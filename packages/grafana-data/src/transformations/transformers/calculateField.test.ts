@@ -31,6 +31,7 @@ import {
   ReduceOptions,
   WindowSizeMode,
   WindowAlignment,
+  getNameFromOptions,
 } from './calculateField';
 import { DataTransformerID } from './ids';
 
@@ -1456,6 +1457,144 @@ describe('calculateField transformer w/ timeseries', () => {
       expect(data.fields[1].values[2]).toEqual(0.25);
       expect(data.fields[1].values[3]).toBeCloseTo(0.6666666, 4);
     });
+  });
+});
+
+describe('getNameFromOptions', () => {
+  it('returns alias when provided', () => {
+    const options = {
+      mode: CalculateFieldMode.ReduceRow,
+      alias: 'My Custom Name',
+      reduce: { reducer: ReducerID.sum },
+    };
+    expect(getNameFromOptions(options)).toBe('My Custom Name');
+  });
+
+  it('returns cumulative function name', () => {
+    const options = {
+      mode: CalculateFieldMode.CumulativeFunctions,
+      cumulative: { reducer: ReducerID.sum, field: 'Value' },
+    };
+    expect(getNameFromOptions(options)).toBe('cumulative sum(Value)');
+  });
+
+  it('returns cumulative function name without field', () => {
+    const options = {
+      mode: CalculateFieldMode.CumulativeFunctions,
+      cumulative: { reducer: ReducerID.mean },
+    };
+    expect(getNameFromOptions(options)).toBe('cumulative mean');
+  });
+
+  it('returns window function name', () => {
+    const options = {
+      mode: CalculateFieldMode.WindowFunctions,
+      window: {
+        windowAlignment: WindowAlignment.Trailing,
+        reducer: ReducerID.mean,
+        field: 'Temperature',
+      },
+    };
+    expect(getNameFromOptions(options)).toBe('trailing moving mean(Temperature)');
+  });
+
+  it('returns window function name without field', () => {
+    const options = {
+      mode: CalculateFieldMode.WindowFunctions,
+      window: {
+        windowAlignment: WindowAlignment.Centered,
+        reducer: ReducerID.sum,
+      },
+    };
+    expect(getNameFromOptions(options)).toBe('centered moving sum');
+  });
+
+  it('returns unary operation name', () => {
+    const options = {
+      mode: CalculateFieldMode.UnaryOperation,
+      unary: {
+        operator: UnaryOperationID.Abs,
+        fieldName: 'Value',
+      },
+    };
+    expect(getNameFromOptions(options)).toBe('abs(Value)');
+  });
+
+  it('returns unary operation name without field', () => {
+    const options = {
+      mode: CalculateFieldMode.UnaryOperation,
+      unary: {
+        operator: UnaryOperationID.Abs,
+        fieldName: '',
+      },
+    };
+    expect(getNameFromOptions(options)).toBe('abs');
+  });
+
+  it('returns binary operation name with field matcher', () => {
+    const options = {
+      mode: CalculateFieldMode.BinaryOperation,
+      binary: {
+        left: { matcher: { id: FieldMatcherID.byName, options: 'FieldA' } },
+        operator: BinaryOperationID.Add,
+        right: { matcher: { id: FieldMatcherID.byName, options: 'FieldB' } },
+      },
+    };
+    expect(getNameFromOptions(options)).toBe('FieldA + FieldB');
+  });
+
+  it('returns binary operation name with fixed values', () => {
+    const options = {
+      mode: CalculateFieldMode.BinaryOperation,
+      binary: {
+        left: { fixed: '10' },
+        operator: BinaryOperationID.Multiply,
+        right: { fixed: '5' },
+      },
+    };
+    expect(getNameFromOptions(options)).toBe('10 * 5');
+  });
+
+  it('returns empty string for binary operation with variables', () => {
+    const options = {
+      mode: CalculateFieldMode.BinaryOperation,
+      binary: {
+        left: { fixed: '$variable1' },
+        operator: BinaryOperationID.Add,
+        right: { fixed: '10' },
+      },
+    };
+    expect(getNameFromOptions(options)).toBe('');
+  });
+
+  it('returns empty string when binary field is not provided', () => {
+    const options = {
+      mode: CalculateFieldMode.BinaryOperation,
+      // No binary field provided at all
+    };
+    expect(getNameFromOptions(options)).toBe('');
+  });
+
+  it('returns reducer name for reduce row mode', () => {
+    const options = {
+      mode: CalculateFieldMode.ReduceRow,
+      reduce: { reducer: ReducerID.mean },
+    };
+    expect(getNameFromOptions(options)).toBe('Mean');
+  });
+
+  it('returns "Row" for index mode', () => {
+    const options = {
+      mode: CalculateFieldMode.Index,
+    };
+    expect(getNameFromOptions(options)).toBe('Row');
+  });
+
+  it('returns "math" as default', () => {
+    const options = {
+      mode: 'invalid-mode' as CalculateFieldMode,
+    };
+    expect(getNameFromOptions(options)).toBe('math');
   });
 });
 
