@@ -6,6 +6,7 @@ import { QueryEditorMode } from './types';
 export interface Props {
   mode: QueryEditorMode;
   onChange: (mode: QueryEditorMode) => void;
+  hideBuilder?: boolean;
 }
 
 const editorModes = [
@@ -13,10 +14,12 @@ const editorModes = [
   { label: 'Code', value: QueryEditorMode.Code },
 ];
 
-export function QueryEditorModeToggle({ mode, onChange }: Props) {
+export function QueryEditorModeToggle({ mode, onChange, hideBuilder }: Props) {
   return (
     <div data-testid={'QueryEditorModeToggle'}>
-      <RadioButtonGroup options={editorModes} size="sm" value={mode} onChange={onChange} />
+      <RadioButtonGroup options={editorModes?.filter(
+        (option) => !(hideBuilder && option.value === QueryEditorMode.Builder)
+      )} size="sm" value={mode} onChange={onChange} />
     </div>
   );
 }
