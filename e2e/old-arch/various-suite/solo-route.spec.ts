@@ -25,10 +25,10 @@ describe('Solo Route', () => {
   it('Can view solo repeated panel in scenes', () => {
     // open Panel Tests - Graph NG
     e2e.pages.SoloPanel.visit(
-      'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=panel-2-clone-0&__feature.dashboardSceneSolo=true'
+      'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=panel-2-clone-1&__feature.dashboardSceneSolo=true'
     );
 
-    e2e.components.Panels.Panel.title('server=A').should('exist');
+    e2e.components.Panels.Panel.title('server=B').should('exist');
     cy.contains('uplot-main-div').should('not.exist');
   });
 

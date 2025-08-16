@@ -35,12 +35,12 @@ test.describe(
     test('Can view solo repeated panel in scenes', async ({ page, selectors }) => {
       // open Panel Tests - Graph NG
       const soloPanelUrl = selectors.pages.SoloPanel.url(
-        'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=panel-2-clone-0&__feature.dashboardSceneSolo=true'
+        'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=panel-2-clone-1&__feature.dashboardSceneSolo=true'
       );
       await page.goto(soloPanelUrl);
 
       // Check that the panel title exists
-      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('server=A'));
+      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('server=B'));
       await expect(panelTitle).toBeVisible();
 
       // Check that uplot-main-div does not exist

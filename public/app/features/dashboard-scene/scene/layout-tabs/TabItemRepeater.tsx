@@ -3,17 +3,11 @@ import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
-import {
-  MultiValueVariable,
-  SceneVariableSet,
-  LocalValueVariable,
-  sceneGraph,
-  VariableValueSingle,
-} from '@grafana/scenes';
+import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -164,17 +158,7 @@ export function createTabRepeats({
 
     tabClone.setState({
       key: tabCloneKey,
-      $variables: new SceneVariableSet({
-        variables: [
-          new LocalValueVariable({
-            name: variable.state.name,
-            value: variableValues[tabIndex],
-            text: String(variableTexts[tabIndex]),
-            isMulti: variable.state.isMulti,
-            includeAll: variable.state.includeAll,
-          }),
-        ],
-      }),
+      $variables: getLocalVariableValueSet(variable, variableValues[tabIndex], variableTexts[tabIndex]),
       layout,
     });
 
