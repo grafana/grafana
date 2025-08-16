@@ -3129,7 +3129,7 @@ __metadata:
     marked: "npm:16.1.1"
     marked-mangle: "npm:1.1.11"
     moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.47"
+    moment-timezone: "npm:0.6.0"
     ol: "npm:10.6.1"
     papaparse: "npm:5.5.3"
     react: "npm:18.3.1"
@@ -3518,7 +3518,7 @@ __metadata:
     jest-environment-jsdom: "npm:29.7.0"
     lodash: "npm:4.17.21"
     moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.47"
+    moment-timezone: "npm:0.6.0"
     monaco-promql: "npm:1.8.0"
     pluralize: "npm:8.0.0"
     prismjs: "npm:1.30.0"
@@ -18518,7 +18518,7 @@ __metadata:
     ml-regression-polynomial: "npm:^3.0.0"
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.47"
+    moment-timezone: "npm:0.6.0"
     monaco-editor: "npm:0.34.1"
     moveable: "npm:0.53.0"
     msw: "npm:2.10.4"
@@ -23335,12 +23335,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment-timezone@npm:0.5.47":
-  version: 0.5.47
-  resolution: "moment-timezone@npm:0.5.47"
+"moment-timezone@npm:0.6.0":
+  version: 0.6.0
+  resolution: "moment-timezone@npm:0.6.0"
   dependencies:
     moment: "npm:^2.29.4"
-  checksum: 10/b2ad32e6b7ea4ce99756c9f571f8eb1bdd6592ecdc2bf3f7fb988ae980a49a7e87b986776090571b9608c8576205f839b736dc7589c180ce36c82fad4b8416c6
+  checksum: 10/324df65c9ed622c75d4e39dc5daf01dfcd8b4cb4eb63dec3270ddbfed3f5357e4d4b22a39bf3b4fe1fe2d78b21307abddfb13e7aa6a19b69b7f33bb712c8ad55
   languageName: node
   linkType: hard
 
