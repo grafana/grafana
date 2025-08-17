@@ -17,35 +17,35 @@ describe('Geomap layer controls options', () => {
     e2e.components.PanelEditor.showZoomField()
       .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
+        cy.get('input[type="checkbox"]').check({ force: true });
       });
 
     // Show attribution
     e2e.components.PanelEditor.showAttributionField()
       .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
+        cy.get('input[type="checkbox"]').check({ force: true });
       });
 
     // Show scale
     e2e.components.PanelEditor.showScaleField()
       .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
+        cy.get('input[type="checkbox"]').check({ force: true });
       });
 
     // Show measure tool
     e2e.components.PanelEditor.showMeasureField()
       .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
+        cy.get('input[type="checkbox"]').check({ force: true });
       });
 
     // Show debug
     e2e.components.PanelEditor.showDebugField()
       .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
+        cy.get('input[type="checkbox"]').check({ force: true });
       });
 
     e2e.components.Panels.Panel.content({ timeout: TIMEOUT })

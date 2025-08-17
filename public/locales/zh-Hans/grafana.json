@@ -1238,20 +1238,6 @@
       "copy-code": "复制代码",
       "download": "下载"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "提醒规则",
-        "all": "全部",
-        "error": "错误",
-        "firing": "触发中",
-        "no-data": "没有数据",
-        "normal": "正常",
-        "ok": "好",
-        "pending": "待处理",
-        "recording-rule": "录制规则",
-        "recovering": "正在恢复"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "筛选规则列表"
     },
@@ -2575,11 +2561,27 @@
       "delete-rule": {
         "success": "规则已成功删除"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "规则评估已暂停"
       },
       "resume-rule": {
         "success": "规则评估已恢复"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "规则已成功更新"
@@ -2588,20 +2590,29 @@
     "rules-filter": {
       "clear-filters": "清除筛选器",
       "configured-alert-rules": "包含已配置警报规则的数据源是 Mimir 或 Loki 数据源，其中警报规则在数据源中存储和评估。",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "仪表板",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "按数据源帮助搜索",
       "filter-options": {
-        "aria-label-show-filters": "显示筛选器",
-        "label-custom-filter": "自定义筛选器",
-        "label-saved-searches": "保存的搜索"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "健康",
       "label": {
         "hide": "隐藏",
         "show": "显示"
       },
       "manage-alerts": "在这些数据源中，您可以选择通过警报用户界面管理警报，以便能够在 Grafana 用户界面以及在其配置所在的数据源中管理这些警报规则。",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "所有数据源",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "插件规则",
       "rule-type": "规则类型",
       "rulesSearchInput-placeholder-search": "搜索",
@@ -2616,9 +2627,6 @@
       "text-federated": "联合",
       "text-provisioned": "已预置"
     },
-    "saved-searches": {
-      "text-default": "默认"
-    },
     "search": {
       "property": {
         "data-source": "数据源",
@@ -2626,11 +2634,10 @@
         "labels": "标签",
         "namespace": "文件夹/命名空间",
         "rule-health": "健康",
-        "rule-name": "提醒规则名称",
+        "rule-name": "",
         "rule-type": "类型",
         "state": "状态"
-      },
-      "save-query": "保存当前搜索"
+      }
     },
     "search-field-input": {
       "clear": "清除",
@@ -4078,10 +4085,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "应用",
     "cancel": "取消",
     "clear": "清除",
-    "close": "关闭",
     "collapse": "收起",
     "edit": "编辑",
     "help": "帮助",
@@ -4496,6 +4503,10 @@
           },
           "value": "值"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "由于条件渲染，元素已被隐藏。"
@@ -6562,6 +6573,9 @@
         "hosted-graphite-prometheus-and-loki": "托管 Graphite、Prometheus 和 Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "取消",
       "placeholder-filter-by-name-or-type": "按名称或类型筛选"
@@ -7850,7 +7864,8 @@
       "edit-pane": {
         "go-back": "返回"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9037,6 +9052,7 @@
       "sign-up": "注册"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "拖放以重新排序",
@@ -11225,7 +11241,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "回到存储库",
-      "repository-config-exists-configuration": "确保存储库配置存在于配置文件中。"
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "确保存储库配置存在于配置文件中。",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "保存",
@@ -11423,6 +11441,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "您的资源现在位于外部存储中，并预配到您的实例中。从现在开始，您的实例和外部存储将被同步。",
