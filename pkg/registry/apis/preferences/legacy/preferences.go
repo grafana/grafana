@@ -99,8 +99,9 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 		case utils.TeamResourceOwner:
 			req.TeamUID = owner.Name
 			return false, nil
+		default:
+			return false, fmt.Errorf("unsupported name")
 		}
-		return false, fmt.Errorf("unsupported name")
 	})
 	if err != nil {
 		return nil, err
