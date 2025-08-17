@@ -9,12 +9,19 @@ import { getFiltersFromUrlParams } from '../utils/misc';
 
 export const useFilteredAmGroups = (groups: AlertmanagerGroup[]) => {
   const [queryParams] = useQueryParams();
-  const { queryString, alertState } = getFiltersFromUrlParams(queryParams);
+  const { queryString, alertState, receiver } = getFiltersFromUrlParams(queryParams);
 
   return useMemo(() => {
     const matchers = queryString ? parsePromQLStyleMatcherLooseSafe(queryString) : [];
 
     return groups.reduce((filteredGroup: AlertmanagerGroup[], group) => {
+      // Filter by receiver if specified
+      const receiverMatches = receiver && receiver.length > 0 ? receiver.includes(group.receiver.name) : true;
+
+      if (!receiverMatches) {
+        return filteredGroup;
+      }
+
       const alerts = group.alerts.filter(({ labels, status }) => {
         const labelsMatch = labelsMatchMatchers(labels, matchers);
         const filtersMatch = alertState ? status.state === alertState : true;
@@ -30,5 +37,5 @@ export const useFilteredAmGroups = (groups: AlertmanagerGroup[]) => {
       }
       return filteredGroup;
     }, []);
-  }, [queryString, groups, alertState]);
+  }, [queryString, groups, alertState, receiver]);
 };
