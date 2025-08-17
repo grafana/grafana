@@ -48,6 +48,50 @@ describe('Partition by values transformer', () => {
     expect(partitioned[1].fields[1].values).toEqual(['China', 'China', 'China']);
   });
 
+  it('should partition by one field (transfer displayName to name)', () => {
+    const source = [
+      toDataFrame({
+        name: 'XYZ',
+        refId: 'A',
+        fields: [
+          {
+            name: 'model',
+            type: FieldType.string,
+            config: { displayName: 'myModel' },
+            values: ['E1', 'E2', 'C1', 'E3', 'C2', 'C3'],
+          },
+          { name: 'region', type: FieldType.string, values: ['Europe', 'Europe', 'China', 'Europe', 'China', 'China'] },
+        ],
+      }),
+    ];
+
+    const config: PartitionByValuesTransformerOptions = {
+      fields: ['region'],
+      keepFields: true,
+      naming: {
+        asLabels: false,
+      },
+    };
+
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
+
+    expect(partitioned.length).toEqual(2);
+
+    expect(partitioned[0].length).toEqual(3);
+    expect(partitioned[0].name).toEqual('Europe');
+    expect(partitioned[0].fields[0].name).toEqual('myModel');
+    expect(partitioned[0].fields[1].name).toEqual('region');
+    expect(partitioned[0].fields[0].values).toEqual(['E1', 'E2', 'E3']);
+    expect(partitioned[0].fields[1].values).toEqual(['Europe', 'Europe', 'Europe']);
+
+    expect(partitioned[1].length).toEqual(3);
+    expect(partitioned[1].name).toEqual('China');
+    expect(partitioned[1].fields[0].name).toEqual('myModel');
+    expect(partitioned[1].fields[1].name).toEqual('region');
+    expect(partitioned[1].fields[0].values).toEqual(['C1', 'C2', 'C3']);
+    expect(partitioned[1].fields[1].values).toEqual(['China', 'China', 'China']);
+  });
+
   it('should partition by multiple fields', () => {
     const source = [
       toDataFrame({

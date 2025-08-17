@@ -103,7 +103,37 @@ export function partitionByValues(
   matcher: FieldMatcher,
   options?: PartitionByValuesTransformerOptions
 ): DataFrame[] {
-  const keyFields = frame.fields.filter((f) => matcher(f, frame, [frame]))!;
+  let fields = frame.fields.map(f => {
+    let f2 = f;
+
+    let renamedTo = f.config.displayNameFromDS ?? f.config.displayName;
+
+    // if the field was explicitly renamed e.g. via prior Organize transform
+    // we need to stamp this new name as the base field name to allow calculateFieldDisplayName()
+    // to proceed normally with its logic to generate unique field names when all fields have same field.name
+    // which includes prepending the frame name. panels like XYChart rely on the existing autonaming conventions
+    // to correctly extract the final series names, omitting any common/repetative prefixes or suffixes
+    if (renamedTo) {
+      f2 = {
+        ...f,
+        name: renamedTo,
+        config: {
+          ...f.config,
+        },
+        state: {
+          ...f.state,
+        },
+      };
+
+      delete f2.config.displayName;
+      delete f2.config.displayNameFromDS;
+      delete f2.state!.displayName;
+    }
+
+    return f2;
+  });
+
+  const keyFields = fields.filter((f) => matcher(f, frame, [frame]))!;
 
   if (!keyFields.length) {
     return [frame];
@@ -140,11 +170,11 @@ export function partitionByValues(
       frameName = name;
     }
 
-    let filteredFields = frame.fields;
+    let filteredFields = fields;
 
     if (!options?.keepFields) {
       const keyFieldNames = new Set(names);
-      filteredFields = frame.fields.filter((field) => !keyFieldNames.has(field.name));
+      filteredFields = fields.filter((field) => !keyFieldNames.has(field.name));
     }
 
     return {
