@@ -198,7 +198,7 @@ func MakeCancelError(err error, refID string) TypedError {
 	return &ErrorWithType{errorType: "cancel", err: CancelError.Build(data)}
 }
 
-var tableNotFoundStr = "sql expression [{{ .Public.refId }}] was not run because: table (refId) '{{ .Public.table }}' not found"
+var tableNotFoundStr = "failed to run sql expression [{{ .Public.refId }}] because it selects from table (refId/query) [{{ .Public.table }}] and that table not found"
 
 var TableNotFoundError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.table_not_found").MustTemplate(
@@ -261,4 +261,46 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 	}
 
 	return &ErrorWithType{errorType: "input_conversion", err: InputConvertError.Build(data)}
+}
+
+
+var errEmptyQueryString = "sql expression [{{.Public.refId}}] failed because it has an empty SQL query"
+
+var ErrEmptySQLQuery = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.emptyQuery").MustTemplate(
+	errEmptyQueryString,
+	errutil.WithPublic(errEmptyQueryString))
+
+// MakeTableNotFoundError creates an error for when a referenced table
+// does not exist.
+func MakeErrEmptyQuery(refID string) TypedError {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+		},
+
+		Error: fmt.Errorf("sql expression [%s] failed because it has an empty SQL query", refID),
+	}
+
+	return &ErrorWithType{errorType: "empty_query", err: ErrEmptySQLQuery.Build(data)}
+}
+
+var invalidQueryStr = "sql expression [{{.Public.refId}}] failed because it has an invalid SQL query: {{ .Public.error }}"
+
+var ErrInvalidQuery = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.invalidQuery").MustTemplate(
+	invalidQueryStr,
+	errutil.WithPublic(invalidQueryStr))
+
+func MakeErrInvalidQuery(refID string, err error) TypedError {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":  refID,
+			"error":  err.Error(),
+		},
+
+		Error: fmt.Errorf("sql expression [%s] failed because it has an invalid SQL query: %w", refID, err),
+	}
+
+	return &ErrorWithType{errorType: "invalid_query", err: ErrInvalidQuery.Build(data)}
 }

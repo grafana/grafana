@@ -11,22 +11,11 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-var (
-	ErrMissingSQLQuery = errutil.BadRequest("sql-missing-query").Errorf("missing SQL query")
-	ErrInvalidSQLQuery = errutil.BadRequest("sql-invalid-sql").MustTemplate(
-		"invalid SQL query: {{ .Private.query }} err: {{ .Error }}",
-		errutil.WithPublic(
-			"Invalid SQL query: {{ .Public.error }}",
-		),
-	)
 )
 
 // SQLCommand is an expression to run SQL over results
@@ -45,20 +34,12 @@ type SQLCommand struct {
 // NewSQLCommand creates a new SQLCommand.
 func NewSQLCommand(ctx context.Context, refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
 	if rawSQL == "" {
-		return nil, ErrMissingSQLQuery
+		return nil, sql.MakeErrEmptyQuery(refID)
 	}
 	tables, err := sql.TablesList(ctx, rawSQL)
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
-		return nil, ErrInvalidSQLQuery.Build(errutil.TemplateData{
-			Error: err,
-			Public: map[string]any{
-				"error": err.Error(),
-			},
-			Private: map[string]any{
-				"query": rawSQL,
-			},
-		})
+		return nil, sql.MakeErrInvalidQuery(refID, err)
 	}
 	if len(tables) == 0 {
 		logger.Warn("no tables found in SQL query", "sql", rawSQL)
