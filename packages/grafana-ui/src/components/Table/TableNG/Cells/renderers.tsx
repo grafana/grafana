@@ -66,7 +66,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
     getStyles: getDataLinksStyles,
   },
   [TableCellDisplayMode.Gauge]: {
-    renderer: memo((props) => (
+    renderer: (props) => (
       <BarGaugeCell
         field={props.field}
         value={props.value}
@@ -75,7 +75,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
         width={props.width}
         rowIdx={props.rowIdx}
       />
-    )),
+    ),
   },
   [TableCellDisplayMode.Sparkline]: {
     renderer: memo((props) => (
