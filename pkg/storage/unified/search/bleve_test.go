@@ -766,7 +766,7 @@ func TestBleveInMemoryIndexExpiration(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, "test", indexTestDocs(ns, 1))
+	builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, "test", indexTestDocs(ns, 1, 100))
 	require.NoError(t, err)
 
 	// Wait for index expiration, which is 1ns
@@ -798,7 +798,7 @@ func TestBleveFileIndexExpiration(t *testing.T) {
 	}
 
 	// size=100 is above FileThreshold, this will be file-based index
-	builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 1))
+	builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 1, 100))
 	require.NoError(t, err)
 
 	// Wait for index expiration, which is 1ns
@@ -830,8 +830,7 @@ func TestFileIndexIsReusedOnSameSizeAndRVLessThanIndexRV(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	backend1, reg1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10))
-	_ = idx.UpdateResourceVersion(100)
+	idx, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100))
 	require.NoError(t, err)
 
 	// Verify one open index.
@@ -854,8 +853,7 @@ func TestFileIndexIsReusedOnSameSizeAndRVLessThanIndexRV(t *testing.T) {
 
 	// We open new backend using same directory, and run indexing with same size (10) and RV (100). This should reuse existing index, and skip indexing.
 	backend2, reg2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err = backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 1000))
-	_ = idx.UpdateResourceVersion(100)
+	idx, err = backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 1000, 100))
 	require.NoError(t, err)
 
 	// Verify that we're reusing existing index and there is only 10 documents in it, not 1000.
@@ -881,8 +879,7 @@ func TestFileIndexIsReusedOnSameSizeAndRVLessThanIndexRV(t *testing.T) {
 
 	// We repeat with backend3 and RV 99. This should also reuse existing index and skip indexing
 	backend3, reg3 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err = backend3.BuildIndex(context.Background(), ns, 10 /* file based */, 99, nil, "test", indexTestDocs(ns, 1000))
-	_ = idx.UpdateResourceVersion(100)
+	idx, err = backend3.BuildIndex(context.Background(), ns, 10 /* file based */, 99, nil, "test", indexTestDocs(ns, 1000, 99))
 	require.NoError(t, err)
 
 	// Verify that we're reusing existing index and there is only 10 documents in it, not 1000.
@@ -910,13 +907,13 @@ func TestFileIndexIsNotReusedOnDifferentSize(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	backend1, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, "test", indexTestDocs(ns, 10))
+	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, "test", indexTestDocs(ns, 10, 100))
 	require.NoError(t, err)
 	backend1.closeAllIndexes()
 
 	// We open new backend using same directory, but with different size. Index should be rebuilt.
 	backend2, _ := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-	idx, err := backend2.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 100))
+	idx, err := backend2.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 100, 100))
 	require.NoError(t, err)
 
 	// Verify that index has updated number of documents.
@@ -948,7 +945,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			if testCase.firstInMemory {
 				firstSize = 1
 			}
-			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, "test", indexTestDocs(ns, firstSize))
+			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, "test", indexTestDocs(ns, firstSize, 100))
 			require.NoError(t, err)
 
 			if testCase.firstInMemory {
@@ -964,7 +961,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 				secondSize = 1
 				openInMemoryIndexes = 1
 			}
-			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, "test", indexTestDocs(ns, secondSize))
+			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, "test", indexTestDocs(ns, secondSize, 100))
 			require.NoError(t, err)
 
 			if testCase.secondInMemory {
@@ -1006,7 +1003,7 @@ func verifyDirEntriesCount(t *testing.T, dir string, count int) {
 	require.Len(t, ents, count)
 }
 
-func indexTestDocs(ns resource.NamespacedResource, docs int) func(index resource.ResourceIndex) (int64, error) {
+func indexTestDocs(ns resource.NamespacedResource, docs int, listRV int64) func(index resource.ResourceIndex) (int64, error) {
 	return func(index resource.ResourceIndex) (int64, error) {
 		var items []*resource.BulkIndexItem
 		for i := 0; i < docs; i++ {
@@ -1025,7 +1022,7 @@ func indexTestDocs(ns resource.NamespacedResource, docs int) func(index resource
 		}
 
 		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
-		return int64(docs), err
+		return listRV, err
 	}
 }
 
@@ -1087,6 +1084,6 @@ func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 	require.Error(t, err)
 
 	// Even though previous build of the index failed, new building of the index should work.
-	_, err = backend.BuildIndex(context.Background(), ns, size, 100, nil, "test", indexTestDocs(ns, int(size)))
+	_, err = backend.BuildIndex(context.Background(), ns, size, 100, nil, "test", indexTestDocs(ns, int(size), 100))
 	require.NoError(t, err)
 }

@@ -79,8 +79,6 @@ type ResourceIndex interface {
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
-
-	UpdateResourceVersion(rv int64) error
 }
 
 // SearchBackend contains the technology specific logic to support search
@@ -800,12 +798,6 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return nil, 0, err
 	}
 
-	err = index.UpdateResourceVersion(listRV)
-	if err != nil {
-		logger.Debug("failed to update resourceVersion in the index", "error", err)
-		return nil, 0, err
-	}
-
 	// Record the number of objects indexed for the kind/resource
 	docCount, err := index.DocCount(ctx, "")
 	if err != nil {
@@ -830,7 +822,7 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 	// Build an empty index by passing a builder function that doesn't add any documents
 	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, "empty", func(index ResourceIndex) (int64, error) {
 		// Return the resource version without adding any documents to the index
-		return rv, nil
+		return 0, nil
 	})
 }
 

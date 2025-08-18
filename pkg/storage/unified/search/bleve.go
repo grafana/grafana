@@ -191,8 +191,12 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 	}
 }
 
-// BuildIndex builds an index from scratch.
+// BuildIndex builds an index from scratch or retrieves it from the cache.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
+// An index may be cached from memory or from the file system
+// An index in the file system is considered to be valid if the requested resourceVersion is smaller than or equal to
+// the resourceVersion used to build the index and the number of indexed objects matches the expected size.
+// The return value of "builder" should be the RV returned from List. This will be stored as the index RV
 //
 //nolint:gocyclo
 func (b *bleveBackend) BuildIndex(
@@ -326,7 +330,7 @@ func (b *bleveBackend) BuildIndex(
 		}
 
 		start := time.Now()
-		_, err = builder(idx)
+		listRV, err := builder(idx)
 		if err != nil {
 			logWithDetails.Error("Failed to build index", "err", err)
 			if b.indexMetrics != nil {
@@ -334,6 +338,7 @@ func (b *bleveBackend) BuildIndex(
 			}
 			return nil, fmt.Errorf("failed to build index: %w", err)
 		}
+		idx.updateResourceVersion(listRV)
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
 
@@ -608,7 +613,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 var internalRVKey = []byte("rv")
 
-func (b *bleveIndex) UpdateResourceVersion(rv int64) error {
+func (b *bleveIndex) updateResourceVersion(rv int64) error {
 	if rv == 0 {
 		return nil
 	}
