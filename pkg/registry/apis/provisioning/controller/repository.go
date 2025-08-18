@@ -474,18 +474,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	healthCheckErr := rc.healthChecker.CheckAndUpdateHealth(ctx, repo, obj)
+	healthStatus, healthCheckErr := rc.healthChecker.CheckAndUpdateHealth(ctx, repo, obj)
 	if healthCheckErr != nil {
 		return fmt.Errorf("failed to update health status: %w", healthCheckErr)
-	}
-
-	// Get the current health status for sync decisions
-	healthStatus := obj.Status.Health
-	if shouldCheckHealth {
-		// Health status was just updated, re-read it from the object
-		// Note: In a real implementation, we might need to re-fetch the object
-		// For now, we'll use the result from CheckAndUpdateHealth
-		healthStatus = obj.Status.Health
 	}
 
 	// determine the sync strategy and sync status to apply

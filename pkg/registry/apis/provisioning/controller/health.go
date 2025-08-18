@@ -319,7 +319,7 @@ func (hc *HealthChecker) CheckAndUpdateHealth(ctx context.Context, repo reposito
 
 	// Perform comprehensive health check
 	newHealthStatus := hc.CheckRepositoryHealth(ctx, repo, repoConfig.Status.Health)
-	
+
 	// Only update if health status actually changed
 	if hc.HasHealthStatusChanged(repoConfig.Status.Health, newHealthStatus) {
 		patchOp := map[string]interface{}{
@@ -332,6 +332,6 @@ func (hc *HealthChecker) CheckAndUpdateHealth(ctx context.Context, repo reposito
 			return newHealthStatus, err // Return the new status even if patch failed
 		}
 	}
-	
+
 	return newHealthStatus, nil
 }
