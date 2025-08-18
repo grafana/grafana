@@ -10,7 +10,7 @@ export function AnalyzeFlameGraphButton(props: Props) {
   const { assistantContext, className } = props;
   const [isAvailable, openAssistant] = useAssistant();
 
-  if (!isAvailable || !openAssistant) {
+  if (!isAvailable || !openAssistant || assistantContext.length === 0) {
     return null;
   }
 
