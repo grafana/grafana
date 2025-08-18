@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -115,7 +116,7 @@ type StorageBackend interface {
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
-	ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error)
+	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -125,10 +126,16 @@ type StorageBackend interface {
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
 }
 
-type ResourceModifiedKey struct {
-	Namespace string
-	Group     string
-	Resource  string
+type ModifiedResourceKey struct {
+	NamespacedResource
+	Name string
+}
+
+type ModifiedResource struct { // Could be WrittenEvent ?
+	Action          int64
+	Key             ModifiedResourceKey
+	Value           []byte // Only when IsDeleted false
+	ResourceVersion int64
 }
 
 type ResourceStats struct {

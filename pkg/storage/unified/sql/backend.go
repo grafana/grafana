@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"iter"
 	"math"
 	"sync"
 	"time"
@@ -632,46 +633,77 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 }
 
 // ListModifiedSince lists all resource changes that have occurred since the given resource version.
-func (b *backend) ListModifiedSince(ctx context.Context, key resource.ResourceModifiedKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
-	resIter := &listDeltaIter{}
-
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	var latestRv int64
-	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		latestRv, err = b.fetchLatestRV(ctx, tx, b.dialect, key.Group, key.Resource)
-		if err != nil {
-			return fmt.Errorf("fetch latest resource version: %w", err)
-		}
-		query := sqlResourceListModifiedSinceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			Namespace:   key.Namespace,
-			Group:       key.Group,
-			Resource:    key.Resource,
-			SinceRv:     sinceRv,
-		}
-
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryListModifiedSince, query)
-		if rows != nil {
-			defer func() {
-				if err := rows.Close(); err != nil {
-					b.log.Warn("listSinceModified error closing rows", "error", err)
-				}
-			}()
-		}
-		if err != nil {
-			return err
-		}
-
-		resIter.rows = rows
-		err = cb(resIter)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
+	if err != nil {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
+	}
 
-	return latestRv, err
+	// track seen resources to avoid duplicates
+	seen := make(map[string]bool)
+
+	seq := func(yield func(*resource.ModifiedResource, error) bool) {
+		// Run transaction
+		err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
+			var err error
+
+			query := sqlResourceListModifiedSinceRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Namespace:   key.Namespace,
+				Group:       key.Group,
+				Resource:    key.Resource,
+				SinceRv:     sinceRv,
+			}
+
+			rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryListModifiedSince, query)
+			if rows != nil {
+				defer func() {
+					if cerr := rows.Close(); cerr != nil {
+						b.log.Warn("listSinceModified error closing rows", "error", cerr)
+					}
+				}()
+			}
+			if err != nil {
+				yield(nil, err)
+				return nil
+			}
+
+			// Iterate rows -> convert to *ModifiedResource
+			for rows.Next() {
+				mr := &resource.ModifiedResource{}
+				if err := rows.Scan(&mr.Key.Namespace, &mr.Key.Group, &mr.Key.Resource, &mr.Key.Name, &mr.ResourceVersion, &mr.Action, &mr.Value); err != nil {
+					if !yield(nil, err) {
+						return nil
+					}
+					continue
+				}
+
+				// Deduplicate by name
+				if _, exists := seen[mr.Key.Name]; exists {
+					continue
+				}
+				seen[mr.Key.Name] = true
+
+				if !yield(mr, nil) {
+					return nil
+				}
+			}
+			return nil
+		})
+
+		if err != nil {
+			yield(nil, err)
+		}
+	}
+
+	return latestRv, seq
 }
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.

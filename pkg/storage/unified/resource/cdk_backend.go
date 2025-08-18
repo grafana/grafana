@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/http"
 	"sort"
 	"strconv"
@@ -74,9 +75,10 @@ type cdkBackend struct {
 	stream      chan<- *WrittenEvent
 }
 
-func (s *cdkBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *cdkBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
 }
 
 func (s *cdkBackend) getPath(key *resourcepb.ResourceKey, rv int64) string {

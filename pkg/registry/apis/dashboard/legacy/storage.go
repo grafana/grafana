@@ -3,7 +3,9 @@ package legacy
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"iter"
 	"net/http"
 	"time"
 
@@ -234,9 +236,10 @@ func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.Li
 	return a.ListIterator(ctx, req, cb)
 }
 
-func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource.ResourceModifiedKey, sinceRv int64, cb func(iterator resource.ListIterator) error) (int64, error) {
-	// TODO
-	panic("implement me")
+func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
 }
 
 // List implements StorageBackend.

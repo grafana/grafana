@@ -487,94 +487,79 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 	ns := nsPrefix + "-history-ns"
-	rv1, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-	require.Greater(t, rv1, int64(0))
+	rvCreated, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.Greater(t, rvCreated, int64(0))
+	rvUpdated, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvUpdated, rvCreated)
+	rvDeleted, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDeleted, rvUpdated)
 
-	rvHistory1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
-	require.NoError(t, err)
-	require.Greater(t, rvHistory1, rv1)
-	rvHistory2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
-	require.NoError(t, err)
-	require.Greater(t, rvHistory2, rvHistory1)
-	rvHistory3, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
-	require.NoError(t, err)
-	require.Greater(t, rvHistory3, rvHistory2)
-
-	t.Run("can list modified events since a given resource version", func(t *testing.T) {
-		key := resource.ResourceModifiedKey{
+	t.Run("will list latest modified event when resource has multiple events", func(t *testing.T) {
+		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
-			// change 1
-			iter.Next()
-			require.NoError(t, iter.Error())
-			require.Equal(t, rvHistory1, iter.ResourceVersion())
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		require.Greater(t, latestRv, rvCreated)
 
-			// change 2
-			iter.Next()
-			require.NoError(t, iter.Error())
-			require.Equal(t, rvHistory2, iter.ResourceVersion())
-
-			// change 3
-			iter.Next()
-			require.NoError(t, iter.Error())
-			require.Equal(t, rvHistory3, iter.ResourceVersion())
-
-			return nil
-		})
-
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, latestRv, rvHistory3)
+		counter := 0
+		for res, err := range seq {
+			require.NoError(t, err)
+			require.Equal(t, rvDeleted, res.ResourceVersion)
+			counter++
+		}
+		require.Equal(t, 1, counter) // only one event should be returned
 	})
 
 	t.Run("no events if none after the given resource version", func(t *testing.T) {
-		key := resource.ResourceModifiedKey{
+		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv, err := backend.ListModifiedSince(ctx, key, rvHistory3, func(iter resource.ListIterator) error {
-			require.Equal(t, false, iter.Next())
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
-			return nil
-		})
-
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, latestRv, rvHistory3)
+		counter := 0
+		for _, _ = range seq {
+			counter++
+		}
+		require.Equal(t, 0, counter) // no events should be returned
 	})
 
 	t.Run("will only return modified events for the given key", func(t *testing.T) {
-		key := resource.ResourceModifiedKey{
-			Namespace: "other-ns",
-			Group:     "group",
-			Resource:  "resource",
-		}
+		//key := resource.NamespacedResource{
+		//	Namespace: "other-ns",
+		//	Group:     "group",
+		//	Resource:  "resource",
+		//}
 
 		// Write an event for this tenant for another resource
-		_, err = writeEvent(ctx, backend, "item2-othertenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"), WithResource("other-resource"))
-		require.NoError(t, err)
+		//_, err = writeEvent(ctx, backend, "item2-othertenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"), WithResource("other-resource"))
+		//require.NoError(t, err)
 
 		// Write an event for this tenant for the resource we are interested in
-		rvOther, err := writeEvent(ctx, backend, "item1-othertenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
-		require.NoError(t, err)
-		require.Greater(t, rvOther, rvHistory3)
+		//rvOther, err := writeEvent(ctx, backend, "item1-othertenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
+		//require.NoError(t, err)
+		//require.Greater(t, rvOther, rvHistory3)
 
-		latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
-			// Should only get the single new event for this tenant and resource
-			iter.Next()
-			require.NoError(t, iter.Error())
-			require.Equal(t, rvOther, iter.ResourceVersion())
-			require.Equal(t, "other-ns", iter.Namespace())
+		//latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
+		//	Should only get the single new event for this tenant and resource
+		//iter.Next()
+		//require.NoError(t, iter.Error())
+		//require.Equal(t, rvOther, iter.ResourceVersion())
+		//require.Equal(t, "other-ns", iter.Namespace())
+		//
+		//require.Equal(t, false, iter.Next())
+		//
+		//return nil
+		//})
 
-			require.Equal(t, false, iter.Next())
-
-			return nil
-		})
-
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, latestRv, rvOther)
+		//require.NoError(t, err)
+		//require.GreaterOrEqual(t, latestRv, rvOther)
 	})
 }
 

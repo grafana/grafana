@@ -2,7 +2,9 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"iter"
 	"log/slog"
 	"sync"
 	"testing"
@@ -98,8 +100,10 @@ func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.Li
 	return 0, nil
 }
 
-func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
-	return 0, nil
+func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
 }
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math/rand/v2"
 	"net/http"
 	"sort"
@@ -450,67 +451,10 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key ResourceModifiedKey, sinceRv int64, cb func(iterator ListIterator) error) (int64, error) {
-	if key.Group == "" || key.Resource == "" || key.Namespace == "" {
-		return 0, fmt.Errorf("group, resource, and namespace are required")
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
 	}
-
-	if sinceRv <= 0 {
-		return 0, fmt.Errorf("sinceRv must be greater than 0")
-	}
-
-	// Generate current resource version
-	listRV := k.snowflake.Generate().Int64()
-
-	historyKeys := make([]DataKey, 0, defaultListBufferSize)
-
-	// Use datastore.Keys to get all data keys for this specific resource
-	for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{
-		Namespace: key.Namespace,
-		Group:     key.Group,
-		Resource:  key.Resource,
-	}) {
-		if err != nil {
-			return 0, err
-		}
-		historyKeys = append(historyKeys, dataKey)
-	}
-
-	// filter to get all history keys for this NSR newer than sinceRv
-	req := &resourcepb.ListRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-		},
-		VersionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
-		ResourceVersion: sinceRv + 1, // when we filter keys below, it checks if RV >= sinceRv + 1
-	}
-	filteredKeys, err := filterHistoryKeysByVersion(historyKeys, req)
-	if err != nil {
-		return 0, err
-	}
-
-	// Sort ascending by resource version
-	sortByResourceVersion(filteredKeys, true)
-
-	iter := kvHistoryIterator{
-		keys:          filteredKeys,
-		currentIndex:  -1,
-		ctx:           ctx,
-		listRV:        listRV,
-		sortAscending: true,
-		dataStore:     k.dataStore,
-	}
-
-	err = cb(&iter)
-	if err != nil {
-		return 0, err
-	}
-
-	return listRV, nil
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
