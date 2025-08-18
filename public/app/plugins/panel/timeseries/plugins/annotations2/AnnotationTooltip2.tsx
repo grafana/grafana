@@ -123,7 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   header: css({
     padding: theme.spacing(0.5, 1),
-    borderBottom: `1px solid ${theme.colors.border.medium}`,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
     fontWeight: theme.typography.fontWeightBold,
     fontSize: theme.typography.fontSize,
     color: theme.colors.text.primary,
