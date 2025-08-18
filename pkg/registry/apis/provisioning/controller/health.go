@@ -167,7 +167,7 @@ func (hc *HealthChecker) CheckRepositoryHealth(ctx context.Context, repo reposit
 
 	// Build health status
 	healthy := len(allFailures) == 0
-	var messages []string
+	messages := make([]string, 0, len(allFailures))
 	for _, failure := range allFailures {
 		messages = append(messages, failure.Error())
 	}
@@ -197,7 +197,7 @@ func (hc *HealthChecker) RecordFailure(failureType FailureType, err error, exist
 	allFailures := append(preservedFailures, newFailure)
 
 	// Build health status
-	var messages []string
+	messages := make([]string, 0, len(allFailures))
 	for _, failure := range allFailures {
 		messages = append(messages, failure.Error())
 	}
@@ -287,10 +287,9 @@ func (hc *HealthChecker) CheckAndUpdateRepositoryHealth(ctx context.Context, rep
 			"value": newHealthStatus,
 		}
 
-		// Update the repository health status
-		// Note: We don't return errors here because the test succeeded
-		// and we don't want to fail the test operation if status update fails
-		_ = hc.statusPatcher.Patch(ctx, cfg, patchOp)
+		if err := hc.statusPatcher.Patch(ctx, cfg, patchOp); err != nil {
+			return nil, fmt.Errorf("update health status: %w", err)
+		}
 	}
 
 	return testResults, nil
@@ -310,13 +309,9 @@ func (hc *HealthChecker) ShouldCheckHealth(repo *provisioning.Repository) bool {
 	return healthAge > time.Minute // otherwise within a minute
 }
 
-// CheckAndUpdateHealth performs health check if needed and updates repository status
+// RefreshHealth performs health check if needed and updates repository status
 // Returns the current health status (either existing or newly checked)
-func (hc *HealthChecker) CheckAndUpdateHealth(ctx context.Context, repo repository.Repository, repoConfig *provisioning.Repository) (provisioning.HealthStatus, error) {
-	if !hc.ShouldCheckHealth(repoConfig) {
-		return repoConfig.Status.Health, nil // Return existing health status, no check needed
-	}
-
+func (hc *HealthChecker) RefreshHealth(ctx context.Context, repo repository.Repository, repoConfig *provisioning.Repository) (provisioning.HealthStatus, error) {
 	// Perform comprehensive health check
 	newHealthStatus := hc.CheckRepositoryHealth(ctx, repo, repoConfig.Status.Health)
 

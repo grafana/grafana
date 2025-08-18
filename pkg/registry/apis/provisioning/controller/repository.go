@@ -462,9 +462,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle hooks - may return early if hooks fail
-	hookOps, shouldContinue, hookErr := rc.processHooksWithFailureHandling(ctx, repo, obj)
-	if hookErr != nil {
-		return hookErr // Propagate status update errors
+	hookOps, shouldContinue, err := rc.processHooksWithFailureHandling(ctx, repo, obj)
+	if err != nil {
+		return fmt.Errorf("process hooks: %w", err)
 	}
 	if !shouldContinue {
 		return nil // Hook handling already updated status and returned early
@@ -474,9 +474,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	healthStatus, healthCheckErr := rc.healthChecker.CheckAndUpdateHealth(ctx, repo, obj)
-	if healthCheckErr != nil {
-		return fmt.Errorf("failed to update health status: %w", healthCheckErr)
+	healthStatus, err := rc.healthChecker.RefreshHealth(ctx, repo, obj)
+	if err != nil {
+		return fmt.Errorf("update health status: %w", err)
 	}
 
 	// determine the sync strategy and sync status to apply
