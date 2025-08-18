@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
 
     name: Sqlite (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest 
     permissions:
       contents: read
     steps:
@@ -80,7 +80,7 @@ jobs:
       fail-fast: false
 
     name: MySQL (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-xlarge-io
     permissions:
       contents: read
     env:
@@ -128,7 +128,7 @@ jobs:
       fail-fast: false
 
     name: Postgres (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-xlarge
     permissions:
       contents: read
     env:
