@@ -70,6 +70,9 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+
+	// this is more "forward compatible", for example supports per-query time ranges
+	QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -86,7 +89,6 @@ type ServiceImpl struct {
 	concurrentQueryLimit       int
 	mtDatasourceClientBuilder  mtdsclient.MTDatasourceClientBuilder
 	headers                    map[string]string
-	supportLocalTimeRange      bool
 }
 
 // Run ServiceImpl.
@@ -96,7 +98,7 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocaltimeRange bool) (*backend.QueryDataResponse, error) {
 	fromAlert := false
 	for header, val := range s.headers {
 		if header == models.FromAlertHeaderName && val == "true" {
@@ -104,7 +106,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 		}
 	}
 	// Parse the request into parsed queries grouped by datasource uid
-	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO, s.supportLocalTimeRange)
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO, supportLocaltimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +121,14 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
+}
+
+func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	return s.queryData(ctx, user, skipDSCache, reqDTO, false)
+}
+
+func (s *ServiceImpl) QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	return s.queryData(ctx, user, skipDSCache, reqDTO, true)
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers
@@ -223,9 +233,8 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
 		headers:                    headers,
 		concurrentQueryLimit:       16, // TODO: make it configurable
-		supportLocalTimeRange:      true,
 	}
-	return s.QueryData(ctx, nil, false, reqDTO)
+	return s.QueryDataNew(ctx, nil, false, reqDTO)
 }
 
 // handleExpressions handles queries when there is an expression.
