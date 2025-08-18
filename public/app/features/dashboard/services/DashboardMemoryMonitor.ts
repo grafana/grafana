@@ -25,6 +25,9 @@ export class DashboardMemoryMonitor {
   private intervalMs = 30000; // Default 30s
   private isTabVisible = true;
   private logger = createLogger('DashboardMemoryMonitor', 'grafana.debug.memory');
+  private visibilityChangeHandler = () => {
+    this.isTabVisible = !document.hidden;
+  };
 
   constructor() {
     this.parseConfiguredInterval();
@@ -258,9 +261,7 @@ export class DashboardMemoryMonitor {
    * Set up browser tab visibility handling
    */
   private setupVisibilityHandling(): void {
-    document.addEventListener('visibilitychange', () => {
-      this.isTabVisible = !document.hidden;
-    });
+    document.addEventListener('visibilitychange', this.visibilityChangeHandler);
   }
 
   /**
@@ -268,8 +269,7 @@ export class DashboardMemoryMonitor {
    */
   destroy(): void {
     this.stopMonitoring();
-    // Note: Can't remove visibilitychange listener as we don't store the reference
-    // This is acceptable as the service is a singleton that lives for the app lifetime
+    document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
   }
 }
 

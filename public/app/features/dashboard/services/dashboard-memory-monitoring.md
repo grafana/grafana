@@ -256,23 +256,6 @@ Usage: 224MB/4096MB (5%) → +0.1MB/min
 📈 Call: _debug.dashboardMemory.getHistory() for raw data
 ```
 
-#### Graph Features
-
-- **Automatic Scaling**: Y-axis scales automatically based on memory range
-- **Dashboard Context**: Shows current dashboard name and UID
-- **Growth Indicators**: Displays memory trend with arrows (↗ ↘ →)
-- **Usage Summary**: Current memory, heap limit, percentage, and growth rate
-- **Rolling History**: Maintains last 30 measurements for visualization
-- **On-Demand**: Graph renders immediately without waiting for measurement intervals
-
-#### Graph Interpretation
-
-- **Datapoints (.)**: Each dot represents a memory measurement
-- **Y-axis**: Memory usage in megabytes (MB)
-- **X-axis**: Measurement sequence (newest on right)
-- **Growth Rate**: Memory change per minute (MB/min)
-- **Percentage**: Current usage vs. browser heap limit
-
 #### Debug Interface Commands
 
 | Command                               | Description                             |
@@ -335,12 +318,6 @@ localStorage.setItem('grafana.debug.memory', 'true');
 
 ## Performance Considerations
 
-### Optimal Configuration
-
-- **Production**: 30s-1m intervals, specific dashboards
-- **Development**: 10s intervals, all dashboards (`*`)
-- **Debug**: Enable only when needed
-
 ### Memory API Limitations
 
 - Chrome/Edge: Full functionality
@@ -353,4 +330,3 @@ localStorage.setItem('grafana.debug.memory', 'true');
 - [Dashboard Render Performance Profiling](./dashboard-render-performance-profiling.md)
 - [Grafana Configuration Documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
 - [Browser Performance Memory API](https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory)
-- [Faro Frontend Observability](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/)

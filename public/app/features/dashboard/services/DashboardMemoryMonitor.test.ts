@@ -185,6 +185,31 @@ describe('DashboardMemoryMonitor Integration Tests', () => {
     }
   });
 
+  it('should properly clean up event listeners on destroy', async () => {
+    const { DashboardMemoryMonitor } = await import('./DashboardMemoryMonitor');
+
+    // Spy on event listener methods
+    const addEventListenerSpy = jest.spyOn(document, 'addEventListener');
+    const removeEventListenerSpy = jest.spyOn(document, 'removeEventListener');
+
+    const monitor = new DashboardMemoryMonitor();
+
+    // Verify event listener was added
+    expect(addEventListenerSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+
+    // Store the handler function reference for comparison
+    const addedHandler = addEventListenerSpy.mock.calls.find((call) => call[0] === 'visibilitychange')?.[1];
+    expect(addedHandler).toBeDefined();
+
+    // Destroy and verify cleanup
+    monitor.destroy();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('visibilitychange', addedHandler);
+
+    // Cleanup spies
+    addEventListenerSpy.mockRestore();
+    removeEventListenerSpy.mockRestore();
+  });
+
   it('should respect different interval configurations', async () => {
     const { DashboardMemoryMonitor } = await import('./DashboardMemoryMonitor');
 
