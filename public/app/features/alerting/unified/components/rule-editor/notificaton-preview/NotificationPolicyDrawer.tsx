@@ -80,7 +80,6 @@ export function NotificationPolicyDrawer({
                     <JourneyPolicyCard
                       route={routeInfo.route}
                       isRoot={index === 0}
-                      level={index}
                       isFinalRoute={index === journey.length - 1}
                     />
                   </Fragment>

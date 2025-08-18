@@ -12,11 +12,10 @@ import { DefaultPolicyIndicator } from '../../notification-policies/Policy';
 interface JourneyPolicyCardProps {
   route: RouteWithID;
   isRoot?: boolean;
-  level: number;
   isFinalRoute?: boolean;
 }
 
-export function JourneyPolicyCard({ route, isRoot = false, level, isFinalRoute = false }: JourneyPolicyCardProps) {
+export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false }: JourneyPolicyCardProps) {
   const styles = useStyles2(getStyles);
 
   // Convert route matchers to ObjectMatcher format
