@@ -8,7 +8,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/alerting/lokiclient"
-	notificationhistorian "github.com/grafana/alerting/notificationhistorian"
+	"github.com/grafana/alerting/notificationhistorian"
 	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/prometheus/alertmanager/featurecontrol"
