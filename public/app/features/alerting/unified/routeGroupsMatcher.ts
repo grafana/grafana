@@ -1,10 +1,14 @@
 import { InstanceMatchResult, RouteMatch, matchAlertInstancesToPolicyTree } from '@grafana/alerting/unstable';
 
-
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import { convertRouteWithIDToAlertingFormat, findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './utils/notification-policies';
+import {
+  convertRouteWithIDToAlertingFormat,
+  findMatchingAlertGroups,
+  normalizeRoute,
+  unquoteRouteMatchers,
+} from './utils/notification-policies';
 
 export interface MatchOptions {
   unquoteMatchers?: boolean;
@@ -82,4 +86,3 @@ function getNormalizedRoute(route: RouteWithID, options?: MatchOptions): RouteWi
 }
 
 export type RouteGroupsMatcher = typeof routeGroupsMatcher;
-

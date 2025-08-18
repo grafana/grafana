@@ -21,7 +21,6 @@ function NotificationPreviewByAlertManager({
   alertManagerSource: AlertManagerDataSource;
   instances: Labels[];
 }) {
-
   const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
     instances
@@ -76,7 +75,12 @@ function NotificationPreviewByAlertManager({
           >
             <Stack direction="column" gap={0}>
               {resultsForReceiver.map(({ routeTree, matchDetails }) => (
-                <InstanceMatch key={matchDetails.labels.join(',')} matchedInstance={matchDetails}  policyTreeSpec={routeTree.expandedSpec} policyTreeMetadata={routeTree.metadata} />
+                <InstanceMatch
+                  key={matchDetails.labels.join(',')}
+                  matchedInstance={matchDetails}
+                  policyTreeSpec={routeTree.expandedSpec}
+                  policyTreeMetadata={routeTree.metadata}
+                />
               ))}
             </Stack>
           </ExternalContactPointGroup>

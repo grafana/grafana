@@ -15,7 +15,7 @@ import { Labels } from '../../../../types/unified-alerting-dto';
 import { MatcherFieldValue } from '../types/silence-form';
 
 import { isPrivateLabelKey } from './labels';
- 
+
 const matcherOperators = [
   MatcherOperator.regex,
   MatcherOperator.notRegex,
@@ -333,7 +333,7 @@ export type Label = [string, string];
 
 export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatcher): LabelMatcher {
   const [label, operator, value] = matcher;
-  
+
   return {
     label,
     type: operator as LabelMatcher['type'],

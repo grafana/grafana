@@ -55,11 +55,21 @@ export function ExternalContactPointGroup({
   children,
 }: ContactPointGroupProps & { alertmanagerSourceName: string }) {
   const link = (
-    <TextLink color="primary" variant="bodySmall" external inline={false} href={createContactPointLink(name, alertmanagerSourceName)}>
+    <TextLink
+      color="primary"
+      variant="bodySmall"
+      external
+      inline={false}
+      href={createContactPointLink(name, alertmanagerSourceName)}
+    >
       {name}
     </TextLink>
   );
-  return <ContactPointGroup name={link} matchedInstancesCount={matchedInstancesCount}>{children}</ContactPointGroup>;
+  return (
+    <ContactPointGroup name={link} matchedInstancesCount={matchedInstancesCount}>
+      {children}
+    </ContactPointGroup>
+  );
 }
 
 interface ContactPointGroupInnerProps extends Omit<ContactPointGroupProps, 'name'> {
@@ -105,7 +115,9 @@ export function ContactPointGroup({
               )}
               {matchedInstancesCount && (
                 <>
-                  <Text color="secondary" variant='bodySmall'>|</Text>
+                  <Text color="secondary" variant="bodySmall">
+                    |
+                  </Text>
                   <MetaText icon="layers-alt">
                     {/* @TODO pluralization */}
                     {matchedInstancesCount}{' '}

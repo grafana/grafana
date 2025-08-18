@@ -4,7 +4,16 @@ import { RouteWithID as AlertingRouteWithID, LabelMatcher } from '@grafana/alert
 import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { Label, convertObjectMatcherToAlertingPackageMatcher, isLabelMatch, matchLabelsSet, matcherToObjectMatcher, normalizeMatchers, parseMatcherToArray, unquoteWithUnescape } from './matchers';
+import {
+  Label,
+  convertObjectMatcherToAlertingPackageMatcher,
+  isLabelMatch,
+  matchLabelsSet,
+  matcherToObjectMatcher,
+  normalizeMatchers,
+  parseMatcherToArray,
+  unquoteWithUnescape,
+} from './matchers';
 
 // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
 // So we cannot use null as an indicator of no match
@@ -228,7 +237,7 @@ function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
   }
 
   return updated;
-} 
+}
 
 /**
  * Converts a RouteWithID from the alertmanager types to the alerting package RouteWithID format.
@@ -241,10 +250,12 @@ function convertRouteWithIDToAlertingFormat(route: RouteWithID): AlertingRouteWi
     matchers = route.object_matchers.map(convertObjectMatcherToAlertingPackageMatcher);
   } else if (route.matchers) {
     route.matchers.forEach((matcher) => {
-      const parsedMatchers = parseMatcherToArray(matcher).map(matcherToObjectMatcher).map(convertObjectMatcherToAlertingPackageMatcher);
+      const parsedMatchers = parseMatcherToArray(matcher)
+        .map(matcherToObjectMatcher)
+        .map(convertObjectMatcherToAlertingPackageMatcher);
       matchers.push(...parsedMatchers);
     });
-  }   
+  }
 
   const convertedRoute: AlertingRouteWithID = {
     ...route,
@@ -257,5 +268,10 @@ function convertRouteWithIDToAlertingFormat(route: RouteWithID): AlertingRouteWi
   return convertedRoute;
 }
 
-
-export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, renameReceiverInRoute, convertRouteWithIDToAlertingFormat };
+export {
+  findMatchingAlertGroups,
+  findMatchingRoutes,
+  getInheritedProperties,
+  renameReceiverInRoute,
+  convertRouteWithIDToAlertingFormat,
+};
