@@ -301,7 +301,7 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 //  1. If the input declares a supported time series or numeric kind in the wide or multi format (via FrameMeta.Type), it converts to a full-long formatted table using ConvertToFullLong.
 //  2. If the input is a single frame (no labels, no declared type), it passes through as-is.
 //  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
-func handleSqlInput(refID string, forRefIDs map[string]struct{}, dataFrames data.Frames) mathexp.Results {
+func handleSqlInput(refID string, forRefIDs map[string]struct{}, dsType string, dataFrames data.Frames) mathexp.Results {
 	var result mathexp.Results
 
 	// dataframes len > 0 is checked in the caller -- Convert
@@ -326,7 +326,7 @@ func handleSqlInput(refID string, forRefIDs map[string]struct{}, dataFrames data
 	if supportedToLongConversion(metaType) {
 		convertedFrames, err := ConvertToFullLong(dataFrames)
 		if err != nil {
-			result.Error = sql.MakeInputConvertError(err, refID, forRefIDs)
+			result.Error = sql.MakeInputConvertError(err, refID, forRefIDs, dsType)
 		}
 
 		if len(convertedFrames) == 0 {
@@ -341,15 +341,21 @@ func handleSqlInput(refID string, forRefIDs map[string]struct{}, dataFrames data
 		return result
 	}
 
+	var frameTypeIssue string
+	if metaType == "" {
+		frameTypeIssue = "is missing the data type (frame.meta.type)"
+	} else {
+		frameTypeIssue = fmt.Sprintf("has an unsupported data type [%s]", metaType)
+	}
 	// If Meta.Type is not supported, but there are labels or more than 1 frame, fail fast
 	if len(dataFrames) > 1 {
-		result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response is missing the data type (frame.meta.type) and has more than one dataframe that can not be automatically mapped to a single table."), refID, forRefIDs)
+		result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response %s and has more than one dataframe that can not be automatically mapped to a single table", frameTypeIssue), refID, forRefIDs, dsType)
 		return result
 	}
 	for _, frame := range dataFrames {
 		for _, field := range frame.Fields {
 			if len(field.Labels) > 0 {
-				result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response is missing the data type (frame.meta.type) and has labels in the response that can not be mapped to a table."), refID, forRefIDs)
+				result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response %s and has labels in the response that can not be mapped to a table", frameTypeIssue), refID, forRefIDs, dsType)
 				return result
 			}
 		}

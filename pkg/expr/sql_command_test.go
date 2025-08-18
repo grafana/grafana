@@ -237,7 +237,7 @@ func TestHandleSqlInput(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			res := handleSqlInput("a", map[string]struct{}{"b": {}}, tc.frames)
+			res := handleSqlInput("a", map[string]struct{}{"b": {}}, "fakeDS", tc.frames)
 
 			if tc.expectErr != "" {
 				require.Error(t, res.Error)

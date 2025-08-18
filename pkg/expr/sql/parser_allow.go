@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 
 // AllowQuery parses the query and checks it against an allow list of allowed SQL nodes
 // and functions.
-func AllowQuery(rawSQL string) (bool, error) {
+func AllowQuery(refID, rawSQL string) (bool, error) {
 	s, err := sqlparser.Parse(rawSQL)
 	if err != nil {
 		return false, fmt.Errorf("error parsing sql: %s", err.Error())
@@ -19,15 +20,19 @@ func AllowQuery(rawSQL string) (bool, error) {
 		err := sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
 			if !allowedNode(node) {
 				if fT, ok := node.(*sqlparser.FuncExpr); ok {
-					return false, fmt.Errorf("blocked function %s - not supported in queries", fT.Name)
+					return false, MakeBlockedNodeOrFuncError(refID, fT.Name.String(), true)
 				}
-				return false, fmt.Errorf("blocked node %T - not supported in queries", node)
+				return false, MakeBlockedNodeOrFuncError(refID, fmt.Sprintf("%T", node), false)
 			}
 			return true, nil
 		}, node)
 
 		if err != nil {
-			return fmt.Errorf("failed to parse SQL expression: %w", err)
+			var bn *ErrorWithType
+			if !errors.As(err, &bn) {
+				return fmt.Errorf("failed to parse SQL expression: %w", err)
+			}
+			return err
 		}
 
 		return nil

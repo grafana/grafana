@@ -239,7 +239,7 @@ func MakeSQLDependencyError(refID, depRefID string) TypedError {
 	return &ErrorWithType{errorType: "failed_dependency", err: DependencyError.Build(data)}
 }
 
-var sqlInputConvertErrorStr = "failed to convert the results of query [{{.Public.refId}}] into a SQL/Tabular format for sql expression {{ .Public.forRefID }}: {{ .Error }}"
+var sqlInputConvertErrorStr = "failed to convert the results of query [{{.Public.refId}}] (Datasource Type: [{{.Public.dsType}}]) into a SQL/Tabular format for sql expression {{ .Public.forRefID }}: {{ .Error }}"
 
 var InputConvertError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.failed_input_conversion").MustTemplate(
@@ -247,7 +247,7 @@ var InputConvertError = errutil.NewBase(
 	errutil.WithPublic(sqlInputConvertErrorStr))
 
 // MakeInputConvertError creates an error for when the input conversion to a table for a SQL expressions fails.
-func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{}) TypedError {
+func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{}, dsType string) TypedError {
 	forRefIdsSlice := make([]string, 0, len(forRefIDs))
 	for k := range forRefIDs {
 		forRefIdsSlice = append(forRefIdsSlice, k)
@@ -256,13 +256,13 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 		Public: map[string]interface{}{
 			"refId":    refID,
 			"forRefID": forRefIdsSlice,
+			"dsType":   dsType,
 		},
 		Error: err,
 	}
 
 	return &ErrorWithType{errorType: "input_conversion", err: InputConvertError.Build(data)}
 }
-
 
 var errEmptyQueryString = "sql expression [{{.Public.refId}}] failed because it has an empty SQL query"
 
@@ -295,12 +295,38 @@ var ErrInvalidQuery = errutil.NewBase(
 func MakeErrInvalidQuery(refID string, err error) TypedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
-			"refId":  refID,
-			"error":  err.Error(),
+			"refId": refID,
+			"error": err.Error(),
 		},
 
 		Error: fmt.Errorf("sql expression [%s] failed because it has an invalid SQL query: %w", refID, err),
 	}
 
 	return &ErrorWithType{errorType: "invalid_query", err: ErrInvalidQuery.Build(data)}
+}
+
+var blockedNodeOrFuncStr = "did not execute the SQL expression {{.Public.refId}} because the sql {{.Public.tokenType}} '{{.Public.token}}' is not in the allowed list of {{.Public.tokenType}}s"
+
+var BlockedNodeOrFuncError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.blocked_node_or_func").MustTemplate(
+	blockedNodeOrFuncStr,
+	errutil.WithPublic(blockedNodeOrFuncStr))
+
+// MakeBlockedNodeOrFuncError creates an error for when a sql function or keyword is not allowed.
+func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) TypedError {
+	tokenType := "keyword"
+	if isFunction {
+		tokenType = "function"
+	}
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":   refID,
+			"token":   token,
+			"tokenType": tokenType,
+		},
+
+		Error: fmt.Errorf("sql expression [%s] failed because the sql function or keyword '%s' is not in the allowed list of keywords and functions", refID, token),
+	}
+
+	return &ErrorWithType{errorType: "blocked_node_or_func", err: BlockedNodeOrFuncError.Build(data)}
 }

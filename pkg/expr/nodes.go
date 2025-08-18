@@ -441,7 +441,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 
 	if dn.isInputToSQLExpr {
-		result = handleSqlInput(dn.RefID(), dn.IsInputTo(), dataFrames)
+		result = handleSqlInput(dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
 
 	} else {
 		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
