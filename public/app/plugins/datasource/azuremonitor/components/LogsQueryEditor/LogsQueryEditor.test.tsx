@@ -632,6 +632,9 @@ describe('LogsQueryEditor', () => {
 
   describe('schema loading and auto-completion', () => {
     it('loads schema and table plans when resources change and builder mode is set', async () => {
+      // Mock these as we expect Kusto to complain about workers
+      jest.spyOn(console, 'warn').mockImplementation();
+      jest.spyOn(console, 'error').mockImplementation();
       const mockSchema: EngineSchema = {
         clusterType: 'Engine',
         cluster: {
