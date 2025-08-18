@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 
 import { CoreApp } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -39,6 +39,15 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Azure Monitor QueryEditor', () => {
+  beforeEach(() => {
+    config.featureToggles = {};
+  });
+
+  afterEach(() => {
+    cleanup();
+    jest.clearAllMocks();
+  });
+
   it('renders the Metrics query editor when the query type is Metrics', async () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = {
@@ -65,6 +74,65 @@ describe('Azure Monitor QueryEditor', () => {
     await waitFor(() =>
       expect(screen.queryByTestId(selectors.components.queryEditor.logsQueryEditor.container.input)).toBeInTheDocument()
     );
+  });
+
+  it('renders the Logs code editor when there is an existing query and the builder is enabled', async () => {
+    config.featureToggles.azureMonitorLogsBuilderEditor = true;
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.LogAnalytics,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.logsQueryEditor.container.input)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.logsQueryBuilder.container.input)
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders the Logs code editor when there is no existing query and the builder is disabled', async () => {
+    config.featureToggles.azureMonitorLogsBuilderEditor = false;
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.LogAnalytics,
+    };
+    delete mockQuery.azureLogAnalytics?.query;
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.logsQueryEditor.container.input)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.logsQueryBuilder.container.input)
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders the Logs builder when there is no existing query and the builder is enabled', async () => {
+    config.featureToggles.azureMonitorLogsBuilderEditor = true;
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.LogAnalytics,
+    };
+    delete mockQuery.azureLogAnalytics?.query;
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.logsQueryEditor.container.input)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.queryEditor.logsQueryBuilder.container.input)
+      ).not.toBeInTheDocument();
+    });
   });
 
   it('renders the ARG query editor when the query type is ARG', async () => {
