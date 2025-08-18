@@ -8,6 +8,8 @@ export type User = {
 
 export type OnSelectQueryType = (query: DataQuery) => void;
 
+export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
+
 export type QueryTemplate = {
   query: DataQuery;
   datasourceName?: string;
