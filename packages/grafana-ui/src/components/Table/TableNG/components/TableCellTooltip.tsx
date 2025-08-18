@@ -42,7 +42,7 @@ export function TableCellTooltip({
   gridRef,
   height,
   placement,
-  renderer,
+  renderer: CellRenderer,
   rowIdx,
   style,
   theme,
@@ -115,8 +115,6 @@ export function TableCellTooltip({
     return children;
   }
 
-  const body = <>{renderer(rendererProps)}</>;
-
   // TODO: perist the hover if you mouse out of the trigger and into the popover
   const onMouseLeave = () => setHovered(false);
   const onMouseEnter = () => setHovered(true);
@@ -125,7 +123,7 @@ export function TableCellTooltip({
     <>
       {cellElement && (
         <Popover
-          content={body}
+          content={<CellRenderer {...rendererProps} />}
           show={show}
           placement={placement}
           wrapperClassName={classes.tooltipWrapper}
