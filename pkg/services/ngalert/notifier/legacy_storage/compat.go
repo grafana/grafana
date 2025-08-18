@@ -5,11 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"slices"
+	"strings"
 
+	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/prometheus/alertmanager/config"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var NameToUid = models.NameToUid
@@ -82,6 +87,13 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 	if err != nil {
 		return nil, err
 	}
+	if postable.Type() == apimodels.AlertmanagerReceiverType {
+		mimir, err := PostableMimirReceiverToIntegrations(postable.Receiver)
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, mimir...)
+	}
 	r := &models.Receiver{
 		UID:          NameToUid(postable.GetName()), // TODO replace with stable UID.
 		Name:         postable.GetName(),
@@ -121,6 +133,40 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 	}
 
 	return integrations, nil
+}
+
+func PostableMimirReceiverToIntegrations(r config.Receiver) ([]*models.Integration, error) {
+	data, err := definition.MarshalJSONWithSecrets(r)
+	if err != nil {
+		return nil, err
+	}
+	var un map[string]any
+	err = json.Unmarshal(data, &un)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*models.Integration, 0, 3)
+	for _, key := range slices.Sorted(maps.Keys(un)) {
+		if !strings.HasSuffix(key, "_configs") {
+			continue
+		}
+		tp := strings.TrimSuffix(key, "_configs")
+		integrationConfig, err := models.IntegrationConfigFromType(tp, util.Pointer("v0"))
+		if err != nil {
+			return nil, err
+		}
+		for _, cfg := range un[key].([]any) {
+			cfgMap := cfg.(map[string]any)
+			integration := &models.Integration{
+				Config:         integrationConfig,
+				Settings:       cfgMap,
+				SecureSettings: map[string]string{},
+			}
+			result = append(result, integration)
+		}
+	}
+	return result, nil
 }
 
 func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
