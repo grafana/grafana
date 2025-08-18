@@ -69,6 +69,8 @@ const payload = {
   totalJSHeapSize: e.totalJSHeapSize,
   usedJSHeapSize: e.usedJSHeapSize,
   jsHeapSizeLimit: e.jsHeapSizeLimit,
+  longFramesCount: e.longFramesCount,
+  longFramesTotalTime: e.longFramesTotalTime,
   timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
 };
 
@@ -101,6 +103,8 @@ interface SceneInteractionProfileEvent {
   jsHeapSizeLimit: number; // JavaScript heap size limit
   startTs: number; // Profile start timestamp
   endTs: number; // Profile end timestamp
+  longFramesCount: number; // Number of long frames (>50ms with LoAF, >30ms with fallback)
+  longFramesTotalTime: number; // Total time of long frames during interaction
 }
 ```
 
@@ -113,6 +117,8 @@ For each tracked interaction, the system collects:
   - `duration`: Total interaction time from start to finish
   - `networkDuration`: Time spent on network requests (API calls, data fetching)
   - `processingTime`: Client-side processing time calculated as `duration - networkDuration`
+  - `longFramesCount`: Number of frames that exceeded the threshold (50ms for LoAF API, 30ms for manual fallback)
+  - `longFramesTotalTime`: Cumulative time of all long frames during the interaction
 - **Memory Metrics**: JavaScript heap usage statistics
 - **Timing Information**: Time since boot, profile start and end timestamps
 - **Interaction Context**: Type of user interaction
@@ -124,6 +130,9 @@ The performance metrics provide detailed insights into where time is spent durin
 - **Total Duration (`duration`)**: Complete time from interaction start to completion
 - **Network Time (`networkDuration`)**: Time spent waiting for server responses (data source queries, API calls)
 - **Processing Time (`processingTime`)**: Time spent on client-side operations (rendering, computations, DOM updates)
+- **Long Frames (`longFramesCount` & `longFramesTotalTime`)**: Frames exceeding threshold indicate potential UI jank or performance issues. These metrics help identify interactions causing poor user experience:
+  - `longFramesCount`: The number of frames that exceeded the threshold (50ms for LoAF API, 30ms for manual fallback)
+  - `longFramesTotalTime`: The total accumulated time of all long frames, indicating the severity of performance issues
 
 ## Debugging and Development
 
@@ -140,8 +149,15 @@ localStorage.setItem('grafana.debug.scenes', 'true');
 When debug logging is enabled, you'll see console logs for each profiling event:
 
 ```
+SceneRenderProfiler: Long Animation Frame API is supported
 SceneRenderProfiler: Profile started: {origin: <NAME_OF_INTERACTION>, crumbs: Array(0)}
+SceneRenderProfiler: Started LoAF tracking
 ... // intermediate steps adding profile crumbs
+SceneRenderProfiler: Long frame detected (LoAF): 67ms at 1234ms, total count: 1
+SceneRenderProfiler:   Script attribution: DashboardGrid.render took 35ms
+SceneRenderProfiler:   Script attribution: PanelChrome.update took 25ms
+... // more long frame detections
+SceneRenderProfiler: Stopped LoAF tracking
 SceneRenderProfiler: Stopped recording, total measured time (network included): 2123
 ```
 
@@ -194,6 +210,8 @@ The system reports the following data for each interaction:
   totalJSHeapSize: number,      // Memory metrics
   usedJSHeapSize: number,
   jsHeapSizeLimit: number,
+  longFramesCount: number,      // Number of long frames (>50ms with LoAF, >30ms with fallback)
+  longFramesTotalTime: number,  // Total time of all long frames
   timeSinceBoot: number         // Time since frontend boot
 }
 ```
@@ -201,6 +219,49 @@ The system reports the following data for each interaction:
 ## Implementation Details
 
 The profiler is integrated into dashboard creation paths and uses a singleton pattern to share profiler instances across dashboard reloads. The performance tracking is implemented using the `SceneRenderProfiler` from the `@grafana/scenes` library.
+
+### Long Frame Detection
+
+The profiler uses the Long Animation Frame (LoAF) API when available to monitor frame rendering performance during dashboard interactions:
+
+#### Primary Method: Long Animation Frame API
+- **Browser Support**: Chrome 123+ (automatically detected)
+- **Threshold**: 50ms (standard LoAF threshold)
+- **Benefits**:
+  - Browser-level accuracy and performance
+  - Script attribution data showing which code caused long frames
+  - Standards-based implementation
+  - More efficient than manual tracking
+
+#### Fallback Method: Manual Frame Tracking
+- **Browser Support**: All browsers
+- **Threshold**: 30ms (more sensitive than LoAF)
+- **Used when**: LoAF API is not available
+- **Implementation**: Uses requestAnimationFrame for frame monitoring
+
+Both methods track:
+- **Count**: Number of frames exceeding the threshold
+- **Total Time**: Cumulative duration of all long frames
+
+#### Debug Output
+
+With LoAF API:
+```
+SceneRenderProfiler: Long frame detected (LoAF): 67ms at 1234ms, total count: 1
+SceneRenderProfiler:   Script attribution: MyComponent.render took 45ms
+SceneRenderProfiler:   Script attribution: DataProcessor.transform took 15ms
+```
+
+With manual fallback:
+```
+SceneRenderProfiler: Long frame detected (manual): 38ms, total count: 1
+```
+
+This metric is particularly valuable for:
+- Detecting rendering performance issues that impact user experience
+- Identifying specific scripts/components causing UI stuttering (with LoAF)
+- Measuring the impact of performance optimizations on frame rendering
+- Comparing performance across different browsers and environments
 
 ### Tab Inactivity Handling
 

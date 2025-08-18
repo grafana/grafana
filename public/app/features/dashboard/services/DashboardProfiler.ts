@@ -21,6 +21,8 @@ export function getDashboardInteractionCallback(uid: string, title: string) {
       totalJSHeapSize: e.totalJSHeapSize,
       usedJSHeapSize: e.usedJSHeapSize,
       jsHeapSizeLimit: e.jsHeapSizeLimit,
+      longFramesCount: (e as any).longFramesCount ?? 0,
+      longFramesTotalTime: (e as any).longFramesTotalTime ?? 0,
       timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
     };
 
