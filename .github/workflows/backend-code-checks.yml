@@ -19,7 +19,27 @@ permissions:
   id-token: write
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/backend-code-checks.yml
+
   validate-configs:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     name: Validate Backend Configs
     runs-on: ubuntu-latest
     steps:
