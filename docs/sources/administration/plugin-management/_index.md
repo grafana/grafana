@@ -107,7 +107,7 @@ Plugin signature verification, also known as _signing_, is a security measure to
 
 You can relocate app plugin pages to customize the navigation menu structure, as explained in [Customize navigation placement of plugin pages](customize-nav-bar).
 
-### Integrate plugins
+### Allow plugin backend communication
 
 You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. See how in [Configure backend communication between installed plugins](plugin-integrate).
 
