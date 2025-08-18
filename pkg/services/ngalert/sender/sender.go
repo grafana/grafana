@@ -41,6 +41,9 @@ type ExternalAlertmanager struct {
 	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
 	sdCancel           context.CancelFunc
 	sdManager          *discovery.Manager
+	maxQueueCapacity   int
+	maxBatchSize       int
+	doFunc             doFunc
 }
 
 type ExternalAMcfg struct {
@@ -56,7 +59,7 @@ type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, 
 // WithDoFunc receives a function to use when making HTTP requests from the Manager.
 func WithDoFunc(doFunc doFunc) Option {
 	return func(s *ExternalAlertmanager) {
-		s.manager.opts.Do = doFunc
+		s.doFunc = doFunc
 	}
 }
 
@@ -71,6 +74,20 @@ func WithUTF8Labels() Option {
 			}
 			return ls
 		}
+	}
+}
+
+// WithMaxQueueCapacity sets the maximum capacity of the queue used by the sender.
+func WithMaxQueueCapacity(capacity int) Option {
+	return func(s *ExternalAlertmanager) {
+		s.maxQueueCapacity = capacity
+	}
+}
+
+// WithMaxBatchSize sets the maximum batch size for sending alerts to the external Alertmanager(s).
+func WithMaxBatchSize(size int) Option {
+	return func(s *ExternalAlertmanager) {
+		s.maxBatchSize = size
 	}
 }
 
@@ -100,15 +117,27 @@ func (cfg *ExternalAMcfg) headerString() string {
 func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) (*ExternalAlertmanager, error) {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
-		logger:   l,
-		sdCancel: sdCancel,
+		logger:           l,
+		sdCancel:         sdCancel,
+		maxQueueCapacity: defaultMaxQueueCapacity,
 	}
 
 	s.sanitizeLabelSetFn = s.sanitizeLabelSet
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg, DrainOnShutdown: defaultDrainOnShutdown},
+		&Options{
+			QueueCapacity:   s.maxQueueCapacity,
+			MaxBatchSize:    s.maxBatchSize,
+			Registerer:      reg,
+			DrainOnShutdown: defaultDrainOnShutdown,
+			Do:              s.doFunc,
+		},
 		toSlogLogger(s.logger),
 	)
 	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
@@ -122,10 +151,6 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 
 	if s.sdManager == nil {
 		return nil, errors.New("failed to create new discovery manager")
-	}
-
-	for _, opt := range opts {
-		opt(s)
 	}
 
 	return s, nil
