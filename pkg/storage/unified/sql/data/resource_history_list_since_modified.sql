@@ -6,7 +6,6 @@ SELECT
     {{.Ident "resource_version"}},
     {{.Ident "action"}},
     {{.Ident "value"}}
---     {{.Ident "folder"}},
 FROM resource_history
 WHERE {{.Ident "namespace" }} = {{.Arg .Namespace }}
   AND {{.Ident "group" }} = {{.Arg .Group }}
