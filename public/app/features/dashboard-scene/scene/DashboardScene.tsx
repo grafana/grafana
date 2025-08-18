@@ -664,7 +664,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (panel && panel.state.key) {
       if (isRepeatCloneOrChildOf(panel)) {
         // We check if any of the panel ancestors are clones because we can't use the original panel ID in this case
-        panelId = djb2Hash(panel?.state.key);
+        panelId = djb2Hash(panel.getPathId());
       } else {
         // Otherwise, it's the absolute original panel, and we can use the key directly
         // getPanelIdForVizPanel extracts the panel ID from the key so we don't need to do it manually
