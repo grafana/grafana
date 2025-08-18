@@ -503,49 +503,13 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
 
-	// Check if we need to run hooks and handle hook failures
-	const hookFailureMessage = "Hook execution failed"
-	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
-
-	// Skip hooks if status already indicates hook failure to avoid infinite retry
-	if shouldRunHooks && len(obj.Status.Health.Message) > 0 {
-		for _, msg := range obj.Status.Health.Message {
-			if len(msg) >= len(hookFailureMessage) && msg[:len(hookFailureMessage)] == hookFailureMessage {
-				shouldRunHooks = false
-				break
-			}
-		}
+	// Handle hooks - may return early if hooks fail
+	hookOps, shouldContinue := rc.processHooksWithFailureHandling(ctx, repo, obj)
+	if !shouldContinue {
+		return nil // Hook handling already updated status and returned early
 	}
-
-	// Run hooks if needed
-	if shouldRunHooks {
-		hookOps, err := rc.runHooks(ctx, repo, obj)
-		if err != nil {
-			// Hook failed - mark as unhealthy and return early to avoid retry loop
-			// Don't update observed generation since hooks didn't complete successfully
-			healthStatus := provisioning.HealthStatus{
-				Healthy: false,
-				Checked: time.Now().UnixMilli(),
-				Message: []string{fmt.Sprintf("%s: %s", hookFailureMessage, err.Error())},
-			}
-			hookFailurePatch := []map[string]interface{}{
-				{
-					"op":    "replace",
-					"path":  "/status/health",
-					"value": healthStatus,
-				},
-			}
-
-			// Apply patch and return early using the existing patchStatus method
-			if patchErr := rc.patchStatus(ctx, obj, hookFailurePatch); patchErr != nil {
-				return fmt.Errorf("failed to update status after hook failure: %w", patchErr)
-			}
-			return nil // Don't retry immediately
-		}
-
-		if len(hookOps) > 0 {
-			patchOperations = append(patchOperations, hookOps...)
-		}
+	if len(hookOps) > 0 {
+		patchOperations = append(patchOperations, hookOps...)
 	}
 
 	healthStatus := obj.Status.Health
@@ -581,4 +545,77 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	return nil
+}
+
+// processHooksWithFailureHandling handles hook execution with intelligent retry logic
+// Returns hook operations and whether processing should continue
+// If hooks fail, updates status internally and returns shouldContinue=false
+func (rc *RepositoryController) processHooksWithFailureHandling(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool) {
+	const hookFailureMessage = "Hook execution failed"
+	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
+
+	// Skip hooks if status already indicates recent hook failure to avoid infinite retry
+	if shouldRunHooks && rc.hasRecentHookFailure(obj.Status.Health, hookFailureMessage) {
+		shouldRunHooks = false
+	}
+
+	if !shouldRunHooks {
+		return nil, true
+	}
+
+	hookOps, err := rc.runHooks(ctx, repo, obj)
+	if err != nil {
+		rc.handleHookFailure(ctx, obj, hookFailureMessage, err)
+		return nil, false // Don't continue processing, hook failure handled internally
+	}
+
+	return hookOps, true
+}
+
+// hasRecentHookFailure checks if the health status indicates a recent hook failure
+// Uses staleness logic similar to health checks - allows retrying hooks after some time
+func (rc *RepositoryController) hasRecentHookFailure(healthStatus provisioning.HealthStatus, hookFailureMessage string) bool {
+	// First check if there's a hook failure message
+	hasHookFailure := false
+	for _, msg := range healthStatus.Message {
+		if len(msg) >= len(hookFailureMessage) && msg[:len(hookFailureMessage)] == hookFailureMessage {
+			hasHookFailure = true
+			break
+		}
+	}
+
+	if !hasHookFailure {
+		return false
+	}
+
+	// If there's a hook failure, check if it's recent enough to skip retrying
+	if healthStatus.Checked == 0 {
+		return true // No timestamp, assume recent
+	}
+
+	failureAge := time.Since(time.UnixMilli(healthStatus.Checked))
+	// Allow retrying hooks after 2 minutes (longer than health check to avoid too frequent retries)
+	return failureAge < time.Minute*2
+}
+
+// handleHookFailure updates the repository status when hooks fail to prevent retry loops
+func (rc *RepositoryController) handleHookFailure(ctx context.Context, obj *provisioning.Repository, hookFailureMessage string, hookErr error) {
+	// Hook failed - mark as unhealthy and return early to avoid retry loop
+	// Don't update observed generation since hooks didn't complete successfully
+	healthStatus := provisioning.HealthStatus{
+		Healthy: false,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{fmt.Sprintf("%s: %s", hookFailureMessage, hookErr.Error())},
+	}
+	hookFailurePatch := []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/health",
+			"value": healthStatus,
+		},
+	}
+
+	// Apply patch using the existing patchStatus method
+	// If this fails, we can't do much more - the error will be logged by the controller framework
+	rc.patchStatus(ctx, obj, hookFailurePatch)
 }
