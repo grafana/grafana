@@ -547,6 +547,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 				},
+				Translations: map[string]string{},
 			},
 		}
 
@@ -641,11 +642,12 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
 			},
-			FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
-			Class:     plugins.ClassExternal,
-			Signature: plugins.SignatureStatusValid,
-			BaseURL:   "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-			Module:    "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
+			FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
+			Class:        plugins.ClassExternal,
+			Signature:    plugins.SignatureStatusValid,
+			BaseURL:      "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+			Module:       "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
+			Translations: map[string]string{},
 		}}
 
 		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeErrorTracker())
@@ -732,6 +734,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Signature:     "valid",
 						SignatureType: plugins.SignatureTypePrivate,
 						SignatureOrg:  "Will Browne",
+						Translations:  map[string]string{},
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
@@ -850,6 +853,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 					SignatureOrg:  "gabrielmabille",
 					Module:        "public/plugins/test-app/module.js",
 					BaseURL:       "public/plugins/test-app",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -918,6 +922,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 				SignatureOrg:  "Will Browne",
 				Module:        "public/plugins/test-datasource/module.js",
 				BaseURL:       "public/plugins/test-datasource",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -1004,6 +1009,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 				SignatureOrg:  "Grafana Labs",
 				Module:        "public/plugins/test-app/module.js",
 				BaseURL:       "public/plugins/test-app",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -1094,6 +1100,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 				SignatureOrg:  "Grafana Labs",
 				Module:        "public/plugins/test-app/module.js",
 				BaseURL:       "public/plugins/test-app",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -1295,6 +1302,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.ClassExternal,
+		Translations:  map[string]string{},
 	}
 
 	child := &plugins.Plugin{
@@ -1338,6 +1346,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.ClassExternal,
+		Translations:  map[string]string{},
 	}
 
 	parent.Children = []*plugins.Plugin{child}
@@ -1487,6 +1496,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			SignatureType: plugins.SignatureTypeGrafana,
 			SignatureOrg:  "Grafana Labs",
 			Class:         plugins.ClassExternal,
+			Translations:  map[string]string{},
 		}
 
 		child := &plugins.Plugin{
@@ -1537,6 +1547,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			SignatureType:   plugins.SignatureTypeGrafana,
 			SignatureOrg:    "Grafana Labs",
 			Class:           plugins.ClassExternal,
+			Translations:    map[string]string{},
 		}
 
 		parent.Children = []*plugins.Plugin{child}
