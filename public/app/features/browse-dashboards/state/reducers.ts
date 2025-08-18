@@ -1,6 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
-import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { GENERAL_FOLDER_UID } from '../../search/constants';
