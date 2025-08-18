@@ -532,8 +532,10 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 
 		indexRV, err := getRV(idx)
 		if err != nil {
-			b.log.Debug("error getting rv from index", "indexDir", indexDir, "err", err)
-			_ = idx.Close()
+			b.log.Error("error getting rv from index", "indexDir", indexDir, "err", err)
+			if !errors.Is(err, bleve.ErrorIndexClosed) {
+				_ = idx.Close()
+			}
 			continue
 		}
 
@@ -634,11 +636,18 @@ func setRV(index bleve.Index, rv int64) error {
 	return index.SetInternal(internalRVKey, buf)
 }
 
+// getRV will call index.GetInternal to retrieve the RV saved in the index. If index is closed, it will return a
+// bleve.ErrorIndexClosed error. If there's no RV saved in the index, or it's invalid format, it will return 0
 func getRV(index bleve.Index) (int64, error) {
 	raw, err := index.GetInternal(internalRVKey)
 	if err != nil {
 		return 0, err
 	}
+
+	if len(raw) < 8 {
+		return 0, nil
+	}
+
 	return int64(binary.BigEndian.Uint64(raw)), nil
 }
 
