@@ -349,6 +349,11 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUI
 		require.NoError(t, resp.Body.Close())
 	}()
 	require.NoError(t, err)
+	if resp.StatusCode != http.StatusOK {
+		// Log the response body to help debug the issue
+		body, _ := io.ReadAll(resp.Body)
+		t.Logf("CreateFolder failed with status %d: %s", resp.StatusCode, string(body))
+	}
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	a.ReloadCachedPermissions(t)
 }
