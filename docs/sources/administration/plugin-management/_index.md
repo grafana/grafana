@@ -30,6 +30,16 @@ Read on for an overview on how to get started with plugins:
 - Configure backend communication between installed plugins.
 - Improve security by isolating plugins with the Plugin Frontend Sandbox.
 
+## Types of plugins
+
+Grafana supports three types of plugins:
+
+- [Panels](/grafana/plugins/panel-plugins) - These plugins make it easy to create and add any kind of visualization, to show your data, or improve your favorite dashboards.
+- [Data sources](/grafana/plugins/data-source-plugins) - These plugins allow you to pull data from various data sources such as databases, APIs, log files, and so on, and display it in the form of graphs, charts, and dashboards in Grafana.
+- [Apps](/grafana/plugins/app-plugins) - These plugins enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
+
+Read more in [Types of plugins](plugin-types).
+
 ## Plugin catalog
 
 The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions](../roles-and-permissions/).
@@ -39,35 +49,6 @@ The following access rules apply depending on the user role:
 - If you are an **Org Admin**, you can configure app plugins, but you can't install, uninstall, or update them.
 - If you are a **Server Admin**, you can't configure app plugins, but you can install, uninstall, or update them.
 - If you are both **Org Admin** and **Server Admin**, you can configure app plugins and also install, uninstall, or update them.
-
-{{< admonition type="note" >}}
-The Grafana plugin catalog is designed to work with a single Grafana server instance only. Support for Grafana clusters is planned for future Grafana releases.
-{{< /admonition >}}
-
-<div class="medium-6 columns">
-  <video width="700" height="600" controls>
-    <source src="/static/assets/videos/plugins-catalog-install-9.2.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</div>
-
-_Video shows the Plugin catalog in a previous version of Grafana._
-
-{{< admonition type="note" >}}
-If required, the Grafana plugin catalog can be disabled using the `plugin_admin_enabled` flag in the [configuration](../../setup-grafana/configure-grafana/#plugin_admin_enabled) file.
-{{< /admonition >}}
-
-<a id="#plugin-catalog-entry"></a>
-
-### Types of plugins
-
-Grafana supports three types of plugins:
-
-- [Panels](/grafana/plugins/panel-plugins) - These plugins make it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards.
-- [Data sources](/grafana/plugins/data-source-plugins) - These plugins allow you to pull data from various data sources such as databases, APIs, log files, and so on, and display it in the form of graphs, charts, and dashboards in Grafana.
-- [Apps](/grafana/plugins/app-plugins) - These plugins enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
-
-Read more in [Types of plugins](plugin-types).
 
 ### Browse plugins
 
