@@ -97,11 +97,6 @@ export function setItemSelectionState(
     return;
   }
 
-  // Prevent selection of root provisioned folders
-  if (item.managedBy === ManagerKind.Repo && !item.parentUID) {
-    return;
-  }
-
   // Selecting a folder selects all children, and unselecting a folder deselects all children
   // so propagate the new selection state to all descendants
   function markChildren(kind: DashboardViewItemKind, uid: string) {
