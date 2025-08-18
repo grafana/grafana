@@ -338,13 +338,13 @@ func (b *bleveBackend) BuildIndex(
 			}
 			return nil, fmt.Errorf("failed to build index: %w", err)
 		}
-		idx.updateResourceVersion(listRV)
-		elapsed := time.Since(start)
-		logWithDetails.Info("Finished building index", "elapsed", elapsed)
-
+		err = idx.updateResourceVersion(listRV)
 		if err != nil {
 			return nil, fmt.Errorf("fail to persist rv to index: %w", err)
 		}
+
+		elapsed := time.Since(start)
+		logWithDetails.Info("Finished building index", "elapsed", elapsed)
 
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
