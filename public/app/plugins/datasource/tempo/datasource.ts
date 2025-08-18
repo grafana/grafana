@@ -459,44 +459,51 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
-            const startTime = performance.now();
-            subQueries.push(
-              this._request('/api/search', {
-                q: queryFromFilters,
-                limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-                spss: options.targets[0].spss ?? DEFAULT_SPSS,
-                start: options.range.from.unix(),
-                end: options.range.to.unix(),
-              }).pipe(
-                map((response) => {
-                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
-                    success: true,
-                    streaming: false,
-                    latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-                    query: queryFromFilters ?? '',
-                  });
-                  return {
-                    data: formatTraceQLResponse(
-                      response.data.traces,
-                      this.instanceSettings,
-                      targets.traceqlSearch[0].tableType
-                    ),
-                  };
-                }),
-                catchError((err) => {
-                  reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
-                    success: false,
-                    streaming: false,
-                    latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-                    query: queryFromFilters ?? '',
-                    error: getErrorMessage(err.message),
-                    statusCode: err.status,
-                    statusText: err.statusText,
-                  });
-                  return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
-                })
-              )
-            );
+            if (true) {
+              console.log('BACKEND SEARCH QUERY');
+              const queries = traceqlSearchTargets.map((t) => ({ ...t, query: queryFromFilters }));
+              return super.query({ ...options, targets: queries });
+            } else {
+              console.log('FRONTEND SEARCH QUERY');
+              const startTime = performance.now();
+              subQueries.push(
+                this._request('/api/search', {
+                  q: queryFromFilters,
+                  limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                  spss: options.targets[0].spss ?? DEFAULT_SPSS,
+                  start: options.range.from.unix(),
+                  end: options.range.to.unix(),
+                }).pipe(
+                  map((response) => {
+                    reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+                      success: true,
+                      streaming: false,
+                      latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+                      query: queryFromFilters ?? '',
+                    });
+                    return {
+                      data: formatTraceQLResponse(
+                        response.data.traces,
+                        this.instanceSettings,
+                        targets.traceqlSearch[0].tableType
+                      ),
+                    };
+                  }),
+                  catchError((err) => {
+                    reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
+                      success: false,
+                      streaming: false,
+                      latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
+                      query: queryFromFilters ?? '',
+                      error: getErrorMessage(err.message),
+                      statusCode: err.status,
+                      statusText: err.statusText,
+                    });
+                    return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
+                  })
+                )
+              );
+            }
           }
         }
       } catch (error) {

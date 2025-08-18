@@ -79,6 +79,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		var err error
 
 		switch q.QueryType {
+		case string(dataquery.TempoQueryTypeTraceqlSearch):
+			res, err = s.Search(ctx, req.PluginContext, q)
+			if err != nil {
+				ctxLogger.Error("Error processing Search query", "error", err)
+				return response, err
+			}
+
 		case string(dataquery.TempoQueryTypeTraceId):
 			res, err = s.getTrace(ctx, req.PluginContext, q)
 			if err != nil {
@@ -123,7 +130,6 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	return instance, nil
 }
 
-// Return the file, line, and (full-path) function name of the caller
 func getRunContext() (string, int, string) {
 	pc := make([]uintptr, 10)
 	runtime.Callers(2, pc)
@@ -132,7 +138,6 @@ func getRunContext() (string, int, string) {
 	return file, line, f.Name()
 }
 
-// Return a formatted string representing the execution context for the logger
 func logEntrypoint() string {
 	file, line, pathToFunction := getRunContext()
 	parts := strings.Split(pathToFunction, "/")
