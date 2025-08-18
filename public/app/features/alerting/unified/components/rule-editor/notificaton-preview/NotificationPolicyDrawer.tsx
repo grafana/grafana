@@ -36,7 +36,7 @@ export function NotificationPolicyDrawer({
   };
 
   // Process the journey data to extract the information we need
-  const finalRouteMatchInfo = journey[journey.length - 1];
+  const finalRouteMatchInfo = journey.at(-1);
   const nonMatchingLabels = finalRouteMatchInfo?.matchDetails.filter((detail) => !detail.match) ?? [];
 
   return (

@@ -122,13 +122,6 @@ export function createShareLink(ruleIdentifier: RuleIdentifier): string | undefi
   return;
 }
 
-export function createViewPolicyLink(matchers: ObjectMatcher[], alertmanagerSourceName?: string) {
-  return createRelativeUrl('/alerting/routes', {
-    queryString: matchers.map((matcher) => matcher.join('')).join(','),
-    alertmanager: alertmanagerSourceName ?? 'grafana',
-  });
-}
-
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
   return items.reduce<Record<string, string>>((rec, { key, value }) => {
     rec[key] = value;
