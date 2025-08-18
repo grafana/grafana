@@ -315,13 +315,15 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
+
 	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
 		UID:          name,
 		OrgID:        info.OrgID,
 		SignedInUser: user,
 
 		// This would cascade delete into alert rules
-		ForceDeleteRules: false,
+		ForceDeleteRules:  false,
+		RemovePermissions: utils.GetFolderRemovePermissions(ctx, true),
 	})
 	return p, true, err // true is instant delete
 }
