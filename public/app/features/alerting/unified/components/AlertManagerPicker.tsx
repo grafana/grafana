@@ -3,7 +3,7 @@ import { ComponentProps, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, InlineField, Select, SelectMenuOptions, Tooltip, useStyles2 } from '@grafana/ui';
+import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { isExtraConfig } from '../utils/alertmanager/extraConfigs';
@@ -74,7 +74,6 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
 
   const isDisabled = disabled || options.length === 1;
   const label = isDisabled ? 'Alertmanager' : 'Choose Alertmanager';
-  const isSelectedExtraConfig = selectedAlertmanager && isExtraConfig(selectedAlertmanager);
 
   return (
     <InlineField className={styles.field} label={label} disabled={isDisabled} data-testid="alertmanager-picker">
@@ -98,19 +97,6 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
           getOptionLabel={(o) => o.label}
           components={{ Option: CustomOption }}
         />
-        <div className={styles.iconContainer}>
-          {isSelectedExtraConfig && (
-            <Tooltip
-              content={t(
-                'alerting.alert-manager-picker.selected-converted-tooltip',
-                'This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.'
-              )}
-              placement="bottom"
-            >
-              <Icon name="info-circle" size="sm" className={styles.infoIcon} />
-            </Tooltip>
-          )}
-        </div>
       </div>
     </InlineField>
   );
@@ -124,21 +110,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-  }),
-  iconContainer: css({
-    width: '20px',
-    height: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  }),
-  infoIcon: css({
-    color: theme.colors.text.secondary,
-    cursor: 'pointer',
-    '&:hover': {
-      color: theme.colors.text.primary,
-    },
   }),
   optionContent: css({
     display: 'flex',
