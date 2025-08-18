@@ -178,6 +178,7 @@ func TestHandleSqlInput(t *testing.T) {
 		frames      data.Frames
 		expectErr   string
 		expectFrame bool
+		converted   bool
 	}{
 		{
 			name:        "single frame with no fields and no type is passed through",
@@ -207,7 +208,7 @@ func TestHandleSqlInput(t *testing.T) {
 					data.NewField("value", data.Labels{"foo": "bar"}, []*float64{fp(2)}),
 				),
 			},
-			expectErr: "frame has labels but frame type is missing or unsupported",
+			expectErr: "labels in the response that can not be mapped to a table",
 		},
 		{
 			name: "multiple frames, no type → error",
@@ -221,7 +222,7 @@ func TestHandleSqlInput(t *testing.T) {
 					data.NewField("value", nil, []*float64{fp(2)}),
 				),
 			},
-			expectErr: "response has more than one frame but frame type is missing or unsupported",
+			expectErr: "more than one dataframe that can not be automatically mapped to a single table",
 		},
 		{
 			name: "supported type (timeseries-multi) triggers ConvertToFullLong",
@@ -232,13 +233,14 @@ func TestHandleSqlInput(t *testing.T) {
 				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
 			},
 			expectFrame: true,
+			converted:   true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			res := handleSqlInput("a", map[string]struct{}{"b": {}}, "fakeDS", tc.frames)
-
+			res, c := handleSqlInput("a", map[string]struct{}{"b": {}}, "fakeDS", tc.frames)
+			require.Equal(t, tc.converted, c, "conversion bool mismatch")
 			if tc.expectErr != "" {
 				require.Error(t, res.Error)
 				require.ErrorContains(t, res.Error, tc.expectErr)

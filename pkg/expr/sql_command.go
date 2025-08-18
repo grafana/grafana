@@ -295,16 +295,20 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	return numbers, nil
 }
 
-// handleSqlInput normalizes input DataFrames into a single dataframe with no labels for use with SQL expressions.
+// handleSqlInput normalizes input DataFrames into a single dataframe with no labels so it can represent a table for use with SQL expressions.
 //
 // It handles three cases:
 //  1. If the input declares a supported time series or numeric kind in the wide or multi format (via FrameMeta.Type), it converts to a full-long formatted table using ConvertToFullLong.
 //  2. If the input is a single frame (no labels, no declared type), it passes through as-is.
 //  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
-func handleSqlInput(refID string, forRefIDs map[string]struct{}, dsType string, dataFrames data.Frames) mathexp.Results {
+//
+// The returned bool indicates if the input was (attempted to be) converted or passed through as-is.
+func handleSqlInput(refID string, forRefIDs map[string]struct{}, dsType string, dataFrames data.Frames) (mathexp.Results, bool) {
 	var result mathexp.Results
+	if len(dataFrames) == 0 {
+		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, false
+	}
 
-	// dataframes len > 0 is checked in the caller -- Convert
 	first := dataFrames[0]
 
 	// Single Frame no data case
@@ -315,7 +319,7 @@ func handleSqlInput(refID string, forRefIDs map[string]struct{}, dsType string, 
 			mathexp.TableData{Frame: first},
 		}
 
-		return result
+		return result, false
 	}
 
 	var metaType data.FrameType
@@ -331,32 +335,34 @@ func handleSqlInput(refID string, forRefIDs map[string]struct{}, dsType string, 
 
 		if len(convertedFrames) == 0 {
 			result.Error = fmt.Errorf("conversion succeeded but returned no frames")
-			return result
+			return result, true
 		}
 
 		result.Values = mathexp.Values{
 			mathexp.TableData{Frame: convertedFrames[0]},
 		}
 
-		return result
+		return result, true
 	}
 
+	// If we don't have a supported type for conversion, see if we can pass through as a table (no labels, and only a single frame)
 	var frameTypeIssue string
 	if metaType == "" {
 		frameTypeIssue = "is missing the data type (frame.meta.type)"
 	} else {
 		frameTypeIssue = fmt.Sprintf("has an unsupported data type [%s]", metaType)
 	}
-	// If Meta.Type is not supported, but there are labels or more than 1 frame, fail fast
+
+	// If meta.type is not supported, but there are labels or more than 1 frame error
 	if len(dataFrames) > 1 {
 		result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response %s and has more than one dataframe that can not be automatically mapped to a single table", frameTypeIssue), refID, forRefIDs, dsType)
-		return result
+		return result, false
 	}
 	for _, frame := range dataFrames {
 		for _, field := range frame.Fields {
 			if len(field.Labels) > 0 {
 				result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response %s and has labels in the response that can not be mapped to a table", frameTypeIssue), refID, forRefIDs, dsType)
-				return result
+				return result, false
 			}
 		}
 	}
@@ -365,5 +371,5 @@ func handleSqlInput(refID string, forRefIDs map[string]struct{}, dsType string, 
 	result.Values = mathexp.Values{
 		mathexp.TableData{Frame: first},
 	}
-	return result
+	return result, false
 }

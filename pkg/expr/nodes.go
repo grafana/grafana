@@ -441,7 +441,13 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 
 	if dn.isInputToSQLExpr {
-		result = handleSqlInput(dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
+		var converted bool
+		result, converted = handleSqlInput(dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
+		status := "ok"
+		if result.Error != nil {
+			status = "error"
+		}
+		s.metrics.SqlCommandInputCount.WithLabelValues(status, fmt.Sprintf("%t", converted), dn.datasource.Type).Inc()
 
 	} else {
 		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
