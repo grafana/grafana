@@ -1,7 +1,7 @@
-import { useProvisionedDashboardData } from '../saving/provisioned/hooks';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
+import { useProvisionedDashboardData } from './hooks';
 
 export interface Props {
   dashboard: DashboardScene;

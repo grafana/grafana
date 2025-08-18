@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
-import { SaveProvisionedDashboard } from 'app/features/provisioning';
+import { SaveProvisionedDashboard } from 'app/features/provisioning/components/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
 import { DashboardScene } from '../scene/DashboardScene';

@@ -1,17 +1,8 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { ManagerKind } from 'app/features/apiserver/types';
-import { DashboardViewItem } from 'app/features/search/types';
+import { ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
 
-import { findItem } from '../state/utils';
-import {
-  DashboardTreeSelection,
-  DashboardViewItemWithUIItems,
-  BrowseDashboardsPermissions,
-  BrowseDashboardsState,
-} from '../types';
-
-import { ResourceRef } from './BulkActions/useBulkActionJob';
+import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return baseId + item.uid;

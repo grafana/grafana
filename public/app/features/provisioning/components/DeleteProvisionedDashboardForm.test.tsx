@@ -4,11 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-
-import { useProvisionedDashboardData, ProvisionedDashboardData } from '../saving/provisioned/hooks';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
+import { ProvisionedDashboardData, useProvisionedDashboardData } from './hooks';
 
 // Mock the hooks and dependencies
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({

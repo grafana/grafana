@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
+import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 import { ResponseType } from './useBulkActionJob';
