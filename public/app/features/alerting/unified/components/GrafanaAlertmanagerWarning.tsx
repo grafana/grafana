@@ -105,13 +105,12 @@ function GrafanaExtraConfigWarning({ currentAlertmanager }: GrafanaAlertmanagerW
   }
 
   return (
-    <Alert
-      title={t('alerting.alert-manager-picker.extra-config-warning.title', 'Imported configuration')}
-      content={t(
-        'alerting.alert-manager-picker.extra-config-warning.content',
-        'This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.'
-      )}
-    />
+    <Alert title={t('alerting.alert-manager-picker.extra-config-warning.title', 'Imported configuration')}>
+      <Trans i18nKey="alerting.alert-manager-picker.extra-config-warning.content">
+        This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is
+        read-only in the UI.
+      </Trans>
+    </Alert>
   );
 }
 

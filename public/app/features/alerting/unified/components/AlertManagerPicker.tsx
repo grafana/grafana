@@ -77,27 +77,25 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
 
   return (
     <InlineField className={styles.field} label={label} disabled={isDisabled} data-testid="alertmanager-picker">
-      <div className={styles.pickerContainer}>
-        <Select
-          aria-label={label}
-          width={29}
-          className="ds-picker select-container"
-          backspaceRemovesValue={false}
-          onChange={(value) => {
-            if (value?.value) {
-              setSelectedAlertmanager(value.value);
-            }
-          }}
-          options={options}
-          noOptionsMessage={t(
-            'alerting.alert-manager-picker.noOptionsMessage-no-datasources-found',
-            'No datasources found'
-          )}
-          value={selectedAlertmanager}
-          getOptionLabel={(o) => o.label}
-          components={{ Option: CustomOption }}
-        />
-      </div>
+      <Select
+        aria-label={label}
+        width={29}
+        className="ds-picker select-container"
+        backspaceRemovesValue={false}
+        onChange={(value) => {
+          if (value?.value) {
+            setSelectedAlertmanager(value.value);
+          }
+        }}
+        options={options}
+        noOptionsMessage={t(
+          'alerting.alert-manager-picker.noOptionsMessage-no-datasources-found',
+          'No datasources found'
+        )}
+        value={selectedAlertmanager}
+        getOptionLabel={(o) => o.label}
+        components={{ Option: CustomOption }}
+      />
     </InlineField>
   );
 };
@@ -105,11 +103,6 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   field: css({
     margin: 0,
-  }),
-  pickerContainer: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
   }),
   optionContent: css({
     display: 'flex',
