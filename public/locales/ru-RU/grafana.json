@@ -1256,20 +1256,6 @@
       "copy-code": "Копировать код",
       "download": "Загрузить"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Правило оповещения",
-        "all": "Все",
-        "error": "Ошибка",
-        "firing": "Активно",
-        "no-data": "Нет данных",
-        "normal": "Нормальное",
-        "ok": "OK",
-        "pending": "Ожидание",
-        "recording-rule": "Правило записи",
-        "recovering": "Восстановление"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "список-отфильтрованных-правил"
     },
@@ -2614,11 +2600,27 @@
       "delete-rule": {
         "success": "Правило удалено"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Оценка правила приостановлена"
       },
       "resume-rule": {
         "success": "Оценка правила возобновлена"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Правило обновлено"
@@ -2627,20 +2629,29 @@
     "rules-filter": {
       "clear-filters": "Очистить фильтры",
       "configured-alert-rules": "Источники данных, содержащие настроенные правила оповещений принадлежат к источникам Mimir или Loki, где правила оповещения хранятся и оцениваются в самом источнике данных.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Дашборд",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Справка по поиску по источникам данных",
       "filter-options": {
-        "aria-label-show-filters": "Показать фильтры",
-        "label-custom-filter": "Пользовательский фильтр",
-        "label-saved-searches": "Сохраненные поиски"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Работоспособность",
       "label": {
         "hide": "Скрыть",
         "show": "Показать"
       },
       "manage-alerts": "В этих источниках данных можно выбрать параметр «Управление оповещениями через пользовательский интерфейс Alerting», чтобы иметь возможность управлять этими правилами оповещения в пользовательском интерфейсе Grafana, а также в источнике данных, где они были установлены.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Все источники данных",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Правила плагинов",
       "rule-type": "Тип правила",
       "rulesSearchInput-placeholder-search": "Поиск",
@@ -2655,9 +2666,6 @@
       "text-federated": "Федеративная",
       "text-provisioned": "Подготовлено"
     },
-    "saved-searches": {
-      "text-default": "По умолчанию"
-    },
     "search": {
       "property": {
         "data-source": "Источник данных",
@@ -2665,11 +2673,10 @@
         "labels": "Метки",
         "namespace": "Папка / пространство имен",
         "rule-health": "Работоспособность",
-        "rule-name": "Имя правила оповещения",
+        "rule-name": "",
         "rule-type": "Тип",
         "state": "Состояние"
-      },
-      "save-query": "Сохранить текущий поиск"
+      }
     },
     "search-field-input": {
       "clear": "Очистить",
@@ -4132,10 +4139,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Применить",
     "cancel": "Отмена",
     "clear": "Очистить",
-    "close": "Закрыть",
     "collapse": "Свернуть",
     "edit": "Редактировать",
     "help": "Справка",
@@ -4550,6 +4557,10 @@
           },
           "value": "Значение"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "Элемент скрыт из-за условной визуализации."
@@ -5381,6 +5392,7 @@
       "playlist-next": "Перейти к следующему дашборду",
       "playlist-previous": "Перейти к предыдущему дашборду",
       "playlist-stop": "Остановить плейлист",
+      "read-only": "",
       "refresh": "Обновить дашборд",
       "save": "Сохранить дашборд",
       "save-dashboard": {
@@ -6624,6 +6636,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus и Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Отмена",
       "placeholder-filter-by-name-or-type": "Фильтр по названию или типу"
@@ -7516,6 +7531,13 @@
       "tooltip-title": "Математический оператор",
       "tooltip-trigger": "Выражение"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Функция",
       "label-input": "Ввод",
@@ -7530,6 +7552,11 @@
       "label-resample-to": "Изменить частоту выборки на",
       "label-upsample": "Увеличить частоту выборки",
       "tooltip-s-m-h": "10 с, 1 мин, 30 мин, 1 ч"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Ввод"
@@ -7547,7 +7574,8 @@
     "loading": "Загрузка папок..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7899,7 +7927,8 @@
       "edit-pane": {
         "go-back": "Назад"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9092,6 +9121,7 @@
       "sign-up": "Зарегистрироваться"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Перетащить для изменения порядка",
@@ -10924,7 +10954,6 @@
         "downloads": "Загрузки",
         "from": "Время начала",
         "installedVersion": "Установленная версия",
-        "lastCommitDate": "Дата последней фиксации:",
         "latestReleaseDate": "Дата последнего выпуска:",
         "latestVersion": "Новейшая версия",
         "license": "Лицензия",
@@ -11317,7 +11346,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Назад к репозиториям",
-      "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Сохранить",
@@ -11483,6 +11514,8 @@
         "subtitle": "Используйте этот параметр, если хотите синхронизировать весь экземпляр Grafana и управлять им через внешнее хранилище"
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "активные задания",
       "column-action": "Действие",
@@ -11501,6 +11534,7 @@
       "get-repository-meta": {
         "webhook": "Веб-перехватчик"
       },
+      "read-only-badge": "",
       "settings": "Параметры",
       "view": "Просмотр"
     },
@@ -11512,6 +11546,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Теперь ваши ресурсы находятся во внешнем хранилище и подготовлены для вашего экземпляра. С этого момента ваш экземпляр и внешнее хранилище будут синхронизироваться.",
@@ -11918,6 +11955,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Свернуть строку запроса",
       "datasource-help": "Показать справку по источнику данных",
       "drag-and-drop": "Перетащить для изменения порядка",
@@ -11928,7 +11966,11 @@
       "replace-query-from-library": "Замена на запрос из библиотеки",
       "show-response": "Показать ответ"
     },
-    "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
+    "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12170,7 +12212,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Добавить служебную учетную запись",
-      "message": "Служебные учетные записи не найдены",
+      "message": "",
       "more-info": "Помните, вы можете предоставлять определенные разрешения на доступ к API других приложений",
       "title": "Вы еще не создали ни одной служебной учетной записи"
     }
@@ -12565,6 +12607,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Сортировать"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
