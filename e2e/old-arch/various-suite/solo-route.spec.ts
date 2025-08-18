@@ -25,17 +25,17 @@ describe('Solo Route', () => {
   it('Can view solo repeated panel in scenes', () => {
     // open Panel Tests - Graph NG
     e2e.pages.SoloPanel.visit(
-      'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=panel-2-clone-0&__feature.dashboardSceneSolo=true'
+      'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=A$panel-2&__feature.dashboardSceneSolo=true'
     );
 
-    e2e.components.Panels.Panel.title('server=A').should('exist');
+    e2e.components.Panels.Panel.title('server=B').should('exist');
     cy.contains('uplot-main-div').should('not.exist');
   });
 
   it('Can view solo in repeated row and panel in scenes', () => {
     // open Panel Tests - Graph NG
     e2e.pages.SoloPanel.visit(
-      'Repeating-rows-uid/repeating-rows?orgId=1&var-server=A&var-server=B&var-server=D&var-pod=1&var-pod=2&var-pod=3&panelId=panel-16-clone-1/grid-item-2/panel-2-clone-1&__feature.dashboardSceneSolo=true'
+      'Repeating-rows-uid/repeating-rows?orgId=1&var-server=A&var-server=B&var-server=D&var-pod=1&var-pod=2&var-pod=3&panelId=B$2$panel-2&__feature.dashboardSceneSolo=true'
     );
 
     e2e.components.Panels.Panel.title('server = B, pod = Rob').should('exist');

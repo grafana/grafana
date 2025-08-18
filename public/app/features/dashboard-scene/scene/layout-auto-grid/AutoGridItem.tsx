@@ -3,12 +3,10 @@ import React from 'react';
 
 import {
   CustomVariable,
-  LocalValueVariable,
   MultiValueVariable,
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
   VizPanel,
@@ -16,7 +14,7 @@ import {
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
@@ -123,19 +121,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
             repeatSourceKey: panelToRepeat.state.key,
           });
 
-      clone.setState({
-        $variables: new SceneVariableSet({
-          variables: [
-            new LocalValueVariable({
-              name: variable.state.name,
-              value: variableValues[index],
-              text: String(variableTexts[index]),
-              isMulti: variable.state.isMulti,
-              includeAll: variable.state.includeAll,
-            }),
-          ],
-        }),
-      });
+      clone.setState({ $variables: getLocalVariableValueSet(variable, variableValues[index], variableTexts[index]) });
 
       if (index > 0) {
         repeatedPanels.push(clone);

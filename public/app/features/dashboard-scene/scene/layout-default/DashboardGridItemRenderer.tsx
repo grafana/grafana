@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
 
 export function DashboardGridItemRenderer({ model }: SceneComponentProps<DashboardGridItem>) {
-  const { repeatedPanels, itemHeight, variableName, body } = model.useState();
+  const { repeatedPanels = [], itemHeight, variableName, body } = model.useState();
   const layoutStyle = useLayoutStyle(
     model.getRepeatDirection(),
     model.getPanelCount(),
@@ -17,17 +17,11 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   );
 
   if (!variableName) {
-    if (body instanceof VizPanel) {
-      return (
-        <div className={panelWrapper} ref={model.containerRef}>
-          <body.Component model={body} key={body.state.key} />
-        </div>
-      );
-    }
-  }
-
-  if (!repeatedPanels) {
-    return null;
+    return (
+      <div className={panelWrapper} ref={model.containerRef}>
+        <body.Component model={body} key={body.state.key} />
+      </div>
+    );
   }
 
   return (

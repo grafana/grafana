@@ -6,19 +6,17 @@ import {
   VizPanel,
   SceneObjectBase,
   SceneGridLayout,
-  SceneVariableSet,
   SceneGridItemStateLike,
   SceneGridItemLike,
   sceneGraph,
   MultiValueVariable,
-  LocalValueVariable,
   CustomVariable,
   VariableValueSingle,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
@@ -180,19 +178,7 @@ export class DashboardGridItem
             repeatSourceKey: panelToRepeat.state.key,
           });
 
-      clone.setState({
-        $variables: new SceneVariableSet({
-          variables: [
-            new LocalValueVariable({
-              name: variable.state.name,
-              value: variableValues[index],
-              text: String(variableTexts[index]),
-              isMulti: variable.state.isMulti,
-              includeAll: variable.state.includeAll,
-            }),
-          ],
-        }),
-      });
+      clone.setState({ $variables: getLocalVariableValueSet(variable, variableValues[index], variableTexts[index]) });
 
       if (index > 0) {
         repeatedPanels.push(clone);

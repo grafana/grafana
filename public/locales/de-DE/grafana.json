@@ -1244,20 +1244,6 @@
       "copy-code": "Code kopieren",
       "download": "Download"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Warnregel",
-        "all": "Alle",
-        "error": "Fehler",
-        "firing": "Auslösung",
-        "no-data": "Keine Daten",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Ausstehend",
-        "recording-rule": "Aufnahmeregel",
-        "recovering": "Wird wiederhergestellt"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "gefilterte Regelliste"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regel erfolgreich gelöscht"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Regelevaluierung pausiert"
       },
       "resume-rule": {
         "success": "Regelevaluierung fortgesetzt"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regel erfolgreich aktualisiert"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Filter zurücksetzen",
       "configured-alert-rules": "Datenquellen mit konfigurierten Warnregeln sind Mimir- oder Loki-Datenquellen, wobei die Warnregeln in der Datenquelle selbst gespeichert und bewertet werden.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Hilfe für Suche nach Datenquellen",
       "filter-options": {
-        "aria-label-show-filters": "Filter anzeigen",
-        "label-custom-filter": "Benutzerdefinierter Filter",
-        "label-saved-searches": "Gespeicherte Suchen"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Zustand",
       "label": {
         "hide": "Ausblenden",
         "show": "Anzeigen"
       },
       "manage-alerts": "In diesen Datenquellen können Sie über die Alerting-Benutzeroberfläche „Warnungen verwalten“ auswählen, um diese Warnregeln sowohl in der Grafana-Benutzeroberfläche als auch in der Datenquelle, in der sie konfiguriert wurden, verwalten zu können.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Alle Datenquellen",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Plugin-Regeln",
       "rule-type": "Regelart",
       "rulesSearchInput-placeholder-search": "Suche",
@@ -2629,9 +2640,6 @@
       "text-federated": "Verbunden",
       "text-provisioned": "Bereitgestellt"
     },
-    "saved-searches": {
-      "text-default": "Standard"
-    },
     "search": {
       "property": {
         "data-source": "Datenquelle",
@@ -2639,11 +2647,10 @@
         "labels": "Labels",
         "namespace": "Ordner / Namensraum",
         "rule-health": "Zustand",
-        "rule-name": "Name der Warnregel",
+        "rule-name": "",
         "rule-type": "Typ",
         "state": "Status"
-      },
-      "save-query": "Aktuelle Suche speichern"
+      }
     },
     "search-field-input": {
       "clear": "Löschen",
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Anwenden",
     "cancel": "Abbrechen",
     "clear": "Löschen",
-    "close": "Schließen",
     "collapse": "Einklappen",
     "edit": "Bearbeiten",
     "help": "Hilfe",
@@ -4514,6 +4521,10 @@
           },
           "value": "Wert"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "Das Element wird aufgrund von bedingtem Rendering ausgeblendet."
@@ -5343,6 +5354,7 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
+      "read-only": "",
       "refresh": "Dashboard aktualisieren",
       "save": "Dashboard speichern",
       "save-dashboard": {
@@ -6582,6 +6594,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus und Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Abbrechen",
       "placeholder-filter-by-name-or-type": "Nach Name oder Typ filtern"
@@ -7474,6 +7489,13 @@
       "tooltip-title": "Mathematik-Operator",
       "tooltip-trigger": "Ausdruck"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Funktion",
       "label-input": "Eingabe",
@@ -7488,6 +7510,11 @@
       "label-resample-to": "Resample zu",
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10 s, 1 min., 30 min., 1 h"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Eingabe"
@@ -7505,7 +7532,8 @@
     "loading": "Ordner werden geladen …"
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7857,7 +7885,8 @@
       "edit-pane": {
         "go-back": "Zurückgehen"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9046,6 +9075,7 @@
       "sign-up": "Registrieren"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Ziehen und Ablegen zum Neuordnen",
@@ -10860,7 +10890,6 @@
         "downloads": "Downloads",
         "from": "",
         "installedVersion": "Installierte Version",
-        "lastCommitDate": "Letztes Commit-Datum:",
         "latestReleaseDate": "Neuestes Release-Datum:",
         "latestVersion": "Aktuelle Version",
         "license": "Lizenz",
@@ -11247,7 +11276,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
-      "repository-config-exists-configuration": "Achten Sie darauf, dass die Repository-config in der Konfigurationsdatei vorhanden ist."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Achten Sie darauf, dass die Repository-config in der Konfigurationsdatei vorhanden ist.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Speichern",
@@ -11413,6 +11444,8 @@
         "subtitle": "Nutzen Sie diese Option, wenn Sie Ihre gesamte Grafana-Instanz über einen externen Speicher synchronisieren und verwalten möchten."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "Aktive Aufträge",
       "column-action": "Aktion",
@@ -11431,6 +11464,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Einstellungen",
       "view": "Anzeigen"
     },
@@ -11442,6 +11476,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Ihre Ressourcen befinden sich jetzt in Ihrem externen Speicher und werden in Ihrer Instanz bereitgestellt. Von nun an werden Ihre Instanz und der externe Speicher synchronisiert.",
@@ -11846,6 +11883,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
@@ -11856,7 +11894,11 @@
       "replace-query-from-library": "Mit Abfrage von Bibliothek ersetzen",
       "show-response": "Antwort anzeigen "
     },
-    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
+    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12134,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Dienstkonto hinzufügen",
-      "message": "Keine Dienstkonten gefunden",
+      "message": "",
       "more-info": "Bitte beachten Sie, dass Sie bestimmte Berechtigungen für den API-Zugriff auf andere Anwendungen vergeben können",
       "title": "Sie haben noch keine Dienstkonten erstellt"
     }
@@ -12485,6 +12527,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sortieren"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {

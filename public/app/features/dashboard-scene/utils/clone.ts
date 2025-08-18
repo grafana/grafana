@@ -1,4 +1,11 @@
-import { SceneObject } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  MultiValueVariableState,
+  SceneObject,
+  SceneVariable,
+  SceneVariableSet,
+  VariableValueSingle,
+} from '@grafana/scenes';
 
 const CLONE_KEY = '-clone-';
 
@@ -23,4 +30,22 @@ export function isRepeatCloneOrChildOf(scene: SceneObject): boolean {
   } while (obj);
 
   return false;
+}
+
+export function getLocalVariableValueSet(
+  variable: SceneVariable<MultiValueVariableState>,
+  value: VariableValueSingle,
+  text: VariableValueSingle
+): SceneVariableSet {
+  return new SceneVariableSet({
+    variables: [
+      new LocalValueVariable({
+        name: variable.state.name,
+        value,
+        text,
+        isMulti: variable.state.isMulti,
+        includeAll: variable.state.includeAll,
+      }),
+    ],
+  });
 }

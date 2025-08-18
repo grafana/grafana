@@ -13,8 +13,8 @@ export type SupportedView = 'list' | 'grouped';
 type LegacySupportedView = 'list' | 'grouped' | 'state';
 
 const ViewOptions: Array<SelectableValue<SupportedView>> = [
-  { icon: 'folder', label: 'Grouped', value: 'grouped' },
-  { icon: 'list-ul', label: 'List', value: 'list' },
+  { icon: 'folder', value: 'grouped', label: 'Grouped' },
+  { icon: 'list-ul', value: 'list', label: 'List' },
 ];
 
 interface RulesViewModeSelectorV2Props {

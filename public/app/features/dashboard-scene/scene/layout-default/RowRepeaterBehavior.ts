@@ -1,7 +1,6 @@
 import { isEqual } from 'lodash';
 
 import {
-  LocalValueVariable,
   MultiValueVariable,
   sceneGraph,
   SceneGridItemLike,
@@ -9,12 +8,11 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
 } from '@grafana/scenes';
 
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -144,17 +142,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           });
 
       rowClone.setState({
-        $variables: new SceneVariableSet({
-          variables: [
-            new LocalValueVariable({
-              name: this.state.variableName,
-              value: variableValues[rowIndex],
-              text: String(variableTexts[rowIndex]),
-              isMulti: variable.state.isMulti,
-              includeAll: variable.state.includeAll,
-            }),
-          ],
-        }),
+        $variables: getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]),
         children: [],
       });
 
