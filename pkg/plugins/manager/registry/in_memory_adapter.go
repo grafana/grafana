@@ -22,9 +22,9 @@ type InMemoryAdapter struct {
 	pluginRegistry Service
 }
 
-func ProvideInMemoryRegistryAdapter(pluginRegistry Service) *InMemoryAdapter {
+func ProvideInMemoryRegistryAdapter(inMemory *InMemory) *InMemoryAdapter {
 	return &InMemoryAdapter{
-		pluginRegistry: pluginRegistry,
+		pluginRegistry: inMemory,
 	}
 }
 

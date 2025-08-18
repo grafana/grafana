@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -22,11 +23,11 @@ type InstallAPIRegistry struct {
 	client   pluginsapp.InstallClient
 }
 
-func ProvideService() *InstallAPIRegistry {
-	return NewAPI()
+func ProvideInstallAPIRegistry() *InstallAPIRegistry {
+	return NewInstallAPIRegistry()
 }
 
-func NewAPI() *InstallAPIRegistry {
+func NewInstallAPIRegistry() *InstallAPIRegistry {
 	return &InstallAPIRegistry{}
 }
 
@@ -145,6 +146,17 @@ func (r *InstallAPIRegistry) Remove(ctx context.Context, id, version string) err
 		Namespace: requester.GetNamespace(),
 		Name:      name,
 	})
+}
+
+func (r *InstallAPIRegistry) Enabled() (bool, error) {
+	_, err := r.getClient()
+	if err != nil {
+		if errors.Is(err, pluginsapp.ErrInstallAPINotEnabled) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func fromPluginInstall(pluginInstall *pluginsv0alpha1.PluginInstall) (*plugins.Plugin, error) {
