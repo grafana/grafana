@@ -12,6 +12,12 @@ import {
 } from 'react';
 
 import {
+  createContext as createAssistantContext,
+  ItemDataType,
+  OpenAssistantProps,
+  useAssistant,
+} from '@grafana/assistant';
+import {
   CoreApp,
   DataFrame,
   LogLevel,
@@ -22,12 +28,14 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
-import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
+import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
+import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
@@ -60,9 +68,13 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
+  setTimestampResolution: (format: LogLineTimestampResolution) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
+  timestampResolution: LogLineTimestampResolution;
   toggleDetails: (log: LogListModel) => void;
+  isAssistantAvailable: boolean;
+  openAssistantByLog: ((log: LogListModel) => void) | undefined;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -93,13 +105,17 @@ export const LogListContext = createContext<LogListContextData>({
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
+  setTimestampResolution: () => {},
   setWrapLogMessage: () => {},
   showDetails: [],
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  timestampResolution: 'ns',
   toggleDetails: () => {},
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -133,6 +149,7 @@ export type LogListState = Pick<
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
+  | 'timestampResolution'
   | 'wrapLogMessage'
 >;
 
@@ -177,6 +194,7 @@ export interface Props {
   showTime: boolean;
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
+  timestampResolution?: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
@@ -220,6 +238,9 @@ export const LogListContextProvider = ({
   showUniqueLabels,
   sortOrder,
   syntaxHighlighting,
+  timestampResolution = logOptionsStorageKey
+    ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
+    : 'ms',
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -234,11 +255,13 @@ export const LogListContextProvider = ({
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
+    timestampResolution,
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+  const [isAssistantAvailable, openAssistant] = useAssistant();
 
   useEffect(() => {
     if (noInteractions) {
@@ -254,11 +277,13 @@ export const LogListContextProvider = ({
       detailsWidth,
       detailsMode,
       withDisplayedFields: displayedFields.length > 0,
+      timestampResolution: logListState.timestampResolution,
     });
     // Just once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // OTel displayed fields
   useEffect(() => {
     if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
       return;
@@ -269,6 +294,7 @@ export const LogListContextProvider = ({
     }
   }, [displayedFields.length, logs, setDisplayedFields]);
 
+  // Sync state
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
     if (showControls && app !== CoreApp.PanelEditor) {
@@ -297,6 +323,7 @@ export const LogListContextProvider = ({
     wrapLogMessage,
   ]);
 
+  // Sync filter levels
   useEffect(() => {
     if (filterLevels === undefined) {
       return;
@@ -309,16 +336,19 @@ export const LogListContextProvider = ({
     });
   }, [filterLevels]);
 
+  // Sync font size
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
   }, [fontSize]);
 
+  // Sync pinned logs
   useEffect(() => {
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       setLogListState({ ...logListState, pinnedLogs });
     }
   }, [logListState, pinnedLogs]);
 
+  // Sync show details
   useEffect(() => {
     if (!showDetails.length) {
       return;
@@ -331,6 +361,7 @@ export const LogListContextProvider = ({
     }
   }, [logs, showDetails]);
 
+  // Sync log details width
   useEffect(() => {
     const handleResize = debounce(() => {
       setDetailsWidthState((detailsWidth) => getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth));
@@ -341,6 +372,14 @@ export const LogListContextProvider = ({
       window.removeEventListener('resize', handleResize);
     };
   }, [containerElement, logOptionsStorageKey]);
+
+  // Sync timestamp resolution
+  useEffect(() => {
+    setLogListState((state) => ({
+      ...state,
+      timestampResolution,
+    }));
+  }, [timestampResolution]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -390,10 +429,16 @@ export const LogListContextProvider = ({
 
   const setShowTime = useCallback(
     (showTime: boolean) => {
-      setLogListState({ ...logListState, showTime });
+      const newTimestampFormat = showTime === false ? 'ms' : logListState.timestampResolution;
+      setLogListState({
+        ...logListState,
+        showTime,
+        timestampResolution: newTimestampFormat,
+      });
       onLogOptionsChange?.('showTime', showTime);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.showTime`, showTime);
+        store.set(`${logOptionsStorageKey}.timestampResolution`, newTimestampFormat);
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
@@ -504,6 +549,29 @@ export const LogListContextProvider = ({
     [containerElement, logOptionsStorageKey]
   );
 
+  const setTimestampResolution = useCallback(
+    (timestampResolution: LogLineTimestampResolution) => {
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.timestampResolution`, timestampResolution);
+      }
+      setLogListState((state) => ({
+        ...state,
+        timestampResolution,
+      }));
+    },
+    [logOptionsStorageKey]
+  );
+
+  const openAssistantByLog = useCallback(
+    (log: LogListModel) => {
+      if (!openAssistant) {
+        return;
+      }
+      handleOpenAssistant(openAssistant, log);
+    },
+    [openAssistant]
+  );
+
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
@@ -561,14 +629,18 @@ export const LogListContextProvider = ({
         setShowUniqueLabels,
         setSortOrder,
         setSyntaxHighlighting,
+        setTimestampResolution,
         setWrapLogMessage,
         showDetails,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
+        timestampResolution: logListState.timestampResolution,
         toggleDetails,
         wrapLogMessage: logListState.wrapLogMessage,
+        isAssistantAvailable,
+        openAssistantByLog,
       }}
     >
       {children}
@@ -636,3 +708,37 @@ const reportInteractionOnce = (interactionName: string, properties?: Record<stri
   sessionStorage.setItem(key, '1');
   reportInteraction(interactionName, properties);
 };
+
+async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
+  const datasource = await getDataSourceSrv().get(log.datasourceUid);
+  const context = [];
+  if (datasource) {
+    context.push(
+      createAssistantContext(ItemDataType.Datasource, {
+        datasourceUid: datasource.uid,
+        datasourceName: datasource.name,
+        datasourceType: datasource.type,
+        img: datasource.meta?.info?.logos?.small,
+      })
+    );
+  }
+  openAssistant({
+    prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
+
+      \`\`\`
+${log.entry.replaceAll('`', '\\`')}
+      \`\`\`
+      `,
+    context: [
+      ...context,
+      createAssistantContext(ItemDataType.Structured, {
+        title: t('logs.log-line-menu.log-line', 'Log line'),
+        data: {
+          labels: log.labels,
+          value: log.entry,
+          timestamp: log.timestamp,
+        },
+      }),
+    ],
+  });
+}

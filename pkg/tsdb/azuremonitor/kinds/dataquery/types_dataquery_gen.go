@@ -53,13 +53,14 @@ type AzureMonitorQuery struct {
 	CustomNamespace *string `json:"customNamespace,omitempty"`
 	// Used only for exemplar queries from Prometheus
 	Query *string `json:"query,omitempty"`
+	// Used to configure the HTTP request timeout
+	Timeout *float64 `json:"timeout,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource any `json:"datasource,omitempty"`
-	// Used to configure the HTTP request timeout
-	Timeout *float64 `json:"timeout,omitempty"`
+	Datasource  any      `json:"datasource,omitempty"`
+	KeepCookies []string `json:"keepCookies,omitempty"`
 }
 
 // NewAzureMonitorQuery creates a new AzureMonitorQuery object.

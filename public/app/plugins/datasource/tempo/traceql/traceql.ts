@@ -229,7 +229,7 @@ export const languageDefinition = {
 };
 
 // For "Search" tab (query builder)
-export const traceqlGrammar: Grammar = {
+export const traceqlGrammar = {
   comment: {
     pattern: /\/\/.*/,
   },
@@ -277,4 +277,4 @@ export const traceqlGrammar: Grammar = {
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
   operator: new RegExp(`/[-+*/=%^~]|&&?|\\|?\\||!=?|<(?:=>?|<|>)?|>[>=]?|`, 'i'),
   punctuation: /[{};()`,.]/,
-};
+} satisfies Grammar;

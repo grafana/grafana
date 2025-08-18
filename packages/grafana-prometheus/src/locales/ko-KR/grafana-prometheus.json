@@ -2,401 +2,496 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "주석 데이터 로드 오류!",
+        "aria-label-lower-limit-parameter": "단계 매개변수에 대한 하한 설정",
+        "label-min-step": "최소 단계",
+        "label-series-value-as-timestamp": "타임스탬프로 표시된 계열 값",
         "label-tags": "태그",
-        "label-text": "",
+        "label-text": "텍스트",
         "label-title": "제목",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "자동",
+        "tooltip-either-pattern-example-instance-replaced-label": "이름 또는 패턴을 사용하세요. 예를 들어, {{labelTemplate}}은(는) {{labelName}} 레이블에 대한 레이블 값으로 대체됩니다.",
+        "tooltip-min-step": "Prometheus 쿼리의 단계 매개변수와 <2>{{intervalVar}}</2> 및 <4>{{rateIntervalVar}}</4> 변수에 대한 추가적인 하한입니다.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "타임스탬프 단위는 밀리초입니다. 계열 값의 단위가 초인 경우, 범위 벡터에 1,000을 곱합니다."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "인스턴트 쿼리 및 범위 쿼리 실행"
         },
         "label": {
-          "both": ""
+          "both": "둘 다"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "특정 시간 범위에 대해 쿼리 실행"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "즉시",
+            "range": "범위"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "레이블에 대한 표현식 필터링",
+        "description-select-labels": "레이블 값을 선택하면, 가능한 레이블 조합만 표시됩니다.",
+        "select-labels-to-search-in": "2. 검색할 레이블을 선택합니다."
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "메트릭에 대한 표현식 필터링",
+        "aria-label-limit-results-from-series-endpoint": "시리즈 엔드포인트의 결과 제한",
+        "description-series-limit": "제한은 모든 메트릭, 레이블, 값에 적용됩니다. 기본 한도를 사용하려면 필드를 비워 두세요. 한도를 비활성화하고 모든 것을 가져오려면 0으로 설정하세요. 이렇게 하면 성능 문제가 발생할 수 있습니다.",
+        "label-select-metric": "메트릭을 선택하면, 가능한 레이블만 표시됩니다. 레이블은 아래의 시리즈 한도에 의해 제한됩니다.",
+        "select-a-metric": "1. 메트릭을 선택합니다.",
+        "series-limit": "시리즈 한도"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "PromQL 치트 시트"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "예제",
+        "tooltip-disable-query": "예제를 사용한 쿼리 비활성화",
+        "tooltip-enable-query": "예제를 사용한 쿼리 활성화"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Prometheus 추가 필드",
+        "aria-label-query-type-field": "쿼리 유형 필드",
+        "aria-label-step-field": "단계 필드",
+        "min-step": "최소 단계",
+        "query-type": "쿼리 유형",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "여기에서 시간 단위 및 기본 제공 변수를 사용할 수 있습니다. 예: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}}(단위가 지정되지 않은 경우 기본값: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "PromQL 쿼리를 입력하세요..."
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "클래식 쿼리",
+        "aria-label-metric-regex": "메트릭 정규식",
+        "aria-label-metric-selector": "메트릭 선택기",
+        "aria-label-prometheus-query": "Prometheus 쿼리",
+        "aria-label-query-type": "쿼리 유형",
+        "aria-label-series-query": "시리즈 쿼리",
+        "label-classic-query": "클래식 쿼리",
         "label-label": "라벨",
-        "label-metric-regex": "",
+        "label-metric-regex": "메트릭 정규식",
         "label-query": "쿼리",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "쿼리 유형",
+        "label-series-query": "시리즈 쿼리",
+        "placeholder-classic-query": "클래식 쿼리",
+        "placeholder-metric-regex": "메트릭 정규식",
+        "placeholder-prometheus-query": "Prometheus 쿼리",
         "placeholder-select-query-type": "쿼리 유형 선택",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "시리즈 쿼리",
+        "returns-metrics-matching-specified-metric-regex": "지정된 메트릭 정규식과 매칭하는 메트릭 목록을 반환합니다.",
+        "tooltip-classic-query": "Prometheus 변수 쿼리 편집기의 원래 구현입니다. 이 문서에 설명된 대로 올바른 쿼리 유형 및 매개변수가 있는 문자열을 입력합니다. 예: {{exampleQuery}}.",
+        "tooltip-label": "메트릭이 지정되지 않은 한, 모든 메트릭에서 레이블 이름에 대한 레이블 값 목록을 반환합니다.",
+        "tooltip-metric-regex": "필요에 따라 지정된 메트릭 정규식을 기준으로 필터링하여, 레이블 이름 목록을 반환합니다.",
+        "tooltip-query": "쿼리에 대한 Prometheus 쿼리 결과 목록을 반환합니다. 여기에는 Prometheus 기능이 포함될 수 있습니다. 예: {{exampleQuery}}.",
+        "tooltip-query-type": "Prometheus 데이터 소스 플러그인은 템플릿 변수에 대해 다음과 같은 쿼리 유형을 제공합니다.",
+        "tooltip-series-query": "레이블이 있는 메트릭 또는 메트릭만 단독으로 또는 레이블만 단독으로 입력하세요. 예: {{example1}}, {{example2}}, {{example3}}. 입력된 데이터와 관련된 시계열 목록을 반환합니다."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "선택기",
+        "aria-label-selector-clear-button": "선택기 지우기 버튼",
+        "aria-label-use-selector-as-metrics-button": "메트릭 버튼으로 선택기 사용",
+        "aria-label-use-selector-for-query-button": "쿼리 버튼에 선택기 사용",
+        "aria-label-validate-submit-button": "제출 버튼 유효성 검사",
         "clear": "초기화",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. 결과로 나타난 선택기",
+        "use-as-rate-query": "요율 쿼리로 사용",
+        "use-query": "쿼리 사용",
+        "validate-selector": "선택기 검증"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "레이블 값에 대한 필터 표현식",
+        "aria-label-values-for": "{{labelKey}} 값",
+        "description-search-field-values-across-selected-labels": "검색 필드를 사용하여 선택한 레이블 전체에서 값을 찾습니다.",
+        "select-multiple-values-for-your-labels": "3. 레이블에 대한 (여러) 값을 선택합니다."
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "기록 규칙 대상으로 허용",
+        "label-manage-alerts-via-alerting-ui": "경보 UI를 통해 경보를 관리합니다.",
         "title-alerting": "경고",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "이 데이터 소스를 기록 규칙 작성 대상으로 선택하도록 허용합니다.",
         "tooltip-manage-alerts-via-alerting-ui": "이 데이터 소스에 대한 경고 규칙을 관리합니다. 다른 Alerting 리소스를 관리하려면 Alertmanager 데이터 소스를 추가하세요."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "Prometheus 데이터 소스에서 브라우저 액세스 모드를 더 이상 사용할 수 없습니다. 서버 액세스 모드로 전환합니다.",
+        "description-advanced-settings": "추가 설정은 데이터 소스를 보다 세부적으로 제어하기 위해 구성할 수 있는 선택적 설정입니다. ",
         "title-advanced-settings": "고급 설정",
         "title-error": "오류"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "액세스 방법이 <1>브라우저</1>이므로 브라우저에서 URL에 액세스할 수 있어야 합니다.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "전체 HTTP URL을 지정(예: {{exampleURL}})합니다.",
         "tooltip-server-access-mode": "액세스 방법이 <1>서버</1>이므로 Grafana 백엔드 또는 서버에서 URL에 액세스할 수 있어야 합니다."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "자세한 내용은 여기에서 문서를 참조하세요."
       },
       "exemplar-setting": {
         "label-data-source": "데이터 소스",
-        "label-internal-link": "",
+        "label-internal-link": "내부 링크",
         "label-label-name": "라벨 이름",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "예시 링크 제거",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "URL 레이블",
+        "placeholder-go-to-examplecom": "example.com으로 이동",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "추적 ID",
+        "title-remove-exemplar-link": "예시 링크 제거",
+        "tooltip-data-source": "예제에서 탐색할 데이터 소스입니다.",
+        "tooltip-internal-link": "내부 링크가 있는 경우 이 옵션을 활성화합니다. 활성화하면, 데이터 소스 선택기가 표시됩니다. 예시 데이터에 대한 백엔드 추적 데이터 저장소를 선택합니다.",
+        "tooltip-label-name": "추적 ID를 가져오는 데 사용해야 하는 레이블 개체 내 필드 이름입니다.",
+        "tooltip-url": "사용자가 추적을 확인하기 위해 이동할 추적 백엔드의 URL입니다. ",
+        "tooltip-url-label": "예제 추적 ID 필드의 버튼 레이블을 재정의하는 데 사용합니다."
       },
       "exemplars-settings": {
         "add": "추가",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "예시 구성 없음",
+        "title-exemplars": "예제"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
+        "aria-label-default-editor": "기본 편집기(코드 또는 빌더)",
+        "aria-label-prom-type-type": "{{promType}} 유형",
+        "aria-label-prometheus-type": "Prometheus 유형",
+        "aria-label-select-http-method": "HTTP 메소드 선택",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "빌더",
+          "label-code": "코드"
         },
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "label-cache-level": "캐시 수준",
+        "label-custom-query-parameters": "사용자 지정 쿼리 파라미터",
+        "label-default-editor": "기본 편집기",
+        "label-disable-metrics-lookup": "메트릭 조회 비활성화",
+        "label-disable-recording-rules-beta": "기록 규칙 비활성화(베타)",
+        "label-http-method": "HTTP 메소드",
+        "label-incremental-querying-beta": "증분 쿼리(베타)",
+        "label-metric-names-suggestion-limit": "메트릭 이름 제안 한도",
+        "label-prom-type-version": "{{promType}} 버전",
+        "label-prometheus-type": "Prometheus 유형",
+        "label-query-overlap-window": "쿼리 중복 창",
+        "label-query-timeout": "쿼리 시간 초과",
+        "label-scrape-interval": "스크레이핑 간격",
+        "label-series-limit": "계열 한도",
+        "label-use-series-endpoint": "계열 엔드포인트 사용",
+        "more-info": "데이터 소스에서 prometheus 유형 및 버전을 구성하는 방법에 대한 자세한 내용은 <2>프로비저닝 문서</2>를 참조하시기 바랍니다.",
+        "placeholder-example-maxsourceresolutionmtimeout": "예: {{example}} ",
+        "title-interval-behaviour": "간격 동작",
+        "title-other": "기타",
         "title-performance": "성능",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "쿼리 편집기",
+        "tooltip-cache-level": "편집기 쿼리에 대한 브라우저 캐싱 수준을 설정합니다. 카디널리티(cardinality)가 높은 데이터 소스에는 더 높은 캐시 설정을 권장합니다.",
+        "tooltip-custom-query-parameters": "Prometheus 쿼리 URL에 사용자 지정 매개변수를 추가합니다. 예: {{example1}}, {{example2}}, {{example3}}, {{example4}}. 여러 파라미터는 {{concatenationChar}}와(과) 함께 연결해야 합니다.",
+        "tooltip-default-editor": "이 데이터 소스의 모든 사용자에 대한 기본 편집기 옵션을 설정합니다.",
+        "tooltip-disable-metrics-lookup": "이 옵션을 선택하면, 쿼리 필드의 자동 완성에서 메트릭 선택기 및 메트릭/레이블 지원이 비활성화됩니다. 이는 대규모 Prometheus 인스턴스에서 성능 문제가 발생하는 경우에 유용합니다. ",
+        "tooltip-disable-recording-rules-beta": "이 기능을 사용하면 기록 규칙이 비활성화됩니다. 대시보드 성능을 향상시키려면 이 기능을 켜세요.",
+        "tooltip-http-method": "POST 또는 GET HTTP 메소드를 사용하여 Prometheus 데이터 소스를 쿼리할 수 있습니다. POST는 더 큰 쿼리를 허용하기 때문에 권장되는 메소드입니다. Prometheus 버전이 2.1보다 이전 버전이거나 네트워크에서 POST 요청이 제한되어 있는 경우 이를 GET으로 변경하세요.",
+        "tooltip-incremental-querying-beta": "이 기능은 상대적 쿼리의 기본 동작을 항상 Prometheus 인스턴스에서 최신 데이터를 요청하도록 변경합니다. 대신 쿼리 결과가 캐시되고 새 레코드만 요청됩니다. 데이터베이스 및 네트워크 부하를 줄이려면 이 기능을 켜세요.",
+        "tooltip-metric-names-suggestion-limit": "쿼리 편집기의 코드 모드에서 자동 완성 제안으로 표시될 수 있는 메트릭 이름 개수 최대 한도입니다.",
+        "tooltip-prom-type-version": "{{promType}} 인스턴스의 버전이 자동으로 구성되지 않은 경우 이를 사용하여 버전을 설정합니다.",
+        "tooltip-prometheus-type": "이를 Prometheus 데이터베이스의 유형(예: Prometheus, Cortex, Mimir, Thanos)으로 설정합니다. 이 필드를 변경하면 현재 설정이 저장됩니다. Prometheus는 유형에 따라 다양한 API를 지원할 수도, 지원하지 않을 수도 있습니다. 예를 들어, 일부 유형은 성능을 개선하기 위해 레이블 쿼리에 대한 정규식 매칭을 지원합니다. 일부 유형에는 메타데이터용 API가 있습니다. 이를 잘못 설정하면, 메트릭 및 레이블을 쿼리할 때 이상 작동이 발생할 수 있습니다. Prometheus 설명서를 살펴보고 올바른 유형을 입력했는지 확인하세요.",
+        "tooltip-query-overlap-window": "{{example1}}, {{example2}}, 또는 {{example3}} 등의 지속 시간을 설정합니다. 기본값은 {{default}}입니다. 이 기간은 각 증분 요청의 기간에 추가됩니다.",
+        "tooltip-query-timeout": "Prometheus 쿼리 타임아웃을 설정합니다.",
+        "tooltip-scrape-interval": "이 간격은 Prometheus가 대상을 스크레이핑하는 빈도입니다. 이를 Prometheus 구성 파일에서 구성된 일반적인 스크레이핑 및 평가 간격으로 설정합니다. 이 값을 Prometheus 구성 파일 간격보다 큰 값으로 설정하면, Grafana는 이 간격에 맞춰 데이터를 평가하며 데이터 포인트가 더 적게 표시됩니다. 기본값은 {{default}}입니다.",
+        "tooltip-series-limit": "이 제한은 두 엔드포인트(계열 및 레이블)의 모든 리소스(메트릭, 레이블 및 값)에 적용됩니다. 기본 한도(40,000)를 사용하려면 필드를 비워 두세요. 한도를 비활성화하고 모든 것을 가져오려면 0으로 설정하세요. 이렇게 하면 성능 문제가 발생할 수 있습니다. 기본 한도는 40,000입니다.",
+        "tooltip-use-series-endpoint": "이 옵션을 선택하면 {{exampleParameter}} 파라미터가 있는 레이블 값 엔드포인트보다 {{exampleParameter}} 파라미터가 있는 계열 엔드포인트가 선호됩니다. 레이블 값 엔드포인트가 성능이 더 우수한 것으로 간주되지만, 레이블 값 엔드포인트에는 GET 메서드만 있는 반면 계열 엔드포인트에는 POST 메소드가 있기 때문에 일부 사용자는 계열을 선호할 수 있습니다."
       }
+    },
+    "metrics-browser": {
+      "disabled-label": "(비활성화됨)",
+      "enabled-label": "메트릭 브라우저"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "고유 레이블만 포함",
+        "description-custom": "이름 지정 템플릿 제공",
+        "description-verbose": "모든 레이블 이름 및 값",
+        "label-auto": "자동",
+        "label-custom": "사용자 지정",
+        "label-verbose": "자세히"
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "차원에 대한 평균을 계산합니다",
+        "documentation-bottomk": "샘플 값 기준으로 가장 작은 k개 요소",
+        "documentation-count": "벡터 요소의 개수를 셉니다",
+        "documentation-count-values": "동일한 값을 가진 요소의 개수를 셉니다",
+        "documentation-group": "결과 벡터의 값은 모두 1입니다",
+        "documentation-max": "차원에 대한 최대값을 선택합니다",
+        "documentation-min": "차원에 대한 최소값을 선택합니다",
+        "documentation-quantile": "차원에 대한 φ-분위수(0 ≤ φ ≤ 1)를 계산합니다",
+        "documentation-stddev": "차원에 대한 모집단 표준 편차를 계산합니다",
+        "documentation-stdvar": "차원에 대한 모집단 표준 분산을 계산합니다",
+        "documentation-sum": "차원에 대한 합계를 계산합니다",
+        "documentation-topk": "샘플 값 기준으로 가장 큰 k개 요소"
+      },
+      "getFunctions": {
+        "documentation-abs": "모든 샘플 값이 절대값으로 변환된 입력 벡터를 반환합니다.",
+        "documentation-absent": "전달된 벡터에 요소가 있으면 빈 벡터를 반환하고, 전달된 벡터에 요소가 없으면 값이 1인 요소 1개를 가진 벡터를 반환합니다. 이는 지정된 메트릭 이름 및 레이블 조합에 대한 시계열이 없을 경우 경고를 생성하는 데 유용합니다.",
+        "documentation-absent-over-time": "전달된 범위 벡터에 요소가 있으면 빈 벡터를 반환하고, 전달된 범위 벡터에 요소가 없으면 값이 1인 요소 1개를 가진 벡터를 반환합니다.",
+        "documentation-avg-over-time": "지정된 간격의 모든 포인트를 평균한 값입니다.",
+        "documentation-ceil": "`v`에 속한 모든 요소의 샘플 값을 가장 가까운 정수로 반올림합니다.",
+        "documentation-changes": "각 입력 시계열에 대해 `changes(v range-vector)`는 제공된 시간 범위 내에서 값이 변경된 횟수를 인스턴트 벡터로 반환합니다.",
+        "documentation-clamp": "`v`에 속한 모든 요소의 샘플 값을 `min`의 하한과 `max`의 상한을 갖도록 고정합니다.",
+        "documentation-clamp-max": "`v`에 속한 모든 요소의 샘플 값을 `max`의 상한을 갖도록 고정합니다.",
+        "documentation-clamp-min": "`v`에 속한 모든 요소의 샘플 값을 `min`의 하한을 갖도록 고정합니다.",
+        "documentation-count-over-time": "지정된 간격에 속한 모든 값을 계수한 값입니다.",
+        "documentation-count-scalar": "시계열 벡터의 요소 수를 스칼라로 반환합니다. 이는 항상 벡터를 반환(입력 벡터가 비어 있는 경우 빈 벡터)하고 `by` 절을 통해 레이블별로 그룹화할 수 있는 `count()` 집계 연산자와는 다릅니다.",
+        "documentation-day-of-month": "UTC로 지정된 각 시간에 대해 해당 월의 날을 반환합니다. 반환된 값은 1부터 31까지입니다.",
+        "documentation-day-of-week": "UTC로 지정된 각 시간에 대한 요일을 반환합니다. 반환된 값은 0부터 6까지이며, 여기서 0은 일요일 등을 의미합니다.",
+        "documentation-day-of-year": "UTC로 지정된 각 시간에 대해 해당 연도의 날을 반환합니다. 반환되는 값은 윤년이 아닌 경우 1부터 365까지, 윤년인 경우 1부터 366까지입니다.",
+        "documentation-days-in-month": "UTC로 지정된 각 시간에 대해 해당 월의 일수를 반환합니다. 반환되는 값은 28부터 31까지입니다.",
+        "documentation-deg": "v의 모든 요소에 대해 라디안을 도(degree)로 변환합니다",
+        "documentation-delta": "범위 벡터 `v`의 각 시계열 요소의 첫 번째 값과 마지막 값의 차이를 계산하여 지정된 델타 및 동일한 레이블을 가진 인스턴트 벡터를 반환합니다. 델타는 범위 벡터 선택기에서 지정된 전체 시간 범위를 커버하도록 외삽되므로 샘플 값이 모두 정수인 경우에도 정수가 아닌 결과를 얻을 수 있습니다.",
+        "documentation-deriv": "단순 선형 회귀를 사용하여 범위 벡터 `v`에서 시계열의 초당 도함수를 계산합니다.",
+        "documentation-double-exponential-smoothing": "`v`의 범위를 토대로 시계열의 평활화 값을 생성합니다. 평활화 계수 `sf`가 낮을수록 이전 데이터의 중요성이 커집니다. 추세 계수 `tf`가 높을수록 데이터의 추세가 더 많이 고려됩니다. `sf`와 `tf` 모두 0과 1 사이여야 합니다.",
+        "documentation-drop-common-labels": "입력 벡터의 모든 시리즈에서 이름과 값이 동일한 레이블을 모두 제거합니다.",
+        "documentation-exp": "`v`의 모든 요소에 대한 지수 함수를 계산합니다.\n특수한 경우는 다음과 같습니다.\n* `Exp(+Inf) = +Inf` \n* `Exp(NaN) = NaN`",
+        "documentation-floor": "`v`에 속한 모든 요소의 샘플 값을 가장 가까운 정수로 내림합니다.",
+        "documentation-histogram-avg": "기본 히스토그램에 저장된 관찰 값의 산술 평균을 반환합니다. 기본 히스토그램이 아닌 샘플은 무시되며 반환된 벡터에 표시되지 않습니다.",
+        "documentation-histogram-count": "기본 히스토그램에 저장된 관찰값의 개수를 반환합니다.",
+        "documentation-histogram-fraction": "제공된 하한값과 상한값 사이에 속한 관찰값의 추정 비율을 소수로 반환합니다.",
+        "documentation-histogram-quantile": "히스토그램의 구간 `b`에서 φ-분위수(0 ≤ φ ≤ 1)를 계산합니다. `b`의 샘플은 각 구간의 관찰값의 개수입니다. 각 샘플에는 레이블 `le`가 있어야 하며 레이블 값은 버킷의 상한을 나타냅니다. (이러한 레이블이 없는 샘플은 자동으로 무시됩니다.) 히스토그램 메트릭 유형은 자동으로 `_bucket` 접미사와 적절한 레이블이 있는 시계열을 제공합니다.",
+        "documentation-histogram-stddev": "관찰값이 있는 구간의 기하 평균을 토대로 기본 히스토그램에서 관찰값의 추정 표준 편차를 반환합니다.",
+        "documentation-histogram-stdvar": "기본 히스토그램에서 관찰값의 추정 표준 분산을 반환합니다.",
+        "documentation-histogram-sum": "기본 히스토그램에 저장된 관찰값의 합계를 반환합니다.",
+        "documentation-holt-winters": "Prometheus v3.x에서 double_exponential_smoothing으로 이름이 변경되었습니다. Prometheus 버전이 v3.0 이상인 경우 double_exponential_smoothing을 사용하세요. \n\n`v`의 범위를 토대로 시계열의 평활화 값을 생성합니다. 평활화 계수 `sf`가 낮을수록 이전 데이터의 중요성이 커집니다. 추세 계수 `tf`가 높을수록 데이터의 추세가 더 많이 고려됩니다. `sf`와 `tf` 모두 0과 1 사이여야 합니다.",
+        "documentation-hour": "UTC로 지정된 각 시간에 대해 해당 날의 시간을 반환합니다. 반환되는 값은 0부터 23까지입니다.",
+        "documentation-idelta": "범위 벡터 `v`의 마지막 두 샘플 간의 차이를 계산하여 지정된 델타 및 동일한 레이블을 가진 인스턴트 벡터를 반환합니다.",
+        "documentation-increase": "범위 벡터의 시계열 증가분을 계산합니다. 단조성 중단(예: 대상이 재시작되면서 카운터가 초기화되는 경우)은 자동으로 조정됩니다. 증가분은 범위 벡터 선택기에서 지정된 시간 범위 전체를 커버하도록 외삽되므로 카운터가 정수 단위로만 증가하는 경우에도 정수가 아닌 결과를 얻을 수 있습니다.",
+        "documentation-info": "계산 없이 레이블 및 현재 값과 같은 메트릭 그룹에 대한 최신 세부 정보 및 메타데이터를 반환합니다",
+        "documentation-irate": "마지막 두 데이터 포인트를 토대로 범위 벡터의 시계열 증가분의 초당 순간 속도를 계산합니다. 단조성 중단(예: 대상이 재시작되면서 카운터가 초기화되는 경우)은 자동으로 조정됩니다.",
+        "documentation-label-join": "`v`의 각 시계열에 대해 `separator`를 사용하여 모든 `src_labels`의 모든 값을 결합하고 결합된 값이 포함된 레이블 `dst_label`을 가진 시계열을 반환합니다. 이 함수에는 `src_labels`를 제한 없이 여러 개 사용할 수 있습니다.",
+        "documentation-label-replace": "`v`의 각 시계열에 대해 `label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)`는 레이블 `src_label`에 대해 정규 표현식 `regex`를 매칭합니다. 정규식이 일치하면 레이블 `dst_label`이 `replacement`의 확장으로 대체되어 시계열이 반환됩니다. `$1`은 첫 번째 일치하는 하위 그룹으로, `$2`는 두 번째 하위 그룹으로 대체됩니다. 정규 표현식이 일치하지 않으면 시계열이 변경되지 않고 반환됩니다.",
+        "documentation-last-over-time": "지정된 간격의 가장 최근 포인트 값입니다.",
+        "documentation-ln": "`v`의 모든 요소에 대해 자연 로그를 계산합니다.\n특수한 경우는 다음과 같습니다.\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`",
+        "documentation-log10": "`v`의 모든 요소에 대한 상용로그를 계산합니다. 특수한 경우는 `ln`의 경우와 동일합니다.",
+        "documentation-log2": "`v`의 모든 요소에 대한 이진로그를 계산합니다. 특수한 경우는 `ln`의 경우와 동일합니다.",
+        "documentation-max-over-time": "지정된 간격의 모든 포인트의 최대값입니다.",
+        "documentation-min-over-time": "지정된 간격의 모든 포인트의 최소값입니다.",
+        "documentation-minute": "UTC로 지정된 각 시간에 대해 해당 시간의 분을 반환합니다. 반환되는 값은 0부터 59까지입니다.",
+        "documentation-month": "UTC로 지정된 각 시간에 대해 해당 연도의 월을 반환합니다. 반환되는 값은 1부터 12까지이며, 여기서 1은 1월 등을 의미합니다.",
+        "documentation-pi": "파이(pi)를 반환합니다",
+        "documentation-predict-linear": "단순 선형 회귀를 사용하여 범위 벡터 `v`를 토대로 현재부터 `t`초 후의 시계열 값을 예측합니다.",
+        "documentation-present-over-time": "지정된 간격에 속한 모든 시리즈에 대한 값 1을 반환합니다.",
+        "documentation-quantile-over-time": "지정된 간격에 속한 값의 φ-분위수(0 ≤ φ ≤ 1)입니다.",
+        "documentation-rad": "v의 모든 요소에 대해 도(degree)를 라디안으로 변환합니다",
+        "documentation-rate": "범위 벡터의 시계열 증가분의 초당 평균 속도를 계산합니다. 단조성 중단(예: 대상이 재시작되면서 카운터가 초기화되는 경우)은 자동으로 조정됩니다. 또한, 시간 범위의 끝까지 외삽하여 계산하기 때문에 스크레이프가 누락되거나 범위의 기간과 스크레이프 주기가 완전하게 일치하지 않더라도 문제없이 처리됩니다.",
+        "documentation-resets": "각 입력 시계열에 대해 `resets(v range-vector)`는 제공된 시간 범위 내에서 카운터가 재설정된 횟수를 인스턴트 벡터로 반환합니다. 두 연속 샘플 사이의 값이 감소하면 카운터가 재설정된 것으로 해석합니다.",
+        "documentation-round": "`v`의 모든 요소의 샘플 값을 가장 가까운 정수로 반올림합니다. 값이 정확히 중간인 경우에는 반올림하여 해결합니다. 선택 사항인 `to_nearest` 인수를 사용하면 샘플 값을 반올림할 가장 가까운 배수를 지정할 수 있습니다. 이 배수는 소수로도 지정할 수 있습니다.",
+        "documentation-scalar": "단일 요소로 구성된 입력 벡터가 주어지면 `scalar(v instant-vector)`는 해당 단일 요소의 샘플 값을 스칼라로 반환합니다. 입력 벡터의 요소가 정확히 한 개가 아닌 경우 `scalar`는 `NaN`을 반환합니다.",
+        "documentation-sgn": "모든 샘플 값이 부호로 변환된 벡터를 반환하며 다음과 같이 정의됩니다. v가 양수이면 1, v가 음수이면 -1, v가 0이면 0입니다.",
+        "documentation-sort": "샘플 값에 따라 오름차순으로 정렬된 벡터 요소를 반환합니다.",
+        "documentation-sort-desc": "샘플 값에 따라 내림차순으로 정렬된 벡터 요소를 반환합니다.",
+        "documentation-sqrt": "`v`의 모든 요소의 제곱근을 계산합니다.",
+        "documentation-stddev-over-time": "지정된 간격에 속한 값의 모집단 표준 편차입니다.",
+        "documentation-stdvar-over-time": "지정된 간격에 속한 값의 모집단 표준 분산입니다.",
+        "documentation-sum-over-time": "지정된 간격에 속한 모든 값의 합계입니다.",
+        "documentation-time": "UTC 기준으로 1970년 1월 1일 이후의 초(seconds) 수를 반환합니다. 반환된 값은 실제 현재 시간이 아닌 표현식이 평가되는 시간을 기준으로 합니다.",
+        "documentation-timestamp": "지정된 벡터의 각 샘플의 타임스탬프를 UTC 기준 1970년 1월 1일 이후의 초 수로 반환합니다.",
+        "documentation-vector": "스칼라 `s`를 레이블이 없는 벡터로 반환합니다.",
+        "documentation-year": "UTC로 지정된 각 시간에 대한 연도를 반환합니다."
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "{{argument}}의 모든 요소의 아크코사인을 계산합니다",
+        "documentation-acosh": "{{argument}}의 모든 요소의 역쌍곡 코사인을 계산합니다",
+        "documentation-asin": "{{argument}}의 모든 요소의 아크사인을 계산합니다",
+        "documentation-asinh": "{{argument}}의 모든 요소의 역쌍곡 사인을 계산합니다",
+        "documentation-atan": "{{argument}}의 모든 요소의 아크탄젠트를 계산합니다",
+        "documentation-atanh": "{{argument}}의 모든 요소의 역쌍곡 탄젠트를 계산합니다",
+        "documentation-cos": "{{argument}}의 모든 요소의 코사인을 계산합니다",
+        "documentation-cosh": "{{argument}}의 모든 요소의 쌍곡 코사인을 계산합니다",
+        "documentation-sin": "{{argument}}의 모든 요소의 사인을 계산합니다",
+        "documentation-sinh": "{{argument}}의 모든 요소의 쌍곡 사인을 계산합니다",
+        "documentation-tan": "{{argument}}의 모든 요소의 탄젠트를 계산합니다",
+        "documentation-tanh": "{{argument}}의 모든 요소의 쌍곡 탄젠트를 계산합니다"
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
-      },
       "feedback-link": {
         "give-feedback": "피드백 제출하기",
-        "title-give-feedback": ""
+        "title-give-feedback": "메트릭 탐색기는 새로운 기능이니, 개선할 사항이 있다면, 저희 측에 알려주세요. "
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "예시: {{value}}",
+        "format": "형식: {{value}}",
+        "legend": "범례: {{value}}",
+        "step": "단계: {{value}}",
+        "type": "유형: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
-        "type": ""
+        "browse": "이름으로 메트릭 검색",
+        "type": "유형으로 필터링"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "단조 증가하는 단일 카운터를 나타내는 누적 메트릭으로, 값은 증가만 가능하거나 다시 시작할 때 0으로 재설정될 수 있습니다.",
+        "description-gauge": "임의로 오르내릴 수 있는 단일 숫자 값을 나타내는 메트릭입니다.",
+        "description-histogram": "히스토그램은 관찰값(일반적으로 요청 기간 또는 응답 크기와 같은 것)을 샘플링하여 구성 가능한 구간별로 항목 수를 계수합니다.",
+        "description-native-histogram": "기본 히스토그램은 여러 가지 면에서 기존 Prometheus 히스토그램과 다릅니다. 기본 히스토그램 구간의 경계는 사용자가 정의할 수 없으며, 히스토그램의 스케일(해상도)에 따라 달라지는 공식을 사용하여 계산됩니다.",
+        "description-no-type": "이러한 메트릭은 메타데이터에 정의된 유형이 없습니다.",
+        "description-summary": "요약은 관찰값(일반적으로 요청 기간 및 응답 크기와 같은 것)을 샘플링하며 슬라이딩 시간 창에서 구성 가능한 분위수를 계산할 수 있습니다.",
+        "description-unknown": "이러한 메트릭은 메타데이터에서 알 수 없는 유형으로 지정되었습니다.",
+        "label-counter": "카운터",
+        "label-gauge": "게이지",
+        "label-histogram": "히스토그램",
+        "label-native-histogram": "기본 히스토그램",
+        "label-no-type": "유형 없음",
+        "label-summary": "요약",
+        "label-unknown": "알 수 없음"
       },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "쿼리 구문 분석이 모호합니다."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "{{name}} 삭제",
+        "placeholder-select-label": "레이블 선택",
         "placeholder-select-value": "값 선택"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "레이블 필터",
+        "label-label-filters": "레이블 필터",
+        "tooltip-label-filters": "선택 사항: 이 쿼리 유형에 대한 메트릭 선택을 필터링하는 데 사용됩니다."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "레이블 로딩 중",
+        "noOptionsMessage-no-labels-found": "레이블을 찾을 수 없습니다"
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "메트릭 탐색기 열기",
+          "placeholder-select-metric": "메트릭 선택",
+          "tooltip-open-metrics-explorer": "메트릭 탐색기 열기"
         },
         "label-metric": "메트릭",
-        "tooltip-metric": ""
+        "tooltip-metric": "선택 사항: 지정된 메트릭에서 레이블 이름에 대한 레이블 값 목록을 반환합니다."
       },
       "metrics-modal": {
-        "additional-settings": "",
-        "aria-label-additional-settings": "추가 설정",
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_other": ""
+        "aria-label-browse-metrics": "메트릭 찾아보기",
+        "currently-selected": "현재 선택 사항: {{selected}} ",
+        "metrics-pre-filtered": "이러한 메트릭은 레이블 필터에서 선택한 레이블로 사전 필터링되었습니다.",
+        "title-metrics-explorer": "메트릭 탐색기"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "무시 중",
           "on": "켜기"
         },
         "operator": "작업 수행자",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "매칭 항목 제거",
+        "vector-matches": "벡터 매칭"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "{{id}} 연산을 찾을 수 없습니다.",
+        "title-remove": "{{name}} 삭제"
       },
       "operation-header": {
         "placeholder-replace-with": "다음으로 교체",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "대체 연산을 보려면 클릭하세요.",
+        "title-remove-operation": "연산 제거"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "설명을 보려면 클릭하세요.",
+        "title-remove-operation": "연산 제거"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "연산",
         "placeholder-search": "검색",
-        "title-add-operation": ""
+        "title-add-operation": "연산 추가"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "{{name}} 추가",
+        "title-remove": "{{name}} 삭제"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "{{labelWord}} {{labels}}을(를) 유지하면서 차원에 대해 {{aggregationName}}을(를) 계산합니다.",
+          "label-default": "차원에 대해 {{aggregationName}}을(를) 계산합니다.",
+          "label-without": "차원 {{labels}}에 대해 {{aggregationName}}을(를) 계산합니다. 다른 모든 레이블은 그대로 유지합니다."
+        }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
+        "aria-label-lower-limit-parameter": "단계 매개변수에 대한 하한 설정",
+        "aria-label-select-resolution": "해상도 선택",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "히트맵",
+          "label-table": "테이블",
+          "label-time-series": "시계열"
         },
-        "label-exemplars": "",
+        "label-exemplars": "예제",
         "label-format": "형식",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "최소 단계",
+        "label-resolution": "해상도",
         "label-type": "유형",
-        "placeholder-auto": "",
+        "placeholder-auto": "자동",
         "title-options": "옵션",
-        "tooltip-min-step": ""
+        "tooltip-min-step": "Prometheus 쿼리의 단계 매개변수와 <2>{{interval}}</2> 및 <4>{{rateInterval}} </4> 변수에 대한 추가적인 하한."
       },
       "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "autocomplete-suggestions-limited": "자동 완성 제안 제한됨",
+        "tooltip-autocomplete-suggestions-limited": "메트릭 이름 수가 자동 완성 한도를 초과합니다. 가장 관련성이 높은 {{autocompleteLimit}}개 메트릭만 표시됩니다. 데이터 소스 설정에서 임계값을 조정할 수 있습니다."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "구문 오류가 있거나 빌더 모드로 전환할 때 쿼리 구조를 시각화할 수 없습니다. 쿼리의 일부가 손실될 수 있습니다.",
+        "confirmText-continue": "계속",
         "kick-start-your-query": "쿼리 시작하기",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "설명",
+        "run-queries": "쿼리 실행",
+        "title-parsing-error-switch-builder": "구문 분석 오류: 빌더 모드로 전환하시겠어요?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "범례",
+        "placeholder-select-legend-mode": "범례 모드 선택",
+        "tooltip-legend": "계열 이름 재정의 또는 템플릿. 예: {{templateExample}} 은(는) {{labelName}}에 대한 레이블 값으로 대체됩니다."
       },
       "query-builder-hints": {
-        "hint-details": ""
+        "hint-details": "힌트: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "빌더",
+          "label-code": "코드"
         }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "쿼리 적용",
+        "aria-label-apply-query-starter-button": "쿼리 스타터 버튼 적용",
+        "aria-label-back-button": "뒤로 가기 버튼",
+        "aria-label-create-new-query-button": "새 쿼리 버튼 생성",
+        "aria-label-raw-query": "{{patternName}} 원시 쿼리",
+        "aria-label-use-this-query-button": "이 쿼리 사용 버튼",
         "back": "뒤로",
-        "create-new-query": "",
+        "create-new-query": "새 쿼리 생성",
         "use-this-query": "이 쿼리 사용"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "쿼리 모달 시작 닫기",
         "aria-label-kick-start-your-query-modal": "쿼리 모달 시작하기",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "{{patternType}} 쿼리 스타터 카드 열기 및 닫기",
         "close": "닫기",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "다음 쿼리 중 하나를 선택하여 쿼리를 시작합니다. 그런 다음 쿼리를 계속 완료할 수 있습니다.",
+        "label-toggle-query-starter": "{{patternType}} 쿼리 스타터",
         "title-kick-start-your-query": "쿼리 시작하기"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "선택기"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "{{descriptiveType}}을 생성할 때 Prometheus는 유형 카운터와 함께 여러 계열을 노출합니다. ",
         "description": "설명",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "메트릭을 찾을 수 없습니다. 레이블 필터를 확장해 보세요.",
+        "message-expand-search": "메트릭을 찾을 수 없습니다. 검색 및 필터를 확장해 보세요.",
+        "message-no-metrics-found": "데이터 소스에서 메트릭을 찾을 수 없습니다.",
         "name": "이름",
-        "select": "선택",
         "type": "유형"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "쿼리 구문 분석이 모호합니다."
         }
       }
     }

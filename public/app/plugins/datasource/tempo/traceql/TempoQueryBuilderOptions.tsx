@@ -4,7 +4,7 @@ import { useToggle } from 'react-use';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
-import { AutoSizeInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, RadioButtonGroup, TextLink, useStyles2 } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
 import { SearchTableType, MetricsQueryType } from '../dataquery.gen';
@@ -37,6 +37,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
     const styles = useStyles2(getStyles);
     const [isOpen, toggleOpen] = useToggle(false);
     const isAlerting = app === CoreApp.UnifiedAlerting;
+    const isMetricsStreamingEnabled = metricsStreaming && !isAlerting;
 
     if (!query.hasOwnProperty('limit')) {
       query.limit = DEFAULT_LIMIT;
@@ -93,7 +94,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
       `Step: ${query.step || 'auto'}`,
       `Type: ${query.metricsQueryType === MetricsQueryType.Range ? 'Range' : 'Instant'}`,
       '|',
-      `Streaming: ${metricsStreaming ? 'Enabled' : 'Disabled'}`,
+      `Streaming: ${isMetricsStreamingEnabled ? 'Enabled' : 'Disabled'}`,
       // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
     ];
 
@@ -179,7 +180,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
             </EditorField>
 
             <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
-              <div>{metricsStreaming ? 'Enabled' : 'Disabled'}</div>
+              <div>{isMetricsStreamingEnabled ? 'Enabled' : 'Disabled'}</div>
             </EditorField>
             {/*<EditorField*/}
             {/*  label="Exemplars"*/}
@@ -208,15 +209,14 @@ const StreamingTooltip = () => {
         Indicates if streaming is currently enabled. Streaming allows you to view partial query results before the
         entire query completes.
       </span>
-      <a
+      <TextLink
+        external
         href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}
         aria-label={'Learn more about streaming query results'}
-        target={'_blank'}
-        rel="noreferrer"
         style={{ textDecoration: 'underline' }}
       >
         Learn more
-      </a>
+      </TextLink>
     </div>
   );
 };

@@ -159,7 +159,7 @@ func TestQueryAPI(t *testing.T) {
 					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 					Tracer:   tracing.InitializeTracerForTest(),
 				},
-				clientSupplier: mockClient{
+				instanceProvider: mockClient{
 					stubbedFrame: tc.stubbedFrame,
 				},
 				tracer:                 tracing.InitializeTracerForTest(),
@@ -250,7 +250,21 @@ type mockClient struct {
 	stubbedFrame *data.Frame
 }
 
-func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
+func (m mockClient) GetInstance(ctx context.Context, headers map[string]string) (clientapi.Instance, error) {
+	mclient := mockClient{
+		stubbedFrame: m.stubbedFrame,
+	}
+	return mclient, nil
+}
+
+func (m mockClient) ReportMetrics() {
+}
+
+func (m mockClient) GetLogger(parent log.Logger) log.Logger {
+	return parent.New()
+}
+
+func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
 	}
@@ -281,11 +295,11 @@ func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 	return nil, nil
 }
 
-func (m mockClient) GetInstanceConfigurationSettings(ctx context.Context) (clientapi.InstanceConfigurationSettings, error) {
+func (m mockClient) GetSettings() clientapi.InstanceConfigurationSettings {
 	return clientapi.InstanceConfigurationSettings{
 		ExpressionsEnabled: true,
 		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
-	}, nil
+	}
 }
 
 type mockLegacyDataSourceLookup struct{}

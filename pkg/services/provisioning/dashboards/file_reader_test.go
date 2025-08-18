@@ -109,6 +109,9 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 }
 
 func TestIntegrationDashboardFileReader(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	logger := log.New("test-logger")
 	cfg := &config{}
 
@@ -126,7 +129,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	}
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql)
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)

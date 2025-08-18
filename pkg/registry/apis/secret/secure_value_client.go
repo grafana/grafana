@@ -23,6 +23,11 @@ import (
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
 
+var (
+	ErrSecureValueNotFound      = contracts.ErrSecureValueNotFound
+	ErrSecureValueAlreadyExists = contracts.ErrSecureValueAlreadyExists
+)
+
 // SecureValueClient is a CRUD client for the secure value API.
 type SecureValueClient = contracts.SecureValueClient
 
@@ -260,7 +265,16 @@ func (c *secureValueClient) mapError(err error, name string) error {
 }
 
 func (c *secureValueClient) checkAccess(ctx context.Context, name, verb string) error {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewUnauthorized("missing auth info in context")
+	}
+
 	gr := secretv1beta1.SecureValuesResourceInfo.GroupResource()
+
+	if !claims.NamespaceMatches(authInfo.GetNamespace(), c.namespace) {
+		return apierrors.NewForbidden(gr, name, fmt.Errorf("namespace mismatch: %s != %s", authInfo.GetNamespace(), c.namespace))
+	}
 
 	decision, reason, err := c.access.Authorize(ctx, authorizer.AttributesRecord{
 		Verb:            verb,

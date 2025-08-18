@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Prometheus 类型",
         "aria-label-select-http-method": "选择 HTTP 方法",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "构建器",
+          "label-code": "代码"
         },
         "label-cache-level": "缓存级别",
         "label-custom-query-parameters": "自定义查询参数",
@@ -199,54 +199,148 @@
         "tooltip-use-series-endpoint": "选中此选项将优先使用带有 {{exampleParameter}} 参数的序列端点，而不是带有 {{exampleParameter}} 参数的标签值端点。虽然标签值端点在性能方面表现更好，但有些用户可能更喜欢序列，因为它具有 POST 方法，而标签值端点仅具有 GET 方法。"
       }
     },
+    "metrics-browser": {
+      "disabled-label": "（已禁用）",
+      "enabled-label": "指标浏览器"
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "仅包含唯一标签",
+        "description-custom": "提供命名模板",
+        "description-verbose": "所有标签名称和值",
+        "label-auto": "自动",
+        "label-custom": "自定义",
+        "label-verbose": "详细"
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "计算各维度的平均值",
+        "documentation-bottomk": "按样本值取最小的 k 个元素",
+        "documentation-count": "计算向量中的元素数",
+        "documentation-count-values": "计算具有相同值的元素数",
+        "documentation-group": "结果向量中的所有值均为 1",
+        "documentation-max": "选择各维度的最大值",
+        "documentation-min": "选择各维度的最小值",
+        "documentation-quantile": "计算各维度的 φ-quantile (0 ≤ φ ≤ 1)",
+        "documentation-stddev": "计算各维度的总体标准差",
+        "documentation-stdvar": "计算各维度的总体标准差",
+        "documentation-sum": "计算各维度的总和",
+        "documentation-topk": "按样本值取最大的 k 个元素"
+      },
+      "getFunctions": {
+        "documentation-abs": "返回输入向量，其中所有样本值都转换为其绝对值。",
+        "documentation-absent": "如果传入的向量包含任意元素，则返回一个空向量；如果传入的向量不包含任何元素，则返回一个值为 1 的单元素向量。这在针对某个特定指标名称和标签组合不存在任何时间序列时发出告警时非常有用。",
+        "documentation-absent-over-time": "如果传入的向量包含任意元素，则返回一个空向量；如果传入的向量不包含任何元素，则返回一个值为·1·的单元素向量。",
+        "documentation-avg-over-time": "指定间隔内所有点的平均值。",
+        "documentation-ceil": "将“v”中所有元素的样本值向上舍入到最接近的整数。",
+        "documentation-changes": "对于每个输入时间序列，“changes(v range-vector)”返回其值在提供的时间范围内更改的次数，作为瞬时向量。",
+        "documentation-clamp": "将“v”中所有元素的样本值限制为下限为“min”且上限为“max”。",
+        "documentation-clamp-max": "将“v”中所有元素的样本值限制为上限为“max”。",
+        "documentation-clamp-min": "将“v”中所有元素的样本值限制为下限为“min”。",
+        "documentation-count-over-time": "指定间隔内所有值的计数。",
+        "documentation-count-scalar": "返回时间序列向量中元素的数量作为标量。这与 'count()' 聚合运算符相反，后者始终返回一个向量（如果输入向量为空，则为空向量），并允许通过 'by' 子句按标签分组。",
+        "documentation-day-of-month": "返回每个月中给定时间的日期（UTC 时间）。返回的值介于 1 到 31 之间。",
+        "documentation-day-of-week": "返回每周中给定时间的日期（UTC 时间）。返回的值介于 0 到 6 之间，其中 0 表示星期日，以此类推。",
+        "documentation-day-of-year": "返回每年中的给定时间的日期（UTC 时间）。对于非闰年，返回的值介于 1 到 365 之间；对于闰年，返回的值介于 1 到 366 之间。",
+        "documentation-days-in-month": "返回每月中给定时间的天数（UTC 时间）。返回的值介于 28 到 31 之间。",
+        "documentation-deg": "将 v 中所有元素的弧度转换为度",
+        "documentation-delta": "计算范围矢量“v”中每个时间序列元素的第一个值和最后一个值之间的差，返回具有给定增量和等效标签的瞬时矢量。增量被外推以覆盖范围矢量选择器中指定的全时间范围，因此即使样本值都是整数，也可以获得非整数结果。",
+        "documentation-deriv": "使用简单线性回归计算范围向量“v”中时间序列的每秒导数。",
+        "documentation-double-exponential-smoothing": "根据“v”中的范围为时间序列生成平滑值。平滑因子“sf”越低，旧数据的重要性就越高。趋势因子“tf”越高，考虑的数据趋势就越多。“sf”和“tf”都必须介于 0 和 1 之间。",
+        "documentation-drop-common-labels": "删除输入向量中所有序列中具有相同名称和值的所有标签。",
+        "documentation-exp": "计算“v”中所有元素的指数函数。\n特殊情况是：\n* `Exp(+Inf) = +Inf` \n* `Exp(NaN) = NaN`",
+        "documentation-floor": "将“v”中所有元素的样本值向下舍入到最接近的整数。",
+        "documentation-histogram-avg": "返回存储在原生直方图中的观测值的算术平均值。非原生直方图的样本将被忽略，不会显示在返回的向量中。",
+        "documentation-histogram-count": "返回存储在原生直方图中的观测值的计数。",
+        "documentation-histogram-fraction": "返回所提供的下限值和上限值之间的估计观测值分数。",
+        "documentation-histogram-quantile": "从直方图的存储桶 'b' 计算 φ-quantile (0 ≤ φ ≤ 1)。'b' 中的样本是每个存储桶中的观测值计数。每个样本都必须有一个标签 'le'，其中标签值表示存储桶的包含上限。（没有此类标签的样本将被静默忽略。）直方图指标类型自动为时间序列提供 '_bucket' 后缀和相应的标签。",
+        "documentation-histogram-stddev": "根据观测值所在的存储桶的几何平均值，返回原生直方图中观测值的估计标准差。",
+        "documentation-histogram-stdvar": "返回原生直方图中观测值的估计标准方差。",
+        "documentation-histogram-sum": "返回存储在原生直方图中的观测值的总和。",
+        "documentation-holt-winters": "在 prometheus v3.x 中重命名为 double_exponential_smoothing。对于等于和大于 v3.0 的 prometheus 版本，请使用 double_exponential_smoothing。\n\n根据“v”中的范围为时间序列生成平滑值。平滑因子“sf”越低，旧数据的重要性就越高。趋势因子“tf”越高，考虑的数据趋势就越多。“sf”和“tf”都必须介于 0 和 1 之间。",
+        "documentation-hour": "返回每天中给定时间的小时（UTC 时间）。返回的值介于 0 到 23 之间。",
+        "documentation-idelta": "计算范围矢量“v”中最后两个样本之间的差，返回具有给定增量和等效标签的瞬时矢量。",
+        "documentation-increase": "计算范围矢量中时间序列的增加。单调性中断（例如由于目标重新启动而导致的计数器重置）会自动调整。增加被外推以覆盖范围矢量选择器中指定的全时间范围，因此即使计数器仅以整数增量增加，也可以获得非整数结果。",
+        "documentation-info": "返回有关一组指标的最新详细信息和元数据，例如其标签和当前值，而无需进行任何计算",
+        "documentation-irate": "计算范围矢量中时间序列的每秒瞬时增加率。这是基于最后两个数据点。单调性中断（例如由于目标重新启动而导致的计数器重置）会自动调整。",
+        "documentation-label-join": "对于“v”中的每个时间序列，使用“separator”连接所有“src_labels”的所有值，并返回包含连接值的标签“dst_label”的时间序列。此函数中可以有任意数量的“src_labels”。",
+        "documentation-label-replace": "对于“v”中的每个时间序列，“label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)”将正则表达式“regex”与标签“src_label”进行匹配。如果匹配，则返回时间序列，并将标签“dst_label”替换为“replacement”的扩展。“$1”替换为第一个匹配的子组，“$2”替换为第二个匹配的子组，依此类推。如果正则表达式不匹配，则返回不变的时间序列。",
+        "documentation-last-over-time": "指定间隔内的最近点值。",
+        "documentation-ln": "计算“v”中所有元素的自然对数。\n特殊情况是：\n * 'ln(+Inf) = +Inf'\n * 'ln(0) = -Inf'\n * 'ln(x < 0) = NaN'\n * 'ln(NaN) = NaN'",
+        "documentation-log10": "计算“v”中所有元素的十进制对数。特殊情况等同于“ln”中的情况。",
+        "documentation-log2": "计算“v”中所有元素的二进制对数。特殊情况等同于“ln”中的情况。",
+        "documentation-max-over-time": "指定间隔内所有点的最大值。",
+        "documentation-min-over-time": "指定间隔内所有点的最小值。",
+        "documentation-minute": "返回每小时中给定时间的分钟（UTC 时间）。返回的值介于 0 到 59 之间。",
+        "documentation-month": "返回每年中的给定时间的月份（UTC 时间）。返回的值介于 1 到 12 之间，其中 1 表示一月，以此类推。",
+        "documentation-pi": "返回 pi",
+        "documentation-predict-linear": "使用简单线性回归，根据范围向量“v”预测从现在开始的时间序列“t”秒的值。",
+        "documentation-present-over-time": "指定间隔内任何系列的值 1。",
+        "documentation-quantile-over-time": "指定间隔内值的 φ-quantile (0 ≤ φ ≤ 1)。",
+        "documentation-rad": "将 v 中所有元素的度转换为弧度",
+        "documentation-rate": "计算范围矢量中时间序列的每秒平均增加率。单调性中断（例如由于目标重新启动而导致的计数器重置）会自动调整。此外，计算外推到时间范围的末端，允许遗漏的抓取或抓取周期与范围的时间段不完美对齐。",
+        "documentation-resets": "对于每个输入时间序列，“resets(v range-vector)”返回提供的时间范围内的计数器重置次数，作为瞬时向量。两个连续样本之间的值的任何减小都被解释为计数器重置。",
+        "documentation-round": "将“v”中所有元素的样本值舍入到最接近的整数。通过向上舍入来解决绑定。可选的“to_nearest”参数允许指定应舍入样本值的最接近倍数。这个倍数也可能是分数。",
+        "documentation-scalar": "给定单元素输入向量，“scalar(v instant-vector)”返回该单个元素的样本值作为标量。如果输入向量不正好只有一个元素，“scalar”将返回“NaN”。",
+        "documentation-sgn": "返回一个向量，其中所有样本值都转换为其符号，定义如下：如果 v 为正，则为 1；如果 v 为负，则为 -1；如果 v 为零，则为 0。",
+        "documentation-sort": "返回按样本值排序的矢量元素，按升序排列。",
+        "documentation-sort-desc": "返回按样本值排序的向量元素，按降序排列。",
+        "documentation-sqrt": "计算“v”中所有元素的平方根。",
+        "documentation-stddev-over-time": "指定间隔内值的总体标准差。",
+        "documentation-stdvar-over-time": "指定间隔内值的总体标准方差。",
+        "documentation-sum-over-time": "指定间隔内所有值的总和。",
+        "documentation-time": "返回自 1970 年 1 月 1 日（UTC 时间）起的秒数。请注意，这实际上并不返回当前时间，而是返回要计算表达式的时间。",
+        "documentation-timestamp": "返回给定向量每个样本的时间戳，作为自 1970 年 1 月 1 日（UTC 时间）起的秒数。",
+        "documentation-vector": "返回标量“s”作为没有标签的矢量。",
+        "documentation-year": "返回每年给定时间的年份（UTC 时间）。"
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "计算 {{argument}} 中所有元素的反余弦",
+        "documentation-acosh": "计算 {{argument}} 中所有元素的反双曲余弦",
+        "documentation-asin": "计算 {{argument}} 中所有元素的反正弦",
+        "documentation-asinh": "计算 {{argument}} 中所有元素的反双曲正弦",
+        "documentation-atan": "计算 {{argument}} 中所有元素的反正切",
+        "documentation-atanh": "计算 {{argument}} 中所有元素的反双曲正切",
+        "documentation-cos": "计算 {{argument}} 中所有元素的余弦",
+        "documentation-cosh": "计算 {{argument}} 中所有元素的双曲余弦",
+        "documentation-sin": "计算 {{argument}} 中所有元素的正弦",
+        "documentation-sinh": "计算 {{argument}} 中所有元素的双曲正弦",
+        "documentation-tan": "计算 {{argument}} 中所有元素的正切",
+        "documentation-tanh": "计算 {{argument}} 中所有元素的双曲正切"
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "使用 Prometheus API 上的其他调用，通过正则表达式搜索筛选指标名称。",
-        "disable-text-wrap": "禁用文本换行"
-      },
       "feedback-link": {
         "give-feedback": "提供反馈",
         "title-give-feedback": "指标浏览器是新功能，请告诉我们如何改进"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "范例：{{value}}",
+        "format": "格式：{{value}}",
+        "legend": "图例：{{value}}",
+        "step": "步骤：{{value}}",
+        "type": "类型：{{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
-        "type": ""
+        "browse": "按名称搜索指标",
+        "type": "按类型筛选"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "表示单个单调递增计数器的累积指标，其值只能在重新启动时增加或重置为零。",
+        "description-gauge": "表示可以任意上下移动的单个数值的指标。",
+        "description-histogram": "直方图对观测值（通常是请求持续时间或响应大小等）进行抽样，并在可配置的存储桶中对其进行计数。",
+        "description-native-histogram": "原生直方图在许多方面与经典的 Prometheus 直方图不同：原生直方图的存储桶边界由公式计算，该公式取决于原生直方图的比例（分辨率），而不是由用户自定义。",
+        "description-no-type": "这些指标在元数据中没有定义的类型。",
+        "description-summary": "汇总对观测值（通常是请求持续时间和响应大小等）进行抽样，并可以在滑动时间窗口中计算可配置的分位数。",
+        "description-unknown": "这些指标在元数据中被赋予未知类型。",
+        "label-counter": "计数器",
+        "label-gauge": "仪表",
+        "label-histogram": "直方图",
+        "label-native-histogram": "原生直方图",
+        "label-no-type": "无类型",
+        "label-summary": "摘要",
+        "label-unknown": "未知"
       },
       "handle-function": {
         "text": {
@@ -264,8 +358,8 @@
         "tooltip-label-filters": "可选：用于筛选为此查询类型选择的指标。"
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "正在加载标签",
+        "noOptionsMessage-no-labels-found": "未找到标签"
       },
       "metric-combobox": {
         "async-select": {
@@ -277,15 +371,10 @@
         "tooltip-metric": "可选：返回指定指标中标签名称的标签值列表。"
       },
       "metrics-modal": {
-        "additional-settings": "其他设置",
-        "aria-label-additional-settings": "附加设置",
         "aria-label-browse-metrics": "浏览指标",
         "currently-selected": "当前选择：{{selected}}",
         "metrics-pre-filtered": "这些指标已通过标签筛选器中选择的标签进行预筛选。",
-        "placeholder-results-per-page": "每页显示结果数",
-        "results-per-page": "每页结果数",
-        "title-metrics-explorer": "指标浏览器",
-        "results-amount_other": "显示 {{num}} 个结果（共 {{count}} 个）"
+        "title-metrics-explorer": "指标浏览器"
       },
       "nested-query": {
         "label": {
@@ -318,13 +407,20 @@
         "title-add": "添加{{name}}",
         "title-remove": "移除{{name}}"
       },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "计算各维度的 {{aggregationName}}，同时保留 {{labelWord}} {{labels}}。",
+          "label-default": "计算各维度的 {{aggregationName}}。",
+          "label-without": "计算各维度的 {{aggregationName}} {{labels}}。所有其他标签都将保留。"
+        }
+      },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "设置步长参数的下限",
         "aria-label-select-resolution": "选择分辨率",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "热图",
+          "label-table": "表格",
+          "label-time-series": "时间序列"
         },
         "label-exemplars": "范例",
         "label-format": "格式",
@@ -340,8 +436,8 @@
         "tooltip-autocomplete-suggestions-limited": "指标名称的数量超过了自动完成限制。仅显示 {{autocompleteLimit}} 个最相关的指标。您可以在数据源设置中调整阈值。"
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "存在语法错误，或者切换到构建器模式时无法可视化查询结构。查询的某些部分可能会丢失。",
+        "confirmText-continue": "继续",
         "kick-start-your-query": "启动您的查询",
         "label-explain": "解释",
         "run-queries": "运行查询",
@@ -357,8 +453,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "构建器",
+          "label-code": "代码"
         }
       },
       "query-pattern": {
@@ -387,11 +483,10 @@
       "results-table": {
         "content-descriptive-type": "创建 {{descriptiveType}} 时，Prometheus 会使用类型计数器公开多个序列。",
         "description": "描述",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "未找到指标。尝试展开您的标签筛选条件。",
+        "message-expand-search": "未找到指标。尝试展开您的搜索和筛选条件。",
+        "message-no-metrics-found": "数据源中未找到指标。",
         "name": "名称",
-        "select": "选择",
         "type": "类型"
       },
       "update-function-args": {

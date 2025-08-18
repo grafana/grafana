@@ -158,8 +158,8 @@
         "aria-label-prometheus-type": "Prometheus-típus",
         "aria-label-select-http-method": "HTTP-módszer kiválasztása",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Építő",
+          "label-code": "Kód"
         },
         "label-cache-level": "Gyorsítótár szintje",
         "label-custom-query-parameters": "Egyéni lekérdezési paraméterek",
@@ -199,54 +199,148 @@
         "tooltip-use-series-endpoint": "Ennek az opciónak a bejelölésével előnyben részesíti a sorozat végpontját {{exampleParameter}} paraméterrel a címkeértékek végpontjához képest {{exampleParameter}} paraméterrel. Bár a címkeértékek végpontja hatékonyabbnak tekinthető, egyes felhasználók előnyben részesíthetik a sorozatot, mert rendelkezik POST-metódussal, míg a címkeértékek végpontja csak GET-metódussal rendelkezik."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "(Letiltva)",
+      "enabled-label": "Metrikaböngésző"
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Csak egyedi címkéket tartalmaz",
+        "description-custom": "Adjon meg egy elnevezési sablont",
+        "description-verbose": "Minden címkenév és -érték",
+        "label-auto": "Automatikus",
+        "label-custom": "Egyéni",
+        "label-verbose": "Részletes"
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "Számítsa ki a méretek átlagát",
+        "documentation-bottomk": "A legkisebb k elem mintaérték szerint",
+        "documentation-count": "Számolja meg a vektor elemeinek számát",
+        "documentation-count-values": "Számolja meg az azonos értékű elemek számát",
+        "documentation-group": "Az eredményül kapott vektor összes értéke: 1",
+        "documentation-max": "Válassza ki a maximális méreteket",
+        "documentation-min": "Válassza ki a minimális méreteket",
+        "documentation-quantile": "Számítsa ki a φ-kvantilist (0 ≤ φ ≤ 1) a dimenziók mentén",
+        "documentation-stddev": "Számítsa ki a populáció szórását a dimenziók mentén",
+        "documentation-stdvar": "Számítsa ki a populáció szabványos varianciáját a dimenziók mentén",
+        "documentation-sum": "Számítsa ki az összeget a dimenziók mentén",
+        "documentation-topk": "A legnagyobb k elemek mintaérték szerint"
+      },
+      "getFunctions": {
+        "documentation-abs": "Visszaadja a bemeneti vektort, amelyben az összes mintaérték abszolút értékre van konvertálva.",
+        "documentation-absent": "Üres vektort ad vissza, ha az átadott vektor tartalmaz elemeket, és 1 elemből álló vektort ad vissza, amelynek értéke 1, ha az átadott vektor nem tartalmaz elemeket. Ez akkor hasznos, ha figyelmeztetésre van szükség, amikor egy adott metrika név-címke kombinációjához nem létezik idősor.",
+        "documentation-absent-over-time": "Üres vektort ad vissza, ha az átadott tartományvektor tartalmaz elemeket, és 1 elemből álló vektort ad vissza, amelynek értéke 1, ha az átadott tartományvektor nem tartalmaz elemeket.",
+        "documentation-avg-over-time": "A megadott intervallum összes pontjának átlagértéke.",
+        "documentation-ceil": "A „v” összes elemének mintavételi értékeit a legközelebbi egész számra felkerekíti.",
+        "documentation-changes": "Minden bemeneti idősor esetében a „changes(v range-vector)” függvény az adott időtartományon belül az érték változásának számát adja vissza pillanatnyi vektorként.",
+        "documentation-clamp": "A „v” összes elemének mintavételi értékeit úgy rögzíti, hogy az alsó határ „min”, a felső határ pedig „max” legyen.",
+        "documentation-clamp-max": "A „v” összes elemének mintavételi értékeit úgy rögzíti, hogy a felső határ „max” legyen.",
+        "documentation-clamp-min": "A „v” összes elemének mintavételi értékeit úgy rögzíti, hogy az alsó határ „min” legyen.",
+        "documentation-count-over-time": "A megadott intervallum összes értékének száma.",
+        "documentation-count-scalar": "Visszaadja az idősorvektor elemeinek számát skalárként. Ez ellentétben áll a „count()” összesítő operátorral, amely mindig vektort ad vissza (üreset, ha a bemeneti vektor üres) és lehetővé teszi a címkék szerinti csoportosítást a „by” záradékkal.",
+        "documentation-day-of-month": "Visszaadja az időpontok adott hónapra vonatkozó napját UTC-ben. A visszaadott értékek 1 és 31 között lehetnek.",
+        "documentation-day-of-week": "Visszaadja az időpontok adott hétre vonatkozó napját UTC-ben. A visszaadott értékek 0 és 6 között lehetnek, ahol a 0 vasárnapot jelent stb.",
+        "documentation-day-of-year": "Visszaadja az időpontok adott évre vonatkozó napját UTC-ben. A visszaadott értékek 1 és 365 között lehetnek a nem szökőévek esetében, és 1 és 366 között a szökőévek esetében.",
+        "documentation-days-in-month": "Visszaadja az adott időpontokhoz tartozó hónap napjainak számát UTC időzóna szerint. A visszaadott értékek 28 és 31 között lehetnek.",
+        "documentation-deg": "A v összes elemének radiánjait fokokká alakítja át",
+        "documentation-delta": "Kiszámítja a „v” tartományvektorban szereplő idősorelemek első és utolsó értéke közötti különbséget, és visszaad egy pillanatnyi vektort a megadott deltákkal és egyenértékű címkékkel. A delta extrapolálásra kerül, hogy lefedje a tartományvektor-választóban megadott teljes időtartományt, így lehetséges, hogy nem egész számú eredményt kapunk, még akkor is, ha a mintaértékek mind egész számok.",
+        "documentation-deriv": "Egyszerű lineáris regresszió segítségével kiszámítja az idősor másodpercenkénti deriváltját egy „v” tartományvektorban.",
+        "documentation-double-exponential-smoothing": "A „v” tartomány alapján simított értéket állít elő az idősorokhoz. Minél alacsonyabb az „sf” simítási tényező, annál nagyobb jelentőséget kapnak a régebbi adatok. Minél magasabb a „tf” trendtényező, annál nagyobb szerepet kapnak az adatokban a trendek. Mind az „sf”, mind a „tf” értékének 0 és 1 között kell lennie.",
+        "documentation-drop-common-labels": "Eltávolít minden olyan címkét, amely azonos névvel és értékkel rendelkezik a bemeneti vektor összes sorozatában.",
+        "documentation-exp": "Kiszámítja az exponenciális függvényt a „v” összes elemére.\nKülönleges esetek:\n* „Exp(+Inf) = +Inf”\n* „Exp(NaN) = NaN”",
+        "documentation-floor": "A „v” összes elemének mintavételi értékeit a legközelebbi egész számra lekerekíti.",
+        "documentation-histogram-avg": "Visszaadja a natív hisztogramban tárolt megfigyelt értékek számtani átlagát. A natív hisztogramokhoz nem tartozó minták figyelmen kívül maradnak, és nem jelennek meg a visszaadott vektorban.",
+        "documentation-histogram-count": "Visszaadja a natív hisztogramban tárolt megfigyelések számát.",
+        "documentation-histogram-fraction": "Visszaadja a megadott alsó és felső értékek közötti megfigyelések becsült arányát.",
+        "documentation-histogram-quantile": "Kiszámítja a φ-kvantilt (0 ≤ φ ≤ 1) a hisztogram „b” gyűjtőiből. A „b” minták az egyes gyűjtőkben található megfigyelések számát jelentik. Minden mintának rendelkeznie kell egy „le” címkével, amelynek értéke a gyűjtő felső határát jelöli. (Az ilyen címkével nem rendelkező mintákat a rendszer figyelmen kívül hagyja.) A hisztogram metrikus típusa automatikusan ellátja az idősorokat a „_bucket” utótaggal és a megfelelő címkékkel.",
+        "documentation-histogram-stddev": "Visszaadja a natív hisztogramban szereplő megfigyelések becsült szórását a megfigyelések helyét tartalmazó tartományok geometriai átlaga alapján.",
+        "documentation-histogram-stdvar": "Visszaadja a natív hisztogramban szereplő megfigyelések becsült varianciáját.",
+        "documentation-histogram-sum": "Visszaadja a natív hisztogramban tárolt megfigyelések összegét.",
+        "documentation-holt-winters": "A Prometheus v3.x verzióban double_exponential_smoothing megnevezést kapott. A Prometheus v3.0 vagy annál újabb verzóknál használja a double_exponential_smoothing funkciót.\n\nA „v” tartomány alapján simított értéket állít elő az idősorokhoz. Minél alacsonyabb az „sf” simítási tényező, annál nagyobb jelentőséget kapnak a régebbi adatok. Minél magasabb a „tf” trendtényező, annál nagyobb szerepet kapnak az adatokban a trendek. Mind az „sf”, mind a „tf” értékének 0 és 1 között kell lennie.",
+        "documentation-hour": "Visszaadja az adott időpontok óráját UTC-ben. A visszaadott értékek 0 és 23 között lehetnek.",
+        "documentation-idelta": "Kiszámítja a „v” tartományvektor utolsó két mintája közötti különbséget, és visszaad egy pillanatnyi vektort a megadott deltákkal és egyenértékű címkékkel.",
+        "documentation-increase": "Kiszámítja az idősor növekedését a tartományvektorban. A monotonitás megszakadásait (például a cél újraindítása miatt bekövetkező számláló-visszaállításokat) a rendszer automatikusan kiigazítja. A növekedés extrapolálásra kerül, hogy lefedje a tartományvektor-választóban megadott teljes időtartományt, így lehetséges, hogy nem egész számú eredményt kapunk, még akkor is, ha a számláló csak egész számmal növekszik.",
+        "documentation-info": "A legfrissebb részleteket és metaadatokat adja vissza egy mutatócsoportról, például a címkéket és az aktuális értékeket, anélkül, hogy bármilyen számítást végezne.",
+        "documentation-irate": "Kiszámítja az idősor másodpercenkénti növekedési sebességét a tartományvektorban. Ez az utolsó két adatponton alapul. A monotonitás megszakadásait (például a cél újraindítása miatt bekövetkező számláló-visszaállításokat) a rendszer automatikusan kiigazítja.",
+        "documentation-label-join": "A „v” vektor minden idősorához összekapcsolja az összes „src_labels” értékét a „separator” segítségével, és visszaadja az összekapcsolt értéket tartalmazó, „dst_label” címkével ellátott idősorokat. Ebben a függvényben tetszőleges számú „src_labels” lehet.",
+        "documentation-label-replace": "A „v” minden idősorához a „label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)” a „regex” reguláris kifejezést a „src_label” címkével hasonlítja össze. Ha egyezik, akkor az idősor a „dst_label” címkét adja vissza, amelyet a „replacement” kiterjesztése helyettesít. Az „$1” helyére az első egyező alcsoport, az „$2” helyére a második stb. kerül. Ha a reguláris kifejezés nem egyezik, akkor az idősor változatlanul kerül visszaadásra.",
+        "documentation-last-over-time": "A legutóbbi pontérték a megadott intervallumban.",
+        "documentation-ln": "Kiszámítja a természetes logaritmust a „v” összes elemére.\nKülönleges esetek:\n * „ln(+Inf) = +Inf”\n * „ln(0) = -Inf”\n * „ln(x < 0) = NaN”\n * „ln(NaN) = NaN”",
+        "documentation-log10": "Kiszámítja a „v” összes elemének decimális logaritmusát. A különleges esetek megegyeznek az „ln” esetével.",
+        "documentation-log2": "Kiszámítja a „v” összes elemének bináris logaritmusát. A különleges esetek megegyeznek az „ln” esetével.",
+        "documentation-max-over-time": "A megadott intervallum összes pontjának maximális értéke.",
+        "documentation-min-over-time": "A megadott intervallum összes pontjának minimális értéke.",
+        "documentation-minute": "Visszaadja az adott időpontok percét UTC-ben. A visszaadott értékek 0 és 59 között lehetnek.",
+        "documentation-month": "Visszaadja az év hónapját az adott időpontokhoz UTC-ben. A visszaadott értékek 1 és 12 között lehetnek, ahol 1 január, stb.",
+        "documentation-pi": "A pi értékét adja vissza",
+        "documentation-predict-linear": "Egyszerű lineáris regresszióval megjósolja a „t” másodperccel későbbi idősor értékét a „v” tartományvektor alapján.",
+        "documentation-present-over-time": "Az 1-es érték a megadott intervallum bármely sorozata esetében.",
+        "documentation-quantile-over-time": "A megadott intervallum értékeinek φ-kvantilise (0 ≤ φ ≤ 1).",
+        "documentation-rad": "A „v” összes elemének fokjait radiánra alakítja át",
+        "documentation-rate": "Kiszámítja az idősor másodpercenkénti átlagos növekedési sebességét a tartományvektorban. A monotonitás megszakadásait (például a cél újraindítása miatt bekövetkező számláló-visszaállításokat) a rendszer automatikusan kiigazítja. Ezenkívül a számítás extrapolálja az időtartomány végeit, figyelembe véve a kihagyott lekérdezéseket vagy a lekérdezési ciklusok és a tartomány időtartamának nem tökéletes összehangolását.",
+        "documentation-resets": "Minden bemeneti idősor esetében a „resets(v range-vector)” a megadott időtartományon belüli számláló-visszaállítások számát azonnali vektorként adja vissza. Két egymást követő minta közötti értékcsökkenést a program számláló-visszaállításként értelmez.",
+        "documentation-round": "A „v” összes elemének mintaértékeit a legközelebbi egész számra kerekíti. Az egyenlő értékeket felfelé kerekíti. Az opcionális „to_nearest” argumentum lehetővé teszi a mintaértékek kerekítésének legközelebbi többszörösének megadását. Ez a többszörös lehet törtszám is.",
+        "documentation-scalar": "Egy egyelemes bemeneti vektor esetén a „scalar(v instant-vector)” az adott egy elem mintavételi értékét skalárként adja vissza. Ha a bemeneti vektor nem pontosan egy elemmel rendelkezik, a „scalar” a „NaN” értéket adja vissza.",
+        "documentation-sgn": "Egy vektort ad vissza, amelyben az összes mintaérték az előjelére van konvertálva, az alábbiak szerint: 1, ha „v” pozitív, -1, ha „v” negatív, és 0, ha „v” nulla.",
+        "documentation-sort": "A mintavételi értékeik szerint növekvő sorrendbe rendezve adja vissza a vektorelemeket.",
+        "documentation-sort-desc": "A mintavételi értékeik szerint csökkenő sorrendbe rendezve adja vissza a vektorelemeket.",
+        "documentation-sqrt": "Kiszámítja a „v” összes elemének négyzetgyökét.",
+        "documentation-stddev-over-time": "A megadott intervallum értékeinek populációs szórása.",
+        "documentation-stdvar-over-time": "A megadott intervallum értékeinek populációs varianciája.",
+        "documentation-sum-over-time": "A megadott intervallum összes értékének összege.",
+        "documentation-time": "Visszaadja az 1970. január 1-től eltelt másodpercek számát UTC-időzóna szerint. Ne feledje, hogy ez valójában nem a jelenlegi időt adja vissza, hanem azt az időpontot, amikor a kifejezés kiértékelésre kerül.",
+        "documentation-timestamp": "Visszaadja az adott vektor minden mintájának időbélyegét az 1970. január 1. óta eltelt másodpercek számaként UTC-időzónában.",
+        "documentation-vector": "Visszaadja a skaláris „s” értéket címkék nélküli vektorként.",
+        "documentation-year": "Visszaadja az adott időpontok évét UTC-ben."
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "kiszámítja a(z) {{argument}} összes elemének arkusz koszinuszát",
+        "documentation-acosh": "kiszámítja a(z) {{argument}} összes elemének inverz hiperbolikus koszinuszát",
+        "documentation-asin": "kiszámítja a(z) {{argument}} összes elemének arkusz szinuszát",
+        "documentation-asinh": "kiszámítja a(z) {{argument}} összes elemének inverz hiperbolikus szinuszát",
+        "documentation-atan": "kiszámítja a(z) {{argument}} összes elemének arkusz tangensét",
+        "documentation-atanh": "kiszámítja a(z) {{argument}} összes elemének inverz hiperbolikus tangensét",
+        "documentation-cos": "kiszámítja a(z) {{argument}} összes elemének koszinuszát",
+        "documentation-cosh": "kiszámítja a(z) {{argument}} összes elemének hiperbolikus koszinuszát",
+        "documentation-sin": "kiszámítja a(z) {{argument}} összes elemének szinuszát",
+        "documentation-sinh": "kiszámítja a(z) {{argument}} összes elemének hiperbolikus szinuszát",
+        "documentation-tan": "kiszámítja a(z) {{argument}} összes elemének tangensét",
+        "documentation-tanh": "kiszámítja a(z) {{argument}} összes elemének hiperbolikus tangensét"
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "A metrikanevek szűrése reguláris kifejezéses kereséssel, a Prometheus API további hívásával.",
-        "disable-text-wrap": "Sortörés letiltása"
-      },
       "feedback-link": {
         "give-feedback": "Visszajelzés küldése",
         "title-give-feedback": "A metrikaböngésző új, és számítunk az építő jellegű visszajelzésére"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Mintapéldányok: {{value}}",
+        "format": "Formátum: {{value}}",
+        "legend": "Jelmagyarázat: {{value}}",
+        "step": "Lépés: {{value}}",
+        "type": "Típus: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
-        "type": ""
+        "browse": "Metrikák keresése név alapján",
+        "type": "Szűrés típus szerint"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Egyetlen, monoton növekvő számlálóhoz tartozó kumulatív mutató, amelynek értéke csak növekedhet, vagy újraindításkor nullára állítható vissza.",
+        "description-gauge": "Egyetlen numerikus értéket képviselő mutató, amely szabadon növekedhet és csökkenhet.",
+        "description-histogram": "A hisztogram mintákat vesz a megfigyelésekből (általában olyanokból, mint a kérések időtartama vagy a válaszok mérete), és konfigurálható kategóriákba sorolja őket.",
+        "description-native-histogram": "A natív hisztogramok számos szempontból eltérnek a klasszikus Prometheus hisztogramoktól: A natív hisztogramok tartományhatárai egy képlet alapján kerülnek kiszámolásra, amely a natív hisztogram méretarányától (felbontásától) függ, és nem a felhasználó határozza meg.",
+        "description-no-type": "Ezeknek a mutatóknak nincs meghatározott típusa a metaadatokban.",
+        "description-summary": "Összefoglalja a mintavételi megfigyeléseket (általában olyanokat, mint a kérések időtartama és a válaszok mérete), és konfigurálható kvantiliseket számíthat ki egy változó időablakban.",
+        "description-unknown": "Ezek a mutatók a metaadatokban ismeretlen típusúak.",
+        "label-counter": "Számláló",
+        "label-gauge": "Mérőeszköz",
+        "label-histogram": "Hisztogram",
+        "label-native-histogram": "Natív hisztogram",
+        "label-no-type": "Nincs típus",
+        "label-summary": "Összegzés",
+        "label-unknown": "Ismeretlen"
       },
       "handle-function": {
         "text": {
@@ -264,8 +358,8 @@
         "tooltip-label-filters": "Opcionális: a lekérdezéstípushoz kiválasztott metrika szűrésére szolgál."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Címkék betöltése",
+        "noOptionsMessage-no-labels-found": "Nem található címke"
       },
       "metric-combobox": {
         "async-select": {
@@ -277,16 +371,10 @@
         "tooltip-metric": "Opcionális: a megadott metrikában a címke nevéhez tartozó címkeértékek listáját adja vissza."
       },
       "metrics-modal": {
-        "additional-settings": "További beállítások",
-        "aria-label-additional-settings": "További beállítások",
         "aria-label-browse-metrics": "Metrikák böngészése",
         "currently-selected": "Jelenleg kiválasztott: {{selected}}",
         "metrics-pre-filtered": "Ezek a metrikák előszűrtek a címkeszűrőkben kiválasztott címkék alapján.",
-        "placeholder-results-per-page": "találat oldalanként",
-        "results-per-page": "Találatok száma oldalanként",
-        "title-metrics-explorer": "Metrikaböngésző",
-        "results-amount_one": "{{count}}/{{num}} találat megjelenítése",
-        "results-amount_other": "{{count}}/{{num}} találat megjelenítése"
+        "title-metrics-explorer": "Metrikaböngésző"
       },
       "nested-query": {
         "label": {
@@ -319,13 +407,20 @@
         "title-add": "{{name}} hozzáadása",
         "title-remove": "{{name}} eltávolítása"
       },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "Kiszámítja a(z) {{aggregationName}} összesítést a dimenziók mentén, miközben megőrzi a(z) {{labelWord}} {{labels}} címkéket.",
+          "label-default": "Kiszámítja a(z) {{aggregationName}} összesítést a dimenziók mentén.",
+          "label-without": "Kiszámítja a(z) {{aggregationName}} összesítést a(z) {{labels}} dimenziók mentén. Minden más címke megmarad."
+        }
+      },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Állítsa be a léptékparaméter alsó határát",
         "aria-label-select-resolution": "Felbontás kiválasztása",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Hőtérkép",
+          "label-table": "Táblázat",
+          "label-time-series": "Idősor"
         },
         "label-exemplars": "Mintapéldányok",
         "label-format": "Formátum",
@@ -341,8 +436,8 @@
         "tooltip-autocomplete-suggestions-limited": "A metrikanevek száma meghaladja az automatikus kitöltés korlátját. Csak a(z) {{autocompleteLimit}} legrelevánsabb metrika jelenik meg. A küszöbértéket az adatforrás beállításai között módosíthatja."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Szintaktikai hiba történt, vagy a lekérdezési struktúra nem jeleníthető meg szerkesztő módra való váltáskor. A lekérdezés egyes részei elveszhetnek.",
+        "confirmText-continue": "Folytatás",
         "kick-start-your-query": "Előbeállításos lekérdezés",
         "label-explain": "Magyarázat",
         "run-queries": "Lekérdezések futtatása",
@@ -358,8 +453,8 @@
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Építő",
+          "label-code": "Kód"
         }
       },
       "query-pattern": {
@@ -388,11 +483,10 @@
       "results-table": {
         "content-descriptive-type": "{{descriptiveType}} létrehozásakor a Prometheus több, számláló típusú sorozatot jelenít meg. ",
         "description": "Leírás",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Nem található metrika. Próbálja meg kibővíteni a címkeszűrőket.",
+        "message-expand-search": "Nem található metrika. Próbálja meg kibővíteni a keresést és a szűrőket.",
+        "message-no-metrics-found": "Nem található metrika az adatforrásban.",
         "name": "Név",
-        "select": "Kijelölés",
         "type": "Típus"
       },
       "update-function-args": {

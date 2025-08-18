@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -389,9 +389,8 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 // IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
 func IsRowAlreadyExistsError(err error) bool {
-	var sqlite sqlite3.Error
-	if errors.As(err, &sqlite) {
-		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
 	}
 
 	var pg *pgconn.PgError
@@ -600,7 +599,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{}
+	iter := &listIter{sortAsc: false}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -638,7 +637,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	defer span.End()
 
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion}
+	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {

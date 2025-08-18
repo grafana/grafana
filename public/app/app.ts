@@ -50,7 +50,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
-import { loadResources as loadScenesResources } from '@grafana/scenes';
+import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -82,6 +82,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
+import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -215,7 +216,7 @@ export class GrafanaApp {
 
       // Login redirect requires locationUtil to be initialized
       locationUtil.initialize({
-        config,
+        config: window.grafanaBootData.settings,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
@@ -282,6 +283,11 @@ export class GrafanaApp {
 
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();
+      }
+
+      if (config.featureToggles.dashboardLevelTimeMacros) {
+        sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
+        sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }
 
       const root = createRoot(document.getElementById('reactRoot')!);

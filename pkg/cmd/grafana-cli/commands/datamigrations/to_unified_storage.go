@@ -63,6 +63,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		},
 	}
 
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return err
+	}
+	featureToggles := featuremgmt.ProvideToggles(featureManager)
+
 	provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
 	if err != nil {
 		return err
@@ -75,10 +81,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		provisioning,
 		nil, // no librarypanels.Service
 		sort.ProvideService(),
+		nil, // we don't delete during migration, and this is only need to delete permission.
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		featureToggles,
 	)
 
-	client, err := newUnifiedClient(cfg, sqlStore)
+	client, err := newUnifiedClient(cfg, sqlStore, featureToggles)
 	if err != nil {
 		return err
 	}
@@ -215,12 +223,7 @@ func promptYesNo(prompt string) (bool, error) {
 	}
 }
 
-func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, err
-	}
-	featureToggles := featuremgmt.ProvideToggles(featureManager)
+func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
 		Features: featureToggles,

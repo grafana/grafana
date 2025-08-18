@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/semconv
 
-go 1.24.4
+go 1.24.6
 
 require go.opentelemetry.io/otel v1.37.0
 

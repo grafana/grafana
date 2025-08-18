@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
@@ -76,8 +76,15 @@ export function SecondaryActions({
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
               variant="canvas"
-              onClick={() => openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary)}
+              onClick={() =>
+                openQueryLibraryDrawer({
+                  datasourceFilters: activeDatasources,
+                  onSelectQuery: onSelectQueryFromLibrary,
+                  options: { context: CoreApp.Explore },
+                })
+              }
               icon="plus"
+              disabled={addQueryRowButtonDisabled}
             >
               <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add query from library</Trans>
             </ToolbarButton>

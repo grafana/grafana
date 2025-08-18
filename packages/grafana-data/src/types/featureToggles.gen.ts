@@ -80,11 +80,6 @@ export interface FeatureToggles {
   */
   mysqlAnsiQuotes?: boolean;
   /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
-  /**
   * Rule backtesting API for alerting
   */
   alertingBacktesting?: boolean;
@@ -165,15 +160,6 @@ export interface FeatureToggles {
   * Enables the plugins frontend sandbox
   */
   pluginsFrontendSandbox?: boolean;
-  /**
-  * Enables right panel for the plugins details page
-  * @default true
-  */
-  pluginsDetailsRightPanel?: boolean;
-  /**
-  * Enables previous SQL data source dataset dropdown behavior
-  */
-  sqlDatasourceDatabaseSelection?: boolean;
   /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
@@ -287,18 +273,13 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Routes library panel connections requests from /api to using search
-  */
-  kubernetesLibraryPanelConnections?: boolean;
-  /**
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
   /**
-  * Route the folder and dashboard service requests to k8s
-  * @default true
+  * Routes short url requests from /api to the /apis endpoint
   */
-  kubernetesClientDashboardsFolders?: boolean;
+  kubernetesShortURLs?: boolean;
   /**
   * Disable schema validation for dashboards/v1
   */
@@ -311,6 +292,10 @@ export interface FeatureToggles {
   * Log schema validation errors so they can be analyzed later
   */
   dashboardSchemaValidationLogging?: boolean;
+  /**
+  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+  */
+  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -352,6 +337,10 @@ export interface FeatureToggles {
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   */
   alertmanagerRemoteSecondary?: boolean;
+  /**
+  * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
+  */
+  alertingProvenanceLockWrites?: boolean;
   /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
@@ -396,6 +385,10 @@ export interface FeatureToggles {
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Enables time comparison option in supported panels
+  */
+  timeComparison?: boolean;
   /**
   * Enables infinite scrolling for the Logs panel in Explore and Dashboards
   * @default true
@@ -450,7 +443,7 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   /**
   * Enables the compressed protobuf-based alert state storage
-  * @default false
+  * @default true
   */
   alertingSaveStateCompressed?: boolean;
   /**
@@ -458,6 +451,11 @@ export interface FeatureToggles {
   * @default false
   */
   scopeApi?: boolean;
+  /**
+  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+  * @default false
+  */
+  useScopeSingleNodeEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
@@ -472,6 +470,10 @@ export interface FeatureToggles {
   * Enables SQL Expressions, which can execute SQL queries against data source results.
   */
   sqlExpressions?: boolean;
+  /**
+  * Enables column autocomplete for SQL Expressions
+  */
+  sqlExpressionsColumnAutoComplete?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -673,11 +675,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Enable permission filtering on unified storage search
-  * @default true
-  */
-  unifiedStorageSearchPermissionFiltering?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -748,6 +745,11 @@ export interface FeatureToggles {
   */
   alertingAIGenAlertRules?: boolean;
   /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
   * Enable AI-improve alert rules labels and annotations.
   * @default false
   */
@@ -808,11 +810,6 @@ export interface FeatureToggles {
   * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
-  /**
-  * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
-  * @default true
-  */
-  teamHttpHeadersMimir?: boolean;
   /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
@@ -953,6 +950,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
+  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -983,6 +984,14 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Registers AuthZ resource permission /apis endpoints
+  */
+  kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
+  * Enables create, delete, and update mutations for resources owned by IAM identity
+  */
+  kubernetesAuthnMutation?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1002,6 +1011,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables the UI to see imported Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   */
@@ -1054,4 +1068,44 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Supports __from and __to macros that always use the dashboard level time range
+  */
+  dashboardLevelTimeMacros?: boolean;
+  /**
+  * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
+  * @default false
+  */
+  alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
+  /**
+  * Enable favorite datasources
+  */
+  favoriteDatasources?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
+  /**
+  * Enable experimental search-after-write guarantees to unified-storage search endpoints
+  * @default false
+  */
+  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
 }

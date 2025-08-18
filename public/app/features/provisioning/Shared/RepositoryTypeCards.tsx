@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 
 import { Trans } from '@grafana/i18n';
-import { Card, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
 import { CONNECT_URL, DEFAULT_REPOSITORY_TYPES } from '../constants';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
+
+import { RepoIcon } from './RepoIcon';
 
 export function RepositoryTypeCards() {
   const styles = useStyles2(getStyles);
@@ -26,7 +28,7 @@ export function RepositoryTypeCards() {
             {gitProviders.map((config) => (
               <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
                 <Stack gap={2} alignItems="center">
-                  <Icon name={config.icon} size="xxl" />
+                  <RepoIcon type={config.type} />
                   <Trans
                     i18nKey="provisioning.repository-type-cards.configure-with-provider"
                     values={{ provider: config.label }}
@@ -51,7 +53,7 @@ export function RepositoryTypeCards() {
           {otherProviders.map((config) => (
             <Card key={config.type} href={`${CONNECT_URL}/${config.type}`} className={styles.card} noMargin>
               <Stack gap={2} alignItems="center">
-                <Icon name={config.icon} size="xxl" />
+                <RepoIcon type={config.type} />
                 {config.type === 'local' ? (
                   <Trans i18nKey="provisioning.repository-type-cards.configure-file">Configure file provisioning</Trans>
                 ) : (
