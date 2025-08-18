@@ -309,7 +309,7 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 	hooks, _ := repo.(repository.Hooks)
-	if hooks == nil || obj.Generation == obj.Status.ObservedGeneration {
+	if hooks == nil {
 		return nil, nil
 	}
 
@@ -522,6 +522,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	case len(hookOps) > 0:
 		patchOperations = append(patchOperations, hookOps...)
 	}
+
 	// If hooks failed, update health status to unhealthy
 	if hookError != nil {
 		healthStatus = provisioning.HealthStatus{
