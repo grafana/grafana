@@ -120,7 +120,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 
 			// Use health checker to test and update repository health
-			rsp, err = s.healthChecker.RefreshHealthWithTestResults(ctx, repo)
+			rsp, _, err = s.healthChecker.RefreshHealth(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return

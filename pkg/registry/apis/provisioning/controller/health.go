@@ -114,8 +114,9 @@ func (hc *HealthChecker) ShouldRetryFailure(failure *RepositoryFailure) bool {
 	}
 }
 
-// CheckRepositoryHealth performs a comprehensive health check
-func (hc *HealthChecker) CheckRepositoryHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) provisioning.HealthStatus {
+// checkHealth performs a comprehensive health check
+// Returns test results, health status, and any error
+func (hc *HealthChecker) checkHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
 	// Parse existing failures to preserve them
 	existingFailures := hc.ParseExistingFailures(existingStatus)
 	var preservedFailures []*RepositoryFailure
@@ -129,6 +130,7 @@ func (hc *HealthChecker) CheckRepositoryHealth(ctx context.Context, repo reposit
 
 	// Only run new health check if we don't have recent health failures
 	var newHealthFailure *RepositoryFailure
+	var testResults *provisioning.TestResults
 	shouldRunHealthCheck := true
 	for _, failure := range preservedFailures {
 		if failure.Type == FailureTypeHealth {
@@ -140,20 +142,21 @@ func (hc *HealthChecker) CheckRepositoryHealth(ctx context.Context, repo reposit
 	if shouldRunHealthCheck {
 		if repo != nil {
 			res, err := hc.tester.TestRepository(ctx, repo)
-			if err != nil || (res != nil && !res.Success) {
-				if err != nil {
-					newHealthFailure = NewRepositoryFailure(FailureTypeHealth, err)
-				} else {
-					// Convert test result errors to failure
-					var errorMsgs []string
-					for _, testErr := range res.Errors {
-						if testErr.Detail != "" {
-							errorMsgs = append(errorMsgs, testErr.Detail)
-						}
+			if err != nil {
+				return nil, existingStatus, fmt.Errorf("failed to test repository: %w", err)
+			}
+
+			testResults = res
+			if res != nil && !res.Success {
+				// Convert test result errors to failure
+				var errorMsgs []string
+				for _, testErr := range res.Errors {
+					if testErr.Detail != "" {
+						errorMsgs = append(errorMsgs, testErr.Detail)
 					}
-					if len(errorMsgs) > 0 {
-						newHealthFailure = NewRepositoryFailure(FailureTypeHealth, fmt.Errorf("%s", strings.Join(errorMsgs, "; ")))
-					}
+				}
+				if len(errorMsgs) > 0 {
+					newHealthFailure = NewRepositoryFailure(FailureTypeHealth, fmt.Errorf("%s", strings.Join(errorMsgs, "; ")))
 				}
 			}
 		}
@@ -172,11 +175,13 @@ func (hc *HealthChecker) CheckRepositoryHealth(ctx context.Context, repo reposit
 		messages = append(messages, failure.Error())
 	}
 
-	return provisioning.HealthStatus{
+	healthStatus := provisioning.HealthStatus{
 		Healthy: healthy,
 		Checked: time.Now().UnixMilli(),
 		Message: messages,
 	}
+
+	return testResults, healthStatus, nil
 }
 
 // recordFailure creates a health status with a specific failure
@@ -258,26 +263,23 @@ func (hc *HealthChecker) HasHealthStatusChanged(old, new provisioning.HealthStat
 	return false
 }
 
-// RefreshHealthWithTestResults performs a health check on an existing repository,
+// RefreshHealth performs a health check on an existing repository,
 // updates its status if needed, and returns the test results
-func (hc *HealthChecker) RefreshHealthWithTestResults(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error) {
+func (hc *HealthChecker) RefreshHealth(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, error) {
 	if repo == nil {
-		return nil, fmt.Errorf("repository is nil")
+		return nil, provisioning.HealthStatus{}, fmt.Errorf("repository is nil")
 	}
 
 	cfg := repo.Config()
 	if cfg == nil {
-		return nil, fmt.Errorf("repository config is nil")
-	}
-
-	// Run the test to get results
-	testResults, err := hc.tester.TestRepository(ctx, repo)
-	if err != nil {
-		return nil, fmt.Errorf("failed to test repository: %w", err)
+		return nil, provisioning.HealthStatus{}, fmt.Errorf("repository config is nil")
 	}
 
 	// Use health checker to perform comprehensive health check with existing status
-	newHealthStatus := hc.CheckRepositoryHealth(ctx, repo, cfg.Status.Health)
+	testResults, newHealthStatus, err := hc.checkHealth(ctx, repo, cfg.Status.Health)
+	if err != nil {
+		return nil, provisioning.HealthStatus{}, fmt.Errorf("health check failed: %w", err)
+	}
 
 	// Only update if health status actually changed
 	if hc.HasHealthStatusChanged(cfg.Status.Health, newHealthStatus) {
@@ -288,11 +290,11 @@ func (hc *HealthChecker) RefreshHealthWithTestResults(ctx context.Context, repo 
 		}
 
 		if err := hc.statusPatcher.Patch(ctx, cfg, patchOp); err != nil {
-			return nil, fmt.Errorf("update health status: %w", err)
+			return testResults, newHealthStatus, fmt.Errorf("update health status: %w", err)
 		}
 	}
 
-	return testResults, nil
+	return testResults, newHealthStatus, nil
 }
 
 // ShouldCheckHealth determines if a repository health check should be performed
@@ -307,26 +309,4 @@ func (hc *HealthChecker) ShouldCheckHealth(repo *provisioning.Repository) bool {
 	}
 
 	return healthAge > time.Minute // otherwise within a minute
-}
-
-// RefreshHealth performs health check if needed and updates repository status
-// Returns the current health status (either existing or newly checked)
-func (hc *HealthChecker) RefreshHealth(ctx context.Context, repo repository.Repository, repoConfig *provisioning.Repository) (provisioning.HealthStatus, error) {
-	// Perform comprehensive health check
-	newHealthStatus := hc.CheckRepositoryHealth(ctx, repo, repoConfig.Status.Health)
-
-	// Only update if health status actually changed
-	if hc.HasHealthStatusChanged(repoConfig.Status.Health, newHealthStatus) {
-		patchOp := map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/health",
-			"value": newHealthStatus,
-		}
-
-		if err := hc.statusPatcher.Patch(ctx, repoConfig, patchOp); err != nil {
-			return newHealthStatus, err // Return the new status even if patch failed
-		}
-	}
-
-	return newHealthStatus, nil
 }
