@@ -56,7 +56,7 @@ func RunTest(
 		e2eContainer = e2eContainer.WithMountedFile("/tmp/outputs.json", opts.CloudPluginCreds)
 	}
 
-	e2eContainer.WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
+	e2eContainer = e2eContainer.WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
 		Expect: dagger.ReturnTypeAny,
 	})
 

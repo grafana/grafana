@@ -383,7 +383,7 @@ test.describe(
 
       const metricNameInput = page
         .getByTestId(azMonSelectors.components.queryEditor.metricsQueryEditor.metricName.input)
-        .locator('input');
+        .locator('input2'); // change to check the test fails correctly
       await metricNameInput.fill('Transactions');
       await metricNameInput.press('Enter');
     });
