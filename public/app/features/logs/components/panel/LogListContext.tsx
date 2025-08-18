@@ -586,8 +586,6 @@ export const LogListContextProvider = ({
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
-  console.log(detailsWidth);
-
   return (
     <LogListContext.Provider
       value={{
