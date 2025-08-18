@@ -163,7 +163,6 @@ export function createTabRepeats({
     const layout = isSourceTab ? tab.getLayout() : tab.getLayout().cloneLayout(tabCloneKey, false);
 
     tabClone.setState({
-      key: tabCloneKey,
       $variables: getLocalVariableValueSet(variable, variableValues[tabIndex], variableTexts[tabIndex]),
       layout,
     });

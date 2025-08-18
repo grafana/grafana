@@ -41,7 +41,7 @@ describe('PanelRepeaterGridItem', () => {
     expect(panel1.state.$variables?.state.variables[0].getValueText?.()).toBe('A');
     expect(panel2.state.$variables?.state.variables[0].getValue()).toBe('2');
 
-    expect(panel1.state.repeatSourceKey).toBe(repeater.state.body.state.key);
+    expect(panel1.state.repeatSourceKey).toBe(undefined);
     expect(panel2.state.repeatSourceKey).toBe(repeater.state.body.state.key);
   });
 

@@ -40,7 +40,7 @@ test.describe(
       await page.goto(soloPanelUrl);
 
       // Check that the panel title exists
-      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('server=B'));
+      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('server=A'));
       await expect(panelTitle).toBeVisible();
 
       // Check that uplot-main-div does not exist
