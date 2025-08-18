@@ -496,7 +496,7 @@ export function TableNG(props: TableNGProps) {
 
             renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
               // cached so we don't care about multiple calls.
-              const height = rowHeightFn(props.row);
+              const tooltipHeight = rowHeightFn(props.row);
               let tooltipStyle: CSSProperties | undefined;
               if (tooltipCanBeColorized) {
                 const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
@@ -504,7 +504,7 @@ export function TableNG(props: TableNGProps) {
               }
 
               return (
-                <TableCellTooltip {...tooltipProps} height={height} rowIdx={props.rowIdx} style={tooltipStyle}>
+                <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.rowIdx} style={tooltipStyle}>
                   {renderBasicCellContent(props)}
                 </TableCellTooltip>
               );
