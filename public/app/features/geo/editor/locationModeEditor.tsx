@@ -21,6 +21,7 @@ export const LocationModeEditor = ({
   onChange,
   context,
   item,
+  id,
 }: StandardEditorProps<string, ModeEditorSettings, unknown, unknown>) => {
   const [info, setInfo] = useState<FrameGeometryField>();
 
@@ -97,6 +98,7 @@ export const LocationModeEditor = ({
   return (
     <>
       <Select
+        inputId={id}
         options={MODE_OPTIONS}
         value={value}
         onChange={(v) => {
@@ -117,12 +119,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: '0px',
       marginTop: '5px',
       padding: theme.spacing(0.25),
-    }),
-    // TODO apply styling to horizontal group (currently not working)
-    hGroup: css({
-      '& div': {
-        width: '100%',
-      },
     }),
   };
 };
