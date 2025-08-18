@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTimeParse, FeatureToggles, systemDateFormats, TimeRange } from '@grafana/data';
@@ -65,6 +65,8 @@ function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
 
 describe('TimeRangeForm', () => {
   let user: ReturnType<typeof userEvent.setup>;
+  mockClipboard.writeText.mockClear();
+  mockClipboard.readText.mockClear();
   beforeEach(() => {
     user = userEvent.setup();
     Object.defineProperty(global.navigator, 'clipboard', {
@@ -115,6 +117,37 @@ describe('TimeRangeForm', () => {
 
     expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
     expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+  });
+
+  it('copy in UTC then paste into different timezone should convert times', async () => {
+    const sourceRange: TimeRange = {
+      from: defaultTimeRange.from,
+      to: defaultTimeRange.to,
+      raw: {
+        from: defaultTimeRange.from,
+        to: defaultTimeRange.to,
+      },
+    };
+
+    const source = setup(sourceRange);
+
+    let written = '';
+    mockClipboard.writeText.mockImplementation((text: string) => {
+      written = text;
+      return Promise.resolve();
+    });
+
+    await user.click(within(source.container).getByTestId('data-testid TimePicker copy button'));
+
+    const target = setup(undefined, 'America/New_York');
+
+    mockClipboard.readText.mockResolvedValue(written);
+
+    const targetPasteButton = within(target.container).getByTestId('data-testid TimePicker paste button');
+    await user.click(targetPasteButton);
+
+    expect(within(target.container).getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
+    expect(within(target.container).getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
   });
 
   describe('when common format are entered', () => {
