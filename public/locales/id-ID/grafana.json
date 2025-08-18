@@ -1238,20 +1238,6 @@
       "copy-code": "Salin kode",
       "download": "Unduh"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Aturan peringatan",
-        "all": "Semua",
-        "error": "Kesalahan",
-        "firing": "Dipicu",
-        "no-data": "Tidak ada data",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Tertunda",
-        "recording-rule": "Aturan pencatatan",
-        "recovering": "Memulihkan"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
     },
@@ -2575,11 +2561,27 @@
       "delete-rule": {
         "success": "Aturan berhasil dihapus"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Evaluasi aturan dijeda"
       },
       "resume-rule": {
         "success": "Evaluasi aturan dilanjutkan"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Aturan berhasil diperbarui"
@@ -2588,20 +2590,29 @@
     "rules-filter": {
       "clear-filters": "Hapus filter",
       "configured-alert-rules": "Sumber data yang berisi aturan peringatan yang dikonfigurasi adalah sumber data Mimir atau Loki tempat aturan peringatan disimpan dan dievaluasi dalam sumber data itu sendiri.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Dasbor",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Cari berdasarkan bantuan sumber data",
       "filter-options": {
-        "aria-label-show-filters": "Tampilkan filter",
-        "label-custom-filter": "Filter kustom",
-        "label-saved-searches": "Pencarian tersimpan"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Kesehatan",
       "label": {
         "hide": "Sembunyikan",
         "show": "Tampilkan"
       },
       "manage-alerts": "Dalam sumber data ini, Anda dapat memilih Kelola peringatan melalui UI Alerting untuk dapat mengelola aturan peringatan ini di UI Grafana serta di sumber data tempat mereka dikonfigurasi.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Semua sumber data",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Aturan plugin",
       "rule-type": "Jenis aturan",
       "rulesSearchInput-placeholder-search": "Cari",
@@ -2616,9 +2627,6 @@
       "text-federated": "Federasi",
       "text-provisioned": "Disediakan"
     },
-    "saved-searches": {
-      "text-default": "Default"
-    },
     "search": {
       "property": {
         "data-source": "Sumber data",
@@ -2626,11 +2634,10 @@
         "labels": "Label",
         "namespace": "Folder / Ruang nama",
         "rule-health": "Kesehatan",
-        "rule-name": "Nama aturan Alerting",
+        "rule-name": "",
         "rule-type": "Jenis",
         "state": "Status"
-      },
-      "save-query": "Simpan pencarian saat ini"
+      }
     },
     "search-field-input": {
       "clear": "Hapus",
@@ -4078,10 +4085,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Terapkan",
     "cancel": "Batalkan",
     "clear": "Hapus",
-    "close": "Tutup",
     "collapse": "Ciutkan",
     "edit": "Edit",
     "help": "Bantuan",
@@ -4496,6 +4503,10 @@
           },
           "value": "Nilai"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "Elemen disembunyikan karena rendering bersyarat."
@@ -6562,6 +6573,9 @@
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus, dan Loki yang di-hosting"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Batalkan",
       "placeholder-filter-by-name-or-type": "Filter berdasarkan nama atau jenis"
@@ -7850,7 +7864,8 @@
       "edit-pane": {
         "go-back": "Kembali"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9037,6 +9052,7 @@
       "sign-up": "Daftar"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Seret dan lepas untuk menyusun ulang",
@@ -11225,7 +11241,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Kembali ke repositori",
-      "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Pastikan konfigurasi repositori ada dalam file konfigurasi.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Simpan",
@@ -11423,6 +11441,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Sumber daya Anda sekarang berada di penyimpanan eksternal dan disediakan ke instans Anda. Mulai sekarang, instans Anda dan penyimpanan eksternal akan disinkronkan.",

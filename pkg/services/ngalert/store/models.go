@@ -72,14 +72,13 @@ type alertRuleVersion struct {
 }
 
 // EqualSpec compares two alertRuleVersion objects for equality based on their specifications and returns true if they match.
-// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created and CreatedBy
+// The comparison is very basic and can produce false-negative. Fields excluded: ID, ParentVersion, RestoredFrom, Version, Created, RuleGroupIndex and CreatedBy
 func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 	return a.RuleOrgID == b.RuleOrgID &&
 		a.RuleGUID == b.RuleGUID &&
 		a.RuleUID == b.RuleUID &&
 		a.RuleNamespaceUID == b.RuleNamespaceUID &&
 		a.RuleGroup == b.RuleGroup &&
-		a.RuleGroupIndex == b.RuleGroupIndex &&
 		a.Title == b.Title &&
 		a.Condition == b.Condition &&
 		a.Data == b.Data &&
