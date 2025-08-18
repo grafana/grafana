@@ -9,12 +9,7 @@ import { Trans } from '@grafana/i18n';
 import { getTemplateSrv, useFavoriteDatasources } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import {
-  useDatasources,
-  useKeyboardNavigatableList,
-  useRecentlyUsedDataSources,
-  useToggleFavoriteDatasource,
-} from '../../hooks';
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
@@ -81,7 +76,6 @@ export function DataSourceList(props: DataSourceListProps) {
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const favoriteDataSources = useFavoriteDatasources();
-  const toggleFavoriteDatasource = useToggleFavoriteDatasource(favoriteDataSources);
 
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
@@ -113,8 +107,16 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={isDataSourceMatch(ds, current)}
-            isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
-            onToggleFavorite={favoriteDataSources.enabled ? toggleFavoriteDatasource : undefined}
+            isFavorite={favoriteDataSources.isFavoriteDatasource(ds.uid)}
+            onToggleFavorite={
+              favoriteDataSources.enabled
+                ? () => {
+                    favoriteDataSources.isFavoriteDatasource(ds.uid)
+                      ? favoriteDataSources.removeFavoriteDatasource(ds)
+                      : favoriteDataSources.addFavoriteDatasource(ds);
+                  }
+                : undefined
+            }
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}

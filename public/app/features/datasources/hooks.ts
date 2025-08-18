@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
-import { GetDataSourceListFilters, getDataSourceSrv, useFavoriteDatasources } from '@grafana/runtime';
+import { GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
 
 export const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
 
@@ -158,19 +158,4 @@ export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps):
   }, [containerRef, querySelectorNavigatableElements, selectItem]);
 
   return [navigatableItemProps, selectedItemCssSelector];
-}
-
-export function useToggleFavoriteDatasource(favoriteDataSourcesHook: ReturnType<typeof useFavoriteDatasources>) {
-  return useCallback(
-    (ds: DataSourceInstanceSettings) => {
-      const { isFavoriteDatasource, addFavoriteDatasource, removeFavoriteDatasource } = favoriteDataSourcesHook;
-
-      if (isFavoriteDatasource(ds.uid)) {
-        removeFavoriteDatasource(ds);
-      } else {
-        addFavoriteDatasource(ds);
-      }
-    },
-    [favoriteDataSourcesHook]
-  );
 }

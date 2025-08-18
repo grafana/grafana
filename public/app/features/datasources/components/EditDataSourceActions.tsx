@@ -5,7 +5,6 @@ import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/u
 import { contextSrv } from 'app/core/core';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
-import { useToggleFavoriteDatasource } from '../hooks';
 import { useDataSource } from '../state/hooks';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
@@ -19,7 +18,6 @@ export function EditDataSourceActions({ uid }: Props) {
   const dataSourceInstance = getDataSourceSrv().getInstanceSettings(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
   const favoriteDataSources = useFavoriteDatasources();
-  const toggleFavoriteDatasource = useToggleFavoriteDatasource(favoriteDataSources);
   const isFavorite = dataSourceInstance ? favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) : false;
 
   // Fetch plugin extension links
@@ -72,7 +70,11 @@ export function EditDataSourceActions({ uid }: Props) {
           key={`favorite-${isFavorite ? 'favorite-mono' : 'star-default'}`}
           name={isFavorite ? 'favorite' : 'star'}
           iconType={isFavorite ? 'mono' : 'default'}
-          onClick={() => toggleFavoriteDatasource(dataSourceInstance)}
+          onClick={() =>
+            isFavorite
+              ? favoriteDataSources.removeFavoriteDatasource(dataSourceInstance)
+              : favoriteDataSources.addFavoriteDatasource(dataSourceInstance)
+          }
           disabled={favoriteDataSources.isLoading}
           tooltip={
             isFavorite
