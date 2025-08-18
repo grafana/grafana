@@ -19,7 +19,7 @@ weight: 200
 
 You can configure Grafana CLI in two ways: using environment variables or through a configuration file.
 
-- **Environment variables** are ideal for CI environments and support a single context. A full list of supported environment variables is available in the [reference documentation](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#environment-variables-reference). 
+- **Environment variables** are ideal for CI environments and support a single context. A full list of supported environment variables is available in the [reference documentation](https://github.com/grafana/grafanactl/blob/main/docs/reference/environment-variables/index.md#environment-variables-reference).
 - **Configuration files** can manage multiple contexts, making it easier to switch between different Grafana instances.
 
 {{< admonition type="note" >}}
@@ -43,9 +43,9 @@ Depending on your authentication method, you may also need to set:
 
 To persist your configuration, consider [creating a context](#use-configuration-contexts).
 
-### Use configuration contexts 
+### Use configuration contexts
 
-Contexts allow you to easily switch between multiple Grafana instances. 
+Contexts allow you to easily switch between multiple Grafana instances.
 
 By default, the CLI uses a context named `default`. To configure it use:
 
