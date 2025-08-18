@@ -134,7 +134,7 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsProps) => {
-  const { app, noInteractions } = useLogListContext();
+  const { app, detailsWidth, noInteractions } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -159,7 +159,7 @@ export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsPro
   }, [log]);
 
   return (
-    <div className={`${styles.inlineWrapper} log-line-inline-details`}>
+    <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.container}>
         <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
           <LogLineDetailsComponent log={log} logs={logs} />
@@ -178,7 +178,6 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
     height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
     paddingBottom: theme.spacing(0.5),
     marginRight: 1,
-    maxWidth: '95vw',
   }),
   container: css({
     overflow: 'auto',

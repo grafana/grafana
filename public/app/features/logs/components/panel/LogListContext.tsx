@@ -40,7 +40,7 @@ import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
-import { LOG_LIST_MIN_WIDTH } from './virtualization';
+import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
@@ -259,7 +259,9 @@ export const LogListContextProvider = ({
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
-  const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
+  const [detailsWidth, setDetailsWidthState] = useState(
+    getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
+  );
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
   const [isAssistantAvailable, openAssistant] = useAssistant();
 
@@ -361,17 +363,25 @@ export const LogListContextProvider = ({
     }
   }, [logs, showDetails]);
 
+  // Sync log details inline and sidebar width
+  useEffect(() => {
+    setDetailsWidthState(getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsMode, showControls));
+  }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
+
   // Sync log details width
   useEffect(() => {
+    if (!containerElement) {
+      return;
+    }
     const handleResize = debounce(() => {
-      setDetailsWidthState((detailsWidth) => getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth));
+      setDetailsWidthState((detailsWidth) =>
+        getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth, detailsMode, showControls)
+      );
     }, 50);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [containerElement, logOptionsStorageKey]);
+    const observer = new ResizeObserver(() => handleResize());
+    observer.observe(containerElement);
+    return () => observer.disconnect();
+  }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
 
   // Sync timestamp resolution
   useEffect(() => {
@@ -576,6 +586,8 @@ export const LogListContextProvider = ({
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
+  console.log(detailsWidth);
+
   return (
     <LogListContext.Provider
       value={{
@@ -665,10 +677,15 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 function getDetailsWidth(
   containerElement: HTMLDivElement | undefined,
   logOptionsStorageKey?: string,
-  currentWidth?: number
+  currentWidth?: number,
+  detailsMode: LogLineDetailsMode = 'sidebar',
+  showControls?: boolean
 ) {
   if (!containerElement) {
     return 0;
+  }
+  if (detailsMode === 'inline') {
+    return containerElement.clientWidth - getScrollbarWidth() - (showControls ? LOG_LIST_CONTROLS_WIDTH : 0);
   }
   const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth =
