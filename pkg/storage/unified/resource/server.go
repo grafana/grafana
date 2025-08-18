@@ -20,8 +20,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
-
+	"github.com/grafana/dskit/ring"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -180,6 +181,8 @@ type SearchOptions struct {
 
 	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
 	RebuildInterval time.Duration
+
+	Ring *ring.Ring
 }
 
 type ResourceServerOptions struct {
@@ -205,6 +208,9 @@ type ResourceServerOptions struct {
 	// Link RBAC
 	AccessClient claims.AccessClient
 
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
 
@@ -223,9 +229,15 @@ type ResourceServerOptions struct {
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue QOSEnqueuer
+
+	Ring           *ring.Ring
+	RingLifecycler *ring.BasicLifecycler
+
+	// Enable strong consistency for searches. When enabled, index is always updated with latest changes before search.
+	SearchAfterWrite bool
 }
 
-func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
@@ -291,6 +303,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		blob:             blobstore,
 		diagnostics:      opts.Diagnostics,
 		access:           opts.AccessClient,
+		secure:           opts.SecureValues,
 		writeHooks:       opts.WriteHooks,
 		lifecycle:        opts.Lifecycle,
 		now:              opts.Now,
@@ -305,7 +318,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler, opts.SearchAfterWrite)
 		if err != nil {
 			return nil, err
 		}
@@ -327,6 +340,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -404,6 +418,8 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
+//
+//nolint:gocyclo
 func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
@@ -457,6 +473,11 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
+	}
+
+	// Verify that this resource can reference secure values
+	if err := canReferenceSecureValues(ctx, obj, event.ObjectOld, s.secure); err != nil {
+		return nil, err
 	}
 
 	if key.Namespace != obj.GetNamespace() {

@@ -17,28 +17,26 @@ const (
 )
 
 type GrafanaAlertmanagerConfig struct {
+	// TODO this needs to be deleted once Mimir is updated
 	TemplateFiles      map[string]string                    `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig definition.PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	Templates          []definition.PostableApiTemplate     `yaml:"templates,omitempty" json:"templates,omitempty"`
 }
 
 func (u *GrafanaAlertmanagerConfig) MarshalJSON() ([]byte, error) {
-	// this is special marshaling that makes sure that secrets are not masked
+	// This is special marshaling that makes sure that secrets are not masked.
 	type cfg GrafanaAlertmanagerConfig
 	return definition.MarshalJSONWithSecrets((*cfg)(u))
 }
 
 type UserGrafanaConfig struct {
-	GrafanaAlertmanagerConfig *GrafanaAlertmanagerConfig `json:"configuration"`
-	Hash                      string                     `json:"configuration_hash"`
-	CreatedAt                 int64                      `json:"created"`
-	Default                   bool                       `json:"default"`
-	Promoted                  bool                       `json:"promoted"`
-	ExternalURL               string                     `json:"external_url"`
-	SmtpConfig                SmtpConfig                 `json:"smtp_config"`
-
-	// TODO: Remove once everything can be sent in the 'SmtpConfig' field.
-	SmtpFrom      string            `json:"smtp_from"`
-	StaticHeaders map[string]string `json:"static_headers"`
+	GrafanaAlertmanagerConfig GrafanaAlertmanagerConfig `json:"configuration"`
+	Hash                      string                    `json:"configuration_hash"`
+	CreatedAt                 int64                     `json:"created"`
+	Default                   bool                      `json:"default"`
+	Promoted                  bool                      `json:"promoted"`
+	ExternalURL               string                    `json:"external_url"`
+	SmtpConfig                SmtpConfig                `json:"smtp_config"`
 }
 
 func (mc *Mimir) ShouldPromoteConfig() bool {
@@ -64,7 +62,7 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	return gc, nil
 }
 
-func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
+func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
 	payload, err := definition.MarshalJSONWithSecrets(&UserGrafanaConfig{
 		GrafanaAlertmanagerConfig: cfg,
 		Hash:                      hash,
@@ -73,10 +71,6 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *Grafa
 		Promoted:                  mc.promoteConfig,
 		ExternalURL:               mc.externalURL,
 		SmtpConfig:                mc.smtpConfig,
-
-		// TODO: Remove once everything can be sent only in the 'smtp_config' field.
-		SmtpFrom:      mc.smtpFrom,
-		StaticHeaders: mc.staticHeaders,
 	})
 	if err != nil {
 		return err

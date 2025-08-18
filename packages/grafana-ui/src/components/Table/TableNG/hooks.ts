@@ -1,23 +1,21 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { Column, DataGridProps, SortColumn } from 'react-data-grid';
-import { varPreLine } from 'uwrap';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties } from 'react';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
+import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
 import {
   getDisplayName,
   processNestedTableRows,
   applySort,
-  getCellOptions,
   getColumnTypes,
-  GetMaxWrapCellOptions,
-  getMaxWrapCell,
-  getCellLinks,
+  getRowHeight,
+  buildHeaderLineCounters,
+  buildRowLineCounters,
+  getCellOptions,
 } from './utils';
 
 // Helper function to get displayed value
@@ -137,7 +135,7 @@ export function useSortedRows(
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
-  rowHeight: number | ((row: TableRow) => number);
+  rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   headerHeight: number;
   footerHeight: number;
   paginationHeight?: number;
@@ -174,6 +172,12 @@ export function usePaginatedRows(
 
     if (typeof rowHeight === 'number') {
       return rowHeight;
+    }
+
+    // when using auto-sized rows, we're just going to have to pick a number. the alternative
+    // is to measure each row, which we could do but would be expensive.
+    if (typeof rowHeight === 'string') {
+      return TABLE.MAX_CELL_HEIGHT;
     }
 
     // we'll just measure 100 rows to estimate
@@ -216,7 +220,7 @@ export function usePaginatedRows(
   }, [width, height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!enabled) {
       return;
     }
@@ -256,6 +260,7 @@ export interface FooterCalcsOptions {
 
 export function useFooterCalcs(
   rows: TableRow[],
+  // it's very important that this is the _visible_ fields.
   fields: Field[],
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
@@ -266,6 +271,8 @@ export function useFooterCalcs(
       return [];
     }
 
+    const fieldNameSet = footerOptions.fields?.length ? new Set(footerOptions.fields) : null;
+
     return fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
@@ -275,24 +282,27 @@ export function useFooterCalcs(
         return index === 0 ? `${rows.length}` : '';
       }
 
+      let emptyValue = '';
       if (index === 0) {
         const footerCalcReducer = footerReducers[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
+        emptyValue = footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
 
       if (field.type !== FieldType.number) {
-        return '';
+        return emptyValue;
       }
 
       // if field.display is undefined, don't throw
       const displayFn = field.display;
       if (!displayFn) {
-        return '';
+        return emptyValue;
       }
 
-      // If fields array is specified, only show footer for fields included in that array
-      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
-        return '';
+      // If fields array is specified, only show footer for fields included in that array.
+      // the array can include either the display name or the field name. we don't use a field matcher
+      // because that requires us to drill the data frame down here.
+      if (fieldNameSet && !fieldNameSet.has(getDisplayName(field)) && !fieldNameSet.has(field.name)) {
+        return emptyValue;
       }
 
       const calc = footerReducers[0];
@@ -309,49 +319,6 @@ export function useFooterCalcs(
   }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
-interface TypographyCtx {
-  ctx: CanvasRenderingContext2D;
-  font: string;
-  avgCharWidth: number;
-  calcRowHeight: (text: string, cellWidth: number, defaultHeight: number) => number;
-}
-
-export function useTypographyCtx(): TypographyCtx {
-  const theme = useTheme2();
-  const typographyCtx = useMemo((): TypographyCtx => {
-    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    // set in grafana/data in createTypography.ts
-    const letterSpacing = 0.15;
-
-    ctx.letterSpacing = `${letterSpacing}px`;
-    ctx.font = font;
-    const txt =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
-    const txtWidth = ctx.measureText(txt).width;
-    const avgCharWidth = txtWidth / txt.length + letterSpacing;
-    const { count } = varPreLine(ctx);
-
-    const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
-      if (text === '') {
-        return defaultHeight;
-      }
-      const numLines = count(text, cellWidth);
-      const totalHeight = numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING;
-      return Math.max(totalHeight, defaultHeight);
-    };
-
-    return {
-      calcRowHeight,
-      ctx,
-      font,
-      avgCharWidth,
-    };
-  }, [theme.typography.fontSize, theme.typography.fontFamily]);
-  return typographyCtx;
-}
-
 const ICON_WIDTH = 16;
 const ICON_GAP = 4;
 
@@ -359,7 +326,6 @@ interface UseHeaderHeightOptions {
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
-  defaultHeight: number;
   sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
@@ -369,12 +335,14 @@ export function useHeaderHeight({
   fields,
   enabled,
   columnWidths,
-  defaultHeight,
   sortColumns,
-  typographyCtx: { calcRowHeight, avgCharWidth },
+  typographyCtx,
   showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
   const perIconSpace = ICON_WIDTH + ICON_GAP;
+
+  const lineCounters = useMemo(() => buildHeaderLineCounters(fields, typographyCtx), [fields, typographyCtx]);
+
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {
@@ -391,46 +359,26 @@ export function useHeaderHeight({
         if (showTypeIcons) {
           width -= perIconSpace;
         }
-        return Math.floor(width);
+        // sadly, the math for this is off by exactly 1 pixel. shrug.
+        return Math.floor(width) - 1;
       }),
     [fields, columnWidths, sortColumns, showTypeIcons, perIconSpace]
   );
 
-  const [wrappedColHeaderIdxs, hasWrappedColHeaders] = useMemo(() => {
-    let hasWrappedColHeaders = false;
-    return [
-      fields.map((field) => {
-        const wrapText = field.config?.custom?.wrapHeaderText ?? false;
-        if (wrapText) {
-          hasWrappedColHeaders = true;
-        }
-        return wrapText;
-      }),
-      hasWrappedColHeaders,
-    ];
-  }, [fields]);
-
-  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
-    () => ({
-      colWidths: columnAvailableWidths,
-      avgCharWidth,
-      wrappedColIdxs: wrappedColHeaderIdxs,
-    }),
-    [columnAvailableWidths, avgCharWidth, wrappedColHeaderIdxs]
-  );
-
-  // TODO: is there a less clunky way to subtract the top padding value?
   const headerHeight = useMemo(() => {
     if (!enabled) {
       return 0;
     }
-    if (!hasWrappedColHeaders) {
-      return defaultHeight - TABLE.CELL_PADDING;
-    }
-
-    const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
-  }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
+    return getRowHeight(
+      fields,
+      -1,
+      columnAvailableWidths,
+      TABLE.HEADER_HEIGHT,
+      lineCounters,
+      TABLE.LINE_HEIGHT,
+      TABLE.CELL_PADDING
+    );
+  }, [fields, enabled, columnAvailableWidths, lineCounters]);
 
   return headerHeight;
 }
@@ -439,9 +387,8 @@ interface UseRowHeightOptions {
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
-  defaultHeight: number;
-  headerHeight: number;
-  expandedRows: Record<string, boolean>;
+  defaultHeight: NonNullable<CSSProperties['height']>;
+  expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
 
@@ -450,56 +397,31 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  headerHeight,
   expandedRows,
-  typographyCtx: { calcRowHeight, avgCharWidth },
-}: UseRowHeightOptions): number | ((row: TableRow) => number) {
-  const [wrappedColIdxs, hasWrappedCols] = useMemo(() => {
-    let hasWrappedCols = false;
-    return [
-      fields.map((field) => {
-        if (field.type !== FieldType.string) {
-          return false;
-        }
+  typographyCtx,
+}: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
+  const hasWrappedCols = useMemo(() => lineCounters?.length ?? 0 > 0, [lineCounters]);
 
-        const cellOptions = getCellOptions(field);
-        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
-        const type = cellOptions.type;
-        const result = !!wrapText && type !== TableCellDisplayMode.Image;
-        if (result === true) {
-          hasWrappedCols = true;
-        }
-        return result;
-      }),
-      hasWrappedCols,
-    ];
-  }, [fields]);
-
-  const colWidths = useMemo(
-    () => columnWidths.map((c) => c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT),
-    [columnWidths]
-  );
-
-  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
-    () => ({
-      colWidths,
-      avgCharWidth,
-      wrappedColIdxs,
-    }),
-    [colWidths, avgCharWidth, wrappedColIdxs]
-  );
+  const colWidths = useMemo(() => {
+    const columnWidthAffordance = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    return columnWidths.map((c) => c - columnWidthAffordance);
+  }, [columnWidths]);
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
-    if (!hasNestedFrames && !hasWrappedCols) {
+    if ((!hasNestedFrames && !hasWrappedCols) || typeof defaultHeight === 'string') {
       return defaultHeight;
     }
 
+    // this cache should get blown away on resize, data refresh, updated fields, etc.
+    // caching by __index is ok because sorting does not modify the __index.
+    const cache: Array<number | undefined> = Array(fields[0].values.length);
     return (row: TableRow) => {
       // nested rows
-      if (Number(row.__depth) > 0) {
+      if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows[row.__index]) {
+        if (!expandedRows.has(row.__index)) {
           return 0;
         }
 
@@ -509,23 +431,33 @@ export function useRowHeight({
         }
 
         const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
-        return Math.max(defaultHeight, defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2);
+        return defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
-      return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight);
+      let result = cache[row.__index];
+      if (!result) {
+        result = cache[row.__index] = getRowHeight(
+          fields,
+          row.__index,
+          colWidths,
+          defaultHeight,
+          lineCounters,
+          TABLE.LINE_HEIGHT,
+          (field, numLines) => {
+            // Pill cells have vertical padding between each row
+            if (getCellOptions(field).type === TableCellDisplayMode.Pill) {
+              return TABLE.CELL_PADDING * (numLines - 1) + TABLE.CELL_PADDING * 2;
+            }
+
+            // default vertical padding for cells
+            return TABLE.CELL_PADDING * 2;
+          }
+        );
+      }
+      return result;
     };
-  }, [
-    calcRowHeight,
-    defaultHeight,
-    expandedRows,
-    fields,
-    hasNestedFrames,
-    hasWrappedCols,
-    maxWrapCellOptions,
-    colWidths,
-  ]);
+  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, lineCounters, expandedRows]);
 
   return rowHeight;
 }
@@ -602,9 +534,28 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefined {
-  const linksCount = field.config.links?.length ?? 0;
-  const actionsCount = field.config.actions?.length ?? 0;
-  const shouldShowLink = linksCount === 1 && actionsCount === 0;
-  return useMemo(() => (shouldShowLink ? (getCellLinks(field, rowIdx) ?? []) : [])[0], [field, shouldShowLink, rowIdx]);
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current?.element;
+
+    if (!el) {
+      return;
+    }
+
+    const updateScrollbarDimensions = () => {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    };
+
+    updateScrollbarDimensions();
+
+    const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+    resizeObserver.observe(el);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, height]);
+
+  return scrollbarWidth;
 }

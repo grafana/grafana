@@ -2,26 +2,26 @@
   "grafana-sql": {
     "components": {
       "confirm-modal": {
-        "builder-mode": "",
+        "builder-mode": "編輯模式不會顯示在程式碼中的變更。查詢編輯器將顯示您在編輯器模式下所做的最後變更。",
         "cancel": "取消",
-        "clipboard": "",
-        "copy-code-and-switch": "",
-        "discard-code-and-switch": "",
+        "clipboard": "要將程式碼複製到剪貼簿嗎？",
+        "copy-code-and-switch": "複製程式碼並切換",
+        "discard-code-and-switch": "捨棄程式碼並切換",
         "warning": "警告"
       },
       "connection-limits": {
-        "auto-max-idle": "",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
-        "content-max-lifetime": "",
-        "content-max-open": "",
-        "max-idle": "",
-        "max-lifetime": "",
-        "max-open": "",
-        "title-connection-limits": ""
+        "auto-max-idle": "自動最大閒置時間",
+        "content-auto-max-idle": "若啟用，<1>最大閒置連線數</1>的數量將會自動設定為與<3>最大開啟連線數</3>相同的數值。如果未設定最大開啟連線數，則將設定為預設值 ({{defaultMaxIdle}})。",
+        "content-max-idle": "閒置連線池中的最大連線數。若<1>最大開啟連線數</1>大於 0，但小於 <3>最大閒置連線數</3>，則<5>最大閒置連線數</5>將會縮減，以符合<8>最大開啟連線數</8>限制。若設定為 0，則不會保留任何閒置連線。",
+        "content-max-lifetime": "可以重複使用連線的最長時間（秒）。若設定為 0，則會永遠重複使用連線。",
+        "content-max-open": "資料庫的最大開啟連線數。若<1>最大閒置連線數</1>大於 0，且<3>最大開啟連線數</3>小於<5>最大閒置連線數</5>，則<7>最大閒置連線數</7>將會縮減，以符合<9>最大開啟連線數</9>限制。若設定為 0，則不會限制開啟連線數。",
+        "max-idle": "最大閒置",
+        "max-lifetime": "最大存活期",
+        "max-open": "最大開啟數量",
+        "title-connection-limits": "連線限制"
       },
       "dataset-selector": {
-        "aria-label-dataset-selector": ""
+        "aria-label-dataset-selector": "資料集選擇器"
       },
       "error-boundary": {
         "fall-back": {
@@ -31,21 +31,21 @@
       "get-custom-operators": {
         "custom-operators": {
           "label": {
-            "macros": ""
+            "macros": "巨集"
           }
         }
       },
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "分組依據",
-          "title-remove-group-by-column": ""
+          "title-remove-group-by-column": "按欄位移除群組"
         }
       },
       "order-by-row": {
-        "aria-label-order-by": "",
+        "aria-label-order-by": "排序方式",
         "label-limit": "限制",
-        "label-offset": "",
-        "label-order-by": ""
+        "label-offset": "位移量",
+        "label-order-by": "排序方式"
       },
       "preview": {
         "label-element": {
@@ -54,100 +54,100 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "您的查詢無效。請參閱下方詳細資訊。<1></1>不過，您仍然可以執行此查詢。",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "建立器",
+          "label-code": "代碼"
         },
-        "label-dataset": "",
+        "label-dataset": "資料集",
         "label-filter": "篩選",
         "label-format": "格式",
         "label-group": "群組",
-        "label-order": "",
+        "label-order": "排序",
         "label-preview": "預覽",
         "label-table": "表格",
-        "placeholder-select-format": "",
+        "placeholder-select-format": "選擇格式",
         "run-query": "執行查詢"
       },
       "query-toolbox": {
-        "content-hit-ctrlcmdreturn-to-run-query": "",
-        "tooltip-collapse": "",
-        "tooltip-expand": "",
-        "tooltip-format-query": ""
+        "content-hit-ctrlcmdreturn-to-run-query": "按下 CTRL/CMD + Return 執行查詢",
+        "tooltip-collapse": "收合編輯器",
+        "tooltip-expand": "展開編輯器",
+        "tooltip-format-query": "格式化查詢"
       },
       "query-validator": {
-        "query-will-process": "",
-        "validating-query": ""
+        "query-will-process": "<0></0>此查詢將在執行時處理 <2>{{bytes}}</2>。",
+        "validating-query": "正在驗證查詢…"
       },
       "raw-editor": {
         "render-placeholder": {
-          "editing-in-expanded-code-editor": ""
+          "editing-in-expanded-code-editor": "在展開的程式碼編輯器中編輯"
         },
-        "title-query-num": ""
+        "title-query-num": "查詢 {{queryNum}}"
       },
       "select-column": {
         "label-column": "欄位"
       },
       "select-custom-function-parameters": {
-        "aria-label-parameter": "",
+        "aria-label-parameter": "欄位 {{columnIndex}} 的參數 {{index}}",
         "render-parameters": {
           "params": {
-            "title-remove-parameter": ""
+            "title-remove-parameter": "移除參數"
           }
         },
-        "title-add-parameter": ""
+        "title-add-parameter": "新增參數"
       },
       "select-row": {
         "aggregate-options": {
           "options": {
             "label": {
-              "aggregations": "",
-              "macros": ""
+              "aggregations": "聚合",
+              "macros": "巨集"
             }
           }
         },
         "label": {
-          "time": "",
+          "time": "時間",
           "value": "值"
         },
         "label-alias": "別名",
-        "label-data-operations": "",
-        "title-add-column": "",
-        "title-remove-column": ""
+        "label-data-operations": "資料操作",
+        "title-add-column": "新增欄位",
+        "title-remove-column": "移除欄位"
       },
       "settings": {
-        "aria-label-conjunction": "",
+        "aria-label-conjunction": "連接條件",
         "aria-label-field": "欄位",
         "aria-label-operator": "運算子",
-        "title-button-filter": ""
+        "title-button-filter": "{{ buttonLabel }} 篩選條件"
       },
       "sql-query-editor-lazy": {
         "text-loading-editor": "正在載入編輯器"
       },
       "table-selector": {
-        "aria-label-table-selector": "",
-        "placeholder-loading": "",
-        "placeholder-select-table": ""
+        "aria-label-table-selector": "表格選擇器",
+        "placeholder-loading": "載入表格…",
+        "placeholder-select-table": "選擇表格"
       },
       "tlssecrets-config": {
-        "content-tlsssl-client-certificate": "",
-        "content-tlsssl-client-key": "",
-        "content-tlsssl-root-certificate": "",
-        "tlsssl-client-certificate": "",
-        "tlsssl-client-key": "",
+        "content-tlsssl-client-certificate": "若要使用 TLS/SSL 用戶端憑證進行驗證，請在此提供用戶端憑證。",
+        "content-tlsssl-client-key": "若要使用用戶端 TLS/SSL 憑證進行驗證，請在此提供金鑰。",
+        "content-tlsssl-root-certificate": "若所選的 TLS/SSL 模式需要伺服器根憑證，請在此提供",
+        "tlsssl-client-certificate": "TLS/SSL 用戶端憑證",
+        "tlsssl-client-key": "TLS/SSL 用戶端金鑰",
         "tlsssl-root-certificate": "TLS/SSL 根憑證"
       },
       "visual-editor": {
-        "label-filter-by-column-value": "",
-        "label-group-by-column": ""
+        "label-filter-by-column-value": "按欄位數值篩選",
+        "label-group-by-column": "按欄位分組"
       },
       "widgets": {
-        "aria-label-macros-value-selector": ""
+        "aria-label-macros-value-selector": "巨集值選擇器"
       }
     },
     "utils": {
       "get-columns-width-indices": {
-        "label-selected-columns": ""
+        "label-selected-columns": "選取的欄位"
       }
     }
   }

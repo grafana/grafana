@@ -1,4 +1,5 @@
 import { ReactNode, useMemo, useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
@@ -38,8 +39,8 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const { body } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
-      const dashboardTitleInputId = 'dashboard-title-input';
-      const dashboardDescriptionInputId = 'dashboard-description-input';
+      const dashboardTitleInputId = uuidv4();
+      const dashboardDescriptionInputId = uuidv4();
       const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
@@ -108,8 +109,8 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
 
         dashboardEditActions.changeTitle({
           source: dashboard,
-          oldTitle: valueBeforeEdit.current,
-          newTitle: e.currentTarget.value,
+          oldValue: valueBeforeEdit.current,
+          newValue: e.currentTarget.value,
         });
       }}
     />
@@ -139,8 +140,8 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
 
         dashboardEditActions.changeDescription({
           source: dashboard,
-          oldDescription: valueBeforeEdit.current,
-          newDescription: e.currentTarget.value,
+          oldValue: valueBeforeEdit.current,
+          newValue: e.currentTarget.value,
         });
       }}
     />

@@ -3,7 +3,6 @@ import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from '
 
 import {
   DataFrame,
-  DataTransformerID,
   TransformerRegistryItem,
   TransformationApplicabilityLevels,
   GrafanaTheme2,
@@ -12,20 +11,27 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Card,
+  Drawer,
+  FilterPill,
+  Grid,
+  IconButton,
+  Input,
+  Stack,
+  Switch,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
-import { categoriesLabels } from 'app/features/transformers/utils';
+import { getCategoriesLabels } from 'app/features/transformers/utils';
 
+import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
 import { FilterCategory } from './TransformationsEditor';
 
-const viewAllLabel = 'View all';
 const VIEW_ALL_VALUE = 'viewAll';
-const filterCategoriesLabels: Array<[FilterCategory, string]> = [
-  [VIEW_ALL_VALUE, viewAllLabel],
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
-];
 
 interface TransformationPickerNgProps {
   onTransformationAdd: (selectedItem: SelectableValue<string>) => void;
@@ -60,6 +66,12 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
     onSelectedFilterChange,
   } = props;
 
+  const filterCategoriesLabels: Array<[FilterCategory, string]> = [
+    [VIEW_ALL_VALUE, t('dashboard.transformation-picker-ng.view-all', 'View all')],
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    ...(Object.entries(getCategoriesLabels()) as Array<[FilterCategory, string]>),
+  ];
+
   // Use a callback ref to call "click" on the search input
   // This will focus it when it's opened
   const searchInputRef = useCallback((input: HTMLInputElement) => {
@@ -74,68 +86,65 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
       }}
       title={t('dashboard.transformation-picker-ng.title-add-another-transformation', 'Add another transformation')}
     >
-      <div className={styles.searchWrapper}>
-        <Input
-          data-testid={selectors.components.Transforms.searchInput}
-          className={styles.searchInput}
-          value={search ?? ''}
-          placeholder={t(
-            'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
-            'Search for transformation'
-          )}
-          onChange={onSearchChange}
-          onKeyDown={onSearchKeyDown}
-          suffix={suffix}
-          ref={searchInputRef}
-          autoFocus={true}
-        />
-        <div className={styles.showImages}>
-          <span className={styles.illustationSwitchLabel}>
-            <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
-          </span>{' '}
-          <Switch
-            value={showIllustrations}
-            onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
+      <Stack direction="column" gap={2}>
+        {config?.featureToggles?.sqlExpressions && <SqlExpressionsBanner />}
+        <div className={styles.searchWrapper}>
+          <Input
+            data-testid={selectors.components.Transforms.searchInput}
+            className={styles.searchInput}
+            value={search ?? ''}
+            placeholder={t(
+              'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
+              'Search for transformation'
+            )}
+            onChange={onSearchChange}
+            onKeyDown={onSearchKeyDown}
+            suffix={suffix}
+            ref={searchInputRef}
+            autoFocus={true}
           />
-        </div>
-      </div>
-
-      <div className={styles.filterWrapper}>
-        {filterCategoriesLabels.map(([slug, label]) => {
-          return (
-            <FilterPill
-              key={slug}
-              onClick={() => onSelectedFilterChange && onSelectedFilterChange(slug)}
-              label={label}
-              selected={selectedFilter === slug}
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <span className={styles.switchLabel}>
+              <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
+            </span>
+            <Switch
+              value={showIllustrations}
+              onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
             />
-          );
-        })}
-      </div>
+          </Stack>
+        </div>
 
-      <TransformationsGrid
-        showIllustrations={showIllustrations}
-        transformations={xforms}
-        data={data}
-        onClick={(id) => {
-          onTransformationAdd({ value: id });
-        }}
-      />
+        <Stack direction="row" wrap="wrap" rowGap={1} columnGap={0.5}>
+          {filterCategoriesLabels.map(([slug, label]) => {
+            return (
+              <FilterPill
+                key={slug}
+                onClick={() => onSelectedFilterChange && onSelectedFilterChange(slug)}
+                label={label}
+                selected={selectedFilter === slug}
+              />
+            );
+          })}
+        </Stack>
+
+        <TransformationsGrid
+          showIllustrations={showIllustrations}
+          transformations={xforms}
+          data={data}
+          onClick={(id) => {
+            onTransformationAdd({ value: id });
+          }}
+        />
+      </Stack>
     </Drawer>
   );
 }
 
 function getTransformationPickerStyles(theme: GrafanaTheme2) {
   return {
-    showImages: css({
-      flexBasis: '0',
-      display: 'flex',
-      gap: '8px',
-      alignItems: 'center',
-    }),
     pickerInformationLine: css({
       fontSize: '16px',
-      marginBottom: `${theme.spacing(2)}`,
+      marginBottom: theme.spacing(2),
     }),
     pickerInformationLineHighlight: css({
       verticalAlign: 'middle',
@@ -143,8 +152,8 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
     searchWrapper: css({
       display: 'flex',
       flexWrap: 'wrap',
-      columnGap: '27px',
-      rowGap: '16px',
+      columnGap: theme.spacing(2),
+      rowGap: theme.spacing(1),
       width: '100%',
       paddingBottom: theme.spacing(1),
     }),
@@ -152,15 +161,8 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
       flexGrow: '1',
       width: 'initial',
     }),
-    illustationSwitchLabel: css({
+    switchLabel: css({
       whiteSpace: 'nowrap',
-    }),
-    filterWrapper: css({
-      padding: `${theme.spacing(1)} 0`,
-      display: 'flex',
-      flexWrap: 'wrap',
-      rowGap: `${theme.spacing(1)}`,
-      columnGap: `${theme.spacing(0.5)}`,
     }),
   };
 }
@@ -173,10 +175,11 @@ interface TransformationsGridProps {
 }
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
+  const theme = useTheme2();
   const styles = useStyles2(getTransformationGridStyles);
 
   return (
-    <div className={styles.grid}>
+    <Grid columns={3} gap={1}>
       {transformations.map((transform) => {
         // Check to see if the transform
         // is applicable to the given data
@@ -201,12 +204,15 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           cardClasses = cx(styles.newCard, styles.cardDisabled);
         }
 
+        const imageUrl = theme.isDark ? transform.imageDark : transform.imageLight;
+
         return (
           <Card
             className={cardClasses}
             data-testid={selectors.components.TransformTab.newTransform(transform.name)}
             onClick={() => onClick(transform.id)}
             key={transform.id}
+            noMargin
           >
             <Card.Heading className={styles.heading}>
               <div className={styles.titleRow}>
@@ -218,21 +224,16 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
               {transform.tags && transform.tags.size > 0 && (
                 <div className={styles.tagsWrapper}>
                   {Array.from(transform.tags).map((tag) => (
-                    <Badge
-                      color="darkgrey"
-                      icon="tag-alt"
-                      key={tag}
-                      text={t('transformers.tag', '{{ tag }}', { tag })}
-                    />
+                    <Badge color="darkgrey" icon="tag-alt" key={tag} text={tag} />
                   ))}
                 </div>
               )}
             </Card.Heading>
             <Card.Description className={styles.description}>
-              <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
+              <span>{standardTransformersRegistry.getIfExists(transform.id)?.description}</span>
               {showIllustrations && (
                 <span>
-                  <img className={styles.image} src={getImagePath(transform.id, !isApplicable)} alt={transform.name} />
+                  <img className={styles.image} src={imageUrl} alt={transform.name} />
                 </span>
               )}
               {!isApplicable && applicabilityDescription !== null && (
@@ -246,7 +247,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           </Card>
         );
       })}
-    </div>
+    </Grid>
   );
 }
 
@@ -270,7 +271,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
     description: css({
-      fontSize: '12px',
+      fontSize: theme.typography.bodySmall.fontSize,
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
@@ -314,33 +315,3 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
   };
 }
-
-const getImagePath = (id: string, disabled: boolean) => {
-  const folder = config.theme2.isDark ? 'dark' : 'light';
-  return `public/build/img/transformations/${folder}/${id}.svg`;
-};
-
-const TransformationDescriptionOverrides: { [key: string]: string } = {
-  [DataTransformerID.concatenate]: 'Combine all fields into a single frame.',
-  [DataTransformerID.configFromData]: 'Set unit, min, max and more.',
-  [DataTransformerID.fieldLookup]: 'Use a field value to lookup countries, states, or airports.',
-  [DataTransformerID.filterFieldsByName]: 'Remove parts of the query results using a regex pattern.',
-  [DataTransformerID.filterByRefId]: 'Remove rows from the data based on origin query',
-  [DataTransformerID.filterByValue]: 'Remove rows from the query results using user-defined filters.',
-  [DataTransformerID.groupBy]: 'Group data by a field value and create aggregate data.',
-  [DataTransformerID.groupingToMatrix]: 'Summarize and reorganize data based on three fields.',
-  [DataTransformerID.joinByField]: 'Combine rows from 2+ tables, based on a related field.',
-  [DataTransformerID.labelsToFields]: 'Group series by time and return labels or tags as fields.',
-  [DataTransformerID.merge]: 'Merge multiple series. Values will be combined into one row.',
-  [DataTransformerID.organize]: 'Re-order, hide, or rename fields.',
-  [DataTransformerID.partitionByValues]: 'Split a one-frame dataset into multiple series.',
-  [DataTransformerID.prepareTimeSeries]: 'Stretch data frames from the wide format into the long format.',
-  [DataTransformerID.reduce]: 'Reduce all rows or data points to a single value (ex. max, mean).',
-  [DataTransformerID.renameByRegex]:
-    'Rename parts of the query results using a regular expression and replacement pattern.',
-  [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
-};
-
-const getTransformationsRedesignDescriptions = (id: string): string => {
-  return TransformationDescriptionOverrides[id] || standardTransformersRegistry.getIfExists(id)?.description || '';
-};

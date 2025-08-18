@@ -2,12 +2,23 @@ import ansicolor from 'ansicolor';
 import { parse, stringify } from 'lossless-json';
 import Prism, { Grammar } from 'prismjs';
 
-import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
+import {
+  DataFrame,
+  dateTimeFormat,
+  Labels,
+  LogLevel,
+  LogRowModel,
+  LogsSortOrder,
+  systemDateFormats,
+  textUtil,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
+import { identifyOTelLanguage, getOtelFormattedBody } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { LogLineVirtualization } from './virtualization';
@@ -30,6 +41,7 @@ export class LogListModel implements LogRowModel {
   isSampled: boolean;
   labels: Labels;
   logLevel: LogLevel;
+  otelLanguage?: string;
   raw: string;
   rowIndex: number;
   rowId?: string | undefined;
@@ -69,6 +81,7 @@ export class LogListModel implements LogRowModel {
     this.isSampled = !!checkLogsSampled(log);
     this.labels = log.labels;
     this.logLevel = log.logLevel;
+    this.otelLanguage = identifyOTelLanguage(log);
     this.rowIndex = log.rowIndex;
     this.rowId = log.rowId;
     this.searchWords = log.searchWords;
@@ -86,7 +99,8 @@ export class LogListModel implements LogRowModel {
     this._grammar = grammar;
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
-      defaultWithMS: true,
+      // YYYY-MM-DD HH:mm:ss.SSS
+      format: systemDateFormats.fullDateMS,
     });
     this._virtualization = virtualization;
     this._wrapLogMessage = wrapLogMessage;
@@ -110,14 +124,15 @@ export class LogListModel implements LogRowModel {
   get body(): string {
     if (this._body === undefined) {
       try {
-        const parsed = stringify(parse(this.raw), undefined, 2);
+        const parsed = stringify(parse(this.raw), undefined, this._wrapLogMessage ? 2 : 1);
         if (parsed) {
           this.raw = parsed;
         }
       } catch (error) {}
+      const raw = config.featureToggles.otelLogsFormatting && this.otelLanguage ? getOtelFormattedBody(this) : this.raw;
       this._body = this.collapsed
-        ? this.raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
-        : this.raw;
+        ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
+        : raw;
       if (!this._wrapLogMessage) {
         this._body = this._body.replace(NEWLINES_REGEX, '');
       }
@@ -151,6 +166,11 @@ export class LogListModel implements LogRowModel {
 
   get sampledMessage(): string | undefined {
     return checkLogsSampled(this);
+  }
+
+  get timestampNs(): string {
+    let suffix = this.timeEpochNs.substring(this.timeEpochMs.toString().length);
+    return this.timestamp + suffix;
   }
 
   getDisplayedFieldValue(fieldName: string, stripAnsi = false): string {
@@ -229,7 +249,14 @@ export const preProcessLogs = (
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
   return orderedLogs.map((log) =>
-    preProcessLog(log, { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage })
+    preProcessLog(log, {
+      escape,
+      getFieldLinks,
+      grammar,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    })
   );
 };
 

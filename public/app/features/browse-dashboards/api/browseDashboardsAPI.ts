@@ -4,7 +4,7 @@ import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
@@ -19,6 +19,7 @@ import { PermissionLevelString } from 'app/types/acl';
 import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
 import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
 
+import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
@@ -201,8 +202,7 @@ export const browseDashboardsAPI = createApi({
         };
 
         for (const folderCounts of results) {
-          // TODO remove nullish coalescing once nestedFolders is toggled on
-          totalCounts.folder += folderCounts.folder ?? 0;
+          totalCounts.folder += folderCounts.folder;
           totalCounts.dashboard += folderCounts.dashboard;
           totalCounts.alertRule += folderCounts.alertrule;
           totalCounts.libraryPanel += folderCounts.librarypanel;
@@ -287,6 +287,7 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+        const pageStateManager = getDashboardScenePageStateManager();
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
@@ -330,6 +331,9 @@ export const browseDashboardsAPI = createApi({
           }
 
           await getDashboardAPI().deleteDashboard(dashboardUID, true);
+
+          pageStateManager.clearDashboardCache();
+          pageStateManager.removeSceneCache(dashboardUID);
 
           // handling success alerts for these feature toggles
           // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts

@@ -17,6 +17,7 @@ import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
+import { getConfig } from 'app/core/config';
 
 import { getActions } from '../../../../features/actions/utils';
 
@@ -34,6 +35,10 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
+  const _getActions = useCallback(
+    (frame: DataFrame, field: Field, rowIndex: number) => getCellActions(frame, field, rowIndex, replaceVariables),
+    [replaceVariables]
+  );
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
     : data.series;
@@ -57,10 +62,7 @@ export function TablePanel(props: Props) {
 
   const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
 
-  const _getActions = useCallback(
-    (frame: DataFrame, field: Field, rowIndex: number) => getCellActions(frame, field, rowIndex, replaceVariables),
-    [replaceVariables]
-  );
+  const disableSanitizeHtml = getConfig().disableSanitizeHtml;
 
   const tableElement = (
     <TableNG
@@ -75,6 +77,7 @@ export function TablePanel(props: Props) {
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       footerOptions={options.footer}
+      frozenColumns={options.frozenColumns?.left}
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
@@ -83,6 +86,7 @@ export function TablePanel(props: Props) {
       getActions={_getActions}
       structureRev={data.structureRev}
       transparent={transparent}
+      disableSanitizeHtml={disableSanitizeHtml}
     />
   );
 

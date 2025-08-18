@@ -30,7 +30,6 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. For **Sign-in method**, select **OIDC - OpenID Connect**.
 1. For **Application type**, select **Web Application** and click **Next**.
 1. Configure **New Web App Integration Operations**:
-
    - **App integration name**: Choose a name for the app.
    - **Logo (optional)**: Add a logo.
    - **Grant type**: Select **Authorization Code** and **Refresh Token**.
@@ -54,7 +53,6 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. In the **Okta Admin Console**, select **Directory > Profile Editor**.
 1. Select the Okta Application Profile you created previously (the default name for this is `<App name> User`).
 1. Select **Add Attribute** and fill in the following fields:
-
    - **Data Type**: string
    - **Display Name**: Meaningful name. For example, `Grafana Role`.
    - **Variable Name**: Meaningful name. For example, `grafana_role`.
@@ -238,7 +236,7 @@ org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 ### Configure team synchronization
 
 {{< admonition type="note" >}}
-Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 By using Team Sync, you can link your Okta groups to teams within Grafana. This will automatically assign users to the appropriate teams.

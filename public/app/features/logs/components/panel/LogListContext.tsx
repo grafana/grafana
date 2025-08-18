@@ -12,6 +12,12 @@ import {
 } from 'react';
 
 import {
+  createContext as createAssistantContext,
+  ItemDataType,
+  OpenAssistantProps,
+  useAssistant,
+} from '@grafana/assistant';
+import {
   CoreApp,
   DataFrame,
   LogLevel,
@@ -22,10 +28,14 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
-import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
+import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
+import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
@@ -40,9 +50,10 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
+  forceEscape: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
-  hasUnescapedContent?: boolean;
+  hasUnescapedContent: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
@@ -57,9 +68,13 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
+  setTimestampResolution: (format: LogLineTimestampResolution) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
+  timestampResolution: LogLineTimestampResolution;
   toggleDetails: (log: LogListModel) => void;
+  isAssistantAvailable: boolean;
+  openAssistantByLog: ((log: LogListModel) => void) | undefined;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -73,8 +88,10 @@ export const LogListContext = createContext<LogListContextData>({
   downloadLogs: () => {},
   enableLogDetails: false,
   filterLevels: [],
+  forceEscape: false,
   fontSize: 'default',
   hasUnescapedContent: false,
+  noInteractions: false,
   setDedupStrategy: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
@@ -88,13 +105,17 @@ export const LogListContext = createContext<LogListContextData>({
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
+  setTimestampResolution: () => {},
   setWrapLogMessage: () => {},
   showDetails: [],
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  timestampResolution: 'ns',
   toggleDetails: () => {},
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -122,13 +143,13 @@ export type LogListState = Pick<
   | 'fontSize'
   | 'forceEscape'
   | 'filterLevels'
-  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
+  | 'timestampResolution'
   | 'wrapLogMessage'
 >;
 
@@ -143,8 +164,6 @@ export interface Props {
   enableLogDetails: boolean;
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
-  forceEscape?: boolean;
-  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
@@ -152,6 +171,7 @@ export interface Props {
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noInteractions?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
@@ -174,6 +194,7 @@ export interface Props {
   showTime: boolean;
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
+  timestampResolution?: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
@@ -187,8 +208,6 @@ export const LogListContextProvider = ({
   displayedFields,
   filterLevels,
   fontSize,
-  forceEscape = false,
-  hasUnescapedContent,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
@@ -196,6 +215,7 @@ export const LogListContextProvider = ({
   logsMeta,
   logOptionsStorageKey,
   logSupportsContext,
+  noInteractions,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -218,6 +238,9 @@ export const LogListContextProvider = ({
   showUniqueLabels,
   sortOrder,
   syntaxHighlighting,
+  timestampResolution = logOptionsStorageKey
+    ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
+    : 'ms',
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -225,20 +248,53 @@ export const LogListContextProvider = ({
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
     fontSize,
-    forceEscape,
-    hasUnescapedContent,
+    forceEscape: logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.forceEscape`, false) : false,
     pinnedLogs,
     prettifyJSON,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
+    timestampResolution,
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+  const [isAssistantAvailable, openAssistant] = useAssistant();
 
+  useEffect(() => {
+    if (noInteractions) {
+      return;
+    }
+    reportInteractionOnce(`logs_log_list_${app}_logs_displayed`, {
+      dedupStrategy,
+      fontSize,
+      forceEscape: logListState.forceEscape,
+      showTime,
+      syntaxHighlighting,
+      wrapLogMessage,
+      detailsWidth,
+      detailsMode,
+      withDisplayedFields: displayedFields.length > 0,
+      timestampResolution: logListState.timestampResolution,
+    });
+    // Just once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // OTel displayed fields
+  useEffect(() => {
+    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+      return;
+    }
+    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
+    if (otelDisplayedFields.length) {
+      setDisplayedFields(otelDisplayedFields);
+    }
+  }, [displayedFields.length, logs, setDisplayedFields]);
+
+  // Sync state
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
     if (showControls && app !== CoreApp.PanelEditor) {
@@ -267,6 +323,7 @@ export const LogListContextProvider = ({
     wrapLogMessage,
   ]);
 
+  // Sync filter levels
   useEffect(() => {
     if (filterLevels === undefined) {
       return;
@@ -279,22 +336,19 @@ export const LogListContextProvider = ({
     });
   }, [filterLevels]);
 
+  // Sync font size
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
   }, [fontSize]);
 
-  useEffect(() => {
-    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
-      setLogListState({ ...logListState, hasUnescapedContent });
-    }
-  }, [hasUnescapedContent, logListState]);
-
+  // Sync pinned logs
   useEffect(() => {
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       setLogListState({ ...logListState, pinnedLogs });
     }
   }, [logListState, pinnedLogs]);
 
+  // Sync show details
   useEffect(() => {
     if (!showDetails.length) {
       return;
@@ -307,6 +361,7 @@ export const LogListContextProvider = ({
     }
   }, [logs, showDetails]);
 
+  // Sync log details width
   useEffect(() => {
     const handleResize = debounce(() => {
       setDetailsWidthState((detailsWidth) => getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth));
@@ -317,6 +372,14 @@ export const LogListContextProvider = ({
       window.removeEventListener('resize', handleResize);
     };
   }, [containerElement, logOptionsStorageKey]);
+
+  // Sync timestamp resolution
+  useEffect(() => {
+    setLogListState((state) => ({
+      ...state,
+      timestampResolution,
+    }));
+  }, [timestampResolution]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -366,10 +429,16 @@ export const LogListContextProvider = ({
 
   const setShowTime = useCallback(
     (showTime: boolean) => {
-      setLogListState({ ...logListState, showTime });
+      const newTimestampFormat = showTime === false ? 'ms' : logListState.timestampResolution;
+      setLogListState({
+        ...logListState,
+        showTime,
+        timestampResolution: newTimestampFormat,
+      });
       onLogOptionsChange?.('showTime', showTime);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.showTime`, showTime);
+        store.set(`${logOptionsStorageKey}.timestampResolution`, newTimestampFormat);
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
@@ -442,20 +511,22 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
+    showDetails.forEach((log) => removeDetailsScrollPosition(log));
     setShowDetails([]);
-  }, []);
+  }, [showDetails]);
 
   const toggleDetails = useCallback(
     (log: LogListModel) => {
       if (!enableLogDetails) {
         return;
       }
-      const found = showDetails.findIndex((stateLog) => stateLog === log || stateLog.uid === log.uid);
-      if (found >= 0) {
+      const found = showDetails.find((stateLog) => stateLog === log || stateLog.uid === log.uid);
+      if (found) {
+        removeDetailsScrollPosition(found);
         setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
       } else {
         // Supporting one displayed details for now
-        setShowDetails([log]);
+        setShowDetails([...showDetails, log]);
       }
     },
     [enableLogDetails, showDetails]
@@ -478,8 +549,32 @@ export const LogListContextProvider = ({
     [containerElement, logOptionsStorageKey]
   );
 
+  const setTimestampResolution = useCallback(
+    (timestampResolution: LogLineTimestampResolution) => {
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.timestampResolution`, timestampResolution);
+      }
+      setLogListState((state) => ({
+        ...state,
+        timestampResolution,
+      }));
+    },
+    [logOptionsStorageKey]
+  );
+
+  const openAssistantByLog = useCallback(
+    (log: LogListModel) => {
+      if (!openAssistant) {
+        return;
+      }
+      handleOpenAssistant(openAssistant, log);
+    },
+    [openAssistant]
+  );
+
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
+  const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
   return (
     <LogListContext.Provider
@@ -498,12 +593,13 @@ export const LogListContextProvider = ({
         forceEscape: logListState.forceEscape,
         hasLogsWithErrors,
         hasSampledLogs,
-        hasUnescapedContent: logListState.hasUnescapedContent,
+        hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
         logOptionsStorageKey,
+        noInteractions: noInteractions ?? false,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -533,14 +629,18 @@ export const LogListContextProvider = ({
         setShowUniqueLabels,
         setSortOrder,
         setSyntaxHighlighting,
+        setTimestampResolution,
         setWrapLogMessage,
         showDetails,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
+        timestampResolution: logListState.timestampResolution,
         toggleDetails,
         wrapLogMessage: logListState.wrapLogMessage,
+        isAssistantAvailable,
+        openAssistantByLog,
       }}
     >
       {children}
@@ -584,4 +684,61 @@ function getDetailsWidth(
     return currentWidth ?? defaultWidth;
   }
   return detailsWidth;
+}
+
+const detailsScrollMap = new Map<string, number>();
+
+export function saveDetailsScrollPosition(log: LogListModel, position: number) {
+  detailsScrollMap.set(log.uid, position);
+}
+
+export function getDetailsScrollPosition(log: LogListModel) {
+  return detailsScrollMap.get(log.uid) ?? 0;
+}
+
+export function removeDetailsScrollPosition(log: LogListModel) {
+  detailsScrollMap.delete(log.uid);
+}
+
+const reportInteractionOnce = (interactionName: string, properties?: Record<string, unknown>) => {
+  const key = `logs.log-list-context.events.${interactionName}`;
+  if (sessionStorage.getItem(key)) {
+    return;
+  }
+  sessionStorage.setItem(key, '1');
+  reportInteraction(interactionName, properties);
+};
+
+async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
+  const datasource = await getDataSourceSrv().get(log.datasourceUid);
+  const context = [];
+  if (datasource) {
+    context.push(
+      createAssistantContext(ItemDataType.Datasource, {
+        datasourceUid: datasource.uid,
+        datasourceName: datasource.name,
+        datasourceType: datasource.type,
+        img: datasource.meta?.info?.logos?.small,
+      })
+    );
+  }
+  openAssistant({
+    prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
+
+      \`\`\`
+${log.entry.replaceAll('`', '\\`')}
+      \`\`\`
+      `,
+    context: [
+      ...context,
+      createAssistantContext(ItemDataType.Structured, {
+        title: t('logs.log-line-menu.log-line', 'Log line'),
+        data: {
+          labels: log.labels,
+          value: log.entry,
+          timestamp: log.timestamp,
+        },
+      }),
+    ],
+  });
 }

@@ -99,6 +99,7 @@ type OAuthInfo struct {
 	TokenUrl                    string            `mapstructure:"token_url" toml:"token_url"`
 	UsePKCE                     bool              `mapstructure:"use_pkce" toml:"use_pkce"`
 	UseRefreshToken             bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
+	LoginPrompt                 string            `mapstructure:"login_prompt" toml:"login_prompt"`
 	Extra                       map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
 }
 

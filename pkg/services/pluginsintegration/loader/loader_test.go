@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
@@ -1572,7 +1573,7 @@ type loaderDepOpts struct {
 func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Service, proc process.Manager,
 	backendFactory plugins.BackendFactoryProvider, errTracker pluginerrs.ErrorTracker,
 ) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
+	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	angularInspector := angularinspector.NewStaticInspector()
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
@@ -1586,7 +1587,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 }
 
 func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loaderDepOpts) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
+	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	reg := fakes.NewFakePluginRegistry()
 	proc := fakes.NewFakeProcessManager()
 

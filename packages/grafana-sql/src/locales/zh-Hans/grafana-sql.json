@@ -2,26 +2,26 @@
   "grafana-sql": {
     "components": {
       "confirm-modal": {
-        "builder-mode": "",
+        "builder-mode": "生成器模式不显示代码中所做的更改。查询生成器将显示您在生成器模式下所做的最后一次更改。",
         "cancel": "取消",
-        "clipboard": "",
-        "copy-code-and-switch": "",
-        "discard-code-and-switch": "",
+        "clipboard": "您想将代码复制到剪贴板吗？",
+        "copy-code-and-switch": "复制代码并切换",
+        "discard-code-and-switch": "丢弃代码并切换",
         "warning": "警告"
       },
       "connection-limits": {
-        "auto-max-idle": "",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
-        "content-max-lifetime": "",
-        "content-max-open": "",
-        "max-idle": "",
-        "max-lifetime": "",
-        "max-open": "",
-        "title-connection-limits": ""
+        "auto-max-idle": "自动最大空闲",
+        "content-auto-max-idle": "如果启用，则自动将<1>最大空闲连接数</1>的数字设置为与<3>最大打开连接数</3>相同的值。如果未设置最大打开连接数的数字，则将其设置为默认值 ({{defaultMaxIdle}})。",
+        "content-max-idle": "空闲连接池中的最大连接数。如果<1>最大打开连接数</1>大于 0 但小于<3>最大空闲连接数</3>，则<5>最大空闲连接数</5>将减少以匹配<8>最大打开连接数</8>限制。如果设置为 0，则不保留任何空闲连接。",
+        "content-max-lifetime": "连接可以重复使用的最长时间（秒）。如果设置为 0，则连接将永久重复使用。",
+        "content-max-open": "数据库的最大打开连接数。如果<1>最大空闲连接数</1>大于 0 且<3>最大打开连接数</3>小于<5>最大空闲连接数</5>，则<7>最大空闲连接数</7>将减少以匹配<9>最大打开连接数</9>限制。如果设置为 0，则对打开的连接数没有限制。",
+        "max-idle": "最大空闲",
+        "max-lifetime": "最大生命周期",
+        "max-open": "最大打开",
+        "title-connection-limits": "连接限制"
       },
       "dataset-selector": {
-        "aria-label-dataset-selector": ""
+        "aria-label-dataset-selector": "数据集选择器"
       },
       "error-boundary": {
         "fall-back": {
@@ -31,21 +31,21 @@
       "get-custom-operators": {
         "custom-operators": {
           "label": {
-            "macros": ""
+            "macros": "宏指令"
           }
         }
       },
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "分组依据",
-          "title-remove-group-by-column": ""
+          "title-remove-group-by-column": "按列移除组"
         }
       },
       "order-by-row": {
-        "aria-label-order-by": "",
+        "aria-label-order-by": "排序条件",
         "label-limit": "限制",
-        "label-offset": "",
-        "label-order-by": ""
+        "label-offset": "偏移",
+        "label-order-by": "排序条件"
       },
       "preview": {
         "label-element": {
@@ -54,100 +54,100 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "您的查询无效。请查看下方详情。<1></1>但是，您仍然可以运行此查询。",
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "构建器",
+          "label-code": "代码"
         },
-        "label-dataset": "",
+        "label-dataset": "数据集",
         "label-filter": "筛选条件",
         "label-format": "格式",
         "label-group": "组",
-        "label-order": "",
+        "label-order": "顺序",
         "label-preview": "预览",
         "label-table": "表格",
-        "placeholder-select-format": "",
+        "placeholder-select-format": "选择格式",
         "run-query": "运行查询"
       },
       "query-toolbox": {
-        "content-hit-ctrlcmdreturn-to-run-query": "",
-        "tooltip-collapse": "",
-        "tooltip-expand": "",
-        "tooltip-format-query": ""
+        "content-hit-ctrlcmdreturn-to-run-query": "按 CTRL/CMD+Return 运行查询",
+        "tooltip-collapse": "折叠编辑器",
+        "tooltip-expand": "展开编辑器",
+        "tooltip-format-query": "格式化查询"
       },
       "query-validator": {
-        "query-will-process": "",
-        "validating-query": ""
+        "query-will-process": "<0></0> 此查询将在运行时处理 <2>{{bytes}}</2>。",
+        "validating-query": "正在验证查询..."
       },
       "raw-editor": {
         "render-placeholder": {
-          "editing-in-expanded-code-editor": ""
+          "editing-in-expanded-code-editor": "在展开的代码编辑器中编辑"
         },
-        "title-query-num": ""
+        "title-query-num": "查询 {{queryNum}}"
       },
       "select-column": {
         "label-column": "列"
       },
       "select-custom-function-parameters": {
-        "aria-label-parameter": "",
+        "aria-label-parameter": "{{columnIndex}} 列的参数 {{index}}",
         "render-parameters": {
           "params": {
-            "title-remove-parameter": ""
+            "title-remove-parameter": "移除参数"
           }
         },
-        "title-add-parameter": ""
+        "title-add-parameter": "添加参数"
       },
       "select-row": {
         "aggregate-options": {
           "options": {
             "label": {
-              "aggregations": "",
-              "macros": ""
+              "aggregations": "聚合",
+              "macros": "宏指令"
             }
           }
         },
         "label": {
-          "time": "",
+          "time": "时间",
           "value": "值"
         },
         "label-alias": "别名",
-        "label-data-operations": "",
-        "title-add-column": "",
-        "title-remove-column": ""
+        "label-data-operations": "数据操作",
+        "title-add-column": "添加列",
+        "title-remove-column": "移除列"
       },
       "settings": {
-        "aria-label-conjunction": "",
+        "aria-label-conjunction": "连词",
         "aria-label-field": "字段",
         "aria-label-operator": "运算符",
-        "title-button-filter": ""
+        "title-button-filter": "{{ buttonLabel }}筛选器"
       },
       "sql-query-editor-lazy": {
         "text-loading-editor": "正在加载编辑器"
       },
       "table-selector": {
-        "aria-label-table-selector": "",
-        "placeholder-loading": "",
-        "placeholder-select-table": ""
+        "aria-label-table-selector": "表选择器",
+        "placeholder-loading": "正在加载表格",
+        "placeholder-select-table": "选择表格"
       },
       "tlssecrets-config": {
-        "content-tlsssl-client-certificate": "",
-        "content-tlsssl-client-key": "",
-        "content-tlsssl-root-certificate": "",
-        "tlsssl-client-certificate": "",
-        "tlsssl-client-key": "",
+        "content-tlsssl-client-certificate": "要使用 TLS/SSL 客户端证书进行身份验证，请在此处提供客户端证书。",
+        "content-tlsssl-client-key": "要使用客户端 TLS/SSL 证书进行身份验证，请在此处提供密钥。",
+        "content-tlsssl-root-certificate": "如果所选的 TLS/SSL 模式需要服务器根证书，请在此处提供",
+        "tlsssl-client-certificate": "TLS/SSL 客户端证书",
+        "tlsssl-client-key": "TLS 客户端密钥",
         "tlsssl-root-certificate": "TLS/SSL 根证书"
       },
       "visual-editor": {
-        "label-filter-by-column-value": "",
-        "label-group-by-column": ""
+        "label-filter-by-column-value": "按列值筛选",
+        "label-group-by-column": "按列分组"
       },
       "widgets": {
-        "aria-label-macros-value-selector": ""
+        "aria-label-macros-value-selector": "宏值选择器"
       }
     },
     "utils": {
       "get-columns-width-indices": {
-        "label-selected-columns": ""
+        "label-selected-columns": "选定的列"
       }
     }
   }

@@ -37,6 +37,13 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   return {
     useCreateRepositoryFilesWithPathMutation: jest.fn(),
+    provisioningAPIv0alpha1: {
+      endpoints: {
+        listRepository: {
+          select: jest.fn().mockReturnValue(() => ({ data: { items: [] } })),
+        },
+      },
+    },
   };
 });
 
@@ -124,6 +131,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     workflows: ['write', 'branch'],
     target: 'folder',
   },
+  isReadOnlyRepo: false,
   folder: {
     metadata: {
       annotations: {
@@ -139,7 +147,6 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     { label: 'Commit directly', value: 'write' },
     { label: 'Create a branch', value: 'branch' },
   ],
-  isGitHub: true,
   initialValues: {
     title: '',
     comment: '',
@@ -182,18 +189,18 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should return null when initialValues is not available', () => {
-    const { container } = setup(
+    setup(
       {},
       {
         ...mockHookData,
         initialValues: undefined,
       }
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
   });
 
   it('should show error when repository is not found', () => {
-    const { container } = setup(
+    setup(
       {},
       {
         ...mockHookData,
@@ -201,7 +208,7 @@ describe('NewProvisionedFolderForm', () => {
         initialValues: undefined,
       }
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
   });
 
   it('should show branch field when branch workflow is selected', async () => {

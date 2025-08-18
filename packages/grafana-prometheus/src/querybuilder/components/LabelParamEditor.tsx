@@ -13,7 +13,7 @@ import { PromVisualQuery, PromQueryModellerInterface } from '../types';
  * Props for the LabelParamEditor component.
  * This editor specifically requires a Prometheus query modeller instance.
  */
-export interface LabelParamEditorProps extends Omit<QueryBuilderOperationParamEditorProps, 'queryModeller'> {
+interface LabelParamEditorProps extends Omit<QueryBuilderOperationParamEditorProps, 'queryModeller'> {
   queryModeller: PromQueryModellerInterface;
 }
 

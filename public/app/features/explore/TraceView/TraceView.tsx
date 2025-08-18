@@ -14,6 +14,7 @@ import {
   mapInternalLinkToExplore,
   SplitOpen,
   TimeRange,
+  TraceSearchProps,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
@@ -40,7 +41,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { SearchProps, useSearch } from './useSearch';
+import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -66,7 +67,7 @@ type Props = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
-  spanFilters?: SearchProps;
+  spanFilters?: TraceSearchProps;
   timeRange: TimeRange;
 };
 
@@ -98,7 +99,7 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { search, setSearch, spanFilterMatches } = useSearch(traceProp?.spans, spanFilters);
+  const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [headerHeight, setHeaderHeight] = useState(100);
@@ -166,6 +167,7 @@ export function TraceView(props: Props) {
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
+  const datasourceName = datasource ? datasource?.name : 'unknown';
   const datasourceUid = datasource ? datasource?.uid : '';
   const scrollElement = props.scrollElement
     ? props.scrollElement
@@ -188,6 +190,8 @@ export function TraceView(props: Props) {
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
+            datasourceName={datasourceName}
+            datasourceUid={datasourceUid}
             setHeaderHeight={setHeaderHeight}
             app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
           />

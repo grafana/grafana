@@ -6,6 +6,20 @@ set -eo pipefail
 HOST=${HOST:-$DEFAULT_HOST}
 PORT=${PORT:-$DEFAULT_PORT}
 
-echo -e "Waiting for grafana-server to finish starting, host=$HOST, port=$PORT"
+printf "Waiting for grafana-server to finish starting, host=%s, port=%s" "$HOST" "$PORT"
 
-timeout 60 bash -c 'until nc -z $0 $1; do sleep 1; done' $HOST $PORT
+timeout=60
+elapsed=0
+
+while ! curl -s -f http://$HOST:$PORT/health > /dev/null 2>&1; do
+  if [ $elapsed -ge $timeout ]; then
+    printf "\nTimeout after %d seconds waiting for grafana-server to start\n" "$timeout"
+    exit 1
+  fi
+
+  printf "."
+  sleep 1
+  elapsed=$((elapsed + 1))
+done
+
+printf "\n"

@@ -136,7 +136,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
       - name: Configure git user
@@ -208,7 +208,7 @@ jobs:
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         run: |
           git add package.json lerna.json yarn.lock packages public
-          test -e e2e/test-plugins && git add e2e/test-plugins
+          test -e e2e-playwright/test-plugins && git add e2e-playwright/test-plugins
           git commit -m "Update version to $VERSION"
 
       - name: Git push

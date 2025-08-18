@@ -10,10 +10,13 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -79,7 +82,8 @@ func (s *folderStorage) Create(ctx context.Context,
 ) (runtime.Object, error) {
 	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
-		return nil, err
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
 	}
 
 	info, err := request.NamespaceInfoFrom(ctx, true)
@@ -125,7 +129,23 @@ func (s *folderStorage) Update(ctx context.Context,
 
 // GracefulDeleter
 func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return s.store.Delete(ctx, name, deleteValidation, options)
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	obj, async, err := s.store.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		return obj, async, err
+	}
+
+	if accessErr := s.folderPermissionsSvc.DeleteResourcePermissions(ctx, info.OrgID, name); accessErr != nil {
+		// TODO: add a proper logger to this struct.
+		logger := log.New().FromContext(ctx)
+		logger.Warn("failed to delete folder permission after successfully deleting folder resource", "folder", name, "error", accessErr)
+	}
+
+	return obj, async, err
 }
 
 // GracefulDeleter
@@ -151,7 +171,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 		})
 	}
 	isNested := parentUID != ""
-	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
