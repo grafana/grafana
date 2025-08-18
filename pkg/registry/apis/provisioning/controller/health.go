@@ -179,8 +179,8 @@ func (hc *HealthChecker) CheckRepositoryHealth(ctx context.Context, repo reposit
 	}
 }
 
-// RecordFailure creates a health status with a specific failure
-func (hc *HealthChecker) RecordFailure(failureType FailureType, err error, existingStatus provisioning.HealthStatus) provisioning.HealthStatus {
+// recordFailure creates a health status with a specific failure
+func (hc *HealthChecker) recordFailure(failureType FailureType, err error, existingStatus provisioning.HealthStatus) provisioning.HealthStatus {
 	// Parse existing failures
 	existingFailures := hc.ParseExistingFailures(existingStatus)
 
@@ -210,9 +210,9 @@ func (hc *HealthChecker) RecordFailure(failureType FailureType, err error, exist
 }
 
 // RecordFailureAndUpdate records a failure and updates the repository status
-func (hc *HealthChecker) RecordFailureAndUpdate(ctx context.Context, failureType FailureType, err error, repo *provisioning.Repository) error {
+func (hc *HealthChecker) RecordFailure(ctx context.Context, failureType FailureType, err error, repo *provisioning.Repository) error {
 	// Create the health status with the failure
-	healthStatus := hc.RecordFailure(failureType, err, repo.Status.Health)
+	healthStatus := hc.recordFailure(failureType, err, repo.Status.Health)
 
 	// Create patch operation
 	patchOp := map[string]interface{}{
@@ -258,9 +258,9 @@ func (hc *HealthChecker) HasHealthStatusChanged(old, new provisioning.HealthStat
 	return false
 }
 
-// CheckAndUpdateRepositoryHealth performs a health check on an existing repository,
+// RefreshHealthWithTestResults performs a health check on an existing repository,
 // updates its status if needed, and returns the test results
-func (hc *HealthChecker) CheckAndUpdateRepositoryHealth(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error) {
+func (hc *HealthChecker) RefreshHealthWithTestResults(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error) {
 	if repo == nil {
 		return nil, fmt.Errorf("repository is nil")
 	}
