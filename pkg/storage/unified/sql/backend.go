@@ -632,7 +632,8 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
-// ListModifiedSince lists all resource changes that have occurred since the given resource version.
+// ListModifiedSince will return all resources that have changed since the given resource version.
+// If a resource has changes, only the latest change will be returned.
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	var latestRv int64
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
