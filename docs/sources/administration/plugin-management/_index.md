@@ -115,6 +115,13 @@ You can configure your Grafana instance to let the frontends of installed plugin
 
 You can use the [Plugin Frontend Sandbox](plugin-frontend-sandbox) to securely isolate plugin frontend code from the main Grafana application.
 
+When enabled, plugins run in a separate JavaScript context, which provides several security benefits:
+
+- Prevents plugins from modifying parts of the Grafana interface outside their designated areas
+- Stops plugins from interfering with other plugins functionality
+- Protects core Grafana features from being altered by plugins
+- Prevents plugins from modifying global browser objects and behaviors
+
 ### Learn more
 
 - [Browse available plugins](/grafana/plugins)

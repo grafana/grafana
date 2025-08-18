@@ -45,6 +45,12 @@ Data source plugins communicate with external sources of data and return the dat
 
 Use data source plugins when you want to query data from external or third-party systems.
 
+### Managing access for data source plugins
+
+Customize access to data source plugins with [RBAC](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins/).
+
+?????? CHECK
+
 ## App plugins
 
 Applications, or app plugins, bundle data sources and panels to provide a cohesive experience, such as the [Zabbix](/grafana/plugins/alexanderzobnin-zabbix-app) app.
