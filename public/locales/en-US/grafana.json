@@ -7526,11 +7526,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-picker": {
-    "create-instructions": "Press enter to create the new folder.",
-    "input-placeholder": "Press enter to confirm new folder",
-    "loading": "Loading folders..."
-  },
   "folder-repo": {
     "provisioned-badge": "Provisioned",
     "read-only-badge": "Read only"
