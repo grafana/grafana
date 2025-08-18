@@ -110,7 +110,7 @@ const LogLineComponent = memo(
     const permalinked = useLogIsPermalinked(log);
 
     useEffect(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization || !height) {
+      if (!onOverflow || !logLineRef.current || !virtualization || !height || !wrapLogMessage) {
         return;
       }
       const calculatedHeight = typeof height === 'number' ? height : undefined;
