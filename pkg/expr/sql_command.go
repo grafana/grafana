@@ -362,13 +362,13 @@ func handleSqlInput(refID string, forRefIDs map[string]struct{}, dataFrames data
 
 	// If Meta.Type is not supported, but there are labels or more than 1 frame, fail fast
 	if len(dataFrames) > 1 {
-		result.Error = fmt.Errorf("response has more than one frame but frame type is missing or unsupported for sql conversion")
+		result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response is missing the data type (frame.meta.type) and has more than one dataframe that can not be automatically mapped to a single table."), refID, forRefIDs)
 		return result
 	}
 	for _, frame := range dataFrames {
 		for _, field := range frame.Fields {
 			if len(field.Labels) > 0 {
-				result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response is missing the data type (frame.meta.type) and has labels in the response that can not be mapped to a table."), frame.RefID, forRefIDs)
+				result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response is missing the data type (frame.meta.type) and has labels in the response that can not be mapped to a table."), refID, forRefIDs)
 				return result
 			}
 		}

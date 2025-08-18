@@ -220,7 +220,7 @@ func MakeTableNotFoundError(refID, table string) TypedError {
 	return &ErrorWithType{errorType: "table_not_found", err: TableNotFoundError.Build(data)}
 }
 
-var sqlDepErrStr = "did not execute sql expression [{{ .Public.refId }}] due to a failure of the dependent expression or query [{{.Public.depRefId}}]"
+var sqlDepErrStr = "could not run sql expression [{{ .Public.refId }}] because it selects from the results of the query [{{.Public.depRefId }}] which has an error"
 
 var DependencyError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.failed_dependency").MustTemplate(
@@ -233,7 +233,7 @@ func MakeSQLDependencyError(refID, depRefID string) TypedError {
 			"refId":    refID,
 			"depRefId": depRefID,
 		},
-		Error: fmt.Errorf("could not run execute sql expression %v due to a failure of the dependent expression or query %v", refID, depRefID),
+		Error: fmt.Errorf("could not run sql expression %v because it selects from the results of the query %v which has an error", refID, depRefID),
 	}
 
 	return &ErrorWithType{errorType: "failed_dependency", err: DependencyError.Build(data)}
