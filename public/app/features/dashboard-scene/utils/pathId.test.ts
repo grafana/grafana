@@ -31,7 +31,7 @@ describe('findVizPanelByPathId', () => {
   it('should include local and parent local variable value', () => {
     const { repeatedPanel } = buildTestScene();
 
-    expect(getVizPanelPathId(repeatedPanel)).toBe('US$pod1$panel-2');
+    expect(repeatedPanel.getPathId()).toBe('US$pod1$panel-2');
   });
 });
 
