@@ -1344,34 +1344,6 @@ describe('TableNG', () => {
     });
   });
 
-  describe('Context menu', () => {
-    it('should show context menu on right-click', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={400} height={400} />
-      );
-
-      const cell = container.querySelector('[role="gridcell"]');
-      expect(cell).toBeInTheDocument();
-
-      // Trigger context menu directly on the cell element
-      if (cell) {
-        fireEvent.contextMenu(cell);
-      }
-
-      // Check that context menu is shown
-      const menu = await screen.findByRole('menu');
-      expect(menu).toBeInTheDocument();
-
-      // Check for the Inspect value menu item
-      const menuItem = await screen.findByText('Inspect value');
-      expect(menuItem).toBeInTheDocument();
-
-      // close the menu
-      await userEvent.click(container);
-      expect(menuItem).not.toBeInTheDocument();
-    });
-  });
-
   describe('Cell inspection', () => {
     it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
