@@ -776,8 +776,8 @@ export function TableNG(props: TableNGProps) {
 
       {inspectCell && (
         <TableCellInspector
-          mode={inspectCell?.mode ?? TableCellInspectorMode.text}
-          value={inspectCell?.value}
+          mode={inspectCell.mode ?? TableCellInspectorMode.text}
+          value={inspectCell.value}
           onDismiss={() => setInspectCell(null)}
         />
       )}
