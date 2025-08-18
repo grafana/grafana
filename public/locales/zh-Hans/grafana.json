@@ -4504,6 +4504,10 @@
           "value": "值"
         }
       },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
+      },
       "overlay": {
         "tooltip": "由于条件渲染，元素已被隐藏。"
       },

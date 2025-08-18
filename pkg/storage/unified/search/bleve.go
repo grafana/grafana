@@ -549,7 +549,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 	return nil, "", 0
 }
 
-func (b *bleveBackend) closeAllIndexes() {
+func (b *bleveBackend) CloseAllIndexes() {
 	b.cacheMx.Lock()
 	defer b.cacheMx.Unlock()
 
