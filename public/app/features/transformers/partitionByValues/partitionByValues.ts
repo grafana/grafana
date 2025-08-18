@@ -7,6 +7,7 @@ import {
   getFieldMatcher,
   DataTransformContext,
   FieldMatcher,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { getMatcherConfig, noopTransformer } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
@@ -98,42 +99,12 @@ export const getPartitionByValuesTransformer: () => SynchronousDataTransformerIn
   });
 
 // Split a single frame dataset into multiple frames based on values in a set of fields
-export function partitionByValues(
+function _partitionByValues(
   frame: DataFrame,
   matcher: FieldMatcher,
   options?: PartitionByValuesTransformerOptions
 ): DataFrame[] {
-  let fields = frame.fields.map(f => {
-    let f2 = f;
-
-    let renamedTo = f.config.displayNameFromDS ?? f.config.displayName;
-
-    // if the field was explicitly renamed e.g. via prior Organize transform
-    // we need to stamp this new name as the base field name to allow calculateFieldDisplayName()
-    // to proceed normally with its logic to generate unique field names when all fields have same field.name
-    // which includes prepending the frame name. panels like XYChart rely on the existing autonaming conventions
-    // to correctly extract the final series names, omitting any common/repetative prefixes or suffixes
-    if (renamedTo) {
-      f2 = {
-        ...f,
-        name: renamedTo,
-        config: {
-          ...f.config,
-        },
-        state: {
-          ...f.state,
-        },
-      };
-
-      delete f2.config.displayName;
-      delete f2.config.displayNameFromDS;
-      delete f2.state!.displayName;
-    }
-
-    return f2;
-  });
-
-  const keyFields = fields.filter((f) => matcher(f, frame, [frame]))!;
+  const keyFields = frame.fields.filter((f) => matcher(f, frame, [frame]))!;
 
   if (!keyFields.length) {
     return [frame];
@@ -170,11 +141,11 @@ export function partitionByValues(
       frameName = name;
     }
 
-    let filteredFields = fields;
+    let filteredFields = frame.fields;
 
     if (!options?.keepFields) {
       const keyFieldNames = new Set(names);
-      filteredFields = fields.filter((field) => !keyFieldNames.has(field.name));
+      filteredFields = frame.fields.filter((field) => !keyFieldNames.has(field.name));
     }
 
     return {
@@ -202,4 +173,76 @@ export function partitionByValues(
       }),
     };
   });
+}
+
+// since this transformation splits one frame into multiple, we end up with duplicate field names across all frames
+// this is normally okay since getFieldDisplayName() -> calculateFieldDisplayName() avoids creating duplicate names
+// by using other sources of entropy such as refIds, frame names, field labels, and increments.
+
+// however, this does *not* work if a field has been renamed by the user or datasource (config.displayName or config.displayNameFromDS).
+// Organize fields transformation or field overrides are common places where this happens.
+// in this situation the auto-namer is skipped, and we end up with multiple fields named exactly the same.
+
+// consequently, onToggleSeriesVisibility() (from usePanelContext) does not have a unique field name to use for applying a
+// fieldMatcher that controls field.config.hideFrom.viz
+
+// so what we need to do to make this work is either make field.name unique or make field.config.displayName unique.
+// since field.name might need to be used for data links and subsequent drill down queries, we cannot overwrite it.
+// therefore, the code below [unfortunately] has to modify field.config.displayName by using calculateFieldDisplayName() logic.
+// this will have the side-effect of the displayName being a more verbose variant of what the user indicated, except in panels that
+// know how to remove common prefixes/suffixes from field names in tooltip and legend rendering (like XYChart)
+export function partitionByValues(
+  frame: DataFrame,
+  matcher: FieldMatcher,
+  options?: PartitionByValuesTransformerOptions
+) {
+  // remember original field names, we'll need to restore them later
+  let fieldNames: Record<string, string> = {};
+
+  let frame2 = {
+    ...frame,
+
+    fields: frame.fields.map((f) => {
+      let f2 = f;
+
+      let renameTo = f.config.displayNameFromDS ?? f.config.displayName;
+
+      if (renameTo) {
+        f2 = {
+          ...f,
+          config: {
+            ...f.config,
+          },
+          state: {
+            ...f.state,
+          },
+        };
+
+        fieldNames[renameTo] = f.name;
+        f2.name = renameTo;
+
+        delete f2.config.displayName;
+        delete f2.config.displayNameFromDS;
+        delete f2.state?.displayName;
+      }
+
+      return f2;
+    }),
+  };
+
+  let frames2 = _partitionByValues(frame2, matcher, options);
+
+  cacheFieldDisplayNames(frames2);
+
+  // restore original field names
+  // frames2.forEach((frame) => {
+  //   frame.fields.forEach((field) => {
+  //     if (field.name in fieldNames) {
+  //       field.name = fieldNames[field.name] ?? field.name;
+  //       field.config.displayName = field.state!.displayName!;
+  //     }
+  //   });
+  // });
+
+  return frames2;
 }
