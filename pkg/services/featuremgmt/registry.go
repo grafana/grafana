@@ -1072,6 +1072,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "alertingPrometheusRulesPrimary",
