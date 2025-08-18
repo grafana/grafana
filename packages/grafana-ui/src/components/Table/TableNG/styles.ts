@@ -77,7 +77,8 @@ export const getGridStyles = (
     gridNested: css({
       height: '100%',
       width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
-      overflow: 'visible',
+      overflowX: 'scroll',
+      overflowY: 'hidden',
       marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
       marginBlock: TABLE.CELL_PADDING,
     }),
