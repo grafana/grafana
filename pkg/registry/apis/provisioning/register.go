@@ -1326,9 +1326,9 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	}
 
 	// TODO: these values are not yet used
-	// After https://github.com/grafana/grafana/pull/107803 is merged, we can
-	// replace the custom secure value handling with this function
-	// This is included to make sure we have a full e2e integration test included
+	// After we are confident repositories with inline secrets can be deployed to cloud
+	// and do not fail here, we can then remove and replace the explicit/legacy secret
+	// support with a more generic approach (that will eventually be provided by app-sdk)
 	_, err := decrypt(ctx, r, b.decryptSvc)
 	if err != nil {
 		return nil, err

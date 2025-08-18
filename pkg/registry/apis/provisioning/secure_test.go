@@ -2,10 +2,12 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	secretV1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -35,6 +37,7 @@ func TestSecureValues_Decrypt(t *testing.T) {
 		name          string
 		input         *provisioning.Repository
 		decrypt       map[string]secret.DecryptResult
+		decryptErr    error
 		expect        *decryptedValues
 		expectedError string
 	}{
@@ -89,6 +92,33 @@ func TestSecureValues_Decrypt(t *testing.T) {
 			decrypt: map[string]secret.DecryptResult{},
 			expect:  getOutput("", ""),
 		},
+		{
+			name: "error decrypting",
+			input: &provisioning.Repository{
+				Secure: provisioning.SecureValues{},
+			},
+			decrypt:       map[string]secret.DecryptResult{},
+			decryptErr:    fmt.Errorf("error decrypting"),
+			expect:        getOutput("", ""),
+			expectedError: "error decrypting",
+		},
+		{
+			name: "error for one value",
+			input: &provisioning.Repository{
+				Secure: provisioning.SecureValues{
+					Token:         v0alpha1.InlineSecureValue{Name: "A"},
+					WebhookSecret: v0alpha1.InlineSecureValue{Name: "B"},
+				},
+			},
+			decrypt: map[string]secret.DecryptResult{
+				"A": newDecryptResult("decrypted-a"),
+				"B": secret.NewDecryptResultErr(fmt.Errorf("error with B")),
+			},
+			expect: &decryptedValues{
+				token: ptr.To(secretV1beta1.NewExposedSecureValue("decrypted-a")),
+			},
+			expectedError: "Unable to read secret: secure.webhookSecret",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -96,7 +126,7 @@ func TestSecureValues_Decrypt(t *testing.T) {
 			decryptSvc.EXPECT().Decrypt(mock.Anything, provisioning.GROUP, tt.input.Namespace,
 				tt.input.Secure.Token.Name,
 				tt.input.Secure.WebhookSecret.Name,
-			).Return(tt.decrypt, nil).Once()
+			).Return(tt.decrypt, tt.decryptErr).Once()
 
 			decrypted, err := decrypt(context.Background(), tt.input, decryptSvc)
 			if tt.expectedError != "" {

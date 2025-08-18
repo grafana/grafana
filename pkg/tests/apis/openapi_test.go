@@ -1,15 +1,15 @@
 package apis
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/version"
-	apimachineryversion "k8s.io/apimachinery/pkg/version"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -38,18 +38,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 
 	t.Run("check valid version response", func(t *testing.T) {
 		disco := h.NewDiscoveryClient()
-		req := disco.RESTClient().Get().
-			Prefix("version").
-			SetHeader("Accept", "application/json")
-
-		result := req.Do(context.Background())
-		require.NoError(t, result.Error())
-
-		raw, err := result.Raw()
+		info, err := disco.ServerVersion()
 		require.NoError(t, err)
-		info := apimachineryversion.Info{}
-		err = json.Unmarshal(raw, &info)
-		require.NoError(t, err)
+		require.Equal(t, runtime.Version(), info.GoVersion)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -57,8 +48,15 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.Equal(t, info.Major, fmt.Sprintf("%d", v.Major()))
 		require.Equal(t, info.Minor, fmt.Sprintf("%d", v.Minor()))
 
+		time.Sleep(20 * time.Second)
+
 		// Check that OpenAPI v2 (used by kubectl) returns properly
 		v2, err := disco.OpenAPISchema()
+		if err != nil {
+			jj, _ := json.MarshalIndent(v2, "", "  ")
+			fmt.Printf("%s\n", jj)
+		}
+
 		require.NoError(t, err, "requesting OpenAPI v2")
 		require.Equal(t, "Grafana API Server", v2.Info.Title)
 	})
