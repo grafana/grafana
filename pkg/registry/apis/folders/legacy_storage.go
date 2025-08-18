@@ -95,16 +95,10 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		SignedInUser: user,
 		OrgID:        orgId,
 	}
-	if options.Continue != "" {
-		query.Page = paging.page
-		query.Limit = paging.limit
-	} else if options.Limit > 0 {
-		query.Limit = options.Limit
-		query.Page = 1
-		// also need to update the paging token so the continue token is correct
-		paging.limit = options.Limit
-		paging.page = 1
-	}
+
+	// paging is always retrieved from the continue token
+	query.Limit = paging.limit
+	query.Page = paging.page
 
 	if options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
 		query.WithFullpath = true
@@ -321,13 +315,15 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
+
 	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
 		UID:          name,
 		OrgID:        info.OrgID,
 		SignedInUser: user,
 
 		// This would cascade delete into alert rules
-		ForceDeleteRules: false,
+		ForceDeleteRules:  false,
+		RemovePermissions: utils.GetFolderRemovePermissions(ctx, true),
 	})
 	return p, true, err // true is instant delete
 }

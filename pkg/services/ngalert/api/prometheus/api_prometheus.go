@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -240,6 +241,10 @@ type RuleGroupStatusesOptions struct {
 }
 
 type ListAlertRulesStore interface {
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
+}
+
+type ListAlertRulesStoreV2 interface {
 	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesByGroupQuery) (ngmodels.RulesGroup, string, error)
 }
 
@@ -399,7 +404,7 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 	}
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -483,14 +488,16 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	}
 
 	byGroupQuery := ngmodels.ListAlertRulesByGroupQuery{
-		OrgID:              opts.OrgID,
+		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
+			OrgID:         opts.OrgID,
+			NamespaceUIDs: namespaceUIDs,
+			DashboardUID:  dashboardUID,
+			PanelID:       panelID,
+			RuleGroups:    ruleGroups,
+			ReceiverName:  receiverName,
+		},
 		GroupLimit:         maxGroups,
 		GroupContinueToken: nextToken,
-		NamespaceUIDs:      namespaceUIDs,
-		DashboardUID:       dashboardUID,
-		PanelID:            panelID,
-		RuleGroups:         ruleGroups,
-		ReceiverName:       receiverName,
 	}
 	ruleList, continueToken, err := store.ListAlertRulesByGroup(opts.Ctx, &byGroupQuery)
 	if err != nil {
@@ -540,6 +547,174 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 	}
 
 	return ruleResponse
+}
+
+func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+	ruleResponse := apimodels.RuleResponse{
+		DiscoveryBase: apimodels.DiscoveryBase{
+			Status: "success",
+		},
+		Data: apimodels.RuleDiscovery{
+			RuleGroups: []apimodels.RuleGroup{},
+		},
+	}
+
+	dashboardUID := opts.Query.Get("dashboard_uid")
+	panelID, err := getPanelIDFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("invalid panel_id: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+	if dashboardUID == "" && panelID != 0 {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = "panel_id must be set with dashboard_uid"
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+
+	limitRulesPerGroup := getInt64WithDefault(opts.Query, "limit_rules", -1)
+	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
+	matchers, err := getMatchersFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+	stateFilterSet, err := getStatesFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+
+	healthFilterSet, err := getHealthFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+
+	var labelOptions []ngmodels.LabelOption
+	if !getBoolWithDefault(opts.Query, queryIncludeInternalLabels, false) {
+		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
+	}
+
+	if len(opts.AllowedNamespaces) == 0 {
+		log.Debug("User does not have access to any namespaces")
+		return ruleResponse
+	}
+
+	namespaceUIDs := make([]string, 0, len(opts.AllowedNamespaces))
+
+	folderUID := opts.Query.Get("folder_uid")
+	_, exists := opts.AllowedNamespaces[folderUID]
+	if folderUID != "" && exists {
+		namespaceUIDs = append(namespaceUIDs, folderUID)
+	} else {
+		for k := range opts.AllowedNamespaces {
+			namespaceUIDs = append(namespaceUIDs, k)
+		}
+	}
+
+	ruleGroups := opts.Query["rule_group"]
+
+	receiverName := opts.Query.Get("receiver_name")
+
+	alertRuleQuery := ngmodels.ListAlertRulesQuery{
+		OrgID:         opts.OrgID,
+		NamespaceUIDs: namespaceUIDs,
+		DashboardUID:  dashboardUID,
+		PanelID:       panelID,
+		RuleGroups:    ruleGroups,
+		ReceiverName:  receiverName,
+	}
+	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
+		ruleResponse.ErrorType = apiv1.ErrServer
+		return ruleResponse
+	}
+
+	ruleNames := opts.Query["rule_name"]
+	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
+	for _, rn := range ruleNames {
+		ruleNamesSet[rn] = struct{}{}
+	}
+
+	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
+	nextToken := opts.Query.Get("group_next_token")
+	if nextToken != "" {
+		if _, err := base64.URLEncoding.DecodeString(nextToken); err != nil {
+			nextToken = ""
+		}
+	}
+
+	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
+	rulesTotals := make(map[string]int64, len(groupedRules))
+	var newToken string
+	foundToken := false
+	for _, rg := range groupedRules {
+		if nextToken != "" && !foundToken {
+			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
+				continue
+			}
+			foundToken = true
+		}
+
+		if maxGroups > -1 && len(ruleResponse.Data.RuleGroups) == int(maxGroups) {
+			newToken = getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
+			break
+		}
+
+		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
+		ruleGroup.Totals = totals
+		for k, v := range totals {
+			rulesTotals[k] += v
+		}
+
+		if len(stateFilterSet) > 0 {
+			filterRulesByState(ruleGroup, stateFilterSet)
+		}
+
+		if len(healthFilterSet) > 0 {
+			filterRulesByHealth(ruleGroup, healthFilterSet)
+		}
+
+		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
+			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
+		}
+
+		if len(ruleGroup.Rules) > 0 {
+			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		}
+	}
+
+	ruleResponse.Data.NextToken = newToken
+
+	// Only return Totals if there is no pagination
+	if maxGroups == -1 {
+		ruleResponse.Data.Totals = rulesTotals
+	}
+
+	return ruleResponse
+}
+
+func getRuleGroupNextToken(namespace, group string) string {
+	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
+}
+
+// Returns true if tokenA >= tokenB
+func tokenGreaterThanOrEqual(tokenA string, tokenB string) bool {
+	decodedTokenA, _ := base64.URLEncoding.DecodeString(tokenA)
+	decodedTokenB, _ := base64.URLEncoding.DecodeString(tokenB)
+
+	return string(decodedTokenA) >= string(decodedTokenB)
 }
 
 type ruleGroup struct {

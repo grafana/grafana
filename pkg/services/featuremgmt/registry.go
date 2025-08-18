@@ -255,14 +255,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:              "sqlDatasourceDatabaseSelection",
-			Description:       "Enables previous SQL data source dataset dropdown behavior",
-			FrontendOnly:      true,
-			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaOSSBigTent,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -759,7 +751,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:              "scopeApi",
@@ -1714,6 +1706,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzResourcePermissionApis",
+			Description:       "Registers AuthZ resource permission /apis endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
@@ -1750,6 +1750,15 @@ var (
 		{
 			Name:              "alertingImportAlertmanagerAPI",
 			Description:       "Enables the API to import Alertmanager configuration",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingImportAlertmanagerUI",
+			Description:       "Enables the UI to see imported Alertmanager configuration",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1881,6 +1890,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "favoriteDatasources",
+			Description:  "Enable favorite datasources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "newLogContext",
 			Description:  "New Log Context component",
 			Stage:        FeatureStageExperimental,
@@ -1893,6 +1909,24 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:              "unifiedStorageSearchAfterWriteExperimentalAPI",
+			Description:       "Enable experimental search-after-write guarantees to unified-storage search endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "false",
+		},
+		{
+			Name:         "teamFolders",
+			Description:  "Enables team folders functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
 		},
 	}

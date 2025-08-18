@@ -1,22 +1,66 @@
 import { css, cx } from '@emotion/css';
+import { memo, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { SceneComponentProps } from '@grafana/scenes';
+import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
+import { getIsLazy } from '../layouts-shared/utils';
 
 import { AutoGridItem } from './AutoGridItem';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
-  const { body, repeatedPanels, key } = model.useState();
+  const { body, repeatedPanels = [], key } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
-  const { isEditing } = useDashboardState(model);
+  const { isEditing, preload } = useDashboardState(model);
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
     useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
+
+  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
+
+  const Wrapper = useMemo(
+    () =>
+      memo(
+        ({
+          item,
+          addDndContainer,
+          isDragged,
+          isDragging,
+        }: {
+          item: VizPanel;
+          addDndContainer: boolean;
+          isDragged: boolean;
+          isDragging: boolean;
+        }) => (
+          <div
+            {...(addDndContainer
+              ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: isDragging ? key : undefined }
+              : {})}
+          >
+            {isDragged && <div className={styles.draggedPlaceholder} />}
+            {isLazy ? (
+              <LazyLoader
+                key={item.state.key!}
+                className={cx(conditionalRenderingClass, styles.wrapper, isDragged && styles.draggedWrapper)}
+              >
+                <item.Component model={item} />
+                {conditionalRenderingOverlay}
+              </LazyLoader>
+            ) : (
+              <div className={cx(conditionalRenderingClass, styles.wrapper, isDragged && styles.draggedWrapper)}>
+                <item.Component model={item} />
+                {conditionalRenderingOverlay}
+              </div>
+            )}
+          </div>
+        )
+      ),
+    [conditionalRenderingClass, conditionalRenderingOverlay, isLazy, key, model.containerRef, styles]
+  );
 
   if (isConditionallyHidden && !isEditing) {
     return null;
@@ -25,37 +69,24 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const isDragging = !!draggingKey;
   const isDragged = draggingKey === key;
 
-  return repeatedPanels ? (
+  return (
     <>
+      <Wrapper item={body} addDndContainer={true} key={body.state.key!} isDragged={isDragged} isDragging={isDragging} />
       {repeatedPanels.map((item) => (
-        <div className={cx(conditionalRenderingClass, styles.wrapper)} key={item.state.key}>
-          <item.Component model={item} />
-          {conditionalRenderingOverlay}
-        </div>
+        <Wrapper
+          item={item}
+          addDndContainer={false}
+          key={item.state.key!}
+          isDragged={isDragged}
+          isDragging={isDragging}
+        />
       ))}
     </>
-  ) : (
-    <div ref={model.containerRef} data-auto-grid-item-drop-target={isDragging ? key : undefined}>
-      {isDragged && <div className={styles.draggedPlaceholder} />}
-
-      <div className={cx(!isDragged && conditionalRenderingClass, styles.wrapper, isDragged && styles.draggedWrapper)}>
-        <body.Component model={body} />
-        {conditionalRenderingOverlay}
-      </div>
-    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    width: '100%',
-    height: '100%',
-  }),
-  wrapper: css({
-    width: '100%',
-    height: '100%',
-    position: 'relative',
-  }),
+  wrapper: css({ width: '100%', height: '100%', position: 'relative' }),
   draggedWrapper: css({
     position: 'absolute',
     zIndex: 1000,

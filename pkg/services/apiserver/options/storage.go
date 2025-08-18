@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -62,6 +63,9 @@ type StorageOptions struct {
 	// Optional blob storage field. When an object's size in bytes exceeds the threshold
 	// value, it is considered large and gets partially stored in blob storage.
 	BlobThresholdBytes int
+
+	// Support writing secrets inline
+	InlineSecrets secret.InlineSecureValueSupport
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
@@ -164,7 +168,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
-	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig, o.ConfigProvider)
+	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
 }

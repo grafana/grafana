@@ -70,6 +70,9 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+
+	// this is more "forward compatible", for example supports per-query time ranges
+	QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -86,7 +89,6 @@ type ServiceImpl struct {
 	concurrentQueryLimit       int
 	mtDatasourceClientBuilder  mtdsclient.MTDatasourceClientBuilder
 	headers                    map[string]string
-	supportLocalTimeRange      bool
 }
 
 // Run ServiceImpl.
@@ -96,7 +98,7 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 }
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
-func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocaltimeRange bool) (*backend.QueryDataResponse, error) {
 	fromAlert := false
 	for header, val := range s.headers {
 		if header == models.FromAlertHeaderName && val == "true" {
@@ -104,7 +106,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 		}
 	}
 	// Parse the request into parsed queries grouped by datasource uid
-	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO, s.supportLocalTimeRange)
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO, supportLocaltimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +121,14 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
+}
+
+func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	return s.queryData(ctx, user, skipDSCache, reqDTO, false)
+}
+
+func (s *ServiceImpl) QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	return s.queryData(ctx, user, skipDSCache, reqDTO, true)
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers
@@ -223,9 +233,8 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
 		headers:                    headers,
 		concurrentQueryLimit:       16, // TODO: make it configurable
-		supportLocalTimeRange:      true,
 	}
-	return s.QueryData(ctx, nil, false, reqDTO)
+	return s.QueryDataNew(ctx, nil, false, reqDTO)
 }
 
 // handleExpressions handles queries when there is an expression.
@@ -311,16 +320,21 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 	}
 }
 
-func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) gtime.TimeRange {
-	from := query.Get("timeRange").Get("from").MustString("")
-	to := query.Get("timeRange").Get("to").MustString("")
-
-	if (from == "") && (to == "") {
-		from = globalFrom
-		to = globalTo
+func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) (string, string, error) {
+	tr, ok := query.CheckGet("timeRange")
+	if !ok { // timeRange json node does not exist, use global from/to
+		return globalFrom, globalTo, nil
+	}
+	from, err := tr.Get("from").String()
+	if err != nil {
+		return "", "", errors.New("time range: field 'from' is missing or invalid")
+	}
+	to, err := tr.Get("to").String()
+	if err != nil {
+		return "", "", errors.New("time range: field 'to' is missing or invalid")
 	}
 
-	return gtime.NewTimeRange(from, to)
+	return from, to, nil
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
@@ -359,7 +373,11 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 
 		var timeRange gtime.TimeRange
 		if supportLocalTimeRange {
-			timeRange = getTimeRange(query, reqDTO.From, reqDTO.To)
+			from, to, err := getTimeRange(query, reqDTO.From, reqDTO.To)
+			if err != nil {
+				return nil, err
+			}
+			timeRange = gtime.NewTimeRange(from, to)
 		} else {
 			timeRange = gtime.NewTimeRange(reqDTO.From, reqDTO.To)
 		}
