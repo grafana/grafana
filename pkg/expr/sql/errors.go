@@ -57,7 +57,7 @@ func (e *GoMySQLServerError) ErrorType() string {
 }
 
 // WrapGoMySQLServerError wraps errors from Go MySQL Server with additional context
-func WrapGoMySQLServerError(err error) error {
+func WrapGoMySQLServerError(refID string, err error) error {
 	// Don't wrap nil errors
 	if err == nil {
 		return nil
@@ -69,7 +69,7 @@ func WrapGoMySQLServerError(err error) error {
 	case mysql.ErrTableNotFound.Is(err):
 		return &GoMySQLServerError{err: err, errorType: "table_not_found"}
 	case mysql.ErrColumnNotFound.Is(err):
-		return &GoMySQLServerError{err: err, errorType: "column_not_found"}
+		return MakeColumnNotFoundError(refID, err)
 	}
 
 	// Return original error if it's not one we want to wrap
@@ -77,7 +77,7 @@ func WrapGoMySQLServerError(err error) error {
 }
 
 func MakeGMSError(refID string, err error) error {
-	err = WrapGoMySQLServerError(err)
+	err = WrapGoMySQLServerError(refID, err)
 
 	gmsError := &GoMySQLServerError{}
 	if errors.As(err, &gmsError) {
@@ -320,8 +320,8 @@ func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) TypedError
 	}
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
-			"refId":   refID,
-			"token":   token,
+			"refId":     refID,
+			"token":     token,
 			"tokenType": tokenType,
 		},
 
@@ -329,4 +329,25 @@ func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) TypedError
 	}
 
 	return &ErrorWithType{errorType: "blocked_node_or_func", err: BlockedNodeOrFuncError.Build(data)}
+}
+
+var columnNotFoundStr = `sql expression [{{.Public.refId}}] failed because it selects from a column (refId/query) that does not exist: {{ .Error }}.
+If this happens on a previously working query, it might mean that the query has returned no data, or the resulting schema of the query has changed.
+`
+
+var ColumnNotFoundError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.sql.column_not_found").MustTemplate(
+	columnNotFoundStr,
+	errutil.WithPublic(columnNotFoundStr))
+
+func MakeColumnNotFoundError(refID string, err error) TypedError {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId": refID,
+		},
+
+		Error: err,
+	}
+
+	return &ErrorWithType{errorType: "column_not_found", err: ColumnNotFoundError.Build(data)}
 }
