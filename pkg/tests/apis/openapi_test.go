@@ -1,11 +1,9 @@
 package apis
 
 import (
-	"encoding/json"
 	"fmt"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -33,6 +31,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagSecretsManagementAppPlatform,
 		},
 	})
 
@@ -48,14 +47,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.Equal(t, info.Major, fmt.Sprintf("%d", v.Major()))
 		require.Equal(t, info.Minor, fmt.Sprintf("%d", v.Minor()))
 
-		time.Sleep(20 * time.Second)
-
 		// Check that OpenAPI v2 (used by kubectl) returns properly
 		v2, err := disco.OpenAPISchema()
-		if err != nil {
-			jj, _ := json.MarshalIndent(v2, "", "  ")
-			fmt.Printf("%s\n", jj)
-		}
 
 		require.NoError(t, err, "requesting OpenAPI v2")
 		require.Equal(t, "Grafana API Server", v2.Info.Title)

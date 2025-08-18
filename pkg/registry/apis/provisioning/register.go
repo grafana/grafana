@@ -251,7 +251,7 @@ func RegisterAPIService(
 	}
 	builder := NewAPIBuilder(folderResolver, features,
 		client,
-		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
+		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarily for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		usageStats,
