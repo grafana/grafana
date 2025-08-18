@@ -1244,20 +1244,6 @@
       "copy-code": "Kopieer code",
       "download": "Downloaden"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Waarschuwingsregel",
-        "all": "Alle",
-        "error": "Fout",
-        "firing": "Geactiveerd",
-        "no-data": "Geen gegevens",
-        "normal": "Normaal",
-        "ok": "OK",
-        "pending": "In afwachting",
-        "recording-rule": "Opnameregel",
-        "recovering": "Herstellen"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "gefilterde-regels-lijst"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Regel is verwijderd"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Regelevaluatie is gepauzeerd"
       },
       "resume-rule": {
         "success": "Regelevaluatie is hervat"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Regel is aangepast"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Filters wissen",
       "configured-alert-rules": "Gegevensbronnen met geconfigureerde waarschuwingsregels zijn Mimir- of Loki-gegevensbronnen waar waarschuwingsregels worden opgeslagen en geëvalueerd in de gegevensbron zelf.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Zoeken op hulp bij gegevensbronnen",
       "filter-options": {
-        "aria-label-show-filters": "Filters tonen",
-        "label-custom-filter": "Aangepaste filter",
-        "label-saved-searches": "Opgeslagen zoekopdrachten"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Gezondheid",
       "label": {
         "hide": "Verbergen",
         "show": "Tonen"
       },
       "manage-alerts": "In deze gegevensbronnen kun je waarschuwingen beheren via de waarschuwingsinterface om deze waarschuwingsregels te kunnen beheren in de Grafana-gebruikersinterface en in de gegevensbron waar ze zijn geconfigureerd.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Alle gegevensbronnen",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Plug-inregels",
       "rule-type": "Regeltype",
       "rulesSearchInput-placeholder-search": "Zoeken",
@@ -2629,9 +2640,6 @@
       "text-federated": "Federatief",
       "text-provisioned": "Provisioned"
     },
-    "saved-searches": {
-      "text-default": "Standaard"
-    },
     "search": {
       "property": {
         "data-source": "Gegevensbron",
@@ -2639,11 +2647,10 @@
         "labels": "Labels",
         "namespace": "Map/Naamruimte",
         "rule-health": "Gezondheid",
-        "rule-name": "Naam waarschuwingsregel",
+        "rule-name": "",
         "rule-type": "Type",
         "state": "Status"
-      },
-      "save-query": "Huidige zoekopdracht opslaan"
+      }
     },
     "search-field-input": {
       "clear": "Wissen",
@@ -3519,26 +3526,18 @@
     "browse-view": {
       "this-folder-is-empty": "Deze map is leeg"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Alle bronnen zijn verwijderd",
-      "all-moved": "Alle bronnen zijn verplaatst",
-      "button-done": "Gereed",
-      "progress-title": "Succes",
-      "failed-alert_one": "{{count}} items mislukt",
-      "failed-alert_other": "{{count}} items mislukt"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
       "delete-warning": "Hiermee worden geselecteerde mappen en hun afgeleiden verwijderd. In totaal heeft dit invloed op:",
-      "error-path-not-found": "Pad niet gevonden"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annuleren",
       "button-move": "Verplaatsen",
       "button-moving": "Bezig met verplaatsen...",
-      "deleting": "Verwijderen",
+      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3545,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Bestandcontent niet gevonden",
-      "error-path-not-found": "Pad niet gevonden",
-      "error-target-folder-path-missing": "Pad naar doelmap ontbreekt",
-      "error-title": "Fout in doelmap",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Hiermee worden geselecteerde mappen en hun afgeleiden verwijderd. In totaal heeft dit invloed op:",
-      "moving": "Verplaatsen",
-      "progress": "Voortgang: {{current}} van {{total}}",
       "target-folder": "Doelmap"
     },
     "counts": {
@@ -3568,6 +3563,9 @@
       "total_other": "{{count}} item"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Map {{title}} samenvouwen",
       "expand-folder-button": "Map {{title}} uitvouwen",
       "name-column": "Naam",
@@ -4105,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Toepassen",
     "cancel": "Annuleren",
     "clear": "Wissen",
-    "close": "Sluiten",
     "collapse": "Samenvouwen",
     "edit": "Bewerken",
     "help": "Help",
@@ -4509,15 +4507,24 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "{{type}} dynamisch weergeven of verbergen op basis van de variabele waarde.",
           "label": "Sjabloonvariabele",
           "name": "Naam",
           "operator": {
             "equals": "Gelijk aan",
-            "not-equals": "Is niet gelijk"
+            "matches": "",
+            "not-equals": "Is niet gelijk",
+            "not-matches": ""
           },
           "value": "Waarde"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "Element is verborgen vanwege voorwaardelijke weergave."
@@ -5347,6 +5354,7 @@
       "playlist-next": "Naar het volgende dashboard",
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
+      "read-only": "",
       "refresh": "Dashboard vernieuwen",
       "save": "Dashboard opslaan",
       "save-dashboard": {
@@ -5399,6 +5407,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Transformatie zoeken",
       "show-images": "Afbeeldingen weergeven",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Nog een transformatie toevoegen",
       "view-all": "Alles bekijken"
     },
@@ -6583,6 +6594,9 @@
         "hosted-graphite-prometheus-and-loki": "Gehost Graphite, Prometheus en Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Annuleren",
       "placeholder-filter-by-name-or-type": "Filteren op naam of type"
@@ -7475,6 +7489,13 @@
       "tooltip-title": "Wiskundige operator",
       "tooltip-trigger": "Expressie"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Functie",
       "label-input": "Invoer",
@@ -7489,6 +7510,11 @@
       "label-resample-to": "Resample naar",
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1u"
+    },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
     },
     "threshold": {
       "label-input": "Invoer"
@@ -7506,7 +7532,8 @@
     "loading": "Mappen laden ..."
   },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7858,7 +7885,8 @@
       "edit-pane": {
         "go-back": "Ga terug"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -9047,6 +9075,7 @@
       "sign-up": "Registreren"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Versleep om opnieuw te rangschikken",
@@ -10861,7 +10890,6 @@
         "downloads": "Downloads",
         "from": "Van",
         "installedVersion": "Geïnstalleerde Versie",
-        "lastCommitDate": "Datum laatste inzet:",
         "latestReleaseDate": "Uiterste releasedatum:",
         "latestVersion": "Nieuwste versie",
         "license": "Licentie",
@@ -11248,7 +11276,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Terug naar repositories",
-      "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Zorg ervoor dat de repository-configuratie in het configuratiebestand bestaat.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Opslaan",
@@ -11414,6 +11444,8 @@
         "subtitle": "Gebruik deze optie als je je hele Grafana-instantie via externe opslag wilt synchroniseren en beheren."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "actieve taken",
       "column-action": "Actie",
@@ -11432,6 +11464,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Instellingen",
       "view": "Weergave"
     },
@@ -11442,8 +11475,16 @@
       "title-repository-is-unhealthy": "Repository is ongezond"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Je bronnen bevinden zich nu in je externe opslag en zijn ingericht in je instantie. Vanaf nu worden je instantie en de externe opslag gesynchroniseerd.",
-      "view-repository": "Repository weergeven"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Gecontroleerd:",
@@ -11842,6 +11883,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Queryrij samenvouwen",
       "datasource-help": "Hulp bij gegevensbron weergeven",
       "drag-and-drop": "Versleep om opnieuw te rangschikken",
@@ -11852,7 +11894,11 @@
       "replace-query-from-library": "Vervangen door query uit bibliotheek",
       "show-response": "Antwoord weergeven"
     },
-    "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
+    "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12088,7 +12134,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Serviceaccount toevoegen",
-      "message": "Geen servicesaccounts gevonden",
+      "message": "",
       "more-info": "Vergeet niet dat je specifieke toestemmingen kunt geven voor API-toegang tot andere applicaties",
       "title": "Je hebt nog geen serviceaccounts gemaakt"
     }
@@ -12481,6 +12527,21 @@
   },
   "sort-picker": {
     "select-aria-label": "Sorteren"
+  },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
   },
   "stat": {
     "add-orientation-option": {
