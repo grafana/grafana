@@ -13,22 +13,28 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-type RepositoryTester interface {
-	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
+type StatusPatcherProvider interface {
+	GetStatusPatcher() *controller.RepositoryStatusPatcher
 }
 
 type testConnector struct {
-	getter RepoGetter
-	tester RepositoryTester
+	getter        RepoGetter
+	tester        controller.RepositoryTester
+	healthChecker *controller.HealthChecker
+	statusPatcher StatusPatcherProvider
 }
 
-func NewTestConnector(getter RepoGetter, tester RepositoryTester) *testConnector {
+func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, statusPatcher StatusPatcherProvider) *testConnector {
+	statusPatcherInstance := statusPatcher.GetStatusPatcher()
 	return &testConnector{
-		getter: getter,
-		tester: tester,
+		getter:        getter,
+		tester:        tester,
+		healthChecker: controller.NewHealthChecker(tester, statusPatcherInstance),
+		statusPatcher: statusPatcher,
 	}
 }
 
@@ -104,22 +110,30 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 		}
 
+		var rsp *provisioning.TestResults
 		if repo == nil {
+			// Testing existing repository - get it and update health
 			repo, err = s.getter.GetRepository(ctx, name)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 
-			// TODO: in this case, we should update the health of the repository
+			// Use health checker to test and update repository health
+			rsp, err = s.healthChecker.CheckAndUpdateRepositoryHealth(ctx, repo)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		} else {
+			// Testing temporary repository - just run test without status update
+			rsp, err = s.tester.TestRepository(ctx, repo)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
 		}
 
-		// Only call test if field validation passes
-		rsp, err := s.tester.TestRepository(ctx, repo)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
 		responder.Object(rsp.Code, rsp)
 	}), 30*time.Second), nil
 }
