@@ -1,6 +1,6 @@
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { HorizontalGroup, RadioButtonGroup } from '@grafana/ui';
+import { Stack, RadioButtonGroup } from '@grafana/ui';
 
 import { InputPrefix, NullsThresholdInput } from './NullsThresholdInput';
 
@@ -25,7 +25,7 @@ export const SpanNullsEditor = ({ value, onChange, item }: Props) => {
   GAPS_OPTIONS[2].value = isThreshold ? value : 3600000; // 1h
 
   return (
-    <HorizontalGroup>
+    <Stack wrap={true}>
       <RadioButtonGroup value={value} options={GAPS_OPTIONS} onChange={onChange} />
       {isThreshold && (
         <NullsThresholdInput
@@ -35,6 +35,6 @@ export const SpanNullsEditor = ({ value, onChange, item }: Props) => {
           isTime={item.settings?.isTime ?? false}
         />
       )}
-    </HorizontalGroup>
+    </Stack>
   );
 };
