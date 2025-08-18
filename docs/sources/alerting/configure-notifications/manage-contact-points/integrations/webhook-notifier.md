@@ -79,6 +79,7 @@ For more details on contact points, including how to test them and enable notifi
 | Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit.                                                                   |
 | TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                                                                                  |
 | HMAC Signature                    | HMAC signature configuration options.                                                                                                                                                     |
+| HTTP Config                       | Configure an OAuth2 endpoint for alert notifications                                                                                                                                      |
 
 {{< admonition type="note" >}}
 
@@ -278,3 +279,17 @@ For detailed information about these and other template functions, refer to [not
 Example using JSON helper functions:
 
 {{< docs/shared lookup="alerts/example-custom-json-payload.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### OAuth2 configuration
+
+The HTTP client configurations supports OAuth 2.0 authentication using the `client_credentials` grant type. Alertmanager fetches an access token from the specified endpoint with the given client access and secret keys.
+
+| Option              | Description                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| Token URL           | URL for the access token endpoint.                                                                      |
+| Client ID           | Client ID to use when authenticating.                                                                   |
+| Client Secret       | Client secret to use when authenticating.                                                               |
+| Scopes              | Optional scopes to request when obtaining an access token.                                              |
+| Endpoint Parameters | Optional parameters to append to the access token request.                                              |
+| TLS                 | Optional TLS configuration options to certify (or disable certification) for OAuth2 requests.           |
+| Proxy Config        | Optional configuration to designate proxy servers and custom headers for proxy server connect requests. |
