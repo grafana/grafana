@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { map } from 'rxjs';
 
 import {
@@ -163,7 +164,7 @@ function _partitionByValues(
         return {
           name: f.name,
           type: f.type,
-          config: f.config,
+          config: cloneDeep(f.config),
           labels: {
             ...f.labels,
             ...fieldLabels,
@@ -235,14 +236,14 @@ export function partitionByValues(
   cacheFieldDisplayNames(frames2);
 
   // restore original field names
-  // frames2.forEach((frame) => {
-  //   frame.fields.forEach((field) => {
-  //     if (field.name in fieldNames) {
-  //       field.name = fieldNames[field.name] ?? field.name;
-  //       field.config.displayName = field.state!.displayName!;
-  //     }
-  //   });
-  // });
+  frames2.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      if (field.name in fieldNames) {
+        field.name = fieldNames[field.name] ?? field.name;
+        field.config.displayName = field.state!.displayName!;
+      }
+    });
+  });
 
   return frames2;
 }
