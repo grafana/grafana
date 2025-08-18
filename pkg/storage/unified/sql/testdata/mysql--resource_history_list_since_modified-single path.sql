@@ -6,7 +6,6 @@ SELECT
     `resource_version`,
     `action`,
     `value`
---     `folder`,
 FROM resource_history
 WHERE `namespace` = 'ns'
   AND `group` = 'group'
