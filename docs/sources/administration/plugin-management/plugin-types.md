@@ -47,9 +47,9 @@ Use data source plugins when you want to query data from external or third-party
 
 ### Managing access for data source plugins
 
-Customize access to data source plugins with [RBAC](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins/).
+Administrators can grant access to data source plugins with [LBAC](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/). 
 
-?????? CHECK
+Label Based Access Control (LBAC) customizes access rights based on team memberships, ensuring that users only query data relevant to their assigned permissions.
 
 ## App plugins
 
@@ -63,7 +63,9 @@ Use app plugins when you want an out-of-the-box monitoring experience.
 
 Customize access to app plugins with [RBAC](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins/).
 
-By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
+By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. 
+
+Access is granted by the `fixed:plugins.app:reader` role.
 
 {{< admonition type="note" >}}
 To prevent users from seeing an app plugin, refer to [these permissions scenarios](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/#prevent-viewers-from-accessing-an-app-plugin).
