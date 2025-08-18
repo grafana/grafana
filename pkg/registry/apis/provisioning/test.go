@@ -16,8 +16,20 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
+type RepositoryTester interface {
+	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
+}
+
 type testConnector struct {
 	getter RepoGetter
+	tester RepositoryTester
+}
+
+func NewTestConnector(getter RepoGetter, tester RepositoryTester) *testConnector {
+	return &testConnector{
+		getter: getter,
+		tester: tester,
+	}
 }
 
 func (*testConnector) New() runtime.Object {
@@ -103,7 +115,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		// Only call test if field validation passes
-		rsp, err := repository.TestRepository(ctx, repo)
+		rsp, err := s.tester.TestRepository(ctx, repo)
 		if err != nil {
 			responder.Error(err)
 			return

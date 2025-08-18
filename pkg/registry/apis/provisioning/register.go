@@ -473,10 +473,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
-		getter: b,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{})
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
