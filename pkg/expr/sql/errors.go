@@ -87,7 +87,7 @@ func MakeGMSError(refID string, err error) error {
 	return err
 }
 
-var inputLimitExceededStr = "sql expression failed to run because the input limit was exceeded for query [{{ .Public.refId }}]: {{ .Public.inputLimit }}"
+var inputLimitExceededStr = "sql expression [{{ .Public.refId }}] was not run because the number of input cells to the sql expression exceeded the configured limit of {{ .Public.inputLimit }}"
 
 var InputLimitExceededError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.inputLimitExceeded").MustTemplate(
@@ -222,7 +222,7 @@ func MakeTableNotFoundError(refID, table string) TypedError {
 
 var sqlDepErrStr = "did not execute sql expression [{{ .Public.refId }}] due to a failure of the dependent expression or query [{{.Public.depRefId}}]"
 
-var SQLDependencyError = errutil.NewBase(
+var DependencyError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.failed_dependency").MustTemplate(
 	sqlDepErrStr,
 	errutil.WithPublic(sqlDepErrStr))
@@ -236,16 +236,17 @@ func MakeSQLDependencyError(refID, depRefID string) TypedError {
 		Error: fmt.Errorf("could not run execute sql expression %v due to a failure of the dependent expression or query %v", refID, depRefID),
 	}
 
-	return &ErrorWithType{errorType: "failed_dependency", err: SQLDependencyError.Build(data)}
+	return &ErrorWithType{errorType: "failed_dependency", err: DependencyError.Build(data)}
 }
 
-var sqlInputConvertErrorStr = "did not execute sql expression {{ .Public.forRefID }} due to a failure to convert into a SQL/Tabular format for the results of [{{.Public.refId}}]: {{ .Error }}"
+var sqlInputConvertErrorStr = "failed to convert the results of query [{{.Public.refId}}] into a SQL/Tabular format for sql expression {{ .Public.forRefID }}: {{ .Error }}"
 
-var SQLInputConvertError = errutil.NewBase(
+var InputConvertError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.failed_input_conversion").MustTemplate(
 	sqlInputConvertErrorStr,
 	errutil.WithPublic(sqlInputConvertErrorStr))
 
+// MakeInputConvertError creates an error for when the input conversion to a table for a SQL expressions fails.
 func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{}) TypedError {
 	forRefIdsSlice := make([]string, 0, len(forRefIDs))
 	for k := range forRefIDs {
@@ -259,5 +260,5 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 		Error: err,
 	}
 
-	return &ErrorWithType{errorType: "input_conversion", err: SQLInputConvertError.Build(data)}
+	return &ErrorWithType{errorType: "input_conversion", err: InputConvertError.Build(data)}
 }

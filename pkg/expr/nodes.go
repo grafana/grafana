@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
-	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -443,18 +442,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	if dn.isInputToSQLExpr {
 		result = handleSqlInput(dn.RefID(), dn.IsInputTo(), dataFrames)
-		if result.Error != nil {
-			// The SQL expression won't be run so we increment the sql expression metric
-			// since there was an attempt to run an SQL expression.
-			var ce *sql.ErrorWithType
-			if errors.As(result.Error, &ce) {
-				// TODO: want to capture specific input error types for different types
-				// of errors?
-				s.metrics.SqlCommandCount.WithLabelValues("error", ce.ErrorType()).Inc()
-			} else {
-				s.metrics.SqlCommandCount.WithLabelValues("error", "input_conversion").Inc()
-			}
-		}
+
 	} else {
 		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
 		if err != nil {

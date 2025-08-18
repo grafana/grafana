@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -91,14 +92,21 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			if res, ok := vars[neededVar]; ok {
 				if res.Error != nil {
 					var depErr error
+					// IF SQL expression dependency error
 					if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
 						e := sql.MakeSQLDependencyError(node.RefID(), neededVar)
 
 						// although the SQL expression won't be executed,
 						// we track a dependency error on the metric.
-						s.metrics.SqlCommandCount.WithLabelValues("error", e.ErrorType())
+						eType := e.ErrorType()
+						var errWithType *sql.ErrorWithType
+						if errors.As(res.Error, &errWithType) {
+							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
+							eType = errWithType.ErrorType()
+						}
+						s.metrics.SqlCommandCount.WithLabelValues("error", eType)
 						depErr = e
-					} else {
+					} else { // general SSE dependency error
 						depErr = MakeDependencyError(node.RefID(), neededVar)
 					}
 					errResult := mathexp.Results{

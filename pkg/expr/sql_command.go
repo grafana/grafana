@@ -368,7 +368,7 @@ func handleSqlInput(refID string, forRefIDs map[string]struct{}, dataFrames data
 	for _, frame := range dataFrames {
 		for _, field := range frame.Fields {
 			if len(field.Labels) > 0 {
-				result.Error = sql.MakeInputConvertError(fmt.Errorf("frame has labels but frame type is missing or unsupported for sql conversion"), frame.RefID, forRefIDs)
+				result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response is missing the data type (frame.meta.type) and has labels in the response that can not be mapped to a table."), frame.RefID, forRefIDs)
 				return result
 			}
 		}
