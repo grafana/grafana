@@ -81,6 +81,9 @@ export const InfiniteScroll = ({
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
+    if (scrollElement.scrollHeight <= scrollElement.clientHeight) {
+      return;
+    }
 
     function handleScroll(event: Event | WheelEvent) {
       if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
@@ -227,10 +230,6 @@ export function shouldLoadMore(
   element: HTMLDivElement,
   lastScroll: number
 ): ScrollDirection {
-  // Disable behavior if there is no scroll
-  if (element.scrollHeight <= element.clientHeight) {
-    return ScrollDirection.NoScroll;
-  }
   const delta = event instanceof WheelEvent ? event.deltaY : element.scrollTop - lastScroll;
   if (delta === 0) {
     return ScrollDirection.NoScroll;
