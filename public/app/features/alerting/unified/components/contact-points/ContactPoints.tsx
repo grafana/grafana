@@ -27,7 +27,7 @@ import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import { ContactPoint } from './ContactPoint';
 import { NotificationTemplates } from './NotificationTemplates';
@@ -225,7 +225,7 @@ export const ContactPointsPageContents = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
       <Stack direction="column">
         <TabsBar>
           {showContactPointsTab && (

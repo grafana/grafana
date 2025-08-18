@@ -9,11 +9,11 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-interface GrafanaAlertmanagerDeliveryWarningProps {
+interface GrafanaAlertmanagerWarningProps {
   currentAlertmanager: string;
 }
 
-export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: GrafanaAlertmanagerDeliveryWarningProps) {
+export function GrafanaAlertmanagerWarning({ currentAlertmanager }: GrafanaAlertmanagerWarningProps) {
   const styles = useStyles2(getStyles);
   const externalAlertmanager = currentAlertmanager !== GRAFANA_RULES_SOURCE_NAME;
 
