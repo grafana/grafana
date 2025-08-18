@@ -26,7 +26,7 @@ export async function importPluginModule({
   }
 
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
-  if (config.featureToggles.localizationForPlugins && translations) {
+  if (translations) {
     await addTranslationsToI18n({
       resolvedLanguage: getResolvedLanguage(),
       fallbackLanguage: DEFAULT_LANGUAGE,
