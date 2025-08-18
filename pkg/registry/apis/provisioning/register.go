@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,15 +30,15 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
-	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -57,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -76,6 +79,11 @@ var (
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
 
+// JobHistoryConfig holds configuration for job history backends
+type JobHistoryConfig struct {
+	Loki *loki.Config `json:"loki,omitempty"`
+}
+
 type APIBuilder struct {
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -92,6 +100,7 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
+	jobHistoryConfig  *JobHistoryConfig
 	jobHistory        jobs.History
 	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
@@ -99,7 +108,8 @@ type APIBuilder struct {
 	legacyMigrator    legacy.LegacyMigrator
 	storageStatus     dualwrite.Service
 	unified           resource.ResourceClient
-	repositorySecrets secrets.RepositorySecrets
+	decryptSvc        secret.DecryptService
+	repositorySecrets secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
 	client            client.ProvisioningV0alpha1Interface
 	access            authlib.AccessChecker
 	mutators          []controller.Mutator
@@ -122,10 +132,12 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
+	decryptSvc secret.DecryptService,
 	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	jobHistoryConfig *JobHistoryConfig,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
@@ -151,9 +163,10 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
+		decryptSvc:          decryptSvc,
 		repositorySecrets:   repositorySecrets,
 		access:              access,
-		jobHistory:          jobs.NewJobHistoryCache(),
+		jobHistoryConfig:    jobHistoryConfig,
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
 			provisioning.LocalRepositoryType:  true,
 			provisioning.GitHubRepositoryType: true,
@@ -176,6 +189,38 @@ func NewAPIBuilder(
 	return b
 }
 
+// createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
+func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
+	// If LokiURL is defined, use Loki
+	if cfg.ProvisioningLokiURL != "" {
+		parsedURL, err := url.Parse(cfg.ProvisioningLokiURL)
+		if err != nil {
+			logging.DefaultLogger.Error("Invalid Loki URL in provisioning config", "url", cfg.ProvisioningLokiURL, "error", err)
+			return &JobHistoryConfig{}
+		}
+
+		lokiCfg := &loki.Config{
+			ReadPathURL:       parsedURL,
+			WritePathURL:      parsedURL,
+			BasicAuthUser:     cfg.ProvisioningLokiUser,
+			BasicAuthPassword: cfg.ProvisioningLokiPassword,
+			TenantID:          cfg.ProvisioningLokiTenantID,
+			ExternalLabels: map[string]string{
+				"source":       "grafana-provisioning",
+				"service_name": "grafana-provisioning",
+			},
+			MaxQuerySize: 5000, // Default query size
+		}
+
+		return &JobHistoryConfig{
+			Loki: lokiCfg,
+		}
+	}
+
+	// Default to memory backend
+	return &JobHistoryConfig{}
+}
+
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
@@ -191,6 +236,7 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
+	decryptSvc secret.DecryptService,
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -209,10 +255,12 @@ func RegisterAPIService(
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		usageStats,
+		decryptSvc,
 		repositorySecrets,
 		access,
 		tracer,
 		extraBuilders,
+		createJobHistoryConfigFromSettings(cfg),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -228,6 +276,27 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionAllow, "", nil
 			}
 
+			info, ok := authlib.AuthInfoFrom(ctx)
+			if ok && authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) {
+				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
+					Verb:        a.GetVerb(),
+					Group:       a.GetAPIGroup(),
+					Resource:    a.GetResource(),
+					Name:        a.GetName(),
+					Namespace:   a.GetNamespace(),
+					Subresource: a.GetSubresource(),
+				})
+
+				if err != nil {
+					return authorizer.DecisionDeny, "failed to perform authorization", err
+				}
+
+				if !res.Allowed {
+					return authorizer.DecisionDeny, "permission denied", nil
+				}
+
+				return authorizer.DecisionAllow, "", nil
+			}
 			// Different routes may need different permissions.
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
@@ -304,7 +373,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 				return authorizer.DecisionDeny, "viewer role is required", nil
 
-			case provisioning.JobResourceInfo.GetName():
+			case provisioning.JobResourceInfo.GetName(),
+				provisioning.HistoricJobResourceInfo.GetName():
 				// Jobs are shown on the configuration page.
 				if id.GetOrgRole().Includes(identity.RoleAdmin) {
 					return authorizer.DecisionAllow, "", nil
@@ -371,12 +441,31 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
+	storage := map[string]rest.Storage{}
+	// Create job history based on configuration
+	// Default to in-memory cache if no config provided
+	var jobHistory jobs.History
+	if b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil {
+		jobHistory = jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
+	} else {
+		historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return fmt.Errorf("failed to create historic job storage: %w", err)
+		}
+
+		jobHistory, err = jobs.NewStorageBackedHistory(historicJobStore)
+		if err != nil {
+			return fmt.Errorf("failed to create historic job wrapper: %w", err)
+		}
+
+		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
+	}
+
+	b.jobHistory = jobHistory
 	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
-
-	storage := map[string]rest.Storage{}
 
 	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
 	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
@@ -523,15 +612,31 @@ func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Reposit
 	}
 
 	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+		// Instance sync can only be created if NO other repositories exist
 		for _, v := range all {
-			if v.Name != cfg.Name && v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+			if v.Name != cfg.Name {
 				return field.Forbidden(field.NewPath("spec", "sync", "target"),
-					"Another repository is already targeting root: "+v.Name)
+					"Instance repository can only be created when no other repositories exist. Found: "+v.Name)
+			}
+		}
+	} else {
+		// Folder sync cannot be created if an instance repository exists
+		for _, v := range all {
+			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+				return field.Forbidden(field.NewPath("spec", "sync", "target"),
+					"Cannot create folder repository when instance repository exists: "+v.Name)
 			}
 		}
 	}
 
-	if len(all) >= 10 {
+	// Count repositories excluding the current one being created/updated
+	count := 0
+	for _, v := range all {
+		if v.Name != cfg.Name {
+			count++
+		}
+	}
+	if count >= 10 {
 		return field.Forbidden(field.NewPath("spec"),
 			"Maximum number of 10 repositories reached")
 	}
@@ -547,16 +652,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			// When starting with an empty instance -- swith to "mode 4+"
-			err = b.tryRunningOnlyUnifiedStorage()
-			if err != nil {
-				return err
-			}
-
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			go repoInformer.Informer().Run(postStartHookCtx.Done())
+			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -566,6 +665,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.repositoryLister = repoInformer.Lister()
+
+			// if running solely CRUD, skip the rest of the setup
+			if b.localFileResolver == nil {
+				return nil
+			}
+
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
+			go jobInformer.Informer().Run(postStartHookCtx.Done())
+
+			// When starting with an empty instance -- swith to "mode 4+"
+			err = b.tryRunningOnlyUnifiedStorage()
+			if err != nil {
+				return err
+			}
 
 			// Create the repository resources factory
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
@@ -628,22 +741,37 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncWorker,
 			}
 
+			// Create JobController to handle job create notifications
+			jobController, err := controller.NewJobController(jobInformer)
+			if err != nil {
+				return err
+			}
+
 			// Add any extra workers
 			for _, extra := range b.extras {
 				workers = append(workers, extra.GetJobWorkers()...)
 			}
 
-			driver, err := jobs.NewJobDriver(
-				time.Minute*20, // Max time for each job
-				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
-				time.Second*30, // Periodically look for new jobs
+			// This is basically our own JobQueue system
+			driver, err := jobs.NewConcurrentJobDriver(
+				3,              // 3 drivers for now
+				20*time.Minute, // Max time for each job
+				time.Minute,    // Cleanup jobs
+				30*time.Second, // Periodically look for new jobs
+				30*time.Second, // Lease renewal interval
 				b.jobs, b, b.jobHistory,
+				jobController.InsertNotifications(),
 				workers...,
 			)
 			if err != nil {
 				return err
 			}
-			go driver.Run(postStartHookCtx.Context)
+
+			go func() {
+				if err := driver.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("job driver failed", "error", err)
+				}
+			}()
 
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
@@ -661,6 +789,25 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+
+			// If Loki not used, start the controller for history jobs
+			if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+				// Create HistoryJobController for cleanup of old job history entries
+				// Separate informer factory for HistoryJob cleanup with resync interval
+				historyJobExpiration := 30 * time.Second
+				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
+				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
+				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
+				_, err = controller.NewHistoryJobController(
+					b.GetClient(),
+					historyJobInformer,
+					historyJobExpiration,
+				)
+				if err != nil {
+					return fmt.Errorf("create history job controller: %w", err)
+				}
+			}
+
 			return nil
 		},
 	}
@@ -677,11 +824,19 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	oas.Info.Description = "Provisioning"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
-	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
+	// Hide the internal historic jobs endpoint from the OpenAPI spec.
+	historicjobs := root + "namespaces/{namespace}/historicjobs"
+	for path := range oas.Paths.Paths {
+		if strings.HasPrefix(path, historicjobs) {
+			delete(oas.Paths.Paths, path)
+		}
+	}
+
+	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
-	refsBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
+	defsBase := "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1."
+	refsBase := "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1."
 
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
@@ -964,12 +1119,12 @@ spec:
 	// Add any missing definitions
 	//-----------------------------
 	for k, v := range defs {
-		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.", 1)
+		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.", 1)
 		if oas.Components.Schemas[clean] == nil {
 			oas.Components.Schemas[clean] = &v.Schema
 		}
 	}
-	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
+	compBase := "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1."
 	schema := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
@@ -1015,6 +1170,10 @@ spec:
 	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"]
 	schema.Items = countSpec
 	oas.Components.Schemas[compBase+"ResourceStats"].Properties["instance"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["unmanaged"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ResourceStats"].Properties["unmanaged"] = schema
 
 	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["managed"]
 	schema.Items = managerSpec

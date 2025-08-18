@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
+import InfiniteViewer from 'infinite-viewer';
 import Moveable from 'moveable';
-import { createRef, CSSProperties, RefObject } from 'react';
-import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import { CSSProperties } from 'react';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import Selecto from 'selecto';
 
@@ -28,9 +28,9 @@ import {
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
+import { Connections2 } from 'app/plugins/panel/canvas/components/connections/Connections2';
 import { Options } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
-import { getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -38,11 +38,10 @@ import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
-import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
-import { initMoveable } from './sceneAbleManagement';
+import { initMoveable, calculateZoomToFitScale } from './sceneAbleManagement';
 import { findElementByTarget } from './sceneElementManagement';
 
 export interface SelectionParams {
@@ -63,32 +62,30 @@ export class Scene {
   width = 0;
   height = 0;
   scale = 1;
+  scrollLeft = 0;
+  scrollTop = 0;
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
   moveable?: Moveable;
+  infiniteViewer?: InfiniteViewer;
   div?: HTMLDivElement;
-  connections: Connections;
+  viewerDiv?: HTMLDivElement;
+  viewportDiv?: HTMLDivElement;
+  connections: Connections | Connections2;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
-  shouldInfinitePan?: boolean;
+  zoomToContent?: boolean;
   tooltipMode?: TooltipDisplayMode;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
   contextMenuVisible?: boolean;
+  openContextMenu?: (position: AnchorPoint) => void;
   contextMenuOnVisibilityChange = (visible: boolean) => {
     this.contextMenuVisible = visible;
-    const transformInstance = getTransformInstance(this);
-    if (transformInstance) {
-      if (visible) {
-        transformInstance.setup.disabled = true;
-      } else {
-        transformInstance.setup.disabled = false;
-      }
-    }
   };
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
@@ -107,7 +104,6 @@ export class Scene {
   subscription: Subscription;
 
   targetsToSelect = new Set<HTMLDivElement>();
-  transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
 
   constructor(
     options: Options,
@@ -129,8 +125,7 @@ export class Scene {
     });
 
     this.panel = panel;
-    this.connections = new Connections(this);
-    this.transformComponentRef = createRef();
+    this.connections = config.featureToggles.canvasPanelPanZoom ? new Connections2(this) : new Connections(this);
   }
 
   getNextElementName = (isFrame = false) => {
@@ -153,7 +148,7 @@ export class Scene {
   };
 
   load(options: Options, enableEditing: boolean) {
-    const { root, showAdvancedTypes, panZoom, infinitePan, tooltip } = options;
+    const { root, showAdvancedTypes, panZoom, zoomToContent, tooltip } = options;
     const tooltipMode = tooltip?.mode ?? TooltipDisplayMode.Single;
 
     this.root = new RootElement(
@@ -168,18 +163,39 @@ export class Scene {
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
-    this.shouldInfinitePan = infinitePan;
+    this.zoomToContent = zoomToContent;
     this.tooltipMode = tooltipMode;
 
     setTimeout(() => {
-      if (this.div) {
-        // If editing is enabled, clear selecto instance
-        const destroySelecto = enableEditing;
-        initMoveable(destroySelecto, enableEditing, this);
-        this.currentLayer = this.root;
-        this.selection.next([]);
-        this.connections.select(undefined);
-        this.connections.updateState();
+      if (config.featureToggles.canvasPanelPanZoom) {
+        if (this.viewportDiv && this.viewerDiv) {
+          if (!this.shouldPanZoom) {
+            this.scale = 1;
+            this.scrollLeft = 0;
+            this.scrollTop = 0;
+          }
+
+          // If editing is enabled, clear selecto instance
+          const destroySelecto = enableEditing;
+          initMoveable(destroySelecto, enableEditing, this);
+          this.currentLayer = this.root;
+          this.selection.next([]);
+          this.connections.select(undefined);
+          this.connections.updateState();
+          // update initial connections svg size
+          this.updateConnectionsSize();
+          this.fitContent(this, zoomToContent);
+        }
+      } else {
+        if (this.div) {
+          // If editing is enabled, clear selecto instance
+          const destroySelecto = enableEditing;
+          initMoveable(destroySelecto, enableEditing, this);
+          this.currentLayer = this.root;
+          this.selection.next([]);
+          this.connections.select(undefined);
+          this.connections.updateState();
+        }
       }
     });
     return this.root;
@@ -207,12 +223,53 @@ export class Scene {
     if (this.selecto?.getSelectedTargets().length) {
       this.clearCurrentSelection();
     }
+
+    if (config.featureToggles.canvasPanelPanZoom) {
+      this.updateConnectionsSize();
+      this.fitContent(this, this.zoomToContent!);
+
+      // TODO: This is a workaround to apply styles to the elements after the size update.
+      // It's a good to go approach used by movable creator, but maybe we can find a better way.
+      this.root.elements.forEach((el) => {
+        el.applyLayoutStylesToDiv(false);
+      });
+      // TODO: This is a workaround to apply styles to the elements after the size update.
+      // Remove this after dealing with the connection anchors stacking context issue.
+      if (this.connections.connectionAnchorDiv) {
+        this.connections.connectionAnchorDiv.style.display = 'none';
+      }
+    }
+  }
+
+  updateConnectionsSize() {
+    const svgConnections = this.connections.connectionsSVG;
+
+    if (svgConnections) {
+      const scale = this.infiniteViewer!.getZoom();
+      // NOTE: sometimes getScrollLeft and getScrollTop return NaN,
+      // so we use || 0 to ensure we have a valid number
+      const left = this.infiniteViewer!.getScrollLeft() || 0;
+      const top = this.infiniteViewer!.getScrollTop() || 0;
+      const width = this.width;
+      const height = this.height;
+
+      svgConnections.style.left = `${left}px`;
+      svgConnections.style.top = `${top}px`;
+      svgConnections.style.width = `${width / scale}px`;
+      svgConnections.style.height = `${height / scale}px`;
+
+      svgConnections.setAttribute('viewBox', `${left} ${top} ${width / scale} ${height / scale}`);
+    }
   }
 
   clearCurrentSelection(skipNextSelectionBroadcast = false) {
     this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
     let event: MouseEvent = new MouseEvent('click');
-    this.selecto?.clickTarget(event, this.div);
+    if (config.featureToggles.canvasPanelPanZoom) {
+      this.selecto?.clickTarget(event, this.viewportDiv);
+    } else {
+      this.selecto?.clickTarget(event, this.div);
+    }
   }
 
   save = (updateMoveable = false) => {
@@ -220,8 +277,15 @@ export class Scene {
 
     if (updateMoveable) {
       setTimeout(() => {
-        if (this.div) {
-          initMoveable(true, this.isEditingEnabled, this);
+        if (config.featureToggles.canvasPanelPanZoom) {
+          if (this.viewportDiv && this.viewerDiv) {
+            initMoveable(true, this.isEditingEnabled, this);
+            this.updateConnectionsSize();
+          }
+        } else {
+          if (this.div) {
+            initMoveable(true, this.isEditingEnabled, this);
+          }
         }
       });
     }
@@ -245,6 +309,14 @@ export class Scene {
 
   setRef = (sceneContainer: HTMLDivElement) => {
     this.div = sceneContainer;
+  };
+
+  setViewerRef = (viewerContainer: HTMLDivElement) => {
+    this.viewerDiv = viewerContainer;
+  };
+
+  setViewportRef = (viewportContainer: HTMLDivElement) => {
+    this.viewportDiv = viewportContainer;
   };
 
   select = (selection: SelectionParams) => {
@@ -285,6 +357,16 @@ export class Scene {
     }
   };
 
+  fitContent = (scene: Scene, zoomToContent: boolean) => {
+    const { root, viewerDiv, infiniteViewer } = scene;
+    if (zoomToContent && root.div && infiniteViewer && viewerDiv) {
+      const dimentions = calculateZoomToFitScale(Array.from(root.div.children), viewerDiv);
+      const { scale, centerX, centerY } = dimentions;
+      infiniteViewer.setZoom(scale);
+      infiniteViewer.scrollTo(centerX, centerY);
+    }
+  };
+
   render() {
     const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
     const hasActions =
@@ -295,7 +377,7 @@ export class Scene {
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid && isTooltipEnabled;
 
     const sceneDiv = (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
+      <>
         {this.connections.render()}
         {this.root.render()}
         {this.isEditingEnabled && (
@@ -312,13 +394,30 @@ export class Scene {
             <CanvasTooltip scene={this} />
           </Portal>
         )}
-      </div>
+      </>
     );
 
     return config.featureToggles.canvasPanelPanZoom ? (
-      <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper>
+      <div className={this.styles.viewer} ref={this.setViewerRef} key={this.revId} data-testid="canvas-scene-wrapper">
+        <div
+          className={this.styles.viewport}
+          ref={this.setViewportRef}
+          key={this.revId}
+          data-testid="canvas-scene-pan-zoom"
+        >
+          {sceneDiv}
+        </div>
+      </div>
     ) : (
-      sceneDiv
+      <div
+        key={this.revId}
+        className={this.styles.wrap}
+        style={this.style}
+        ref={this.setRef}
+        data-testid="canvas-scene"
+      >
+        {sceneDiv}
+      </div>
     );
   }
 }
@@ -327,5 +426,17 @@ const getStyles = () => ({
   wrap: css({
     overflow: 'hidden',
     position: 'relative',
+  }),
+  selected: css({
+    zIndex: '999 !important',
+  }),
+  viewer: css({
+    overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+  }),
+  viewport: css({
+    width: '100%',
+    height: '100%',
   }),
 });

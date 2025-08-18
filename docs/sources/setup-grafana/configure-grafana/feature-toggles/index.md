@@ -29,7 +29,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                                                         |                    |
 | `correlations`                         | Correlations page                                                                                                                                             | Yes                |
 | `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
-| `nestedFolders`                        | Enable folder nesting                                                                                                                                         | Yes                |
 | `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
@@ -74,7 +73,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML`  | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
-| `teamHttpHeadersMimir`                 | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                           | Yes                |
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
@@ -92,7 +90,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
-| `sqlDatasourceDatabaseSelection`  | Enables previous SQL data source dataset dropdown behavior                                             |
 | `reportingRetries`                | Enables rendering retries for the reporting feature                                                    |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |

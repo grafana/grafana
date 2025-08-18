@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	provisioningV0 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioningV0 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -140,7 +141,7 @@ func TestExportResources_Dashboards_WithErrors(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "failed to export dashboard"
+			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "writing resource file for dashboard-1: failed to export dashboard"
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Name == "dashboard-2" && result.Action == repository.FileActionCreated
@@ -178,7 +179,7 @@ func TestExportResources_Dashboards_TooManyErrors(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "failed to export dashboard"
+			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "writing resource file for dashboard-1: failed to export dashboard"
 		})).Return()
 		progress.On("TooManyErrors").Return(fmt.Errorf("too many errors encountered"))
 	}
@@ -416,7 +417,7 @@ func TestExportResources_Dashboards_V2Alpha1_ClientError(t *testing.T) {
 				return false
 			}
 
-			if result.Error.Error() != "v2 client error" {
+			if result.Error.Error() != "writing resource file for v2-dashboard-error: v2 client error" {
 				return false
 			}
 
@@ -515,7 +516,7 @@ func TestExportResources_Dashboards_V2beta1_ClientError(t *testing.T) {
 				return false
 			}
 
-			if result.Error.Error() != "v2 client error" {
+			if result.Error.Error() != "writing resource file for v2-dashboard-error: v2 client error" {
 				return false
 			}
 
@@ -530,5 +531,39 @@ func TestExportResources_Dashboards_V2beta1_ClientError(t *testing.T) {
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
+	require.NoError(t, err)
+}
+
+func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
+	// Create a dashboard managed by file provisioning
+	dashboard := createDashboardObject("managed-dashboard")
+
+	// Add manager metadata using utils package
+	meta, err := utils.MetaAccessor(&dashboard)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:        utils.ManagerKindTerraform,
+		Identity:    "terraform-provisioning",
+		AllowsEdits: false,
+		Suspended:   false,
+	})
+
+	mockItems := []unstructured.Unstructured{dashboard}
+
+	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
+		progress.On("SetMessage", mock.Anything, "start resource export").Return()
+		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Name == "managed-dashboard" && result.Action == repository.FileActionIgnored
+		})).Return()
+		progress.On("TooManyErrors").Return(nil).Maybe()
+	}
+
+	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
+		resourceClients.On("ForResource", resources.DashboardResource).Return(mockClient, gvk, nil)
+		// No WriteResourceFileFromObject call expected since resource should be skipped
+	}
+
+	err = runExportTest(t, mockItems, setupProgress, setupResources)
 	require.NoError(t, err)
 }

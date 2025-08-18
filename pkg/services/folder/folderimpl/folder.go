@@ -243,27 +243,9 @@ func (s *Service) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery
 		}
 	}
 
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		qry.WithFullpath = false // do not request full path if nested folders are disabled
-		qry.WithFullpathUIDs = false
-	}
-
 	dashFolders, err := s.store.GetFolders(ctx, qry)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
-	}
-
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		if q.WithFullpathUIDs || q.WithFullpath {
-			for _, f := range dashFolders { // and fix the full path with folder title (unescaped)
-				if q.WithFullpath {
-					f.Fullpath = f.Title
-				}
-				if q.WithFullpathUIDs {
-					f.FullpathUIDs = f.UID
-				}
-			}
-		}
 	}
 
 	return dashFolders, nil
@@ -286,7 +268,7 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		return folder.RootFolder, nil
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && q.UID != nil && *q.UID == folder.SharedWithMeFolderUID {
+	if q.UID != nil && *q.UID == folder.SharedWithMeFolderUID {
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
@@ -316,11 +298,6 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
-
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
-		f.FullpathUIDs = f.UID // set full path to the folder UID
-	}
 
 	return f, err
 }
@@ -378,7 +355,7 @@ func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQu
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && q.UID == folder.SharedWithMeFolderUID {
+	if q.UID == folder.SharedWithMeFolderUID {
 		return s.GetSharedWithMe(ctx, q, true)
 	}
 
@@ -646,7 +623,7 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 func (s *Service) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetParentsLegacy")
 	defer span.End()
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) || q.UID == accesscontrol.GeneralFolderUID {
+	if q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
 	}
 	if q.UID == folder.SharedWithMeFolderUID {
@@ -667,7 +644,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgID = cmd.OrgID
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+	if cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		parentUIDScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID)
 		legacyEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, parentUIDScope)
@@ -694,7 +671,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID == folder.SharedWithMeFolderUID {
+	if cmd.UID == folder.SharedWithMeFolderUID {
 		return nil, folder.ErrBadRequest.Errorf("cannot create folder with UID %s", folder.SharedWithMeFolderUID)
 	}
 
@@ -817,10 +794,6 @@ func (s *Service) UpdateLegacy(ctx context.Context, cmd *folder.UpdateFolderComm
 	if err != nil {
 		s.log.ErrorContext(ctx, "folder update failed", "folderUID", cmd.UID, "error", err)
 		return nil, err
-	}
-
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		return dashFolder, nil
 	}
 
 	// always expose the dashboard store sequential ID
@@ -1023,7 +996,7 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 	// Delete all dashboards in the folders
 	for _, folderUID := range folderUIDs {
 		// nolint:staticcheck
-		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules, RemovePermissions: cmd.RemovePermissions}
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 			return toFolderError(err)
 		}
@@ -1279,17 +1252,15 @@ func (s *Service) GetDescendantCountsLegacy(ctx context.Context, q *folder.GetDe
 
 	folders := []string{*q.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		descendantFolders, err := s.store.GetDescendants(ctx, q.OrgID, *q.UID)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
-			return nil, err
-		}
-		for _, f := range descendantFolders {
-			folders = append(folders, f.UID)
-		}
-		countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
+	descendantFolders, err := s.store.GetDescendants(ctx, q.OrgID, *q.UID)
+	if err != nil {
+		s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
+		return nil, err
 	}
+	for _, f := range descendantFolders {
+		folders = append(folders, f.UID)
+	}
+	countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
 
 	for _, v := range s.registry {
 		c, err := v.CountInFolders(ctx, q.OrgID, folders, q.SignedInUser)

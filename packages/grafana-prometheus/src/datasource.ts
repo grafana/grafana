@@ -47,7 +47,7 @@ import {
   InstantQueryRefIdIndex,
   SUGGESTIONS_LIMIT,
 } from './constants';
-import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
+import { interpolateQueryExpr, prometheusRegularEscape } from './escaping';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
@@ -379,22 +379,7 @@ export class PrometheusDatasource
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) {
-    // if no multi or include all do not regexEscape
-    if (!variable.multi && !variable.includeAll) {
-      return prometheusRegularEscape(value);
-    }
-
-    if (typeof value === 'string') {
-      return prometheusSpecialRegexEscape(value);
-    }
-
-    const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
-
-    if (escapedValues.length === 1) {
-      return escapedValues[0];
-    }
-
-    return '(' + escapedValues.join('|') + ')';
+    return interpolateQueryExpr(value, variable);
   }
 
   targetContainsTemplate(target: PromQuery) {
@@ -492,16 +477,16 @@ export class PrometheusDatasource
       return this.directAccessError();
     }
 
-    let fullOrPartialRequest: DataQueryRequest<PromQuery>;
-    let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
-    const hasInstantQuery = request.targets.some((target) => target.instant);
+    // Use incremental query only if enabled and no instant queries or no $__range variables
+    const shouldUseIncrementalQuery =
+      this.hasIncrementalQuery && !request.targets.some((target) => target.instant || target.expr.includes('$__range'));
 
-    // Don't cache instant queries
-    if (this.hasIncrementalQuery && !hasInstantQuery) {
+    let fullOrPartialRequest: DataQueryRequest<PromQuery> = request;
+    let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
+
+    if (shouldUseIncrementalQuery) {
       requestInfo = this.cache.requestInfo(request);
       fullOrPartialRequest = requestInfo.requests[0];
-    } else {
-      fullOrPartialRequest = request;
     }
 
     const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));

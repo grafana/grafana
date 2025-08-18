@@ -88,6 +88,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import { getIsLazy } from './layouts-shared/utils';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
 
@@ -128,8 +129,6 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
   /** Panel to view in fullscreen */
   viewPanelScene?: ViewPanelScene;
   /** Edit view */
@@ -198,7 +197,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
+      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([], getIsLazy(state.preload)),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
