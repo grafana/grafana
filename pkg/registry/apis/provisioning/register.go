@@ -102,7 +102,6 @@ type APIBuilder struct {
 	}
 	jobHistoryConfig  *JobHistoryConfig
 	jobHistory        jobs.History
-	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
 	legacyMigrator    legacy.LegacyMigrator
@@ -658,12 +657,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 
 			b.client = c.ProvisioningV0alpha1()
-
-			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
-			b.tester = &RepositoryTester{
-				client: b.GetClient(),
-			}
-
 			b.repositoryLister = repoInformer.Lister()
 
 			// if running solely CRUD, skip the rest of the setup
@@ -1255,49 +1248,20 @@ func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository
 	return b.asRepository(ctx, obj)
 }
 
-func timeSince(when int64) time.Duration {
-	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
-}
-
 func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
 	repo, err := b.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
+
 	status := repo.Config().Status.Health
 	if !status.Healthy {
-		if timeSince(status.Checked) > time.Second*25 {
-			ctx, _, err = identity.WithProvisioningIdentity(ctx, repo.Config().Namespace)
-			if err != nil {
-				return nil, err // The status
-			}
-
-			// Check health again
-			s, err := repository.TestRepository(ctx, repo)
-			if err != nil {
-				return nil, err // The status
-			}
-
-			// Write and return the repo with current status
-			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
-			if cfg != nil {
-				status = cfg.Status.Health
-				if cfg.Status.Health.Healthy {
-					status = cfg.Status.Health
-					repo, err = b.AsRepository(ctx, cfg)
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-		if !status.Healthy {
-			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-				Code:    http.StatusFailedDependency,
-				Message: "The repository configuration is not healthy",
-			}}
-		}
+		return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+			Code:    http.StatusFailedDependency,
+			Message: "The repository configuration is not healthy",
+		}}
 	}
+
 	return repo, err
 }
 

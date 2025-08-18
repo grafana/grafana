@@ -8,13 +8,11 @@ import (
 	"reflect"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -100,6 +98,8 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				responder.Error(err)
 				return
 			}
+
+			// TODO: in this case, we should update the health of the repository
 		}
 
 		// Only call test if field validation passes
@@ -110,57 +110,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 		responder.Object(rsp.Code, rsp)
 	}), 30*time.Second), nil
-}
-
-// TODO: Move tester to a more suitable location out of the connector.
-type RepositoryTester struct {
-	// Repository+Jobs
-	client client.ProvisioningV0alpha1Interface
-}
-
-// This function will check if the repository is configured and functioning as expected
-func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisioning.Repository, res *provisioning.TestResults) (*provisioning.Repository, error) {
-	if res == nil {
-		res = &provisioning.TestResults{
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Detail: "missing health status",
-			}},
-		}
-	}
-
-	repo := cfg.DeepCopy()
-
-	// Preserve existing hook failure messages
-	const hookFailureMessage = "Hook execution failed"
-	var preservedMessages []string
-	for _, msg := range cfg.Status.Health.Message {
-		if len(msg) >= len(hookFailureMessage) && msg[:len(hookFailureMessage)] == hookFailureMessage {
-			preservedMessages = append(preservedMessages, msg)
-		}
-	}
-
-	repo.Status.Health = provisioning.HealthStatus{
-		Healthy: res.Success,
-		Checked: time.Now().UnixMilli(),
-		Message: preservedMessages, // Start with preserved hook failure messages
-	}
-
-	// Add test result errors
-	for _, err := range res.Errors {
-		if err.Detail != "" {
-			repo.Status.Health.Message = append(repo.Status.Health.Message, err.Detail)
-		}
-	}
-
-	// If we have hook failures, the repository should be considered unhealthy regardless of test results
-	if len(preservedMessages) > 0 {
-		repo.Status.Health.Healthy = false
-	}
-
-	_, err := t.client.Repositories(repo.GetNamespace()).
-		UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-	return repo, err
 }
 
 var (

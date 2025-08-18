@@ -305,11 +305,6 @@ func (rc *RepositoryController) runHealthCheckWithExistingStatus(ctx context.Con
 	return healthStatus
 }
 
-// runHealthCheck is kept for backward compatibility but now calls the new method
-func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository) provisioning.HealthStatus {
-	return rc.runHealthCheckWithExistingStatus(ctx, repo, provisioning.HealthStatus{})
-}
-
 func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
 	// don't trigger resync if a sync was never started
 	if obj.Status.Sync.Finished == 0 && obj.Status.Sync.State == "" {
@@ -472,6 +467,7 @@ func (rc *RepositoryController) determineSyncStatus(obj *provisioning.Repository
 //nolint:gocyclo
 func (rc *RepositoryController) process(item *queueItem) error {
 	logger := rc.logger.With("key", item.key)
+	ctx := logging.Context(context.Background(), logger)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
@@ -486,7 +482,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return err
 	}
@@ -617,7 +613,7 @@ func (rc *RepositoryController) hasRecentHookFailure(healthStatus provisioning.H
 
 	failureAge := time.Since(time.UnixMilli(healthStatus.Checked))
 	// Allow retrying hooks after 2 minutes (longer than health check to avoid too frequent retries)
-	return failureAge < time.Minute*2
+	return failureAge < time.Minute
 }
 
 // handleHookFailure updates the repository status when hooks fail to prevent retry loops
