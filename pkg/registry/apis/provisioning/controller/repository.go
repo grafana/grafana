@@ -515,11 +515,25 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Run hooks
 	hookOps, err := rc.runHooks(ctx, repo, obj)
+	var hookError error
 	switch {
 	case err != nil:
-		return err
+		hookError = err
 	case len(hookOps) > 0:
 		patchOperations = append(patchOperations, hookOps...)
+	}
+	// If hooks failed, update health status to unhealthy
+	if hookError != nil {
+		healthStatus = provisioning.HealthStatus{
+			Healthy: false,
+			Checked: time.Now().UnixMilli(),
+			Message: []string{fmt.Sprintf("Hook execution failed: %s", hookError.Error())},
+		}
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/health",
+			"value": healthStatus,
+		})
 	}
 
 	// determine the sync strategy and sync status to apply
