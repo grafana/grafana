@@ -63,6 +63,7 @@ export class LogListModel implements LogRowModel {
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _virtualization?: LogLineVirtualization;
   private _wrapLogMessage: boolean;
+  private _json = false;
 
   constructor(
     log: LogRowModel,
@@ -124,9 +125,13 @@ export class LogListModel implements LogRowModel {
   get body(): string {
     if (this._body === undefined) {
       try {
-        const parsed = stringify(parse(this.raw), undefined, this._wrapLogMessage ? 2 : 1);
-        if (parsed) {
-          this.raw = parsed;
+        const parsed = parse(this.raw);
+        if (typeof parsed === 'object') {
+          this._json = true; 
+        }
+        const reStringified = this._wrapLogMessage ? stringify(parsed, undefined, 2) : this.raw;
+        if (reStringified) {
+          this.raw = reStringified;
         }
       } catch (error) {}
       const raw = config.featureToggles.otelLogsFormatting && this.otelLanguage ? getOtelFormattedBody(this) : this.raw;
