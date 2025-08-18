@@ -55,7 +55,7 @@ The following access rules apply depending on the user role:
 To browse for available plugins:
 
 1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed and available plugins.
-1. Use the search to filter based on name, keywords, organization and other metadata.
+1. Use the search box to filter based on name, keywords, organization and other metadata.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
 ## Manage your plugins
