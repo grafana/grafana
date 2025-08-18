@@ -477,5 +477,19 @@ describe('EditDataSourceActions', () => {
 
       expect(mockFavoriteHook.isFavoriteDatasource).toHaveBeenCalledWith('test-uid');
     });
+
+    it('should disable favorite button when isLoading is true', () => {
+      config.featureToggles.favoriteDatasources = true;
+      mockUseFavoriteDatasources.mockReturnValue({
+        ...mockFavoriteHook,
+        isLoading: true,
+      });
+      mockFavoriteHook.isFavoriteDatasource.mockReturnValue(false);
+
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      const favoriteButton = screen.getByRole('button', { name: /add to favorites/i });
+      expect(favoriteButton).toBeDisabled();
+    });
   });
 });

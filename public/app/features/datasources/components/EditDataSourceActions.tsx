@@ -20,6 +20,7 @@ export function EditDataSourceActions({ uid }: Props) {
   const hasExploreRights = contextSrv.hasAccessToExplore();
   const favoriteDataSources = useFavoriteDatasources();
   const toggleFavoriteDatasource = useToggleFavoriteDatasource(favoriteDataSources);
+  const isFavorite = dataSourceInstance ? favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) : false;
 
   // Fetch plugin extension links
   const { links: allLinks, isLoading } = usePluginLinks({
@@ -68,10 +69,13 @@ export function EditDataSourceActions({ uid }: Props) {
     <>
       {favoriteDataSources.enabled && dataSourceInstance && !dataSourceInstance.meta.builtIn && (
         <IconButton
-          name={favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) ? 'favorite' : 'star'}
+          key={`favorite-${isFavorite ? 'favorite-mono' : 'star-default'}`}
+          name={isFavorite ? 'favorite' : 'star'}
+          iconType={isFavorite ? 'mono' : 'default'}
           onClick={() => toggleFavoriteDatasource(dataSourceInstance)}
+          disabled={favoriteDataSources.isLoading}
           tooltip={
-            favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid)
+            isFavorite
               ? t('datasources.edit-data-source-actions.remove-favorite', 'Remove from favorites')
               : t('datasources.edit-data-source-actions.add-favorite', 'Add to favorites')
           }
