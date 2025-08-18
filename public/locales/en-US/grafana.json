@@ -3632,11 +3632,11 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
+      "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
       "error-required": "Folder name is required",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
-      "text-your-folder-will-be-created-as": "Your folder will be created as {{folderName}}",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -4521,6 +4521,10 @@
           },
           "value": "Value"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "unsupported-item-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
@@ -7521,11 +7525,6 @@
     "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
-  },
-  "folder-picker": {
-    "create-instructions": "Press enter to create the new folder.",
-    "input-placeholder": "Press enter to confirm new folder",
-    "loading": "Loading folders..."
   },
   "folder-repo": {
     "provisioned-badge": "Provisioned",
@@ -11272,7 +11271,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
-      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+      "history-not-supported": "File history is not supported for this repository",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "repository-not-found": "Repository not found"
     },
     "file-status-page": {
       "save": "Save",
@@ -11470,6 +11471,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "Compare branch",
+        "open-pull-request": "Open pull request",
+        "view-branch": "View branch",
         "view-repository": "View repository"
       },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
@@ -12786,6 +12790,7 @@
     "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12801,8 +12806,17 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-tooltip-from-field": "Tooltip from field",
+    "name-tooltip-placement": "Tooltip placement",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "tooltip-placement-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom",
+      "label-left": "Left",
+      "label-right": "Right",
+      "label-top": "Top"
+    }
   },
   "tag-filter": {
     "clear-button": "Clear tags",

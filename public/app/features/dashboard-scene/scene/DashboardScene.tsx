@@ -129,8 +129,6 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
   /** Panel to view in fullscreen */
   viewPanelScene?: ViewPanelScene;
   /** Edit view */
