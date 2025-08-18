@@ -132,5 +132,4 @@ type Service interface {
 	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
 	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
-	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }
