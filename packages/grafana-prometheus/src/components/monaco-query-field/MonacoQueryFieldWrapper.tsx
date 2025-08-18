@@ -23,5 +23,13 @@ export const MonacoQueryFieldWrapper = (props: Props) => {
     onChange(value);
   };
 
-  return <MonacoQueryFieldLazy onRunQuery={handleRunQuery} onBlur={handleBlur} {...rest} />;
+  /**
+   * Handles changes without running any queries
+   * @param value
+   */
+  const handleChange = (value: string) => {
+    onChange(value);
+  };
+
+  return <MonacoQueryFieldLazy onChange={handleChange} onRunQuery={handleRunQuery} onBlur={handleBlur} {...rest} />;
 };

@@ -16,5 +16,7 @@ export type Props = {
   placeholder: string;
   onRunQuery: (value: string) => void;
   onBlur: (value: string) => void;
+  // onChange will never initiate a query, it just denotes that a query value has been changed
+  onChange: (value: string) => void;
   datasource: PrometheusDatasource;
 };
