@@ -380,9 +380,6 @@ export function getRowHeight(
     maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, rowIdx, lineHeight);
   }
 
-  // round up to the nearest line before doing math
-  maxHeight = Math.ceil(maxHeight);
-
   // adjust for vertical padding, and clamp to a minimum default height
   return Math.max(maxHeight + verticalPadding, defaultHeight);
 }
