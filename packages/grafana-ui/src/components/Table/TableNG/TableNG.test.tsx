@@ -1242,57 +1242,6 @@ describe('TableNG', () => {
     });
   });
 
-  // TODO we need to test this with an e2e rather than a unit test, because the element dimensions calcs
-  // don't work in unit tests (no clientWidth/Height)
-  describe.skip('Resizing', () => {
-    beforeEach(() => {
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-      window.HTMLElement.prototype.setPointerCapture = jest.fn();
-      window.HTMLElement.prototype.hasPointerCapture = jest.fn();
-      window.HTMLElement.prototype.releasePointerCapture = jest.fn();
-      window.HTMLElement.prototype.getBoundingClientRect = jest.fn(() => ({
-        width: 100,
-        height: 20,
-        top: 0,
-        left: 0,
-        bottom: 0,
-        right: 0,
-        x: 0,
-        y: 0,
-        toJSON: jest.fn(() => ''),
-      }));
-    });
-
-    it('calls onColumnResize when column is resized', async () => {
-      const onColumnResize = jest.fn();
-
-      const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          onColumnResize={onColumnResize}
-        />
-      );
-
-      // Find resize handle
-      const resizeHandles = container.querySelectorAll('.rdg-header-row > [role="columnheader"] > div:last-child');
-      const handle = resizeHandles[0];
-
-      if (!handle) {
-        throw new Error('Resize handle not found');
-      }
-
-      // simulate a click, then drag, then release.
-      await userEvent.pointer({ keys: '[MouseLeft>]', coords: { x: 0, y: 0 }, target: handle });
-      await userEvent.pointer({ coords: { x: 250, y: 0 }, target: handle });
-      await userEvent.pointer({ keys: '[/MouseLeft]', coords: { x: 250, y: 0 }, target: handle });
-
-      await waitFor(() => expect(onColumnResize).toHaveBeenCalled());
-    });
-  });
-
   describe('Text wrapping', () => {
     it('defaults to not wrapping text', () => {
       const { container } = render(
