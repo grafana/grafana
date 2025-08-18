@@ -522,7 +522,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle hooks - may return early if hooks fail
-	hookOps, shouldContinue := rc.processHooksWithFailureHandling(ctx, repo, obj)
+	hookOps, shouldContinue, hookErr := rc.processHooksWithFailureHandling(ctx, repo, obj)
+	if hookErr != nil {
+		return hookErr // Propagate status update errors
+	}
 	if !shouldContinue {
 		return nil // Hook handling already updated status and returned early
 	}
@@ -566,9 +569,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 }
 
 // processHooksWithFailureHandling handles hook execution with intelligent retry logic
-// Returns hook operations and whether processing should continue
-// If hooks fail, updates status internally and returns shouldContinue=false
-func (rc *RepositoryController) processHooksWithFailureHandling(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool) {
+// Returns hook operations, whether processing should continue, and any error
+func (rc *RepositoryController) processHooksWithFailureHandling(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
 	const hookFailureMessage = "Hook execution failed"
 	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
 
@@ -578,16 +580,16 @@ func (rc *RepositoryController) processHooksWithFailureHandling(ctx context.Cont
 	}
 
 	if !shouldRunHooks {
-		return nil, true
+		return nil, true, nil
 	}
 
 	hookOps, err := rc.runHooks(ctx, repo, obj)
 	if err != nil {
-		rc.handleHookFailure(ctx, obj, hookFailureMessage, err)
-		return nil, false // Don't continue processing, hook failure handled internally
+		handleErr := rc.handleHookFailure(ctx, obj, hookFailureMessage, err)
+		return nil, false, handleErr // Return the status update error if any
 	}
 
-	return hookOps, true
+	return hookOps, true, nil
 }
 
 // hasRecentHookFailure checks if the health status indicates a recent hook failure
@@ -617,7 +619,7 @@ func (rc *RepositoryController) hasRecentHookFailure(healthStatus provisioning.H
 }
 
 // handleHookFailure updates the repository status when hooks fail to prevent retry loops
-func (rc *RepositoryController) handleHookFailure(ctx context.Context, obj *provisioning.Repository, hookFailureMessage string, hookErr error) {
+func (rc *RepositoryController) handleHookFailure(ctx context.Context, obj *provisioning.Repository, hookFailureMessage string, hookErr error) error {
 	// Hook failed - mark as unhealthy and return early to avoid retry loop
 	// Don't update observed generation since hooks didn't complete successfully
 	healthStatus := provisioning.HealthStatus{
@@ -625,6 +627,7 @@ func (rc *RepositoryController) handleHookFailure(ctx context.Context, obj *prov
 		Checked: time.Now().UnixMilli(),
 		Message: []string{fmt.Sprintf("%s: %s", hookFailureMessage, hookErr.Error())},
 	}
+
 	hookFailurePatch := []map[string]interface{}{
 		{
 			"op":    "replace",
@@ -634,6 +637,8 @@ func (rc *RepositoryController) handleHookFailure(ctx context.Context, obj *prov
 	}
 
 	// Apply patch using the existing patchStatus method
-	// If this fails, we can't do much more - the error will be logged by the controller framework
-	_ = rc.patchStatus(ctx, obj, hookFailurePatch)
+	if patchErr := rc.patchStatus(ctx, obj, hookFailurePatch); patchErr != nil {
+		return fmt.Errorf("failed to update status after hook failure (%v): %w", hookErr, patchErr)
+	}
+	return nil
 }
