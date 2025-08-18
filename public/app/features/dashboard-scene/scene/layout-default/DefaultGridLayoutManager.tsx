@@ -433,11 +433,7 @@ export class DefaultGridLayoutManager
     for (const child of this.state.grid.state.children) {
       // Flatten repeated grid items
       if (child instanceof DashboardGridItem) {
-        if (child.state.repeatedPanels) {
-          children.push(...child.state.repeatedPanels);
-        } else {
-          children.push(child.state.body);
-        }
+        children.push(child.state.body, ...(child.state.repeatedPanels || []));
       }
     }
 
