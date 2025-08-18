@@ -503,33 +503,54 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
 
+	// Check if we need to run hooks and handle hook failures
+	const hookFailureMessage = "Hook execution failed"
+	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
+
+	// Skip hooks if status already indicates hook failure to avoid infinite retry
+	if shouldRunHooks && len(obj.Status.Health.Message) > 0 {
+		for _, msg := range obj.Status.Health.Message {
+			if len(msg) >= len(hookFailureMessage) && msg[:len(hookFailureMessage)] == hookFailureMessage {
+				shouldRunHooks = false
+				break
+			}
+		}
+	}
+
+	// Run hooks if needed
+	if shouldRunHooks {
+		hookOps, err := rc.runHooks(ctx, repo, obj)
+		if err != nil {
+			// Hook failed - mark as unhealthy and return early to avoid retry loop
+			// Don't update observed generation since hooks didn't complete successfully
+			healthStatus := provisioning.HealthStatus{
+				Healthy: false,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{fmt.Sprintf("%s: %s", hookFailureMessage, err.Error())},
+			}
+			hookFailurePatch := []map[string]interface{}{
+				{
+					"op":    "replace",
+					"path":  "/status/health",
+					"value": healthStatus,
+				},
+			}
+
+			// Apply patch and return early using the existing patchStatus method
+			if patchErr := rc.patchStatus(ctx, obj, hookFailurePatch); patchErr != nil {
+				return fmt.Errorf("failed to update status after hook failure: %w", patchErr)
+			}
+			return nil // Don't retry immediately
+		}
+
+		if len(hookOps) > 0 {
+			patchOperations = append(patchOperations, hookOps...)
+		}
+	}
+
 	healthStatus := obj.Status.Health
 	if shouldCheckHealth {
 		healthStatus = rc.runHealthCheck(ctx, repo)
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/health",
-			"value": healthStatus,
-		})
-	}
-
-	// Run hooks
-	hookOps, err := rc.runHooks(ctx, repo, obj)
-	var hookError error
-	switch {
-	case err != nil:
-		hookError = err
-	case len(hookOps) > 0:
-		patchOperations = append(patchOperations, hookOps...)
-	}
-
-	// If hooks failed, update health status to unhealthy
-	if hookError != nil {
-		healthStatus = provisioning.HealthStatus{
-			Healthy: false,
-			Checked: time.Now().UnixMilli(),
-			Message: []string{fmt.Sprintf("Hook execution failed: %s", hookError.Error())},
-		}
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/health",
