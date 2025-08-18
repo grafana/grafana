@@ -64,19 +64,6 @@ func NewRepositoryFailure(failureType FailureType, err error) *RepositoryFailure
 	}
 }
 
-// IsRecognizedFailure checks if an error is a recognized repository failure
-func (hc *HealthChecker) IsRecognizedFailure(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	if _, ok := err.(*RepositoryFailure); ok {
-		return true
-	}
-
-	return false
-}
-
 // ParseExistingFailures extracts known failure types from existing health status
 func (hc *HealthChecker) ParseExistingFailures(healthStatus provisioning.HealthStatus) []*RepositoryFailure {
 	var failures []*RepositoryFailure

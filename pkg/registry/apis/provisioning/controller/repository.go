@@ -456,7 +456,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	healthStatus, err := rc.healthChecker.RefreshHealth(ctx, repo, obj)
+	_, healthStatus, err := rc.healthChecker.RefreshHealth(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
 	}
