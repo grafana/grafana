@@ -11,12 +11,10 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, logInfo } from '../../../Analytics';
-import { trackAlertRuleFilterEvent } from '../../../Analytics';
+import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
-import { RuleHealth } from '../../../search/rulesSearchParser';
-import { getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
+import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
