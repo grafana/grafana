@@ -3,7 +3,6 @@ package search_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"runtime"
 	"testing"
 	"time"
@@ -14,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupIndex(b testing.TB) (resource.ResourceIndex, string) {
+func setupIndex(b testing.TB) resource.ResourceIndex {
 	// size := 1000000  // TODO: 200k documents standard size?
 	size := 200000
 	// batchSize := 1000 slower 8s (for 200k documents) - 34s (for 1M documents)
@@ -37,13 +36,7 @@ func BenchmarkBleveQuery(b *testing.B) {
 	var memStatsAfterIndex runtime.MemStats
 	runtime.ReadMemStats(&memStatsStart)
 
-	testIndex, testIndexDir := setupIndex(b)
-	defer func() {
-		err := os.RemoveAll(testIndexDir)
-		if err != nil {
-			fmt.Printf("Error removing index directory: %v\n", err)
-		}
-	}()
+	testIndex := setupIndex(b)
 
 	runtime.ReadMemStats(&memStatsAfterIndex)
 
