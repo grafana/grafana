@@ -136,7 +136,7 @@ export function getCellRenderer(
   }
 
   // if the field fails the test for a specific renderer, fallback to Auto
-  if (CELL_REGISTRY[cellType]?.testField && !CELL_REGISTRY[cellType]?.testField!(field)) {
+  if (CELL_REGISTRY[cellType]?.testField && CELL_REGISTRY[cellType]?.testField?.(field) !== true) {
     return AUTO_RENDERER;
   }
 

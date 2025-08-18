@@ -73,46 +73,46 @@ describe('TableNG Cells renderers', () => {
     }
 
     // Helper function to render a cell and get the test ID
-    const renderCell = (field: Field, cellOptions: TableCellOptions) =>
-      render(
-        getCellRenderer(
-          field,
-          cellOptions
-        )({
-          field,
-          value: 'test-value',
-          rowIdx: 0,
-          frame: createDataFrame({ fields: [field] }),
-          height: 100,
-          width: 100,
-          theme: createTheme(),
-          cellOptions,
-          cellInspect: false,
-          showFilters: false,
-          getActions: jest.fn(() => [
+    const renderCell = (field: Field, cellOptions: TableCellOptions) => {
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const CellComponent = getCellRenderer(field, cellOptions);
+      return render(
+        <CellComponent
+          field={field}
+          value="test-value"
+          rowIdx={0}
+          frame={createDataFrame({ fields: [field] })}
+          height={100}
+          width={100}
+          theme={createTheme()}
+          cellOptions={cellOptions}
+          cellInspect={false}
+          showFilters={false}
+          getActions={jest.fn(() => [
             { title: 'Action', onClick: jest.fn(() => {}), confirmation: jest.fn(), style: {} },
-          ]),
-        })
+          ])}
+        />
       );
+    };
 
     // Performance test helper
     const benchmarkCellPerformance = (field: Field, cellOptions: TableCellOptions, iterations = 100) => {
       // eslint-disable-next-line testing-library/render-result-naming-convention
-      const r = getCellRenderer(field, cellOptions);
+      const CellComponent = getCellRenderer(field, cellOptions);
       return measurePerformance(() => {
         render(
-          r({
-            field,
-            value: 'test-value',
-            rowIdx: 0,
-            frame: createDataFrame({ fields: [field] }),
-            height: 100,
-            width: 100,
-            theme: createTheme(),
-            cellOptions,
-            cellInspect: false,
-            showFilters: false,
-          })
+          <CellComponent
+            field={field}
+            value="test-value"
+            rowIdx={0}
+            frame={createDataFrame({ fields: [field] })}
+            height={100}
+            width={100}
+            theme={createTheme()}
+            cellOptions={cellOptions}
+            cellInspect={false}
+            showFilters={false}
+          />
         );
       }, iterations);
     };
