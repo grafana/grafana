@@ -354,7 +354,7 @@ export async function processV2DatasourceInput(
     dataSourceInput = {
       name: datasource.name,
       label: datasource.name,
-      info: `Select a ${datasource.name} data source`,
+      info: `Select a ${datasource.type} data source`,
       value: datasource.uid,
       type: InputType.DataSource,
       pluginId: datasource.meta?.id,
