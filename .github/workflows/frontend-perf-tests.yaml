@@ -91,9 +91,9 @@ jobs:
             --rm \
             --volume="./fsperfbaseline-pw-results.json:/pw-results.json" \
             --volume="./fsperfbaseline-metrics.txt:/metrics.txt" \
-            -e PROMETHEUS_URL=$PROMETHEUS_URL \
-            -e PROMETHEUS_USER=$PROMETHEUS_USER \
-            -e PROMETHEUS_PASSWORD=$PROMETHEUS_TOKEN \
+            -e PROMETHEUS_URL="$PROMETHEUS_URL" \
+            -e PROMETHEUS_USER="$PROMETHEUS_USER" \
+            -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
             us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.0 report \
               --grafana-url "http://fsperfbaseline.grafana-dev.net" \
               --test-suite-name "FrontendPerfTests" \
@@ -113,9 +113,9 @@ jobs:
             --rm \
             --volume="./fsperf-pw-results.json:/pw-results.json" \
             --volume="./fsperf-metrics.txt:/metrics.txt" \
-            -e PROMETHEUS_URL=$PROMETHEUS_URL \
-            -e PROMETHEUS_USER=$PROMETHEUS_USER \
-            -e PROMETHEUS_PASSWORD=$PROMETHEUS_TOKEN \
+            -e PROMETHEUS_URL="$PROMETHEUS_URL" \
+            -e PROMETHEUS_USER="$PROMETHEUS_USER" \
+            -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
             us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.0 report \
               --grafana-url "http://fsperf.grafana-dev.net" \
               --test-suite-name "FrontendPerfTests" \
