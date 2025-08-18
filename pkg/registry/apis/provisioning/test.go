@@ -130,14 +130,32 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 	}
 
 	repo := cfg.DeepCopy()
+
+	// Preserve existing hook failure messages
+	const hookFailureMessage = "Hook execution failed"
+	var preservedMessages []string
+	for _, msg := range cfg.Status.Health.Message {
+		if len(msg) >= len(hookFailureMessage) && msg[:len(hookFailureMessage)] == hookFailureMessage {
+			preservedMessages = append(preservedMessages, msg)
+		}
+	}
+
 	repo.Status.Health = provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
+		Message: preservedMessages, // Start with preserved hook failure messages
 	}
+
+	// Add test result errors
 	for _, err := range res.Errors {
 		if err.Detail != "" {
 			repo.Status.Health.Message = append(repo.Status.Health.Message, err.Detail)
 		}
+	}
+
+	// If we have hook failures, the repository should be considered unhealthy regardless of test results
+	if len(preservedMessages) > 0 {
+		repo.Status.Health.Healthy = false
 	}
 
 	_, err := t.client.Repositories(repo.GetNamespace()).

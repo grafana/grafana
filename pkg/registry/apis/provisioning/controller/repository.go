@@ -260,7 +260,7 @@ func (rc *RepositoryController) shouldCheckHealth(obj *provisioning.Repository) 
 	return healthAge > time.Minute // otherwise within a minute
 }
 
-func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository) provisioning.HealthStatus {
+func (rc *RepositoryController) runHealthCheckWithExistingStatus(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) provisioning.HealthStatus {
 	logger := logging.FromContext(ctx)
 	logger.Info("running health check")
 	res, err := rc.tester.TestRepository(ctx, repo)
@@ -273,19 +273,41 @@ func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo reposit
 		}
 	}
 
+	// Preserve existing hook failure messages
+	const hookFailureMessage = "Hook execution failed"
+	var preservedMessages []string
+	for _, msg := range existingStatus.Message {
+		if len(msg) >= len(hookFailureMessage) && msg[:len(hookFailureMessage)] == hookFailureMessage {
+			preservedMessages = append(preservedMessages, msg)
+		}
+	}
+
 	healthStatus := provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
+		Message: preservedMessages, // Start with preserved hook failure messages
 	}
+
+	// Add health check errors
 	for _, err := range res.Errors {
 		if err.Detail != "" {
 			healthStatus.Message = append(healthStatus.Message, err.Detail)
 		}
 	}
 
+	// If we have hook failures, the repository should be considered unhealthy regardless of health check
+	if len(preservedMessages) > 0 {
+		healthStatus.Healthy = false
+	}
+
 	logger.Info("health check completed", "status", healthStatus)
 
 	return healthStatus
+}
+
+// runHealthCheck is kept for backward compatibility but now calls the new method
+func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo repository.Repository) provisioning.HealthStatus {
+	return rc.runHealthCheckWithExistingStatus(ctx, repo, provisioning.HealthStatus{})
 }
 
 func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool {
@@ -514,7 +536,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	healthStatus := obj.Status.Health
 	if shouldCheckHealth {
-		healthStatus = rc.runHealthCheck(ctx, repo)
+		healthStatus = rc.runHealthCheckWithExistingStatus(ctx, repo, obj.Status.Health)
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/health",
@@ -617,5 +639,5 @@ func (rc *RepositoryController) handleHookFailure(ctx context.Context, obj *prov
 
 	// Apply patch using the existing patchStatus method
 	// If this fails, we can't do much more - the error will be logged by the controller framework
-	rc.patchStatus(ctx, obj, hookFailurePatch)
+	_ = rc.patchStatus(ctx, obj, hookFailurePatch)
 }
