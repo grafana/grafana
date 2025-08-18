@@ -650,7 +650,6 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 	seen := make(map[string]bool)
 
 	seq := func(yield func(*resource.ModifiedResource, error) bool) {
-		// Run transaction
 		err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
 			var err error
 
@@ -675,7 +674,6 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 				return nil
 			}
 
-			// Iterate rows -> convert to *ModifiedResource
 			for rows.Next() {
 				mr := &resource.ModifiedResource{}
 				if err := rows.Scan(&mr.Key.Namespace, &mr.Key.Group, &mr.Key.Resource, &mr.Key.Name, &mr.ResourceVersion, &mr.Action, &mr.Value); err != nil {

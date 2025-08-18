@@ -131,7 +131,7 @@ type ModifiedResourceKey struct {
 	Name string
 }
 
-type ModifiedResource struct { // Could be WrittenEvent ?
+type ModifiedResource struct {
 	Action          int64
 	Key             ModifiedResourceKey
 	Value           []byte // Only when IsDeleted false
