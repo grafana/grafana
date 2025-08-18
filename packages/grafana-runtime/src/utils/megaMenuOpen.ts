@@ -1,4 +1,4 @@
-type MegaMenuOpenHook = () => Readonly<[boolean, (open: boolean) => void]>;
+type MegaMenuOpenHook = () => Readonly<[boolean, (open: boolean, persist?: boolean) => void]>;
 
 let megaMenuOpenHook: MegaMenuOpenHook | undefined = undefined;
 
