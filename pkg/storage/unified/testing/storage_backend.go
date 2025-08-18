@@ -531,35 +531,27 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 	})
 
 	t.Run("will only return modified events for the given key", func(t *testing.T) {
-		//key := resource.NamespacedResource{
-		//	Namespace: "other-ns",
-		//	Group:     "group",
-		//	Resource:  "resource",
-		//}
+		key := resource.NamespacedResource{
+			Namespace: "other-ns",
+			Group:     "group",
+			Resource:  "resource",
+		}
 
-		// Write an event for this tenant for another resource
-		//_, err = writeEvent(ctx, backend, "item2-othertenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"), WithResource("other-resource"))
-		//require.NoError(t, err)
+		// Write an event for another tenant for the same resource
+		rvCreatedOtherTenant, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
+		require.NoError(t, err)
 
-		// Write an event for this tenant for the resource we are interested in
-		//rvOther, err := writeEvent(ctx, backend, "item1-othertenant", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
-		//require.NoError(t, err)
-		//require.Greater(t, rvOther, rvHistory3)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		require.Greater(t, latestRv, rvCreated)
 
-		//latestRv, err := backend.ListModifiedSince(ctx, key, rv1, func(iter resource.ListIterator) error {
-		//	Should only get the single new event for this tenant and resource
-		//iter.Next()
-		//require.NoError(t, iter.Error())
-		//require.Equal(t, rvOther, iter.ResourceVersion())
-		//require.Equal(t, "other-ns", iter.Namespace())
-		//
-		//require.Equal(t, false, iter.Next())
-		//
-		//return nil
-		//})
-
-		//require.NoError(t, err)
-		//require.GreaterOrEqual(t, latestRv, rvOther)
+		counter := 0
+		for res, err := range seq {
+			require.NoError(t, err)
+			require.Equal(t, rvCreatedOtherTenant, res.ResourceVersion)
+			require.Equal(t, key.Namespace, res.Key.Namespace)
+			counter++
+		}
+		require.Equal(t, 1, counter) // only one event should be returned
 	})
 }
 
