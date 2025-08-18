@@ -87,7 +87,7 @@ func MakeGMSError(refID string, err error) error {
 	return err
 }
 
-var inputLimitExceededStr = "sql expression [{{ .Public.refId }}] was not run because the number of input cells to the sql expression exceeded the configured limit of {{ .Public.inputLimit }}"
+var inputLimitExceededStr = "sql expression [{{ .Public.refId }}] was not run because the number of input cells (columns*rows) to the sql expression exceeded the configured limit of {{ .Public.inputLimit }}"
 
 var InputLimitExceededError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.inputLimitExceeded").MustTemplate(
@@ -220,7 +220,7 @@ func MakeTableNotFoundError(refID, table string) TypedError {
 	return &ErrorWithType{errorType: "table_not_found", err: TableNotFoundError.Build(data)}
 }
 
-var sqlDepErrStr = "could not run sql expression [{{ .Public.refId }}] because it selects from the results of the query [{{.Public.depRefId }}] which has an error"
+var sqlDepErrStr = "could not run sql expression [{{ .Public.refId }}] because it selects from the results of query [{{.Public.depRefId }}] which has an error"
 
 var DependencyError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.sql.failed_dependency").MustTemplate(
@@ -233,7 +233,7 @@ func MakeSQLDependencyError(refID, depRefID string) TypedError {
 			"refId":    refID,
 			"depRefId": depRefID,
 		},
-		Error: fmt.Errorf("could not run sql expression %v because it selects from the results of the query %v which has an error", refID, depRefID),
+		Error: fmt.Errorf("could not run sql expression %v because it selects from the results of query %v which has an error", refID, depRefID),
 	}
 
 	return &ErrorWithType{errorType: "failed_dependency", err: DependencyError.Build(data)}
