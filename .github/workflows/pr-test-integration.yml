@@ -84,7 +84,7 @@ jobs:
       fail-fast: false
 
     name: MySQL (${{ matrix.shard }})
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
     env:
@@ -134,7 +134,7 @@ jobs:
       fail-fast: false
 
     name: Postgres (${{ matrix.shard }})
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
     env:
