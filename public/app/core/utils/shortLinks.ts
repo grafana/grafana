@@ -100,7 +100,7 @@ export const getShareUrlParams = (
   const urlParamsUpdate: UrlQueryMap = {};
 
   if (panel) {
-    urlParamsUpdate.viewPanel = getVizPanelPathId(panel);
+    urlParamsUpdate.viewPanel = panel.getPathId();
   }
 
   if (opts.useAbsoluteTimeRange) {

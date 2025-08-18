@@ -20,7 +20,7 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
   }
 
   public getUrlKey() {
-    return getVizPanelPathId(this.state.panelRef.resolve());
+    return this.state.panelRef.resolve().getPathId();
   }
 
   public static Component = ({ model }: SceneComponentProps<ViewPanelScene>) => {

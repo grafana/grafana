@@ -10,20 +10,7 @@ import {
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
-import { findVizPanelByPathId, getVizPanelPathId } from './pathId';
-
-describe('getVizPanelPathId', () => {
-  it('Non repeated panels inside no repeated context should simply return key', () => {
-    const { panel1 } = buildTestScene();
-    expect(getVizPanelPathId(panel1)).toBe('panel-1');
-  });
-
-  it('should include local and parent local variable value', () => {
-    const { repeatedPanel } = buildTestScene();
-
-    expect(getVizPanelPathId(repeatedPanel)).toBe('US$pod1$panel-2');
-  });
-});
+import { findVizPanelByPathId } from './pathId';
 
 describe('findVizPanelByPathId', () => {
   it('should find correct panel', () => {

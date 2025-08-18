@@ -5,12 +5,11 @@ import { contextSrv } from 'app/core/core';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { getVizPanelPathId } from './pathId';
 import { getQueryRunnerFor } from './utils';
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), {
-    viewPanel: getVizPanelPathId(vizPanel),
+    viewPanel: vizPanel.getPathId(),
     editPanel: undefined,
   });
 }
