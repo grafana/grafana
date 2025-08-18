@@ -4153,7 +4153,7 @@
         },
         "collector": {
           "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
-          "title": "Collector:"
+          "title": "Collector"
         },
         "data-sources": {
           "subtitle": "Manage your existing data source connections",
