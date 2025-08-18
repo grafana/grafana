@@ -14,7 +14,6 @@ import {
   isGrafanaRuleIdentifier,
   isPrometheusRuleIdentifier,
 } from 'app/features/alerting/unified/utils/rules';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
   Alert,
