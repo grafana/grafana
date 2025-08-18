@@ -251,7 +251,7 @@ func RegisterAPIService(
 	}
 	builder := NewAPIBuilder(folderResolver, features,
 		client,
-		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarily for now)
+		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		usageStats,
@@ -1323,15 +1323,6 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		if r != nil {
 			return r, nil
 		}
-	}
-
-	// TODO: these values are not yet used
-	// After we are confident repositories with inline secrets can be deployed to cloud
-	// and do not fail here, we can then remove and replace the explicit/legacy secret
-	// support with a more generic approach (that will eventually be provided by app-sdk)
-	_, err := decrypt(ctx, r, b.decryptSvc)
-	if err != nil {
-		return nil, err
 	}
 
 	switch r.Spec.Type {

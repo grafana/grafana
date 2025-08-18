@@ -23,7 +23,6 @@
         "workflows": []
     },
     "secure": {
-        "token": { "create": "{{ or .SecureTokenCreate "" }}" },
-        "webhookSecret": { "name": "{{ or .SecureWebhookSecretName "" }}" }
+        "token": { "create": "{{ or .SecureTokenCreate "" }}" }
     }
 }

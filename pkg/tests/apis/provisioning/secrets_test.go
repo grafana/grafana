@@ -45,18 +45,13 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 		{
 			name: "inline github token encrypted",
 			values: map[string]any{
-				"SecureTokenCreate":       "some-token",
-				"SecureWebhookSecretName": "webhook",
+				"SecureTokenCreate": "some-token",
 			},
 			inputFile: "testdata/github-readonly.json.tmpl",
 			expectedFields: []expectedField{
 				{
 					Path:           []string{"secure", "token", "name"},
 					DecryptedValue: "some-token",
-				},
-				{
-					Path:  []string{"secure", "webhookSecret", "name"},
-					Value: "webhook", // won't decrypt
 				},
 			},
 		},
@@ -65,19 +60,15 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			input := helper.RenderObject(t, test.inputFile, test.values)
-			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
+			output, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
 			require.NoError(t, err, "failed to create resource")
-
-			name := mustNestedString(input.Object, "metadata", "name")
-			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-			require.NoError(t, err, "failed to read back resource")
 
 			// Move encrypted token mutation
 			for _, expectedField := range test.expectedFields {
 				name, found, err := unstructured.NestedString(output.Object, expectedField.Path...)
 				require.NoError(t, err, "error getting expected path")
-				require.True(t, found)
-				require.NotEmpty(t, name)
+				require.True(t, found, expectedField.Path)
+				require.NotEmpty(t, name, expectedField.Path)
 
 				if expectedField.Value != "" {
 					require.Equal(t, expectedField.Value, name)
