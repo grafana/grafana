@@ -49,15 +49,16 @@ func RunTest(
 		WithEnvVariable("bustcache", "1").
 		WithEnvVariable("PLAYWRIGHT_HTML_OPEN", "never").
 		WithEnvVariable("PLAYWRIGHT_HTML_OUTPUT_DIR", htmlResultsDir).
-		WithEnvVariable("PLAYWRIGHT_BLOB_OUTPUT_DIR", blobResultsDir).
-		WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
-			Expect: dagger.ReturnTypeAny,
-		})
+		WithEnvVariable("PLAYWRIGHT_BLOB_OUTPUT_DIR", blobResultsDir)
 
 	if opts.CloudPluginCreds != nil {
 		fmt.Println("DEBUG: CloudPluginCreds file is provided, mounting to /tmp/outputs.json")
 		e2eContainer = e2eContainer.WithMountedFile("/tmp/outputs.json", opts.CloudPluginCreds)
 	}
+
+	e2eContainer.WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
+		Expect: dagger.ReturnTypeAny,
+	})
 
 	if opts.TestResultsExportDir != "" {
 		_, err := e2eContainer.Directory(testResultsDir).Export(ctx, opts.TestResultsExportDir)
