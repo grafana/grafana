@@ -51,7 +51,7 @@ describe('Connections', () => {
 
     // Add new connection card
     expect(await screen.findByText('Add new connection')).toBeVisible();
-    expect(await screen.findByText('Collector:')).toBeVisible();
+    expect(await screen.findByText('Collector')).toBeVisible();
     expect(await screen.findByText('Data sources')).toBeVisible();
     expect(await screen.findByText('Integrations')).toBeVisible();
     expect(await screen.findByText('Private data source connect')).toBeVisible();
