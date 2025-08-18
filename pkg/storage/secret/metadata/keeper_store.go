@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -91,13 +92,12 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv1beta
 			return err
 		}
 
-		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
-		if err := s.validateSecureValueReferences(ctx, keeper); err != nil {
-			return err
-		}
-
 		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
+			if sql.IsRowAlreadyExistsError(err) {
+				return fmt.Errorf("namespace=%s name=%s: %w", keeper.Namespace, keeper.Name, contracts.ErrKeeperAlreadyExists)
+			}
+
 			return fmt.Errorf("inserting row: %w", err)
 		}
 
@@ -235,11 +235,6 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv1b
 	var newRow *keeperDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		// Validate before updating that any `secureValues` referenced exists and does not reference other third-party keepers.
-		if err := s.validateSecureValueReferences(ctx, newKeeper); err != nil {
-			return err
-		}
-
 		// Validate before updating that any `secureValues` referenced exists and does not reference other third-party keepers.
 		if err := s.validateSecureValueReferences(ctx, newKeeper); err != nil {
 			return err

@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrKeeperNotFound = errors.New("keeper not found")
+	ErrKeeperNotFound      = errors.New("keeper not found")
+	ErrKeeperAlreadyExists = errors.New("keeper already exists")
 )
 
 // KeeperMetadataStorage is the interface for wiring and dependency injection.
