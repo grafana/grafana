@@ -58,7 +58,7 @@ export function getTargetFolderPathInRepo({
 /**
  * Checks if the target folder is the repository root folder
  */
-function isRepositoryRootFolder(targetFolder?: Folder, repoName?: string): boolean {
+function isRepositoryRootFolder(targetFolder?: Folder, repoName?: string) {
   return Boolean(targetFolder?.metadata?.name === repoName && repoName);
 }
 
