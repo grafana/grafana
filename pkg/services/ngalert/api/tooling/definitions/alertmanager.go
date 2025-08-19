@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	alertingTemplates "github.com/grafana/alerting/templates"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
@@ -267,8 +268,31 @@ type (
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
 	ReceiverType              = definition.ReceiverType
-	MergeResult               = definition.MergeResult
 )
+
+type MergeResult definition.MergeResult
+
+func (m MergeResult) LogContext() []any {
+	if len(m.RenamedReceivers) == 0 && len(m.RenamedTimeIntervals) == 0 {
+		return nil
+	}
+	logCtx := make([]any, 0, 4)
+	if len(m.RenamedTimeIntervals) > 0 {
+		rcvBuilder := strings.Builder{}
+		for from, to := range m.RenamedReceivers {
+			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+		}
+		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+	}
+	if len(m.RenamedTimeIntervals) > 0 {
+		rcvBuilder := strings.Builder{}
+		for from, to := range m.RenamedTimeIntervals {
+			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+		}
+		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+	}
+	return logCtx
+}
 
 const (
 	GrafanaReceiverType      = definition.GrafanaReceiverType
@@ -721,11 +745,13 @@ func (c ExtraConfiguration) Validate() error {
 		}
 	}
 
-	// Alertmanager configuration is validated during YAML unmarshalling.
-	am := config.Config{}
-	err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &am)
+	cfg, err := c.GetAlertmanagerConfig()
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+	err = cfg.Validate()
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
 	}
 
 	return nil
@@ -734,10 +760,12 @@ func (c ExtraConfiguration) Validate() error {
 func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
 	config := PostableApiAlertingConfig{
 		Config: Config{
-			Global:       prometheusConfig.Global,
-			Route:        AsGrafanaRoute(prometheusConfig.Route),
-			InhibitRules: prometheusConfig.InhibitRules,
-			Templates:    prometheusConfig.Templates,
+			Global:            prometheusConfig.Global,
+			Route:             AsGrafanaRoute(prometheusConfig.Route),
+			InhibitRules:      prometheusConfig.InhibitRules,
+			TimeIntervals:     prometheusConfig.TimeIntervals,
+			MuteTimeIntervals: prometheusConfig.MuteTimeIntervals,
+			Templates:         prometheusConfig.Templates,
 		},
 	}
 
@@ -779,31 +807,20 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
 
-	return definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+	m, err := definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
+	}
+	return MergeResult(m), nil
 }
 
-// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
-func (c *PostableUserConfig) GetMergedTemplateDefinitions() []alertingTemplates.TemplateDefinition {
-	out := make([]alertingTemplates.TemplateDefinition, 0, len(c.TemplateFiles))
-	for name, tmpl := range c.TemplateFiles {
-		out = append(out, alertingTemplates.TemplateDefinition{
-			Name:     name,
-			Template: tmpl,
-			Kind:     alertingTemplates.GrafanaKind,
-		})
-	}
-	if len(c.ExtraConfigs) == 0 {
+// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.
+func (c *PostableUserConfig) GetMergedTemplateDefinitions() []definition.PostableApiTemplate {
+	out := definition.TemplatesMapToPostableAPITemplates(c.TemplateFiles, definition.GrafanaTemplateKind)
+	if len(c.ExtraConfigs) == 0 || len(c.ExtraConfigs[0].TemplateFiles) == 0 {
 		return out
 	}
-	// support only one config for now
-	for name, tmpl := range c.ExtraConfigs[0].TemplateFiles {
-		out = append(out, alertingTemplates.TemplateDefinition{
-			Name:     name,
-			Template: tmpl,
-			Kind:     alertingTemplates.MimirKind,
-		})
-	}
-	return out
+	return append(out, definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)...)
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {

@@ -39,8 +39,10 @@ composableKinds: PanelCfg: {
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
 					enableInfiniteScrolling?: bool
+					noInteractions?:          bool
 					fontSize?:                "default" | "small"                  @cuetsy(kind="enum", memberNames="default|small")
 					detailsMode?:             "inline" | "sidebar"                  @cuetsy(kind="enum", memberNames="inline|sidebar")
+					timestampResolution?:     "ms" | "ns"                  @cuetsy(kind="enum", memberNames="ms|ns")
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _
 					onClickFilterOutLabel?:  _

@@ -62,6 +62,8 @@ composableKinds: DataQuery: {
 
 					// Used to configure the HTTP request timeout
 					timeout?: number
+
+					keepCookies?: [...string]
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated

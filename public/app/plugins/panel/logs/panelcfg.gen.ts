@@ -22,6 +22,7 @@ export interface Options {
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
+  noInteractions?: boolean;
   /**
    * TODO: figure out how to define callbacks
    */
@@ -42,6 +43,7 @@ export interface Options {
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   syntaxHighlighting?: boolean;
+  timestampResolution?: ('ms' | 'ns');
   wrapLogMessage: boolean;
 }
 

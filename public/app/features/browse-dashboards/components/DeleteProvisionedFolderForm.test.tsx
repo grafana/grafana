@@ -30,6 +30,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
       },
     },
   },
+  provisioningAPIv0alpha1: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
 }));
 
 jest.mock('../hooks/useProvisionedFolderFormData');
@@ -41,6 +48,26 @@ jest.mock('./BrowseActions/DescendantCount', () => ({
 jest.mock('app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="shared-fields" />,
 }));
+
+const MOCK_DATA = {
+  repository: {
+    name: 'test-repo',
+    namespace: 'default',
+    title: 'Test Repository',
+    type: 'git',
+  },
+  resource: {
+    type: {
+      kind: 'Folder',
+    },
+    upsert: {
+      apiVersion: 'v1',
+      kind: 'Folder',
+      metadata: { name: 'test-folder', uid: 'test-folder-uid' },
+      spec: { title: 'Test Folder' },
+    },
+  },
+};
 
 const mockUseDeleteRepositoryFilesMutation = useDeleteRepositoryFilesWithPathMutation as jest.MockedFunction<
   typeof useDeleteRepositoryFilesWithPathMutation
@@ -104,10 +131,10 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
     { label: 'Write directly', value: 'write' },
     { label: 'Create branch', value: 'branch' },
   ],
-  isGitHub: true,
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,
+  isReadOnlyRepo: false,
 };
 
 function setup(
@@ -261,7 +288,13 @@ describe('DeleteProvisionedFolderForm', () => {
 
   describe('success handling', () => {
     it('should navigate to parent folder on successful write workflow', async () => {
-      const successState = { isLoading: false, isSuccess: true, isError: false, error: null };
+      const successState = {
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+        error: null,
+        data: MOCK_DATA,
+      };
       setup({}, defaultHookData, successState);
 
       await waitFor(() => {
@@ -271,7 +304,13 @@ describe('DeleteProvisionedFolderForm', () => {
 
     it('should navigate to dashboards root when parent folder has no parentUid', async () => {
       const folderWithoutParent = { ...mockParentFolder, parentUid: undefined };
-      const successState = { isLoading: false, isSuccess: true, isError: false, error: null };
+      const successState = {
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+        error: null,
+        data: MOCK_DATA,
+      };
       setup({ parentFolder: folderWithoutParent }, defaultHookData, successState);
 
       await waitFor(() => {
@@ -286,14 +325,22 @@ describe('DeleteProvisionedFolderForm', () => {
         isSuccess: true,
         isError: false,
         error: null,
-        data: { urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } },
+        data: {
+          ...MOCK_DATA,
+          ref: 'feature-branch',
+          path: 'folders/test-folder.json',
+          urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' },
+        },
       };
       const { mockNavigate } = setup({}, { ...defaultHookData, initialValues: branchFormData }, successState);
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith(
-          '/dashboards?new_pull_request_url=https://github.com/test/repo/pull/new'
-        );
+        const expectedParams = new URLSearchParams();
+        expectedParams.set('new_pull_request_url', 'https://github.com/test/repo/pull/new');
+        expectedParams.set('repo_type', 'git');
+        const expectedUrl = `/dashboards?${expectedParams.toString()}`;
+
+        expect(mockNavigate).toHaveBeenCalledWith(expectedUrl);
       });
     });
   });

@@ -37,6 +37,13 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   return {
     useCreateRepositoryFilesWithPathMutation: jest.fn(),
+    provisioningAPIv0alpha1: {
+      endpoints: {
+        listRepository: {
+          select: jest.fn().mockReturnValue(() => ({ data: { items: [] } })),
+        },
+      },
+    },
   };
 });
 
@@ -124,6 +131,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     workflows: ['write', 'branch'],
     target: 'folder',
   },
+  isReadOnlyRepo: false,
   folder: {
     metadata: {
       annotations: {
@@ -139,7 +147,6 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     { label: 'Commit directly', value: 'write' },
     { label: 'Create a branch', value: 'branch' },
   ],
-  isGitHub: true,
   initialValues: {
     title: '',
     comment: '',
@@ -182,18 +189,18 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should return null when initialValues is not available', () => {
-    const { container } = setup(
+    setup(
       {},
       {
         ...mockHookData,
         initialValues: undefined,
       }
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
   });
 
   it('should show error when repository is not found', () => {
-    const { container } = setup(
+    setup(
       {},
       {
         ...mockHookData,
@@ -201,7 +208,7 @@ describe('NewProvisionedFolderForm', () => {
         initialValues: undefined,
       }
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
   });
 
   it('should show branch field when branch workflow is selected', async () => {
@@ -213,25 +220,6 @@ describe('NewProvisionedFolderForm', () => {
     await user.click(branchOption);
 
     expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
-  });
-
-  it('should validate folder name', async () => {
-    (validationSrv.validateNewFolderName as jest.Mock).mockRejectedValue(new Error('Folder name already exists'));
-
-    const { user } = setup();
-
-    const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
-    await user.clear(folderNameInput);
-    await user.type(folderNameInput, 'Existing Folder');
-
-    // Submit the form
-    const submitButton = screen.getByRole('button', { name: /^create$/i });
-    await user.click(submitButton);
-
-    // Wait for validation error to appear
-    await waitFor(() => {
-      expect(screen.getByText('Folder name already exists')).toBeInTheDocument();
-    });
   });
 
   it('should validate branch name', async () => {
@@ -290,7 +278,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: undefined, // write workflow uses undefined ref
           name: 'test-repo',
-          path: '/dashboards/new-test-folder/',
+          path: '/dashboards/New Test Folder/',
           message: 'Creating a new test folder',
           body: {
             title: 'New Test Folder',
@@ -343,7 +331,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: 'feature/new-folder',
           name: 'test-repo',
-          path: '/dashboards/branch-folder/',
+          path: '/dashboards/Branch Folder/',
           message: 'Create folder: Branch Folder',
           body: {
             title: 'Branch Folder',

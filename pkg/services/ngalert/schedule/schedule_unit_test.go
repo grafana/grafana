@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -66,7 +67,19 @@ func TestProcessTicks(t *testing.T) {
 	}
 
 	cacheServ := &datasources.FakeCacheService{}
-	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+	evaluator := eval.NewEvaluatorFactory(
+		setting.UnifiedAlertingSettings{},
+		cacheServ,
+		expr.ProvideService(
+			&setting.Cfg{ExpressionsEnabled: true},
+			nil,
+			nil,
+			featuremgmt.WithFeatures(),
+			nil,
+			tracing.InitializeTracerForTest(),
+			dsquerierclient.NewNullQSDatasourceClientBuilder(),
+		),
+	)
 	rrSet := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
@@ -1192,7 +1205,19 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, &datasources.FakeCacheService{}, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+		evaluator = eval.NewEvaluatorFactory(
+			setting.UnifiedAlertingSettings{},
+			&datasources.FakeCacheService{},
+			expr.ProvideService(
+				&setting.Cfg{ExpressionsEnabled: true},
+				nil,
+				nil,
+				featuremgmt.WithFeatures(),
+				nil,
+				tracing.InitializeTracerForTest(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
+			),
+		)
 	}
 
 	if registry == nil {

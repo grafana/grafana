@@ -17,6 +17,7 @@ import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
+import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -343,6 +344,9 @@ export function getDefaultVizPanel(): VizPanel {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    headerActions: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      : undefined,
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({
         queries: [{ refId: 'A' }],
@@ -369,8 +373,8 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 export function calculateGridItemDimensions(repeater: DashboardGridItem) {
-  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
-  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const rowCount = Math.ceil(repeater.getPanelCount() / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.getPanelCount() / rowCount);
   const w = 24 / columnCount;
   const h = repeater.state.itemHeight ?? 10;
   return { h, w, columnCount };

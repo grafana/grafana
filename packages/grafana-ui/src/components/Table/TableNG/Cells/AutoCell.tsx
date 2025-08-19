@@ -1,13 +1,37 @@
+import { css } from '@emotion/css';
+
 import { formattedValueToString } from '@grafana/data';
 
-import { renderSingleLink } from '../../DataLinksActionsTooltip';
-import { useSingleLink } from '../hooks';
-import { AutoCellProps } from '../types';
+import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { AutoCellProps, TableCellStyles } from '../types';
 
-export default function AutoCell({ value, field, rowIdx }: AutoCellProps) {
+export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
-  const link = useSingleLink(field, rowIdx);
-
-  return link != null ? renderSingleLink(link, formattedValue) : formattedValue;
+  return (
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+      {formattedValue}
+    </MaybeWrapWithLink>
+  );
 }
+
+export const getStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow }) =>
+  css({
+    ...(textWrap && { whiteSpace: 'pre-line' }),
+    ...(shouldOverflow && {
+      '&:hover, &[aria-selected=true]': {
+        whiteSpace: 'pre-line',
+      },
+    }),
+  });
+
+export const getJsonCellStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow }) =>
+  css({
+    fontFamily: 'monospace',
+    ...(textWrap && { whiteSpace: 'pre' }),
+    ...(shouldOverflow && {
+      '&:hover, &[aria-selected=true]': {
+        whiteSpace: 'pre',
+      },
+    }),
+  });

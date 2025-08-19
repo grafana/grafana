@@ -3,19 +3,29 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Checkbox, useStyles2 } from '@grafana/ui';
+import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
+import { useSelector } from 'app/types/store';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
-import { isSharedWithMe } from './utils';
+import { useSelectionRepoValidation } from './BrowseActions/useSelectionRepoValidation';
+import { isSharedWithMe, canEditItemType } from './utils';
 
 export default function CheckboxCell({
   row: { original: row },
   isSelected,
   onItemSelectionChange,
+  permissions,
 }: DashboardsTreeCellProps) {
   const item = row.item;
 
+  // Get current selection state for repository validation
+  const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
+  const { selectedItemsRepoUID, isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
+
+  // Early returns for cases where we should show a spacer instead of checkbox
   if (!isSelected) {
     return <CheckboxSpacer />;
   }
@@ -30,6 +40,43 @@ export default function CheckboxCell({
 
   if (isSharedWithMe(item.uid)) {
     return <CheckboxSpacer />;
+  }
+
+  // Disable checkbox for root provisioned folder itself
+  if (item.managedBy === ManagerKind.Repo && !item.parentUID) {
+    return <CheckboxSpacer />;
+  }
+
+  if ((permissions && permissions.isReadOnlyRepo) || isUidInReadOnlyRepo(item.uid)) {
+    // When the folder is read-only (inherited from repository), disable checkbox with tooltip
+    return (
+      <Tooltip content={getReadOnlyTooltipText({})}>
+        <span>
+          <Checkbox disabled value={false} />
+        </span>
+      </Tooltip>
+    );
+  }
+
+  // Check if user can edit this specific item type
+  if (permissions && !canEditItemType(item.kind, permissions)) {
+    return <CheckboxSpacer />;
+  }
+
+  // check if current item uid has different repo uid than selected items
+  if (selectedItemsRepoUID && !isInLockedRepo(item.uid)) {
+    return (
+      <Tooltip
+        content={t(
+          'browse-dashboards.dashboards-tree.checkbox.disabled-not-in-same-repo',
+          'This item is not in the same repository as the selected items.'
+        )}
+      >
+        <span>
+          <Checkbox disabled value={false} />
+        </span>
+      </Tooltip>
+    );
   }
 
   const state = isSelected(item);

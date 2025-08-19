@@ -107,7 +107,7 @@ func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars
 	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
-func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
+func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
@@ -141,7 +141,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.
 		if err != nil {
 			return nil, err
 		}
-		q, err := reader.ReadQuery(data.NewDataQuery(map[string]any{
+		q, err := reader.ReadQuery(ctx, data.NewDataQuery(map[string]any{
 			"refId": rn.RefID,
 			"type":  rn.QueryType,
 		}), iter)
@@ -164,7 +164,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.
 	case TypeThreshold:
 		node.Command, err = UnmarshalThresholdCommand(rn)
 	case TypeSQL:
-		node.Command, err = UnmarshalSQLCommand(rn, cfg)
+		node.Command, err = UnmarshalSQLCommand(ctx, rn, cfg)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
@@ -213,7 +213,7 @@ func (dn *DSNode) NeedsVars() []string {
 	return []string{}
 }
 
-func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
+func (s *Service) buildDSNode(_ *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	if rn.TimeRange == nil {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
@@ -361,17 +361,12 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 	defer span.End()
 
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
-	if err != nil {
-		return mathexp.Results{}, err
-	}
 	span.SetAttributes(
 		attribute.String("datasource.type", dn.datasource.Type),
 		attribute.String("datasource.uid", dn.datasource.UID),
 	)
 
 	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
 		Queries: []backend.DataQuery{
 			{
 				RefID:         dn.refID,
@@ -399,9 +394,35 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
-	resp, err := s.dataService.QueryData(ctx, req)
+	var resp *backend.QueryDataResponse
+	qsDSClient, ok, err := s.qsDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
 	if err != nil {
 		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+	}
+
+	if !ok { // use single tenant client
+		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
+		if err != nil {
+			return mathexp.Results{}, err
+		}
+		req.PluginContext = pCtx
+		resp, err = s.dataService.QueryData(ctx, req)
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
+	} else { // use query-service client (single or multi tenant)
+		k8sReq, err := ConvertBackendRequestToDataRequest(req)
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
+
+		// make the query with a mt client
+		resp, err = qsDSClient.QueryData(ctx, *k8sReq)
+
+		// handle error
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
 	}
 
 	dataFrames, err := getResponseFrame(logger, resp, dn.refID)

@@ -1,0 +1,10 @@
+apiVersion: dashboard.grafana.app/v2beta1
+kind: Dashboard
+metadata:
+  name: test-v2beta1
+spec:
+  title: Test dashboard. Created at v2beta1
+  layout:
+    kind: GridLayout
+    spec:
+      items: []

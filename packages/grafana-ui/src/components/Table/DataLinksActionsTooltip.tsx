@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { flip, shift, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { ReactElement, useMemo } from 'react';
-import * as React from 'react';
+import { useMemo, ReactNode } from 'react';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
@@ -16,7 +15,7 @@ import { DataLinksActionsTooltipCoords } from './utils';
 interface Props {
   links: LinkModel[];
   actions?: ActionModel[];
-  value?: string | ReactElement;
+  value?: ReactNode;
   coords: DataLinksActionsTooltipCoords;
   onTooltipClose?: () => void;
 }
@@ -26,6 +25,7 @@ interface Props {
  * @internal
  */
 export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   // the order of middleware is important!
@@ -84,7 +84,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     <>
       {/* TODO: we can remove `value` from this component when tableNextGen is fully rolled out */}
       {value}
-      <Portal>
+      <Portal zIndex={theme.zIndex.tooltip}>
         <div
           ref={refCallback}
           {...getReferenceProps()}
@@ -102,11 +102,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   );
 };
 
-export const renderSingleLink = (
-  link: LinkModel,
-  children: string | React.JSX.Element,
-  className?: string
-): React.JSX.Element => {
+export const renderSingleLink = (link: LinkModel, children: ReactNode, className?: string): ReactNode => {
   return (
     <a
       href={link.href}
@@ -124,7 +120,6 @@ export const renderSingleLink = (
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     tooltipWrapper: css({
-      zIndex: theme.zIndex.portal,
       whiteSpace: 'pre',
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,

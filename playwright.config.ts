@@ -5,6 +5,7 @@ import { PluginOptions } from '@grafana/plugin-e2e';
 
 const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
+const DEFAULT_URL = 'http://localhost:3001';
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
@@ -15,8 +16,11 @@ export default defineConfig<PluginOptions>({
   reporter: [
     ['html'], // pretty
   ],
+  expect: {
+    timeout: 10_000,
+  },
   use: {
-    baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
+    baseURL: process.env.GRAFANA_URL ?? DEFAULT_URL,
     trace: 'retain-on-failure',
     httpCredentials: {
       username: 'admin',
@@ -26,6 +30,14 @@ export default defineConfig<PluginOptions>({
     permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
   },
+  ...(!process.env.GRAFANA_URL && {
+    webServer: {
+      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+      url: DEFAULT_URL,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  }),
   projects: [
     // Login to Grafana with admin user and store the cookie on disk for use in other tests
     {
@@ -184,6 +196,15 @@ export default defineConfig<PluginOptions>({
       dependencies: ['authenticate'],
     },
     {
+      name: 'canvas',
+      testDir: path.join(testDirRoot, '/canvas'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'zipkin',
       testDir: path.join(pluginDirRoot, '/zipkin'),
       use: {
@@ -193,8 +214,8 @@ export default defineConfig<PluginOptions>({
       dependencies: ['authenticate'],
     },
     {
-      name: 'scenarios',
-      testDir: path.join(testDirRoot, '/scenarios'),
+      name: 'unauthenticated',
+      testDir: path.join(testDirRoot, '/unauthenticated'),
       use: {
         ...devices['Desktop Chrome'],
       },

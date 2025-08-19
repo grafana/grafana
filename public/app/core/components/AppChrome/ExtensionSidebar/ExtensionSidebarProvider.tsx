@@ -6,7 +6,7 @@ import { config, getAppEvents, reportInteraction, usePluginLinks, locationServic
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
 
-import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
@@ -231,7 +231,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         dockedComponentId,
         setDockedComponentId: (componentId) => setDockedComponentWithProps(componentId, undefined),
         availableComponents,
-        extensionSidebarWidth: extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+        extensionSidebarWidth: Math.min(
+          extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+          MAX_EXTENSION_SIDEBAR_WIDTH
+        ),
         setExtensionSidebarWidth,
         props,
       }}

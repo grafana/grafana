@@ -1,0 +1,27 @@
+apiVersion: 1
+
+prune: true
+
+datasources:
+  # From devenv/datasources.yaml
+  - name: Testdata
+    uid: PD8C576611E62080A
+    type: grafana-testdata-datasource
+
+  - name: Loki Logs
+    uid: fs-loki
+    type: loki
+    url: http://loki:3100
+
+  - name: Tempo Traces
+    uid: fs-tempo
+    type: tempo
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        # Field with an internal link pointing to a logs data source in Grafana.
+        # datasourceUid value must match the uid value of the logs data source.
+        datasourceUid: 'fs-loki'
+        spanStartTimeShift: '-1m'
+        spanEndTimeShift: '1m'
+        filterByTraceID: true

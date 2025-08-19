@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -56,9 +56,17 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
+	msg := options.Message
+	if msg == "" {
+		msg = fmt.Sprintf("Export from Grafana %s", job.Name)
+	}
+
 	cloneOptions := repository.StageOptions{
-		Timeout:      10 * time.Minute,
-		PushOnWrites: false,
+		Ref:                   options.Branch,
+		Timeout:               10 * time.Minute,
+		PushOnWrites:          false,
+		Mode:                  repository.StageModeCommitOnlyOnce,
+		CommitOnlyOnceMessage: msg,
 	}
 
 	fn := func(repo repository.Repository, _ bool) error {
@@ -80,5 +88,16 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
 	}
 
-	return r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
+	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
+
+	// Set RefURLs if the repository supports it and we have a target branch
+	if options.Branch != "" {
+		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, options.Branch); urlErr == nil && refURLs != nil {
+				progress.SetRefURLs(ctx, refURLs)
+			}
+		}
+	}
+
+	return err
 }

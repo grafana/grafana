@@ -3,72 +3,43 @@ import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
-import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 
 import { useStepStatus } from './StepStatusContext';
+import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
-  requiresMigration: boolean;
   isLegacyStorage?: boolean;
 }
 
-export function SynchronizeStep({ requiresMigration, isLegacyStorage }: SynchronizeStepProps) {
-  const { setStepStatusInfo } = useStepStatus();
-  const [createJob] = useCreateRepositoryJobsMutation();
+export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
   const { getValues, register, watch } = useFormContext<WizardFormData>();
-  const repoType = watch('repository.type');
-  const supportsHistory = repoType === 'github' && isLegacyStorage;
+  const { setStepStatusInfo } = useStepStatus();
+  const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
+  const { requiresMigration } = useResourceStats(repoName, isLegacyStorage);
+  const { createSyncJob, supportsHistory } = useCreateSyncJob({
+    repoName,
+    requiresMigration,
+    repoType,
+    isLegacyStorage,
+    setStepStatusInfo,
+  });
   const [job, setJob] = useState<Job>();
 
   const startSynchronization = async () => {
-    const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
-    if (!repoName) {
-      setStepStatusInfo({
-        status: 'error',
-        error: t('provisioning.synchronize-step.error-no-repository-name', 'No repository name provided'),
-      });
-      return;
-    }
-
-    try {
-      setStepStatusInfo({ status: 'running' });
-      const jobSpec = requiresMigration
-        ? {
-            migrate: {
-              history: history && supportsHistory,
-            },
-          }
-        : {
-            pull: {
-              incremental: false, // will queue a full resync job
-            },
-          };
-
-      const response = await createJob({
-        name: repoName,
-        jobSpec,
-      }).unwrap();
-
-      if (!response?.metadata?.name) {
-        return setStepStatusInfo({
-          status: 'error',
-          error: t('provisioning.synchronize-step.error-no-job-id', 'Failed to start job'),
-        });
-      }
+    const [history] = getValues(['migrate.history']);
+    const response = await createSyncJob({ history });
+    if (response) {
       setJob(response);
-    } catch (error) {
-      setStepStatusInfo({
-        status: 'error',
-        error: t('provisioning.synchronize-step.error-starting-job', 'Error starting job'),
-      });
     }
   };
 
   if (job) {
-    return <JobStatus watch={job} />;
+    return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" />;
   }
 
   return (

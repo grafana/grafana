@@ -451,8 +451,11 @@ export { getLinksSupplier } from './field/fieldOverrides';
 // Types
 export { isUnsignedPluginSignature } from './types/pluginSignature';
 export type {
+  AzureSettings,
+  AzureCloudInfo,
   CurrentUserDTO,
   AnalyticsSettings,
+  AppPluginConfig,
   BootData,
   OAuth,
   OAuthSettings,
@@ -460,6 +463,8 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
+  PreinstalledPlugin,
+  UnifiedAlertingConfig,
 } from './types/config';
 export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';
 export type { WithAccessControlMetadata } from './types/accesscontrol';
@@ -492,6 +497,8 @@ export type {
   ExploreLogsPanelState,
   SplitOpenOptions,
   SplitOpen,
+  TraceSearchProps,
+  TraceSearchTag,
 } from './types/explore';
 export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
@@ -565,6 +572,8 @@ export {
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionDataSourceConfigActionsContext,
+  type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
@@ -658,6 +667,7 @@ export {
   type QueryFixAction,
   type QueryHint,
   type MetricFindValue,
+  type FiltersApplicability,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,

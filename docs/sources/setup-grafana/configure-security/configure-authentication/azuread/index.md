@@ -42,16 +42,12 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 1. Note the **Application ID**. This is the OAuth client ID.
 
 1. Click **Endpoints** from the top menu.
-
    - Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
    - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
 1. Click **Certificates & secrets** in the side menu, then add a new entry under the supported client authentication option you want to use. The following are the supported client authentication options with their respective configuration steps.
-
    - **Client secrets**
-
      1. Add a new entry under **Client secrets** with the following configuration.
-
         - Description: Grafana OAuth 2.0
         - Expires: Select an expiration period
 
@@ -60,16 +56,12 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
      {{< admonition type="note" >}}
      Make sure that you copy the string in the **Value** field, rather than the one in the **Secret ID** field.
      {{< /admonition >}}
-
      1. You must have set `client_authentication` under `[auth.azuread]` to `client_secret_post` in the Grafana server configuration for this to work.
 
    - **Federated credentials**
-
      - **_Managed Identity_**
-
        1. Refer to [Configure an application to trust a managed identity (preview)](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-config-app-trust-managed-identity?tabs=microsoft-entra-admin-center) for a complete guide on setting up a managed identity as a federated credential.
           Add a new entry under Federated credentials with the following configuration.
-
           - Federated credential scenario: Select **Other issuer**.
           - Issuer: The OAuth 2.0 / OIDC issuer URL of the Microsoft Entra ID authority. For example: `https://login.microsoftonline.com/{tenantID}/v2.0`.
           - Subject identifier: The Object (Principal) ID GUID of the Managed Identity.
@@ -88,10 +80,8 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
        {{< /admonition >}}
 
      - **_Workload Identity (K8s/AKS)_**
-
        1. Refer to [Federated identity credential for an Azure AD application](https://azure.github.io/azure-workload-identity/docs/topics/federated-identity-credential.html#azure-portal-ui) for a complete guide on setting up a federated credential for workload identity.
           Add a new entry under Federated credentials with the following configuration.
-
           - Federated credential scenario: Select **Kubernetes accessing Azure resources**.
           - [Cluster issuer URL](https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer#get-the-oidc-issuer-url): The OIDC issuer URL that your cluster is integrated with. For example: `https://{region}.oic.prod-aks.azure.com/{tenant_id}/{uuid}`.
           - Namespace: Namespace of your Grafana deployment. For example: `grafana`.
@@ -141,7 +131,6 @@ This section describes setting up basic application roles for Grafana within the
 1. Click **App roles** and then **Create app role**.
 
 1. Define a role corresponding to each Grafana role: Viewer, Editor, and Admin.
-
    1. Choose a **Display name** for the role. For example, "Grafana Editor".
 
    1. Set the **Allowed member types** to **Users/Groups**.
@@ -271,6 +260,10 @@ resource "grafana_sso_settings" "azuread_sso_settings" {
     allow_assign_grafana_admin    = false
     skip_org_role_sync            = false
     use_pkce                      = true
+    custom = {
+      domain_hint = "contoso.com"
+      force_use_graph_api = "true"
+    }
   }
 }
 ```
@@ -421,7 +414,7 @@ auto_login = true
 ### Team Sync
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
 With Team Sync you can map your Entra ID groups to teams in Grafana so that your users will automatically be added to
@@ -469,7 +462,7 @@ You can make Grafana always get group information from the Microsoft Graph API b
 1. Under the **GroupMember** section, select **GroupMember.Read.All**.
 1. Click **Add permissions**.
 1. Select **Microsoft Graph** from the list of APIs.
-1. Select **Delegated permissions**..
+1. Select **Delegated permissions**.
 1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
 1. Click the **Add permissions** button at the bottom of the page.
 
@@ -479,9 +472,10 @@ Admin consent may be required for this permission.
 
 ### Force fetching groups from Microsoft Graph API
 
-To force fetching groups from Microsoft Graph API instead of the `id_token`. You can use the `force_use_graph_api` config option.
+To force fetching groups from Microsoft Graph API instead of the `id_token`, you can use the `force_use_graph_api` configuration option.
 
-```
+```ini
+[auth.azuread]
 force_use_graph_api = true
 ```
 
@@ -544,6 +538,7 @@ The following table outlines the various Azure AD/Entra ID configuration options
 | `scopes`                        | No       | Yes                | List of comma- or space-separated OAuth2 scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                | `openid email profile`                               |
 | `allow_sign_up`                 | No       | Yes                | Controls Grafana user creation through the Azure AD/Entra ID login. Only existing Grafana users can log in with Azure AD/Entra ID if set to `false`.                                                                                                                                                                                                                                                                                                                                            | `true`                                               |
 | `auto_login`                    | No       | Yes                | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                          | `false`                                              |
+| `login_prompt`                  | No       | Yes                | Indicates the type of user interaction when the user logs in with Azure AD/Entra ID. Available values are `login`, `consent` and `select_account`.                                                                                                                                                                                                                                                                                                                                              |                                                      |
 | `role_attribute_strict`         | No       | Yes                | Set to `true` to deny user login if the Grafana org role cannot be extracted using `role_attribute_path` or `org_mapping`. For more information on user role mapping, refer to [Map roles](#map-roles).                                                                                                                                                                                                                                                                                         | `false`                                              |
 | `org_attribute_path`            | No       | No                 | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana org to role lookup. Grafana will first evaluate the expression using the OAuth2 ID token. If no value is returned, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation will be mapped to org roles based on `org_mapping`. For more information on org to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example). |                                                      |
 | `org_mapping`                   | No       | No                 | List of comma- or space-separated `<ExternalOrgName>:<OrgIdOrName>:<Role>` mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`. For more information on external organization to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example).                                                                                                                                          |                                                      |

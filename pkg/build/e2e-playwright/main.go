@@ -8,11 +8,11 @@ import (
 	"os/signal"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana/pkg/build/e2eutil"
 	"github.com/urfave/cli/v3"
 )
 
 var (
-	grafanaHost = "grafana"
 	grafanaPort = 3001
 )
 
@@ -71,6 +71,17 @@ func NewApp() *cli.Command {
 				Usage:     "Enables the blob reporter, exported to this directory. Useful with --shard (optional)",
 				Validator: mustBeDir("blob-dir", true, true),
 			},
+			&cli.StringFlag{
+				Name:  "playwright-command",
+				Usage: "The playwright command to run.",
+				Value: "yarn e2e:playwright",
+			},
+			&cli.StringFlag{
+				Name:      "cloud-plugin-creds",
+				Usage:     "Path to the cloud plugin credentials file (only required for running @cloud-plugins e2e tests)",
+				Validator: mustBeFile("cloud-plugin-creds", true),
+				TakesFile: true,
+			},
 		},
 		Action: run,
 	}
@@ -80,10 +91,12 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	grafanaDir := cmd.String("grafana-dir")
 	targzPath := cmd.String("package")
 	licensePath := cmd.String("license")
+	cloudPluginCredsPath := cmd.String("cloud-plugin-creds")
 	pwShard := cmd.String("shard")
 	resultsDir := cmd.String("results-dir")
 	htmlDir := cmd.String("html-dir")
 	blobDir := cmd.String("blob-dir")
+	playwrightCommand := cmd.String("playwright-command")
 	// pa11yConfigPath := cmd.String("config")
 	// pa11yResultsPath := cmd.String("results")
 	// noThresholdFail := cmd.Bool("no-threshold-fail")
@@ -144,7 +157,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		},
 	})
 
-	frontendContainer, err := WithFrontendContainer(ctx, d, yarnHostSrc)
+	frontendContainer, err := e2eutil.WithFrontendContainer(ctx, d, yarnHostSrc)
 	if err != nil {
 		return fmt.Errorf("failed to create frontend container: %w", err)
 	}
@@ -154,6 +167,11 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	var license *dagger.File
 	if licensePath != "" {
 		license = d.Host().File(licensePath)
+	}
+
+	var cloudPluginCreds *dagger.File
+	if cloudPluginCredsPath != "" {
+		cloudPluginCreds = d.Host().File(cloudPluginCredsPath)
 	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
@@ -174,6 +192,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		TestResultsExportDir: resultsDir,
 		HTMLReportExportDir:  htmlDir,
 		BlobReportExportDir:  blobDir,
+		PlaywrightCommand:    playwrightCommand,
+		CloudPluginCreds:     cloudPluginCreds,
 	}
 
 	c, runErr := RunTest(ctx, d, runOpts)

@@ -23,7 +23,8 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
 func TestMain(m *testing.M) {
@@ -164,10 +165,10 @@ func TestIntegrationDashboardsAppV1(t *testing.T) {
 	}
 }
 
-func TestIntegrationDashboardsAppV2(t *testing.T) {
+func TestIntegrationDashboardsAppV2alpha1(t *testing.T) {
 	gvr := schema.GroupVersionResource{
-		Group:    dashboardV2.GROUP,
-		Version:  dashboardV2.VERSION,
+		Group:    dashboardV2alpha1.GROUP,
+		Version:  dashboardV2alpha1.VERSION,
 		Resource: "dashboards",
 	}
 	if testing.Short() {
@@ -176,7 +177,33 @@ func TestIntegrationDashboardsAppV2(t *testing.T) {
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v1beta1 with dual writer mode %d", mode), func(t *testing.T) {
+		t.Run(fmt.Sprintf("v2alpha1 with dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+			})
+			runDashboardTest(t, helper, gvr)
+		})
+	}
+}
+
+func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV2beta1.GROUP,
+		Version:  dashboardV2beta1.VERSION,
+		Resource: "dashboards",
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("v1alpha2 with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -191,13 +218,11 @@ func TestIntegrationDashboardsAppV2(t *testing.T) {
 }
 
 func TestIntegrationLegacySupport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			// NOTE: when using this feature toggle, the read is always v0!
-			// featuremgmt.FlagKubernetesClientDashboardsFolders
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
@@ -223,7 +248,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 
 	clientV2 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
-		GVR:  dashboardV2.DashboardResourceInfo.GroupVersionResource(),
+		GVR:  dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource(),
 	})
 	obj, err = clientV2.Resource.Create(ctx,
 		helper.LoadYAMLOrJSONFile("testdata/dashboard-test-v2.yaml"),

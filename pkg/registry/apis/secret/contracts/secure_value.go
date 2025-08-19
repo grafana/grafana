@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 
+	"k8s.io/client-go/dynamic"
+
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 // The maximum size of a secure value in bytes when written as raw input.
-const SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES = 24576 // 24 KiB
+const SecureValueRawInputMaxSizeBytes = 24576 // 24 KiB
 
 type DecryptSecureValue struct {
 	Keeper     *string
@@ -19,9 +21,8 @@ type DecryptSecureValue struct {
 }
 
 var (
-	ErrSecureValueNotFound            = errors.New("secure value not found")
-	ErrSecureValueAlreadyExists       = errors.New("secure value already exists")
-	ErrSecureValueOperationInProgress = errors.New("an operation is already in progress for the secure value")
+	ErrSecureValueNotFound      = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
 )
 
 type ReadOpts struct {
@@ -44,4 +45,8 @@ type SecureValueService interface {
 	List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error)
 	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+}
+
+type SecureValueClient interface {
+	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -17,11 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -39,9 +37,7 @@ type WebhookExtraBuilder struct {
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	legacySecretsSvc grafanasecrets.Service,
-	secretsSvc *service.SecureValueService,
-	decryptSvc service.DecryptService,
+	repositorySecrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -68,7 +64,6 @@ func ProvideWebhooks(
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
-			repositorySecrets := secrets.NewRepositorySecrets(features, secrets.NewSecretsService(secretsSvc, decryptSvc), secrets.NewSingleTenant(legacySecretsSvc))
 
 			return NewWebhookExtra(
 				render,

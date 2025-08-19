@@ -52,7 +52,7 @@
       "button-use-query": "Használja ezt a lekérdezést",
       "label-categories": "Kategóriák",
       "label-query-results": "Lekérdezés eredményei: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Nem lehet felsorolni az összes kategóriát",
       "placeholder-all-categories": "Összes kategória",
       "placeholder-search-logs": "Naplólekérdezések keresése",
       "text-loading": "Betöltés…"
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
     "config-editor": {
-      "description-additional-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében. Ez magában foglalja a Secure Socks Proxyt.",
-      "description-request-timeout": "Állítsa be a kérelem időtúllépési időtartamát másodpercben. Az alapértelmezés a 30 másodperc.",
-      "title-additional-settings": "További beállítások",
-      "title-request-timeout": "Kérelem időtúllépése"
+      "description-additional-settings": "",
+      "title-additional-settings": "További beállítások"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Az alapértelmezett hitelesítő adatok le lettek tiltva. Mivel a felhasználóalapú hitelesítés eredendően csak a hatókörben felhasználót tartalmazó kéréseket támogatja, az olyan funkciók, mint a riasztás, a rögzített lekérdezések vagy a jelentéskészítés, nem fognak az elvárt módon működni. További részletekért tekintse át a <2>dokumentációt</2>.",
@@ -115,9 +113,12 @@
       "aria-label-column": "Oszlop",
       "aria-label-column-value": "Oszlopérték",
       "aria-label-operator": "Műveleti jel",
+      "aria-label-remove-filter": "",
       "label-or": "VAGY"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Csoport hozzáadása",
       "label-and": "ÉS",
       "label-filters": "Szűrők",
@@ -130,6 +131,8 @@
       "label-format-as": "Formázás mint"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Oszlop kiválasztása",
       "label-fuzzy-search": "Hozzávetőleges keresés",
       "placeholder-search-team": "Keresési kifejezés megadása",
@@ -144,6 +147,7 @@
       "aria-label-remove": "Eltávolítás"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Csoportosítási szempont",
       "tooltip-group-by": "Rendezze az eredményeket kategóriákba a megadott oszlopok alapján. A Csoportosítási szempont használható önállóan a kiválasztott oszlopok egyedi értékeinek felsorolására, vagy kombinálható összesítési függvényekkel az egyes csoportok összesített statisztikáinak előállításához. Ha önmagában használják, a megadott oszlopok különböző kombinációit adja vissza."
     },
@@ -162,8 +166,8 @@
       "tooltip-limit": "A visszaadott sorok számának korlátozása (az alapértelmezett érték az 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Biztosan átvált az alapvető naplókra?",
+      "confirmText-confirm": "Megerősítés",
       "description-basic-logs-queries": "Az Alapvető naplók lekérdezései a beolvasott adatok mennyiségétől függően költséget eredményeznek.",
       "label-logs": "Naplók",
       "title-basic-logs-queries": "Alapvető naplók lekérdezései",
@@ -186,8 +190,10 @@
       "text-loading": "Betöltés…"
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Rendezés oszlop szerint",
       "aria-label-order-direction": "Rendezési irány",
+      "aria-label-remove-order-by": "",
       "label-by": "SZEMPONT",
       "label-order-by": "Rendezési szempont",
       "tooltip-order-by": "Az eredmények rendezése egy vagy több oszlop alapján növekvő vagy csökkenő sorrendben."
@@ -197,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure-naplók előbeállításos lekérdezése gomb",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "A szerkesztő módra váltás elveti az aktuális KQL-lekérdezést és törli a KQL-szerkesztőben lévő tartalmat. Biztosan folytatja?",
+      "body-switching-to-kql": "A KQL-re váltás elveti az aktuális szerkesztő beállításait. Biztosan folytatja?",
       "button-kick-start-your-query": "Előbeállításos lekérdezés",
       "button-run-query": "Lekérdezés futtatása",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Váltás erre: {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Építő",
+        "label-kql": "KQL"
       },
       "label-service": "Szolgáltatás",
       "placeholder-service": "Szolgáltatás…",
@@ -233,7 +239,7 @@
       "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Hatókör"
     },
     "search": {
       "aria-label-resource-search": "Erőforrás keresése",
@@ -249,7 +255,8 @@
       "label-columns": "Oszlopok",
       "label-table": "Táblázat",
       "placeholder-select-columns": "Oszlopok kiválasztása",
-      "placeholder-select-table": "Tábla kiválasztása"
+      "placeholder-select-table": "Tábla kiválasztása",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Időszemcse"

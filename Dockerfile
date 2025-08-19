@@ -16,7 +16,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.24.4-alpine AS go-builder-base
+FROM golang:1.24.6-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -79,7 +79,8 @@ COPY go.* ./
 COPY .bingo .bingo
 COPY .citools .citools
 
-# Include vendored dependencies
+# Copy go dependencies first
+# If updating this, please also update devenv/frontend-service/backend.dockerfile
 COPY pkg/util/xorm pkg/util/xorm
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
@@ -92,6 +93,9 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
+COPY apps/plugins apps/plugins
+COPY apps/shorturl apps/shorturl
+COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
