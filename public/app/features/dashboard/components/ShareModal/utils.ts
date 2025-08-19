@@ -81,7 +81,7 @@ export async function buildShareUrl(
   const params = buildParams({
     useCurrentTimeRange,
     selectedTheme,
-    panelId: String(panel?.id),
+    panelId: panel?.id ? String(panel.id) : undefined,
     timeFrom: panel?.timeFrom,
   });
   const shareUrl = urlUtil.appendQueryToUrl(baseUrl, params.toString());
@@ -131,7 +131,13 @@ export function buildImageUrl(
   selectedTheme?: string,
   panel?: PanelModel
 ) {
-  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, String(panel?.id), panel?.timeFrom);
+  let soloUrl = buildSoloUrl(
+    useCurrentTimeRange,
+    dashboardUid,
+    selectedTheme,
+    panel?.id ? String(panel.id) : undefined,
+    panel?.timeFrom
+  );
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
   imageUrl +=
