@@ -285,13 +285,22 @@ The colored background cell type has the following options:
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
 | Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
-<!-- The wrap text and cell value inspect descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+<!-- The wrap text, cell value inspect, and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Gauge
 
-With this cell type, cells can be displayed as a graphical gauge, with several different presentation types controlled by the [gauge display mode](#gauge-display-mode) and the [value display](#value-display).
+With this cell type, cells can be displayed as a graphical gauge, with several different presentation types.
+
+The gauge cell type has the following options:
+
+| Option | Description |
+| ------ | ----------- |
+| Gauge display mode | Controls the type of gauge used. For more information, refer to the [Gauge display mode](#gauge-display-mode). |
+| Value display | Controls how the value is displayed. For more information, refer to the [Value display](#value-display). |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 
 {{< admonition type="note" >}}
 The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole dataset.
@@ -346,6 +355,7 @@ For more detailed information about all of the sparkline styling options (except
 | Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
 | Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
 | Bar alignment       | Set the position of the bar relative to a data point. |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
 #### JSON View
@@ -358,6 +368,9 @@ If a value is an object the JSON view allowing browsing the JSON object will app
 For the JSON view cell type, you can set enable **Cell value inspect**.
 This enables value inspection from table cells.
 When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.
+
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+For more information, refer to [Tooltip from field](#tooltip-from-field).
 
 Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
 However, you can switch back and forth between tabs.
@@ -377,6 +390,9 @@ The following data formats are supported for the pill cell type:
 - Comma-separated values (`cows,chickens,goats`)
 - JSON arrays of uniform (`(["cows","chickens","goats"])`) or mixed (`[1,2,3,"foo",42,"bar"]`) types
 
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+For more information, refer to [Tooltip from field](#tooltip-from-field).
+
 #### Markdown + HTML
 
 The **Markdown + HTML** cell type displays rich Markdown or HTML content, rendered using the
@@ -392,6 +408,9 @@ Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /te
 By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
 in these cells if the [`disable_sanitize_html`](../../../setup-grafana/configure-grafana/_index.md#disable_sanitize_html) option is set to true for your Grafana instance.
 
+Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip.
+For more information, refer to [Tooltip from field](#tooltip-from-field).
+
 #### Image
 
 If you have a field value that is an image URL or a base64 encoded image, this cell type displays it as an image.
@@ -400,10 +419,11 @@ If you have a field value that is an image URL or a base64 encoded image, this c
 
 It has the following options:
 
-| Option     | Description                                                                                                                   |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Alt text   | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
-| Title text | Set the text that's displayed when the image is hovered over with a cursor.                                                   |
+| Option             | Description                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Alt text           | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
+| Title text         | Set the text that's displayed when the image is hovered over with a cursor.                                                   |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 
 #### Actions
 
@@ -411,14 +431,15 @@ The cell displays a button that triggers a basic, unauthenticated API call when 
 Configure the API call with the following options:
 
 <!-- prettier-ignore-start -->
-| Option  | Description  |
-| ------- | ------------ |
-| Endpoint | Enter the endpoint URL. |
-| Method | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
-| Query parameters | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters | Enter as many **Key**, **Value** pairs as you need. |
-| Payload | Enter the body of the API call. |
+| Option             | Description  |
+| ------------------ | ------------ |
+| Endpoint           | Enter the endpoint URL. |
+| Method             | Choose from **GET**, **POST**, and **PUT**. |
+| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
+| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
+| Payload            | Enter the body of the API call. |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
 #### Tooltip from field
