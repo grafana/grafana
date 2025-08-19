@@ -316,6 +316,7 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 	start := time.Now()
 	var result mathexp.Results
 	errorType := "none"
+	var metaType data.FrameType
 
 	defer func() {
 		duration := float64(time.Since(start).Milliseconds())
@@ -323,10 +324,18 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		if result.Error != nil {
 			statusLabel = "error"
 		}
+		dataType := "unknown"
+		if metaType.IsKnownType() {
+			dataType = string(metaType)
+		}
+
 		span.SetAttributes(
 			attribute.String("status", statusLabel),
 			attribute.Float64("duration", duration),
+			attribute.String("data.type", dataType),
+			attribute.String("datasource.type", dsType),
 		)
+
 		if result.Error != nil {
 			e := &sql.ErrorWithCategory{}
 			if errors.As(result.Error, &e) {
@@ -361,7 +370,6 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		return result, false
 	}
 
-	var metaType data.FrameType
 	if first.Meta != nil {
 		metaType = first.Meta.Type
 	}
