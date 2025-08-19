@@ -66,12 +66,7 @@ func New(
 		return nil, err
 	}
 
-	queryTimeout, err := maputil.GetStringOptional(jsonData, "queryTimeout")
-	if err != nil {
-		return nil, err
-	}
-
-	promClient := client.NewClient(httpClient, httpMethod, settings.URL, queryTimeout)
+	promClient := client.NewClient(httpClient, httpMethod, settings.URL, "2m")
 
 	// standard deviation sampler is the default for backwards compatibility
 	exemplarSampler := exemplar.NewStandardDeviationSampler
