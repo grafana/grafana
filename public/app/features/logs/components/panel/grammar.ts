@@ -6,7 +6,6 @@ import { LogListModel } from './processing';
 
 // The Logs grammar is used for highlight in the logs panel
 const logsGrammar: Grammar = {
-  'log-token-json-key': /"(\b|\B)[\w-]+"(?=\s*:)/gi,
   'log-token-key': /(\b|\B)[\w_]+(?=\s*=)/gi,
   'log-token-string': /"(?!:)([^'"])*?"(?!:)/g,
 };
@@ -48,8 +47,8 @@ export const generateLogGrammar = (log: LogListModel) => {
   }
   return {
     ...logGrammar,
-    ...logsGrammar,
     ...tokensGrammar,
+    ...logsGrammar,
   };
 };
 
