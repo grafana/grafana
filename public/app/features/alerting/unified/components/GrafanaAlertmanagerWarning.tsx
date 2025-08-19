@@ -7,13 +7,23 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { isExtraConfig } from '../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-interface GrafanaAlertmanagerDeliveryWarningProps {
+interface GrafanaAlertmanagerWarningProps {
   currentAlertmanager: string;
 }
 
-export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: GrafanaAlertmanagerDeliveryWarningProps) {
+export function GrafanaAlertmanagerWarning({ currentAlertmanager }: GrafanaAlertmanagerWarningProps) {
+  return (
+    <>
+      <GrafanaExternalAlertmanagerConfigWarning currentAlertmanager={currentAlertmanager} />
+      <GrafanaExtraConfigWarning currentAlertmanager={currentAlertmanager} />
+    </>
+  );
+}
+
+function GrafanaExternalAlertmanagerConfigWarning({ currentAlertmanager }: GrafanaAlertmanagerWarningProps) {
   const styles = useStyles2(getStyles);
   const externalAlertmanager = currentAlertmanager !== GRAFANA_RULES_SOURCE_NAME;
 
@@ -85,6 +95,23 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
   }
 
   return null;
+}
+
+function GrafanaExtraConfigWarning({ currentAlertmanager }: GrafanaAlertmanagerWarningProps) {
+  const isSelectedExtraConfig = currentAlertmanager && isExtraConfig(currentAlertmanager);
+
+  if (!isSelectedExtraConfig) {
+    return null;
+  }
+
+  return (
+    <Alert title={t('alerting.alert-manager-picker.extra-config-warning.title', 'Imported configuration')}>
+      <Trans i18nKey="alerting.alert-manager-picker.extra-config-warning.content">
+        This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is
+        read-only in the UI.
+      </Trans>
+    </Alert>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
