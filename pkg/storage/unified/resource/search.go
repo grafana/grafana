@@ -718,12 +718,11 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 	fields := s.builders.GetFields(nsr)
 
-	var listRV int64
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, indexBuildReason, func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.Int64("rv", rv), attribute.String("reason", indexBuildReason)))
 
-		listRV, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
+		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{

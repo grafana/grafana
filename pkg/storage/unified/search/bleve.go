@@ -191,9 +191,8 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 	}
 }
 
-// BuildIndex builds an index from scratch or retrieves it from the cache.
+// BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
-// An index may be cached from memory or from the file system
 // An index in the file system is considered to be valid if the requested resourceVersion is smaller than or equal to
 // the resourceVersion used to build the index and the number of indexed objects matches the expected size.
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV
