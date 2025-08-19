@@ -18,9 +18,11 @@ FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
 FROM golang:1.24.6-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
-
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+ARG JS_NODE_ENV=production
+ARG JS_YARN_INSTALL_FLAG=--immutable
+ARG JS_YARN_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -35,15 +37,23 @@ COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
 RUN apk add --no-cache make build-base python3
-
-RUN yarn install --immutable
+#
+# Set the node env according to defaults or argument passed
+#
+ENV NODE_ENV=${JS_NODE_ENV}
+#
+RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
+    yarn install; \
+  else \
+    yarn install --immutable; \
+  fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV=production
-RUN yarn build
+# Set the build argument according to default or argument passed
+RUN yarn ${JS_YARN_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
