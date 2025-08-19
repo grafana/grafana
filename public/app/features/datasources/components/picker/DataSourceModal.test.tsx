@@ -45,7 +45,15 @@ const mockDS2 = createDS('mock.datasource.2', 2, false);
 const mockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
 const mockDSList = [mockDS1, mockDS2, mockDSBuiltIn];
-
+const mockFavoriteDataSources = {
+  enabled: false,
+  isLoading: false,
+  favoriteDatasources: [],
+  initialFavoriteDataSources: [],
+  isFavoriteDatasource: () => false,
+  addFavoriteDatasource: () => {},
+  removeFavoriteDatasource: () => {},
+};
 const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
   window.HTMLElement.prototype.scrollIntoView = function () {};
 
@@ -54,6 +62,7 @@ const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
     onChange: partialProps.onChange || jest.fn(),
     onDismiss: partialProps.onDismiss || jest.fn(),
     current: partialProps.current || mockDS1,
+    favoriteDataSources: partialProps.favoriteDataSources || mockFavoriteDataSources,
   };
 
   return render(<DataSourceModal {...props} />);
@@ -164,6 +173,7 @@ describe('DataSourceDropdown', () => {
         current: mockDS1.name,
         ...filters,
         dataSources: mockDSList,
+        favoriteDataSources: mockFavoriteDataSources,
       };
 
       getListMock.mockClear();

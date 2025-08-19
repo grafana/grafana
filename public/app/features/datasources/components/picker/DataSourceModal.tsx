@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, FavoriteDatasources, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Modal,
@@ -42,6 +42,7 @@ export interface DataSourceModalProps {
   onDismiss: () => void;
   recentlyUsed?: string[];
   reportedInteractionFrom?: string;
+  favoriteDataSources: FavoriteDatasources;
 
   // DS filters
   filter?: (ds: DataSourceInstanceSettings) => boolean;
@@ -75,6 +76,7 @@ export function DataSourceModal({
   current,
   onDismiss,
   reportedInteractionFrom,
+  favoriteDataSources,
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
@@ -187,6 +189,7 @@ export function DataSourceModal({
             logs={logs}
             dashboard={dashboard}
             mixed={mixed}
+            favoriteDataSources={favoriteDataSources}
           />
           <BuiltInList className={styles.appendBuiltInDataSourcesList} />
         </ScrollContainer>

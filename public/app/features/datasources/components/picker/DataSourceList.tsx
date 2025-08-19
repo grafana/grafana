@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getTemplateSrv, useFavoriteDatasources } from '@grafana/runtime';
+import { FavoriteDatasources, getTemplateSrv, useFavoriteDatasources } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
@@ -44,6 +44,8 @@ export interface DataSourceListProps {
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
   dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  favoriteDataSources: FavoriteDatasources;
+  onClickFavorite?: (ds: DataSourceInstanceSettings) => void;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -57,7 +59,7 @@ export function DataSourceList(props: DataSourceListProps) {
   const theme = useTheme2();
   const styles = getStyles(theme, selectedItemCssSelector);
 
-  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
+  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA, favoriteDataSources } = props;
   const dataSources = useDatasources(
     {
       alerting: props.alerting,
@@ -75,7 +77,6 @@ export function DataSourceList(props: DataSourceListProps) {
   );
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
-  const favoriteDataSources = useFavoriteDatasources();
 
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
@@ -107,10 +108,11 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={isDataSourceMatch(ds, current)}
-            isFavorite={favoriteDataSources.isFavoriteDatasource(ds.uid)}
+            isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
             onToggleFavorite={
               favoriteDataSources.enabled
                 ? () => {
+                    props.onClickFavorite?.(ds);
                     favoriteDataSources.isFavoriteDatasource(ds.uid)
                       ? favoriteDataSources.removeFavoriteDatasource(ds)
                       : favoriteDataSources.addFavoriteDatasource(ds);

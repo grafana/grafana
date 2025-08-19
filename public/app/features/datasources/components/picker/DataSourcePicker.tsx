@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
@@ -33,6 +33,7 @@ const INTERACTION_ITEM = {
   ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
+  TOGGLE_FAVORITE: 'toggle_favorite',
 };
 
 export interface DataSourcePickerProps {
@@ -114,6 +115,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     type: props.type,
     variables: props.variables,
   });
+  const favoriteDataSources = useFavoriteDatasources();
 
   // the order of middleware is important!
   const middleware = [
@@ -298,6 +300,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.SELECT_DS,
                     ds_type: ds.type,
+                    is_favorite: favoriteDataSources.enabled
+                      ? favoriteDataSources.isFavoriteDatasource(ds.uid)
+                      : undefined,
                   });
                 }
               }}
@@ -306,6 +311,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               onDismiss={onClose}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
+              favoriteDataSources={favoriteDataSources}
             />
           </div>
         </Portal>
@@ -343,10 +349,11 @@ export interface PickerContentProps extends DataSourcePickerProps {
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  favoriteDataSources: FavoriteDatasources;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, dataSources } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, dataSources, favoriteDataSources } = props;
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -379,6 +386,13 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             })
           }
           dataSources={dataSources}
+          onClickFavorite={(ds) => {
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.TOGGLE_FAVORITE,
+              ds_type: ds.type,
+              is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
+            });
+          }}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>
@@ -470,6 +484,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
                   hideModal();
                 },
                 dataSources: props.dataSources,
+                favoriteDataSources: props.favoriteDataSources,
               });
               reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
             }}
