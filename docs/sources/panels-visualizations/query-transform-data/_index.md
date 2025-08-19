@@ -124,7 +124,7 @@ This feature is only available on Grafana Enterprise and Grafana Cloud.
 
 {{< docs/public-preview product="Saved queries" >}}
 
-The saved queries feature lets you save queries that you've created so you can reuse them later:
+You can save queries that you've created so you can reuse them later:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-library-v11.6.png" max-width="550px" alt="" >}}
 <!-- To be updated -->
@@ -141,14 +141,14 @@ To view your saved queries, click **+ Add saved query** from the query editor:
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-from-library-v11.6.png" max-width="750px" alt="" >}}
 <!-- To be updated -->
 
-{{< admonition type="note" >}}
-Saved queries aren't accessible from all instances of the query editor yet, so the **+ Add saved query** button doesn't appear in all instances of it.
-{{< /admonition >}}
-
 To add a query you've created to the library, click the **Save query** icon:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-library-v11.6.png" max-width="750px" alt="" >}}
 <!-- To be updated -->
+
+{{< admonition type="note" >}}
+Saved queries aren't accessible from all instances of the query editor yet, so the **+ Add saved query** button doesn't appear in all instances of it.
+{{< /admonition >}}
 
 #### Known limitations
 
@@ -192,14 +192,17 @@ To add a query, follow these steps:
 
    For more information about query options, refer to [Query options](#query-options).
 
-1. Do one of the following:
+1. To add a query, do one of the following:
 
    - Write or construct a query in the query language of your data source.
-   - Click **+ Add saved query**, search or filter for the query you want to use, and click **Select query** (Grafana Enterprise and Cloud only).
+   - Click **+ Add saved query** to add a previously [saved query](ref:saved-queries).
+   - If you've already written a query, you can click the **Replace with saved query** icon to use a previously [saved query](ref:saved-queries) instead.
 
-   Even if you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
+1. (Optional) To save the query for reuse, click the **Save query** icon.
 
-1. (Optional) To save the query for reuse, click the **Save query** icon (Grafana Enterprise and Cloud only).
+   {{< admonition type="note" >}}
+   Saved queries is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+   {{< /admonition >}}
 1. Click **Run queries**.
 
 Grafana queries the data source and visualizes the data.
