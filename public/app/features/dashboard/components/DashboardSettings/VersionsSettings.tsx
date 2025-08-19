@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { Spinner, HorizontalGroup } from '@grafana/ui';
+import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { historySrv, RevisionsModel } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 import { VersionsHistoryButtons } from 'app/features/dashboard-scene/settings/version-history/VersionHistoryButtons';
@@ -198,8 +198,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
 }
 
 export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
-  <HorizontalGroup>
+  <Stack>
     <Spinner />
     <em>{msg}</em>
-  </HorizontalGroup>
+  </Stack>
 );
