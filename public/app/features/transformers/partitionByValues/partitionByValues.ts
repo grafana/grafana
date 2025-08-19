@@ -242,6 +242,9 @@ export function partitionByValues(
         field.name = fieldNames[field.name] ?? field.name;
         field.config.displayName = field.state!.displayName!;
       }
+
+      delete field.state?.displayName;
+      delete field.state?.multipleFrames;
     });
   });
 
