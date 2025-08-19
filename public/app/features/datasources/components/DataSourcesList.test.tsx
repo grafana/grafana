@@ -11,6 +11,7 @@ import { DataSourcesListView, ViewProps } from './DataSourcesList';
 const mockIsFavoriteDatasource = jest.fn();
 const mockUseFavoriteDatasources = jest.fn(() => ({
   enabled: true,
+  isLoading: false,
   isFavoriteDatasource: mockIsFavoriteDatasource,
   favoriteDatasources: [],
   initialFavoriteDataSources: [],

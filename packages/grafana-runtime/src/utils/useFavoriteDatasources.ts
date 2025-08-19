@@ -10,6 +10,7 @@ const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
 
 export type FavoriteDatasources = {
   enabled: boolean;
+  isLoading: boolean;
   favoriteDatasources: string[];
   initialFavoriteDataSources: string[];
   addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
@@ -35,6 +36,7 @@ export function useFavoriteDatasources(): FavoriteDatasources {
   if (!config.featureToggles.favoriteDatasources) {
     return {
       enabled: false,
+      isLoading: false,
       favoriteDatasources: [],
       initialFavoriteDataSources: [],
       addFavoriteDatasource: () => {},
@@ -46,16 +48,19 @@ export function useFavoriteDatasources(): FavoriteDatasources {
   const [userStorage] = useState(() => new UserStorage('grafana-runtime'));
   const [favoriteDatasources, setFavoriteDatasources] = useState<string[]>([]);
   const [initialFavoriteDataSources, setInitialFavoriteDataSources] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load favorites from storage on mount
   useEffect(() => {
     const loadFavorites = async () => {
+      setIsLoading(true);
       const stored = await userStorage.getItem(FAVORITE_DATASOURCES_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         setFavoriteDatasources(parsed);
         setInitialFavoriteDataSources(parsed);
       }
+      setIsLoading(false);
     };
 
     loadFavorites();
@@ -64,8 +69,10 @@ export function useFavoriteDatasources(): FavoriteDatasources {
   // Helper function to save favorites to storage
   const saveFavorites = useCallback(
     async (newFavorites: string[]) => {
+      setIsLoading(true);
       await userStorage.setItem(FAVORITE_DATASOURCES_KEY, JSON.stringify(newFavorites));
       setFavoriteDatasources(newFavorites);
+      setIsLoading(false);
     },
     [userStorage]
   );
@@ -104,6 +111,7 @@ export function useFavoriteDatasources(): FavoriteDatasources {
 
   return {
     enabled: true,
+    isLoading,
     favoriteDatasources,
     addFavoriteDatasource,
     removeFavoriteDatasource,
