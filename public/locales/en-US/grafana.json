@@ -12766,7 +12766,6 @@
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
     "tooltip-placement-options": {
-      "label-auto": "Auto",
       "label-bottom": "Bottom",
       "label-left": "Left",
       "label-right": "Right",
