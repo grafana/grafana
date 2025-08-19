@@ -15,7 +15,12 @@ const mockDS = mockDataSource({
 // Mock the QueryLibraryContext
 const mockQueryLibraryContext = {
   queryLibraryEnabled: true,
-  renderQueryLibraryEditingHeader: jest.fn(() => null),
+  renderQueryLibraryEditingHeader: jest.fn(),
+  renderSaveQueryButton: jest.fn(() => null),
+  openDrawer: jest.fn(),
+  closeDrawer: jest.fn(),
+  isDrawerOpen: false,
+  context: 'test',
 };
 
 jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
@@ -403,6 +408,52 @@ describe('QueryEditorRow', () => {
     render(<QueryEditorRow {...props(data)} />);
     await waitFor(() => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Query Library Integration', () => {
+    let testData: PanelData;
+    let mockOnCancelEdit: jest.MockedFunction<() => void>;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockQueryLibraryContext.renderQueryLibraryEditingHeader.mockReturnValue(null);
+      mockOnCancelEdit = jest.fn();
+
+      // Standard test data for QueryEditorRow
+      testData = {
+        series: [],
+        timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+        state: LoadingState.Done,
+      };
+    });
+
+    it('should render query library editing header when queryLibraryRef is provided', async () => {
+      render(
+        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onCancelQueryLibraryEdit={mockOnCancelEdit} />
+      );
+
+      // Wait for async datasource loading and component rendering
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          'test-ref', // queryLibraryRef
+          mockOnCancelEdit, // onCancelEdit
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function) // onSelectQuery
+        );
+      });
+    });
+
+    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+      render(<QueryEditorRow {...props(testData)} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('query-editor-row')).toBeInTheDocument();
+      });
+
+      expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();
     });
   });
 });
