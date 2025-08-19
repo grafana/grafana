@@ -48,7 +48,6 @@ export const generateLogGrammar = (log: LogListModel) => {
     'log-token-label': new RegExp(`\\b(${labels.join('|')})(?:[=:]{1})\\b`, 'g'),
   };
   if (log.isJSON) {
-    console.log('yeah')
     return {
       ...logGrammar,
       ...jsonGrammar,
