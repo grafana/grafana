@@ -3632,11 +3632,11 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
+      "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
       "error-required": "Folder name is required",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
-      "text-your-folder-will-be-created-as": "Your folder will be created as {{folderName}}",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -7526,11 +7526,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-picker": {
-    "create-instructions": "Press enter to create the new folder.",
-    "input-placeholder": "Press enter to confirm new folder",
-    "loading": "Loading folders..."
-  },
   "folder-repo": {
     "provisioned-badge": "Provisioned",
     "read-only-badge": "Read only"
@@ -8749,7 +8744,6 @@
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
-      "inspect-menu-label": "Inspect value",
       "nested-table": {
         "no-data": "No data"
       },
@@ -12795,6 +12789,7 @@
     "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12810,8 +12805,17 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-tooltip-from-field": "Tooltip from field",
+    "name-tooltip-placement": "Tooltip placement",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "tooltip-placement-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom",
+      "label-left": "Left",
+      "label-right": "Right",
+      "label-top": "Top"
+    }
   },
   "tag-filter": {
     "clear-button": "Clear tags",

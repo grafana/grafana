@@ -3632,11 +3632,11 @@
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
+      "error-invalid-characters": "",
       "error-required": "Mapnaam is vereist",
       "folder-name-input-placeholder-enter-folder-name": "Mapnaam invoeren",
       "label-folder-name": "Mapnaam",
       "text-pull-request-created": "Er is een pull request gemaakt met wijzigingen in deze map:",
-      "text-your-folder-will-be-created-as": "Je map wordt gemaakt als {{folderName}} ",
       "title-pull-request-created": "Pull request is aangemaakt",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
@@ -7526,11 +7526,6 @@
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
   },
-  "folder-picker": {
-    "create-instructions": "Druk op enter om de nieuwe map aan te maken.",
-    "input-placeholder": "Druk op enter om nieuwe map te bevestigen",
-    "loading": "Mappen laden ..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8749,7 +8744,6 @@
       "filter-popup-input-placeholder": "Filter waarden",
       "filter-popup-match-case": "Case matchen",
       "inspect-drawer-title": "Waarde inspecteren",
-      "inspect-menu-label": "Waarde inspecteren",
       "nested-table": {
         "no-data": "Geen gegevens"
       },
@@ -12795,6 +12789,7 @@
     "description-fields": "Selecteer de velden die moeten worden berekend",
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
+    "description-tooltip-from-field": "",
     "name-calculation": "Berekening",
     "name-cell-height": "Celhoogte",
     "name-cell-type": "Type cel",
@@ -12810,8 +12805,17 @@
     "name-min-column-width": "Minimale kolombreedte",
     "name-show-table-footer": "Voettekst tabel tonen",
     "name-show-table-header": "Header tabel tonen",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automatisch",
-    "placeholder-fields": "Alle numerieke velden"
+    "placeholder-fields": "Alle numerieke velden",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Tags wissen",
