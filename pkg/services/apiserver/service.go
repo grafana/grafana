@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -471,6 +472,13 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = runningServer.Handler
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
+
+	for _, installer := range s.appInstallers {
+		err := installer.InitializeApp(*s.restConfig)
+		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+			return err
+		}
+	}
 
 	return nil
 }
