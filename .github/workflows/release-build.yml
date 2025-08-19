@@ -103,10 +103,11 @@ jobs:
           BUILD_ID: ${{ github.run_id }}
           BUCKET: grafana-prerelease
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, GITHUB_EVENT_NAME} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT} = process.env;
             
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -118,7 +119,7 @@ jobs:
                   "build-id": String(BUILD_ID),
                   "bucket": BUCKET,
                   "grafana-commit": GRAFANA_COMMIT,
-                  "source-event": GITHUB_EVENT_NAME,
+                  "source-event": SOURCE_EVENT,
                 }
             })
 
