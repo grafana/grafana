@@ -19,22 +19,45 @@ export const defaultMaplibreConfig: MaplibreConfig = {
   url: sampleURL,
 };
 
+interface ExtendedMapLayerOptions<T> extends MapLayerOptions<T> {
+  noRepeat?: boolean;
+}
+
 export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
   id: 'maplibre',
   name: 'MapLibre layer',
   description: 'Add layer using MapLibre style.json URL',
   isBaseMap: true,
 
-  create: async (map: Map, options: MapLayerOptions<MaplibreConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
+  create: async (
+    map: Map,
+    options: ExtendedMapLayerOptions<MaplibreConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => ({
     init: () => {
       const cfg = { ...options.config };
       if (!cfg.url) {
         cfg.url = defaultMaplibreConfig.url;
       }
       const layerOpacity = options.opacity ?? 1;
+      const noRepeat = options.noRepeat ?? false;
       const layer = new LayerGroup({
         opacity: layerOpacity,
       });
+
+      const applyNoRepeat = () => {
+        if (noRepeat) {
+          // Set wrapX: false on the first layer source to prevent world repetition
+          const firstLayer = layer.getLayers().item(0);
+          if (firstLayer && 'getSource' in firstLayer && typeof firstLayer.getSource === 'function') {
+            const source = firstLayer.getSource();
+            if (source && 'setWrapX' in source && typeof source.setWrapX === 'function') {
+              source.setWrapX(false);
+            }
+          }
+        }
+      };
 
       fetch(cfg.url)
         .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to load style'))))
@@ -48,9 +71,15 @@ export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
               }
             }
           }
-          return apply(layer, style, { styleUrl: cfg.url, accessToken: cfg.accessToken });
+          return apply(layer, style, { styleUrl: cfg.url, accessToken: cfg.accessToken }).then(() => {
+            applyNoRepeat();
+          });
         })
-        .catch(() => apply(layer, cfg.url, { accessToken: cfg.accessToken }));
+        .catch(() =>
+          apply(layer, cfg.url, { accessToken: cfg.accessToken }).then(() => {
+            applyNoRepeat();
+          })
+        );
 
       return layer;
     },
