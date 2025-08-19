@@ -3,15 +3,6 @@ package kinds
 manifest: {
 	appName: 	   "iam"
 	groupOverride: "iam.grafana.app"
-	extraPermissions: {
-		accessKinds: [
-			{
-				group: "folder.grafana.app"
-				resource: "folders"
-				actions: ["list","watch"]
-			}
-		]
-	}
 	versions: {
 	    "v0alpha1": v0alpha1
 	}
