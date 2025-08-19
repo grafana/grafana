@@ -407,7 +407,11 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}()
 
 	var resp *backend.QueryDataResponse
-	mtDSClient, ok := s.mtDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
+	qsDSClient, ok, err := s.qsDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
+	if err != nil {
+		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+	}
+
 	if !ok { // use single tenant client
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
 		if err != nil {
@@ -418,14 +422,14 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		if err != nil {
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}
-	} else {
+	} else { // use query-service client (single or multi tenant)
 		k8sReq, err := ConvertBackendRequestToDataRequest(req)
 		if err != nil {
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}
 
 		// make the query with a mt client
-		resp, err = mtDSClient.QueryData(ctx, *k8sReq)
+		resp, err = qsDSClient.QueryData(ctx, *k8sReq)
 
 		// handle error
 		if err != nil {

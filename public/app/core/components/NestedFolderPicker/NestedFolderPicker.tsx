@@ -44,6 +44,9 @@ export interface NestedFolderPickerProps {
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
+
+  /* HTML ID for the button element for form labels */
+  id?: string;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -68,6 +71,7 @@ export function NestedFolderPicker({
   excludeUIDs,
   permission = 'edit',
   onChange,
+  id,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQueryFacade(value);
@@ -283,6 +287,7 @@ export function NestedFolderPicker({
   if (!overlayOpen) {
     return (
       <Trigger
+        id={id}
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
