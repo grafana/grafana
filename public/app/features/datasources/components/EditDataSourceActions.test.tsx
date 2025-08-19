@@ -382,7 +382,7 @@ describe('EditDataSourceActions', () => {
       render(<EditDataSourceActions uid="test-uid" />);
 
       // Should not find any favorite button
-      expect(screen.queryByRole('button', { name: /favorite|star/i })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('favorite-button')).not.toBeInTheDocument();
       // Core actions should still be rendered
       expect(screen.getByText('Explore data')).toBeInTheDocument();
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
@@ -405,7 +405,7 @@ describe('EditDataSourceActions', () => {
       render(<EditDataSourceActions uid="test-uid" />);
 
       // Should not find any favorite button for built-in datasources
-      expect(screen.queryByRole('button', { name: /favorite|star/i })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('favorite-button')).not.toBeInTheDocument();
     });
 
     it('should render favorite button when feature toggle is enabled and datasource is not built-in', () => {
@@ -416,7 +416,7 @@ describe('EditDataSourceActions', () => {
       render(<EditDataSourceActions uid="test-uid" />);
 
       // Should find star icon for non-favorite datasource
-      const favoriteButton = screen.getByRole('button', { name: /add to favorites/i });
+      const favoriteButton = screen.getByTestId('favorite-button');
       expect(favoriteButton).toBeInTheDocument();
 
       // Should have correct aria-label for non-favorite datasource
@@ -431,7 +431,7 @@ describe('EditDataSourceActions', () => {
       render(<EditDataSourceActions uid="test-uid" />);
 
       // Should find favorite button for favorited datasource
-      const favoriteButton = screen.getByRole('button', { name: /remove from favorites/i });
+      const favoriteButton = screen.getByTestId('favorite-button');
       expect(favoriteButton).toBeInTheDocument();
 
       // Should have correct aria-label for favorited datasource
@@ -445,7 +445,7 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      const favoriteButton = screen.getByRole('button', { name: /add to favorites/i });
+      const favoriteButton = screen.getByTestId('favorite-button');
       fireEvent.click(favoriteButton);
 
       expect(mockFavoriteHook.addFavoriteDatasource).toHaveBeenCalledTimes(1);
@@ -460,7 +460,7 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      const favoriteButton = screen.getByRole('button', { name: /remove from favorites/i });
+      const favoriteButton = screen.getByTestId('favorite-button');
       fireEvent.click(favoriteButton);
 
       expect(mockFavoriteHook.removeFavoriteDatasource).toHaveBeenCalledTimes(1);
@@ -488,7 +488,7 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      const favoriteButton = screen.getByRole('button', { name: /add to favorites/i });
+      const favoriteButton = screen.getByTestId('favorite-button');
       expect(favoriteButton).toBeDisabled();
     });
   });
