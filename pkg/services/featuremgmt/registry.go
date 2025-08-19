@@ -1067,14 +1067,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "tableNextGen",
-			Description:  "Allows access to the new react-data-grid based table component.",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "alertingPrometheusRulesPrimary",
 			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
 			Stage:        FeatureStageExperimental,

@@ -136,7 +136,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.decimals !== undefined) {
+  if (style.decimals) {
     override.properties.push({
       id: 'decimals',
       value: style.decimals,
@@ -186,7 +186,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.thresholds?.length && style.colors?.length) {
+  if (style.thresholds?.length) {
     override.properties.push({
       id: 'thresholds',
       value: {
@@ -216,7 +216,7 @@ const migrateDefaults = (prevDefaults: Style) => {
       isNil
     );
 
-    if (prevDefaults.thresholds && prevDefaults.thresholds.length) {
+    if (prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),

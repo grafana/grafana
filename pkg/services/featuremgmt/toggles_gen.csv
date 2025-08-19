@@ -138,7 +138,6 @@ prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,fa
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 newFiltersUI,GA,@grafana/dashboards-squad,false,false,false
-tableNextGen,preview,@grafana/dataviz-squad,false,false,true
 alertingPrometheusRulesPrimary,experimental,@grafana/alerting-squad,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true

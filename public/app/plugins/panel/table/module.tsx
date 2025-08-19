@@ -9,7 +9,13 @@ import {
   FieldConfigProperty,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
+import {
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+  TableCellTooltipPlacement,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -28,14 +34,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
       },
     },
     useCustomConfig: (builder) => {
-      const category = [t('table.category-table', 'Table')];
-      const cellCategory = [t('table.category-cell-options', 'Cell options')];
+      const category = [t('table-new.category-table', 'Table')];
+      const cellCategory = [t('table-new.category-cell-options', 'Cell options')];
       builder
         .addNumberInput({
           path: 'minWidth',
-          name: t('table.name-min-column-width', 'Minimum column width'),
+          name: t('table-new.name-min-column-width', 'Minimum column width'),
           category,
-          description: t('table.description-min-column-width', 'The minimum width for column auto resizing'),
+          description: t('table-new.description-min-column-width', 'The minimum width for column auto resizing'),
           settings: {
             placeholder: '150',
             min: 50,
@@ -46,10 +52,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         })
         .addNumberInput({
           path: 'width',
-          name: t('table.name-column-width', 'Column width'),
+          name: t('table-new.name-column-width', 'Column width'),
           category,
           settings: {
-            placeholder: t('table.placeholder-column-width', 'auto'),
+            placeholder: t('table-new.placeholder-column-width', 'auto'),
             min: 20,
           },
           shouldApply: () => true,
@@ -57,14 +63,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         })
         .addRadio({
           path: 'align',
-          name: t('table.name-column-alignment', 'Column alignment'),
+          name: t('table-new.name-column-alignment', 'Column alignment'),
           category,
           settings: {
             options: [
-              { label: t('table.column-alignment-options.label-auto', 'Auto'), value: 'auto' },
-              { label: t('table.column-alignment-options.label-left', 'Left'), value: 'left' },
-              { label: t('table.column-alignment-options.label-center', 'Center'), value: 'center' },
-              { label: t('table.column-alignment-options.label-right', 'Right'), value: 'right' },
+              { label: t('table-new.column-alignment-options.label-auto', 'Auto'), value: 'auto' },
+              { label: t('table-new.column-alignment-options.label-left', 'Left'), value: 'left' },
+              { label: t('table-new.column-alignment-options.label-center', 'Center'), value: 'center' },
+              { label: t('table-new.column-alignment-options.label-right', 'Right'), value: 'right' },
             ],
           },
           defaultValue: defaultTableFieldOptions.align,
@@ -72,7 +78,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
-          name: t('table.name-cell-type', 'Cell type'),
+          name: t('table-new.name-cell-type', 'Cell type'),
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: defaultTableFieldOptions.cellOptions,
@@ -82,8 +88,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         })
         .addBooleanSwitch({
           path: 'inspect',
-          name: t('table.name-cell-value-inspect', 'Cell value inspect'),
-          description: t('table.description-cell-value-inspect', 'Enable cell value inspection in a modal window'),
+          name: t('table-new.name-cell-value-inspect', 'Cell value inspect'),
+          description: t('table-new.description-cell-value-inspect', 'Enable cell value inspection in a modal window'),
           defaultValue: false,
           category: cellCategory,
           showIf: (cfg) => {
@@ -97,55 +103,111 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         })
         .addBooleanSwitch({
           path: 'filterable',
-          name: t('table.name-column-filter', 'Column filter'),
+          name: t('table-new.name-column-filter', 'Column filter'),
           category,
-          description: t('table.description-column-filter', 'Enables/disables field filters in table'),
+          description: t('table-new.description-column-filter', 'Enables/disables field filters in table'),
           defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
+          path: 'wrapHeaderText',
+          name: t('table.name-wrap-header-text', 'Wrap header text'),
+          description: t('table.description-wrap-header-text', 'Enables text wrapping for column headers'),
+          category,
+          defaultValue: defaultTableFieldOptions.wrapHeaderText,
+        })
+        .addBooleanSwitch({
           path: 'hidden',
-          name: t('table.name-hide-in-table', 'Hide in table'),
+          name: t('table-new.name-hide-in-table', 'Hide in table'),
           category,
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addFieldNamePicker({
+          path: 'tooltip.field',
+          name: t('table-new.name-tooltip-from-field', 'Tooltip from field'),
+          description: t(
+            'table-new.description-tooltip-from-field',
+            'Render a cell from a field (hidden or visible) in a tooltip'
+          ),
+          category: cellCategory,
+        })
+        .addSelect({
+          path: 'tooltip.placement',
+          name: t('table-new.name-tooltip-placement', 'Tooltip placement'),
+          category: cellCategory,
+          settings: {
+            options: [
+              {
+                label: t('table-new.tooltip-placement-options.label-auto', 'Auto'),
+                value: TableCellTooltipPlacement.Auto,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-top', 'Top'),
+                value: TableCellTooltipPlacement.Top,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-right', 'Right'),
+                value: TableCellTooltipPlacement.Right,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-bottom', 'Bottom'),
+                value: TableCellTooltipPlacement.Bottom,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-left', 'Left'),
+                value: TableCellTooltipPlacement.Left,
+              },
+            ],
+          },
+          defaultValue: 'auto',
+          showIf: (cfg) => cfg.tooltip?.field !== undefined,
         });
     },
   })
   .setPanelOptions((builder) => {
-    const category = [t('table.category-table', 'Table')];
-    const footerCategory = [t('table.category-table-footer', 'Table footer')];
+    const footerCategory = [t('table-new.category-table-footer', 'Table footer')];
+    const category = [t('table-new.category-table', 'Table')];
     builder
       .addBooleanSwitch({
         path: 'showHeader',
-        name: t('table.name-show-table-header', 'Show table header'),
+        name: t('table-new.name-show-table-header', 'Show table header'),
         category,
         defaultValue: defaultOptions.showHeader,
       })
+      .addNumberInput({
+        path: 'frozenColumns.left',
+        name: t('table-new.name-frozen-columns', 'Frozen columns'),
+        description: t('table-new.description-frozen-columns', 'Columns are frozen from the left side of the table'),
+        settings: {
+          placeholder: 'none',
+        },
+        category,
+      })
       .addRadio({
         path: 'cellHeight',
-        name: t('table.name-cell-height', 'Cell height'),
+        name: t('table-new.name-cell-height', 'Cell height'),
         category,
         defaultValue: defaultOptions.cellHeight,
         settings: {
           options: [
-            { value: TableCellHeight.Sm, label: t('table.cell-height-options.label-small', 'Small') },
-            { value: TableCellHeight.Md, label: t('table.cell-height-options.label-medium', 'Medium') },
-            { value: TableCellHeight.Lg, label: t('table.cell-height-options.label-large', 'Large') },
+            { value: TableCellHeight.Sm, label: t('table-new.cell-height-options.label-small', 'Small') },
+            { value: TableCellHeight.Md, label: t('table-new.cell-height-options.label-medium', 'Medium') },
+            { value: TableCellHeight.Lg, label: t('table-new.cell-height-options.label-large', 'Large') },
           ],
         },
       })
       .addBooleanSwitch({
         path: 'footer.show',
         category: footerCategory,
-        name: t('table.name-show-table-footer', 'Show table footer'),
+        name: t('table-new.name-show-table-footer', 'Show table footer'),
         defaultValue: defaultOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
         category: footerCategory,
         path: 'footer.reducer',
-        name: t('table.name-calculation', 'Calculation'),
-        description: t('table.description-calculation', 'Choose a reducer function / calculation'),
+        name: t('table-new.name-calculation', 'Calculation'),
+        description: t('table-new.description-calculation', 'Choose a reducer function / calculation'),
         editor: standardEditorsRegistry.get('stats-picker').editor,
         defaultValue: [ReducerID.sum],
         showIf: (cfg) => cfg.footer?.show,
@@ -153,20 +215,20 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
       .addBooleanSwitch({
         path: 'footer.countRows',
         category: footerCategory,
-        name: t('table.name-count-rows', 'Count rows'),
-        description: t('table.description-count-rows', 'Display a single count for all data rows'),
+        name: t('table-new.name-count-rows', 'Count rows'),
+        description: t('table-new.description-count-rows', 'Display a single count for all data rows'),
         defaultValue: defaultOptions.footer?.countRows,
         showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
       })
       .addMultiSelect({
         path: 'footer.fields',
         category: footerCategory,
-        name: t('table.name-fields', 'Fields'),
-        description: t('table.description-fields', 'Select the fields that should be calculated'),
+        name: t('table-new.name-fields', 'Fields'),
+        description: t('table-new.description-fields', 'Select the fields that should be calculated'),
         settings: {
           allowCustomValue: false,
           options: [],
-          placeholder: t('table.placeholder-fields', 'All Numeric Fields'),
+          placeholder: t('table-new.placeholder-fields', 'All Numeric Fields'),
           getOptions: async (context: FieldOverrideContext) => {
             const options = [];
             if (context && context.data && context.data.length > 0) {
@@ -188,7 +250,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
       .addCustomEditor({
         id: 'footer.enablePagination',
         path: 'footer.enablePagination',
-        name: t('table.name-enable-paginations', 'Enable pagination'),
+        name: t('table-new.name-enable-pagination', 'Enable pagination'),
         category,
         editor: PaginationEditor,
       });

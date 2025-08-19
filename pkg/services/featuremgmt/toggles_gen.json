@@ -3021,7 +3021,8 @@
       "metadata": {
         "name": "tableNextGen",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-26T03:57:57Z"
+        "creationTimestamp": "2025-03-26T03:57:57Z",
+        "deletionTimestamp": "2025-08-19T14:11:23Z"
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",
