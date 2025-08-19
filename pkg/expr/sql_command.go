@@ -311,8 +311,39 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 //  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
 //
 // The returned bool indicates if the input was (attempted to be) converted or passed through as-is.
-func handleSqlInput(refID string, forRefIDs map[string]struct{}, dsType string, dataFrames data.Frames) (mathexp.Results, bool) {
+func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forRefIDs map[string]struct{}, dsType string, dataFrames data.Frames) (mathexp.Results, bool) {
+	_, span := tracer.Start(ctx, "SSE.HandleConvertSQLInput")
+	start := time.Now()
 	var result mathexp.Results
+	errorType := "none"
+
+	defer func() {
+		duration := float64(time.Since(start).Milliseconds())
+		statusLabel := "ok"
+		if result.Error != nil {
+			statusLabel = "error"
+		}
+		span.SetAttributes(
+			attribute.String("status", statusLabel),
+			attribute.Float64("duration", duration),
+		)
+		if result.Error != nil {
+			e := &sql.ErrorWithCategory{}
+			if errors.As(result.Error, &e) {
+				errorType = e.Category()
+			} else {
+				errorType = "unknown"
+			}
+			span.AddEvent("exception", trace.WithAttributes(
+				semconv.ExceptionType(errorType),
+				semconv.ExceptionMessage(result.Error.Error()),
+			))
+			span.SetAttributes(attribute.String("error.category", errorType))
+			span.SetStatus(codes.Error, errorType)
+		}
+		span.End()
+	}()
+
 	if len(dataFrames) == 0 {
 		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, false
 	}

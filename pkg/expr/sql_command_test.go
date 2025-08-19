@@ -240,7 +240,7 @@ func TestHandleSqlInput(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			res, c := handleSqlInput("a", map[string]struct{}{"b": {}}, "fakeDS", tc.frames)
+			res, c := handleSqlInput(t.Context(), &testTracer{}, "a", map[string]struct{}{"b": {}}, "fakeDS", tc.frames)
 			require.Equal(t, tc.converted, c, "conversion bool mismatch")
 			if tc.expectErr != "" {
 				require.Error(t, res.Error)
