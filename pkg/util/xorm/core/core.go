@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -1726,7 +1727,9 @@ type Tx struct {
 
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
 	tx, err := db.DB.BeginTx(ctx, opts)
+	fmt.Println("   xorm BeginTx", opts, "err:", err)
 	if err != nil {
+		debug.PrintStack()
 		return nil, err
 	}
 	return &Tx{tx, db}, nil
@@ -1734,6 +1737,7 @@ func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
 
 func (db *DB) Begin() (*Tx, error) {
 	tx, err := db.DB.Begin()
+	fmt.Println("   xorm Begin", "err:", err)
 	if err != nil {
 		return nil, err
 	}
