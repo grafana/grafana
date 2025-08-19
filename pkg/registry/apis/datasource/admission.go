@@ -21,7 +21,7 @@ func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 func (b *DataSourceAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
 
-	if b.specProvider == nil || obj == nil || a.GetOperation() == admission.Connect {
+	if b.schemaProvider == nil || obj == nil || a.GetOperation() == admission.Connect {
 		return nil // This is normal for sub-resource
 	}
 
@@ -30,7 +30,7 @@ func (b *DataSourceAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected datasource object")
 	}
 
-	info, err := b.specProvider()
+	info, err := b.schemaProvider()
 	if err != nil {
 		return err
 	}

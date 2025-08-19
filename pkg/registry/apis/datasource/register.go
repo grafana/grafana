@@ -46,7 +46,7 @@ type DataSourceAPIBuilder struct {
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
-	specProvider    func() (*datasourceV0.DataSourceOpenAPIExtension, error) // TODO? include query types
+	schemaProvider  func() (*datasourceV0.DataSourceOpenAPIExtension, error) // TODO? include query types
 	queryTypes      *queryV0.QueryTypeDefinitionList
 	log             log.Logger
 }
@@ -98,9 +98,9 @@ func RegisterAPIService(
 			return nil, err
 		}
 
-		// HARDCODE spec access
+		// HARDCODE schema access
 		if ds.ID == "grafana-testdata-datasource" {
-			builder.specProvider = hardcoded.TestdataOpenAPIExtension
+			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
 		apiRegistrar.RegisterAPI(builder)

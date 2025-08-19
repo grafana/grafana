@@ -152,10 +152,10 @@ func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string
 		},
 		Title: ds.Name,
 		Datasource: queryV0.DataSourceConnectionRef{
-			Group:    gv.Group,
-			Version:  gv.Version,
-			Name:     ds.UID,
-			PluginID: ds.Type,
+			Group:   gv.Group,
+			Version: gv.Version,
+			Name:    ds.UID,
+			Plugin:  ds.Type,
 		},
 	}
 	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server

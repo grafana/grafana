@@ -54,11 +54,11 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	ds.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
 	ds.Properties["kind"] = *spec.StringProperty().WithEnum("DataSource")
 
-	if b.specProvider == nil {
+	if b.schemaProvider == nil {
 		return oas, nil
 	}
 
-	custom, err := b.specProvider()
+	custom, err := b.schemaProvider()
 	if err != nil {
 		return nil, err
 	}
