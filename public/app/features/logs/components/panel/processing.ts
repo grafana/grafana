@@ -162,11 +162,7 @@ export class LogListModel implements LogRowModel {
       const sanitizedBody = textUtil.sanitize(this.body);
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedBody = Prism.highlight(
-        sanitizedBody,
-        { ...extraGrammar, ...this._grammar },
-        'lokiql'
-      );
+      this._highlightedBody = Prism.highlight(sanitizedBody, { ...extraGrammar, ...this._grammar }, 'lokiql');
     }
     return this._highlightedBody;
   }
