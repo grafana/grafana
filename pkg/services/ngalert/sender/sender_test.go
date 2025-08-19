@@ -117,13 +117,13 @@ func TestWithMaxQueueCapacity(t *testing.T) {
 		customCapacity := 123
 		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithMaxQueueCapacity(customCapacity))
 		require.NoError(t, err)
-		require.Equal(t, customCapacity, am.maxQueueCapacity)
+		require.Equal(t, customCapacity, am.options.QueueCapacity)
 	})
 
 	t.Run("default capacity when option is not used", func(t *testing.T) {
 		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
 		require.NoError(t, err)
-		require.Equal(t, defaultMaxQueueCapacity, am.maxQueueCapacity)
+		require.Equal(t, defaultMaxQueueCapacity, am.options.QueueCapacity)
 	})
 
 	t.Run("custom queue capacity is enforced", func(t *testing.T) {
@@ -157,13 +157,14 @@ func TestWithMaxBatchSize(t *testing.T) {
 		customBatchSize := 5
 		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithMaxBatchSize(customBatchSize))
 		require.NoError(t, err)
-		require.Equal(t, customBatchSize, am.maxBatchSize)
+		require.Equal(t, customBatchSize, am.options.MaxBatchSize)
 		require.Equal(t, customBatchSize, am.manager.opts.MaxBatchSize)
 	})
 
 	t.Run("default batch size when option is not used", func(t *testing.T) {
 		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
 		require.NoError(t, err)
+		require.Equal(t, DefaultMaxBatchSize, am.options.MaxBatchSize)
 		require.Equal(t, DefaultMaxBatchSize, am.manager.opts.MaxBatchSize)
 	})
 
@@ -191,5 +192,38 @@ func TestWithMaxBatchSize(t *testing.T) {
 
 		emptyBatch := am.manager.nextBatch()
 		require.Equal(t, 0, len(emptyBatch), "No more alerts should remain")
+	})
+}
+
+func TestWithUTF8Labels(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	alert := models.PostableAlert{
+		Annotations: models.LabelSet{
+			"some-name": "test",
+		},
+		Alert: models.Alert{
+			Labels: models.LabelSet{
+				"🔥": "fire",
+			},
+		},
+	}
+
+	t.Run("WithUTF8Labels preserves UTF-8 characters", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithUTF8Labels())
+		require.NoError(t, err)
+
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, "test", result.Annotations.Get("some-name"))
+		require.Equal(t, "fire", result.Labels.Get("🔥"))
+	})
+
+	t.Run("default sanitizes UTF-8 characters", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
+
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, "test", result.Annotations.Get("some_name"))
+		require.Equal(t, "fire", result.Labels.Get("_0x1f525"))
 	})
 }
