@@ -76,21 +76,23 @@ func NewRemoteSecondaryFactory(
 ) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			// Create the internal Alertmanager.
-			internalAM, err := factoryFn(ctx, orgID)
-			if err != nil {
-				return nil, err
-			}
-
 			// Create the remote Alertmanager.
+			// We do this first so we don't need to unregister internal AM metrics if this step fails (avoid panics).
 			cfg.OrgID = orgID
 			l := log.New("ngalert.forked-alertmanager.remote-secondary")
 			remoteAM, err := NewAlertmanager(ctx, cfg, stateStore, crypto, autogenFn, m, t)
+			if err != nil && withRemoteState {
+				// We can't start the internal Alertmanager without the remote state.
+				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
+			}
+
+			// Create the internal Alertmanager.
+			internalAM, err := factoryFn(ctx, orgID)
 			if err != nil {
-				if withRemoteState {
-					// We can't start the internal Alertmanager without the remote state.
-					return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
-				}
+				return nil, fmt.Errorf("failed to create internal Alertmanager: %w", err)
+			}
+
+			if remoteAM == nil {
 				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 				return internalAM, nil
 			}
