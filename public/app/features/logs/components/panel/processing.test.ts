@@ -186,6 +186,40 @@ describe('preProcessLogs', () => {
       expect(logListModel.entry).toBe(entry);
       expect(logListModel.body).toContain('90071992547409911');
     });
+
+    test.each([
+      '{"timestamp":"2025-08-19T12:34:56Z","level":"INFO","message":"User logged in","user_id":1234}',
+      '{"time":"2025-08-19T12:35:10Z","level":"ERROR","service":"payment","error":"Insufficient funds","transaction_id":"tx-98765"}',
+      '{"ts":1692444912,"lvl":"WARN","component":"auth","msg":"Token expired","session_id":"abcd1234"}',
+      '{"@timestamp":"2025-08-19T12:36:00Z","severity":"DEBUG","event":"cache_hit","key":"user_profile:1234","duration_ms":3}',
+      '{}',
+    ])('Detects JSON logs', (entry: string) => {
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+        }
+      );
+      expect(logListModel.body).toBeDefined(); // Triggers parsing
+      expect(logListModel.isJSON).toBe(true);
+    });
+
+    test.each(['1', '"1"', 'true', 'null', 'false', 'not json', '"nope"'])('Detects non-JSON logs', (entry: string) => {
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+        }
+      );
+      expect(logListModel.body).toBeDefined(); // Triggers parsing
+      expect(logListModel.isJSON).toBe(false);
+    });
   });
 
   test('Orders logs', () => {
