@@ -369,8 +369,7 @@ func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) Categorize
 const ErrCategoryColumnNotFound = "column_not_found"
 
 var columnNotFoundStr = `sql expression [{{.Public.refId}}] failed because it selects from a column (refId/query) that does not exist: {{ .Error }}.
-If this happens on a previously working query, it might mean that the query has returned no data, or the resulting schema of the query has changed.
-`
+If this happens on a previously working query, it might mean that the query has returned no data, or the resulting schema of the query has changed.`
 
 var ColumnNotFoundError = errutil.NewBase(
 	errutil.StatusBadRequest, sseErrBase+ErrCategoryColumnNotFound).MustTemplate(

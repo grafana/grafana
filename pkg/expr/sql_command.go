@@ -13,12 +13,15 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const SQLLoggerName = "expr.sql"
 
 // SQLCommand is an expression to run SQL over results
 type SQLCommand struct {
@@ -31,23 +34,25 @@ type SQLCommand struct {
 	inputLimit  int64
 	outputLimit int64
 	timeout     time.Duration
+	logger      log.Logger
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(ctx context.Context, refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
+func NewSQLCommand(ctx context.Context, logger log.Logger, refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
+	sqlLogger := backend.NewLoggerWith("logger", SQLLoggerName).FromContext(ctx)
 	if rawSQL == "" {
 		return nil, sql.MakeErrEmptyQuery(refID)
 	}
 	tables, err := sql.TablesList(ctx, rawSQL)
 	if err != nil {
-		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
+		sqlLogger.Warn("invalid sql query", "sql", rawSQL, "error", err)
 		return nil, sql.MakeErrInvalidQuery(refID, err)
 	}
 	if len(tables) == 0 {
-		logger.Warn("no tables found in SQL query", "sql", rawSQL)
+		sqlLogger.Warn("no tables found in SQL query", "sql", rawSQL)
 	}
 	if tables != nil {
-		logger.Debug("REF tables", "tables", tables, "sql", rawSQL)
+		sqlLogger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
 
 	return &SQLCommand{
@@ -58,14 +63,15 @@ func NewSQLCommand(ctx context.Context, refID, format, rawSQL string, intputLimi
 		outputLimit: outputLimit,
 		timeout:     timeout,
 		format:      format,
+		logger:      sqlLogger,
 	}, nil
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
 func UnmarshalSQLCommand(ctx context.Context, rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
-	sqlLogger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
+	sqlLogger := backend.NewLoggerWith("logger", SQLLoggerName).FromContext(ctx)
 	if rn.TimeRange == nil {
-		logger.Error("time range must be specified for refID", "refID", rn.RefID)
+		sqlLogger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
 
@@ -83,7 +89,7 @@ func UnmarshalSQLCommand(ctx context.Context, rn *rawNode, cfg *setting.Cfg) (*S
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
-	return NewSQLCommand(ctx, rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
+	return NewSQLCommand(ctx, sqlLogger, rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -97,7 +103,6 @@ func (gr *SQLCommand) NeedsVars() []string {
 func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	start := time.Now()
-	sqlLogger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
 	tc := int64(0)
 	rsp := mathexp.Results{}
 	errorType := "none"
@@ -119,7 +124,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			))
 			span.SetAttributes(attribute.String("error.category", errorType))
 			span.SetStatus(codes.Error, errorType)
-			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error(), "error_type", errorType)
+			gr.logger.Error("SQL command execution failed", "error", rsp.Error.Error(), "error_type", errorType)
 		}
 		span.End()
 
@@ -132,7 +137,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	for _, ref := range gr.varsToQuery {
 		results, ok := vars[ref]
 		if !ok {
-			sqlLogger.Warn("no results found for", "ref", ref)
+			gr.logger.Warn("no results found for", "ref", ref)
 			continue
 		}
 		frames := results.Values.AsDataFrames(ref)
@@ -147,7 +152,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		return rsp, nil
 	}
 
-	sqlLogger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
+	gr.logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 
 	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames, sql.WithMaxOutputCells(gr.outputLimit), sql.WithTimeout(gr.timeout))
@@ -156,7 +161,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		return rsp, nil
 	}
 
-	sqlLogger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
+	gr.logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
 
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{

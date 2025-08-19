@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
@@ -19,7 +20,7 @@ import (
 )
 
 func TestNewCommand(t *testing.T) {
-	cmd, err := NewSQLCommand(t.Context(), "a", "", "select a from foo, bar", 0, 0, 0)
+	cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "a", "", "select a from foo, bar", 0, 0, 0)
 	if err != nil && strings.Contains(err.Error(), "feature is not enabled") {
 		return
 	}
@@ -127,7 +128,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd, err := NewSQLCommand(t.Context(), "a", "", "select a from foo, bar", tt.limit, 0, 0)
+			cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "a", "", "select a from foo, bar", tt.limit, 0, 0)
 			require.NoError(t, err, "Failed to create SQL command")
 
 			vars := mathexp.Vars{}
@@ -155,7 +156,7 @@ func TestSQLCommandMetrics(t *testing.T) {
 	m := metrics.NewTestMetrics()
 
 	// Create a command
-	cmd, err := NewSQLCommand(t.Context(), "A", "someformat", "select * from foo", 0, 0, 0)
+	cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "A", "someformat", "select * from foo", 0, 0, 0)
 	require.NoError(t, err)
 
 	// Execute successful command
