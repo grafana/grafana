@@ -1170,7 +1170,7 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 }
 
 // Reproduces a bug where folder deletion does not check for attached library panels.
-func TestFolderDeletionBlockedByLibraryElements(t *testing.T) {
+func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
