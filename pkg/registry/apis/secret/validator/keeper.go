@@ -3,6 +3,7 @@ package validator
 import (
 	"strings"
 
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
@@ -19,12 +20,26 @@ func ProvideKeeperValidator() contracts.KeeperValidator {
 }
 
 func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secretv1beta1.Keeper, operation admission.Operation) field.ErrorList {
-	// Only validate Create and Update for now.
-	if operation != admission.Create && operation != admission.Update {
-		return nil
+	errs := make(field.ErrorList, 0)
+
+	// General validations.
+	if err := validation.IsDNS1123Subdomain(keeper.Name); len(err) > 0 {
+		errs = append(
+			errs,
+			field.Invalid(field.NewPath("metadata", "name"), keeper.Name, strings.Join(err, ",")),
+		)
+	}
+	if err := validation.IsDNS1123Subdomain(keeper.Namespace); len(err) > 0 {
+		errs = append(
+			errs,
+			field.Invalid(field.NewPath("metadata", "namespace"), keeper.Name, strings.Join(err, ",")),
+		)
 	}
 
-	errs := make(field.ErrorList, 0)
+	// Only validate Create and Update for now.
+	if operation != admission.Create && operation != admission.Update {
+		return errs
+	}
 
 	if keeper.Spec.Description == "" {
 		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `description` is required"))
