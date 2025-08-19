@@ -93,6 +93,7 @@ type SearchBackend interface {
 	// Depending on the size, the backend may choose different options (eg: memory vs disk).
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
+	// Updater function is used to update the index before performing the search.
 	BuildIndex(
 		ctx context.Context,
 		key NamespacedResource,
@@ -815,9 +816,82 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	updaterFn := func(context context.Context, index ResourceIndex, sinceRV int64) (int64, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", documentStatsRV)))
+		logger.Debug("updating index", "sinceRV", sinceRV)
 
-		// TODO: perform index update
-		return 0, nil
+		startTime := time.Now()
+
+		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
+			Group:     nsr.Group,
+			Resource:  nsr.Resource,
+			Namespace: nsr.Namespace,
+		}, sinceRV)
+
+		// Process documents in batches to avoid memory issues
+		// When dealing with large collections (e.g., 100k+ documents),
+		// loading all documents into memory at once can cause OOM errors.
+		items := make([]*BulkIndexItem, 0, maxBatchSize)
+
+		docs := 0
+		for res, err := range it {
+			docs++
+
+			if err != nil {
+				span.RecordError(err)
+				return 0, err
+			}
+
+			// Update the key name
+			key := &resourcepb.ResourceKey{
+				Group:     nsr.Group,
+				Resource:  nsr.Resource,
+				Namespace: nsr.Namespace,
+				Name:      res.Key.Name,
+			}
+
+			// TODO: handle deletes
+
+			span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+			// Convert it to an indexable document
+			doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
+			if err != nil {
+				span.RecordError(err)
+				logger.Error("error building search document", "key", SearchID(key), "err", err)
+				continue
+			}
+
+			// Add to bulk items
+			items = append(items, &BulkIndexItem{
+				Action: ActionIndex,
+				Doc:    doc,
+			})
+
+			// When we reach the batch size, perform bulk index and reset the batch.
+			if len(items) >= maxBatchSize {
+				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
+				if err = index.BulkIndex(&BulkIndexRequest{
+					Items: items,
+				}); err != nil {
+					return 0, err
+				}
+
+				// Reset the slice for the next batch while preserving capacity.
+				items = items[:0]
+			}
+		}
+
+		// Index any remaining items in the final batch.
+		if len(items) > 0 {
+			span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
+			if err = index.BulkIndex(&BulkIndexRequest{
+				Items: items,
+			}); err != nil {
+				return 0, err
+			}
+		}
+
+		logger.Debug("finished updating index", "sinceRV", sinceRV, "docs", docs, "elapsed", time.Since(startTime))
+
+		return rv, nil
 	}
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, documentStatsRV, fields, indexBuildReason, builderFn, updaterFn)
