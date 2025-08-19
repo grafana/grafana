@@ -30,17 +30,10 @@ const jsonGrammar: Grammar = {
     greedy: true,
     inside: {
       ...tokensGrammar,
-    }
+    },
   },
   'log-token-size': /-?\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b/i,
-  'punctuation': /[{}[\],]/,
-  'operator': /:/,
-  'boolean': /\b(?:false|true)\b/,
-  'null': {
-    pattern: /\bnull\b/,
-    alias: 'keyword',
-  },
-}
+};
 
 export const generateLogGrammar = (log: LogListModel) => {
   const labels = Object.keys(log.labels).concat(log.fields.map((field) => field.keys[0]));
