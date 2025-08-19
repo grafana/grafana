@@ -62,35 +62,48 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := c.getter.GetHealthyRepository(ctx, name)
-	if err != nil {
-		logger.Debug("failed to find repository", "error", err)
-		return nil, err
-	}
-
-	readWriter, ok := repo.(repository.ReaderWriter)
-	if !ok {
-		return nil, apierrors.NewBadRequest("repository does not support read-writing")
-	}
-
-	parser, err := c.parsers.GetParser(ctx, readWriter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get parser: %w", err)
-	}
-
-	clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
-	}
-
-	folderClient, err := clients.Folder()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get folder client: %w", err)
-	}
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
-
+	
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// For GET operations, allow even unhealthy repositories
+		// For write operations (POST, PUT, DELETE), require healthy repository
+		var repo repository.Repository
+		var err error
+		if r.Method == http.MethodGet {
+			repo, err = c.getter.GetRepository(ctx, name)
+		} else {
+			repo, err = c.getter.GetHealthyRepository(ctx, name)
+		}
+		if err != nil {
+			logger.Debug("failed to find repository", "error", err)
+			responder.Error(err)
+			return
+		}
+
+		readWriter, ok := repo.(repository.ReaderWriter)
+		if !ok {
+			responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
+			return
+		}
+
+		parser, err := c.parsers.GetParser(ctx, readWriter)
+		if err != nil {
+			responder.Error(fmt.Errorf("failed to get parser: %w", err))
+			return
+		}
+
+		clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
+		if err != nil {
+			responder.Error(fmt.Errorf("failed to get clients: %w", err))
+			return
+		}
+
+		folderClient, err := clients.Folder()
+		if err != nil {
+			responder.Error(fmt.Errorf("failed to get folder client: %w", err))
+			return
+		}
+		folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
+		dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
 			Ref:          query.Get("ref"),

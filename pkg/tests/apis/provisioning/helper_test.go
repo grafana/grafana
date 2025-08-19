@@ -497,22 +497,7 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
-	// Eventually it should become healthy
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		repoStatus, err := h.Repositories.Resource.Get(t.Context(), repo.Name, metav1.GetOptions{})
-		if !assert.NoError(collect, err, "failed to get repository status") {
-			return
-		}
-		t.Logf("repository %s status: %+v", repo.Name, repoStatus.Object["status"])
-
-		errType := mustNestedString(repoStatus.Object, "status", "health", "error")
-		assert.Empty(collect, errType, "repository %s has health error: %s", repo.Name, errType)
-		msgs := mustNestedStringSlice(repoStatus.Object, "status", "health", "message")
-		assert.Empty(collect, msgs, "repository %s has health messages: %v", repo.Name, msgs)
-		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
-		assert.True(collect, found, "repository %s does not have health status", repo.Name)
-		assert.True(collect, status, "repository %s is not healthy yet", repo.Name)
-	}, time.Second*10, time.Millisecond*50, "repository %s should become healthy", repo.Name)
+	h.WaitForHealthyRepository(t, repo.Name)
 
 	for from, to := range repo.Copies {
 		if repo.Path != "" {
@@ -542,6 +527,23 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+}
+
+// WaitForHealthyRepository waits for a repository to become healthy.
+func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name string) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoStatus, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository status") {
+			return
+		}
+		errType := mustNestedString(repoStatus.Object, "status", "health", "error")
+		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
+		msgs := mustNestedStringSlice(repoStatus.Object, "status", "health", "message")
+		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		assert.True(collect, found, "repository %s does not have health status", name)
+		assert.True(collect, status, "repository %s is not healthy yet", name)
+	}, time.Second*10, time.Millisecond*50, "repository %s should become healthy", name)
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)

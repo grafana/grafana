@@ -40,11 +40,11 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	for _, inputFilePath := range inputFiles {
 		t.Run(inputFilePath, func(t *testing.T) {
 			input := helper.RenderObject(t, inputFilePath, nil)
+			name := mustNestedString(input.Object, "metadata", "name")
 
 			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
 			require.NoError(t, err, "failed to create resource")
 
-			name := mustNestedString(input.Object, "metadata", "name")
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
 
