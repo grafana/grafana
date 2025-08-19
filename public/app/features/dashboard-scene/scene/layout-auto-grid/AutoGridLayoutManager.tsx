@@ -88,8 +88,13 @@ export class AutoGridLayoutManager
   }
 
   public getOutlineChildren(): SceneObject[] {
-    const outlineChildren = this.state.layout.state.children.map((gridItem) => gridItem.state.body);
-    return outlineChildren;
+    const children: SceneObject[] = [];
+
+    for (const child of this.state.layout.state.children) {
+      children.push(child.state.body, ...(child.state.repeatedPanels || []));
+    }
+
+    return children;
   }
 
   public addPanel(vizPanel: VizPanel) {
