@@ -3632,11 +3632,11 @@
       "button-create": "Skapa",
       "button-creating": "Skapar …",
       "cancel": "Avbryt",
+      "error-invalid-characters": "",
       "error-required": "Mappnamn krävs",
       "folder-name-input-placeholder-enter-folder-name": "Ange mappnamn",
       "label-folder-name": "Mappnamn",
       "text-pull-request-created": "En pull-begäran har skapats med ändringar i den här mappen:",
-      "text-your-folder-will-be-created-as": "Din mapp kommer att skapas som {{folderName}}",
       "title-pull-request-created": "Pull-begäran skapad",
       "title-this-repository-is-read-only": "Den här databasen är skrivskyddad"
     },
@@ -7526,11 +7526,6 @@
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
   },
-  "folder-picker": {
-    "create-instructions": "Tryck på ENTER för att skapa den nya mappen.",
-    "input-placeholder": "Tryck på Enter för att bekräfta den nya mappen",
-    "loading": "Laddar mappar…"
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8749,7 +8744,6 @@
       "filter-popup-input-placeholder": "Filtrera värden",
       "filter-popup-match-case": "Matcha gemener/versaler",
       "inspect-drawer-title": "Inspektera värde",
-      "inspect-menu-label": "Inspektera värde",
       "nested-table": {
         "no-data": "Inga data"
       },
@@ -12795,6 +12789,7 @@
     "description-fields": "Välj de fält som ska beräknas",
     "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
+    "description-tooltip-from-field": "",
     "name-calculation": "Beräkning",
     "name-cell-height": "Cellhöjd",
     "name-cell-type": "Celltyp",
@@ -12810,8 +12805,17 @@
     "name-min-column-width": "Minsta kolumnbredd",
     "name-show-table-footer": "Visa tabellsidfot",
     "name-show-table-header": "Visa tabellsidhuvud",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alla numeriska fält"
+    "placeholder-fields": "Alla numeriska fält",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Rensa taggar",
