@@ -48,7 +48,7 @@ describe('Partition by values transformer', () => {
     expect(partitioned[1].fields[1].values).toEqual(['China', 'China', 'China']);
   });
 
-  it('should partition by one field (transfer displayName to name)', () => {
+  it('should partition by one field and apply auto-naming to displayName', () => {
     const source = [
       toDataFrame({
         name: 'XYZ',
@@ -79,14 +79,16 @@ describe('Partition by values transformer', () => {
 
     expect(partitioned[0].length).toEqual(3);
     expect(partitioned[0].name).toEqual('Europe');
-    expect(partitioned[0].fields[0].name).toEqual('myModel');
+    expect(partitioned[0].fields[0].name).toEqual('model');
+    expect(partitioned[0].fields[0].config).toEqual({ displayName: 'Europe myModel' });
     expect(partitioned[0].fields[1].name).toEqual('region');
     expect(partitioned[0].fields[0].values).toEqual(['E1', 'E2', 'E3']);
     expect(partitioned[0].fields[1].values).toEqual(['Europe', 'Europe', 'Europe']);
 
     expect(partitioned[1].length).toEqual(3);
     expect(partitioned[1].name).toEqual('China');
-    expect(partitioned[1].fields[0].name).toEqual('myModel');
+    expect(partitioned[1].fields[0].name).toEqual('model');
+    expect(partitioned[1].fields[0].config).toEqual({ displayName: 'China myModel' });
     expect(partitioned[1].fields[1].name).toEqual('region');
     expect(partitioned[1].fields[0].values).toEqual(['C1', 'C2', 'C3']);
     expect(partitioned[1].fields[1].values).toEqual(['China', 'China', 'China']);
