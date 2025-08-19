@@ -321,6 +321,23 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(onOverflow).toHaveBeenCalledTimes(2);
     });
 
+    test('When the collapsed state changes, the log line contents re-render', async () => {
+      log.collapsed = true;
+      log.raw = 'The full contents of the log line';
+      const onOverflow = jest.fn();
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} onOverflow={onOverflow} log={log} />
+        </LogListContextProvider>
+      );
+
+      expect(screen.queryByText(log.raw)).not.toBeInTheDocument();
+
+      await userEvent.click(await screen.findByText('show more'));
+      
+      expect(screen.getByText(log.raw)).toBeInTheDocument();
+    });
+
     test('Syncs the collapsed state with collapsed status changes in the log', async () => {
       log.collapsed = true;
       const { rerender } = render(<LogLine {...defaultProps} log={log} />);
