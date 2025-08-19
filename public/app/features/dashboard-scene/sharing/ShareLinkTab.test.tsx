@@ -88,7 +88,7 @@ describe('ShareLinkTab', () => {
       await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
     ).toHaveAttribute(
       'href',
-      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=panel-12&__feature.dashboardSceneSolo=true&width=1000&height=500&tz=Pacific%2FEaster'
+      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=A$panel-12&__feature.dashboardSceneSolo=true&width=1000&height=500&tz=Pacific%2FEaster'
     );
   });
 });

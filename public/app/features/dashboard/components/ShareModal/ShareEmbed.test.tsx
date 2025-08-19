@@ -5,7 +5,6 @@ import { setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { Echo } from '../../../../core/services/echo/Echo';
-import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { ShareEmbed } from './ShareEmbed';
@@ -72,16 +71,13 @@ describe('ShareEmbed', () => {
     const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
-    const mockPanel = new PanelModel({
-      id: 'mockPanelId',
-    });
     mockLocationHref(`http://dashboards.grafana.com/d/${mockDashboard.uid}?orgId=1`);
-    render(<ShareEmbed dashboard={mockDashboard} panel={mockPanel} />);
+    render(<ShareEmbed dashboard={mockDashboard} panelId={'mockPanelId'} />);
 
     const embedUrl = screen.getByTestId('share-embed-html');
     expect(embedUrl).toBeInTheDocument();
     expect(embedUrl).toHaveTextContent(
-      `http://dashboards.grafana.com/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}`
+      `http://dashboards.grafana.com/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=mockPanelId`
     );
   });
 
@@ -90,15 +86,13 @@ describe('ShareEmbed', () => {
     const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
-    const mockPanel = new PanelModel({
-      id: 'mockPanelId',
-    });
-    render(<ShareEmbed dashboard={mockDashboard} panel={mockPanel} />);
+
+    render(<ShareEmbed dashboard={mockDashboard} panelId={'mockPanelId'} />);
 
     const embedUrl = screen.getByTestId('share-embed-html');
     expect(embedUrl).toBeInTheDocument();
     expect(embedUrl).toHaveTextContent(
-      `http://dashboards.grafana.com/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}`
+      `http://dashboards.grafana.com/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=mockPanelId`
     );
   });
 
@@ -108,15 +102,13 @@ describe('ShareEmbed', () => {
     const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
-    const mockPanel = new PanelModel({
-      id: 'mockPanelId',
-    });
-    render(<ShareEmbed dashboard={mockDashboard} panel={mockPanel} />);
+
+    render(<ShareEmbed dashboard={mockDashboard} panelId={'mockPanelId'} />);
 
     const embedUrl = screen.getByTestId('share-embed-html');
     expect(embedUrl).toBeInTheDocument();
     expect(embedUrl).toHaveTextContent(
-      `http://dashboards.grafana.com/dashboard-solo/snapshot/${mockSlug}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}`
+      `http://dashboards.grafana.com/dashboard-solo/snapshot/${mockSlug}?orgId=1&from=1000&to=2000&panelId=mockPanelId`
     );
   });
 
@@ -126,15 +118,13 @@ describe('ShareEmbed', () => {
     const mockDashboard = createDashboardModelFixture({
       uid: 'mockDashboardUid',
     });
-    const mockPanel = new PanelModel({
-      id: 'mockPanelId',
-    });
-    render(<ShareEmbed dashboard={mockDashboard} panel={mockPanel} />);
+
+    render(<ShareEmbed dashboard={mockDashboard} panelId={'mockPanelId'} />);
 
     const embedUrl = screen.getByTestId('share-embed-html');
     expect(embedUrl).toBeInTheDocument();
     expect(embedUrl).toHaveTextContent(
-      `http://dashboards.grafana.com/dashboard-solo/script/${mockSlug}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}`
+      `http://dashboards.grafana.com/dashboard-solo/script/${mockSlug}?orgId=1&from=1000&to=2000&panelId=mockPanelId`
     );
   });
 });
