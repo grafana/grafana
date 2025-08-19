@@ -1,4 +1,12 @@
-import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
+import {
+  CoreApp,
+  GrafanaConfig,
+  LiveChannelEventType,
+  LoadingState,
+  getDefaultTimeRange,
+  locationUtil,
+  store,
+} from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -17,6 +25,8 @@ import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -764,10 +774,44 @@ describe('DashboardScene', () => {
 
       return scene.onRestore(getVersionMock()).then((res) => {
         expect(res).toBe(true);
-
         expect(scene.state.version).toBe(newVersion);
         expect(scene.state.isEditing).toBe(false);
       });
+    });
+
+    it('should call dashboardWatcher.reloadPage even if dashboard is in editing mode', async () => {
+      // sometimes a dashboard can be in editing mode after user has already restored to a previous version
+
+      const newVersion = 3;
+      const mockScene = new DashboardScene({
+        title: 'new name',
+        uid: 'dash-1',
+        version: 4,
+      });
+      jest.mocked(historySrv.restoreDashboard).mockResolvedValue({ version: newVersion });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
+
+      const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
+
+      dashboardWatcher.editing = false;
+      const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
+      jest
+        .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
+        .mockReturnValue({ getCurrent: () => dash });
+
+      dashboardWatcher.observer.next({
+        type: LiveChannelEventType.Message,
+        message: {
+          sessionId: 'other',
+          message: 'Restored from version 3',
+          uid: 'dash-1',
+          action: DashboardEventAction.Saved,
+          timestamp: Date.now(),
+        },
+      });
+
+      expect(reloadSpy).toHaveBeenCalled();
+      reloadSpy.mockRestore();
     });
 
     it('should return early if historySrv does not return a valid version number', () => {
