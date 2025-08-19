@@ -90,7 +90,7 @@ jobs:
       MYSQL_HOST: 127.0.0.1
     services:
       mysql:
-        image: mysql:8.0.32
+        image: mysql:8.0.43
         env:
           MYSQL_ROOT_PASSWORD: rootpass
           MYSQL_DATABASE: grafana_tests
