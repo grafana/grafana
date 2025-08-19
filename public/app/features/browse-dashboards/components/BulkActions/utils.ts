@@ -27,17 +27,20 @@ export interface BulkActionProvisionResourceProps {
  * // Nested folder
  * getTargetFolderPathInRepo(...) // returns "path/to/folder/"
  */
+
+type GetTargetFolderPathInRepoParams = {
+  targetFolderUID?: string;
+  targetFolder?: Folder;
+  repoName?: string;
+  hidePrependSlash?: boolean;
+};
+
 export function getTargetFolderPathInRepo({
   targetFolderUID,
   targetFolder,
   repoName,
   hidePrependSlash = false,
-}: {
-  targetFolderUID?: string;
-  targetFolder?: Folder;
-  repoName?: string;
-  hidePrependSlash?: boolean;
-}): string | undefined {
+}: GetTargetFolderPathInRepoParams): string | undefined {
   const ROOT_PATH = '/';
   const EMPTY_PATH = '';
 
