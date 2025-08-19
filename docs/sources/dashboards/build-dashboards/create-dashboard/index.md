@@ -75,11 +75,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
-  query-library:
+  saved-queries:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-library
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-library
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
 ---
 
 ## Create a dashboard
@@ -117,9 +117,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
-1. Write or construct a query in the query language of your data source or click **+ Add query from library** to add one from the [query library](ref:query-library) (Grafana Enterprise and Cloud only).
+1. Write or construct a query in the query language of your data source or click **+ Add saved query** to add a previously [saved query](ref:saved-queries) (Grafana Enterprise and Cloud only).
 
-   If you've created a query that you want to use again in other dashboards, add it to the query library by clicking the save icon on the query editor. Query library is in [private preview](https://grafana.com/docs/release-life-cycle/).
+   If you've created a query that you want to use again in other dashboards, save it by clicking the save icon on the query editor. Saved queries is in [public preview](https://grafana.com/docs/release-life-cycle/).
 
 1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.

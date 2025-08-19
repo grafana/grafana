@@ -12,11 +12,11 @@ labels:
     - oss
 title: Get started with Explore
 refs:
-  query-library:
+    saved-queries:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-library
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-library
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
 weight: 5
 ---
 
@@ -68,7 +68,7 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 - **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
 
 - **+ Add query** - Add additional queries.
-- **+ Add query from library** - Add a query from the [query library](ref:query-library) (Grafana Enterprise and Cloud only). If you've created a query that you want to use again, add it to the query library by clicking the save icon on the query editor. Query library is in [private preview](https://grafana.com/docs/release-life-cycle/).
+- **+ Add saved query** - Add a [saved query](ref:saved-queries) (Grafana Enterprise and Cloud only). If you've created a query that you want to use again, save it by clicking the save icon on the query editor. Saved queries is in [public preview](https://grafana.com/docs/release-life-cycle/).
 - **Query history** - Query history contains the list of queries that you created in Explore. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
 - **Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**. Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
 

@@ -116,41 +116,44 @@ SELECT hostname FROM host WHERE region IN($region)
 query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ```
 
-### Query library
+### Saved queries
 
 {{< admonition type="note" >}}
 This feature is only available on Grafana Enterprise and Grafana Cloud.
 {{< /admonition >}}
 
-{{< docs/private-preview product="Query library" >}}
+{{< docs/private-preview product="Saved queries" >}}
 
-The query library lets you save queries that you've created so you can reuse them later:
+The saved queries feature lets you save queries that you've created so you can reuse them later:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-library-v11.6.png" max-width="550px" alt="" >}}
+<!-- To be updated -->
 
-In the **Query library** drawer, you can:
+In the **Saved queries** drawer, you can:
 
 - Search for queries by data source name, query content, and description.
 - Filter by data source name and author name (filters use the OR operator).
 - Edit a query description.
 - Delete a saved query.
 
-To view your saved queries, click **+ Add query from library** from the query editor:
+To view your saved queries, click **+ Add saved query** from the query editor:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-from-library-v11.6.png" max-width="750px" alt="" >}}
+<!-- To be updated -->
 
 {{< admonition type="note" >}}
-The query library isn't accessible from all instances of the query editor yet, so the **+ Add query from library** button doesn't appear in all instances of it.
+Saved queries aren't accessible from all instances of the query editor yet, so the **+ Add saved query** button doesn't appear in all instances of it.
 {{< /admonition >}}
 
-To add a query you've created to the library, click the **Save to query library** icon:
+To add a query you've created to the library, click the **Save query** icon:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-library-v11.6.png" max-width="750px" alt="" >}}
+<!-- To be updated -->
 
 #### Known limitations
 
-- The query library doesn't perform any validation of your query, so it's possible to save an invalid query to the library.
-- You can add a maximum of 1000 queries to the library.
+- No validation is performed when you save a query, so it's possible to save an invalid query.
+- You can save a maximum of 1000 queries.
 
 ### Special data sources
 
