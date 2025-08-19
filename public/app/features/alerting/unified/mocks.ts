@@ -645,7 +645,7 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
 };
 
 export const grantUserRole = (role: string) => {
-  jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasRole').mockImplementation((checkRole) => checkRole === role);
 };
 
 export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {

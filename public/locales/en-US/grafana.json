@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "External Alertmanagers",
+      "extra-config-warning": {
+        "content": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.",
+        "title": "Imported configuration"
+      },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "No rules found",
       "error-button": "Error",
+      "export-all-grafana-rules": "Export all Grafana rules",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -4171,7 +4177,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Data sources",
+      "apps-header": "Apps",
+      "datasources-header": "Data Sources",
       "empty-message": "No results matching your query were found",
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
@@ -8744,7 +8751,6 @@
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
-      "inspect-menu-label": "Inspect value",
       "nested-table": {
         "no-data": "No data"
       },
