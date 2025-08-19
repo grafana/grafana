@@ -47,6 +47,11 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.Equal(t, info.Major, fmt.Sprintf("%d", v.Major()))
 		require.Equal(t, info.Minor, fmt.Sprintf("%d", v.Minor()))
 
+		// Check the v3 path resolves properly
+		// NOTE: fetching the v2 schema sometimes returns a 503 in our test infrastructure
+		// Removing the explicit `OneOf` properties from InlineSecureValue in:
+		// https://github.com/grafana/grafana/blob/main/pkg/apimachinery/apis/common/v0alpha1/secure_values.go#L78
+		// will consistently support V2, however kubectl and everything else continues to work
 		paths, err := disco.OpenAPIV3().Paths()
 
 		require.NoError(t, err, "requesting OpenAPI v3")
