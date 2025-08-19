@@ -59,8 +59,8 @@ Grafana's expansion feature considers any value after an `$` a variable, and con
 
 For example, if you want `Pa$sword` as a final value:
 
-- Use the `$ENV_VAR_NAME` syntax to avoid double expansion. 
-- Use `Pa$$sw0rd` in the environment variable value before the expansion in order to escape a literal `$`. 
+- Use the `$ENV_VAR_NAME` syntax to avoid double expansion.
+- Use `Pa$$sw0rd` in the environment variable value before the expansion in order to escape a literal `$`.
 
 ## Configuration management tools
 
