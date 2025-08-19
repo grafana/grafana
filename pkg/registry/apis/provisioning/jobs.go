@@ -83,7 +83,7 @@ func (c *jobsConnector) Connect(
 			responder.Object(http.StatusOK, recent)
 			return
 		}
-		
+
 		// POST operations: require healthy repository
 		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
 		if err != nil {
@@ -91,7 +91,7 @@ func (c *jobsConnector) Connect(
 			return
 		}
 		cfg := repo.Config()
-		
+
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
 			return
