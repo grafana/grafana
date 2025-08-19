@@ -158,10 +158,12 @@ jobs:
         cache: 'yarn'
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
-    - run: |
+    - name: Generate API clients
+      run: |
         extract_error_message='ERROR! API client generation failed!'
         yarn generate-apis || (echo "${extract_error_message}" && false)
-    - run: |
+    - name: Verify generated clients
+      run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf')"
         if [ -n "$file_diff" ]; then
@@ -191,10 +193,12 @@ jobs:
       with:
         github-app-name: 'grafana-ci-bot'
     - run: yarn install --immutable --check-cache
-    - run: |
+    - name: Generate API clients
+      run: |
         extract_error_message='ERROR! API client generation failed!'
         yarn generate-apis || (echo "${extract_error_message}" && false)
-    - run: |
+    - name: Verify generated clients
+      run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
         file_diff="$(git diff ':!conf')"
         if [ -n "$file_diff" ]; then
