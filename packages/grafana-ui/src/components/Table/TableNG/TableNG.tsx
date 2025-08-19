@@ -111,10 +111,14 @@ export function TableNG(props: TableNGProps) {
   } = props;
 
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, {
-    enablePagination,
-    transparent,
-  });
+  const styles = useMemo(
+    () =>
+      useStyles2(getGridStyles, {
+        enablePagination,
+        transparent,
+      }),
+    [enablePagination, transparent]
+  );
   const panelContext = usePanelContext();
 
   const getCellActions = useCallback(
