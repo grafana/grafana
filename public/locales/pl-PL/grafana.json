@@ -3668,11 +3668,11 @@
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
+      "error-invalid-characters": "",
       "error-required": "Wymagana jest nazwa folderu",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
       "label-folder-name": "Nazwa folderu",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
-      "text-your-folder-will-be-created-as": "Zostanie utworzony folder o nazwie {{folderName}}",
       "title-pull-request-created": "Utworzono żądanie pull",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
@@ -7568,11 +7568,6 @@
     "select-aria-label": "Filtr folderów",
     "select-placeholder": "Filtruj wg folderu"
   },
-  "folder-picker": {
-    "create-instructions": "Naciśnij Enter, aby utworzyć nowy folder.",
-    "input-placeholder": "Naciśnij Enter, aby potwierdzić nowy folder",
-    "loading": "Ładowanie folderów…"
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8791,7 +8786,6 @@
       "filter-popup-input-placeholder": "Wartości filtra",
       "filter-popup-match-case": "Dopasuj wielkość liter",
       "inspect-drawer-title": "Sprawdź wartość",
-      "inspect-menu-label": "Sprawdź wartość",
       "nested-table": {
         "no-data": "Brak danych"
       },
@@ -12877,6 +12871,7 @@
     "description-fields": "Wybierz pola, które powinny być obliczone",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
+    "description-tooltip-from-field": "",
     "name-calculation": "Obliczenie",
     "name-cell-height": "Wysokość komórki",
     "name-cell-type": "Typ komórki",
@@ -12892,8 +12887,17 @@
     "name-min-column-width": "Minimalna szerokość kolumny",
     "name-show-table-footer": "Pokaż stopkę tabeli",
     "name-show-table-header": "Pokaż nagłówek tabeli",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automatycznie",
-    "placeholder-fields": "Wszystkie pola numeryczne"
+    "placeholder-fields": "Wszystkie pola numeryczne",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Wyczyść znaczniki",

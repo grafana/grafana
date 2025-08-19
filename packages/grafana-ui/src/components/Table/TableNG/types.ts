@@ -169,12 +169,10 @@ export interface TableCellRendererProps {
   disableSanitizeHtml?: boolean;
 }
 
-export type ContextMenuProps = {
+export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
-  top?: number;
-  left?: number;
 };
 
 export interface TableCellActionsProps {
@@ -184,8 +182,7 @@ export interface TableCellActionsProps {
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
-  setIsInspecting: React.Dispatch<React.SetStateAction<boolean>>;
-  setContextMenuProps: React.Dispatch<React.SetStateAction<ContextMenuProps | null>>;
+  setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }

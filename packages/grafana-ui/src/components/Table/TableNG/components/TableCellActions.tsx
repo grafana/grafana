@@ -15,8 +15,7 @@ export function TableCellActions(props: TableCellActionsProps) {
     value,
     cellOptions,
     displayName,
-    setIsInspecting,
-    setContextMenuProps,
+    setInspectCell,
     onCellFilterAdded,
     className,
     cellInspect,
@@ -47,11 +46,10 @@ export function TableCellActions(props: TableCellActionsProps) {
               mode = TableCellInspectorMode.code;
             }
 
-            setContextMenuProps({
+            setInspectCell({
               value: String(inspectValue ?? ''),
               mode,
             });
-            setIsInspecting(true);
           }}
         />
       )}
