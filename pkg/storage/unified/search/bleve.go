@@ -1225,7 +1225,11 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context) (in
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"updateIndexWithLatestModifications")
 	defer span.End()
 
-	return b.updaterFn(ctx, b, 0 /* TODO */)
+	rv, err := b.updaterFn(ctx, b, b.resourceVersion)
+	if err == nil && rv > 0 {
+		err = b.updateResourceVersion(rv)
+	}
+	return rv, err
 }
 
 func safeInt64ToInt(i64 int64) (int, error) {

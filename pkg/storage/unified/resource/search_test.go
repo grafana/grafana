@@ -136,7 +136,7 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 	return nil, nil
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error), updater func(context context.Context, index ResourceIndex, sinceRV int64) (int64, error)) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -459,7 +459,7 @@ func (m *slowSearchBackendWithCache) GetIndex(ctx context.Context, key Namespace
 	return m.cache[key], nil
 }
 
-func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error), updater func(context context.Context, index ResourceIndex, sinceRV int64) (int64, error)) (ResourceIndex, error) {
 	m.wg.Add(1)
 	defer m.wg.Done()
 
@@ -469,7 +469,7 @@ func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key Namespa
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder)
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder, updater)
 	if err != nil {
 		return nil, err
 	}
