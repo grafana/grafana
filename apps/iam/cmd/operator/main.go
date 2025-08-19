@@ -67,7 +67,8 @@ func main() {
 
 	// Create app config from operator config
 	appCfg := app.AppConfig{
-		ZanzanaAddr: cfg.ZanzanaClient.Addr,
+		ZanzanaAddr:               cfg.ZanzanaClient.Addr,
+		FolderReconcilerNamespace: cfg.FolderReconciler.Namespace,
 	}
 
 	// Run

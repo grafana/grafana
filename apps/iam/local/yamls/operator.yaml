@@ -41,3 +41,5 @@ spec:
               value: ""
             - name: FOLDER_APP_NAMESPACE
               value: "grafana-folder"
+            - name: FOLDER_RECONCILER_NAMESPACE
+              value: "default"

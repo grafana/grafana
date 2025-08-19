@@ -31,7 +31,8 @@ type PermissionStore interface {
 
 // AppConfig represents the app-specific configuration
 type AppConfig struct {
-	ZanzanaAddr string
+	ZanzanaAddr               string
+	FolderReconcilerNamespace string
 }
 
 type FolderReconciler struct {

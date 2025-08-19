@@ -16,10 +16,11 @@ const (
 )
 
 type Config struct {
-	OTelConfig    simple.OpenTelemetryConfig
-	WebhookServer WebhookServerConfig
-	KubeConfig    *kubeconfig.NamespacedConfig
-	ZanzanaClient ZanzanaClientConfig
+	OTelConfig       simple.OpenTelemetryConfig
+	WebhookServer    WebhookServerConfig
+	KubeConfig       *kubeconfig.NamespacedConfig
+	ZanzanaClient    ZanzanaClientConfig
+	FolderReconciler FolderReconcilerConfig
 }
 
 type WebhookServerConfig struct {
@@ -30,6 +31,10 @@ type WebhookServerConfig struct {
 
 type ZanzanaClientConfig struct {
 	Addr string
+}
+
+type FolderReconcilerConfig struct {
+	Namespace string
 }
 
 func LoadConfigFromEnv() (*Config, error) {
@@ -108,6 +113,8 @@ func LoadConfigFromEnv() (*Config, error) {
 	}
 
 	cfg.ZanzanaClient.Addr = os.Getenv("ZANZANA_ADDR")
+
+	cfg.FolderReconciler.Namespace = os.Getenv("FOLDER_RECONCILER_NAMESPACE")
 
 	return &cfg, nil
 }
