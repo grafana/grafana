@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
@@ -111,11 +113,12 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 				errorType = "unknown"
 			}
 			statusLabel = "error"
-			span.RecordError(rsp.Error)
-			span.SetStatus(codes.Error, rsp.Error.Error())
-			span.SetAttributes(
-				attribute.String("error.type", errorType),
-			)
+			span.AddEvent("exception", trace.WithAttributes(
+				semconv.ExceptionType(errorType),
+				semconv.ExceptionMessage(rsp.Error.Error()),
+			))
+			span.SetAttributes(attribute.String("error.category", errorType))
+			span.SetStatus(codes.Error, errorType)
 			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error(), "error_type", errorType)
 		}
 		span.End()

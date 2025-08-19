@@ -47,7 +47,7 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Namespace: "grafana",
 			Subsystem: subsystem,
 			Name:      "sql_command_count",
-			Help:      "Total number of SQL command executions with a status label and error_type for more detailed categorization of errors. When there is no error, error_type is 'none'.",
+			Help:      "Total number of SQL command executions with a status label and error_type for more detailed categorization of errors. When there is no error, error_type is 'none'. The two types of error_types that are unhandled are 'general_gms_error', and and 'unknown'",
 		}, []string{"status", "error_type"}),
 
 		SqlCommandCellCount: prometheus.NewHistogramVec(
