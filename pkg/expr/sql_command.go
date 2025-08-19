@@ -104,9 +104,9 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		duration := float64(time.Since(start).Milliseconds())
 		statusLabel := "ok"
 		if rsp.Error != nil {
-			e := &sql.ErrorWithType{}
+			e := &sql.ErrorWithCategory{}
 			if errors.As(rsp.Error, &e) {
-				errorType = e.ErrorType()
+				errorType = e.Category()
 			} else {
 				errorType = "unknown"
 			}

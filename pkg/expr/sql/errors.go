@@ -13,32 +13,32 @@ import (
 
 // GoMySQLServerError represents an error from the underlying Go MySQL Server
 type GoMySQLServerError struct {
-	err       error
-	errorType string
+	err      error
+	category string
 }
 
-// TypedError is an interface that allows us to categorize errors with a string that can be attached to metrics as a label, logs, and traces.
-type TypedError interface {
+// CategorizedError is an interface that allows us to categorize errors with a string that can be attached to metrics, logs, and traces.
+type CategorizedError interface {
 	error
-	ErrorType() string
+	Category() string
 }
 
-// ErrorWithType is a concrete implementation of ErrorWithType that holds an error and its type.
-type ErrorWithType struct {
-	errorType string
-	err       error
+// ErrorWithCategory is a concrete implementation of ErrorWithCategory that holds an error and its category.
+type ErrorWithCategory struct {
+	category string
+	err      error
 }
 
-func (e *ErrorWithType) Error() string {
+func (e *ErrorWithCategory) Error() string {
 	return e.err.Error()
 }
 
-func (e *ErrorWithType) ErrorType() string {
-	return e.errorType
+func (e *ErrorWithCategory) Category() string {
+	return e.category
 }
 
 // Unwrap provides the original error for errors.Is/As
-func (e *ErrorWithType) Unwrap() error {
+func (e *ErrorWithCategory) Unwrap() error {
 	return e.err
 }
 
@@ -52,8 +52,8 @@ func (e *GoMySQLServerError) Unwrap() error {
 	return e.err
 }
 
-func (e *GoMySQLServerError) ErrorType() string {
-	return e.errorType
+func (e *GoMySQLServerError) Category() string {
+	return e.category
 }
 
 // WrapGoMySQLServerError wraps errors from Go MySQL Server with additional context
@@ -65,9 +65,9 @@ func WrapGoMySQLServerError(refID string, err error) error {
 
 	switch {
 	case mysql.ErrFunctionNotFound.Is(err):
-		return &GoMySQLServerError{err: err, errorType: "function_not_found"}
+		return &GoMySQLServerError{err: err, category: "function_not_found"}
 	case mysql.ErrTableNotFound.Is(err):
-		return &GoMySQLServerError{err: err, errorType: "table_not_found"}
+		return &GoMySQLServerError{err: err, category: "table_not_found"}
 	case mysql.ErrColumnNotFound.Is(err):
 		return MakeColumnNotFoundError(refID, err)
 	}
@@ -94,7 +94,7 @@ var InputLimitExceededError = errutil.NewBase(
 	inputLimitExceededStr,
 	errutil.WithPublic(inputLimitExceededStr))
 
-func MakeInputLimitExceededError(refID string, inputLimit int64) TypedError {
+func MakeInputLimitExceededError(refID string, inputLimit int64) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":      refID,
@@ -102,7 +102,7 @@ func MakeInputLimitExceededError(refID string, inputLimit int64) TypedError {
 		},
 	}
 
-	return &ErrorWithType{errorType: "input_limit_exceeded", err: InputLimitExceededError.Build(data)}
+	return &ErrorWithCategory{category: "input_limit_exceeded", err: InputLimitExceededError.Build(data)}
 }
 
 var DuplicateStringColumnError = errutil.NewBase(
@@ -111,7 +111,7 @@ var DuplicateStringColumnError = errutil.NewBase(
 	errutil.WithPublic("SQL query returned duplicate combinations of string column values. Use GROUP BY or aggregation to return one row per combination."),
 )
 
-func MakeDuplicateStringColumnError(examples []string) TypedError {
+func MakeDuplicateStringColumnError(examples []string) CategorizedError {
 	const limit = 5
 	sort.Strings(examples)
 	exampleStr := strings.Join(truncateExamples(examples, limit), ", ")
@@ -123,9 +123,9 @@ func MakeDuplicateStringColumnError(examples []string) TypedError {
 		},
 	}
 
-	return &ErrorWithType{
-		errorType: "duplicate_string_columns",
-		err:       DuplicateStringColumnError.Build(data),
+	return &ErrorWithCategory{
+		category: "duplicate_string_columns",
+		err:      DuplicateStringColumnError.Build(data),
 	}
 }
 
@@ -145,7 +145,7 @@ var GeneralGMSError = errutil.NewBase(
 	generalGMSErrorStr,
 	errutil.WithPublic(generalGMSErrorStr))
 
-func MakeGeneralGMSError(err *GoMySQLServerError, refID string) TypedError {
+func MakeGeneralGMSError(err *GoMySQLServerError, refID string) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -153,7 +153,7 @@ func MakeGeneralGMSError(err *GoMySQLServerError, refID string) TypedError {
 		Error: err,
 	}
 
-	return &ErrorWithType{errorType: err.ErrorType(), err: GeneralGMSError.Build(data)}
+	return &ErrorWithCategory{category: err.Category(), err: GeneralGMSError.Build(data)}
 }
 
 var timeoutStr = "sql expression [{{ .Public.refId }}] timed out after {{ .Public.timeout }}"
@@ -164,7 +164,7 @@ var TimeoutError = errutil.NewBase(
 	errutil.WithPublic(timeoutStr))
 
 // MakeTimeOutError creates an error for when a query times out because it took longer that the configured timeout.
-func MakeTimeOutError(err error, refID string, timeout time.Duration) TypedError {
+func MakeTimeOutError(err error, refID string, timeout time.Duration) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":   refID,
@@ -174,7 +174,7 @@ func MakeTimeOutError(err error, refID string, timeout time.Duration) TypedError
 		Error: err,
 	}
 
-	return &ErrorWithType{errorType: "timeout", err: TimeoutError.Build(data)}
+	return &ErrorWithCategory{category: "timeout", err: TimeoutError.Build(data)}
 }
 
 var cancelStr = "sql expression [{{ .Public.refId }}] was cancelled before completion"
@@ -186,7 +186,7 @@ var CancelError = errutil.NewBase(
 
 // MakeCancelError creates an error for when a query is cancelled before completion.
 // Users won't see this error in the browser, rather an empty response when the browser cancels the connection.
-func MakeCancelError(err error, refID string) TypedError {
+func MakeCancelError(err error, refID string) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -195,7 +195,7 @@ func MakeCancelError(err error, refID string) TypedError {
 		Error: err,
 	}
 
-	return &ErrorWithType{errorType: "cancel", err: CancelError.Build(data)}
+	return &ErrorWithCategory{category: "cancel", err: CancelError.Build(data)}
 }
 
 var tableNotFoundStr = "failed to run sql expression [{{ .Public.refId }}] because it selects from table (refId/query) [{{ .Public.table }}] and that table not found"
@@ -207,7 +207,7 @@ var TableNotFoundError = errutil.NewBase(
 
 // MakeTableNotFoundError creates an error for when a referenced table
 // does not exist.
-func MakeTableNotFoundError(refID, table string) TypedError {
+func MakeTableNotFoundError(refID, table string) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -217,7 +217,7 @@ func MakeTableNotFoundError(refID, table string) TypedError {
 		Error: fmt.Errorf("sql expression [%s] failed: table (refId)'%s' not found", refID, table),
 	}
 
-	return &ErrorWithType{errorType: "table_not_found", err: TableNotFoundError.Build(data)}
+	return &ErrorWithCategory{category: "table_not_found", err: TableNotFoundError.Build(data)}
 }
 
 var sqlDepErrStr = "could not run sql expression [{{ .Public.refId }}] because it selects from the results of query [{{.Public.depRefId }}] which has an error"
@@ -227,7 +227,7 @@ var DependencyError = errutil.NewBase(
 	sqlDepErrStr,
 	errutil.WithPublic(sqlDepErrStr))
 
-func MakeSQLDependencyError(refID, depRefID string) TypedError {
+func MakeSQLDependencyError(refID, depRefID string) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":    refID,
@@ -236,7 +236,7 @@ func MakeSQLDependencyError(refID, depRefID string) TypedError {
 		Error: fmt.Errorf("could not run sql expression %v because it selects from the results of query %v which has an error", refID, depRefID),
 	}
 
-	return &ErrorWithType{errorType: "failed_dependency", err: DependencyError.Build(data)}
+	return &ErrorWithCategory{category: "failed_dependency", err: DependencyError.Build(data)}
 }
 
 var sqlInputConvertErrorStr = "failed to convert the results of query [{{.Public.refId}}] (Datasource Type: [{{.Public.dsType}}]) into a SQL/Tabular format for sql expression {{ .Public.forRefID }}: {{ .Error }}"
@@ -247,7 +247,7 @@ var InputConvertError = errutil.NewBase(
 	errutil.WithPublic(sqlInputConvertErrorStr))
 
 // MakeInputConvertError creates an error for when the input conversion to a table for a SQL expressions fails.
-func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{}, dsType string) TypedError {
+func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{}, dsType string) CategorizedError {
 	forRefIdsSlice := make([]string, 0, len(forRefIDs))
 	for k := range forRefIDs {
 		forRefIdsSlice = append(forRefIdsSlice, k)
@@ -261,7 +261,7 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 		Error: err,
 	}
 
-	return &ErrorWithType{errorType: "input_conversion", err: InputConvertError.Build(data)}
+	return &ErrorWithCategory{category: "input_conversion", err: InputConvertError.Build(data)}
 }
 
 var errEmptyQueryString = "sql expression [{{.Public.refId}}] failed because it has an empty SQL query"
@@ -273,7 +273,7 @@ var ErrEmptySQLQuery = errutil.NewBase(
 
 // MakeTableNotFoundError creates an error for when a referenced table
 // does not exist.
-func MakeErrEmptyQuery(refID string) TypedError {
+func MakeErrEmptyQuery(refID string) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -282,7 +282,7 @@ func MakeErrEmptyQuery(refID string) TypedError {
 		Error: fmt.Errorf("sql expression [%s] failed because it has an empty SQL query", refID),
 	}
 
-	return &ErrorWithType{errorType: "empty_query", err: ErrEmptySQLQuery.Build(data)}
+	return &ErrorWithCategory{category: "empty_query", err: ErrEmptySQLQuery.Build(data)}
 }
 
 var invalidQueryStr = "sql expression [{{.Public.refId}}] failed because it has an invalid SQL query: {{ .Public.error }}"
@@ -292,7 +292,7 @@ var ErrInvalidQuery = errutil.NewBase(
 	invalidQueryStr,
 	errutil.WithPublic(invalidQueryStr))
 
-func MakeErrInvalidQuery(refID string, err error) TypedError {
+func MakeErrInvalidQuery(refID string, err error) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -302,7 +302,7 @@ func MakeErrInvalidQuery(refID string, err error) TypedError {
 		Error: fmt.Errorf("sql expression [%s] failed because it has an invalid SQL query: %w", refID, err),
 	}
 
-	return &ErrorWithType{errorType: "invalid_query", err: ErrInvalidQuery.Build(data)}
+	return &ErrorWithCategory{category: "invalid_query", err: ErrInvalidQuery.Build(data)}
 }
 
 var blockedNodeOrFuncStr = "did not execute the SQL expression {{.Public.refId}} because the sql {{.Public.tokenType}} '{{.Public.token}}' is not in the allowed list of {{.Public.tokenType}}s"
@@ -313,7 +313,7 @@ var BlockedNodeOrFuncError = errutil.NewBase(
 	errutil.WithPublic(blockedNodeOrFuncStr))
 
 // MakeBlockedNodeOrFuncError creates an error for when a sql function or keyword is not allowed.
-func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) TypedError {
+func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) CategorizedError {
 	tokenType := "keyword"
 	if isFunction {
 		tokenType = "function"
@@ -328,7 +328,7 @@ func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) TypedError
 		Error: fmt.Errorf("sql expression [%s] failed because the sql function or keyword '%s' is not in the allowed list of keywords and functions", refID, token),
 	}
 
-	return &ErrorWithType{errorType: "blocked_node_or_func", err: BlockedNodeOrFuncError.Build(data)}
+	return &ErrorWithCategory{category: "blocked_node_or_func", err: BlockedNodeOrFuncError.Build(data)}
 }
 
 var columnNotFoundStr = `sql expression [{{.Public.refId}}] failed because it selects from a column (refId/query) that does not exist: {{ .Error }}.
@@ -340,7 +340,7 @@ var ColumnNotFoundError = errutil.NewBase(
 	columnNotFoundStr,
 	errutil.WithPublic(columnNotFoundStr))
 
-func MakeColumnNotFoundError(refID string, err error) TypedError {
+func MakeColumnNotFoundError(refID string, err error) CategorizedError {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId": refID,
@@ -349,5 +349,5 @@ func MakeColumnNotFoundError(refID string, err error) TypedError {
 		Error: err,
 	}
 
-	return &ErrorWithType{errorType: "column_not_found", err: ColumnNotFoundError.Build(data)}
+	return &ErrorWithCategory{category: "column_not_found", err: ColumnNotFoundError.Build(data)}
 }

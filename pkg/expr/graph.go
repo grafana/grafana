@@ -98,11 +98,11 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 
 						// although the SQL expression won't be executed,
 						// we track a dependency error on the metric.
-						eType := e.ErrorType()
-						var errWithType *sql.ErrorWithType
+						eType := e.Category()
+						var errWithType *sql.ErrorWithCategory
 						if errors.As(res.Error, &errWithType) {
 							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
-							eType = errWithType.ErrorType()
+							eType = errWithType.Category()
 						}
 						s.metrics.SqlCommandCount.WithLabelValues("error", eType)
 						depErr = e
@@ -355,7 +355,7 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					// this missing dependency. But we collection the metric as there was an
 					// attempt to execute a SQL expression.
 					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
-					s.metrics.SqlCommandCount.WithLabelValues("error", e.ErrorType()).Inc()
+					s.metrics.SqlCommandCount.WithLabelValues("error", e.Category()).Inc()
 					return e
 
 				}

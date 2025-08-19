@@ -28,7 +28,7 @@ func AllowQuery(refID, rawSQL string) (bool, error) {
 		}, node)
 
 		if err != nil {
-			var bn *ErrorWithType
+			var bn *ErrorWithCategory
 			if !errors.As(err, &bn) {
 				return fmt.Errorf("failed to parse SQL expression: %w", err)
 			}
