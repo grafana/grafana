@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -26,14 +28,16 @@ type HealthCheckerProvider interface {
 }
 
 type testConnector struct {
-	getter RepoGetter
-	tester controller.RepositoryTester
+	getter         RepoGetter
+	tester         controller.RepositoryTester
+	healthProvider HealthCheckerProvider
 }
 
-func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, _ *controller.HealthChecker) *testConnector {
+func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, healthProvider HealthCheckerProvider) *testConnector {
 	return &testConnector{
-		getter: getter,
-		tester: tester,
+		getter:         getter,
+		tester:         tester,
+		healthProvider: healthProvider,
 	}
 }
 
@@ -136,19 +140,20 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				return
 			}
 
-			// Use health checker to test and update repository health
-			healthProvider, ok := s.getter.(HealthCheckerProvider)
-			if !ok {
-				responder.Error(fmt.Errorf("health checker provider not available"))
-				return
-			}
-			
-			healthChecker := healthProvider.GetHealthChecker()
+			healthChecker := s.healthProvider.GetHealthChecker()
 			if healthChecker == nil {
-				responder.Error(fmt.Errorf("health checker not initialized yet, please try again"))
+				// Use precondition failed for when health checker is not ready yet
+				responder.Error(&errors.StatusError{
+					ErrStatus: metav1.Status{
+						Status:  metav1.StatusFailure,
+						Code:    http.StatusPreconditionFailed,
+						Reason:  metav1.StatusReason("PreconditionFailed"),
+						Message: "health checker not initialized yet, please try again",
+					},
+				})
 				return
 			}
-			
+
 			rsp, _, err = healthChecker.RefreshHealth(ctx, repo)
 			if err != nil {
 				responder.Error(err)
