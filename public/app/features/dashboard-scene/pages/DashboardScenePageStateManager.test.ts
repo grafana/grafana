@@ -38,39 +38,32 @@ jest.mock('@grafana/runtime', () => {
         dashboardNewLayouts: false, // Default value
         reloadDashboardsOnParamsChange: false, // Default value
       },
-
-      bootData: {
-        ...original.config.bootData,
-        settings: {
-          ...original.config.bootData.settings,
-          datasources: {
-            'gdev-testdata': {
-              id: 7,
-              uid: 'abc',
-              type: 'grafana-testdata-datasource',
-              name: 'gdev-testdata',
-              meta: {
-                id: 'grafana-testdata-datasource',
-                type: 'datasource',
-                name: 'TestData',
-                aliasIDs: ['testdata'],
-              },
-            },
-            '-- Grafana --': {
-              id: -1,
-              uid: 'grafana',
-              type: 'datasource',
-              name: '-- Grafana --',
-              meta: {
-                id: 'grafana',
-                type: 'datasource',
-                name: '-- Grafana --',
-              },
-            },
+      datasources: {
+        'gdev-testdata': {
+          id: 7,
+          uid: 'abc',
+          type: 'grafana-testdata-datasource',
+          name: 'gdev-testdata',
+          meta: {
+            id: 'grafana-testdata-datasource',
+            type: 'datasource',
+            name: 'TestData',
+            aliasIDs: ['testdata'],
           },
-          defaultDatasource: 'gdev-testdata',
+        },
+        '-- Grafana --': {
+          id: -1,
+          uid: 'grafana',
+          type: 'datasource',
+          name: '-- Grafana --',
+          meta: {
+            id: 'grafana',
+            type: 'datasource',
+            name: '-- Grafana --',
+          },
         },
       },
+      defaultDatasource: 'gdev-testdata',
     },
   };
 });

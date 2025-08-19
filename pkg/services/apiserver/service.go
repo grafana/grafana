@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -279,11 +280,6 @@ func (s *service) start(ctx context.Context) error {
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 	appinstaller.RegisterOptions(o, s.appInstallers)
 
-	// Register admission plugins from app installers after options are created
-	if err := appinstaller.RegisterAdmissionPlugins(ctx, s.appInstallers, o); err != nil {
-		return err
-	}
-
 	// Register authorizers from app installers
 	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
 
@@ -350,6 +346,14 @@ func (s *service) start(ctx context.Context) error {
 		s.buildHandlerChainFuncFromBuilders,
 		groupVersions,
 		defGetters,
+	)
+	if err != nil {
+		return err
+	}
+
+	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
+		serverConfig.AdmissionControl,
+		s.appInstallers,
 	)
 	if err != nil {
 		return err
@@ -456,6 +460,13 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = runningServer.Handler
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
+
+	for _, installer := range s.appInstallers {
+		err := installer.InitializeApp(*s.restConfig)
+		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+			return err
+		}
+	}
 
 	return nil
 }

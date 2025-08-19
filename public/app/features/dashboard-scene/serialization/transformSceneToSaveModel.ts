@@ -38,6 +38,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { djb2Hash } from '../utils/djb2Hash';
 import {
   calculateGridItemDimensions,
   getLibraryPanelBehavior,
@@ -329,48 +330,46 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
       return [vizPanelToPanel(repeater.state.body, { x, y, w, h }, isSnapshot)];
     }
 
-    if (repeater.state.repeatedPanels) {
-      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
-      const panels = repeater.state.repeatedPanels!.map((panel, index) => {
-        let x = 0,
-          y = 0;
-        if (repeater.state.repeatDirection === 'v') {
-          x = repeater.state.x!;
-          y = index * h;
-        } else {
-          x = (index % columnCount) * w;
-          y = repeater.state.y! + Math.floor(index / columnCount) * h;
-        }
+    const vizPanels = [repeater.state.body, ...(repeater.state.repeatedPanels ?? [])];
 
-        const gridPos = { x, y, w, h };
+    const { h, w, columnCount } = calculateGridItemDimensions(repeater);
+    const panels = vizPanels.map((panel, index) => {
+      let x = 0,
+        y = 0;
+      if (repeater.state.repeatDirection === 'v') {
+        x = repeater.state.x!;
+        y = repeater.state.y! + index * h;
+      } else {
+        x = (index % columnCount) * w;
+        y = repeater.state.y! + Math.floor(index / columnCount) * h;
+      }
 
-        const localVariable = panel.state.$variables!.getByName(repeater.state.variableName!) as LocalValueVariable;
+      const gridPos = { x, y, w, h };
 
-        const result: Panel = {
-          id: getPanelIdForVizPanel(panel),
-          type: panel.state.pluginId,
-          title: panel.state.title,
-          gridPos,
-          options: panel.state.options,
-          fieldConfig: (panel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
-          transformations: [],
-          transparent: panel.state.displayMode === 'transparent',
-          // @ts-expect-error scopedVars are runtime only properties, not part of the persisted Dashboardmodel
-          scopedVars: {
-            [repeater.state.variableName!]: {
-              text: localVariable?.state.text,
-              value: localVariable?.state.value,
-            },
+      const localVariable = panel.state.$variables!.getByName(repeater.state.variableName!) as LocalValueVariable;
+
+      const result: Panel = {
+        id: djb2Hash(panel.state.key!),
+        type: panel.state.pluginId,
+        title: panel.state.title,
+        gridPos,
+        options: panel.state.options,
+        fieldConfig: (panel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
+        transformations: [],
+        transparent: panel.state.displayMode === 'transparent',
+        // @ts-expect-error scopedVars are runtime only properties, not part of the persisted Dashboardmodel
+        scopedVars: {
+          [repeater.state.variableName!]: {
+            text: localVariable?.state.text,
+            value: localVariable?.state.value,
           },
-          ...vizPanelDataToPanel(panel, isSnapshot),
-        };
-        return result;
-      });
+        },
+        ...vizPanelDataToPanel(panel, isSnapshot),
+      };
+      return result;
+    });
 
-      return panels;
-    }
-
-    return [];
+    return panels;
   }
 }
 

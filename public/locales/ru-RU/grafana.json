@@ -1256,20 +1256,6 @@
       "copy-code": "Копировать код",
       "download": "Загрузить"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Правило оповещения",
-        "all": "Все",
-        "error": "Ошибка",
-        "firing": "Активно",
-        "no-data": "Нет данных",
-        "normal": "Нормальное",
-        "ok": "OK",
-        "pending": "Ожидание",
-        "recording-rule": "Правило записи",
-        "recovering": "Восстановление"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "список-отфильтрованных-правил"
     },
@@ -2614,11 +2600,27 @@
       "delete-rule": {
         "success": "Правило удалено"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Оценка правила приостановлена"
       },
       "resume-rule": {
         "success": "Оценка правила возобновлена"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Правило обновлено"
@@ -2627,20 +2629,29 @@
     "rules-filter": {
       "clear-filters": "Очистить фильтры",
       "configured-alert-rules": "Источники данных, содержащие настроенные правила оповещений принадлежат к источникам Mimir или Loki, где правила оповещения хранятся и оцениваются в самом источнике данных.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Дашборд",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Справка по поиску по источникам данных",
       "filter-options": {
-        "aria-label-show-filters": "Показать фильтры",
-        "label-custom-filter": "Пользовательский фильтр",
-        "label-saved-searches": "Сохраненные поиски"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Работоспособность",
       "label": {
         "hide": "Скрыть",
         "show": "Показать"
       },
       "manage-alerts": "В этих источниках данных можно выбрать параметр «Управление оповещениями через пользовательский интерфейс Alerting», чтобы иметь возможность управлять этими правилами оповещения в пользовательском интерфейсе Grafana, а также в источнике данных, где они были установлены.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Все источники данных",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Правила плагинов",
       "rule-type": "Тип правила",
       "rulesSearchInput-placeholder-search": "Поиск",
@@ -2655,9 +2666,6 @@
       "text-federated": "Федеративная",
       "text-provisioned": "Подготовлено"
     },
-    "saved-searches": {
-      "text-default": "По умолчанию"
-    },
     "search": {
       "property": {
         "data-source": "Источник данных",
@@ -2665,11 +2673,10 @@
         "labels": "Метки",
         "namespace": "Папка / пространство имен",
         "rule-health": "Работоспособность",
-        "rule-name": "Имя правила оповещения",
+        "rule-name": "",
         "rule-type": "Тип",
         "state": "Состояние"
-      },
-      "save-query": "Сохранить текущий поиск"
+      }
     },
     "search-field-input": {
       "clear": "Очистить",
@@ -3661,11 +3668,11 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
+      "error-invalid-characters": "",
       "error-required": "Требуется имя папки",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
       "label-folder-name": "Имя папки",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
-      "text-your-folder-will-be-created-as": "Ваша папка будет создана как {{folderName}}",
       "title-pull-request-created": "Создан запрос на включение изменений",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
@@ -4132,10 +4139,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Применить",
     "cancel": "Отмена",
     "clear": "Очистить",
-    "close": "Закрыть",
     "collapse": "Свернуть",
     "edit": "Редактировать",
     "help": "Справка",
@@ -4550,6 +4557,10 @@
           },
           "value": "Значение"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "Элемент скрыт из-за условной визуализации."
@@ -6625,6 +6636,9 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus и Loki"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Отмена",
       "placeholder-filter-by-name-or-type": "Фильтр по названию или типу"
@@ -7554,11 +7568,6 @@
     "select-aria-label": "Фильтр папок",
     "select-placeholder": "Фильтровать по папкам"
   },
-  "folder-picker": {
-    "create-instructions": "Чтобы создать новую папку, нажмите Enter.",
-    "input-placeholder": "Нажмите Enter, чтобы подтвердить новую папку",
-    "loading": "Загрузка папок..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -7913,7 +7922,8 @@
       "edit-pane": {
         "go-back": "Назад"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -8776,7 +8786,6 @@
       "filter-popup-input-placeholder": "Значения фильтра",
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
-      "inspect-menu-label": "Проверить значение",
       "nested-table": {
         "no-data": "Нет данных"
       },
@@ -9106,6 +9115,7 @@
       "sign-up": "Зарегистрироваться"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Перетащить для изменения порядка",
@@ -11330,7 +11340,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Назад к репозиториям",
-      "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Убедитесь, что конфигурация репозитория существует в файле конфигурации.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Сохранить",
@@ -11528,6 +11540,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Теперь ваши ресурсы находятся во внешнем хранилище и подготовлены для вашего экземпляра. С этого момента ваш экземпляр и внешнее хранилище будут синхронизироваться.",
@@ -12856,6 +12871,7 @@
     "description-fields": "Выбрать поля, которые необходимо рассчитать",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
+    "description-tooltip-from-field": "",
     "name-calculation": "Расчет",
     "name-cell-height": "Высота ячеек",
     "name-cell-type": "Тип ячеек",
@@ -12871,8 +12887,17 @@
     "name-min-column-width": "Минимальная ширина столбца",
     "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "авто",
-    "placeholder-fields": "Все числовые поля"
+    "placeholder-fields": "Все числовые поля",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Очистить теги",

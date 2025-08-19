@@ -121,6 +121,8 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, search)
 
+	t.Cleanup(search.CloseAllIndexes)
+
 	// Create a new resource backend
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
