@@ -17,7 +17,7 @@ type Repository struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
-	Secure SecureValues     `json:"secure,omitempty"`
+	Secure SecureValues     `json:"secure,omitzero,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
 }
 
@@ -28,6 +28,10 @@ type SecureValues struct {
 
 	// Some webhooks (github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+}
+
+func (v SecureValues) IsZero() bool {
+	return v.Token.IsZero() && v.WebhookSecret.IsZero()
 }
 
 type LocalRepositoryConfig struct {
