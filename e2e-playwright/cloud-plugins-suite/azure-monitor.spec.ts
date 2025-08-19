@@ -4,12 +4,12 @@ import { Page } from 'playwright-core';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  test,
-  expect,
   CreateDataSourcePageArgs,
+  DashboardPage,
   DataSourceConfigPage,
   E2ESelectorGroups,
-  DashboardPage,
+  expect,
+  test,
 } from '@grafana/plugin-e2e';
 
 import { AzureQueryType } from '../../public/app/plugins/datasource/azuremonitor/dataquery.gen';
@@ -71,8 +71,7 @@ async function provisionAzureMonitorDatasources(
   await configPage.saveAndTest();
 }
 
-// TODO unskip when we've figured out how to populate the credentials in CI
-test.describe.skip(
+test.describe(
   'Azure Monitor datasource',
   {
     tag: ['@cloud-plugins'],
@@ -84,7 +83,7 @@ test.describe.skip(
       // Check if we're running in CI
       const CI = process.env.CI;
       if (CI) {
-        const outputs = JSON.parse(readFileSync('outputs.json', 'utf8'));
+        const outputs = JSON.parse(readFileSync('/tmp/outputs.json', 'utf8'));
         datasourceConfig = {
           jsonData: {
             cloudName: 'Azure',
@@ -134,6 +133,7 @@ test.describe.skip(
       await expect(page.getByText(rootSubscription)).toBeVisible({ timeout: 30000 });
       const resourceSearchInput = page.getByTestId(azMonSelectors.components.queryEditor.resourcePicker.search.input);
       await resourceSearchInput.fill(storageAcctName);
+      await resourceSearchInput.press('Enter');
       await expect(page.getByText(storageAcctName)).toBeVisible({ timeout: 30000 });
       await page.getByText(storageAcctName).click();
       const applyButton = page.getByTestId(azMonSelectors.components.queryEditor.resourcePicker.apply.button);
@@ -164,6 +164,7 @@ test.describe.skip(
       await resourcePickerButton.click();
       await expect(page.getByText(rootSubscription)).toBeVisible({ timeout: 30000 });
       await resourceSearchInput.fill(logAnalyticsName);
+      await resourceSearchInput.press('Enter');
       await expect(page.getByText(logAnalyticsName)).toBeVisible({ timeout: 30000 });
       await page.getByText(logAnalyticsName).click();
       await applyButton.click();
@@ -220,6 +221,7 @@ test.describe.skip(
       await resourcePickerButton.click();
       await expect(page.getByText(rootSubscription)).toBeVisible({ timeout: 30000 });
       await resourceSearchInput.fill(applicationInsightsName);
+      await resourceSearchInput.press('Enter');
       await expect(page.getByText(applicationInsightsName)).toBeVisible({ timeout: 30000 });
       await page.getByText(applicationInsightsName).click();
       await applyButton.click();
