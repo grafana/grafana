@@ -136,7 +136,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.decimals) {
+  if (typeof style.decimals === 'number') {
     override.properties.push({
       id: 'decimals',
       value: style.decimals,
