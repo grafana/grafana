@@ -216,7 +216,7 @@ const migrateDefaults = (prevDefaults: Style) => {
       isNil
     );
 
-    if (prevDefaults.thresholds.length) {
+    if (prevDefaults.thresholds?.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),

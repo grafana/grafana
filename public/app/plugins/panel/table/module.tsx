@@ -113,7 +113,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           name: t('table.name-wrap-header-text', 'Wrap header text'),
           description: t('table.description-wrap-header-text', 'Enables text wrapping for column headers'),
           category,
-          defaultValue: defaultTableFieldOptions.wrapHeaderText,
+          defaultValue: undefined,
         })
         .addBooleanSwitch({
           path: 'hidden',
@@ -138,10 +138,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           settings: {
             options: [
               {
-                label: t('table-new.tooltip-placement-options.label-auto', 'Auto'),
-                value: TableCellTooltipPlacement.Auto,
-              },
-              {
                 label: t('table-new.tooltip-placement-options.label-top', 'Top'),
                 value: TableCellTooltipPlacement.Top,
               },
@@ -159,7 +155,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
               },
             ],
           },
-          defaultValue: 'auto',
           showIf: (cfg) => cfg.tooltip?.field !== undefined,
         });
     },

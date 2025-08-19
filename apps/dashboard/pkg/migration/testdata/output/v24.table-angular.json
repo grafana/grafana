@@ -130,10 +130,6 @@
                 "value": "short"
               },
               {
-                "id": "decimals",
-                "value": 0
-              },
-              {
                 "id": "custom.cellOptions",
                 "value": {
                   "type": "color-text"
