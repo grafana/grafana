@@ -141,7 +141,7 @@ jobs:
       POSTGRES_HOST: 127.0.0.1
     services:
       postgres:
-        image: postgres:12.3-alpine
+        image: postgres:17.6
         env:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
