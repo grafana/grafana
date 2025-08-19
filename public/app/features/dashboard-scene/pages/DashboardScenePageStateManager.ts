@@ -8,6 +8,7 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
+  AnnoKeyEmbedded,
   AnnoKeyFolder,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
@@ -639,8 +640,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
 
           if (route === DashboardRoutes.Embedded) {
-            throw new Error('Method not implemented.');
-            // rsp.meta.isEmbedded = true;
+            rsp.metadata.annotations = rsp.metadata.annotations || {};
+            rsp.metadata.annotations[AnnoKeyEmbedded] = 'embedded';
           }
       }
       if (rsp.access.url && route === DashboardRoutes.Normal) {
