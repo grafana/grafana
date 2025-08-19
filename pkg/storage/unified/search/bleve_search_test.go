@@ -519,7 +519,7 @@ func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 	}
 }
 
-func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize int64, writer IndexWriter) resource.ResourceIndex {
+func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize int64, writer resource.BuildFn) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -557,9 +557,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, batchSize
 	return index
 }
 
-type IndexWriter func(index resource.ResourceIndex) (int64, error)
-
-var noop IndexWriter = func(index resource.ResourceIndex) (int64, error) {
+var noop resource.BuildFn = func(index resource.ResourceIndex) (int64, error) {
 	return 0, nil
 }
 

@@ -205,8 +205,8 @@ func (b *bleveBackend) BuildIndex(
 	resourceVersion int64,
 	fields resource.SearchableDocumentFields,
 	indexBuildReason string,
-	builder func(index resource.ResourceIndex) (int64, error),
-	updater func(ctx context.Context, index resource.ResourceIndex, lastRV int64) (int64, error),
+	builder resource.BuildFn,
+	updater resource.UpdateFn,
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
@@ -262,7 +262,7 @@ func (b *bleveBackend) BuildIndex(
 	newIndexType := indexStorageMemory
 	build := true
 
-	if size > b.opts.FileThreshold {
+	if size >= b.opts.FileThreshold {
 		newIndexType = indexStorageFile
 
 		// We only check for the existing file-based index if we don't already have an open index for this key.
@@ -313,7 +313,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Batch all the changes
-	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater)
+	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 
 	if build {
 		if b.indexMetrics != nil {
@@ -331,11 +331,12 @@ func (b *bleveBackend) BuildIndex(
 		}
 		err = idx.updateResourceVersion(listRV)
 		if err != nil {
-			return nil, fmt.Errorf("fail to persist rv to index: %w", err)
+			logWithDetails.Error("Failed to persist RV to index", "err", err, "rv", listRV)
+			return nil, fmt.Errorf("failed to persist RV to index: %w", err)
 		}
 
 		elapsed := time.Since(start)
-		logWithDetails.Info("Finished building index", "elapsed", elapsed)
+		logWithDetails.Info("Finished building index", "elapsed", elapsed, "listRV", listRV)
 
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
@@ -343,10 +344,7 @@ func (b *bleveBackend) BuildIndex(
 	} else {
 		logWithDetails.Info("Skipping index build, using existing index")
 
-		idx.resourceVersion, err = getRV(index)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get RV from bleve index: %w", err)
-		}
+		idx.resourceVersion = indexRV
 
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexBuildSkipped.Inc()
@@ -557,6 +555,7 @@ func (b *bleveBackend) CloseAllIndexes() {
 }
 
 type updateRequest struct {
+	reason   string
 	callback chan error
 }
 
@@ -564,6 +563,7 @@ type bleveIndex struct {
 	key   resource.NamespacedResource
 	index bleve.Index
 
+	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion int64
 
 	standard resource.SearchableDocumentFields
@@ -579,8 +579,9 @@ type bleveIndex struct {
 	allFields []*resourcepb.ResourceTableColumnDefinition
 	features  featuremgmt.FeatureToggles
 	tracing   trace.Tracer
+	logger    *slog.Logger
 
-	updaterFn func(ctx context.Context, index resource.ResourceIndex, lastRV int64) (int64, error)
+	updaterFn resource.UpdateFn
 
 	updaterMu      sync.Mutex
 	updaterCond    *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
@@ -596,8 +597,9 @@ func (b *bleveBackend) newBleveIndex(
 	fields resource.SearchableDocumentFields,
 	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
-	updaterFn func(ctx context.Context, index resource.ResourceIndex, lastRV int64,
-	) (int64, error)) *bleveIndex {
+	updaterFn resource.UpdateFn,
+	logger *slog.Logger,
+) *bleveIndex {
 	bi := &bleveIndex{
 		key:            key,
 		index:          index,
@@ -607,6 +609,7 @@ func (b *bleveBackend) newBleveIndex(
 		standard:       standardSearchFields,
 		features:       b.features,
 		tracing:        b.tracer,
+		logger:         logger,
 		updaterFn:      updaterFn,
 		updaterEnabled: true,
 	}
@@ -1138,14 +1141,14 @@ func (b *bleveIndex) closeAndStopUpdates() error {
 	return err
 }
 
-func (b *bleveIndex) UpdateIndex(ctx context.Context) error {
+func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
 	// We don't have to do anything if the index cannot be updated (typically in tests).
 	if b.updaterFn == nil {
 		return nil
 	}
 
 	// Use chan with buffer size 1 to ensure that we can always send error back, even if there's no reader anymore.
-	req := updateRequest{callback: make(chan error, 1)}
+	req := updateRequest{reason: reason, callback: make(chan error, 1)}
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
@@ -1211,9 +1214,15 @@ func (b *bleveIndex) updater(ctx context.Context) {
 			return
 		}
 
+		// Build reasons map
+		reasons := map[string]int{}
+		for _, req := range batch {
+			reasons[req.reason]++
+		}
+
 		var err = ctx.Err()
 		if err == nil {
-			_, err = b.updateIndexWithLatestModifications(ctx)
+			_, err = b.updateIndexWithLatestModifications(ctx, len(batch), reasons)
 		}
 		for _, req := range batch {
 			req.callback <- err
@@ -1221,13 +1230,22 @@ func (b *bleveIndex) updater(ctx context.Context) {
 	}
 }
 
-func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context) (int64, error) {
+func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, requests int, reasons map[string]int) (int64, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"updateIndexWithLatestModifications")
 	defer span.End()
 
-	rv, err := b.updaterFn(ctx, b, b.resourceVersion)
+	b.logger.Debug("Updating index", "sinceRV", b.resourceVersion, "requests", requests, "reasons", reasons)
+
+	startTime := time.Now()
+	rv, docs, err := b.updaterFn(ctx, b, b.resourceVersion)
 	if err == nil && rv > 0 {
 		err = b.updateResourceVersion(rv)
+	}
+
+	if err == nil {
+		b.logger.Debug("Finished updating index", "listRV", b.resourceVersion, "duration", time.Since(startTime), "docs", docs)
+	} else {
+		b.logger.Debug("Updating of index finished with error", "duration", time.Since(startTime), "err", err)
 	}
 	return rv, err
 }
