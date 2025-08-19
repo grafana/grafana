@@ -63,7 +63,7 @@ export function prepSeries(
     let xMatcher = getFieldMatcher(
       seriesCfg.x?.matcher ?? {
         id: FieldMatcherID.byType,
-        options:'number',
+        options: 'number',
       }
     );
     let yMatcher = getFieldMatcher(
