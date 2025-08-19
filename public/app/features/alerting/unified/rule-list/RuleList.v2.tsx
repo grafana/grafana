@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
+import { useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
@@ -35,12 +37,16 @@ function RuleList() {
 export function RuleListActions() {
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+  const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
   const canImportRulesToGMA = isAdmin() && config.featureToggles.alertingMigrationUI;
+
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
   const moreActionsMenu = useMemo(
     () => (
@@ -51,10 +57,17 @@ export function RuleListActions() {
             icon="file-export"
             url="/alerting/export-new-rule"
           />
+          {canExportRules && (
+            <Menu.Item
+              label={t('alerting.rule-list.export-all-grafana-rules', 'Export all Grafana rules')}
+              icon="download-alt"
+              onClick={toggleShowExportDrawer}
+            />
+          )}
           {canImportRulesToGMA && (
             <Menu.Item
               label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
-              icon="import"
+              icon="upload"
               url="/alerting/import-datasource-managed-rules"
             />
           )}
@@ -77,7 +90,7 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
+    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA, canExportRules, toggleShowExportDrawer]
   );
 
   return (
@@ -93,6 +106,7 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />
         </Button>
       </Dropdown>
+      {canExportRules && showExportDrawer && <GrafanaRulesExporter onClose={toggleShowExportDrawer} />}
     </Stack>
   );
 }
