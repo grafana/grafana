@@ -33,14 +33,6 @@ type GetReceiversQuery struct {
 	Decrypt bool
 }
 
-// ListReceiversQuery represents a query for listing receiver groups.
-type ListReceiversQuery struct {
-	OrgID  int64
-	Names  []string
-	Limit  int
-	Offset int
-}
-
 // ReceiverMetadata contains metadata about a receiver's usage in routes and rules.
 type ReceiverMetadata struct {
 	InUseByRules  []AlertRuleKey
