@@ -110,6 +110,15 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
+func logCacheHeaders(logger log.Logger, req *http.Request) {
+	for k, vs := range req.Header {
+		if strings.Contains(k, "Cache") {
+			v := strings.Join(vs, ",")
+			logger.Debug("cache-request-header", "key", k, "value", v)
+		}
+	}
+}
+
 // called by mt query service and also when queryServiceFromUI is enabled, can be both mt and st
 func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
@@ -126,6 +135,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
 		connectLogger := b.log.New("traceId", traceId.String())
+		logCacheHeaders(connectLogger, httpreq)
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
