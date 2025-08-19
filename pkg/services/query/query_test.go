@@ -31,8 +31,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -653,7 +653,7 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 }
 
-func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
+func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
@@ -758,11 +758,11 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 
-	var mtdsClientBuilder mtdsclient.MTDatasourceClientBuilder
+	var qsdsClientBuilder dsquerierclient.QSDatasourceClientBuilder
 	if isMultiTenant {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(isMultiTenant, mockClient)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(isMultiTenant, mockClient)
 	} else {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(false, nil)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(false, nil)
 	}
 
 	exprService := expr.ProvideService(
@@ -772,7 +772,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		featuremgmt.WithFeatures(),
 		nil,
 		tracing.InitializeTracerForTest(),
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	queryService := ProvideService(
@@ -782,7 +782,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		rv,
 		pc,
 		pCtxProvider,
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	return &testContext{
