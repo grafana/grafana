@@ -59,7 +59,7 @@ jobs:
         uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
-          cache: false
+          cache: true 
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -88,7 +88,7 @@ jobs:
       MYSQL_HOST: 127.0.0.1
     services:
       mysql:
-        image: mysql:8.0.43
+        image: mysql:8.0.32
         env:
           MYSQL_ROOT_PASSWORD: rootpass
           MYSQL_DATABASE: grafana_tests
@@ -106,7 +106,7 @@ jobs:
         uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
-          cache: false
+          cache: true
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -138,7 +138,7 @@ jobs:
       POSTGRES_HOST: 127.0.0.1
     services:
       postgres:
-        image: postgres:16.10
+        image: postgres:12.3-alpine
         env:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
@@ -154,7 +154,7 @@ jobs:
         uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
-          cache: false
+          cache: true
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
