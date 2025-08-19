@@ -8,7 +8,7 @@ import (
 )
 
 // Connection to a datasource instance
-// The connection name must be 'ds:{group}:{name}'
+// The connection name must be '{group}:{name}'
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceConnection struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -26,8 +26,8 @@ type DataSourceConnectionRef struct {
 	Version string `json:"version"`
 	Name    string `json:"name"`
 
-	// The plugin ID -- NOTE, this has a 1:1 mapping with apiGroup and should likely be removed
-	PluginID string `json:"pluginId"`
+	// The plugin -- NOTE, this has a 1:1 mapping with apiGroup and should likely be removed
+	Plugin string `json:"plugin"`
 }
 
 // The valid connection name for a group + identifier

@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -121,7 +122,10 @@ func (q *connectionsProvider) ListConnections(ctx context.Context, namespace str
 	}
 	for _, ds := range dss {
 		// TODO, access control?!
-		v, _ := q.asConnection(ds, namespace)
+		v, err := q.asConnection(ds, namespace)
+		if err != nil {
+			return nil, err
+		}
 		result.Items = append(result.Items, *v)
 	}
 	return result, nil
@@ -130,7 +134,12 @@ func (q *connectionsProvider) ListConnections(ctx context.Context, namespace str
 func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string) (v *queryV0.DataSourceConnection, err error) {
 	gv, err := q.registry.GetDatasourceGroupVersion(ds.Type)
 	if err != nil {
-		return nil, err
+		// how does this happen? (grafana-e2etest-datasource)
+		gv = schema.GroupVersion{
+			Group:   "unknown-" + ds.Type,
+			Version: "unknown",
+		}
+		err = nil
 	}
 
 	v = &queryV0.DataSourceConnection{

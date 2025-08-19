@@ -153,7 +153,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Connection to a datasource instance The connection name must be 'ds:{group}:{name}'",
+				Description: "Connection to a datasource instance The connection name must be '{group}:{name}'",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -276,16 +276,16 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnectionRef(ref common.Reference
 							Format:  "",
 						},
 					},
-					"pluginId": {
+					"plugin": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The plugin ID -- NOTE, this has a 1:1 mapping with apiGroup and should likely be removed",
+							Description: "The plugin -- NOTE, this has a 1:1 mapping with apiGroup and should likely be removed",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"group", "version", "name", "pluginId"},
+				Required: []string{"group", "version", "name", "plugin"},
 			},
 		},
 	}
