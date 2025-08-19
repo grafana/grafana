@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -107,4 +108,122 @@ func TestSanitizeLabelSet(t *testing.T) {
 			require.Equal(t, tc.expectedResult, am.sanitizeLabelSet(tc.labelset))
 		})
 	}
+}
+
+func TestWithMaxQueueCapacity(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	t.Run("WithMaxQueueCapacity sets custom capacity", func(t *testing.T) {
+		customCapacity := 123
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithMaxQueueCapacity(customCapacity))
+		require.NoError(t, err)
+		require.Equal(t, customCapacity, am.options.QueueCapacity)
+	})
+
+	t.Run("default capacity when option is not used", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.Equal(t, defaultMaxQueueCapacity, am.options.QueueCapacity)
+	})
+
+	t.Run("custom queue capacity is enforced", func(t *testing.T) {
+		customCapacity := 5
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithMaxQueueCapacity(customCapacity))
+		require.NoError(t, err)
+
+		totalAlerts := customCapacity + 3
+		alerts := make([]*Alert, totalAlerts)
+		for i := range alerts {
+			alerts[i] = &Alert{
+				Labels: labels.FromStrings("alertname", fmt.Sprintf("alert_%d", i)),
+			}
+		}
+
+		am.manager.Send(alerts...)
+
+		require.Equal(t, customCapacity, len(am.manager.queue))
+
+		for i, alert := range am.manager.queue {
+			expectedLabel := fmt.Sprintf("alert_%d", i+3)
+			require.Equal(t, expectedLabel, alert.Labels.Get("alertname"))
+		}
+	})
+}
+
+func TestWithMaxBatchSize(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	t.Run("WithMaxBatchSize sets custom batch size", func(t *testing.T) {
+		customBatchSize := 5
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithMaxBatchSize(customBatchSize))
+		require.NoError(t, err)
+		require.Equal(t, customBatchSize, am.options.MaxBatchSize)
+		require.Equal(t, customBatchSize, am.manager.opts.MaxBatchSize)
+	})
+
+	t.Run("default batch size when option is not used", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.Equal(t, DefaultMaxBatchSize, am.options.MaxBatchSize)
+		require.Equal(t, DefaultMaxBatchSize, am.manager.opts.MaxBatchSize)
+	})
+
+	t.Run("custom batch size is enforced", func(t *testing.T) {
+		customBatchSize := 3
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithMaxBatchSize(customBatchSize))
+		require.NoError(t, err)
+
+		totalAlerts := customBatchSize * 2
+		alerts := make([]*Alert, totalAlerts)
+		for i := range alerts {
+			alerts[i] = &Alert{
+				Labels: labels.FromStrings("alertname", fmt.Sprintf("alert_%d", i)),
+			}
+		}
+
+		am.manager.Send(alerts...)
+		require.Equal(t, totalAlerts, len(am.manager.queue))
+
+		firstBatch := am.manager.nextBatch()
+		require.Equal(t, customBatchSize, len(firstBatch))
+
+		secondBatch := am.manager.nextBatch()
+		require.Equal(t, customBatchSize, len(secondBatch))
+
+		emptyBatch := am.manager.nextBatch()
+		require.Equal(t, 0, len(emptyBatch), "No more alerts should remain")
+	})
+}
+
+func TestWithUTF8Labels(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	alert := models.PostableAlert{
+		Annotations: models.LabelSet{
+			"some-name": "test",
+		},
+		Alert: models.Alert{
+			Labels: models.LabelSet{
+				"🔥": "fire",
+			},
+		},
+	}
+
+	t.Run("WithUTF8Labels preserves UTF-8 characters", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithUTF8Labels())
+		require.NoError(t, err)
+
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, "test", result.Annotations.Get("some-name"))
+		require.Equal(t, "fire", result.Labels.Get("🔥"))
+	})
+
+	t.Run("default sanitizes UTF-8 characters", func(t *testing.T) {
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
+
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, "test", result.Annotations.Get("some_name"))
+		require.Equal(t, "fire", result.Labels.Get("_0x1f525"))
+	})
 }
