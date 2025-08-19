@@ -8,15 +8,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/simple"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/apps/iam/pkg/apis"
-	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 )
 
 type AppConfig = reconcilers.AppConfig
 
+var appManifestData = app.ManifestData{
+	AppName: "iam-folder-reconciler",
+	Group:   "iam.grafana.app",
+}
+
 func Provider(appCfg AppConfig) app.Provider {
-	return simple.NewAppProvider(apis.LocalManifest(), appCfg, New)
+	return simple.NewAppProvider(app.NewEmbeddedManifest(appManifestData), appCfg, New)
 }
 
 func New(cfg app.Config) (app.App, error) {
@@ -34,38 +37,6 @@ func New(cfg app.Config) (app.App, error) {
 			ErrorHandler: func(ctx context.Context, err error) {
 				// FIXME: add your own error handling here
 				logging.FromContext(ctx).With("error", err).Error("Informer processing error")
-			},
-		},
-		ManagedKinds: []simple.AppManagedKind{
-			{
-				Kind: v0alpha1.GlobalRoleKind(),
-			},
-			{
-				Kind: v0alpha1.GlobalRoleBindingKind(),
-			},
-			{
-				Kind: v0alpha1.CoreRoleKind(),
-			},
-			{
-				Kind: v0alpha1.RoleKind(),
-			},
-			{
-				Kind: v0alpha1.RoleBindingKind(),
-			},
-			{
-				Kind: v0alpha1.ResourcePermissionKind(),
-			},
-			{
-				Kind: v0alpha1.UserKind(),
-			},
-			{
-				Kind: v0alpha1.TeamKind(),
-			},
-			{
-				Kind: v0alpha1.TeamBindingKind(),
-			},
-			{
-				Kind: v0alpha1.ServiceAccountKind(),
 			},
 		},
 		UnmanagedKinds: []simple.AppUnmanagedKind{
