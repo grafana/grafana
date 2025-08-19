@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"iter"
+	"maps"
 	"strconv"
 	"strings"
 
@@ -64,22 +66,29 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 	}
 
 	if ds.SecureJsonData != nil {
-		cfg.Secure = make(common.InlineSecureValues)
-		for k := range ds.SecureJsonData {
-			h := sha256.New()
-			h.Write([]byte(ds.Type)) // group+resource
-			h.Write([]byte("|"))
-			h.Write([]byte(ds.UID)) // name
-			h.Write([]byte("|"))
-			h.Write([]byte(k)) // property
-			n := hex.EncodeToString(h.Sum(nil))
-			cfg.Secure[k] = common.InlineSecureValue{
-				Name: "@" + n[0:10], // ??????
-			}
-		}
+		cfg.Secure = ToInlineSecureValues(ds.Type, ds.UID, maps.Keys(ds.SecureJsonData))
 	}
 
 	return cfg, nil
+}
+
+// ToInlineSecureValues converts secure json into InlineSecureValues with reference names
+// The names are predictable and can be used while we implement dual writing for secrets
+func ToInlineSecureValues(dsType string, dsUID string, keys iter.Seq[string]) common.InlineSecureValues {
+	values := make(common.InlineSecureValues)
+	for k := range keys {
+		h := sha256.New()
+		h.Write([]byte(dsType)) // plugin id
+		h.Write([]byte("|"))
+		h.Write([]byte(dsUID)) // unique identifier
+		h.Write([]byte("|"))
+		h.Write([]byte(k)) // property name
+		n := hex.EncodeToString(h.Sum(nil))
+		values[k] = common.InlineSecureValue{
+			Name: "ds-" + n[0:10], // predictable name for dual writing
+		}
+	}
+	return values
 }
 
 func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddDataSourceCommand, error) {
