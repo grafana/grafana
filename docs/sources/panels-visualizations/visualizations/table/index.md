@@ -296,11 +296,13 @@ With this cell type, cells can be displayed as a graphical gauge, with several d
 
 The gauge cell type has the following options:
 
-| Option | Description |
-| ------ | ----------- |
+<!-- prettier-ignore-start -->
+| Option             | Description                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- |
 | Gauge display mode | Controls the type of gauge used. For more information, refer to the [Gauge display mode](#gauge-display-mode). |
-| Value display | Controls how the value is displayed. For more information, refer to the [Value display](#value-display). |
+| Value display      | Controls how the value is displayed. For more information, refer to the [Value display](#value-display). |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+<!-- prettier-ignore-end -->
 
 {{< admonition type="note" >}}
 The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole dataset.
@@ -419,11 +421,13 @@ If you have a field value that is an image URL or a base64 encoded image, this c
 
 It has the following options:
 
+<!-- prettier-ignore-start -->
 | Option             | Description                                                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| ------------------ |  ---------------------------------------------------------------------------------------------------------------------------- |
 | Alt text           | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
-| Title text         | Set the text that's displayed when the image is hovered over with a cursor.                                                   |
+| Title text         | Set the text that's displayed when the image is hovered over with a cursor. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+<!-- prettier-ignore-end -->
 
 #### Actions
 
@@ -472,7 +476,6 @@ The following table has five visible fields (columns) as well as a hidden field 
 
 - The "Info" field is hidden using the **Table > Hide in table** override property.
 - The following overrides have been applied to the "Short text" field:
-
   - The values from the "Info" field are used as tooltip text for the "Short text" cells using the **Cell options > Tooltip from field** override property.
   - The **Cell options > Tooltip placement** override property is set to control the placement of the tooltip.
 
