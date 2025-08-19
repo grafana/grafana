@@ -81,8 +81,13 @@ type ResourceIndex interface {
 	DocCount(ctx context.Context, folder string) (int64, error)
 
 	// UpdateIndex updates the index with the latest data to guarantee strong consistency during the search.
-	UpdateIndex(ctx context.Context) error
+	UpdateIndex(ctx context.Context, reason string) error
 }
+
+type BuildFn func(index ResourceIndex) (int64, error)
+
+// UpdateFn is responsible for updating index with changes since given RV. It should return new RV, number of updated documents and error, if any.
+type UpdateFn func(context context.Context, index ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error)
 
 // SearchBackend contains the technology specific logic to support search
 type SearchBackend interface {
@@ -101,8 +106,8 @@ type SearchBackend interface {
 		resourceVersion int64,
 		nonStandardFields SearchableDocumentFields,
 		indexBuildReason string,
-		builder func(index ResourceIndex) (int64, error),
-		updater func(context context.Context, index ResourceIndex, sinceRV int64) (int64, error),
+		builder BuildFn,
+		updater UpdateFn,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -709,7 +714,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	}
 
 	if s.searchAfterWrite {
-		err := idx.UpdateIndex(ctx)
+		err := idx.UpdateIndex(ctx, reason)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err)
 		}
@@ -788,13 +793,10 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// When we reach the batch size, perform bulk index and reset the batch.
 				if len(items) >= maxBatchSize {
 					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-					if err = index.BulkIndex(&BulkIndexRequest{
-						Items: items,
-					}); err != nil {
+					if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
 						return err
 					}
 
-					// Reset the slice for the next batch while preserving capacity.
 					items = items[:0]
 				}
 			}
@@ -802,9 +804,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 			// Index any remaining items in the final batch.
 			if len(items) > 0 {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{
-					Items: items,
-				}); err != nil {
+				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
 					return err
 				}
 			}
@@ -813,12 +813,9 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return listRV, err
 	}
 
-	updaterFn := func(context context.Context, index ResourceIndex, sinceRV int64) (int64, error) {
+	updaterFn := func(context context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", documentStatsRV)))
-		logger.Debug("updating index", "sinceRV", sinceRV)
-
-		startTime := time.Now()
 
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
 			Group:     nsr.Group,
@@ -837,7 +834,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 			if err != nil {
 				span.RecordError(err)
-				return 0, err
+				return 0, 0, err
 			}
 
 			// Update the key name
@@ -848,33 +845,38 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				Name:      res.Key.Name,
 			}
 
-			// TODO: handle deletes
+			switch res.Action {
+			case int64(resourcepb.WatchEvent_ADDED), int64(resourcepb.WatchEvent_MODIFIED):
+				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+				// Convert it to an indexable document
+				doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
+				if err != nil {
+					span.RecordError(err)
+					logger.Error("error building search document", "key", SearchID(key), "err", err)
+					continue
+				}
 
-			span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
-			// Convert it to an indexable document
-			doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
-			if err != nil {
-				span.RecordError(err)
-				logger.Error("error building search document", "key", SearchID(key), "err", err)
+				items = append(items, &BulkIndexItem{
+					Action: ActionIndex,
+					Doc:    doc,
+				})
+			case int64(resourcepb.WatchEvent_DELETED):
+				items = append(items, &BulkIndexItem{
+					Action: ActionDelete,
+					Key:    key,
+				})
+			default:
+				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", res.Key)
 				continue
 			}
-
-			// Add to bulk items
-			items = append(items, &BulkIndexItem{
-				Action: ActionIndex,
-				Doc:    doc,
-			})
 
 			// When we reach the batch size, perform bulk index and reset the batch.
 			if len(items) >= maxBatchSize {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{
-					Items: items,
-				}); err != nil {
-					return 0, err
+				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+					return 0, 0, err
 				}
 
-				// Reset the slice for the next batch while preserving capacity.
 				items = items[:0]
 			}
 		}
@@ -882,16 +884,12 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		// Index any remaining items in the final batch.
 		if len(items) > 0 {
 			span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-			if err = index.BulkIndex(&BulkIndexRequest{
-				Items: items,
-			}); err != nil {
-				return 0, err
+			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				return 0, 0, err
 			}
 		}
 
-		logger.Debug("finished updating index", "sinceRV", sinceRV, "docs", docs, "elapsed", time.Since(startTime))
-
-		return rv, nil
+		return rv, docs, nil
 	}
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, documentStatsRV, fields, indexBuildReason, builderFn, updaterFn)
@@ -925,9 +923,9 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, "empty", func(index ResourceIndex) (int64, error) {
 		// Return the resource version without adding any documents to the index
 		return 0, nil
-	}, func(context context.Context, index ResourceIndex, sinceRV int64) (int64, error) {
+	}, func(context context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		// No update is performed.
-		return 0, nil
+		return 0, 0, nil
 	})
 }
 
