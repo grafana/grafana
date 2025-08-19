@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"net/http"
 	"regexp"
 	"strings"
@@ -125,8 +126,15 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer trace.Tracer) error {
 	url := req.URL
+	var lokiURL string
 
-	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
+	if req.Path == "config" {
+		lokiURL = fmt.Sprintf("%s", url)
+		fmt.Println("Hello config!")
+		fmt.Printf("%v\n", lokiURL)
+	} else {
+		lokiURL = fmt.Sprintf("/loki/api/v1/%s", url)
+	}
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
 		attribute.String("url", lokiURL),
@@ -165,11 +173,43 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	if rawLokiResponse.Encoding != "" {
 		respHeaders["content-encoding"] = []string{rawLokiResponse.Encoding}
 	}
+
+	if req.Path == "config" {
+		var body interface{}
+		if err := yaml.Unmarshal(rawLokiResponse.Body, &body); err != nil {
+			return err
+		}
+		body = convert(body)
+
+		if b, err := json.Marshal(body); err != nil {
+			return err
+		} else {
+			fmt.Printf("Output: %s\n", b)
+			rawLokiResponse.Body = b
+		}
+	}
+
 	return sender.Send(&backend.CallResourceResponse{
 		Status:  rawLokiResponse.Status,
 		Headers: respHeaders,
 		Body:    rawLokiResponse.Body,
 	})
+}
+
+func convert(i interface{}) interface{} {
+	switch x := i.(type) {
+	case map[interface{}]interface{}:
+		m2 := map[string]interface{}{}
+		for k, v := range x {
+			m2[k.(string)] = convert(v)
+		}
+		return m2
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convert(v)
+		}
+	}
+	return i
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
