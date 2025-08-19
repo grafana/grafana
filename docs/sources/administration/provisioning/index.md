@@ -55,7 +55,12 @@ datasources:
 
 ### Expansion of environment values
 
-Grafana's expansion feature considers any value after an `$` a variable, and converts `$$` into a single `$`. Therefore to escape a literal `$` use `$$`. For example, if you want `Pa$sword` as a final value, use `Pa$$sw0rd` in the environment variable value before the expansion.
+Grafana's expansion feature considers any value after an `$` a variable, and converts `$$` into a single `$`.
+
+For example, if you want `Pa$sword` as a final value:
+
+- Use the `$ENV_VAR_NAME` syntax to avoid double expansion. 
+- Use `Pa$$sw0rd` in the environment variable value before the expansion in order to escape a literal `$`. 
 
 ## Configuration management tools
 
