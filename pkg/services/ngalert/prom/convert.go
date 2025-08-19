@@ -236,7 +236,9 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	}
 
 	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels)+len(p.cfg.ExtraLabels)+1)
-	maps.Copy(labels, p.cfg.ExtraLabels)
+	if !isRecordingRule {
+		maps.Copy(labels, p.cfg.ExtraLabels)
+	}
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
 

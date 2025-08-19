@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import {
@@ -11,7 +12,7 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { PillCellProps, TableCellValue } from '../types';
+import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
 
 export function PillCell({ rowIdx, field, theme }: PillCellProps) {
   const value = field.values[rowIdx];
@@ -102,3 +103,25 @@ function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string
 
   return getColorByStringHash(colors, value);
 }
+
+export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow }) =>
+  css({
+    display: 'inline-flex',
+    gap: theme.spacing(0.5),
+    flexWrap: textWrap ? 'wrap' : 'nowrap',
+
+    ...(shouldOverflow && {
+      '&:hover, &[aria-selected=true]': {
+        flexWrap: 'wrap',
+      },
+    }),
+
+    '> span': {
+      display: 'flex',
+      padding: theme.spacing(0.25, 0.75),
+      borderRadius: theme.shape.radius.default,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      whiteSpace: 'nowrap',
+    },
+  });

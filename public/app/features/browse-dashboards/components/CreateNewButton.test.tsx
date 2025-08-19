@@ -15,7 +15,7 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
 }
 
 async function renderAndOpen(folder?: FolderDTO) {
-  render(<CreateNewButton canCreateDashboard canCreateFolder parentFolder={folder} />);
+  render(<CreateNewButton canCreateDashboard canCreateFolder parentFolder={folder} isReadOnlyRepo={false} />);
   const newButton = screen.getByText('New');
   await userEvent.click(newButton);
 }
@@ -42,7 +42,9 @@ describe('NewActionsButton', () => {
   });
 
   it('clicking the "New folder" button opens the drawer', async () => {
-    render(<CreateNewButton canCreateDashboard canCreateFolder parentFolder={mockParentFolder} />);
+    render(
+      <CreateNewButton canCreateDashboard canCreateFolder parentFolder={mockParentFolder} isReadOnlyRepo={false} />
+    );
 
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
@@ -55,7 +57,7 @@ describe('NewActionsButton', () => {
   });
 
   it('should only render dashboard items when folder creation is disabled', async () => {
-    render(<CreateNewButton canCreateDashboard canCreateFolder={false} />);
+    render(<CreateNewButton canCreateDashboard canCreateFolder={false} isReadOnlyRepo={false} />);
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
 
@@ -65,7 +67,7 @@ describe('NewActionsButton', () => {
   });
 
   it('should only render folder item when dashboard creation is disabled', async () => {
-    render(<CreateNewButton canCreateDashboard={false} canCreateFolder />);
+    render(<CreateNewButton canCreateDashboard={false} canCreateFolder isReadOnlyRepo={false} />);
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
 

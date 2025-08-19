@@ -77,11 +77,14 @@ export function SecondaryActions({
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
               variant="canvas"
               onClick={() =>
-                openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary, {
-                  context: CoreApp.Explore,
+                openQueryLibraryDrawer({
+                  datasourceFilters: activeDatasources,
+                  onSelectQuery: onSelectQueryFromLibrary,
+                  options: { context: CoreApp.Explore },
                 })
               }
               icon="plus"
+              disabled={addQueryRowButtonDisabled}
             >
               <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add query from library</Trans>
             </ToolbarButton>

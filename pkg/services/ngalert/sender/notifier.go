@@ -1,6 +1,6 @@
 // THIS FILE IS COPIED FROM UPSTREAM
 //
-// https://github.com/prometheus/prometheus/blob/293f0c9185260165fd7dabbf8a9e8758b32abeae/notifier/notifier.go
+// https://github.com/prometheus/prometheus/blob/bd5b2ea95ce14fba11db871b4068313408465207/notifier/notifier.go
 //
 // Copyright 2013 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana/pkg/util/httpclient"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	config_util "github.com/prometheus/common/config"
@@ -48,6 +47,9 @@ import (
 )
 
 const (
+	// DefaultMaxBatchSize is the default maximum number of alerts to send in a single request to the alertmanager.
+	DefaultMaxBatchSize = 256
+
 	contentTypeJSON = "application/json"
 )
 
@@ -135,6 +137,9 @@ type Options struct {
 	Do func(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error)
 
 	Registerer prometheus.Registerer
+
+	// MaxBatchSize determines the maximum number of alerts to send in a single request to the alertmanager.
+	MaxBatchSize int
 }
 
 type alertMetrics struct {
@@ -215,17 +220,14 @@ func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanag
 	return m
 }
 
-func do(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
-	if client == nil {
-		client = httpclient.New()
-	}
-	return client.Do(req.WithContext(ctx))
-}
-
 // NewManager is the manager constructor.
 func NewManager(o *Options, logger *slog.Logger) *Manager {
 	if o.Do == nil {
 		o.Do = do
+	}
+	// Set default MaxBatchSize if not provided.
+	if o.MaxBatchSize <= 0 {
+		o.MaxBatchSize = DefaultMaxBatchSize
 	}
 	if logger == nil {
 		logger = promslog.NewNopLogger()
@@ -253,8 +255,6 @@ func NewManager(o *Options, logger *slog.Logger) *Manager {
 	return n
 }
 
-const maxBatchSize = 64
-
 func (n *Manager) queueLen() int {
 	n.mtx.RLock()
 	defer n.mtx.RUnlock()
@@ -268,7 +268,7 @@ func (n *Manager) nextBatch() []*Alert {
 
 	var alerts []*Alert
 
-	if len(n.queue) > maxBatchSize {
+	if maxBatchSize := n.opts.MaxBatchSize; len(n.queue) > maxBatchSize {
 		alerts = append(make([]*Alert, 0, maxBatchSize), n.queue[:maxBatchSize]...)
 		n.queue = n.queue[maxBatchSize:]
 	} else {

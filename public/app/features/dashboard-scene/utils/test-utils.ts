@@ -143,6 +143,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       new VizPanel({
         title: 'Panel $server',
         pluginId: 'timeseries',
+        key: 'panel-1',
       }),
     x: options.x || 0,
     y: options.y || 0,
