@@ -180,7 +180,7 @@ const ErrCategoryTimeout = "timeout"
 var timeoutStr = "sql expression [{{ .Public.refId }}] timed out after {{ .Public.timeout }}"
 
 var TimeoutError = errutil.NewBase(
-	errutil.StatusTimeout, "sse.sql.timeout").MustTemplate(
+	errutil.StatusTimeout, sseErrBase+ErrCategoryTimeout).MustTemplate(
 	timeoutStr,
 	errutil.WithPublic(timeoutStr))
 
