@@ -97,26 +97,29 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	// take the first query in the request list, since all query should share the same timerange
-	q := req.Queries[0]
+	emptyQueries := []string{}
+	graphiteQueries := map[string]struct {
+		req      *http.Request
+		formData url.Values
+	}{}
+	for _, query := range req.Queries {
+		graphiteReq, formData, emptyQuery, err := s.createGraphiteRequest(ctx, query, logger, dsInfo)
+		if err != nil {
+			return nil, err
+		}
 
-	/*
-		graphite doc about from and until, with sdk we are getting absolute instead of relative time
-		https://graphite-api.readthedocs.io/en/latest/api.html#from-until
-	*/
-	from, until := epochMStoGraphiteTime(q.TimeRange)
-	formData := url.Values{
-		"from":          []string{from},
-		"until":         []string{until},
-		"format":        []string{"json"},
-		"maxDataPoints": []string{fmt.Sprintf("%d", q.MaxDataPoints)},
-		"target":        []string{},
-	}
+		if emptyQuery != nil {
+			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", emptyQuery))
+			continue
+		}
 
-	// Convert datasource query to graphite target request
-	targetList, emptyQueries, origRefIds, err := s.processQueries(logger, req.Queries)
-	if err != nil {
-		return nil, err
+		graphiteQueries[query.RefID] = struct {
+			req      *http.Request
+			formData url.Values
+		}{
+			req:      graphiteReq,
+			formData: formData,
+		}
 	}
 
 	var result = backend.QueryDataResponse{}
@@ -134,52 +137,47 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return &result, nil
 		}
 	}
-	formData["target"] = targetList
 
-	if setting.Env == setting.Dev {
-		logger.Debug("Graphite request", "params", formData)
-	}
+	frames := data.Frames{}
 
-	graphiteReq, err := s.createRequest(ctx, logger, dsInfo, formData)
-	if err != nil {
-		return &result, err
-	}
-
-	ctx, span := s.tracer.Start(ctx, "graphite query")
-	defer span.End()
-
-	targetStr := strings.Join(formData["target"], ",")
-	span.SetAttributes(
-		attribute.String("target", targetStr),
-		attribute.String("from", from),
-		attribute.String("until", until),
-		attribute.Int64("datasource_id", dsInfo.Id),
-		attribute.Int64("org_id", req.PluginContext.OrgID),
-	)
-	s.tracer.Inject(ctx, graphiteReq.Header, span)
-
-	res, err := dsInfo.HTTPClient.Do(graphiteReq)
-	if res != nil {
-		span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
-	}
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return &result, err
-	}
-
-	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			logger.Warn("Failed to close response body", "error", err)
+	for refId, graphiteReq := range graphiteQueries {
+		ctx, span := s.tracer.Start(ctx, "graphite query")
+		defer span.End()
+		targetStr := strings.Join(graphiteReq.formData["target"], ",")
+		span.SetAttributes(
+			attribute.String("refId", refId),
+			attribute.String("target", targetStr),
+			attribute.String("from", graphiteReq.formData["from"][0]),
+			attribute.String("until", graphiteReq.formData["until"][0]),
+			attribute.Int64("datasource_id", dsInfo.Id),
+			attribute.Int64("org_id", req.PluginContext.OrgID),
+		)
+		s.tracer.Inject(ctx, graphiteReq.req.Header, span)
+		res, err := dsInfo.HTTPClient.Do(graphiteReq.req)
+		if res != nil {
+			span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
 		}
-	}()
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return &result, err
+		}
 
-	frames, err := s.toDataFrames(logger, res, origRefIds)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return &result, err
+		defer func() {
+			err := res.Body.Close()
+			if err != nil {
+				logger.Warn("Failed to close response body", "error", err)
+			}
+		}()
+
+		queryFrames, err := s.toDataFrames(logger, res, refId)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return &result, err
+		}
+
+		frames = append(frames, queryFrames...)
 	}
 
 	result = backend.QueryDataResponse{
@@ -200,46 +198,82 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-// processQueries converts each datasource query to a graphite query target. It returns the list of
-// targets, a list of invalid queries, and a mapping of formatted refIds (used in the target query)
-// to original query refIds, later used to associate ressponses with the original queries
-func (s *Service) processQueries(logger log.Logger, queries []backend.DataQuery) ([]string, []string, map[string]string, error) {
-	emptyQueries := make([]string, 0)
-	origRefIds := make(map[string]string, 0)
-	targets := make([]string, 0)
+// processQuery converts a Graphite data source query to a Graphite query target. It returns the target,
+// and the model if the target is invalid
+func (s *Service) processQuery(logger log.Logger, query backend.DataQuery) (string, *simplejson.Json, error) {
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return "", nil, err
+	}
+	logger.Debug("Graphite", "query", model)
+	currTarget := ""
+	if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
+		currTarget = fullTarget
+	} else {
+		currTarget = model.Get(TargetModelField).MustString()
+	}
+	if currTarget == "" {
+		logger.Debug("Graphite", "empty query target", model)
+		return "", model, nil
+	}
+	target := fixIntervalFormat(currTarget)
 
-	for _, query := range queries {
-		model, err := simplejson.NewJson(query.JSON)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		logger.Debug("Graphite", "query", model)
-		currTarget := ""
-		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
-			currTarget = fullTarget
-		} else {
-			currTarget = model.Get(TargetModelField).MustString()
-		}
-		if currTarget == "" {
-			logger.Debug("Graphite", "empty query target", model)
-			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
-			continue
-		}
-		target := fixIntervalFormat(currTarget)
+	return target, nil, nil
+}
 
-		// This is a somewhat inglorious way to ensure we can associate results with the right query
-		// By using aliasSub, we can get back a resolved series Target name (accounting for other aliases)
-		// And the original refId. Since there are no restrictions on refId, we need to format it to make it
-		// easy to find in the response
-		formattedRefId := strings.ReplaceAll(query.RefID, " ", "_")
-		origRefIds[formattedRefId] = query.RefID
-		// This will set the alias to `<resolvedSeriesName> <formattedRefId>`
-		// e.g. aliasSub(alias(myquery, "foo"), "(^.*$)", "\1 A") will return "foo A"
-		target = fmt.Sprintf("aliasSub(%s,\"(^.*$)\",\"\\1 %s\")", target, formattedRefId)
-		targets = append(targets, target)
+func (s *Service) createRequest(ctx context.Context, l log.Logger, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
+	u, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join(u.Path, "render")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(data.Encode()))
+	if err != nil {
+		logger.Info("Failed to create request", "error", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	return targets, emptyQueries, origRefIds, nil
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return req, err
+}
+
+func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQuery, logger log.Logger, dsInfo *datasourceInfo) (*http.Request, url.Values, *simplejson.Json, error) {
+	/*
+		graphite doc about from and until, with sdk we are getting absolute instead of relative time
+		https://graphite-api.readthedocs.io/en/latest/api.html#from-until
+	*/
+	from, until := epochMStoGraphiteTime(query.TimeRange)
+	formData := url.Values{
+		"from":          []string{from},
+		"until":         []string{until},
+		"format":        []string{"json"},
+		"maxDataPoints": []string{fmt.Sprintf("%d", query.MaxDataPoints)},
+		"target":        []string{},
+	}
+
+	target, emptyQuery, err := s.processQuery(logger, query)
+	if err != nil {
+		return nil, formData, nil, err
+	}
+
+	if emptyQuery != nil {
+		logger.Debug("Graphite", "empty query target", emptyQuery)
+		return nil, formData, emptyQuery, nil
+	}
+
+	formData["target"] = []string{target}
+
+	if setting.Env == setting.Dev {
+		logger.Debug("Graphite request", "params", formData)
+	}
+
+	graphiteReq, err := s.createRequest(ctx, logger, dsInfo, formData)
+	if err != nil {
+		return nil, formData, nil, err
+	}
+
+	return graphiteReq, formData, emptyQuery, nil
 }
 
 func (s *Service) parseResponse(logger log.Logger, res *http.Response) ([]TargetResponseDTO, error) {
@@ -268,7 +302,7 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response) ([]Target
 	return data, nil
 }
 
-func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origRefIds map[string]string) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(logger log.Logger, response *http.Response, refId string) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(logger, response)
 	if err != nil {
 		return nil, err
@@ -278,18 +312,6 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 	for _, series := range responseData {
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
 		values := make([]*float64, 0, len(series.DataPoints))
-		// series.Target will be in the format <resolvedSeriesName> <formattedRefId>
-		ls := strings.LastIndex(series.Target, " ")
-		if ls == -1 {
-			return nil, fmt.Errorf("received graphite response with invalid target format: %s", series.Target)
-		}
-		target := series.Target[:ls]
-		formattedRefId := series.Target[ls+1:]
-		refId, ok := origRefIds[formattedRefId]
-		if !ok {
-			logger.Warn("Unable to find refId associated with provided formattedRefId", "formattedRefId", formattedRefId)
-			refId = formattedRefId // fallback - shouldn't happen except for in tests
-		}
 
 		for _, dataPoint := range series.DataPoints {
 			var timestamp, value, err = parseDataTimePoint(dataPoint)
@@ -303,7 +325,7 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				value = target
+				value = series.Target
 			}
 			switch value := value.(type) {
 			case string:
@@ -315,30 +337,14 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 
 		frames = append(frames, data.NewFrame(refId,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: target})))
+			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: series.Target})).SetMeta(
+			&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}))
 
 		if setting.Env == setting.Dev {
 			logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
 	return frames, nil
-}
-
-func (s *Service) createRequest(ctx context.Context, l log.Logger, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(data.Encode()))
-	if err != nil {
-		logger.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	return req, err
 }
 
 func fixIntervalFormat(target string) string {

@@ -3,7 +3,6 @@ import { memo } from 'react';
 import {
   PluginContextType,
   PluginExtensionAddedLinkConfig,
-  PluginExtensionLinkConfig,
   PluginExtensionPoints,
   PluginLoadingStrategy,
   PluginType,
@@ -92,16 +91,13 @@ describe('Plugin Extension Validators', () => {
 
     it('should throw an error if the configure() function is defined but is not a function', () => {
       expect(() => {
-        assertConfigureIsValid(
-          // @ts-ignore
-          {
-            title: 'Title',
-            description: 'Description',
-            extensionPointId: 'grafana/some-page/extension-point-a',
-            handler: () => {},
-            configure: '() => {}',
-          } as PluginExtensionLinkConfig
-        );
+        assertConfigureIsValid({
+          title: 'Title',
+          description: 'Description',
+          extensionPointId: 'grafana/some-page/extension-point-a',
+          handler: () => {},
+          configure: '() => {}',
+        } as unknown as PluginExtensionAddedLinkConfig); // We are casting to unknown to test it with a unvalid argument
       }).toThrowError();
     });
   });
@@ -202,9 +198,8 @@ describe('Plugin Extension Validators', () => {
 
   describe('isExtensionPointIdValid()', () => {
     test.each([
-      // We (for now allow core Grafana extension points to run without a version)
-      ['grafana/extension-point', ''],
-      ['grafana/extension-point', 'grafana'],
+      [PluginExtensionPoints.DashboardPanelMenu, ''],
+      [PluginExtensionPoints.DashboardPanelMenu, 'grafana'],
       ['myorg-extensions-app/extension-point', 'myorg-extensions-app'],
       ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
       ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
@@ -221,6 +216,9 @@ describe('Plugin Extension Validators', () => {
         isExtensionPointIdValid({
           extensionPointId,
           pluginId,
+          isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          isCoreGrafanaPlugin: false,
+          log: createLogMock(),
         })
       ).toBe(true);
     });
@@ -236,13 +234,33 @@ describe('Plugin Extension Validators', () => {
         'extension-point/v1',
         'myorgs-extensions-app',
       ],
+      [
+        // Not exposed to plugins
+        'grafana/not-exposed-extension-point/v1',
+        'grafana',
+      ],
     ])('should return FALSE if the extension point id is invalid ("%s", "%s")', (extensionPointId, pluginId) => {
       expect(
         isExtensionPointIdValid({
           extensionPointId,
           pluginId,
+          isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          isCoreGrafanaPlugin: false,
+          log: createLogMock(),
         })
       ).toBe(false);
+    });
+
+    it('should return FALSE true if the extension point id is set by a core plugin', () => {
+      expect(
+        isExtensionPointIdValid({
+          extensionPointId: 'traces',
+          pluginId: 'traces',
+          isInsidePlugin: true,
+          isCoreGrafanaPlugin: true,
+          log: createLogMock(),
+        })
+      ).toBe(true);
     });
   });
 
@@ -361,6 +379,21 @@ describe('Plugin Extension Validators', () => {
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
+
+    it('should return FALSE with links with the same title but different targets', () => {
+      const log = createLogMock();
+      config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
+      const extensionConfig2 = {
+        ...extensionConfig,
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+      };
+      config.apps[pluginId].extensions.addedLinks.push(extensionConfig2);
+
+      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig2, log);
+
+      expect(returnValue).toBe(false);
+      expect(log.error).toHaveBeenCalledTimes(0);
+    });
   });
 
   describe('isAddedComponentMetaInfoMissing()', () => {
@@ -477,6 +510,21 @@ describe('Plugin Extension Validators', () => {
       expect(returnValue).toBe(false);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
+    });
+
+    it('should return FALSE with components with the same title but different targets', () => {
+      const log = createLogMock();
+      config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
+      const extensionConfig2 = {
+        ...extensionConfig,
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+      };
+      config.apps[pluginId].extensions.addedComponents.push(extensionConfig2);
+
+      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig2, log);
+
+      expect(returnValue).toBe(false);
+      expect(log.error).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -595,6 +643,21 @@ describe('Plugin Extension Validators', () => {
       expect(returnValue).toBe(false);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
+    });
+
+    it('should return FALSE with components with the same title but different targets', () => {
+      const log = createLogMock();
+      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
+      const exposedComponentConfig2 = {
+        ...exposedComponentConfig,
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+      };
+      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig2);
+
+      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig2, log);
+
+      expect(returnValue).toBe(false);
+      expect(log.error).toHaveBeenCalledTimes(0);
     });
   });
 

@@ -5,15 +5,16 @@ import (
 	"testing"
 
 	"github.com/go-jose/go-jose/v3/jwt"
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderv0aplha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -161,7 +162,7 @@ func TestLegacyAuthorizer(t *testing.T) {
 		},
 	}
 
-	authz := newLegacyAuthorizer(acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders")))
+	authz := newLegacyAuthorizer(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -261,7 +262,7 @@ func TestMultiTenantAuthorizer(t *testing.T) {
 			authz := newMultiTenantAuthorizer(tt.input.client)
 			authorized, _, err := authz.Authorize(
 				types.WithAuthInfo(context.Background(), tt.input.info),
-				authorizer.AttributesRecord{User: tt.input.info, Verb: tt.input.verb, APIGroup: folderv0aplha1.GROUP, Resource: "folders", ResourceRequest: true, Name: "123", Namespace: "stacks-1"},
+				authorizer.AttributesRecord{User: tt.input.info, Verb: tt.input.verb, APIGroup: folders.GROUP, Resource: "folders", ResourceRequest: true, Name: "123", Namespace: "stacks-1"},
 			)
 
 			if tt.expeted.err {

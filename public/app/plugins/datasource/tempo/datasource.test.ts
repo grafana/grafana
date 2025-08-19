@@ -41,7 +41,10 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
-  getEscapedSpanNames,
+  getEscapedRegexValues,
+  getEscapedValues,
+  makeHistogramLink,
+  makePromServiceMapRequest,
 } from './datasource';
 import mockJson from './test/mockJsonResponse.json';
 import mockServiceGraph from './test/mockServiceGraph.json';
@@ -68,7 +71,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    config.featureToggles.traceQLStreaming = true;
     jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
@@ -172,16 +174,6 @@ describe('Tempo data source', () => {
             valueType: 'string',
           },
         ],
-        groupBy: [
-          {
-            id: 'groupBy1',
-            tag: '$interpolationVar',
-          },
-          {
-            id: 'groupBy2',
-            tag: '$interpolationVar',
-          },
-        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -214,8 +206,6 @@ describe('Tempo data source', () => {
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
       expect(queries[0].filters[1].tag).toBe(text);
-      expect(queries[0].groupBy?.[0].tag).toBe(text);
-      expect(queries[0].groupBy?.[1].tag).toBe(text);
     });
 
     it('when applying template variables', async () => {
@@ -228,8 +218,6 @@ describe('Tempo data source', () => {
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
-      expect(resp.groupBy?.[0].tag).toBe(scopedText);
-      expect(resp.groupBy?.[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {
@@ -318,7 +306,7 @@ describe('Tempo data source', () => {
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
-    expect(field.values[0]).toBe('60ba2abb44f13eae');
+    expect(field.values[0]).toBe('000000000000000060ba2abb44f13eae');
     expect(field.values.length).toBe(6);
   });
 
@@ -350,18 +338,6 @@ describe('Tempo data source', () => {
     const edgesFrame = response.data[1];
     expect(edgesFrame.name).toBe('Edges');
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
-  });
-
-  it('should format metrics summary query correctly', () => {
-    const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
-    const queryGroupBy = [
-      { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },
-      { id: '2', scope: TraceqlSearchScope.Span, tag: 'name' },
-      { id: '3', scope: TraceqlSearchScope.Resource, tag: 'service.name' },
-      { id: '4', scope: TraceqlSearchScope.Intrinsic, tag: 'kind' },
-    ];
-    const groupBy = ds.formatGroupBy(queryGroupBy);
-    expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
   });
 
   describe('test the testDatasource function', () => {
@@ -775,6 +751,20 @@ describe('Tempo service graph view', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="${app}",service="$app"}[$__range])) by (span_name))'
     );
+
+    targets = {
+      targets: [
+        { queryType: 'serviceMap', serviceMapQuery: '{client="app",client_deployment_environment="production"}' },
+      ],
+    } as DataQueryRequest<TempoQuery>;
+    builtQuery = buildExpr(
+      { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",deployment_environment="production"}[$__range])) by (span_name))'
+    );
   });
 
   it('should build link expr correctly', () => {
@@ -789,12 +779,12 @@ describe('Tempo service graph view', () => {
       'server.cluster.local:9090^/sample.test(.*)?',
       'test\\path',
     ];
-    let escaped = getEscapedSpanNames(spanNames);
+    let escaped = getEscapedRegexValues(getEscapedValues(spanNames));
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
-      'test\\\\\\\\path',
+      'test\\\\path',
     ]);
   });
 
@@ -825,7 +815,7 @@ describe('Tempo service graph view', () => {
         },
         {
           url: '',
-          title: 'Request histogram',
+          title: 'Request classic histogram',
           internal: {
             query: {
               expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))',
@@ -877,7 +867,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.name',
-          value: 'my-service',
+          value: 'my-target-service',
           valueType: 'string',
         },
       ],
@@ -922,7 +912,7 @@ describe('Tempo service graph view', () => {
         },
         {
           url: '',
-          title: 'Request histogram',
+          title: 'Request classic histogram',
           internal: {
             query: {
               expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.sourceName}",client_service_namespace="${__data.fields.sourceNamespace}",server="${__data.fields.targetName}",server_service_namespace="${__data.fields.targetNamespace}"}[$__rate_interval])) by (le, client, server, server_service_namespace, client_service_namespace))',
@@ -974,7 +964,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.namespace',
-          value: 'my-namespace',
+          value: 'my-target-namespace-service',
           valueType: 'string',
         },
         {
@@ -982,7 +972,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.name',
-          value: 'my-service',
+          value: 'my-target-name-service',
           valueType: 'string',
         },
       ],
@@ -1237,7 +1227,17 @@ describe('should provide functionality for ad-hoc filters', () => {
   });
 
   it('for getTagKeys', async () => {
-    const response = await datasource.getTagKeys();
+    const response = await datasource.getTagKeys({
+      filters: [],
+      timeRange: {
+        from: dateTime('2021-04-20T15:55:00Z'),
+        to: dateTime('2021-04-20T15:55:00Z'),
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
+    });
     expect(response).toEqual([{ text: 'span.label1' }, { text: 'span.label2' }]);
   });
 
@@ -1257,6 +1257,98 @@ describe('should provide functionality for ad-hoc filters', () => {
     };
     const response = await datasource.getTagValues(options);
     expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
+  });
+});
+
+describe('histogram type functionality', () => {
+  it('should create correct histogram links for classic histogram type', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy);
+    expect(links).toHaveLength(1);
+    expect(links[0].title).toBe('Request classic histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should create correct histogram links for native histogram type', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'native');
+    expect(links).toHaveLength(1);
+    expect(links[0].title).toBe('Request native histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should create correct histogram links for both histogram types', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'both');
+    expect(links).toHaveLength(2);
+    expect(links[0].title).toBe('Request classic histogram');
+    expect(links[1].title).toBe('Request native histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+    expect(links[1].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should include histogram type in field config', () => {
+    const datasourceUid = 'prom';
+    const tempoDatasourceUid = 'tempo';
+    const targetField = '__data.fields.target';
+    const tempoField = '__data.fields.target';
+    const sourceField = '__data.fields.source';
+
+    const fieldConfig = getFieldConfig(
+      datasourceUid,
+      tempoDatasourceUid,
+      targetField,
+      tempoField,
+      sourceField,
+      undefined,
+      'native'
+    );
+    const histogramLink = fieldConfig.links.find((link) => link.title === 'Request native histogram');
+    expect(histogramLink).toBeDefined();
+    expect(histogramLink?.internal?.query).toBeDefined();
+    if (histogramLink?.internal?.query && 'expr' in histogramLink.internal.query) {
+      expect(histogramLink.internal.query.expr).toBe(
+        'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+      );
+    }
+  });
+
+  it('should handle histogram type in service map query', () => {
+    const request = makePromServiceMapRequest(
+      {
+        targets: [{ serviceMapQuery: '{service="test"}' }],
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest<TempoQuery>,
+      'native'
+    );
+
+    const bucketMetric = request.targets.find((t: PromQuery) => t.expr.includes('_bucket'));
+    expect(bucketMetric).toBeUndefined();
+
+    const nativeMetric = request.targets.find((t: PromQuery) =>
+      t.expr.includes('traces_service_graph_request_server_seconds')
+    );
+    expect(nativeMetric).toBeDefined();
   });
 });
 
@@ -1469,7 +1561,7 @@ const serviceGraphLinks = [
   },
   {
     url: '',
-    title: 'Request histogram',
+    title: 'Request classic histogram',
     internal: {
       query: {
         expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
@@ -1508,7 +1600,10 @@ const serviceGraphLinks = [
 
 const replaceVariablesInstrumented = (variable: string): string => {
   const variables: Record<string, string> = {
-    [`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.target}}`]: 'my-target-service',
+    [`\${__data.fields.targetName}`]: 'my-target-name-service',
+    [`\${__data.fields.targetNamespace}`]: 'my-target-namespace-service',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'true',
   };
@@ -1517,7 +1612,7 @@ const replaceVariablesInstrumented = (variable: string): string => {
 
 const replaceVariablesUninstrumented = (variable: string): string => {
   const variables: Record<string, string> = {
-    [`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'false',
   };

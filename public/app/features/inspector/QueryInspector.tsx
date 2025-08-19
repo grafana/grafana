@@ -4,9 +4,9 @@ import { Subscription } from 'rxjs';
 
 import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Space, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getPanelInspectorStyles2 } from './styles';
@@ -206,8 +206,18 @@ export class QueryInspector extends PureComponent<Props, State> {
             <Stack key={info.refId} gap={1} direction="column">
               <div>
                 <span className={styles.refId}>{info.refId}:</span>
-                {info.frames > 1 && <span>{info.frames} frames, </span>}
-                <span>{info.rows} rows</span>
+                {info.frames > 1 && (
+                  <span>
+                    <Trans i18nKey="inspector.query-inspector.count-frames" count={info.frames}>
+                      {'{{count}}'} frames,{' '}
+                    </Trans>
+                  </span>
+                )}
+                <span>
+                  <Trans i18nKey="inspector.query-inspector.count-rows" count={info.rows}>
+                    {'{{count}}'} rows
+                  </Trans>
+                </span>
               </div>
               <pre>{info.query}</pre>
             </Stack>
@@ -228,7 +238,9 @@ export class QueryInspector extends PureComponent<Props, State> {
     return (
       <div className={styles.wrap}>
         <div aria-label={selectors.components.PanelInspector.Query.content}>
-          <h3 className={styles.heading}>Query inspector</h3>
+          <h3 className={styles.heading}>
+            <Trans i18nKey="inspector.query-inspector.query-inspector">Query inspector</Trans>
+          </h3>
           <p className="small muted">
             <Trans i18nKey="inspector.query.description">
               Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a
@@ -265,7 +277,11 @@ export class QueryInspector extends PureComponent<Props, State> {
         </Stack>
         <Space v={2} />
         <div className={styles.content}>
-          {isLoading && <LoadingPlaceholder text="Loading query inspector..." />}
+          {isLoading && (
+            <LoadingPlaceholder
+              text={t('inspector.query-inspector.text-loading-query-inspector', 'Loading query inspector...')}
+            />
+          )}
           {!isLoading && haveData && (
             <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
           )}

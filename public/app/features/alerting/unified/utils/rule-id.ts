@@ -262,16 +262,17 @@ export function hashRulerRule(rule: RulerRuleDTO): string {
     return rule.grafana_alert.uid;
   }
 
-  const fingerprint = getRulerRuleFingerprint(rule);
-  return hash(JSON.stringify(fingerprint)).toString();
-}
-
-function getRulerRuleFingerprint(rule: RulerCloudRuleDTO) {
   const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
   // If the prometheusRulesPrimary feature toggle is enabled, we don't need to hash the query
   // We need to make fingerprint compatibility between Prometheus and Ruler rules
   // Query often differs between the two, so we can't use it to generate a fingerprint
-  const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.expr);
+  const includeQuery = !prometheusRulesPrimary;
+  const fingerprint = getRulerRuleFingerprint(rule, includeQuery);
+  return hash(JSON.stringify(fingerprint)).toString();
+}
+
+export function getRulerRuleFingerprint(rule: RulerCloudRuleDTO, includeQuery: boolean) {
+  const queryHash = includeQuery ? hashQuery(rule.expr) : '';
   const labelsHash = hashLabelsOrAnnotations(rule.labels);
 
   if (rulerRuleType.dataSource.recordingRule(rule)) {
@@ -284,14 +285,15 @@ function getRulerRuleFingerprint(rule: RulerCloudRuleDTO) {
 }
 
 export function hashRule(rule: Rule): string {
-  const fingerprint = getPromRuleFingerprint(rule);
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+  const includeQuery = !prometheusRulesPrimary;
+
+  const fingerprint = getPromRuleFingerprint(rule, includeQuery);
   return hash(JSON.stringify(fingerprint)).toString();
 }
 
-function getPromRuleFingerprint(rule: Rule) {
-  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
-
-  const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.query);
+export function getPromRuleFingerprint(rule: Rule, includeQuery: boolean) {
+  const queryHash = includeQuery ? hashQuery(rule.query) : '';
   const labelsHash = hashLabelsOrAnnotations(rule.labels);
 
   if (prometheusRuleType.recordingRule(rule)) {
@@ -309,9 +311,21 @@ export function hashQuery(query: string) {
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
     query = query.slice(1, -1);
   }
+
   // whitespace could be added or removed
   query = query.replace(/\s|\n/g, '');
-  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
+
+  // normalize escaped quotes in template strings like {{\"REQ_SENT\"}} -> {{"REQ_SENT"}}
+  query = query.replace(/\\"/g, '"');
+
+  // normalize backtick template strings to double quotes for consistency
+  // Convert `{{.field}}` to "{{.field}}"
+  query = query.replace(/`([^`]*)`/g, '"$1"');
+
+  // remove quotes, brackets, parentheses, backslashes, and backticks
+  query = query.replace(/['"()\[\]\\`]/g, '');
+
+  // labels matchers can be reordered, so sort the entire string, essentially comparing just the character counts
   return query.split('').sort().join('');
 }
 

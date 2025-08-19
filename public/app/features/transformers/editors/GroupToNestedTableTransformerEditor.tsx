@@ -16,13 +16,14 @@ import {
   GroupByFieldOptions,
   GroupByOperationID,
   GroupByTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/groupBy';
-import {
   GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
-} from '@grafana/data/src/transformations/transformers/groupToNestedTable';
+} from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
 
+import darkImage from '../images/dark/groupToNestedTable.svg';
+import lightImage from '../images/light/groupToNestedTable.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -90,7 +91,13 @@ export const GroupToNestedTableTransformerEditor = ({
   return (
     <Stack direction="column">
       {showCalcAlert && (
-        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+        <Alert
+          title={t(
+            'transformers.group-to-nested-table-transformer-editor.title-calc-alert',
+            'Calculations will not have an effect if no fields are being grouped on.'
+          )}
+          severity="warning"
+        />
       )}
       <div>
         {fieldNames.map((key) => (
@@ -103,8 +110,14 @@ export const GroupToNestedTableTransformerEditor = ({
         ))}
       </div>
       <Field
-        label="Show field names in nested tables"
-        description="If enabled nested tables will show field names as a table header"
+        label={t(
+          'transformers.group-to-nested-table-transformer-editor.label-show-field-names-in-nested-tables',
+          'Show field names in nested tables'
+        )}
+        description={t(
+          'transformers.group-to-nested-table-transformer-editor.description-show-field-names',
+          'If enabled nested tables will show field names as a table header'
+        )}
       >
         <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
       </Field>
@@ -112,15 +125,9 @@ export const GroupToNestedTableTransformerEditor = ({
   );
 };
 
-const options = [
-  { label: 'Group by', value: GroupByOperationID.groupBy },
-  { label: 'Calculate', value: GroupByOperationID.aggregate },
-];
-
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
-
   const onChange = useCallback(
     (value: SelectableValue<GroupByOperationID | null>) => {
       onConfigChange({
@@ -131,17 +138,34 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     [config, onConfigChange]
   );
 
+  const options = [
+    {
+      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
+      value: GroupByOperationID.groupBy,
+    },
+    {
+      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
+      value: GroupByOperationID.aggregate,
+    },
+  ];
+
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row" wrap={false}>
         <div className={styles.operation}>
-          <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
+          <Select
+            options={options}
+            value={config?.operation}
+            placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
+            onChange={onChange}
+            isClearable
+          />
         </div>
 
         {config?.operation === GroupByOperationID.aggregate && (
           <StatsPicker
             className={styles.aggregations}
-            placeholder="Select Stats"
+            placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {
@@ -171,16 +195,25 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const groupToNestedTableTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
-  id: DataTransformerID.groupToNestedTable,
-  editor: GroupToNestedTableTransformerEditor,
-  transformation: standardTransformers.groupToNestedTable,
-  name: standardTransformers.groupToNestedTable.name,
-  description: standardTransformers.groupToNestedTable.description,
-  categories: new Set([
-    TransformerCategory.Combine,
-    TransformerCategory.CalculateNewFields,
-    TransformerCategory.Reformat,
-  ]),
-  state: PluginState.beta,
-};
+export const getGroupToNestedTableTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> =
+  () => ({
+    id: DataTransformerID.groupToNestedTable,
+    editor: GroupToNestedTableTransformerEditor,
+    transformation: standardTransformers.groupToNestedTable,
+    name: t(
+      'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
+      'Group to nested tables'
+    ),
+    description: t(
+      'transformers.group-to-nested-table-transformer-editor.description.group-by-field-value',
+      'Group data by a field value and create nested tables with the grouped data.'
+    ),
+    categories: new Set([
+      TransformerCategory.Combine,
+      TransformerCategory.CalculateNewFields,
+      TransformerCategory.Reformat,
+    ]),
+    state: PluginState.beta,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

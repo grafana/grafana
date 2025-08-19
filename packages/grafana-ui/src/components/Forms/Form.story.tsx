@@ -1,8 +1,9 @@
 import { StoryFn } from '@storybook/react';
+import { useId } from 'react';
 import { ValidateResult } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
 import { InputControl } from '../InputControl';
 import { Select } from '../Select/Select';
@@ -55,71 +56,82 @@ interface FormDTO {
   };
 }
 
-const renderForm = (defaultValues?: FormDTO) => (
-  <Form
-    defaultValues={defaultValues}
-    onSubmit={(data: FormDTO) => {
-      console.log(data);
-    }}
-  >
-    {({ register, control, errors }) => {
-      console.log(errors);
-      return (
-        <>
-          <Legend>Edit user</Legend>
+const renderForm = (defaultValues?: FormDTO) => {
+  const nameId = useId();
+  const emailId = useId();
+  const usernameId = useId();
+  const nestedPathId = useId();
+  const textId = useId();
+  const checkboxId = useId();
+  const switchId = useId();
+  const radioId = useId();
+  const selectId = useId();
+  return (
+    <Form
+      defaultValues={defaultValues}
+      onSubmit={(data: FormDTO) => {
+        console.log(data);
+      }}
+    >
+      {({ register, control, errors }) => {
+        console.log(errors);
+        return (
+          <>
+            <Legend>Edit user</Legend>
 
-          <Field label="Name" invalid={!!errors.name} error="Name is required">
-            <Input {...register('name', { required: true })} placeholder="Roger Waters" />
-          </Field>
+            <Field label="Name" invalid={!!errors.name} error="Name is required">
+              <Input {...register('name', { required: true })} placeholder="Roger Waters" id={nameId} />
+            </Field>
 
-          <Field label="Email" invalid={!!errors.email} error="E-mail is required">
-            <Input {...register('email', { required: true })} id="email" placeholder="roger.waters@grafana.com" />
-          </Field>
+            <Field label="Email" invalid={!!errors.email} error="E-mail is required">
+              <Input {...register('email', { required: true })} id={emailId} placeholder="roger.waters@grafana.com" />
+            </Field>
 
-          <Field label="Username">
-            <Input {...register('username')} placeholder="mr.waters" />
-          </Field>
-          <Field label="Nested object">
-            <Input {...register('nested.path')} placeholder="Nested path" />
-          </Field>
+            <Field label="Username">
+              <Input {...register('username')} placeholder="mr.waters" id={usernameId} />
+            </Field>
+            <Field label="Nested object">
+              <Input {...register('nested.path')} placeholder="Nested path" id={nestedPathId} />
+            </Field>
 
-          <Field label="Textarea" invalid={!!errors.text} error="Text is required">
-            <TextArea {...register('text', { required: true })} placeholder="Long text" />
-          </Field>
+            <Field label="Textarea" invalid={!!errors.text} error="Text is required">
+              <TextArea {...register('text', { required: true })} placeholder="Long text" id={textId} />
+            </Field>
 
-          <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
-            <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" />
-          </Field>
+            <Field label="Checkbox" invalid={!!errors.checkbox} error="We need your consent">
+              <Checkbox {...register('checkbox', { required: true })} label="Do you consent?" id={checkboxId} />
+            </Field>
 
-          <Field label="Switch">
-            <Switch name="switch" {...register} />
-          </Field>
+            <Field label="Switch">
+              <Switch name="switch" {...register} id={switchId} />
+            </Field>
 
-          <Field label="RadioButton">
-            <InputControl
-              name="radio"
-              control={control}
-              render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} />}
-            />
-          </Field>
+            <Field label="RadioButton" htmlFor={radioId}>
+              <InputControl
+                name="radio"
+                control={control}
+                render={({ field }) => <RadioButtonGroup {...field} options={selectOptions} id={radioId} />}
+              />
+            </Field>
 
-          <Field label="Select" invalid={!!errors.select} error="Select is required">
-            <InputControl
-              name="select"
-              control={control}
-              rules={{
-                required: true,
-              }}
-              render={({ field }) => <Select {...field} options={selectOptions} />}
-            />
-          </Field>
+            <Field label="Select" invalid={!!errors.select} error="Select is required" htmlFor={selectId}>
+              <InputControl
+                name="select"
+                control={control}
+                rules={{
+                  required: true,
+                }}
+                render={({ field }) => <Select {...field} options={selectOptions} inputId={selectId} />}
+              />
+            </Field>
 
-          <Button type="submit">Update</Button>
-        </>
-      );
-    }}
-  </Form>
-);
+            <Button type="submit">Update</Button>
+          </>
+        );
+      }}
+    </Form>
+  );
+};
 
 export const Basic = () => {
   return <>{renderForm()}</>;

@@ -1,5 +1,5 @@
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { LayoutRegistryItem } from './LayoutRegistryItem';
@@ -16,6 +16,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * The layout descriptor (which has the name and id)
    */
   descriptor: Readonly<LayoutRegistryItem>;
+
+  /**
+   * Serializer for layout
+   */
+  serialize(): DashboardV2Spec['layout'];
 
   /**
    * Adds a new panel to the layout
@@ -71,6 +76,16 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Duplicate, like clone but with new keys
    */
   duplicate(): DashboardLayoutManager;
+
+  /**
+   * Paste a panel from the clipboard
+   */
+  pastePanel?(): void;
+
+  /**
+   * Get children for outline
+   */
+  getOutlineChildren(): SceneObject[];
 }
 
 export interface LayoutManagerSerializer {

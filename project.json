@@ -6,7 +6,6 @@
     "start": {
       "dependsOn": [
         "themes-generate",
-        "grafana-icons:generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
@@ -16,7 +15,17 @@
     "build": {
       "dependsOn": [
         "themes-generate",
-        "grafana-icons:generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "outputs": ["{workspaceRoot}/public/build"],
+      "cache": true
+    },
+    "dev": {
+      "dependsOn": [
+        "themes-generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"

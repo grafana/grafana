@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   ConfirmModal,
   FilterInput,
@@ -14,12 +14,14 @@ import {
   Box,
   Stack,
   useStyles2,
+  TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/serviceaccount';
+import { StoreState } from 'app/types/store';
 
 import { ServiceAccountTable } from './ServiceAccountTable';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -172,20 +174,14 @@ export const ServiceAccountsListPageUnconnected = ({
     setCurrentServiceAccount(null);
   };
 
-  const docsLink = (
-    <a
-      className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      documentation.
-    </a>
-  );
   const subTitle = (
     <span>
-      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
-      {docsLink}
+      <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title">
+        Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
+        <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
+          documentation.
+        </TextLink>
+      </Trans>
     </span>
   );
 
@@ -197,7 +193,9 @@ export const ServiceAccountsListPageUnconnected = ({
         <>
           {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
             <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
+              <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.add-service-account">
+                Add service account
+              </Trans>
             </LinkButton>
           )}
         </>
@@ -208,7 +206,10 @@ export const ServiceAccountsListPageUnconnected = ({
           <InlineField grow>
             <FilterInput
               className={styles.filterInput}
-              placeholder="Search service account by name"
+              placeholder={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.placeholder-search-service-account-by-name',
+                'Search service account by name'
+              )}
               value={query}
               onChange={onQueryChange}
             />
@@ -224,7 +225,7 @@ export const ServiceAccountsListPageUnconnected = ({
         {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
           <EmptyState
             variant="not-found"
-            message={t('service-accounts.empty-state.message', 'No services accounts found')}
+            message={t('service-accounts.empty-state.message', 'No service accounts found')}
           />
         )}
         {!isLoading && noServiceAccountsCreated && (
@@ -268,24 +269,47 @@ export const ServiceAccountsListPageUnconnected = ({
           <>
             <ConfirmModal
               isOpen={isRemoveModalOpen}
-              body={`Are you sure you want to delete '${currentServiceAccount.name}'${
+              body={
                 !!currentServiceAccount.tokens
-                  ? ` and ${currentServiceAccount.tokens} accompanying ${pluralize(
-                      'token',
-                      currentServiceAccount.tokens
-                    )}`
-                  : ''
-              }?`}
-              confirmText="Delete"
-              title="Delete service account"
+                  ? t(
+                      'serviceaccounts.service-accounts-list-page-unconnected.body-delete',
+                      'Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?',
+                      {
+                        serviceAccountName: currentServiceAccount.name,
+                        count: currentServiceAccount.tokens,
+                      }
+                    )
+                  : t(
+                      'serviceaccounts.service-accounts-list-page-unconnected.body-delete-with-tokens',
+                      'Are you sure you want to delete {{serviceAccountName}}?',
+                      {
+                        serviceAccountName: currentServiceAccount.name,
+                      }
+                    )
+              }
+              confirmText={t('serviceaccounts.service-accounts-list-page-unconnected.confirmText-delete', 'Delete')}
+              title={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.title-delete-service-account',
+                'Delete service account'
+              )}
               onConfirm={onServiceAccountRemove}
               onDismiss={onRemoveModalClose}
             />
             <ConfirmModal
               isOpen={isDisableModalOpen}
-              title="Disable service account"
-              body={`Are you sure you want to disable '${currentServiceAccount.name}'?`}
-              confirmText="Disable service account"
+              title={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.title-disable-service-account',
+                'Disable service account'
+              )}
+              body={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.body-disable-service-account',
+                "Are you sure you want to disable '{{accountToDisable}}'?",
+                { accountToDisable: currentServiceAccount.name }
+              )}
+              confirmText={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.confirmText-disable-service-account',
+                'Disable service account'
+              )}
               onConfirm={onDisable}
               onDismiss={onDisableModalClose}
             />

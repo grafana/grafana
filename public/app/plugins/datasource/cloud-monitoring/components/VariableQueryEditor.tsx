@@ -13,7 +13,7 @@ import {
   VariableQueryData,
 } from '../types/types';
 
-import { VariableQueryField } from './';
+import { VariableQueryField } from './Fields';
 
 export type Props = QueryEditorProps<
   CloudMonitoringDatasource,

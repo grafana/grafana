@@ -25,19 +25,21 @@ type PluginInstaller struct {
 	pluginStorageDirFunc storage.DirNameGeneratorFunc
 	pluginRegistry       registry.Service
 	pluginLoader         loader.Service
-	installing           sync.Map
-	log                  log.Logger
-	serviceRegistry      auth.ExternalServiceRegistry
+	cfg                  *config.PluginManagementCfg
+
+	installing      sync.Map
+	log             log.Logger
+	serviceRegistry auth.ExternalServiceRegistry
 }
 
 func ProvideInstaller(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo,
+	return New(cfg, pluginRegistry, pluginLoader, pluginRepo,
 		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc, serviceRegistry)
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc,
+func New(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+	pluginRepo repo.Service, pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc,
 	serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:         pluginLoader,
@@ -45,6 +47,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 		pluginRepo:           pluginRepo,
 		pluginStorage:        pluginStorage,
 		pluginStorageDirFunc: pluginStorageDirFunc,
+		cfg:                  cfg,
 		installing:           sync.Map{},
 		log:                  log.New("plugin.installer"),
 		serviceRegistry:      serviceRegistry,
@@ -68,7 +71,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	for _, dep := range archive.Dependencies {
 		m.log.Info(fmt.Sprintf("Fetching %s dependency %s...", pluginID, dep.ID))
 
-		err = m.Add(ctx, dep.ID, dep.Version, opts)
+		err = m.Add(ctx, dep.ID, "", opts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError
 			if errors.As(err, &dupeErr) {

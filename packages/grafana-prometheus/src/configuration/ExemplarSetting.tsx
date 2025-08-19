@@ -3,12 +3,14 @@ import { useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, Input, Switch, useTheme2 } from '@grafana/ui';
 
+import { PROM_CONFIG_LABEL_WIDTH } from '../constants';
 import { ExemplarTraceIdDestination } from '../types';
 
-import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH } from './ConfigEditor';
+import { docsTip, overhaulStyles } from './shared/utils';
 
 type Props = {
   value: ExemplarTraceIdDestination;
@@ -26,13 +28,16 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
   return (
     <div className="gf-form-group">
       <InlineField
-        label="Internal link"
+        label={t('grafana-prometheus.configuration.exemplar-setting.label-internal-link', 'Internal link')}
         labelWidth={PROM_CONFIG_LABEL_WIDTH}
         disabled={disabled}
         tooltip={
           <>
-            Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select
-            the backend tracing data store for your exemplar data. {docsTip()}
+            <Trans i18nKey="grafana-prometheus.configuration.exemplar-setting.tooltip-internal-link">
+              Enable this option if you have an internal link. When enabled, this reveals the data source selector.
+              Select the backend tracing data store for your exemplar data.
+            </Trans>{' '}
+            {docsTip()}
           </>
         }
         interactive={true}
@@ -49,9 +54,16 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
 
       {isInternalLink ? (
         <InlineField
-          label="Data source"
+          label={t('grafana-prometheus.configuration.exemplar-setting.label-data-source', 'Data source')}
           labelWidth={PROM_CONFIG_LABEL_WIDTH}
-          tooltip={<>The data source the exemplar is going to navigate to. {docsTip()}</>}
+          tooltip={
+            <>
+              <Trans i18nKey="grafana-prometheus.configuration.exemplar-setting.tooltip-data-source">
+                The data source the exemplar is going to navigate to.
+              </Trans>{' '}
+              {docsTip()}
+            </>
+          }
           disabled={disabled}
           interactive={true}
         >
@@ -76,14 +88,24 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
         </InlineField>
       ) : (
         <InlineField
-          label="URL"
+          label={t('grafana-prometheus.configuration.exemplar-setting.label-url', 'URL')}
           labelWidth={PROM_CONFIG_LABEL_WIDTH}
-          tooltip={<>The URL of the trace backend the user would go to see its trace. {docsTip()}</>}
+          tooltip={
+            <>
+              <Trans i18nKey="grafana-prometheus.configuration.exemplar-setting.tooltip-url">
+                The URL of the trace backend the user would go to see its trace
+              </Trans>{' '}
+              {docsTip()}
+            </>
+          }
           disabled={disabled}
           interactive={true}
         >
           <Input
-            placeholder="https://example.com/${__value.raw}"
+            placeholder={t(
+              'grafana-prometheus.configuration.exemplar-setting.placeholder-httpsexamplecomvalueraw',
+              'https://example.com/${__value.raw}'
+            )}
             spellCheck={false}
             width={40}
             value={value.url}
@@ -99,14 +121,24 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
       )}
 
       <InlineField
-        label="URL Label"
+        label={t('grafana-prometheus.configuration.exemplar-setting.label-url-label', 'URL Label')}
         labelWidth={PROM_CONFIG_LABEL_WIDTH}
-        tooltip={<>Use to override the button label on the exemplar traceID field. {docsTip()}</>}
+        tooltip={
+          <>
+            <Trans i18nKey="grafana-prometheus.configuration.exemplar-setting.tooltip-url-label">
+              Use to override the button label on the exemplar traceID field.
+            </Trans>{' '}
+            {docsTip()}
+          </>
+        }
         disabled={disabled}
         interactive={true}
       >
         <Input
-          placeholder="Go to example.com"
+          placeholder={t(
+            'grafana-prometheus.configuration.exemplar-setting.placeholder-go-to-examplecom',
+            'Go to example.com'
+          )}
           spellCheck={false}
           width={40}
           value={value.urlDisplayLabel}
@@ -119,14 +151,21 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
         />
       </InlineField>
       <InlineField
-        label="Label name"
+        label={t('grafana-prometheus.configuration.exemplar-setting.label-label-name', 'Label name')}
         labelWidth={PROM_CONFIG_LABEL_WIDTH}
-        tooltip={<>The name of the field in the labels object that should be used to get the traceID. {docsTip()}</>}
+        tooltip={
+          <>
+            <Trans i18nKey="grafana-prometheus.configuration.exemplar-setting.tooltip-label-name">
+              The name of the field in the labels object that should be used to get the traceID.
+            </Trans>{' '}
+            {docsTip()}
+          </>
+        }
         disabled={disabled}
         interactive={true}
       >
         <Input
-          placeholder="traceID"
+          placeholder={t('grafana-prometheus.configuration.exemplar-setting.placeholder-trace-id', 'traceID')}
           spellCheck={false}
           width={40}
           value={value.name}
@@ -139,10 +178,20 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
         />
       </InlineField>
       {!disabled && (
-        <InlineField label="Remove exemplar link" labelWidth={PROM_CONFIG_LABEL_WIDTH} disabled={disabled}>
+        <InlineField
+          label={t(
+            'grafana-prometheus.configuration.exemplar-setting.label-remove-exemplar-link',
+            'Remove exemplar link'
+          )}
+          labelWidth={PROM_CONFIG_LABEL_WIDTH}
+          disabled={disabled}
+        >
           <Button
             variant="destructive"
-            title="Remove exemplar link"
+            aria-label={t(
+              'grafana-prometheus.configuration.exemplar-setting.title-remove-exemplar-link',
+              'Remove exemplar link'
+            )}
             icon="times"
             onClick={(event) => {
               event.preventDefault();

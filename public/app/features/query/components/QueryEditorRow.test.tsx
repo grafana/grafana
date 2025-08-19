@@ -5,23 +5,37 @@ import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from
 import { DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { DataSourceType } from '../../alerting/unified/utils/datasource';
-
-import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
+import { filterPanelDataToQuery, Props, QueryEditorRow, QueryLibraryEditingBadge } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',
-  type: DataSourceType.Alertmanager,
+  type: 'testdata',
 });
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve(mockDS),
-      getList: () => {},
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+
+// Mock the QueryLibraryContext
+const mockQueryLibraryContext = {
+  queryLibraryEnabled: true,
+};
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: () => mockQueryLibraryContext,
+}));
+
+// Mock the internationalization function
+jest.mock('@grafana/i18n', () => ({
+  ...jest.requireActual('@grafana/i18n'),
+  t: (key: string, defaultValue: string) => defaultValue,
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve(mockDS),
+    getList: () => {},
+    getInstanceSettings: () => mockDS,
+  }),
+}));
+
 // Draggable fails to render in tests, so we mock it out
 jest.mock('app/core/components/QueryOperationRow/QueryOperationRow', () => ({
   QueryOperationRow: (props: PropsWithChildren) => <div>{props.children}</div>,
@@ -353,6 +367,7 @@ describe('QueryEditorRow', () => {
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
     onRemoveQuery: jest.fn(),
+    onReplace: jest.fn(),
     index: 0,
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
@@ -388,5 +403,32 @@ describe('QueryEditorRow', () => {
     await waitFor(() => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('QueryLibraryBadge', () => {
+  beforeEach(() => {
+    mockQueryLibraryContext.queryLibraryEnabled = true;
+  });
+
+  it('should display badge when queryLibraryEnabled is true and queryLibraryRef is provided', () => {
+    render(<QueryLibraryEditingBadge queryLibraryRef="library-query-123" />);
+    expect(screen.getByText('Updating query from library')).toBeInTheDocument();
+  });
+
+  it('should not display badge when queryLibraryEnabled is false', () => {
+    mockQueryLibraryContext.queryLibraryEnabled = false;
+    render(<QueryLibraryEditingBadge queryLibraryRef="library-query-123" />);
+    expect(screen.queryByText('Updating query from library')).not.toBeInTheDocument();
+  });
+
+  it('should not display badge when queryLibraryRef is not provided', () => {
+    render(<QueryLibraryEditingBadge />);
+    expect(screen.queryByText('Updating query from library')).not.toBeInTheDocument();
+  });
+
+  it('should not display badge when queryLibraryRef is empty string', () => {
+    render(<QueryLibraryEditingBadge queryLibraryRef="" />);
+    expect(screen.queryByText('Updating query from library')).not.toBeInTheDocument();
   });
 });

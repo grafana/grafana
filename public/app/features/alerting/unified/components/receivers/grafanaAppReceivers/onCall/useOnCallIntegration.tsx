@@ -2,14 +2,14 @@ import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
+import { NotifierDTO } from 'app/types/alerting';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../../../../../types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { option } from '../../../../utils/notifier-types';
@@ -264,7 +264,7 @@ export function useOnCallIntegration() {
       order: -1, // The default is 0. We want OnCall to be the first on the list
       description: isOnCallEnabled
         ? t('alerting.irm-integration.enabled-description', 'Seamless way to handle alerts and manage incidents')
-        : t('alerting.irm-integration.disabled-description', 'Enable Grafana IRM to use this integration'),
+        : t('alerting.irm-integration.disabled-description', 'Enable IRM through a Webhook integration'),
       badge: <Badge color="blue" text={t('alerting.irm-integration.recommended', 'Recommended')} />,
     },
     extendOnCallNotifierFeatures,

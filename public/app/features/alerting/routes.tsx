@@ -1,7 +1,9 @@
+import { Navigate } from 'react-router-dom-v5-compat';
+
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
 import {
@@ -13,6 +15,7 @@ import {
   PERMISSIONS_NOTIFICATION_POLICIES_READ,
 } from './unified/components/notification-policies/permissions';
 import { PERMISSIONS_TEMPLATES } from './unified/components/templates/permissions';
+import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -210,6 +213,30 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/recently-deleted/',
+      roles: () => ['Admin'],
+      component: shouldAllowRecoveringDeletedRules()
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
+      path: '/alerting/import-datasource-managed-rules',
+      roles: () => ['Admin'],
+      component: config.featureToggles.alertingMigrationUI
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
@@ -287,7 +314,15 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      // This route is for backward compatibility
+      // Previously we had a single admin page containing only the alertmanager settings
+      // We now have a separate route for the alertmanager settings and other settings can be added as extensions
       path: '/alerting/admin',
+      roles: () => ['Admin'],
+      component: () => <Navigate replace to="/alerting/admin/alertmanager" />,
+    },
+    {
+      path: '/alerting/admin/alertmanager',
       roles: () => ['Admin'],
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingSettings" */ 'app/features/alerting/unified/Settings')

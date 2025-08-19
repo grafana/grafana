@@ -35,8 +35,6 @@ Annotations provide a way to mark points on a visualization with rich events. Th
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" alt="Annotated visualization with annotation context menu open" >}}
 
-{{< docs/play title="Annotations" url="https://play.grafana.org/d/000000010/" >}}
-
 You can annotate visualizations in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
@@ -142,7 +140,6 @@ To add a new annotation query to a dashboard, follow these steps:
 1. If you don't want the annotation query toggle to be displayed in the dashboard, select the **Hidden** checkbox.
 1. Select a color for the event markers.
 1. In the **Show in** drop-down, choose one of the following options:
-
    - **All panels** - The annotations are displayed on all panels that support annotations.
    - **Selected panels** - The annotations are displayed on all the panels you select.
    - **All panels except** - The annotations are displayed on all panels except the ones you select.

@@ -1,11 +1,11 @@
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { ResponsiveGridLayoutManager } from '../../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 
-import { TabsLayoutSerializer } from './TabsLayoutSerializer';
+import { deserializeTabsLayout } from './TabsLayoutSerializer';
 
 describe('deserialization', () => {
   it('should deserialize tabs layout with row child', () => {
@@ -15,8 +15,7 @@ describe('deserialization', () => {
         tabs: [{ kind: 'TabsLayoutTab', spec: { title: 'Tab 1', layout: { kind: 'RowsLayout', spec: { rows: [] } } } }],
       },
     };
-    const serializer = new TabsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeTabsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(TabsLayoutManager);
     expect(deserialized.state.tabs[0].state.layout).toBeInstanceOf(RowsLayoutManager);
   });
@@ -28,15 +27,20 @@ describe('deserialization', () => {
         tabs: [
           {
             kind: 'TabsLayoutTab',
-            spec: { title: 'Tab 1', layout: { kind: 'ResponsiveGridLayout', spec: { row: '', col: '', items: [] } } },
+            spec: {
+              title: 'Tab 1',
+              layout: {
+                kind: 'AutoGridLayout',
+                spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', maxColumnCount: 4, items: [] },
+              },
+            },
           },
         ],
       },
     };
-    const serializer = new TabsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeTabsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(TabsLayoutManager);
-    expect(deserialized.state.tabs[0].state.layout).toBeInstanceOf(ResponsiveGridLayoutManager);
+    expect(deserialized.state.tabs[0].state.layout).toBeInstanceOf(AutoGridLayoutManager);
   });
 
   it('should deserialize tabs layout with default grid child', () => {
@@ -51,8 +55,7 @@ describe('deserialization', () => {
         ],
       },
     };
-    const serializer = new TabsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeTabsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(TabsLayoutManager);
     expect(deserialized.state.tabs[0].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
   });
@@ -64,16 +67,21 @@ describe('deserialization', () => {
         tabs: [
           {
             kind: 'TabsLayoutTab',
-            spec: { title: 'Tab 1', layout: { kind: 'ResponsiveGridLayout', spec: { row: '', col: '', items: [] } } },
+            spec: {
+              title: 'Tab 1',
+              layout: {
+                kind: 'AutoGridLayout',
+                spec: { columnWidthMode: 'standard', rowHeightMode: 'standard', maxColumnCount: 4, items: [] },
+              },
+            },
           },
           { kind: 'TabsLayoutTab', spec: { title: 'Tab 2', layout: { kind: 'GridLayout', spec: { items: [] } } } },
         ],
       },
     };
-    const serializer = new TabsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeTabsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(TabsLayoutManager);
-    expect(deserialized.state.tabs[0].state.layout).toBeInstanceOf(ResponsiveGridLayoutManager);
+    expect(deserialized.state.tabs[0].state.layout).toBeInstanceOf(AutoGridLayoutManager);
     expect(deserialized.state.tabs[1].state.layout).toBeInstanceOf(DefaultGridLayoutManager);
   });
 
@@ -84,8 +92,7 @@ describe('deserialization', () => {
         tabs: [],
       },
     };
-    const serializer = new TabsLayoutSerializer();
-    const deserialized = serializer.deserialize(layout, {}, false);
+    const deserialized = deserializeTabsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(TabsLayoutManager);
     expect(deserialized.state.tabs).toHaveLength(0);
   });

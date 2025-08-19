@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { compact } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Modal, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
@@ -13,6 +14,8 @@ import { createContactPointSearchLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
+import { ReceiverNameProps } from './NotificationRoute';
+import UnknownContactPointDetails from './UnknownContactPointDetails';
 import { RouteWithPath, hasEmptyMatchers, isDefaultPolicy } from './route';
 
 interface Props {
@@ -28,13 +31,17 @@ function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
 
   return (
     <div className={styles.policyPathWrapper}>
-      <div className={styles.defaultPolicy}>Default policy</div>
+      <div className={styles.defaultPolicy}>
+        <Trans i18nKey="alerting.policy-path.default-policy">Default policy</Trans>
+      </div>
       {routePathObjects.map((pathRoute, index) => {
         return (
           <div key={pathRoute.id}>
             <div className={styles.policyInPath(index, index === routePathObjects.length - 1)}>
               {hasEmptyMatchers(pathRoute) ? (
-                <div className={styles.textMuted}>No matchers</div>
+                <div className={styles.textMuted}>
+                  <Trans i18nKey="alerting.policy-path.no-matchers">No matchers</Trans>
+                </div>
               ) : (
                 <Matchers matchers={pathRoute.object_matchers ?? []} formatter={matcherFormatter} />
               )}
@@ -46,10 +53,10 @@ function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
   );
 }
 
-interface NotificationRouteDetailsModalProps {
+interface NotificationRouteDetailsModalProps extends ReceiverNameProps {
   onClose: () => void;
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
 }
@@ -58,10 +65,12 @@ export function NotificationRouteDetailsModal({
   onClose,
   route,
   receiver,
+  receiverNameFromRoute,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteDetailsModalProps) {
   const styles = useStyles2(getStyles);
+
   const isDefault = isDefaultPolicy(route);
 
   return (
@@ -69,16 +78,26 @@ export function NotificationRouteDetailsModal({
       <Modal
         className={styles.detailsModal}
         isOpen={true}
-        title="Routing details"
+        title={t('alerting.notification-route-details-modal.title-routing-details', 'Routing details')}
         onDismiss={onClose}
         onClickBackdrop={onClose}
       >
         <Stack gap={0} direction="column">
           <div className={cx(styles.textMuted, styles.marginBottom(2))}>
-            Your alert instances are routed as follows.
+            <Trans i18nKey="alerting.notification-route-details-modal.alert-instances-routed-follows">
+              Your alert instances are routed as follows.
+            </Trans>
           </div>
-          <div>Notification policy path</div>
-          {isDefault && <div className={styles.textMuted}>Default policy</div>}
+          <div>
+            <Trans i18nKey="alerting.notification-route-details-modal.notification-policy-path">
+              Notification policy path
+            </Trans>
+          </div>
+          {isDefault && (
+            <div className={styles.textMuted}>
+              <Trans i18nKey="alerting.notification-route-details-modal.default-policy">Default policy</Trans>
+            </div>
+          )}
           <div className={styles.separator(1)} />
           {!isDefault && (
             <PolicyPath
@@ -89,26 +108,26 @@ export function NotificationRouteDetailsModal({
           )}
           <div className={styles.separator(4)} />
           <div className={styles.contactPoint}>
-            <Stack gap={1} direction="row" alignItems="center">
-              Contact point:
-              <span className={styles.textMuted}>{receiver.name}</span>
+            <Stack gap={1} direction="column">
+              <Trans i18nKey="alerting.notification-route-details-modal.contact-point">Contact point</Trans>
+
+              <span className={styles.textMuted}>
+                {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverNameFromRoute} />}
+              </span>
             </Stack>
             <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
               <Stack gap={1} direction="row" alignItems="center">
-                <a
-                  href={createContactPointSearchLink(receiver.name, alertManagerSourceName)}
-                  className={styles.link}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  See details <Icon name="external-link-alt" />
-                </a>
+                {receiver ? (
+                  <TextLink href={createContactPointSearchLink(receiver.name, alertManagerSourceName)} external>
+                    <Trans i18nKey="alerting.notification-route-details-modal.see-details-link">See details</Trans>
+                  </TextLink>
+                ) : null}
               </Stack>
             </Authorize>
           </div>
           <div className={styles.button}>
             <Button variant="primary" type="button" onClick={onClose}>
-              Close
+              <Trans i18nKey="alerting.notification-route-details-modal.close">Close</Trans>
             </Button>
           </div>
         </Stack>

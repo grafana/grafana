@@ -3,6 +3,7 @@ import moment, { Moment } from 'moment/moment';
 import { ChangeEvent, useState } from 'react';
 
 import { dateTimeAsMoment, getTimeZoneInfo, GrafanaTheme2, isDateTime, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   Button,
   Field,
@@ -16,7 +17,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 import { TimeRegionConfig, TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -34,6 +34,7 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 
 export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const styles = useStyles2(getStyles);
+
   const timestamp = Date.now();
   const timezoneInfo = getTimeZoneInfo(value.timezone ?? 'utc', timestamp);
   const isDashboardTimezone = getDashboardSrv().getCurrent()?.getTimezone() === value.timezone;

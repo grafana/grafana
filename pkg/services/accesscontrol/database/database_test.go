@@ -44,7 +44,10 @@ type getUserPermissionsTestCase struct {
 	policyCount        int
 }
 
-func TestAccessControlStore_GetUserPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_GetUserPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []getUserPermissionsTestCase{
 		{
 			desc:               "should successfully get user, team and builtin permissions",
@@ -158,7 +161,10 @@ type getTeamsPermissionsTestCase struct {
 	expected         int
 }
 
-func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_GetTeamsPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []getTeamsPermissionsTestCase{
 		{
 			desc:  "should successfully get team permissions",
@@ -187,7 +193,11 @@ func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 
 			teams := make([]team.Team, 0)
 			for i := 0; i < len(tt.teamsPermissions); i++ {
-				team, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%v", i), "", tt.orgID)
+				teamCmd := team.CreateTeamCommand{
+					Name:  fmt.Sprintf("team-%v", i),
+					OrgID: tt.orgID,
+				}
+				team, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 				require.NoError(t, err)
 				teams = append(teams, team)
 			}
@@ -226,7 +236,10 @@ func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	}
 }
 
-func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_DeleteUserPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
 		user, _ := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
@@ -308,7 +321,10 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
-func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_DeleteTeamPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
 		user, team := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
@@ -388,7 +404,11 @@ func createUserAndTeam(t *testing.T, store db.DB, userSrv user.Service, teamSvc 
 	})
 	require.NoError(t, err)
 
-	createdTeam, err := teamSvc.CreateTeam(context.Background(), "team", "", orgID)
+	teamCmd := team.CreateTeamCommand{
+		Name:  "team",
+		OrgID: orgID,
+	}
+	createdTeam, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 	require.NoError(t, err)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -438,7 +458,11 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 			continue
 		}
 
-		createdTeam, err := svcs.teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team%v", i+1), "", orgID)
+		teamCmd := team.CreateTeamCommand{
+			Name:  fmt.Sprintf("team%v", i+1),
+			OrgID: orgID,
+		}
+		createdTeam, err := svcs.teamSvc.CreateTeam(context.Background(), &teamCmd)
 		require.NoError(t, err)
 
 		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -481,6 +505,9 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 }
 
 func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 	readTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
 		return rs.SetResourcePermissionCommand{
@@ -755,7 +782,10 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	}
 }
 
-func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
+func TestIntegrationAccessControlStore_GetUsersBasicRoles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 	tests := []struct {
 		name       string

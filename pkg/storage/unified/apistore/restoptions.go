@@ -19,6 +19,7 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -27,22 +28,31 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
 
 type RESTOptionsGetter struct {
-	client   resource.ResourceClient
-	original storagebackend.Config
+	client         resource.ResourceClient
+	secrets        secret.InlineSecureValueSupport
+	original       storagebackend.Config
+	configProvider RestConfigProvider
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(
+	client resource.ResourceClient,
+	secrets secret.InlineSecureValueSupport,
+	original storagebackend.Config,
+	configProvider RestConfigProvider,
+) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client:   client,
-		original: original,
-		options:  make(map[string]StorageOptions),
+		client:         client,
+		secrets:        secrets,
+		original:       original,
+		options:        make(map[string]StorageOptions),
+		configProvider: configProvider,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -57,14 +67,16 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 	}
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
+		secrets,
 		originalStorageConfig,
+		nil,
 	), nil
 }
 
 // Optionally, this constructor allows specifying directories
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetterForFile(path string,
+func NewRESTOptionsGetterForFileXX(path string,
 	originalStorageConfig storagebackend.Config,
 	features map[string]any) (*RESTOptionsGetter, error) {
 	if path == "" {
@@ -92,7 +104,9 @@ func NewRESTOptionsGetterForFile(path string,
 	}
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
+		nil, // secrets
 		originalStorageConfig,
+		nil,
 	), nil
 }
 
@@ -133,15 +147,17 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
+			opts := r.options[resource.String()]
+			opts.SecureValues = r.secrets
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-				trigger, indexers, r.options[resource.String()])
+				trigger, indexers, r.configProvider, opts)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
 		ResourcePrefix:            "/group/" + resource.Group + "/resource/" + resource.Resource,
 		CountMetricPollPeriod:     1 * time.Second,
-		StorageObjectCountTracker: storageConfig.Config.StorageObjectCountTracker,
+		StorageObjectCountTracker: storageConfig.StorageObjectCountTracker,
 	}
 
 	return ret, nil

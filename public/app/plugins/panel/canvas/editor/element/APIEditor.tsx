@@ -6,6 +6,7 @@ import {
   StringFieldConfigSettings,
   SelectableValue,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
@@ -136,8 +137,11 @@ export function APIEditor({ value, context, onChange }: Props) {
   const renderTestAPIButton = (api: APIEditorConfig) => {
     if (api && api.endpoint) {
       return (
-        <Button onClick={() => callApi(api)} title="Test API">
-          Test API
+        <Button
+          onClick={() => callApi(api)}
+          title={t('canvas.apieditor.render-test-apibutton.title-test-api', 'Test API')}
+        >
+          <Trans i18nKey="canvas.apieditor.render-test-apibutton.test-api">Test API</Trans>
         </Button>
       );
     }
@@ -148,7 +152,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
+        <InlineField label={t('canvas.apieditor.label-endpoint', 'Endpoint')} labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
             value={value?.endpoint}
@@ -158,13 +162,18 @@ export function APIEditor({ value, context, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
+        <InlineField label={t('canvas.apieditor.label-method', 'Method')} labelWidth={LABEL_WIDTH} grow={true}>
           <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
       {value?.method !== HttpRequestMethod.GET && (
         <InlineFieldRow>
-          <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
+          <InlineField
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            label="Content-Type"
+            labelWidth={LABEL_WIDTH}
+            grow={true}
+          >
             <Select
               options={contentTypeOptions}
               allowCustomValue={true}
@@ -177,14 +186,14 @@ export function APIEditor({ value, context, onChange }: Props) {
       )}
 
       <br />
-      <Field label="Query parameters">
+      <Field label={t('canvas.apieditor.label-query-parameters', 'Query parameters')}>
         <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
       </Field>
-      <Field label="Header parameters">
+      <Field label={t('canvas.apieditor.label-header-parameters', 'Header parameters')}>
         <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
       {value?.method !== HttpRequestMethod.GET && value?.contentType && (
-        <Field label="Payload">
+        <Field label={t('canvas.apieditor.label-payload', 'Payload')}>
           <StringValueEditor
             context={context}
             value={value?.data ?? '{}'}

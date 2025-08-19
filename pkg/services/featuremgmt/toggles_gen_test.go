@@ -92,7 +92,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 					}
 				} else if item.DeletionTimestamp == nil {
 					item.DeletionTimestamp = &created
-					fmt.Printf("mark feature as deleted")
+					t.Log("mark feature as deleted")
 				}
 				current.Items = append(current.Items, item)
 			}
@@ -167,15 +167,12 @@ func TestFeatureToggleFiles(t *testing.T) {
 func verifyFlagsConfiguration(t *testing.T) {
 	legacyNames := map[string]bool{
 		"live-service-web-worker": true,
-		// TODO: Remove this when removing feature toggles
-		"ABTestFeatureToggleA": true,
-		"ABTestFeatureToggleB": true,
 	}
 	invalidNames := make([]string, 0)
 
 	// Check that all flags set in code are valid
 	for _, flag := range standardFeatureFlags {
-		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated || flag.Stage == FeatureStagePublicPreview) {
+		if flag.Expression == "true" && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStageDeprecated && flag.Stage != FeatureStagePublicPreview) {
 			t.Errorf("only features that are FeatureStagePublicPreview, FeatureStageGeneralAvailability, or FeatureStageDeprecated can be enabled by default.  See: %s", flag.Name)
 		}
 		if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
@@ -190,7 +187,7 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Name != strings.TrimSpace(flag.Name) {
 			t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 		}
-		if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
+		if flag.AllowSelfServe && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStagePublicPreview && flag.Stage != FeatureStageDeprecated) {
 			t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
 		}
 		if flag.Owner == "" {
@@ -199,7 +196,7 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
 			t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
 		}
-		if !(flag.Expression == "" || flag.Expression == "true" || flag.Expression == "false") {
+		if flag.Expression != "" && flag.Expression != "true" && flag.Expression != "false" {
 			t.Errorf("the `Expression` property for %s is incorrect. valid values are: `true`, `false` or empty string for default", flag.Name)
 		}
 		// Check camel case names
@@ -396,6 +393,7 @@ func generateDocsMD() string {
 	buf := `---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+  - ../../administration/feature-toggles/ # /docs/grafana/latest/administration/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
@@ -439,16 +437,6 @@ When features are slated for removal, they will be marked as Deprecated first.
 			return flag.Stage == FeatureStageDeprecated
 		}, false)
 	}
-
-	buf += `
-## Experimental feature toggles
-
-[Experimental](https://grafana.com/docs/release-life-cycle/#experimental) features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
-Experimental features might be changed or removed without prior notice.
-
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.Stage == FeatureStageExperimental && !flag.RequiresDevMode
-	}, false)
 
 	buf += `
 ## Development feature toggles

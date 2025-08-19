@@ -21,13 +21,6 @@ brew install go
 brew install node@22
 ```
 
-In the repository enable and install yarn via corepack
-
-```
-corepack enable
-corepack install
-```
-
 ### Windows
 
 If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
@@ -42,6 +35,15 @@ We recommend using the Git command-line interface to download the source code fo
 For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
 
 > **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+
+### Set up yarn
+
+In the repository enable and install yarn via corepack
+
+```
+corepack enable
+corepack install
+```
 
 ### Configure precommit hooks
 
@@ -99,11 +101,12 @@ If you want to contribute to any of the plugins listed below (that are found wit
 - grafana-postgresql-datasource
 - grafana-pyroscope-datasource
 - grafana-testdata-datasource
-- jaegar
+- jaeger
 - mysql
 - parca
 - tempo
 - zipkin
+- loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 
@@ -116,6 +119,16 @@ If, instead, you would like to build and watch a specific plugin you can run the
 ```
 yarn workspace <name_of_plugin> dev
 ```
+
+If you want to run multiple specific plugins, you can use the following command.
+
+```
+yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
+```
+
+If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
+
+`yarn nx show projects --projects="@grafana-plugins/*"`
 
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
@@ -249,17 +262,19 @@ Each version of Playwright needs specific versions of browser binaries to operat
 yarn playwright install chromium
 ```
 
-To run all tests in a headless Chromium browser and display results in the terminal. This assumes you have Grafana running on port 3000.
+The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in CI) on port 3001 and runs all the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
 
 ```
 yarn e2e:playwright
 ```
 
-The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in Drone CI) on port 3001 and runs the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
+You can run against an arbitrary instance by setting the `GRAFANA_URL` environment variable:
 
 ```
-yarn e2e:playwright:server
+GRAFANA_URL=http://localhost:3000 yarn e2e:playwright
 ```
+
+Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
 
 ## Configure Grafana for development
 
@@ -421,6 +436,10 @@ Set NODE_OPTIONS="--max-old-space-size=8192"
 ### Getting `AggregateError` when building frontend tests
 
 If you encounter an `AggregateError` when building new tests, this is probably due to a call to our client [backend service](https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts) not being mocked. Our backend service anticipates multiple responses being returned and was built to return errors as an array. A test encountering errors from the service will group those errors as an `AggregateError` without breaking down the individual errors within. `backend_srv.processRequestError` is called once per error and is a great place to return information on what the individual errors might contain.
+
+### Getting `error reading debug_info: decoding dwarf section line_str at offset` trying to run VSCode debugger
+
+If you are trying to run the server from VS code and get this error, run `go install github.com/go-delve/delve/cmd/dlv@master` in the terminal.
 
 ## Next steps
 

@@ -22,16 +22,16 @@ Label-Based Access Control (LBAC) allows fine-grained access control to data sou
 
 ### Feature availability
 
-LBAC for data sources is currently generally available for `Loki` and in **experimental** for `Prometheus`. Support for additional data sources may be added in future updates.
+LBAC for data sources is currently for `Loki` and `Prometheus`. Support for additional data sources may be added in future updates.
 
-| Data source | [Grafana Cloud](/docs/grafana-cloud) | [Grafana Enterprise](../../../introduction/grafana-enterprise/) |
-| ----------- | ------------------------------------ | --------------------------------------------------------------- |
-| Loki        | GA                                   | GA                                                              |
-| Prometheus  | PrivatePreview                       | PrivatePreview                                                  |
+| Data source | Grafana Cloud | Grafana Enterprise                             | Cross-tenant query support |
+| ----------- | ------------- | ---------------------------------------------- | -------------------------- |
+| Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)    | ❌                         |
+| Prometheus  | GA            | GA (requires GEM - Grafana Enterprise Metrics) | ❌                         |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **LBAC for data sources offers:**
 
@@ -73,6 +73,8 @@ To be able to use LBAC for data sources metrics, you need to enable the feature 
 - If an administrator is part of a team with LBAC for data sources rules, those rules are applied to the administrator requests.
 - Cloud Access Policy (CAP) LBAC rules override LBAC for data sources rules.
   CAP are the access controls from Grafana Cloud.
+- Note that these data sources must be created manually - provisioning is not yet supported.
+- Cross-tenant querying is currently not supported
 
 You must remove any label selectors from your Cloud Access Policy that is configured for the data source, otherwise the CAP label selectors override the LBAC for data sources rules. For more information about CAP label selectors, refer to [Use label-based access control (LBAC) with access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/label-access-policies/).
 

@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
+import { OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
-import { OrgRole, Role } from 'app/types';
+import { Role } from 'app/types/accessControl';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
@@ -53,6 +54,7 @@ const tooltipMessage = (
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
   options: Role[];
+  isFiltered?: boolean;
   appliedRoles: Role[];
   showGroups?: boolean;
   basicRoleDisabled?: boolean;
@@ -70,6 +72,7 @@ interface RolePickerMenuProps {
 export const RolePickerMenu = ({
   basicRole,
   options,
+  isFiltered,
   appliedRoles,
   showGroups,
   basicRoleDisabled,
@@ -237,7 +240,7 @@ export const RolePickerMenu = ({
         })
       )}
     >
-      <div className={customStyles.menu} aria-label="Role picker menu">
+      <div className={customStyles.menu} aria-label={t('role-picker.menu-aria-label', 'Role picker menu')}>
         <ScrollContainer
           maxHeight={`${MENU_MAX_HEIGHT}px`}
           // NOTE: this is a way to force hiding of the scrollbar
@@ -259,6 +262,7 @@ export const RolePickerMenu = ({
             <RoleMenuGroupsSection
               key={groupId}
               roles={collection.roles}
+              isFiltered={isFiltered}
               renderedName={collection.renderedName}
               showGroups={showGroups}
               optionGroups={collection.optionGroup}

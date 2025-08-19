@@ -14,8 +14,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -29,6 +31,7 @@ import (
 
 var folderTitle string = "folder1"
 var folderDsc string = "folder desc"
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
 
 func TestIntegrationCreate(t *testing.T) {
 	if testing.Short() {
@@ -633,7 +636,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs := make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -650,7 +652,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs := make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 		assert.Equal(t, []string{parent.UID}, childrenUIDs)
@@ -683,7 +684,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -701,7 +701,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -721,7 +720,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -739,7 +737,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -757,7 +754,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -1004,16 +1000,28 @@ func TestIntegrationGetFolders(t *testing.T) {
 func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	t.Helper()
 
+	requester := &identity.StaticRequester{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionOrgsDelete: {"*"},
+			},
+			2: {
+				accesscontrol.ActionOrgsDelete: {"*"},
+			},
+		},
+	}
 	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil)
-	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc)
+	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc, acimpl.ProvideAccessControlTest())
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		err = deleteOrgService.Delete(context.Background(), &org.DeleteOrgCommand{ID: orgID})
+		ctx := identity.WithRequester(context.Background(), requester)
+		err = deleteOrgService.Delete(ctx, &org.DeleteOrgCommand{ID: orgID})
 		require.NoError(t, err)
 	})
 

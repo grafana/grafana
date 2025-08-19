@@ -1,8 +1,8 @@
 import { FC, useEffect, useMemo, useReducer } from 'react';
 
 import { LoadingState } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getModalStyles } from '../../styles';
 import { LibraryElementDTO } from '../../types';
@@ -27,6 +27,7 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   useEffect(() => {
     asyncDispatch(getConnectedDashboards(libraryPanel));
   }, [asyncDispatch, libraryPanel]);
+
   const connected = Boolean(dashboardTitles.length);
   const done = loadingState === LoadingState.Done;
 

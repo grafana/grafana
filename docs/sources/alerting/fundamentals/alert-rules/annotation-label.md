@@ -62,9 +62,13 @@ Labels and annotations add additional information about an alert using key/value
 
 ## Labels
 
+{{< shared id="labels-basics" >}}
+
 **Labels** are unique identifiers of an [alert instance](ref:alert-instances). You can use them for searching, silencing, and routing notifications.
 
 Examples of labels are `server=server1` or `team=backend`. Each alert rule can have more than one label and the complete set of labels for an alert rule is called its label set. It is this label set that identifies the alert.
+
+{{< /shared >}}
 
 For example, an alert instance might have the label set `{alertname="High CPU usage",server="server1"}` while another alert instance might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alert instances because although their `alertname` labels are the same, their `server` labels are different.
 
@@ -134,6 +138,8 @@ If multiple label keys are sanitized to the same value, the duplicates have a sh
 
 ## Annotations
 
+{{< shared id="annotations-basics" >}}
+
 Annotations add additional information to alert instances, helping responders identify and address potential issues.
 
 Create clear and self-explanatory annotations so that first responders can investigate without needing deeper knowledge of the alert setup.
@@ -143,7 +149,9 @@ Annotations are displayed in Grafana and are included by default in notification
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
-- `dashboardUId` and `panelId`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
+- `__dashboardUid__` and `__panelId__`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
+
+{{< /shared >}}
 
 For example, you can edit the annotation `summary` to explain why the alert was triggered:
 

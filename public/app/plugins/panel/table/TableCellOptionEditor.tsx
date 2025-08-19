@@ -23,9 +23,10 @@ export interface TableCellEditorProps<T> {
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
+  id?: string;
 }
 
-export const TableCellOptionEditor = ({ value, onChange }: Props) => {
+export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
   const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
@@ -41,7 +42,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       // When changing cell type see if there were previously stored
       // settings and merge those with the changed value
       if (settingCache[value.type] !== undefined && Object.keys(settingCache[value.type]).length > 1) {
-        value = merge(value, settingCache[value.type]);
+        value = merge({}, value, settingCache[value.type]);
       }
 
       onChange(value);
@@ -51,7 +52,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   // When options for a cell change we merge
   // any option changes with our options object
   const onCellOptionsChange = (options: TableCellOptions) => {
-    settingCache[value.type] = merge(value, options);
+    settingCache[value.type] = merge({}, value, options);
     setSettingCache(settingCache);
     onChange(settingCache[value.type]);
   };
@@ -60,7 +61,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   return (
     <div className={styles.fixBottomMargin}>
       <Field>
-        <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
+        <Select inputId={id} options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
         <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
@@ -83,11 +84,11 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
 
 let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
-  { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
   { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
+  { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
+  { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
   { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },

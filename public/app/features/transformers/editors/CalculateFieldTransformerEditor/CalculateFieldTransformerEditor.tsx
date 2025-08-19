@@ -21,11 +21,14 @@ import {
   CalculateFieldTransformerOptions,
   getNameFromOptions,
   defaultWindowOptions,
-} from '@grafana/data/src/transformations/transformers/calculateField';
+} from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../../docs/getTransformationContent';
+import darkImage from '../../images/dark/calculateField.svg';
+import lightImage from '../../images/light/calculateField.svg';
 
 import { BinaryOperationOptionsEditor } from './BinaryOperationOptionsEditor';
 import { CumulativeOptionsEditor } from './CumulativeOptionsEditor';
@@ -41,27 +44,50 @@ interface CalculateFieldTransformerEditorState {
   selected: string[];
 }
 
-const calculationModes = [
-  { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
-  { value: CalculateFieldMode.UnaryOperation, label: 'Unary operation' },
-  { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
-  { value: CalculateFieldMode.Index, label: 'Row index' },
-];
-
-if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
-  calculationModes.push(
-    { value: CalculateFieldMode.CumulativeFunctions, label: 'Cumulative functions' },
-    { value: CalculateFieldMode.WindowFunctions, label: 'Window functions' }
-  );
-}
-
-const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
+const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string, FieldType.boolean]);
 
 export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformerEditorProps) => {
   const { options, onChange, input } = props;
   const configuredOptions = options?.reduce?.include;
-
   const [state, setState] = useState<CalculateFieldTransformerEditorState>({ names: [], selected: [] });
+
+  const calculationModes = [
+    {
+      value: CalculateFieldMode.BinaryOperation,
+      label: t(
+        'transformers.calculate-field-transformer-editor.calculation-modes.label.binary-operation',
+        'Binary operation'
+      ),
+    },
+    {
+      value: CalculateFieldMode.UnaryOperation,
+      label: t(
+        'transformers.calculate-field-transformer-editor.calculation-modes.label.unary-operation',
+        'Unary operation'
+      ),
+    },
+    {
+      value: CalculateFieldMode.ReduceRow,
+      label: t('transformers.calculate-field-transformer-editor.calculation-modes.label.reduce-row', 'Reduce row'),
+    },
+    {
+      value: CalculateFieldMode.Index,
+      label: t('transformers.calculate-field-transformer-editor.calculation-modes.label.row-index', 'Row index'),
+    },
+  ];
+
+  if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
+    calculationModes.push(
+      {
+        value: CalculateFieldMode.CumulativeFunctions,
+        label: t('transformers.calculate-field-transformer-editor.label.cumulative-functions', 'Cumulative functions'),
+      },
+      {
+        value: CalculateFieldMode.WindowFunctions,
+        label: t('transformers.calculate-field-transformer-editor.label.window-functions', 'Window functions'),
+      }
+    );
+  }
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };
@@ -176,7 +202,10 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
 
   return (
     <>
-      <InlineField labelWidth={LABEL_WIDTH} label="Mode">
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.calculate-field-transformer-editor.label-mode', 'Mode')}
+      >
         <Select
           className="width-18"
           options={calculationModes}
@@ -215,7 +244,11 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
       {mode === CalculateFieldMode.Index && (
         <IndexOptionsEditor options={options} onChange={props.onChange}></IndexOptionsEditor>
       )}
-      <InlineField labelWidth={LABEL_WIDTH} label="Alias" disabled={disableAlias}>
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.calculate-field-transformer-editor.label-alias', 'Alias')}
+        disabled={disableAlias}
+      >
         <Input
           className="width-18"
           value={options.alias ?? ''}
@@ -223,19 +256,31 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
           onChange={onAliasChanged}
         />
       </InlineField>
-      <InlineField labelWidth={LABEL_WIDTH} label="Replace all fields">
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.calculate-field-transformer-editor.label-replace-all-fields', 'Replace all fields')}
+      >
         <InlineSwitch value={!!options.replaceFields} onChange={onToggleReplaceFields} />
       </InlineField>
     </>
   );
 };
 
-export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
-  id: DataTransformerID.calculateField,
-  editor: CalculateFieldTransformerEditor,
-  transformation: standardTransformers.calculateFieldTransformer,
-  name: standardTransformers.calculateFieldTransformer.name,
-  description: 'Use the row values to calculate a new field.',
-  categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
-};
+export const getCalculateFieldTransformRegistryItem: () => TransformerRegistryItem<CalculateFieldTransformerOptions> =
+  () => ({
+    id: DataTransformerID.calculateField,
+    editor: CalculateFieldTransformerEditor,
+    transformation: standardTransformers.calculateFieldTransformer,
+    name: t(
+      'transformers.get-calculate-field-transform-registry-item.name.add-field-from-calculation',
+      'Add field from calculation'
+    ),
+    description: t(
+      'transformers.get-calculate-field-transform-registry-item.description.values-calculate-field',
+      'Use the row values to calculate a new field.'
+    ),
+    categories: new Set([TransformerCategory.CalculateNewFields]),
+    help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

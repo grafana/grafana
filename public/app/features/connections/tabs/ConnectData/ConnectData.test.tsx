@@ -5,9 +5,9 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { PluginType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/__mocks__';
+import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 import { CatalogPlugin } from 'app/features/plugins/admin/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AddNewConnection } from './ConnectData';
 
@@ -33,37 +33,13 @@ const mockCatalogDataSourcePlugin = getCatalogPluginMock({
   id: 'sample-data-source',
 });
 
+const mockCatalogAppPlugin = getCatalogPluginMock({
+  type: PluginType.app,
+  name: 'Sample app',
+  id: 'sample-app',
+});
+
 describe('Badges', () => {
-  test('does not show angular badge for non-angular plugins', async () => {
-    renderPage([
-      getCatalogPluginMock({
-        id: 'react-plugin',
-        name: 'React Plugin',
-        type: PluginType.datasource,
-        angularDetected: false,
-      }),
-    ]);
-    await waitFor(() => {
-      expect(screen.queryByText('React Plugin')).toBeInTheDocument();
-    });
-    expect(screen.queryByText('Angular')).not.toBeInTheDocument();
-  });
-
-  test('shows angular badge for angular plugins', async () => {
-    renderPage([
-      getCatalogPluginMock({
-        id: 'legacy-plugin',
-        name: 'Legacy Plugin',
-        type: PluginType.datasource,
-        angularDetected: true,
-      }),
-    ]);
-    await waitFor(() => {
-      expect(screen.queryByText('Legacy Plugin')).toBeInTheDocument();
-    });
-    expect(screen.queryByText('Angular')).toBeInTheDocument();
-  });
-
   test('shows enterprise and deprecated badges for plugins', async () => {
     renderPage([
       getCatalogPluginMock({
@@ -94,8 +70,8 @@ describe('Add new connection', () => {
     expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
 
-  test('renders no results if there is no data source plugin in the list', async () => {
-    renderPage([getCatalogPluginMock()]);
+  test('renders no results if there are no datasource or app plugins in the list', async () => {
+    renderPage([getCatalogPluginMock({ type: PluginType.panel })]);
 
     expect(screen.queryByText('No results matching your query were found')).toBeInTheDocument();
   });
@@ -105,6 +81,20 @@ describe('Add new connection', () => {
 
     expect(await screen.findByText('Sample data source')).toBeVisible();
   });
+
+  test('renders app plugins when list is populated', async () => {
+    renderPage([getCatalogPluginMock(), mockCatalogAppPlugin]);
+
+    expect(await screen.findByText('Sample app')).toBeVisible();
+  });
+
+  test('renders app plugin and datasource plugin when list is populated', async () => {
+    renderPage([getCatalogPluginMock(), mockCatalogAppPlugin, mockCatalogDataSourcePlugin]);
+
+    expect(await screen.findByText('Sample app')).toBeVisible();
+    expect(await screen.findByText('Sample data source')).toBeVisible();
+  });
+
   test('should list plugins with update when filtering by update', async () => {
     const { queryByText } = renderPage(
       [

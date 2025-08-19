@@ -19,11 +19,11 @@ import (
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
-
+	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -31,18 +31,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
-const resourceStoreAudience = "resourceStore"
-
 type Options struct {
-	Cfg      *setting.Cfg
-	Features featuremgmt.FeatureToggles
-	DB       infraDB.DB
-	Tracer   tracing.Tracer
-	Reg      prometheus.Registerer
-	Authzc   types.AccessClient
-	Docs     resource.DocumentBuilderSupplier
+	Cfg          *setting.Cfg
+	Features     featuremgmt.FeatureToggles
+	DB           infraDB.DB
+	Tracer       tracing.Tracer
+	Reg          prometheus.Registerer
+	Authzc       types.AccessClient
+	Docs         resource.DocumentBuilderSupplier
+	SecureValues secrets.InlineSecureValueSupport
 }
 
 type clientMetrics struct {
@@ -51,15 +51,20 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (resource.ResourceClient, error) {
-	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
+func ProvideUnifiedStorageClient(opts *Options,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+) (resource.ResourceClient, error) {
+	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
-		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
-		Address:      apiserverCfg.Key("address").MustString(""), // client address
-		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
+		StorageType:         options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
+		DataPath:            apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
+		Address:             apiserverCfg.Key("address").MustString(""),
+		SearchServerAddress: apiserverCfg.Key("search_server_address").MustString(""),
+		BlobStoreURL:        apiserverCfg.Key("blob_url").MustString(""),
+		BlobThresholdBytes:  apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
@@ -81,8 +86,10 @@ func newClient(opts options.StorageOptions,
 	docs resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	secure secrets.InlineSecureValueSupport,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
+
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
@@ -118,46 +125,79 @@ func newClient(opts options.StorageOptions,
 		}
 
 		var (
-			conn    grpc.ClientConnInterface
-			err     error
-			metrics = newClientMetrics(reg)
+			conn      grpc.ClientConnInterface
+			indexConn grpc.ClientConnInterface
+			err       error
+			metrics   = newClientMetrics(reg)
 		)
-		// Create either a connection pool or a single connection.
-		// The connection pool __can__ be useful when connection to
-		// server side load balancers like kube-proxy.
-		if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
-			conn, err = newPooledConn(&poolOpts{
-				initialCapacity: 3,
-				maxCapacity:     6,
-				idleTimeout:     time.Minute,
-				factory: func() (*grpc.ClientConn, error) {
-					return grpcConn(opts.Address, metrics)
-				},
-			})
+
+		conn, err = newGrpcConn(opts.Address, metrics, features)
+		if err != nil {
+			return nil, err
+		}
+
+		if opts.SearchServerAddress != "" {
+			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features)
+
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			conn, err = grpcConn(opts.Address, metrics)
-			if err != nil {
-				return nil, err
-			}
+			indexConn = conn
 		}
 
 		// Create a client instance
-		client, err := newResourceClient(conn, cfg, features, tracer)
+		client, err := resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 		if err != nil {
 			return nil, err
 		}
 		return client, nil
 
-	// Use the local SQL
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
 		if err != nil {
 			return nil, err
 		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features)
+
+		serverOptions := sql.ServerOptions{
+			DB:             db,
+			Cfg:            cfg,
+			Tracer:         tracer,
+			Reg:            reg,
+			AccessClient:   authzc,
+			SearchOptions:  searchOptions,
+			StorageMetrics: storageMetrics,
+			IndexMetrics:   indexMetrics,
+			Features:       features,
+			SecureValues:   secure,
+		}
+
+		if cfg.QOSEnabled {
+			qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
+			queue := scheduler.NewQueue(&scheduler.QueueOptions{
+				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
+				Registerer:       qosReg,
+				Logger:           cfg.Logger,
+			})
+			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
+				return nil, fmt.Errorf("failed to start queue: %w", err)
+			}
+			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+				NumWorkers: cfg.QOSNumberWorker,
+				Logger:     cfg.Logger,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to create scheduler: %w", err)
+			}
+
+			err = services.StartAndAwaitRunning(ctx, scheduler)
+			if err != nil {
+				return nil, fmt.Errorf("failed to start scheduler: %w", err)
+			}
+			serverOptions.QOSQueue = queue
+		}
+
+		server, err := sql.NewResourceServer(serverOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -165,20 +205,32 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
-func newResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
-		return resource.NewLegacyResourceClient(conn), nil
+func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.FeatureToggles) (grpc.ClientConnInterface, error) {
+	// Create either a connection pool or a single connection.
+	// The connection pool __can__ be useful when connection to
+	// server side load balancers like kube-proxy.
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
+		conn, err := newPooledConn(&poolOpts{
+			initialCapacity: 3,
+			maxCapacity:     6,
+			idleTimeout:     time.Minute,
+			factory: func() (*grpc.ClientConn, error) {
+				return grpcConn(address, metrics)
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return conn, nil
 	}
 
-	clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+	conn, err := grpcConn(address, metrics)
+	if err != nil {
+		return nil, err
+	}
 
-	return resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
-		Token:            clientCfg.Token,
-		TokenExchangeURL: clientCfg.TokenExchangeURL,
-		Audiences:        []string{resourceStoreAudience},
-		Namespace:        clientCfg.TokenNamespace,
-		AllowInsecure:    cfg.Env == setting.Dev,
-	})
+	return conn, nil
 }
 
 // grpcConn creates a new gRPC connection to the provided address.
@@ -200,7 +252,7 @@ func grpcConn(address string, metrics *clientMetrics) (*grpc.ClientConn, error) 
 	// Set the defaults that are normally set by Config.RegisterFlags.
 	flagext.DefaultValues(&cfg)
 
-	opts, err := cfg.DialOption(unary, stream)
+	opts, err := cfg.DialOption(unary, stream, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not instrument grpc client: %w", err)
 	}

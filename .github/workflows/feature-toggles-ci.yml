@@ -7,16 +7,22 @@ on:
       - 'pkg/services/featuremgmt/registry.go'
       - 'docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md'
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: 'go.mod'
           cache: true

@@ -1,0 +1,211 @@
+name: Build Release Packages
+on:
+  workflow_dispatch:
+    inputs:
+      source-event:
+        description: If this workflow was triggered by another workflow, this value should be set to the GITHUB_EVENT_NAME of that source workflow.
+        type: string
+        required: false
+        default: workflow_dispatch
+  schedule:
+    # Every weeknight at midnight
+    # "Scheduled workflows will only run on the default branch." (docs.github.com)
+    - cron: "0 0 * * 1-5"
+  push:
+    branches:
+      - release-*.*.*
+      - main
+
+permissions:
+  contents: read
+
+# Builds the following artifacts:
+#
+# npm:grafana
+# storybook
+# targz:grafana:linux/amd64
+# targz:grafana:linux/arm64
+# targz:grafana:linux/arm/v6
+# targz:grafana:linux/arm/v7
+# deb:grafana:linux/amd64
+# deb:grafana:linux/arm64
+# deb:grafana:linux/arm/v6
+# deb:grafana:linux/arm/v7
+# rpm:grafana:linux/amd64:sign
+# rpm:grafana:linux/arm64:sign
+# docker:grafana:linux/amd64
+# docker:grafana:linux/arm64
+# docker:grafana:linux/arm/v7
+# docker:grafana:linux/amd64:ubuntu
+# docker:grafana:linux/arm64:ubuntu
+# docker:grafana:linux/arm/v7:ubuntu
+# targz:grafana:windows/amd64
+# targz:grafana:windows/arm64
+# targz:grafana:darwin/amd64
+# targz:grafana:darwin/arm64
+# zip:grafana:windows/amd64
+# msi:grafana:windows/amd64
+jobs:
+  setup:
+    name: setup
+    runs-on: github-hosted-ubuntu-x64-small
+    if: github.repository == 'grafana/grafana'
+    outputs:
+      version: ${{ steps.output.outputs.version }}
+      grafana-commit: ${{ steps.output.outputs.grafana_commit }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up version (Release Branches)
+        if: startsWith(github.ref_name, 'release-')
+        run: echo "${REF_NAME#release-}" > VERSION
+        env:
+          REF_NAME: ${{ github.ref_name }}
+      - name: Set up version (Non-release branches)
+        if: ${{ !startsWith(github.ref_name, 'release-') }}
+        run: jq -r .version package.json | sed -s "s/pre/${BUILD_ID}/g" > VERSION
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          BUILD_ID: ${{ github.run_id }}
+      - id: output
+        run: |
+          echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
+  # Triggers the same workflow in `grafana-enterprise` on the same ref
+  downstream:
+    runs-on: github-hosted-ubuntu-x64-small
+    needs: [setup]
+    permissions:
+      contents: read
+      id-token: write
+    name: Dispatch grafana-enterprise build
+    steps:
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["grafana-enterprise"]'
+          permissions: '{"actions": "write"}'
+      - uses: actions/github-script@v7
+        env:
+          REF: ${{ github.ref_name }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          BUILD_ID: ${{ github.run_id }}
+          BUCKET: grafana-prerelease
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT} = process.env;
+            
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'grafana-enterprise',
+                workflow_id: 'release-build.yml',
+                ref:  REF,
+                inputs: {
+                  "version": VERSION,
+                  "build-id": String(BUILD_ID),
+                  "bucket": BUCKET,
+                  "grafana-commit": GRAFANA_COMMIT,
+                  "source-event": SOURCE_EVENT,
+                }
+            })
+
+  build:
+    runs-on: github-hosted-ubuntu-x64-large
+    needs: [setup]
+    permissions:
+      contents: read
+      id-token: write
+    name: ${{ needs.setup.outputs.version }} / ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The artifacts in these lists are grouped by their os+arch because the
+        # build process can reuse the binaries for each artifact.
+        # The downside to this is that the frontend will be built for each one when it could be reused for all of them.
+        # This could be a future improvement.
+        include:
+          - name: linux-amd64
+            artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
+            verify: true
+          - name: linux-arm64
+            artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+            verify: false
+          - name: linux-s390x
+            artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+            verify: true
+          - name: linux-armv7
+            artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
+            verify: true
+          - name: linux-armv6
+            artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
+            verify: true
+          - name: windows-amd64
+            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+            verify: true
+          - name: windows-arm64
+            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+            verify: true
+          - name: darwin-amd64
+            artifacts: targz:grafana:darwin/amd64
+            verify: true
+          - name: darwin-arm64
+            artifacts: targz:grafana:darwin/arm64
+            verify: true
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
+        with:
+          image: docker.io/tonistiigi/binfmt:qemu-v7.0.0-28
+      - uses: ./.github/actions/build-package
+        id: build
+        with:
+          artifacts: ${{ matrix.artifacts }}
+          checksum: true
+          grafana-path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ needs.setup.outputs.version }}
+          output: artifacts-${{ matrix.name }}.txt
+          verify: ${{ matrix.verify }}
+          build-id: ${{ github.run_id }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: artifacts-list-${{ matrix.name }}
+          path: ${{ steps.build.outputs.file }}
+          retention-days: 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: artifacts-${{ matrix.name }}
+          path: ${{ steps.build.outputs.dist-dir }}
+          retention-days: 1
+  publish-artifacts:
+    name: Upload artifacts
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    permissions:
+      id-token: write
+    needs:
+      - setup
+      - build
+    with:
+      bucket: grafana-prerelease
+      pattern: artifacts-*
+      run-id: ${{ github.run_id }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
+      environment: prod

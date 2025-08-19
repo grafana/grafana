@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
@@ -55,14 +56,19 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
+    const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
     const isProvisionedNG = useIsProvisionedNG(dashboard);
 
     const tabs = (
       <TabsBar>
-        <Tab label={'Details'} active={!showDiff} onChangeTab={() => model.setState({ showDiff: false })} />
-        {changesCount > 0 && (
+        <Tab
+          label={t('dashboard-scene.save-dashboard-drawer.tabs.label-details', 'Details')}
+          active={!showDiff}
+          onChangeTab={() => model.setState({ showDiff: false })}
+        />
+        {changesCount > 0 && !managedResourceCannotBeEdited && (
           <Tab
-            label={'Changes'}
+            label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
             active={showDiff}
             onChangeTab={() => model.setState({ showDiff: true })}
             counter={changesCount}
@@ -71,11 +77,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       </TabsBar>
     );
 
-    let title = 'Save dashboard';
+    let title = t('dashboard-scene.save-dashboard-drawer.tabs.title', 'Save dashboard');
     if (saveAsCopy) {
-      title = 'Save dashboard copy';
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
     } else if (isProvisioned || isProvisionedNG) {
-      title = 'Provisioned dashboard';
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
     }
 
     const renderBody = () => {
@@ -101,7 +107,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
         return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
       }
 
-      if (isProvisioned) {
+      if (isProvisioned || managedResourceCannotBeEdited) {
         return <SaveProvisionedDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 

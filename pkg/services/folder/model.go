@@ -63,6 +63,18 @@ type Folder struct {
 	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
+type FolderReference struct {
+	// Deprecated: use UID instead
+	ID        int64  `xorm:"pk autoincr 'id'"`
+	UID       string `xorm:"uid"`
+	Title     string
+	ParentUID string `xorm:"parent_uid"`
+
+	// When the folder belongs to a repository
+	// NOTE: this is only populated when folders are managed by unified storage
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
+}
+
 var GeneralFolder = Folder{ID: 0, Title: "General"}
 var RootFolder = &Folder{ID: 0, Title: "Dashboards", UID: GeneralFolderUID, ParentUID: ""}
 var SharedWithMeFolder = Folder{
@@ -87,6 +99,16 @@ func (f *Folder) WithURL() *Folder {
 	// copy of dashboards.GetFolderURL()
 	f.URL = fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, f.UID, slugify.Slugify(f.Title))
 	return f
+}
+
+func (f *Folder) ToFolderReference() *FolderReference {
+	return &FolderReference{
+		ID:        f.ID,
+		UID:       f.UID,
+		Title:     f.Title,
+		ParentUID: f.ParentUID,
+		ManagedBy: f.ManagedBy,
+	}
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -148,7 +170,8 @@ type DeleteFolderCommand struct {
 	OrgID            int64  `json:"orgId" xorm:"org_id"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser      identity.Requester `json:"-"`
+	RemovePermissions bool               `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or

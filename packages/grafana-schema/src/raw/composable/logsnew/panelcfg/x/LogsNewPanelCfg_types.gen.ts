@@ -10,14 +10,19 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.0.0-pre";
+export const pluginVersion = "12.2.0-pre";
 
 export interface Options {
+  controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
+  grammar?: unknown;
+  onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
+  showControls: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
+  syntaxHighlighting: boolean;
   wrapLogMessage: boolean;
 }

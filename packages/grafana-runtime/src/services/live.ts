@@ -73,15 +73,6 @@ export interface GrafanaLiveSrv {
   getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
 
   /**
-   * Execute a query over the live websocket and potentiall subscribe to a live channel.
-   *
-   * Since the initial request and subscription are on the same socket, this will support HA setups
-   *
-   * @alpha -- this function requires the feature toggle `queryOverLive` to be set
-   */
-  getQueryData(options: LiveQueryDataOptions): Observable<DataQueryResponse>;
-
-  /**
    * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream

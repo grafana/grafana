@@ -1,25 +1,38 @@
-import { RepositorySpec } from 'app/api/clients/provisioning';
-import { WorkflowOption } from 'app/features/provisioning/types';
+import { t } from '@grafana/i18n';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-export function getDefaultWorkflow(config?: RepositorySpec) {
+export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: string) {
+  if (loadedFromRef && loadedFromRef !== config?.branch) {
+    return 'write'; // use write when the value targets an explicit ref
+  }
   return config?.workflows?.[0];
 }
 
-export function getWorkflowOptions(config?: RepositorySpec, ref?: string) {
+export function getWorkflowOptions(config?: RepositoryView, ref?: string) {
   if (!config) {
     return [];
   }
 
-  if (config.local?.path) {
-    return [{ label: `Write to ${config.local.path}`, value: 'write' }];
+  if (config.type === 'local') {
+    return [{ label: `Save`, value: 'write' }];
   }
 
-  let branch = ref ?? config.github?.branch;
-  const availableOptions: Array<{ label: string; value: WorkflowOption }> = [
-    { label: `Push to ${branch ?? 'main'}`, value: 'write' },
-    { label: 'Push to different branch', value: 'branch' },
-  ];
+  // When a branch is configured, show it
+  if (!ref && config.branch) {
+    ref = config.branch;
+  }
 
-  // Filter options based on the workflows in the config
-  return availableOptions.filter((option) => config.workflows?.includes(option.value));
+  // Return the workflows in the configured order
+  return config.workflows.map((value) => {
+    switch (value) {
+      case 'write':
+        return { label: ref ? `Push to ${ref}` : 'Save', value };
+      case 'branch':
+        return {
+          label: t('dashboard-scene.get-workflow-options.label.push-to-a-new-branch', 'Push to a new branch'),
+          value,
+        };
+    }
+    return { label: value, value };
+  });
 }

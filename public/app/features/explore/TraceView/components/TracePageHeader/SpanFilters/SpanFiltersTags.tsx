@@ -2,17 +2,18 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useMount } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toOption, TraceSearchProps, TraceSearchTag } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
-import { randomId, SearchProps, Tag } from '../../../useSearch';
+import { randomId } from '../../../../state/constants';
 import { getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 
 interface Props {
-  search: SearchProps;
-  setSearch: (search: SearchProps) => void;
+  search: TraceSearchProps;
+  setSearch: (search: TraceSearchProps) => void;
   trace: Trace;
   tagKeys?: Array<SelectableValue<string>>;
   setTagKeys: React.Dispatch<React.SetStateAction<Array<SelectableValue<string>> | undefined>>;
@@ -46,7 +47,7 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
     }
   });
 
-  const onTagChange = (tag: Tag, v: SelectableValue<string>) => {
+  const onTagChange = (tag: TraceSearchTag, v: SelectableValue<string>) => {
     setSearch({
       ...search,
       tags: search.tags?.map((x) => {
@@ -102,19 +103,19 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
           <Stack gap={0} width={'auto'} justifyContent={'flex-start'} alignItems={'center'}>
             <div>
               <Select
-                aria-label="Select tag key"
+                aria-label={t('explore.span-filters-tags.aria-label-select-tag-key', 'Select tag key')}
                 isClearable
                 key={tag.key}
                 onChange={(v) => onTagChange(tag, v)}
                 onOpenMenu={getTagKeys}
                 options={tagKeys || (tag.key ? [tag.key].map(toOption) : [])}
-                placeholder="Select tag"
+                placeholder={t('explore.span-filters-tags.placeholder-select-tag', 'Select tag')}
                 value={tag.key || null}
               />
             </div>
             <div>
               <Select
-                aria-label="Select tag operator"
+                aria-label={t('explore.span-filters-tags.aria-label-select-tag-operator', 'Select tag operator')}
                 onChange={(v) => {
                   setSearch({
                     ...search,
@@ -131,7 +132,7 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
             <span className={styles.tagValues}>
               {(tag.operator === '=' || tag.operator === '!=') && (
                 <Select
-                  aria-label="Select tag value"
+                  aria-label={t('explore.span-filters-tags.aria-label-select-tag-value', 'Select tag value')}
                   isClearable
                   key={tag.value}
                   onChange={(v) => {
@@ -143,13 +144,13 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
                     });
                   }}
                   options={tagValues[tag.id] ? tagValues[tag.id] : tag.value ? [tag.value].map(toOption) : []}
-                  placeholder="Select value"
+                  placeholder={t('explore.span-filters-tags.placeholder-select-value', 'Select value')}
                   value={tag.value}
                 />
               )}
               {(tag.operator === '=~' || tag.operator === '!~') && (
                 <Input
-                  aria-label="Input tag value"
+                  aria-label={t('explore.span-filters-tags.aria-label-input-tag-value', 'Input tag value')}
                   onChange={(v) => {
                     setSearch({
                       ...search,
@@ -158,7 +159,7 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
                       }),
                     });
                   }}
-                  placeholder="Tag value"
+                  placeholder={t('explore.span-filters-tags.placeholder-tag-value', 'Tag value')}
                   width={18}
                   value={tag.value || ''}
                 />
@@ -166,21 +167,21 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
             </span>
             {(tag.key || tag.value || search.tags.length > 1) && (
               <AccessoryButton
-                aria-label="Remove tag"
+                aria-label={t('explore.span-filters-tags.aria-label-remove-tag', 'Remove tag')}
                 variant="secondary"
                 icon="times"
                 onClick={() => removeTag(tag.id)}
-                tooltip="Remove tag"
+                tooltip={t('explore.span-filters-tags.tooltip-remove-tag', 'Remove tag')}
               />
             )}
             {(tag.key || tag.value) && i === search.tags.length - 1 && (
               <span className={styles.addTag}>
                 <AccessoryButton
-                  aria-label="Add tag"
+                  aria-label={t('explore.span-filters-tags.aria-label-add-tag', 'Add tag')}
                   variant="secondary"
                   icon="plus"
                   onClick={addTag}
-                  tooltip="Add tag"
+                  tooltip={t('explore.span-filters-tags.tooltip-add-tag', 'Add tag')}
                 />
               </span>
             )}

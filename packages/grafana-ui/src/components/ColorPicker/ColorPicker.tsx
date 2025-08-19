@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { withTheme2, stylesFactory } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { closePopover } from '../../utils/closePopover';
 import { Popover } from '../Tooltip/Popover';
 import { PopoverController } from '../Tooltip/PopoverController';
@@ -36,7 +37,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     pickerTriggerRef = createRef<any>();
 
     render() {
-      const { theme, children, onChange, color } = this.props;
+      const { theme, children, onChange, color, id } = this.props;
       const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
         ...{ ...this.props, children: null },
@@ -66,6 +67,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                   })
                 ) : (
                   <ColorSwatch
+                    id={id}
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}

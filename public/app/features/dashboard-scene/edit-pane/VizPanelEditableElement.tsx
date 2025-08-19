@@ -1,23 +1,27 @@
-import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { useStyles2, Text, Icon, Stack, Tooltip } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Stack, Button } from '@grafana/ui';
+import { appEvents } from 'app/core/core';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
+  editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getEditPanelUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
@@ -36,7 +40,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
     const layoutElement = panel.parent!;
 
@@ -45,31 +49,37 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: uuidv4(),
             render: () => <OpenPanelEditViz panel={this.panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
+            id: uuidv4(),
             value: panel.state.title,
             popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} />,
+            render: (descriptor) => (
+              <PanelFrameTitleInput id={descriptor.props.id} panel={panel} isNewElement={isNewElement} />
+            ),
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.description', 'Description'),
+            id: uuidv4(),
             value: panel.state.description,
-            render: () => <PanelDescriptionTextArea panel={panel} />,
+            render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            render: () => <PanelBackgroundSwitch panel={panel} />,
+            id: uuidv4(),
+            render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
           })
         );
-    }, [panel]);
+    }, [panel, isNewElement]);
 
     const layoutCategories = useMemo(
       () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
@@ -84,6 +94,22 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     layout.removePanel?.(this.panel);
   }
 
+  public onConfirmDelete() {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.viz-panel.delete-panel-title', 'Delete panel?'),
+        text: t(
+          'dashboard.viz-panel.delete-panel-text',
+          'Deleting this panel will also remove all queries. Are you sure you want to continue?'
+        ),
+        yesText: t('dashboard.viz-panel.delete-panel-yes', 'Delete'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
+  }
+
   public onDuplicate() {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
@@ -94,67 +120,37 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     dashboard.copyPanel(this.panel);
   }
 
+  public onChangeName(name: string) {
+    editPanelTitleAction(this.panel, name);
+  }
+
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
     return new MultiSelectedVizPanelsEditableElement(items);
   }
+
+  public scrollIntoView() {
+    if (this.panel.parent instanceof AutoGridItem || this.panel.parent instanceof DashboardGridItem) {
+      this.panel.parent.scrollIntoView();
+    }
+  }
 }
 
-type OpenPanelEditVizProps = {
-  panel: VizPanel;
-};
+type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
-  const styles = useStyles2(getStyles);
-
-  const plugin = panel.getPlugin();
-  const imgSrc = plugin?.meta.info.logos.small;
-
   return (
     <Stack alignItems="center" width="100%">
-      {plugin ? (
-        <Tooltip content={t('dashboard.viz-panel.options.open-edit', 'Open panel editor')}>
-          <a
-            href={textUtil.sanitizeUrl(getEditPanelUrl(getPanelIdForVizPanel(panel)))}
-            className={cx(styles.pluginDescriptionWrapper)}
-          >
-            <img
-              className={styles.panelVizImg}
-              src={imgSrc}
-              alt={t('dashboard.viz-panel.options.plugin-type-image', 'Image of plugin type')}
-            />
-            <Text truncate>{plugin.meta.name}</Text>
-            <Icon className={styles.panelVizIcon} name="sliders-v-alt" />
-          </a>
-        </Tooltip>
-      ) : null}
+      <Button
+        onClick={() => {
+          locationService.partial({ editPanel: getPanelIdForVizPanel(panel) });
+        }}
+        icon="sliders-v-alt"
+        fullWidth
+        size="sm"
+        tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
+      >
+        <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
+      </Button>
     </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  pluginDescriptionWrapper: css({
-    display: 'flex',
-    flexWrap: 'nowrap',
-    alignItems: 'center',
-    columnGap: theme.spacing(1),
-    rowGap: theme.spacing(0.5),
-    minHeight: theme.spacing(4),
-    backgroundColor: theme.colors.secondary.main,
-    border: `1px solid ${theme.colors.secondary.border}`,
-    borderRadius: theme.shape.radius.default,
-    paddingInline: theme.spacing(1),
-    paddingBlock: theme.spacing(0.5),
-    flexGrow: 1,
-    '&:hover': {
-      backgroundColor: theme.colors.secondary.shade,
-    },
-  }),
-  panelVizImg: css({
-    width: '16px',
-    height: '16px',
-    marginRight: theme.spacing(1),
-  }),
-  panelVizIcon: css({
-    marginLeft: 'auto',
-  }),
-});

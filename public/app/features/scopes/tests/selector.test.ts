@@ -1,10 +1,28 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { ScopesService } from '../ScopesService';
 
-import { applyScopes, cancelScopes, openSelector, selectResultCloud, updateScopes } from './utils/actions';
-import { expectScopesSelectorValue } from './utils/assertions';
+import {
+  applyScopes,
+  cancelScopes,
+  selectResultApplicationsMimir,
+  selectResultApplicationsGrafana,
+  openSelector,
+  selectResultCloud,
+  updateScopes,
+  expandRecentScopes,
+  expandResultApplications,
+  selectRecentScope,
+  clearSelector,
+} from './utils/actions';
+import {
+  expectRecentScope,
+  expectRecentScopeNotPresent,
+  expectRecentScopeNotPresentInDocument,
+  expectRecentScopesSection,
+  expectScopesSelectorValue,
+} from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getListOfScopes } from './utils/selectors';
@@ -33,9 +51,11 @@ describe('Selector', () => {
     scopesService = result.scopesService;
     fetchSelectedScopesSpy = jest.spyOn(result.client, 'fetchMultipleScopes');
     dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
+    window.localStorage.clear();
   });
 
   afterEach(async () => {
+    locationService.replace('');
     await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
   });
 
@@ -63,5 +83,94 @@ describe('Selector', () => {
   it('Does not reload the dashboard on scope change', async () => {
     await updateScopes(scopesService, ['grafana']);
     expect(dashboardReloadSpy).not.toHaveBeenCalled();
+  });
+
+  describe('Recent scopes', () => {
+    it('Recent scopes should appear after selecting a second set of scopes', async () => {
+      await openSelector();
+      await expandResultApplications();
+      await selectResultApplicationsGrafana();
+      await applyScopes();
+
+      await openSelector();
+      await selectResultApplicationsMimir();
+      await applyScopes();
+
+      // recent scopes only show on top level, so we need to make sure the scopes tree is not exapnded.
+      await clearSelector();
+
+      await openSelector();
+      expectRecentScopesSection();
+      await expandRecentScopes();
+      expectRecentScope('Grafana Applications');
+      expectRecentScope('Grafana, Mimir Applications');
+      await selectRecentScope('Grafana Applications');
+
+      expectScopesSelectorValue('Grafana');
+
+      await openSelector();
+      await expandRecentScopes();
+      expectRecentScope('Grafana, Mimir Applications');
+      expectRecentScopeNotPresent('Grafana Applications');
+      expectRecentScopeNotPresent('Mimir Applications');
+      await selectRecentScope('Grafana, Mimir Applications');
+
+      expectScopesSelectorValue('Grafana + Mimir');
+    });
+
+    it('recent scopes should not be visible when the first scope is selected', async () => {
+      await openSelector();
+      await expandResultApplications();
+      await selectResultApplicationsGrafana();
+      await applyScopes();
+
+      await openSelector();
+      expectRecentScopeNotPresentInDocument();
+    });
+
+    it('should not show recent scopes when no scopes have been previously selected', async () => {
+      await openSelector();
+      expectRecentScopeNotPresentInDocument();
+    });
+
+    it('should maintain recent scopes after deselecting all scopes', async () => {
+      // First select some scopes
+      await openSelector();
+      await expandResultApplications();
+      await selectResultApplicationsGrafana();
+      await selectResultApplicationsMimir();
+      await applyScopes();
+
+      // Deselect all scopes
+      await clearSelector();
+
+      // Recent scopes should still be available
+      await openSelector();
+      expectRecentScopesSection();
+      await expandRecentScopes();
+      expectRecentScope('Grafana, Mimir Applications');
+    });
+
+    it('should update recent scopes when selecting a different combination', async () => {
+      // First select Grafana + Mimir
+      await openSelector();
+      await expandResultApplications();
+      await selectResultApplicationsGrafana();
+      await selectResultApplicationsMimir();
+      await applyScopes();
+
+      // Then select just Grafana
+      await openSelector();
+      await selectResultApplicationsMimir();
+      await applyScopes();
+
+      await clearSelector();
+
+      // Check recent scopes are updated
+      await openSelector();
+      await expandRecentScopes();
+      expectRecentScope('Grafana, Mimir Applications');
+      expectRecentScope('Grafana Applications');
+    });
   });
 });

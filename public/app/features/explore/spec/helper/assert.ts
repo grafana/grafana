@@ -33,6 +33,17 @@ export const assertQueryLibraryTemplateExists = async (datasource: string, descr
   });
 };
 
+export const assertQueryLibraryTemplateDoesNotExists = async (description: string) => {
+  const selector = withinQueryLibrary();
+  await waitFor(() => {
+    const cell = selector.queryByRole('radio', {
+      name: description,
+    });
+
+    expect(cell).not.toBeInTheDocument();
+  });
+};
+
 export const assertAddToQueryLibraryButtonExists = async (value = true) => {
   await waitFor(() => {
     // ensures buttons for the card have been loaded to avoid false positives

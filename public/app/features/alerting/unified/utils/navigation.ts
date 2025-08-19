@@ -1,12 +1,15 @@
-import { RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 
 import { createReturnTo } from '../hooks/useReturnTo';
 
+import { stringifyIdentifier } from './rule-id';
 import { createRelativeUrl } from './url';
 
-export const createListFilterLink = (values: Array<[string, string]>) => {
+type QueryParams = ConstructorParameters<typeof URLSearchParams>[0];
+
+export const createListFilterLink = (values: Array<[string, string]>, options?: { skipSubPath?: boolean }) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createRelativeUrl(`/alerting/list`, params);
+  return createRelativeUrl(`/alerting/list`, params, { skipSubPath: options?.skipSubPath });
 };
 
 export const alertListPageLink = (queryParams: Record<string, string> = {}, options?: { skipSubPath?: boolean }) =>
@@ -42,4 +45,47 @@ export const groups = {
       { skipSubPath: options?.skipSubPath }
     );
   },
+  newAlertRuleLink: (folderName?: string, folderUid?: string, groupName?: string) => {
+    const returnTo = createReturnTo();
+
+    const defaults = JSON.stringify({
+      folder: {
+        title: folderName,
+        uid: folderUid,
+      },
+      group: groupName,
+    });
+
+    return createRelativeUrl('/alerting/new', { defaults, returnTo });
+  },
+  newRecordingRuleLink: (folderName?: string, folderUid?: string, groupName?: string) => {
+    const returnTo = createReturnTo();
+
+    const defaults = JSON.stringify({
+      folder: {
+        title: folderName,
+        uid: folderUid,
+      },
+      group: groupName,
+    });
+
+    return createRelativeUrl('/alerting/new/grafana-recording', { defaults, returnTo });
+  },
+};
+
+export const rulesNav = {
+  /**
+   * Creates a link to the details page of a rule. Encodes the rules source name and rule identifier.
+   */
+  detailsPageLink: (
+    rulesSourceName: string,
+    ruleIdentifier: RuleIdentifier,
+    params?: QueryParams,
+    options?: { skipSubPath?: boolean }
+  ) =>
+    createRelativeUrl(
+      `/alerting/${encodeURIComponent(rulesSourceName)}/${encodeURIComponent(stringifyIdentifier(ruleIdentifier))}/view`,
+      params,
+      { skipSubPath: options?.skipSubPath }
+    ),
 };

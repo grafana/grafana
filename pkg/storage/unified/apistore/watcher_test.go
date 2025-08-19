@@ -37,8 +37,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -130,12 +132,10 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		// Issue a health check to ensure the server is initialized
-		_, err = server.IsHealthy(ctx, &resource.HealthCheckRequest{})
+		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 		require.NoError(t, err)
 	case StorageTypeUnified:
-		if testing.Short() {
-			t.Skip("skipping integration test")
-		}
+		tests.SkipIntegrationTestInShortMode(t)
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
 
@@ -180,7 +180,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		setupOpts.newListFunc,
 		storage.DefaultNamespaceScopedAttr,
 		make(map[string]storage.IndexerFunc, 0),
-		nil,
+		nil, nil,
 		apistore.StorageOptions{},
 	)
 	if err != nil {
@@ -189,7 +189,10 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	return ctx, store, destroyFunc, nil
 }
 
-func TestWatch(t *testing.T) {
+func TestIntegrationWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
@@ -377,7 +380,7 @@ func newPodList() runtime.Object {
 	return &example.PodList{}
 }
 
-func testKeyParser(val string) (*resource.ResourceKey, error) {
+func testKeyParser(val string) (*resourcepb.ResourceKey, error) {
 	k, err := grafanaregistry.ParseKey(val)
 	if err != nil {
 		if strings.HasPrefix(val, "pods/") {
@@ -407,7 +410,7 @@ func testKeyParser(val string) (*resource.ResourceKey, error) {
 	if k.Resource == "" {
 		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 	}
-	return &resource.ResourceKey{
+	return &resourcepb.ResourceKey{
 		Namespace: k.Namespace,
 		Group:     k.Group,
 		Resource:  k.Resource,

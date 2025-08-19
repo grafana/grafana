@@ -1,7 +1,7 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 

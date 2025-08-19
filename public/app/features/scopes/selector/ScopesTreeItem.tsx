@@ -1,144 +1,117 @@
 import { css, cx } from '@emotion/css';
-import { Dictionary } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Icon, RadioButtonDot, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
 
 import { ScopesTree } from './ScopesTree';
-import { Node, NodeReason, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
+import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
+import { NodesMap, SelectedScope, TreeNode } from './types';
 
 export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
-  groupedNodes: Dictionary<Node[]>;
-  lastExpandedNode: boolean;
   loadingNodeName: string | undefined;
-  node: Node;
-  nodePath: string[];
-  nodeReason: NodeReason;
-  scopeNames: string[];
-  scopes: TreeScope[];
-  type: 'persisted' | 'result';
-  onNodeUpdate: OnNodeUpdate;
-  onNodeSelectToggle: OnNodeSelectToggle;
+  treeNode: TreeNode;
+  scopeNodes: NodesMap;
+  selected: boolean;
+  selectedScopes: SelectedScope[];
+
+  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  selectScope: (scopeNodeId: string) => void;
+  deselectScope: (scopeNodeId: string) => void;
 }
 
 export function ScopesTreeItem({
   anyChildExpanded,
-  groupedNodes,
-  lastExpandedNode,
   loadingNodeName,
-  node,
-  nodePath,
-  nodeReason,
-  scopeNames,
-  scopes,
-  type,
-  onNodeSelectToggle,
+  treeNode,
   onNodeUpdate,
+  scopeNodes,
+  selected,
+  selectedScopes,
+  selectScope,
+  deselectScope,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
 
-  const nodes = groupedNodes[nodeReason] || [];
-
-  if (nodes.length === 0) {
+  if (anyChildExpanded && !treeNode.expanded) {
     return null;
   }
 
-  const children = (
-    <div role="tree" className={anyChildExpanded ? styles.expandedContainer : undefined}>
-      {nodes.map((childNode) => {
-        const selected = childNode.selectable && scopeNames.includes(childNode.linkId!);
+  const scopeNode = scopeNodes[treeNode.scopeNodeId];
+  if (!scopeNode) {
+    // Should not happen as only way we show a tree is if we also load the nodes.
+    return null;
+  }
+  const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
+  const disableMultiSelect = parentNode?.spec.disableMultiSelect ?? false;
 
-        if (anyChildExpanded && !childNode.expanded) {
-          return null;
-        }
+  const isSelectable = isNodeSelectable(scopeNode);
+  const isExpandable = isNodeExpandable(scopeNode);
 
-        const childNodePath = [...nodePath, childNode.name];
+  return (
+    <div
+      key={treeNode.scopeNodeId}
+      role="treeitem"
+      aria-selected={treeNode.expanded}
+      className={anyChildExpanded ? styles.expandedContainer : undefined}
+    >
+      <div className={cx(styles.title, isSelectable && !treeNode.expanded && styles.titlePadding)}>
+        {isSelectable && !treeNode.expanded ? (
+          disableMultiSelect ? (
+            <RadioButtonDot
+              id={treeNode.scopeNodeId}
+              name={treeNode.scopeNodeId}
+              checked={selected}
+              label={isExpandable ? '' : scopeNode.spec.title}
+              data-testid={`scopes-tree-${treeNode.scopeNodeId}-radio`}
+              onClick={() => {
+                selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
+              }}
+            />
+          ) : (
+            <Checkbox
+              checked={selected}
+              data-testid={`scopes-tree-${treeNode.scopeNodeId}-checkbox`}
+              label={isExpandable ? '' : scopeNode.spec.title}
+              onChange={() => {
+                selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
+              }}
+            />
+          )
+        ) : null}
 
-        const radioName = childNodePath.join('.');
-
-        return (
-          <div
-            key={childNode.name}
-            role="treeitem"
-            aria-selected={childNode.expanded}
-            className={anyChildExpanded ? styles.expandedContainer : undefined}
+        {isExpandable && (
+          <button
+            className={styles.expand}
+            data-testid={`scopes-tree-${treeNode.scopeNodeId}-expand`}
+            aria-label={treeNode.expanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')}
+            onClick={() => {
+              onNodeUpdate(treeNode.scopeNodeId, !treeNode.expanded, treeNode.query);
+            }}
           >
-            <div className={cx(styles.title, childNode.selectable && !childNode.expanded && styles.titlePadding)}>
-              {childNode.selectable && !childNode.expanded ? (
-                node.disableMultiSelect ? (
-                  <RadioButtonDot
-                    id={radioName}
-                    name={radioName}
-                    checked={selected}
-                    label=""
-                    data-testid={`scopes-tree-${type}-${childNode.name}-radio`}
-                    onClick={() => {
-                      onNodeSelectToggle(childNodePath);
-                    }}
-                  />
-                ) : (
-                  <Checkbox
-                    checked={selected}
-                    data-testid={`scopes-tree-${type}-${childNode.name}-checkbox`}
-                    onChange={() => {
-                      onNodeSelectToggle(childNodePath);
-                    }}
-                  />
-                )
-              ) : null}
+            <Icon name={!treeNode.expanded ? 'angle-right' : 'angle-down'} />
 
-              {childNode.expandable ? (
-                <button
-                  className={styles.expand}
-                  data-testid={`scopes-tree-${type}-${childNode.name}-expand`}
-                  aria-label={
-                    childNode.expanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
-                  }
-                  onClick={() => {
-                    onNodeUpdate(childNodePath, !childNode.expanded, childNode.query);
-                  }}
-                >
-                  <Icon name={!childNode.expanded ? 'angle-right' : 'angle-down'} />
+            {scopeNode.spec.title}
+          </button>
+        )}
+      </div>
 
-                  {childNode.title}
-                </button>
-              ) : (
-                <span data-testid={`scopes-tree-${type}-${childNode.name}-title`}>{childNode.title}</span>
-              )}
-            </div>
-
-            <div className={styles.children}>
-              {childNode.expanded && (
-                <ScopesTree
-                  nodes={node.nodes}
-                  nodePath={childNodePath}
-                  loadingNodeName={loadingNodeName}
-                  scopes={scopes}
-                  onNodeUpdate={onNodeUpdate}
-                  onNodeSelectToggle={onNodeSelectToggle}
-                />
-              )}
-            </div>
-          </div>
-        );
-      })}
+      <div className={styles.children}>
+        {treeNode.expanded && (
+          <ScopesTree
+            tree={treeNode}
+            loadingNodeName={loadingNodeName}
+            onNodeUpdate={onNodeUpdate}
+            scopeNodes={scopeNodes}
+            selectedScopes={selectedScopes}
+            selectScope={selectScope}
+            deselectScope={deselectScope}
+          />
+        )}
+      </div>
     </div>
   );
-
-  if (lastExpandedNode) {
-    return (
-      <ScrollContainer
-        minHeight={`${Math.min(5, nodes.length) * 30}px`}
-        maxHeight={nodeReason === NodeReason.Persisted ? `${Math.min(5, nodes.length) * 30}px` : '100%'}
-      >
-        {children}
-      </ScrollContainer>
-    );
-  }
-
-  return children;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -156,8 +129,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       lineHeight: theme.typography.pxToRem(22),
       padding: theme.spacing(0.5, 0),
 
-      '& > label': css({
-        gap: 0,
+      '& > label :last-child': css({
+        fontSize: theme.typography.pxToRem(14),
+        lineHeight: theme.typography.pxToRem(22),
+        fontWeight: theme.typography.fontWeightRegular,
       }),
     }),
     titlePadding: css({

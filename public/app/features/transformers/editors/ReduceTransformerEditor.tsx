@@ -9,24 +9,33 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
+import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/reduce.svg';
+import lightImage from '../images/light/reduce.svg';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
     {
-      label: 'Series to rows',
+      label: t('transformers.reduce-transformer-editor.modes.label.series-to-rows', 'Series to rows'),
       value: ReduceTransformerMode.SeriesToRows,
-      description: 'Create a table with one row for each series value',
+      description: t(
+        'transformers.reduce-transformer-editor.modes.description.create-table-series-value',
+        'Create a table with one row for each series value'
+      ),
     },
     {
-      label: 'Reduce fields',
+      label: t('transformers.reduce-transformer-editor.modes.label.reduce-fields', 'Reduce fields'),
       value: ReduceTransformerMode.ReduceFields,
-      description: 'Collapse each field into a single value',
+      description: t(
+        'transformers.reduce-transformer-editor.modes.description.collapse-field-single-value',
+        'Collapse each field into a single value'
+      ),
     },
   ];
 
@@ -58,7 +67,12 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
 
   return (
     <>
-      <InlineField label="Mode" data-testid={selectors.components.Transforms.Reduce.modeLabel} grow labelWidth={16}>
+      <InlineField
+        label={t('transformers.reduce-transformer-editor.label-mode', 'Mode')}
+        data-testid={selectors.components.Transforms.Reduce.modeLabel}
+        grow
+        labelWidth={16}
+      >
         <Select
           options={modes}
           value={modes.find((v) => v.value === options.mode) || modes[0]}
@@ -66,13 +80,13 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
         />
       </InlineField>
       <InlineField
-        label="Calculations"
+        label={t('transformers.reduce-transformer-editor.label-calculations', 'Calculations')}
         data-testid={selectors.components.Transforms.Reduce.calculationsLabel}
         grow
         labelWidth={16}
       >
         <StatsPicker
-          placeholder="Choose Stat"
+          placeholder={t('transformers.reduce-transformer-editor.placeholder-choose-stat', 'Choose stat')}
           allowMultiple
           stats={options.reducers || []}
           onChange={(stats) => {
@@ -84,12 +98,20 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
         />
       </InlineField>
       {options.mode === ReduceTransformerMode.ReduceFields && (
-        <InlineField htmlFor="include-time-field" labelWidth={16} label="Include time">
+        <InlineField
+          htmlFor="include-time-field"
+          labelWidth={16}
+          label={t('transformers.reduce-transformer-editor.label-include-time', 'Include time')}
+        >
           <InlineSwitch id="include-time-field" value={!!options.includeTimeField} onChange={onToggleTime} />
         </InlineField>
       )}
       {options.mode !== ReduceTransformerMode.ReduceFields && (
-        <InlineField htmlFor="labels-to-fields" labelWidth={16} label="Labels to fields">
+        <InlineField
+          htmlFor="labels-to-fields"
+          labelWidth={16}
+          label={t('transformers.reduce-transformer-editor.label-labels-to-fields', 'Labels to fields')}
+        >
           <InlineSwitch id="labels-to-fields" value={!!options.labelsToFields} onChange={onToggleLabels} />
         </InlineField>
       )}
@@ -97,12 +119,17 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
   );
 };
 
-export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransformerOptions> = {
+export const getReduceTransformRegistryItem: () => TransformerRegistryItem<ReduceTransformerOptions> = () => ({
   id: DataTransformerID.reduce,
   editor: ReduceTransformerEditor,
   transformation: standardTransformers.reduceTransformer,
-  name: standardTransformers.reduceTransformer.name,
-  description: standardTransformers.reduceTransformer.description,
+  name: t('transformers.reduce-transformer-editor.name.reduce', 'Reduce'),
+  description: t(
+    'transformers.reduce-transformer-editor.description.reduce-to-single-value',
+    'Reduce all rows or data points to a single value (ex. max, mean).'
+  ),
   categories: new Set([TransformerCategory.CalculateNewFields]),
   help: getTransformationContent(DataTransformerID.reduce).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

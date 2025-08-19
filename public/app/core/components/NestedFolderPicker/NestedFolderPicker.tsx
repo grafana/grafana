@@ -5,21 +5,23 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
-import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { t } from '@grafana/i18n';
+import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { getStatusFromError } from 'app/core/utils/errors';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
 
+import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
-import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
+import { useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
+import { getRootFolderItem } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -42,6 +44,9 @@ export interface NestedFolderPickerProps {
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
+
+  /* HTML ID for the button element for form labels */
+  id?: string;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -66,11 +71,14 @@ export function NestedFolderPicker({
   excludeUIDs,
   permission = 'edit',
   onChange,
+  id,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const selectedFolder = useGetFolderQuery(value || skipToken);
-
-  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
+  const selectedFolder = useGetFolderQueryFacade(value);
+  // user might not have access to the folder, but they have access to the dashboard
+  // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
+  // but doesn't have access to the folder
+  const isForbidden = getStatusFromError(selectedFolder.error) === 403;
 
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
@@ -219,7 +227,7 @@ export function NestedFolderPicker({
     // these options are used infrequently that its not a big deal
     if (!showRootFolder || excludeUIDs?.length) {
       flatTree = flatTree.filter((item) => {
-        if (!showRootFolder && item === ROOT_FOLDER_ITEM) {
+        if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
           return false;
         }
 
@@ -263,13 +271,24 @@ export function NestedFolderPicker({
 
   let label = selectedFolder.data?.title;
   if (value === '') {
-    label = 'Dashboards';
+    label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
+
+  // Display the folder name and provisioning status when the picker is closed
+  const labelComponent = label ? (
+    <Stack alignItems={'center'}>
+      <Text truncate>{label}</Text>
+      <FolderRepo folder={selectedFolder.data} />
+    </Stack>
+  ) : (
+    ''
+  );
 
   if (!overlayOpen) {
     return (
       <Trigger
-        label={label}
+        id={id}
+        label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
         isLoading={selectedFolder.isLoading}
@@ -283,6 +302,7 @@ export function NestedFolderPicker({
             : undefined
         }
         {...getReferenceProps()}
+        disabled={isForbidden}
       />
     );
   }
@@ -342,7 +362,7 @@ export function NestedFolderPicker({
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
               idPrefix={overlayId}
-              foldersAreOpenable={nestedFoldersEnabled && !(search && searchResults)}
+              foldersAreOpenable={!(search && searchResults)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
             />

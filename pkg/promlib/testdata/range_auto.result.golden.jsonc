@@ -7,6 +7,7 @@
 //          1
 //      ],
 //      "custom": {
+//          "calculatedMinStep": 1000,
 //          "resultType": "matrix"
 //      },
 //      "executedQueryString": "Expr: histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[4s])) by (le))\nStep: 1s"
@@ -44,6 +45,7 @@
             1
           ],
           "custom": {
+            "calculatedMinStep": 1000,
             "resultType": "matrix"
           },
           "executedQueryString": "Expr: histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[4s])) by (le))\nStep: 1s"

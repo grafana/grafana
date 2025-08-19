@@ -50,7 +50,10 @@ func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	})
 }
 
-func TestStore_CreateServiceAccount(t *testing.T) {
+func TestIntegration_Store_CreateServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
 		_, store := setupTestDatabase(t)
@@ -319,129 +322,6 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 	}
 }
 
-func TestIntegrationStore_MigrateApiKeys(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode")
-	}
-	cases := []struct {
-		desc            string
-		serviceAccounts []user.CreateUserCommand
-		key             tests.TestApiKey
-		expectedLogin   string
-		expectedErr     error
-	}{
-		{
-			desc:            "api key should be migrated to service account token",
-			serviceAccounts: []user.CreateUserCommand{},
-			key:             tests.TestApiKey{Name: "test1", Role: org.RoleEditor, OrgId: 1},
-			expectedLogin:   "sa-autogen-1-test1",
-			expectedErr:     nil,
-		},
-		{
-			desc: "api key should be migrated to service account token on second attempt",
-			serviceAccounts: []user.CreateUserCommand{
-				{Login: "sa-autogen-1-test2"},
-			},
-			key:           tests.TestApiKey{Name: "test2", Role: org.RoleEditor, OrgId: 1},
-			expectedLogin: "sa-autogen-1-test2-001",
-			expectedErr:   nil,
-		},
-		{
-			desc: "api key should be migrated to service account token on last attempt (the 10th)",
-			serviceAccounts: []user.CreateUserCommand{
-				{Login: "sa-autogen-1-test3"},
-				{Login: "sa-autogen-1-test3-001"},
-				{Login: "sa-autogen-1-test3-002"},
-				{Login: "sa-autogen-1-test3-003"},
-				{Login: "sa-autogen-1-test3-004"},
-				{Login: "sa-autogen-1-test3-005"},
-				{Login: "sa-autogen-1-test3-006"},
-				{Login: "sa-autogen-1-test3-007"},
-				{Login: "sa-autogen-1-test3-008"},
-				{Login: "sa-autogen-1-test3-009"},
-			},
-			key:           tests.TestApiKey{Name: "test3", Role: org.RoleEditor, OrgId: 1},
-			expectedLogin: "sa-autogen-1-test3-010",
-			expectedErr:   nil,
-		},
-		{
-			desc: "api key should not be migrated to service account token because all attempts failed",
-			serviceAccounts: []user.CreateUserCommand{
-				{Login: "sa-autogen-1-test4"},
-				{Login: "sa-autogen-1-test4-001"},
-				{Login: "sa-autogen-1-test4-002"},
-				{Login: "sa-autogen-1-test4-003"},
-				{Login: "sa-autogen-1-test4-004"},
-				{Login: "sa-autogen-1-test4-005"},
-				{Login: "sa-autogen-1-test4-006"},
-				{Login: "sa-autogen-1-test4-007"},
-				{Login: "sa-autogen-1-test4-008"},
-				{Login: "sa-autogen-1-test4-009"},
-				{Login: "sa-autogen-1-test4-010"},
-			},
-			key:         tests.TestApiKey{Name: "test4", Role: org.RoleEditor, OrgId: 1},
-			expectedErr: serviceaccounts.ErrServiceAccountAlreadyExists,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.desc, func(t *testing.T) {
-			db, store := setupTestDatabase(t)
-
-			store.cfg.AutoAssignOrg = true
-			store.cfg.AutoAssignOrgId = 1
-			store.cfg.AutoAssignOrgRole = "Viewer"
-			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
-			require.NoError(t, err)
-
-			key := tests.SetupApiKey(t, db, store.cfg, c.key)
-
-			for _, sa := range c.serviceAccounts {
-				sa.IsServiceAccount = true
-				sa.OrgID = key.OrgID
-				_, err := store.userService.CreateServiceAccount(context.Background(), &sa)
-				require.NoError(t, err)
-			}
-
-			err = store.MigrateApiKey(context.Background(), key.OrgID, key.ID)
-			if c.expectedErr != nil {
-				require.ErrorIs(t, err, c.expectedErr)
-			} else {
-				require.NoError(t, err)
-
-				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgID,
-					Query: c.expectedLogin,
-					Page:  1,
-					Limit: 50,
-					SignedInUser: &user.SignedInUser{
-						UserID: 1,
-						OrgID:  1,
-						Permissions: map[int64]map[string][]string{
-							key.OrgID: {
-								"serviceaccounts:read": {"serviceaccounts:id:*"},
-							},
-						},
-					},
-				}
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
-				require.NoError(t, err)
-				require.Equal(t, int64(1), serviceAccounts.TotalCount)
-				saMigrated := serviceAccounts.ServiceAccounts[0]
-				require.Equal(t, string(key.Role), saMigrated.Role)
-				require.Equal(t, c.expectedLogin, saMigrated.Login)
-
-				tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
-					OrgID:            &key.OrgID,
-					ServiceAccountID: &saMigrated.Id,
-				})
-				require.NoError(t, err)
-				require.Len(t, tokens, 1)
-			}
-		})
-	}
-}
-
 func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode")
@@ -700,7 +580,7 @@ func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing
 			desc: "should return service accounts with sa-1-satest login",
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
-				Query:        "sa-1-satest",
+				Query:        "SA-1-SaTeSt", // Using mixed-case to test case-insensitive search
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
 				CountTokens:  true,

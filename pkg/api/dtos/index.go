@@ -7,33 +7,33 @@ import (
 )
 
 type IndexViewData struct {
-	User                                *CurrentUser
-	Settings                            *FrontendSettingsDTO
-	AppUrl                              string
-	AppSubUrl                           string
-	GoogleAnalyticsId                   string
-	GoogleAnalytics4Id                  string
-	GoogleAnalytics4SendManualPageViews bool
-	GoogleTagManagerId                  string
-	NavTree                             *navtree.NavTreeRoot
-	BuildVersion                        string
-	BuildCommit                         string
-	ThemeType                           string
-	NewGrafanaVersionExists             bool
-	NewGrafanaVersion                   string
-	AppName                             string
-	AppNameBodyClass                    string
-	FavIcon                             template.URL
-	AppleTouchIcon                      template.URL
-	AppTitle                            string
-	LoadingLogo                         template.URL
-	CSPContent                          string
-	CSPEnabled                          bool
-	IsDevelopmentEnv                    bool
+	User                                *CurrentUser         `json:"user"`
+	Settings                            *FrontendSettingsDTO `json:"settings"`
+	AppUrl                              string               `json:"-"`
+	AppSubUrl                           string               `json:"-"`
+	GoogleAnalyticsId                   string               `json:"-"`
+	GoogleAnalytics4Id                  string               `json:"-"`
+	GoogleAnalytics4SendManualPageViews bool                 `json:"-"`
+	GoogleTagManagerId                  string               `json:"-"`
+	NavTree                             *navtree.NavTreeRoot `json:"navTree"`
+	BuildVersion                        string               `json:"-"`
+	BuildCommit                         string               `json:"-"`
+	ThemeType                           string               `json:"-"`
+	NewGrafanaVersionExists             bool                 `json:"-"`
+	NewGrafanaVersion                   string               `json:"-"`
+	AppName                             string               `json:"-"`
+	AppNameBodyClass                    string               `json:"-"`
+	FavIcon                             template.URL         `json:"-"`
+	AppleTouchIcon                      template.URL         `json:"-"`
+	AppTitle                            string               `json:"-"`
+	LoadingLogo                         template.URL         `json:"-"`
+	CSPContent                          string               `json:"-"`
+	CSPEnabled                          bool                 `json:"-"`
+	IsDevelopmentEnv                    bool                 `json:"-"`
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
-	Nonce           string
-	NewsFeedEnabled bool
-	Assets          *EntryPointAssets // Includes CDN info
+	Nonce           string            `json:"-"`
+	NewsFeedEnabled bool              `json:"-"`
+	Assets          *EntryPointAssets `json:"assets"` // Includes CDN info
 }
 
 type EntryPointAssets struct {

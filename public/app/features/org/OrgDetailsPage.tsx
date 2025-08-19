@@ -1,13 +1,15 @@
 import { PureComponent } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
+import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';
@@ -29,7 +31,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
     return new Promise<boolean>((resolve) => {
       appEvents.publish(
         new ShowConfirmModalEvent({
-          title: 'Confirm preferences update',
+          title: t('org.org-details-page.title.confirm-preferences-update', 'Confirm preferences update'),
           text: 'This will update the preferences for the whole organization. Are you sure you want to update the preferences?',
           yesText: 'Save',
           yesButtonVariant: 'primary',

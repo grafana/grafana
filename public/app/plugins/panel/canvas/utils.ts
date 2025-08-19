@@ -1,7 +1,6 @@
 import { isNumber, isString } from 'lodash';
 
-import { AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
-import { DataFrame, Field } from '@grafana/data/';
+import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import {
@@ -205,6 +204,100 @@ export const calculateCoordinates = (
   return { x1, y1, x2, y2 };
 };
 
+export const calculateCoordinates2 = (source: ElementState, target: ElementState, info: CanvasConnection) => {
+  const { x: x1, y: y1 } = getRotatedConnectionPoint(source.div!, info.source.x, info.source.y);
+
+  let x2 = 0;
+  let y2 = 0;
+  const targetDiv = target.div;
+  if (info.targetName && targetDiv) {
+    ({ x: x2, y: y2 } = getRotatedConnectionPoint(targetDiv, info.target.x, info.target.y));
+  } else {
+    x2 = info.target.x;
+    y2 = info.target.y;
+  }
+
+  return { x1, y1, x2, y2 };
+};
+
+export const getElementTransformAndDimensions = (element: Element) => {
+  const style = window.getComputedStyle(element);
+
+  const transform = style.transform;
+
+  let x = 0;
+  let y = 0;
+  let rotation = 0;
+
+  if (transform !== 'none') {
+    // Use DOMMatrix to parse the transform string
+    const matrix = new DOMMatrix(transform);
+
+    // Extract x and y values
+    x = matrix.m41;
+    y = matrix.m42;
+
+    // Extract rotation in radians and convert to degrees
+    // For 2D transforms, rotation = atan2(m21, m11)
+    rotation = -Math.atan2(matrix.m21, matrix.m11) * (180 / Math.PI);
+  }
+
+  // Get the width and height of the element
+  // TODO: there sould be a better way than parseFloat
+  const width = parseFloat(style.width);
+  const height = parseFloat(style.height);
+
+  return { left: x, top: y, width, height, x, y, rotation };
+};
+
+export const getNormalizedRotatedOffset = (div: HTMLDivElement, x: number, y: number) => {
+  const { left, top, width, height, rotation } = getElementTransformAndDimensions(div);
+  // Calculate center of source element
+  const centerX = left + width / 2;
+  const centerY = top + height / 2;
+
+  // Calculate the offset from the center to the connection start point
+  let dx = x - centerX;
+  let dy = y - centerY;
+
+  // Adjust for rotation
+  const rad = rotation * (Math.PI / 180);
+  const cos = Math.cos(-rad);
+  const sin = Math.sin(-rad);
+  // Rotate the delta by the negative of the element's rotation
+  const rotatedDx = dx * cos - dy * sin;
+  const rotatedDy = dx * sin + dy * cos;
+
+  // Convert to normalized coordinates
+  const normalizedX = rotatedDx / (width / 2);
+  const normalizedY = -rotatedDy / (height / 2);
+
+  return { x: normalizedX, y: normalizedY };
+};
+
+export const getRotatedConnectionPoint = (div: HTMLDivElement, normalizedX: number, normalizedY: number) => {
+  const { left, top, width, height, rotation } = getElementTransformAndDimensions(div);
+  const centerX = left + width / 2;
+  const centerY = top + height / 2;
+
+  // Calculate offset from center before rotation
+  const offsetX = (normalizedX * width) / 2;
+  const offsetY = -(normalizedY * height) / 2;
+
+  // Convert rotation to radians
+  const rad = rotation * (Math.PI / 180);
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  // Apply rotation to offset
+  const rotatedOffsetX = offsetX * cos - offsetY * sin;
+  const rotatedOffsetY = offsetX * sin + offsetY * cos;
+
+  const x = centerX + rotatedOffsetX;
+  const y = centerY + rotatedOffsetY;
+
+  return { x, y };
+};
+
 export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
   return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
 };
@@ -274,25 +367,10 @@ const getLineStyle = (lineStyle?: LineStyle) => {
 
 export const getParentBoundingClientRect = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
-    const transformRef = scene.transformComponentRef?.current;
-    return transformRef?.instance.contentComponent?.getBoundingClientRect();
+    return scene.viewportDiv?.getBoundingClientRect();
   }
 
   return scene.div?.getBoundingClientRect();
-};
-
-export const getTransformInstance = (scene: Scene) => {
-  if (config.featureToggles.canvasPanelPanZoom) {
-    return scene.transformComponentRef?.current?.instance;
-  }
-  return undefined;
-};
-
-export const getParent = (scene: Scene) => {
-  if (config.featureToggles.canvasPanelPanZoom) {
-    return scene.transformComponentRef?.current?.instance.contentComponent;
-  }
-  return scene.div;
 };
 
 export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions) {
@@ -327,4 +405,16 @@ export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions
   });
 
   return [...fields];
+}
+
+export function applyStyles(styles: React.CSSProperties, target: HTMLDivElement) {
+  // INFO: CSSProperties can't be applied using setProperty, so we use Object.assign
+  Object.assign(target.style, styles);
+}
+
+export function removeStyles(styles: React.CSSProperties, target: HTMLDivElement) {
+  for (const key in styles) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+    target.style[key as any] = '';
+  }
 }

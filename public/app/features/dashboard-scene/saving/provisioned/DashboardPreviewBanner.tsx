@@ -1,12 +1,14 @@
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Icon, Stack } from '@grafana/ui';
-import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
+import { Alert } from '@grafana/ui';
+import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types/dashboard';
 
-interface CommonBannerProps {
+import { PreviewBannerViewPR } from './PreviewBannerViewPR';
+
+export interface CommonBannerProps {
   queryParams: DashboardPageRouteSearchParams;
   path?: string;
   slug?: string;
@@ -18,13 +20,13 @@ interface DashboardPreviewBannerProps extends CommonBannerProps {
 
 interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {}
 
-const commonAlertProps = {
+export const commonAlertProps = {
   severity: 'info' as const,
   style: { flex: 0 } as const,
 };
 
 function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
-  const prParam = usePullRequestParam();
+  const { prURL } = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
 
   if (file.data?.errors) {
@@ -42,56 +44,14 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   }
 
   // This page was loaded with a `pull_request_url` in the URL
-  if (prParam?.length) {
-    return (
-      <Alert
-        {...commonAlertProps}
-        title={t(
-          'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-request-git-hub',
-          'This dashboard is loaded from a pull request in GitHub.'
-        )}
-        buttonContent={
-          <Stack alignItems="center">
-            <Trans i18nKey="dashboard-scene.dashboard-preview-banner.view-pull-request-in-git-hub">
-              View pull request in GitHub
-            </Trans>
-            <Icon name="external-link-alt" />
-          </Stack>
-        }
-        onRemove={() => window.open(prParam, '_blank')}
-      >
-        <Trans i18nKey="dashboard-scene.dashboard-preview-banner.value-not-saved">
-          The value is not yet saved in the Grafana database
-        </Trans>
-      </Alert>
-    );
+  if (prURL?.length) {
+    return <PreviewBannerViewPR prParam={prURL} />;
   }
 
-  // Check if this is a GitHub link
-  const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
-  if (githubURL) {
-    return (
-      <Alert
-        {...commonAlertProps}
-        title={t(
-          'dashboard-scene.dashboard-preview-banner.title-dashboard-loaded-branch-git-hub',
-          'This dashboard is loaded from a branch in GitHub.'
-        )}
-        buttonContent={
-          <Stack alignItems="center">
-            <Trans i18nKey="dashboard-scene.dashboard-preview-banner.open-pull-request-in-git-hub">
-              Open pull request in GitHub
-            </Trans>
-            <Icon name="external-link-alt" />
-          </Stack>
-        }
-        onRemove={() => window.open(githubURL, '_blank')}
-      >
-        <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-saved">
-          The value is not yet saved in the Grafana database
-        </Trans>
-      </Alert>
-    );
+  // Check if this is a repo link
+  const repoUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
+  if (repoUrl) {
+    return <PreviewBannerViewPR prParam={repoUrl} isNewPr />;
   }
 
   return (

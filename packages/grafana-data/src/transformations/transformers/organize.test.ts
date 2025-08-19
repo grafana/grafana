@@ -94,6 +94,10 @@ describe('OrganizeFields Transformer', () => {
             name: 'time',
             type: FieldType.time,
             values: [3000, 4000, 5000, 6000],
+            state: {
+              displayName: 'time',
+              multipleFrames: false,
+            },
           },
         ]);
       });

@@ -1,10 +1,16 @@
+import { useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
+
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
@@ -17,11 +23,12 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
+        id: uuidv4(),
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
         ),
-        render: () => <RepeatByOption gridItem={gridItem} />,
+        render: (descriptor) => <RepeatByOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     )
     .addItem(
@@ -37,15 +44,24 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.max', 'Max per row'),
+        id: uuidv4(),
         useShowIf: () => {
           const { variableName, repeatDirection } = gridItem.useState();
           return Boolean(variableName) && repeatDirection === 'h';
         },
-        render: () => <MaxPerRowOption gridItem={gridItem} />,
+        render: (descriptor) => <MaxPerRowOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     );
 
-  return [repeatCategory];
+  const conditionalRenderingCategory = useConditionalRenderingEditor(
+    undefined,
+    t(
+      'dashboard.conditional-rendering.editor.not-supported-for-custom-grid',
+      'Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.'
+    )
+  );
+
+  return [repeatCategory, conditionalRenderingCategory];
 }
 
 interface OptionComponentProps {
@@ -64,12 +80,19 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
     <RadioButtonGroup
       options={directionOptions}
       value={repeatDirection ?? 'h'}
-      onChange={(value) => gridItem.setRepeatDirection(value)}
+      onChange={(value) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-repeat-direction', 'Repeat direction'),
+          source: gridItem,
+          perform: () => gridItem.setRepeatDirection(value),
+          undo: () => gridItem.setRepeatDirection(repeatDirection ?? 'h'),
+        });
+      }}
     />
   );
 }
 
-function MaxPerRowOption({ gridItem }: OptionComponentProps) {
+function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { maxPerRow } = gridItem.useState();
   const maxPerRowOptions: Array<SelectableValue<number>> = [2, 3, 4, 6, 8, 12].map((value) => ({
     label: value.toString(),
@@ -78,32 +101,50 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
 
   return (
     <Select
+      id={id}
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
-      onChange={(value) => gridItem.setMaxPerRow(value.value)}
+      onChange={(value) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Max repeats per row'),
+          source: gridItem,
+          perform: () => gridItem.setMaxPerRow(value.value),
+          undo: () => gridItem.setMaxPerRow(maxPerRow ?? 4),
+        });
+      }}
     />
   );
 }
 
-function RepeatByOption({ gridItem }: OptionComponentProps) {
+function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { variableName, width } = gridItem.useState();
 
-  return (
-    <RepeatRowSelect2
-      id="repeat-by-variable-select"
-      sceneContext={gridItem}
-      repeat={variableName}
-      onChange={(value?: string) => {
-        if (value !== variableName) {
-          gridItem.setRepeatByVariable(value);
-          gridItem.handleVariableName();
+  const handleStateChange = useCallback(
+    (value?: string) => {
+      gridItem.setRepeatByVariable(value);
+      gridItem.handleVariableName();
 
-          if (width !== 24) {
-            gridItem.setState({ width: 24 });
-            sceneGraph.getAncestor(gridItem, SceneGridLayout).forceRender();
-          }
-        }
-      }}
-    />
+      if (width !== 24) {
+        gridItem.setState({ width: 24 });
+        sceneGraph.getAncestor(gridItem, SceneGridLayout).forceRender();
+      }
+    },
+    [gridItem, width]
   );
+
+  const handleChange = useCallback(
+    (value?: string) => {
+      if (value !== variableName) {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
+          source: gridItem,
+          perform: () => handleStateChange(value),
+          undo: () => handleStateChange(variableName),
+        });
+      }
+    },
+    [gridItem, handleStateChange, variableName]
+  );
+
+  return <RepeatRowSelect2 id={id} sceneContext={gridItem} repeat={variableName} onChange={handleChange} />;
 }

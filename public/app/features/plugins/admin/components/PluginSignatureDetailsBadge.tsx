@@ -3,6 +3,7 @@ import { capitalize } from 'lodash';
 import * as React from 'react';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2, Icon, Badge, IconName } from '@grafana/ui';
 
 const SIGNATURE_ICONS: Record<string, IconName> = {
@@ -40,7 +41,11 @@ export function PluginSignatureDetailsBadge({ signatureType, signatureOrg = '' }
       </DetailsBadge>
 
       <DetailsBadge>
-        <strong className={styles.strong}>Signed by:</strong> {signatureOrg}
+        <strong className={styles.strong}>
+          <Trans i18nKey="plugins.plugin-signature-details-badge.signed-by" values={{ signatureOrg }}>
+            Signed by: {{ signatureOrg }}
+          </Trans>
+        </strong>
       </DetailsBadge>
     </>
   );

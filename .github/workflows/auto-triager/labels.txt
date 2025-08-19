@@ -14,6 +14,7 @@ area/backend/db/mysql
 area/backend/db/postgres
 area/backend/db/sql
 area/backend/db/sqlite
+area/gitsync
 area/configuration
 area/dashboard/annotations
 area/dashboard/data-links
@@ -33,7 +34,6 @@ area/dashboard/variable
 area/dashboards/panel
 area/data/export
 area/explore
-area/exploremetrics
 area/expressions
 area/field/overrides
 area/frontend/library-panels
@@ -42,6 +42,7 @@ area/image-rendering
 area/internationalization
 area/legend
 area/library-panel
+area/metricsdrilldown
 area/navigation
 area/panel/annotation-list
 area/panel/barchart

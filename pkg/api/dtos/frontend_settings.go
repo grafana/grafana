@@ -94,9 +94,11 @@ type FrontendSettingsAnalyticsDTO struct {
 }
 
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval              string `json:"minInterval"`
-	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
-	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
+	MinInterval                              string `json:"minInterval"`
+	AlertStateHistoryBackend                 string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary                 string `json:"alertStateHistoryPrimary,omitempty"`
+	RecordingRulesEnabled                    bool   `json:"recordingRulesEnabled"`
+	DefaultRecordingRulesTargetDatasourceUID string `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
 }
 
 // Enterprise-only
@@ -193,6 +195,7 @@ type FrontendSettingsDTO struct {
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
 
 	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
+	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
 
 	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`
@@ -207,7 +210,6 @@ type FrontendSettingsDTO struct {
 	ExternalUserMngAnalytics            bool     `json:"externalUserMngAnalytics"`
 	ExternalUserMngAnalyticsParams      string   `json:"externalUserMngAnalyticsParams"`
 	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
-	AngularSupportEnabled               bool     `json:"angularSupportEnabled"`
 	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
@@ -247,7 +249,8 @@ type FrontendSettingsDTO struct {
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
-	DefaultDatasourceManageAlertsUIToggle bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultDatasourceManageAlertsUIToggle          bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool `json:"defaultAllowRecordingRulesTargetAlertsUiToggle"`
 
 	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
@@ -272,7 +275,8 @@ type FrontendSettingsDTO struct {
 	CloudMigrationIsTarget       bool `json:"cloudMigrationIsTarget"`
 	CloudMigrationPollIntervalMs int  `json:"cloudMigrationPollIntervalMs"`
 
-	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
+	DateFormats setting.DateFormats  `json:"dateFormats,omitempty"`
+	QuickRanges []setting.QuickRange `json:"quickRanges,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
 

@@ -14,10 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -59,7 +61,7 @@ func TestService(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -133,7 +135,7 @@ func TestDSQueryError(t *testing.T) {
 
 	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -198,15 +200,15 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			req := &Request{Queries: queries, User: &user.SignedInUser{}}
 
 			// Build the pipeline
-			pipeline, err := s.BuildPipeline(req)
+			pipeline, err := s.BuildPipeline(t.Context(), req)
 			require.NoError(t, err)
 
 			node := pipeline[0]
 			cmdNode := node.(*CMDNode)
 			sqlCmd := cmdNode.Command.(*SQLCommand)
 
-			// Verify the SQL command has the correct limit
-			require.Equal(t, tt.expectedLimit, sqlCmd.limit, "SQL command has incorrect cell limit")
+			// Verify the SQL command has the correct inputLimit
+			require.Equal(t, tt.expectedLimit, sqlCmd.inputLimit, "SQL command has incorrect cell limit")
 		})
 	}
 }
@@ -249,10 +251,11 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 		pCtxProvider: pCtxProvider,
 		features:     featuremgmt.WithFeatures(),
 		tracer:       tracing.InitializeTracerForTest(),
-		metrics:      newMetrics(nil),
+		metrics:      metrics.NewSSEMetrics(nil),
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	}, &Request{Queries: queries, User: &user.SignedInUser{}}
 }

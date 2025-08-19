@@ -1,27 +1,28 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { ShowModalReactEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/store';
 
-import appEvents from '../../../core/app_events';
-import { Trans } from '../../../core/internationalization';
-import { useDispatch } from '../../../types';
-import { ShowModalReactEvent } from '../../../types/events';
-import { useHardDeleteDashboardMutation, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
+import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { useListDeletedDashboardsQuery, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
-import { clearFolders, setAllSelection, useActionSelectionState } from '../state';
+import { useActionSelectionState } from '../state/hooks';
+import { clearFolders, setAllSelection } from '../state/slice';
 
-import { PermanentlyDeleteModal } from './PermanentlyDeleteModal';
 import { RestoreModal } from './RestoreModal';
 
 export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
-
+  const deletedDashboards = useListDeletedDashboardsQuery();
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
-  const [deleteDashboard, { isLoading: isDeleteLoading }] = useHardDeleteDashboardMutation();
 
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
@@ -34,7 +35,7 @@ export function RecentlyDeletedActions() {
     for (const selectedDashboard of selectedDashboards) {
       const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
 
-      // SQLSearcher changes the location from empty string to 'general' for items with no parent
+      // SQLSearcher changes the location from empty string to 'general' for items with no parent,
       // but the restore API doesn't work with 'general' folder UID, so we need to convert it back
       // to an empty string
       const location = searchState.result.view.fields.location.values[index];
@@ -46,6 +47,7 @@ export function RecentlyDeletedActions() {
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
+    deletedDashboardsCache.clear();
     stateManager.doSearchWithDebounce();
   };
 
@@ -56,7 +58,18 @@ export function RecentlyDeletedActions() {
     }
 
     const promises = selectedDashboards.map((uid) => {
-      return restoreDashboard({ dashboardUID: uid, targetFolderUID: restoreTarget });
+      const dashboard = deletedDashboards.data?.items.find((d) => d.metadata.name === uid);
+      if (!dashboard) {
+        return Promise.resolve();
+      }
+      // Clone the dashboard to be able to edit the immutable data from the store
+      const copy = structuredClone(dashboard);
+      copy.metadata = {
+        ...copy.metadata,
+        annotations: { ...copy.metadata?.annotations, [AnnoKeyFolder]: restoreTarget },
+      };
+
+      return restoreDashboard({ dashboard: copy });
     });
 
     await Promise.all(promises);
@@ -75,13 +88,6 @@ export function RecentlyDeletedActions() {
     }
     dispatch(clearFolders(Array.from(parentUIDs)));
 
-    onActionComplete();
-  };
-
-  const onDelete = async () => {
-    const promises = selectedDashboards.map((uid) => deleteDashboard({ dashboardUID: uid }));
-
-    await Promise.all(promises);
     onActionComplete();
   };
 
@@ -104,31 +110,10 @@ export function RecentlyDeletedActions() {
     );
   };
 
-  const showDeleteModal = () => {
-    reportInteraction('grafana_delete_permanently_clicked', {
-      item_counts: {
-        dashboard: selectedDashboards.length,
-      },
-    });
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: PermanentlyDeleteModal,
-        props: {
-          selectedDashboards,
-          onConfirm: onDelete,
-          isLoading: isDeleteLoading,
-        },
-      })
-    );
-  };
-
   return (
     <Stack gap={1}>
       <Button onClick={showRestoreModal} variant="secondary">
         <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
-      </Button>
-      <Button onClick={showDeleteModal} variant="destructive">
-        <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
       </Button>
     </Stack>
   );

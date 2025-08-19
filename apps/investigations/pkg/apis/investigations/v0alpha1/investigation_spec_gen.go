@@ -27,37 +27,23 @@ type InvestigationCollectable struct {
 	Origin    string `json:"origin"`
 	Type      string `json:"type"`
 	// +listType=atomic
-	Queries       []InvestigationQuery       `json:"queries"`
+	Queries       []string                   `json:"queries"`
 	TimeRange     InvestigationTimeRange     `json:"timeRange"`
 	Datasource    InvestigationDatasourceRef `json:"datasource"`
 	Url           string                     `json:"url"`
 	LogoPath      *string                    `json:"logoPath,omitempty"`
 	Note          string                     `json:"note"`
 	NoteUpdatedAt string                     `json:"noteUpdatedAt"`
+	FieldConfig   string                     `json:"fieldConfig"`
 }
 
 // NewInvestigationCollectable creates a new InvestigationCollectable object.
 func NewInvestigationCollectable() *InvestigationCollectable {
 	return &InvestigationCollectable{
+		Queries:    []string{},
 		TimeRange:  *NewInvestigationTimeRange(),
 		Datasource: *NewInvestigationDatasourceRef(),
 	}
-}
-
-// Query represents a data query
-// +k8s:openapi-gen=true
-type InvestigationQuery struct {
-	RefId               string `json:"refId"`
-	QueryType           string `json:"queryType"`
-	EditorMode          string `json:"editorMode"`
-	SupportingQueryType string `json:"supportingQueryType"`
-	LegendFormat        string `json:"legendFormat"`
-	Expr                string `json:"expr"`
-}
-
-// NewInvestigationQuery creates a new InvestigationQuery object.
-func NewInvestigationQuery() *InvestigationQuery {
-	return &InvestigationQuery{}
 }
 
 // TimeRange represents a time range with both absolute and relative values
@@ -116,6 +102,7 @@ type InvestigationSpec struct {
 func NewInvestigationSpec() *InvestigationSpec {
 	return &InvestigationSpec{
 		CreatedByProfile: *NewInvestigationPerson(),
+		Collectables:     []InvestigationCollectable{},
 		ViewMode:         *NewInvestigationViewMode(),
 	}
 }

@@ -1,8 +1,9 @@
 import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
-import { NotificationChannelOption } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 import { CollapsibleSection } from '../CollapsibleSection';
@@ -16,9 +17,19 @@ interface Props {
   pathPrefix: string;
   errors?: Array<DeepMap<any, FieldError>>;
   readOnly?: boolean;
+  secureFields: NotificationChannelSecureFields;
+  getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
 }
 
-export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, readOnly = false }: Props) => {
+export const SubformArrayField = ({
+  option,
+  pathPrefix,
+  errors,
+  defaultValues,
+  readOnly = false,
+  secureFields,
+  getOptionMeta,
+}: Props) => {
   const styles = useStyles2(getReceiverFormFieldStyles);
   const path = `${pathPrefix}${option.propertyName}`;
   const formAPI = useFormContext();
@@ -28,6 +39,7 @@ export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, r
     <div className={styles.wrapper}>
       <CollapsibleSection
         className={styles.collapsibleSection}
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         label={`${option.label} (${fields.length})`}
         description={option.description}
       >
@@ -38,7 +50,7 @@ export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, r
                 <ActionIcon
                   data-testid={`${path}.${itemIndex}.delete-button`}
                   icon="trash-alt"
-                  tooltip="delete"
+                  tooltip={t('alerting.subform-array-field.tooltip-delete', 'delete')}
                   onClick={() => remove(itemIndex)}
                   className={styles.deleteIcon}
                 />
@@ -46,6 +58,8 @@ export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, r
               {option.subformOptions?.map((option) => (
                 <OptionField
                   readOnly={readOnly}
+                  getOptionMeta={getOptionMeta}
+                  secureFields={secureFields}
                   defaultValue={field?.[option.propertyName]}
                   key={option.propertyName}
                   option={option}
@@ -66,7 +80,7 @@ export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, r
             size="sm"
             onClick={() => append({ __id: String(Math.random()) })}
           >
-            Add
+            <Trans i18nKey="alerting.subform-array-field.add">Add</Trans>
           </Button>
         )}
       </CollapsibleSection>

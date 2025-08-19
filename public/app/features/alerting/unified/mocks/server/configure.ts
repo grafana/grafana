@@ -1,7 +1,7 @@
-import { HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
+import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
 import { config } from '@grafana/runtime';
-import server from 'app/features/alerting/unified/mockApi';
+import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,
@@ -14,13 +14,17 @@ import {
   getDisabledPluginHandler,
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
-import { ALERTING_API_SERVER_BASE_URL, paginatedHandlerFor } from 'app/features/alerting/unified/mocks/server/utils';
+import {
+  ALERTING_API_SERVER_BASE_URL,
+  getK8sResponse,
+  paginatedHandlerFor,
+} from 'app/features/alerting/unified/mocks/server/utils';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
@@ -31,7 +35,7 @@ import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handle
 
 export type HandlerOptions = {
   delay?: number;
-  response?: HttpResponse;
+  response?: HttpResponse<DefaultBodyType>;
 };
 
 /**
@@ -158,6 +162,19 @@ export const setMuteTimingsListError = () => {
   return handler;
 };
 
+/**
+ * Makes the mock server respond with no time intervals
+ */
+export const setTimeIntervalsListEmpty = () => {
+  const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
+  const handler = http.get(listMuteTimingsPath, () => {
+    return HttpResponse.json(getK8sResponse('TimeIntervalList', []));
+  });
+
+  server.use(handler);
+  return handler;
+};
+
 export function mimirDataSource() {
   const dataSource = mockDataSource(
     {
@@ -189,6 +206,10 @@ interface DataSourceLike {
 
 export function setPrometheusRules(ds: DataSourceLike, groups: PromRuleGroupDTO[]) {
   server.use(http.get(`/api/prometheus/${ds.uid}/api/v1/rules`, paginatedHandlerFor(groups)));
+}
+
+export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
+  server.use(http.get(`/api/prometheus/grafana/api/v1/rules`, paginatedHandlerFor(groups)));
 }
 
 /** Make a given plugin ID respond with a 404, as if it isn't installed at all */
@@ -234,6 +255,30 @@ export const makeAllK8sGetEndpointsFail = (
 ) => {
   server.use(
     http.get(ALERTING_API_SERVER_BASE_URL + '/*', () => {
+      const errorResponse: ApiMachineryError = {
+        kind: 'Status',
+        apiVersion: 'v1',
+        metadata: {},
+        status: 'Failure',
+        details: {
+          uid,
+        },
+        message,
+        code: status,
+        reason: '',
+      };
+      return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
+    })
+  );
+};
+
+export const makeAllK8sEndpointsFail = (
+  uid: string,
+  message = 'could not find an Alertmanager configuration',
+  status = 500
+) => {
+  server.use(
+    http.all(ALERTING_API_SERVER_BASE_URL + '/*', () => {
       const errorResponse: ApiMachineryError = {
         kind: 'Status',
         apiVersion: 'v1',

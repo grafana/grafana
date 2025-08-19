@@ -704,10 +704,13 @@ export enum TableCellDisplayMode {
   Custom = 'custom',
   DataLinks = 'data-links',
   Gauge = 'gauge',
+  Geo = 'geo',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Markdown = 'markdown',
+  Pill = 'pill',
   Sparkline = 'sparkline',
 }
 
@@ -719,6 +722,16 @@ export enum TableCellDisplayMode {
 export enum TableCellBackgroundDisplayMode {
   Basic = 'basic',
   Gradient = 'gradient',
+}
+
+/**
+ * Whenever we add text wrapping, we should add all text wrapping options at once
+ */
+export interface TableWrapTextOptions {
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
 }
 
 /**
@@ -754,17 +767,15 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
 /**
  * Auto mode table cell options
  */
-export interface TableAutoCellOptions {
+export interface TableAutoCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Auto;
-  wrapText?: boolean;
 }
 
 /**
  * Colored text cell options
  */
-export interface TableColorTextCellOptions {
+export interface TableColorTextCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.ColorText;
-  wrapText?: boolean;
 }
 
 /**
@@ -786,7 +797,7 @@ export interface TableImageCellOptions {
 /**
  * Show data links in the cell
  */
-export interface TableDataLinksCellOptions {
+export interface TableDataLinksCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.DataLinks;
 }
 
@@ -817,28 +828,15 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
 /**
  * Colored background cell options
  */
-export interface TableColoredBackgroundCellOptions {
+export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions {
   applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
-  wrapText?: boolean;
 }
 
-/**
- * Height of a table cell
- */
-export enum TableCellHeight {
-  Auto = 'auto',
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
+export interface TablePillCellOptions extends TableWrapTextOptions {
+  type: TableCellDisplayMode.Pill;
 }
-
-/**
- * Table cell options. Each cell has a display mode
- * and other potential options for that display.
- */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone
@@ -851,17 +849,29 @@ export type TimeZoneUtc = 'utc';
 export type TimeZoneBrowser = 'browser';
 
 /**
+ * Options for time comparison
+ */
+export interface TimeCompareOptions {
+  /**
+   * Enable time comparison control
+   */
+  timeCompare?: boolean;
+}
+
+/**
  * Optional formats for the template variable replace functions
  * See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
  */
 export enum VariableFormatID {
   CSV = 'csv',
+  CustomQueryParam = 'customqueryparam',
   Date = 'date',
   Distributed = 'distributed',
   DoubleQuote = 'doublequote',
   Glob = 'glob',
   HTML = 'html',
   JSON = 'json',
+  Join = 'join',
   Lucene = 'lucene',
   PercentEncode = 'percentencode',
   Pipe = 'pipe',
@@ -943,6 +953,37 @@ export enum ComparisonOperation {
   NEQ = 'neq',
 }
 
+export interface TableMarkdownCellOptions {
+  dynamicHeight?: boolean;
+  type: TableCellDisplayMode.Markdown;
+}
+
+/**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Auto = 'auto',
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
+ * Table cell options. Each cell has a display mode
+ * and other potential options for that display.
+ */
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | {
+    type: TableCellDisplayMode.Geo
+  });
+
+export enum TableCellTooltipPlacement {
+  Auto = 'auto',
+  Bottom = 'bottom',
+  Left = 'left',
+  Right = 'right',
+  Top = 'top',
+}
+
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
  * Generally defines alignment, filtering capabilties, display options, etc.
@@ -962,7 +1003,24 @@ export interface TableFieldOptions {
   hideHeader?: boolean;
   inspect: boolean;
   minWidth?: number;
+  /**
+   * Selecting or hovering this field will show a tooltip containing the content within the target field
+   */
+  tooltip?: {
+    /**
+     * The name of the field to get the tooltip content from
+     */
+    field: string;
+    /**
+     * placement of the tooltip
+     */
+    placement?: TableCellTooltipPlacement;
+  };
   width?: number;
+  /**
+   * Enables text wrapping for column headers
+   */
+  wrapHeaderText?: boolean;
 }
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {

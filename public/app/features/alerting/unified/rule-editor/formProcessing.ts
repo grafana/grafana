@@ -8,7 +8,7 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { KVObject, RuleFormValues } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
-import { DataSourceType } from '../utils/datasource';
+import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
 
 export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
@@ -48,9 +48,9 @@ export function setInstantOrRange(values: RuleFormValues): RuleFormValues {
         return query;
       }
       // data query
-      const defaultToInstant =
-        query.model.datasource?.type === DataSourceType.Loki ||
-        query.model.datasource?.type === DataSourceType.Prometheus;
+      const defaultToInstant = query.model.datasource?.type
+        ? isSupportedExternalRulesSourceType(query.model.datasource.type)
+        : false;
       const isInstant =
         'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
       return {

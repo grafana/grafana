@@ -63,26 +63,18 @@ locationUtil.initialize({
   getTimeRangeForUrl: jest.fn(),
 });
 
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  return {
-    ...actual,
-    getTemplateSrv: () => {
-      return {
-        getVariables: () => [{ id: 'foo', type: 'datasource' }],
-      };
-    },
-  };
-});
-
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      getList: getListMock,
-      getInstanceSettings: getInstanceSettingsMock,
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => {
+    return {
+      getVariables: () => [{ id: 'foo', type: 'datasource' }],
+    };
+  },
+  getDataSourceSrv: () => ({
+    getList: getListMock,
+    getInstanceSettings: getInstanceSettingsMock,
+  }),
+}));
 
 const pushRecentlyUsedDataSourceMock = jest.fn();
 jest.mock('../../hooks', () => {
@@ -90,6 +82,7 @@ jest.mock('../../hooks', () => {
   return {
     ...actual,
     useRecentlyUsedDataSources: () => [[mockDS2.name], pushRecentlyUsedDataSourceMock],
+    useDatasources: () => mockDSList,
   };
 });
 

@@ -18,7 +18,7 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "investigation",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
+			ErrorHandler: func(_ context.Context, err error) {
 				klog.ErrorS(err, "Informer processing error")
 			},
 		},

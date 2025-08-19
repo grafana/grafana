@@ -1,12 +1,12 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { NestedFolderDTO } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { contextSrv } from '../../../core/core';
-import { AccessControlAction } from '../../../types';
 import { getFolderURL, isSharedWithMe } from '../components/utils';
 
 export const PAGE_SIZE = 50;
@@ -17,10 +17,6 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
-  if (parentUID && !config.featureToggles.nestedFolders) {
-    return [];
-  }
-
   const backendSrv = getBackendSrv();
 
   // TODO: what to do here for unified search?
@@ -39,6 +35,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
+    managedBy: item.managedBy,
 
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),

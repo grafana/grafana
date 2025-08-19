@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
@@ -84,10 +84,14 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
         onDragFinished={(size) => size && updateSplitSize(size)}
       >
-        {panes.map(([exploreId]) => {
+        {panes.map(([exploreId, pane]) => {
           return (
             <ErrorBoundaryAlert key={exploreId} style="page">
-              <ExplorePaneContainer exploreId={exploreId} />
+              {pane.initialized ? (
+                <ExplorePaneContainer exploreId={exploreId} />
+              ) : (
+                <LoadingPlaceholder text={t('explore.pane.loading-placeholder', 'Loading...')} />
+              )}
             </ErrorBoundaryAlert>
           );
         })}

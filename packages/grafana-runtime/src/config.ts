@@ -1,18 +1,20 @@
 import { merge } from 'lodash';
 
 import {
+  AppPluginConfig as AppPluginConfigGrafanaData,
   AuthSettings,
+  AzureSettings as AzureSettingsGrafanaData,
   BootData,
   BuildInfo,
   DataSourceInstanceSettings,
   FeatureToggles,
-  GrafanaConfig,
   GrafanaTheme,
   GrafanaTheme2,
   LicenseInfo,
   MapLayerOptions,
   OAuthSettings,
   PanelPluginMeta,
+  PreinstalledPlugin as PreinstalledPluginGrafanaData,
   systemDateFormats,
   SystemDateFormatSettings,
   getThemeById,
@@ -20,8 +22,16 @@ import {
   PluginLoadingStrategy,
   PluginDependencies,
   PluginExtensions,
+  TimeOption,
+  UnifiedAlertingConfig,
+  GrafanaConfig,
+  CurrentUserDTO,
 } from '@grafana/data';
 
+/**
+ * @deprecated Use the type from `@grafana/data`
+ */
+// TODO remove in G13
 export interface AzureSettings {
   cloud?: string;
   clouds?: AzureCloudInfo[];
@@ -32,11 +42,19 @@ export interface AzureSettings {
   azureEntraPasswordCredentialsEnabled: boolean;
 }
 
+/**
+ * @deprecated Use the type from `@grafana/data`
+ */
+// TODO remove in G13
 export interface AzureCloudInfo {
   name: string;
   displayName: string;
 }
 
+/**
+ * @deprecated Use the type from `@grafana/data`
+ */
+// TODO remove in G13
 export type AppPluginConfig = {
   id: string;
   path: string;
@@ -49,26 +67,37 @@ export type AppPluginConfig = {
   moduleHash?: string;
 };
 
+/**
+ * @deprecated Use the type from `@grafana/data`
+ */
+// TODO remove in G13
 export type PreinstalledPlugin = {
   id: string;
   version: string;
 };
 
-export class GrafanaBootConfig implements GrafanaConfig {
+/**
+ * Use to access Grafana config settings in application code.
+ * This takes `window.grafanaBootData.settings` as input and returns a config object.
+ */
+export class GrafanaBootConfig {
   publicDashboardAccessToken?: string;
   publicDashboardsEnabled = true;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
-  apps: Record<string, AppPluginConfig> = {};
+  apps: Record<string, AppPluginConfigGrafanaData> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
   namespace = 'default';
-  windowTitlePrefix = '';
-  buildInfo: BuildInfo;
-  newPanelTitle = '';
+  windowTitlePrefix = 'Grafana - ';
+  buildInfo: BuildInfo = {
+    version: '1.0',
+    commit: '1',
+    env: 'production',
+  } as BuildInfo;
   bootData: BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
@@ -79,7 +108,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
   queryHistoryEnabled = false;
@@ -101,7 +129,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   disableUserSignUp = false;
   loginHint = '';
   passwordHint = '';
-  loginError: string | undefined = undefined;
+  loginError?: string;
   viewersCanEdit = false;
   disableSanitizeHtml = false;
   trustedTypesDefaultPolicyEnabled = false;
@@ -113,7 +141,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme2: GrafanaTheme2;
   featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
-  anonymousDeviceLimit: number | undefined = undefined;
+  anonymousDeviceLimit?: number;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
@@ -138,12 +166,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
-  pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
+  pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
-  azure: AzureSettings = {
+  azure: AzureSettingsGrafanaData = {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
@@ -156,10 +184,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
-  unifiedAlerting = {
+  unifiedAlerting: UnifiedAlertingConfig = {
     minInterval: '',
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
+    recordingRulesEnabled: false,
+    defaultRecordingRulesTargetDatasourceUID: undefined,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
@@ -175,33 +205,35 @@ export class GrafanaBootConfig implements GrafanaConfig {
   analytics = {
     enabled: true,
   };
-  googleAnalyticsId: undefined;
-  googleAnalytics4Id: undefined;
+  googleAnalyticsId?: string;
+  googleAnalytics4Id?: string;
   googleAnalytics4SendManualPageViews = false;
-  rudderstackWriteKey: undefined;
-  rudderstackDataPlaneUrl: undefined;
-  rudderstackSdkUrl: undefined;
-  rudderstackConfigUrl: undefined;
-  rudderstackIntegrationsUrl: undefined;
+  rudderstackWriteKey?: string;
+  rudderstackDataPlaneUrl?: string;
+  rudderstackSdkUrl?: string;
+  rudderstackConfigUrl?: string;
+  rudderstackIntegrationsUrl?: string;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
+  panelSeriesLimit = 0;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
     connMaxLifetime: 14400,
   };
   defaultDatasourceManageAlertsUiToggle = true;
-
-  tokenExpirationDayLimit: undefined;
+  defaultAllowRecordingRulesTargetAlertsUiToggle = true;
+  tokenExpirationDayLimit?: number;
   enableFrontendSandboxForPlugins: string[] = [];
-  sharedWithMeFolderUID: string | undefined;
-  rootFolderUID: string | undefined;
-  localFileSystemAvailable: boolean | undefined;
-  cloudMigrationIsTarget: boolean | undefined;
+  sharedWithMeFolderUID?: string;
+  rootFolderUID?: string;
+  localFileSystemAvailable?: boolean;
+  cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
-  exploreHideLogsDownload: boolean | undefined;
+  exploreHideLogsDownload?: boolean;
+  quickRanges?: TimeOption[];
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
@@ -209,30 +241,22 @@ export class GrafanaBootConfig implements GrafanaConfig {
    */
   language: string | undefined;
 
-  constructor(options: GrafanaBootConfig) {
+  /**
+   * regionalFormat used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
+   * This is the regionalFormat that is used for date formatting and other locale-specific features.
+   */
+  regionalFormat: string;
+  listDashboardScopesEndpoint = '';
+  listScopesEndpoint = '';
+
+  constructor(
+    options: BootData['settings'] & {
+      bootData: BootData;
+    }
+  ) {
     this.bootData = options.bootData;
 
-    const defaults = {
-      datasources: {},
-      windowTitlePrefix: 'Grafana - ',
-      panels: {},
-      newPanelTitle: 'Panel Title',
-      playlist_timespan: '1m',
-      unsaved_changes_warning: true,
-      appUrl: '',
-      appSubUrl: '',
-      buildInfo: {
-        version: '1.0',
-        commit: '1',
-        env: 'production',
-      },
-      viewersCanEdit: false,
-      disableSanitizeHtml: false,
-    };
-
-    merge(this, defaults, options);
-
-    this.buildInfo = options.buildInfo || defaults.buildInfo;
+    merge(this, options);
 
     if (this.dateFormats) {
       systemDateFormats.update(this.dateFormats);
@@ -241,14 +265,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
-    if (this.featureToggles.disableAngular) {
-      this.angularSupportEnabled = false;
-    }
-
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
+    this.regionalFormat = options.bootData.user.regionalFormat;
   }
 }
 
@@ -300,18 +321,33 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   });
 }
 
-const bootData = (window as any).grafanaBootData || {
-  settings: {},
-  user: {},
-  navTree: [],
-};
+let bootData = window.grafanaBootData;
 
-const options = bootData.settings;
-options.bootData = bootData;
+if (!bootData) {
+  if (process.env.NODE_ENV !== 'test') {
+    console.error('window.grafanaBootData was not set by the time config was initialized');
+  }
+
+  bootData = {
+    assets: {
+      dark: '',
+      light: '',
+    },
+    settings: {} as GrafanaConfig,
+    user: {} as CurrentUserDTO,
+    navTree: [],
+  };
+}
 
 /**
  * Use this to access the {@link GrafanaBootConfig} for the current running Grafana instance.
  *
  * @public
  */
-export const config = new GrafanaBootConfig(options);
+export const config = new GrafanaBootConfig({
+  ...bootData.settings,
+  // need to separately include bootData here
+  // this allows people to access the user object on config.bootData.user and maintains backwards compatibility
+  // TODO expose a user object (similar to `GrafanaBootConfig`) and deprecate this recursive bootData
+  bootData,
+});

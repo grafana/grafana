@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   FileDropzone,
-  HorizontalGroup,
+  Stack,
   InlineField,
   InlineFieldRow,
   Modal,
@@ -68,6 +68,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
 
   render() {
     const { query, onChange, datasource, app } = this.props;
+    const isAlerting = app === CoreApp.UnifiedAlerting;
 
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
@@ -114,41 +115,43 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             />
           </div>
         </Modal>
-        <InlineFieldRow>
-          <InlineField label="Query type" grow={true}>
-            <HorizontalGroup spacing={'sm'} align={'center'} justify={'space-between'}>
-              <RadioButtonGroup<TempoQueryType>
-                options={queryTypeOptions}
-                value={query.queryType}
-                onChange={(v) => {
-                  reportInteraction('grafana_traces_query_type_changed', {
-                    datasourceType: 'tempo',
-                    app: app ?? '',
-                    grafana_version: config.buildInfo.version,
-                    newQueryType: v,
-                    previousQueryType: query.queryType ?? '',
-                  });
+        {!isAlerting && (
+          <InlineFieldRow>
+            <InlineField label="Query type" grow={true}>
+              <Stack gap={1} alignItems="center" justifyContent="space-between">
+                <RadioButtonGroup<TempoQueryType>
+                  options={queryTypeOptions}
+                  value={query.queryType}
+                  onChange={(v) => {
+                    reportInteraction('grafana_traces_query_type_changed', {
+                      datasourceType: 'tempo',
+                      app: app ?? '',
+                      grafana_version: config.buildInfo.version,
+                      newQueryType: v,
+                      previousQueryType: query.queryType ?? '',
+                    });
 
-                  this.onClearResults();
-                  onChange({
-                    ...query,
-                    queryType: v,
-                  });
-                }}
-                size="md"
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  this.setState({ uploadModalOpen: true });
-                }}
-              >
-                Import trace
-              </Button>
-            </HorizontalGroup>
-          </InlineField>
-        </InlineFieldRow>
+                    this.onClearResults();
+                    onChange({
+                      ...query,
+                      queryType: v,
+                    });
+                  }}
+                  size="md"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    this.setState({ uploadModalOpen: true });
+                  }}
+                >
+                  Import trace
+                </Button>
+              </Stack>
+            </InlineField>
+          </InlineFieldRow>
+        )}
         {query.queryType === 'traceqlSearch' && (
           <TraceQLSearch
             datasource={this.props.datasource}
@@ -158,6 +161,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             app={app}
             onClearResults={this.onClearResults}
             addVariablesToOptions={this.props.addVariablesToOptions}
+            range={this.props.range}
           />
         )}
         {query.queryType === 'serviceMap' && (
@@ -171,6 +175,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             onChange={onChange}
             app={app}
             onClearResults={this.onClearResults}
+            range={this.props.range}
           />
         )}
       </>

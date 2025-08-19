@@ -10,10 +10,10 @@ import {
   getDisplayProcessor,
   getFieldDisplayName,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -280,7 +280,11 @@ export const generateColumns = (
     };
 
     columns.push({
-      Header: () => <div className={styles.sortedHeader}>Score</div>,
+      Header: () => (
+        <div className={styles.sortedHeader}>
+          <Trans i18nKey="search.generate-columns.score">Score</Trans>
+        </div>
+      ),
       Cell: (p) => {
         const { key, ...cellProps } = p.cellProps;
         return (

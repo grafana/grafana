@@ -25,7 +25,6 @@ import (
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
-	utilversion "k8s.io/component-base/version"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -33,6 +32,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -107,9 +107,11 @@ func SetupConfig(
 	buildCommit string,
 	buildBranch string,
 	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
+	gvs []schema.GroupVersion,
+	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
-	defsGetter := GetOpenAPIDefinitions(builders)
+	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
@@ -119,7 +121,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""
@@ -170,6 +172,8 @@ func SetupConfig(
 			operationAlt = "get" + operationAlt[len("read"):]
 		} else if strings.HasPrefix(operationAlt, "patch") {
 			operationAlt = "update" + operationAlt[len("patch"):]
+		} else if strings.HasPrefix(operationAlt, "put") {
+			operationAlt = "replace" + operationAlt[len("put"):]
 		}
 
 		// Audit our options here
@@ -222,29 +226,15 @@ func SetupConfig(
 	}
 
 	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIConfig.Info.Version = buildVersion
+	serverConfig.OpenAPIV3Config.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
 
-	v := utilversion.DefaultKubeEffectiveVersion()
-	patchver := 0 // required for semver
-
-	info := v.BinaryVersion().Info()
-	info.BuildDate = time.Unix(buildTimestamp, 0).UTC().Format(time.RFC3339)
-	info.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info.Major, info.Minor, patchver, buildVersion)
-	info.GitCommit = fmt.Sprintf("%s@%s", buildBranch, buildCommit)
-	info.GitTreeState = fmt.Sprintf("grafana v%s", buildVersion)
-
-	info2 := v.EmulationVersion().Info()
-	info2.BuildDate = info.BuildDate
-	info2.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info2.Major, info2.Minor, patchver, buildVersion)
-	info2.GitCommit = info.GitCommit
-	info2.GitTreeState = info.GitTreeState
-
-	serverConfig.EffectiveVersion = v
-
+	serverConfig.EffectiveVersion = getEffectiveVersion(buildTimestamp, buildVersion, buildCommit, buildBranch)
 	// set priority for aggregated discovery
 	for i, b := range builders {
 		gvs := GetGroupVersions(b)
@@ -290,6 +280,9 @@ func InstallAPIs(
 	serverLock ServerLockService,
 	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
+	features featuremgmt.FeatureToggles,
+	dualWriterMetrics *grafanarest.DualWriterMetrics,
+	builderMetrics *BuilderMetrics,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
@@ -312,6 +305,7 @@ func InstallAPIs(
 
 			var (
 				dualWriterPeriodicDataSyncJobEnabled bool
+				dualWriterMigrationDataSyncDisabled  bool
 				dataSyncerInterval                   = time.Hour
 				dataSyncerRecordsLimit               = 1000
 			)
@@ -320,6 +314,7 @@ func InstallAPIs(
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dualWriterMigrationDataSyncDisabled = resourceConfig.DualWriterMigrationDataSyncDisabled
 				dataSyncerInterval = resourceConfig.DataSyncerInterval
 				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
@@ -340,19 +335,22 @@ func InstallAPIs(
 				Kind:                   key,
 				RequestInfo:            requestInfo,
 				Mode:                   mode,
+				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
 				LegacyStorage:          legacy,
 				Storage:                storage,
 				ServerLockService:      serverLock,
 				DataSyncerInterval:     dataSyncerInterval,
 				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-				Reg:                    reg,
 			}
 
 			// This also sets the currentMode on the syncer config.
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
 			if err != nil {
 				return nil, err
 			}
+
+			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
+
 			switch currentMode {
 			case grafanarest.Mode0:
 				return legacy, nil
@@ -360,10 +358,11 @@ func InstallAPIs(
 				return storage, nil
 			default:
 			}
+
 			if dualWriterPeriodicDataSyncJobEnabled {
 				// The mode might have changed in SetDualWritingMode, so apply current mode first.
 				syncerCfg.Mode = currentMode
-				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
+				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
 					return nil, err
 				}
 			}
@@ -394,17 +393,37 @@ func InstallAPIs(
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
 			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
-				Scheme:           scheme,
-				OptsGetter:       optsGetter,
-				DualWriteBuilder: dualWrite,
-				MetricsRegister:  reg,
-				StorageOptions:   optsregister,
+				Scheme:              scheme,
+				OptsGetter:          optsGetter,
+				DualWriteBuilder:    dualWrite,
+				MetricsRegister:     reg,
+				StorageOptsRegister: optsregister,
+				StorageOpts:         storageOpts,
 			}); err != nil {
 				return err
 			}
 			if len(g.PrioritizedVersions) < 1 {
 				continue
 			}
+
+			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
+					for name := range resources {
+						if !allowRegisteringResourceByInfo(b.AllowedV0Alpha1Resources(), name) {
+							delete(resources, name)
+						}
+					}
+					if len(resources) == 0 {
+						delete(g.VersionedResourcesStorageMap, "v0alpha1")
+					}
+				}
+			}
+		}
+
+		// skip installing the group if there are no resources left after filtering
+		if len(g.VersionedResourcesStorageMap) == 0 {
+			continue
 		}
 
 		err := server.InstallAPIGroup(&g)
@@ -437,4 +456,17 @@ func AddPostStartHooks(
 		}
 	}
 	return nil
+}
+
+func allowRegisteringResourceByInfo(allowedResources []string, name string) bool {
+	// trim any subresources from the name
+	name = strings.Split(name, "/")[0]
+
+	for _, allowedResource := range allowedResources {
+		if allowedResource == name || allowedResource == AllResourcesAllowed {
+			return true
+		}
+	}
+
+	return false
 }

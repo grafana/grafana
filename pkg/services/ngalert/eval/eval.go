@@ -45,7 +45,7 @@ type expressionExecutor interface {
 
 type expressionBuilder interface {
 	expressionExecutor
-	BuildPipeline(req *expr.Request) (expr.DataPipeline, error)
+	BuildPipeline(ctx context.Context, req *expr.Request) (expr.DataPipeline, error)
 }
 
 type conditionEvaluator struct {
@@ -434,8 +434,9 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 }
 
 type NumberValueCapture struct {
-	Var    string // RefID
-	Labels data.Labels
+	Var              string // RefID
+	IsDatasourceNode bool
+	Labels           data.Labels
 
 	Value *float64
 }
@@ -461,16 +462,17 @@ func IsNoData(res backend.DataResponse) bool {
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// captures contains the values of all instant queries and expressions for each dimension
 	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
-	captureFn := func(refID string, labels data.Labels, value *float64) {
+	captureFn := func(refID string, datasourceType expr.NodeType, labels data.Labels, value *float64) {
 		m := captures[refID]
 		if m == nil {
 			m = make(map[data.Fingerprint]NumberValueCapture)
 		}
 		fp := labels.Fingerprint()
 		m[fp] = NumberValueCapture{
-			Var:    refID,
-			Value:  value,
-			Labels: labels.Copy(),
+			Var:              refID,
+			IsDatasourceNode: datasourceType == expr.TypeDatasourceNode,
+			Value:            value,
+			Labels:           labels.Copy(),
 		}
 		captures[refID] = m
 	}
@@ -487,14 +489,20 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	result.Error = FindConditionError(execResp, c.Condition)
 
 	for refID, res := range execResp.Responses {
+		var datasourceType expr.NodeType
+		datasourceUID, ok := datasourceUIDsForRefIDs[refID]
+		if ok {
+			datasourceType = expr.NodeTypeFromDatasourceUID(datasourceUID)
+		}
+
 		if IsNoData(res) {
 			// To make sure NoData is nil when Results are also nil we wait to initialize
 			// NoData until there is at least one query or expression that returned no data
 			if result.NoData == nil {
 				result.NoData = make(map[string]string)
 			}
-			if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
-				result.NoData[refID] = s
+			if datasourceType == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
+				result.NoData[refID] = datasourceUID
 			}
 		}
 
@@ -508,7 +516,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureFn(refID, frame.Fields[0].Labels, v)
+			captureFn(refID, datasourceType, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {
@@ -841,11 +849,11 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if err != nil {
 		return nil, err
 	}
-	return e.create(condition, req)
+	return e.create(ctx.Ctx, condition, req)
 }
 
-func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
-	pipeline, err := e.expressionService.BuildPipeline(req)
+func (e *evaluatorImpl) create(ctx context.Context, condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
+	pipeline, err := e.expressionService.BuildPipeline(ctx, req)
 	if err != nil {
 		return nil, err
 	}

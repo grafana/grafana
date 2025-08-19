@@ -19,7 +19,7 @@ export interface TempoQuery extends common.DataQuery {
   exemplars?: number;
   filters: Array<TraceqlFilter>;
   /**
-   * Filters that are used to query the metrics summary
+   * deprecated Filters that are used to query the metrics summary
    */
   groupBy?: Array<TraceqlFilter>;
   /**
@@ -125,6 +125,10 @@ export interface TraceqlFilter {
    * Uniquely identify the filter, will not be used in the query generation
    */
   id: string;
+  /**
+   * Whether the value is a custom value typed by the user
+   */
+  isCustomValue?: boolean;
   /**
    * The operator that connects the tag to the value, for example: =, >, !=, =~
    */

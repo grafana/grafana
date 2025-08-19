@@ -4,7 +4,7 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
@@ -65,10 +65,12 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
-        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
-        //we just focus on the value to check if the option already exists
+        // Since the label of a normal option does not have to match its value and a custom option has the same value and label,
+        // we just focus on the value to check if the option already exists
         const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
+          // Make sure to clone the array first to avoid mutating the original array!
+          currentOptions = currentOptions.slice();
           currentOptions.unshift({
             label: userTypedSearch,
             value: userTypedSearch as T,
@@ -115,41 +117,53 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError };
 }
 
-function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>>) {
+/**
+ * Sorts options by group and returns the sorted options and the starting index of each group
+ */
+export function sortByGroup<T extends string | number>(options: Array<ComboboxOption<T>>) {
+  // Group options by their group
   const groupedOptions = new Map<string | undefined, Array<ComboboxOption<T>>>();
+  const groupStartIndices = new Map<string | undefined, number>();
+
   for (const option of options) {
-    const groupExists = groupedOptions.has(option.group);
-    if (groupExists) {
-      groupedOptions.get(option.group)?.push(option);
+    const group = option.group;
+    const existing = groupedOptions.get(group);
+    if (existing) {
+      existing.push(option);
     } else {
-      groupedOptions.set(option.group, [option]);
+      groupedOptions.set(group, [option]);
     }
   }
 
-  // Create a map to track the starting index of each group
-  const groupStartIndices = new Map<string, number>();
+  // If we only have one group (either the undefined group, or a single group), return the original array
+  if (groupedOptions.size <= 1) {
+    if (options[0]?.group) {
+      groupStartIndices.set(options[0]?.group, 0);
+    }
+
+    return {
+      options,
+      groupStartIndices,
+    };
+  }
+
+  // 'Preallocate' result array with same size as input - very minor optimization
+  const result: Array<ComboboxOption<T>> = new Array(options.length);
+
   let currentIndex = 0;
 
-  // Reorganize options to have groups first, then undefined group
-  let reorganizeOptions: Array<ComboboxOption<T>> = [];
+  // Fill result array with grouped and undefined grouped options
   for (const [group, groupOptions] of groupedOptions) {
-    if (!group) {
-      continue;
+    if (group) {
+      groupStartIndices.set(group, currentIndex);
     }
-
-    groupStartIndices.set(group, currentIndex);
-    reorganizeOptions = reorganizeOptions.concat(groupOptions);
-    currentIndex += groupOptions.length;
-  }
-
-  const undefinedGroupOptions = groupedOptions.get(undefined);
-  if (undefinedGroupOptions) {
-    groupStartIndices.set('undefined', currentIndex);
-    reorganizeOptions = reorganizeOptions.concat(undefinedGroupOptions);
+    for (const option of groupOptions) {
+      result[currentIndex++] = option;
+    }
   }
 
   return {
-    options: reorganizeOptions,
+    options: result,
     groupStartIndices,
   };
 }

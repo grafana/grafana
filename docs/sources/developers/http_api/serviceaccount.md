@@ -135,6 +135,8 @@ Content-Type: application/json
 }
 ```
 
+Fixed and custom roles can be set on service accounts using the [RBAC HTTP API](/docs/grafana/latest/developers/http_api/access_control/#set-user-role-assignments).
+
 ## Get a service account by ID
 
 `GET /api/serviceaccounts/:id`
@@ -222,6 +224,8 @@ Content-Type: application/json
 }
 ```
 
+Fixed and custom roles can be set on service accounts using the [RBAC HTTP API](/docs/grafana/latest/developers/http_api/access_control/#set-user-role-assignments).
+
 ## Delete service account
 
 `DELETE /api/serviceaccounts/:id`
@@ -255,134 +259,6 @@ Content-Type: application/json
 ```
 
 ---
-
-## Migrate API keys to service accounts
-
-`POST /api/serviceaccounts/migrate`
-
-**Required permissions**
-
-See note in the [introduction](#service-account-api) for an explanation.
-
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
-
-**Example Request**:
-
-```http
-POST /api/serviceaccounts/migrate HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-	"message": "API keys migrated to service accounts"
-}
-```
-
-## Migrate API key to service account
-
-`POST /api/serviceaccounts/migrate/:keyId`
-
-**Required permissions**
-
-See note in the [introduction](#service-account-api) for an explanation.
-
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
-
-**Example Request**:
-
-```http
-POST /api/serviceaccounts/migrate/4 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-	"message": "Service accounts migrated"
-}
-```
-
-## Get API key to service account migration status
-
-`GET /api/serviceaccounts/migrationstatus`
-
-**Required permissions**
-
-See note in the [introduction](#service-account-api) for an explanation.
-
-| Action               | Scope              |
-| -------------------- | ------------------ |
-| serviceaccounts:read | serviceaccounts:\* |
-
-**Example Request**:
-
-```http
-POST /api/serviceaccounts/migrationstatus HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-	"migrated": true
-}
-```
-
-## Hide the API keys tab
-
-`GET /api/serviceaccounts/hideApiKeys`
-
-**Required permissions**
-
-See note in the [introduction](#service-account-api) for an explanation.
-
-| Action                | Scope              |
-| --------------------- | ------------------ |
-| serviceaccounts:write | serviceaccounts:\* |
-
-**Example Request**:
-
-```http
-POST /api/serviceaccounts/hideApiKeys HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-	"message": "API keys hidden"
-}
-```
 
 ## Get service account tokens
 
@@ -494,39 +370,5 @@ Content-Type: application/json
 
 {
 	"message": "API key deleted"
-}
-```
-
-## Revert service account token to API key
-
-`DELETE /api/serviceaccounts/:serviceAccountId/revert/:keyId`
-
-This operation will delete the service account and create a legacy API Key for the given `keyId`.
-
-**Required permissions**
-
-See note in the [introduction](#service-account-api) for an explanation.
-
-| Action                 | Scope                 |
-| ---------------------- | --------------------- |
-| serviceaccounts:delete | serviceaccounts:id:\* |
-
-**Example Request**:
-
-```http
-DELETE /api/serviceaccounts/1/revert/glsa_VVQjot0nijQ59lun6pMZRtsdBXxnFQ9M_77c34a79 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Basic YWRtaW46YWRtaW4=
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-	"message": "Reverted service account to API key"
 }
 ```

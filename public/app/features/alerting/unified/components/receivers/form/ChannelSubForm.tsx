@@ -1,31 +1,37 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Controller, FieldErrors, FieldValues, useFormContext } from 'react-hook-form';
+import { useEffect, useMemo } from 'react';
+import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { NotificationChannelOption } from 'app/types/alerting';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
-import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
+import {
+  ChannelValues,
+  CloudChannelValues,
+  CommonSettingsComponentType,
+  GrafanaChannelValues,
+  ReceiverFormValues,
+} from '../../../types/receiver-form';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
 import { Notifier } from './notifiers';
 
-interface Props<R extends FieldValues> {
+interface Props<R extends ChannelValues> {
   defaultValues: R;
   initialValues?: R;
-  pathPrefix: string;
+  pathPrefix: `items.${number}.`;
+  integrationIndex: number;
   notifiers: Notifier[];
   onDuplicate: () => void;
   onTest?: () => void;
   commonSettingsComponent: CommonSettingsComponentType;
-
-  secureFields?: Record<string, boolean>;
   errors?: FieldErrors<R>;
   onDelete?: () => void;
   isEditable?: boolean;
@@ -38,74 +44,99 @@ export function ChannelSubForm<R extends ChannelValues>({
   defaultValues,
   initialValues,
   pathPrefix,
+  integrationIndex,
   onDuplicate,
   onDelete,
   onTest,
   notifiers,
   errors,
-  secureFields,
   commonSettingsComponent: CommonSettingsComponent,
   isEditable = true,
   isTestable,
   customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
+  const { control, watch, register, trigger, formState, setValue, getValues } =
+    useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 
-  const fieldName = useCallback((fieldName: string) => `${pathPrefix}${fieldName}`, [pathPrefix]);
+  const channelFieldPath = `items.${integrationIndex}` as const;
+  const typeFieldPath = `${channelFieldPath}.type` as const;
+  const settingsFieldPath = `${channelFieldPath}.settings` as const;
 
-  const { control, watch, register, trigger, formState, setValue } = useFormContext();
-  const selectedType = watch(fieldName('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
-  const parse_mode = watch(fieldName('settings.parse_mode'));
+  const selectedType = watch(typeFieldPath) ?? defaultValues.type;
+  const parse_mode = watch(`${settingsFieldPath}.parse_mode`);
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
-  const onCallIntegrationType = watch(fieldName('settings.integration_type'));
+  const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
   const isTestAvailable = onCallIntegrationType !== OnCallIntegrationType.NewIntegration;
 
   useEffect(() => {
-    register(`${pathPrefix}.__id`);
+    register(`${channelFieldPath}.__id`);
     /* Need to manually register secureFields or else they'll
      be lost when testing a contact point */
-    register(`${pathPrefix}.secureFields`);
-  }, [register, pathPrefix]);
+    register(`${channelFieldPath}.secureFields`);
+  }, [register, channelFieldPath]);
 
   // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
-    const subscription = watch((v, { name, type }) => {
-      const value = name ? v[name] : '';
-      if (initialValues && name === fieldName('type') && value === initialValues.type && type === 'change') {
-        setValue(fieldName('settings'), initialValues.settings);
+    const subscription = watch((formValues, { name, type }) => {
+      // @ts-expect-error name is valid key for formValues
+      const value = name ? formValues[name] : '';
+      if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
+        setValue(settingsFieldPath, initialValues.settings);
       }
       // Restore initial value of an existing oncall integration
       if (
         initialValues &&
-        name === fieldName('settings.integration_type') &&
+        name === `${settingsFieldPath}.integration_type` &&
         value === OnCallIntegrationType.ExistingIntegration
       ) {
-        setValue(fieldName('settings.url'), initialValues.settings.url);
+        setValue(`${settingsFieldPath}.url`, initialValues.settings.url);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, fieldName, watch]);
-
-  const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
+  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch]);
 
   const onResetSecureField = (key: string) => {
-    if (_secureFields[key]) {
-      const updatedSecureFields = { ..._secureFields };
-      updatedSecureFields[key] = '';
-      setSecureFields(updatedSecureFields);
-      setValue(`${pathPrefix}.secureFields`, updatedSecureFields);
+    // formSecureFields might not be up to date if this function is called multiple times in a row
+    const currentSecureFields = getValues(`${channelFieldPath}.secureFields`);
+    if (currentSecureFields[key]) {
+      setValue(`${channelFieldPath}.secureFields`, { ...currentSecureFields, [key]: '' });
     }
+  };
+
+  const findSecureFieldsRecursively = (options: NotificationChannelOption[]): string[] => {
+    const secureFields: string[] = [];
+    options?.forEach((option) => {
+      if (option.secure && option.secureFieldKey) {
+        secureFields.push(option.secureFieldKey);
+      }
+      if (option.subformOptions) {
+        secureFields.push(...findSecureFieldsRecursively(option.subformOptions));
+      }
+    });
+    return secureFields;
+  };
+
+  const onDeleteSubform = (settingsPath: string, option: NotificationChannelOption) => {
+    // Get all subform options with secure=true recursively.
+    const relatedSecureFields = findSecureFieldsRecursively(option.subformOptions ?? []);
+    relatedSecureFields.forEach((key) => {
+      onResetSecureField(key);
+    });
+    const fieldPath = settingsPath.startsWith(`${channelFieldPath}.settings.`)
+      ? settingsPath.slice(`${channelFieldPath}.settings.`.length)
+      : settingsPath;
+    setValue(`${settingsFieldPath}.${fieldPath}`, undefined);
   };
 
   const typeOptions = useMemo(
     (): SelectableValue[] =>
-      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name])
-        // .notifiers.sort((a, b) => a.dto.name.localeCompare(b.dto.name))
-        .map<SelectableValue>(({ dto: { name, type }, meta }) => ({
+      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
+        ({ dto: { name, type }, meta }) => ({
           // @ts-expect-error ReactNode is supported
           label: (
             <Stack alignItems="center" gap={1}>
@@ -116,7 +147,8 @@ export function ChannelSubForm<R extends ChannelValues>({
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
-        })),
+        })
+      ),
     [notifiers]
   );
 
@@ -137,17 +169,22 @@ export function ChannelSubForm<R extends ChannelValues>({
   const showTelegramWarning = isTelegram && !isParseModeNone;
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
-  const mandatoryOptions = notifier?.dto.options.filter((o) => o.required);
-  const optionalOptions = notifier?.dto.options.filter((o) => !o.required);
+  const mandatoryOptions = notifier?.dto.options.filter((o) => o.required) ?? [];
+  const optionalOptions = notifier?.dto.options.filter((o) => !o.required) ?? [];
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
+          <Field
+            label={t('alerting.channel-sub-form.label-integration', 'Integration')}
+            htmlFor={contactPointTypeInputId}
+            data-testid={`${pathPrefix}type`}
+          >
             <Controller
-              name={fieldName('type')}
+              name={typeFieldPath}
+              control={control}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Select
@@ -159,8 +196,6 @@ export function ChannelSubForm<R extends ChannelValues>({
                   onChange={(value) => onChange(value?.value)}
                 />
               )}
-              control={control}
-              rules={{ required: true }}
             />
           </Field>
         </div>
@@ -174,13 +209,13 @@ export function ChannelSubForm<R extends ChannelValues>({
               onClick={() => handleTest()}
               icon={testingReceiver ? 'spinner' : 'message'}
             >
-              Test
+              <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
           {isEditable && (
             <>
               <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                Duplicate
+                <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
               </Button>
               {onDelete && (
                 <Button
@@ -191,7 +226,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                   onClick={() => onDelete()}
                   icon="trash-alt"
                 >
-                  Delete
+                  <Trans i18nKey="alerting.channel-sub-form.delete">Delete</Trans>
                 </Button>
               )}
             </>
@@ -217,16 +252,20 @@ export function ChannelSubForm<R extends ChannelValues>({
           )}
           <ChannelOptions<R>
             defaultValues={defaultValues}
-            selectedChannelOptions={mandatoryOptions?.length ? mandatoryOptions! : optionalOptions!}
-            secureFields={_secureFields}
+            selectedChannelOptions={mandatoryOptions.length ? mandatoryOptions : optionalOptions}
             errors={errors}
             onResetSecureField={onResetSecureField}
-            pathPrefix={pathPrefix}
+            onDeleteSubform={onDeleteSubform}
+            integrationPrefix={channelFieldPath}
             readOnly={!isEditable}
             customValidators={customValidators}
           />
-          {!!(mandatoryOptions?.length && optionalOptions?.length) && (
-            <CollapsibleSection label={`Optional ${notifier.dto.name} settings`}>
+          {!!(mandatoryOptions.length && optionalOptions.length) && (
+            <CollapsibleSection
+              label={t('alerting.channel-sub-form.label-section', 'Optional {{name}} settings', {
+                name: notifier.dto.name,
+              })}
+            >
               {notifier.dto.info !== '' && (
                 <Alert title="" severity="info">
                   {notifier.dto.info}
@@ -234,17 +273,19 @@ export function ChannelSubForm<R extends ChannelValues>({
               )}
               <ChannelOptions<R>
                 defaultValues={defaultValues}
-                selectedChannelOptions={optionalOptions!}
-                secureFields={_secureFields}
+                selectedChannelOptions={optionalOptions}
                 onResetSecureField={onResetSecureField}
+                onDeleteSubform={onDeleteSubform}
                 errors={errors}
-                pathPrefix={pathPrefix}
+                integrationPrefix={channelFieldPath}
                 readOnly={!isEditable}
                 customValidators={customValidators}
               />
             </CollapsibleSection>
           )}
-          <CollapsibleSection label="Notification settings">
+          <CollapsibleSection
+            label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
+          >
             <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
           </CollapsibleSection>
         </div>

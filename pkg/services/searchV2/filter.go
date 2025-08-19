@@ -117,11 +117,12 @@ func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOpti
 	return searcher.NewFilteringSearcher(s, func(d *search.DocumentMatch) bool {
 		var kind, id, location string
 		err := dvReader.VisitDocumentValues(d.Number, func(field string, term []byte) {
-			if field == documentFieldKind {
+			switch field {
+			case documentFieldKind:
 				kind = string(term)
-			} else if field == documentFieldUID {
+			case documentFieldUID:
 				id = string(term)
-			} else if field == documentFieldLocation {
+			case documentFieldLocation:
 				location = string(term)
 			}
 		})

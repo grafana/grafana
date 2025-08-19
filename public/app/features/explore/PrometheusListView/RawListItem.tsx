@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
-import { Field, GrafanaTheme2 } from '@grafana/data/';
+import { Field, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
-import { reportInteraction } from '@grafana/runtime/src';
+import { reportInteraction } from '@grafana/runtime';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { ItemLabels } from './ItemLabels';
@@ -100,6 +101,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
+
   const { values, attributeValues } = getQueryValues(allLabels);
 
   /**
@@ -130,7 +132,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
           <IconButton
-            tooltip="Copy to clipboard"
+            tooltip={t('explore.raw-list-item.tooltip-copy-to-clipboard', 'Copy to clipboard')}
             onClick={() => {
               reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand');
               copyToClipboard(stringRep);

@@ -3,17 +3,26 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-ARG BASE_IMAGE=alpine:3.21
-ARG JS_IMAGE=node:22-alpine
+ARG BASE_IMAGE=alpine-base
+ARG GO_IMAGE=go-builder-base
+ARG JS_IMAGE=js-builder-base
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.1-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
+# Dependabot cannot update dependencies listed in ARGs
+# By using FROM instructions we can delegate dependency updates to dependabot
+FROM alpine:3.21.3 AS alpine-base
+FROM ubuntu:22.04 AS ubuntu-base
+FROM golang:1.24.6-alpine AS go-builder-base
+FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+ARG JS_NODE_ENV=production
+ARG JS_YARN_INSTALL_FLAG=--immutable
+ARG JS_YARN_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -28,15 +37,23 @@ COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
 RUN apk add --no-cache make build-base python3
-
-RUN yarn install --immutable
+#
+# Set the node env according to defaults or argument passed
+#
+ENV NODE_ENV=${JS_NODE_ENV}
+#
+RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
+    yarn install; \
+  else \
+    yarn install --immutable; \
+  fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV=production
-RUN yarn build
+# Set the build argument according to default or argument passed
+RUN yarn ${JS_YARN_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
@@ -60,31 +77,31 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
-COPY .citools/bra .citools/bra
-COPY .citools/cue .citools/cue
-COPY .citools/cog .citools/cog
-COPY .citools/lefthook .citools/lefthook
-COPY .citools/jb .citools/jb
-COPY .citools/drone .citools/drone
-COPY .citools/golangci-lint .citools/golangci-lint
-COPY .citools/swagger ./citools/swagger
+COPY .citools .citools
 
-# Include vendored dependencies
+# Copy go dependencies first
+# If updating this, please also update devenv/frontend-service/backend.dockerfile
 COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
 COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
+COPY apps/plugins apps/plugins
+COPY apps/shorturl apps/shorturl
+COPY apps/provisioning apps/provisioning
+COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/folder apps/folder
+COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications

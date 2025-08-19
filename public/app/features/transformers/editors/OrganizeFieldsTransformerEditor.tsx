@@ -1,6 +1,6 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import {
   DataTransformerID,
@@ -10,8 +10,15 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
-import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
+import {
+  createOrderFieldsComparer,
+  Order,
+  OrderByItem,
+  OrderByMode,
+  OrderByType,
+  OrganizeFieldsTransformerOptions,
+} from '@grafana/data/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Input,
   IconButton,
@@ -22,18 +29,104 @@ import {
   InlineLabel,
   Text,
   Box,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
 } from '@grafana/ui';
 
+import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import { getTransformationContent } from '../docs/getTransformationContent';
-import { useAllFieldNamesFromDataFrames } from '../utils';
+import darkImage from '../images/dark/organize.svg';
+import lightImage from '../images/light/organize.svg';
+import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
+interface UIOrderByItem {
+  type: OrderByType;
+  name?: string;
+  order: Order;
+}
+
+function move(arr: unknown[], from: number, to: number) {
+  arr.splice(to, 0, arr.splice(from, 1)[0]);
+}
+
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
-  const { indexByName, excludeByName, renameByName, includeByName } = options;
+  const { indexByName, excludeByName, renameByName, includeByName, orderBy, orderByMode } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
-  const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
+  const orderedFieldNames = useMemo(() => {
+    if (input.length > 0 && orderByMode === OrderByMode.Auto) {
+      const autoOrderer = createFieldsOrdererAuto(orderBy ?? []);
+
+      return getAllFieldNamesFromDataFrames(
+        [
+          {
+            ...input[0],
+            fields: autoOrderer(input[0].fields),
+          },
+        ],
+        false
+      );
+    }
+
+    return orderFieldNamesByIndex(fieldNames, indexByName);
+  }, [input, fieldNames, indexByName, orderByMode, orderBy]);
+
+  const uiOrderByItems = useMemo(() => {
+    const uiOrderByItems: UIOrderByItem[] = [];
+
+    if (orderByMode === OrderByMode.Auto) {
+      const foundLabels = getDistinctLabels(input);
+
+      let byFieldNameAdded = false;
+
+      // add Asc or Desc items
+      orderBy?.forEach((item, index) => {
+        let order = item.desc ? Order.Desc : Order.Asc;
+
+        // by field name
+        if (item.type === OrderByType.Name) {
+          uiOrderByItems.push({
+            type: OrderByType.Name,
+            order,
+          });
+
+          byFieldNameAdded = true;
+        }
+        // by label
+        else if (foundLabels.has(item.name!)) {
+          uiOrderByItems.push({
+            type: OrderByType.Label,
+            name: item.name,
+            order,
+          });
+
+          foundLabels.delete(item.name!);
+        }
+      });
+
+      // add Off items
+      if (!byFieldNameAdded) {
+        uiOrderByItems.push({
+          type: OrderByType.Name,
+          order: Order.Off,
+        });
+      }
+
+      foundLabels.forEach((name) => {
+        uiOrderByItems.push({
+          type: OrderByType.Label,
+          name,
+          order: Order.Off,
+        });
+      });
+    }
+
+    return uiOrderByItems;
+  }, [input, orderByMode, orderBy]);
+
   const filterType = includeByName && Object.keys(includeByName).length > 0 ? 'include' : 'exclude';
 
   const onToggleVisibility = useCallback(
@@ -63,7 +156,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [onChange, options, includeByName]
   );
 
-  const onDragEnd = useCallback(
+  const onDragEndFields = useCallback(
     (result: DropResult) => {
       if (!result || !result.destination) {
         return;
@@ -97,45 +190,151 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [onChange, options]
   );
 
+  const onChangeSort = useCallback(
+    (item: UIOrderByItem, sortOrder: Order) => {
+      item.order = sortOrder;
+
+      const orderBy: OrderByItem[] = [];
+
+      uiOrderByItems.forEach((item) => {
+        if (item.order !== Order.Off) {
+          orderBy.push({
+            type: item.type,
+            name: item.name,
+            desc: item.order === Order.Desc,
+          });
+        }
+      });
+
+      onChange({ ...options, orderBy });
+    },
+    [options, uiOrderByItems, onChange]
+  );
+
+  const onDragEndLabels = useCallback(
+    (result: DropResult) => {
+      if (result.destination == null) {
+        return;
+      }
+
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
+
+      if (startIndex === endIndex) {
+        return;
+      }
+
+      move(uiOrderByItems, startIndex, endIndex);
+
+      const orderBy: OrderByItem[] = [];
+
+      uiOrderByItems.forEach((item) => {
+        if (item.order !== Order.Off) {
+          orderBy.push({
+            type: item.type,
+            name: item.name,
+            desc: item.order === Order.Desc,
+          });
+        }
+      });
+
+      onChange({ ...options, orderBy });
+    },
+    [options, onChange, uiOrderByItems]
+  );
+
   // Show warning that we only apply the first frame
   if (input.length > 1) {
     return (
       <FieldValidationMessage>
-        Organize fields only works with a single frame. Consider applying a join transformation or filtering the input
-        first.
+        <Trans i18nKey="transformers.organize-fields-transformer-editor.first-frame-warning">
+          Organize fields only works with a single frame. Consider applying a join transformation or filtering the input
+          first.
+        </Trans>
       </FieldValidationMessage>
     );
   }
 
-  return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="sortable-fields-transformer" direction="vertical">
-        {(provided) => (
-          <div ref={provided.innerRef} {...provided.droppableProps}>
-            {orderedFieldNames.map((fieldName, index) => {
-              const isIncludeFilter = includeByName && fieldName in includeByName ? includeByName[fieldName] : false;
-              const isVisible = filterType === 'include' ? isIncludeFilter : !excludeByName[fieldName];
-              const onToggleFunction = filterType === 'include' ? onToggleVisibilityInclude : onToggleVisibility;
+  const styles = useStyles2(getDraggableStyles);
 
+  return (
+    <>
+      <InlineFieldRow className={styles.fieldOrderRadio}>
+        <InlineField label={t('transformers.organize-fields-transformer-editor.field-order', 'Field order')}>
+          <RadioButtonGroup
+            options={[
+              {
+                label: t('transformers.organize-fields-transformer-editor.field-order-manual', 'Manual'),
+                value: OrderByMode.Manual,
+              },
+              {
+                label: t('transformers.organize-fields-transformer-editor.field-order-auto', 'Auto'),
+                value: OrderByMode.Auto,
+              },
+            ]}
+            value={options.orderByMode ?? OrderByMode.Manual}
+            onChange={(v) => onChange({ ...options, orderByMode: v })}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <DragDropContext onDragEnd={onDragEndLabels}>
+        {options.orderByMode === OrderByMode.Auto && (
+          <Droppable droppableId="sortable-labels-transformer" direction="vertical">
+            {(provided) => {
               return (
-                <DraggableFieldName
-                  fieldName={fieldName}
-                  renamedFieldName={renameByName[fieldName]}
-                  index={index}
-                  onToggleVisibility={onToggleFunction}
-                  onRenameField={onRenameField}
-                  visible={isVisible}
-                  key={fieldName}
-                />
+                <>
+                  <div ref={provided.innerRef} className={styles.labelsDraggable} {...provided.droppableProps}>
+                    {uiOrderByItems.map((item, idx) => (
+                      <DraggableUIOrderByItem item={item} index={idx} onChangeSort={onChangeSort} />
+                    ))}
+                  </div>
+                  {provided.placeholder}
+                </>
               );
-            })}
-            {provided.placeholder}
-          </div>
+            }}
+          </Droppable>
         )}
-      </Droppable>
-    </DragDropContext>
+      </DragDropContext>
+
+      <DragDropContext onDragEnd={onDragEndFields}>
+        <Droppable droppableId="sortable-fields-transformer" direction="vertical">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {orderedFieldNames.map((fieldName, index) => {
+                const isIncludeFilter = includeByName && fieldName in includeByName ? includeByName[fieldName] : false;
+                const isVisible = filterType === 'include' ? isIncludeFilter : !excludeByName[fieldName];
+                const onToggleFunction = filterType === 'include' ? onToggleVisibilityInclude : onToggleVisibility;
+
+                return (
+                  <DraggableFieldName
+                    fieldName={fieldName}
+                    renamedFieldName={renameByName[fieldName]}
+                    index={index}
+                    onToggleVisibility={onToggleFunction}
+                    onRenameField={onRenameField}
+                    visible={isVisible}
+                    key={fieldName}
+                    isDragDisabled={options.orderByMode === OrderByMode.Auto}
+                  />
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </>
   );
 };
+
+const getDraggableStyles = (theme: GrafanaTheme2) => ({
+  fieldOrderRadio: css({
+    marginBottom: theme.spacing(1),
+  }),
+  labelsDraggable: css({
+    marginBottom: theme.spacing(3),
+  }),
+});
 
 OrganizeFieldsTransformerEditor.displayName = 'OrganizeFieldsTransformerEditor';
 
@@ -146,6 +345,7 @@ interface DraggableFieldProps {
   visible: boolean;
   onToggleVisibility: (fieldName: string, isVisible: boolean) => void;
   onRenameField: (from: string, to: string) => void;
+  isDragDisabled: boolean;
 }
 
 const DraggableFieldName = ({
@@ -155,24 +355,39 @@ const DraggableFieldName = ({
   visible,
   onToggleVisibility,
   onRenameField,
+  isDragDisabled,
 }: DraggableFieldProps) => {
   const styles = useStyles2(getFieldNameStyles);
 
   return (
-    <Draggable draggableId={fieldName} index={index}>
+    <Draggable draggableId={fieldName} index={index} isDragDisabled={isDragDisabled}>
       {(provided) => (
-        <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
+        <Box display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
           <InlineLabel width={60} as="div">
             <Stack gap={0} justifyContent="flex-start" alignItems="center" width="100%">
-              <span {...provided.dragHandleProps}>
-                <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
-              </span>
+              {!isDragDisabled && (
+                <span {...provided.dragHandleProps}>
+                  <Icon
+                    name="draggabledots"
+                    title={t(
+                      'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                      'Drag and drop to reorder'
+                    )}
+                    size="lg"
+                    className={styles.draggable}
+                  />
+                </span>
+              )}
               <IconButton
                 className={styles.toggle}
                 size="md"
                 name={visible ? 'eye' : 'eye-slash'}
                 onClick={() => onToggleVisibility(fieldName, visible)}
-                tooltip={visible ? 'Disable' : 'Enable'}
+                tooltip={
+                  visible
+                    ? t('transformers.draggable-field-name.tooltip-disable', 'Disable')
+                    : t('transformers.draggable-field-name.tooltip-enable', 'Enable')
+                }
               />
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
                 {fieldName}
@@ -181,7 +396,10 @@ const DraggableFieldName = ({
           </InlineLabel>
           <Input
             defaultValue={renamedFieldName || ''}
-            placeholder={`Rename ${fieldName}`}
+            placeholder={t('transformers.draggable-field-name.rename-placeholder', 'Rename {{fieldName}}', {
+              fieldName,
+              interpolation: { escapeValue: false },
+            })}
             onBlur={(event) => onRenameField(fieldName, event.currentTarget.value)}
           />
         </Box>
@@ -191,6 +409,57 @@ const DraggableFieldName = ({
 };
 
 DraggableFieldName.displayName = 'DraggableFieldName';
+
+interface DraggableUIOrderByItemProps {
+  item: UIOrderByItem;
+  index: number;
+  onChangeSort: (item: UIOrderByItem, order: Order) => void;
+}
+
+const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderByItemProps) => {
+  const styles = useStyles2(getFieldNameStyles);
+  const draggableId = useId();
+
+  return (
+    <Draggable draggableId={draggableId} index={index} isDragDisabled={item.order === Order.Off}>
+      {(provided) => (
+        <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
+          <InlineLabel width={60} as="div">
+            <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
+              <span {...provided.dragHandleProps}>
+                <Icon
+                  name="draggabledots"
+                  title={t(
+                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                    'Drag and drop to reorder'
+                  )}
+                  size="lg"
+                  className={cx(styles.draggable, { [styles.disabled]: item.order === Order.Off })}
+                />
+              </span>
+              <Text truncate={true} element="p" variant="bodySmall" weight="bold">
+                {item.type === OrderByType.Label ? `Label: ${item.name}` : `Field name`}
+              </Text>
+            </Stack>
+          </InlineLabel>
+          <RadioButtonGroup
+            options={[
+              { label: t('transformers.draggable-sort-order.off', 'Off'), value: Order.Off },
+              { label: t('transformers.draggable-sort-order.asc', 'ASC'), value: Order.Asc },
+              { label: t('transformers.draggable-sort-order.desc', 'DESC'), value: Order.Desc },
+            ]}
+            value={item.order}
+            onChange={(order) => {
+              onChangeSort(item, order);
+            }}
+          />
+        </Box>
+      )}
+    </Draggable>
+  );
+};
+
+DraggableUIOrderByItem.displayName = 'DraggableUIOrderByItem';
 
 const getFieldNameStyles = (theme: GrafanaTheme2) => ({
   toggle: css({
@@ -202,6 +471,10 @@ const getFieldNameStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       color: theme.colors.text.maxContrast,
     },
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+    pointerEvents: 'none',
   }),
 });
 
@@ -224,13 +497,18 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   return fieldNames.sort(comparer);
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {
-  id: DataTransformerID.organize,
-  editor: OrganizeFieldsTransformerEditor,
-  transformation: standardTransformers.organizeFieldsTransformer,
-  name: standardTransformers.organizeFieldsTransformer.name,
-  description:
-    "Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.",
-  categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.organize).helperDocs,
-};
+export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryItem<OrganizeFieldsTransformerOptions> =
+  () => ({
+    id: DataTransformerID.organize,
+    editor: OrganizeFieldsTransformerEditor,
+    transformation: standardTransformers.organizeFieldsTransformer,
+    name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
+    description: t(
+      'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
+      'Re-order, hide, or rename fields.'
+    ),
+    categories: new Set([TransformerCategory.ReorderAndRename]),
+    help: getTransformationContent(DataTransformerID.organize).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

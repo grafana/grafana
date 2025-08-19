@@ -60,7 +60,7 @@ var (
 	ErrArcNotFoundBase = errutil.NotFound("plugin.archNotFound").
 				MustTemplate(ErrArcNotFoundMsg, errutil.WithPublic(ErrArcNotFoundMsg))
 
-	ErrChecksumMismatchMsg  = "expected SHA256 checksum does not match the downloaded archive ({{.Public.ArchiveURL}}) - please contact security@grafana.com"
+	ErrChecksumMismatchMsg  = "expected SHA256 checksum ({{.Public.ExpectedSHA256}}) does not match the downloaded archive ({{.Public.ArchiveURL}}) computed SHA256 checksum ({{.Public.ComputedSHA256}}) - please contact security@grafana.com"
 	ErrChecksumMismatchBase = errutil.UnprocessableEntity("plugin.checksumMismatch").
 				MustTemplate(ErrChecksumMismatchMsg, errutil.WithPublic(ErrChecksumMismatchMsg))
 
@@ -85,8 +85,8 @@ func ErrArcNotFound(pluginID, systemInfo string) error {
 	return ErrArcNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "SysInfo": systemInfo}})
 }
 
-func ErrChecksumMismatch(archiveURL string) error {
-	return ErrChecksumMismatchBase.Build(errutil.TemplateData{Public: map[string]any{"ArchiveURL": archiveURL}})
+func ErrChecksumMismatch(archiveURL, expectedSHA256, computedSHA256 string) error {
+	return ErrChecksumMismatchBase.Build(errutil.TemplateData{Public: map[string]any{"ArchiveURL": archiveURL, "ExpectedSHA256": expectedSHA256, "ComputedSHA256": computedSHA256}})
 }
 
 func ErrCorePlugin(pluginID string) error {

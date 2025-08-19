@@ -147,10 +147,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	// we don't care about the error here, if this fails we get 0 and no
 	// permission assigned to user will be returned, only for org role.
@@ -232,9 +229,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = s.actionResolver.ExpandActionSets(permissions)
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	return permissions, nil
 }
@@ -242,11 +237,6 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
-
-	cacheKey := accesscontrol.GetUserPermissionCacheKey(user)
-	if cachedPermissions, ok := s.cache.Get(cacheKey); ok {
-		return cachedPermissions.([]accesscontrol.Permission), nil
-	}
 
 	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
 	if err != nil {
@@ -263,9 +253,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	if err != nil {
 		return nil, err
 	}
-
 	permissions = append(permissions, userManagedPermissions...)
-	s.cache.Set(cacheKey, permissions, cacheTTL)
 	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
@@ -390,7 +378,6 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(accesscontrol.GetUserPermissionCacheKey(user))
 	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
@@ -443,6 +430,11 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
 				for _, p := range registration.Role.Permissions {
+					if registration.Role.IsPlugin() && p.Action == pluginaccesscontrol.ActionAppAccess {
+						s.log.Debug("Plugin is attempting to grant access permission, but this permission is already granted by default and will be ignored",
+							"role", registration.Role.Name, "permission", p.Action, "scope", p.Scope)
+						continue
+					}
 					perm := accesscontrol.Permission{
 						Action: p.Action,
 						Scope:  p.Scope,

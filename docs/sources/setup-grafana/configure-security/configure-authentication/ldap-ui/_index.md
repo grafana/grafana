@@ -18,22 +18,22 @@ This page explains how to configure LDAP authentication in Grafana using the Gra
 
 Benefits of using the Grafana user interface to configure LDAP authentication include:
 
-- There is no need to edit the configuration file manually.
+- No need to edit the configuration file manually.
 - Quickly test the connection to the LDAP server.
-- There is no need to restart Grafana after making changes.
+- No need to restart Grafana after making changes.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. If you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 
-Prerequisites:
+To follow these instructions, you need:
 
 - Knowledge of LDAP authentication and how it works.
-- Grafana instance v11.3.0 or later.
+- A Grafana instance v11.3.0 or later.
 - Permissions `settings:read` and `settings:write` with `settings:auth.ldap:*` scope.
-- This feature requires the `ssoSettingsLDAP` feature toggle to be enabled.
+- The `ssoSettingsLDAP` feature toggle enabled.
 
 ## Steps to configure LDAP authentication
 
@@ -86,8 +86,7 @@ Map LDAP groups to Grafana roles.
 1. **Group name attribute**: Identifies users within group entries.
 1. **Manage group mappings**:
 
-   When managing group mappings, the following fields will become available. To add a new group mapping, click the **Add group mapping** button.
-
+   When managing group mappings, the following fields are available. To add a new group mapping, click the **Add group mapping** button.
    1. **Add a group DN mapping**: The name of the key used to extract the ID token.
    1. **Add an organization role mapping**: Select the Basic Role mapped to this group.
    1. **Add the organization ID membership mapping**: Map the group to an organization ID.

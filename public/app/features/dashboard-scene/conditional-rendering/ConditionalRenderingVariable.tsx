@@ -1,33 +1,50 @@
-import { css } from '@emotion/css';
-import { ReactNode, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
-import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { Combobox, ComboboxOption, Field, Input, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import {
+  ConditionalRenderingVariableKind,
+  ConditionalRenderingVariableSpec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 
-import { ConditionHeader } from './ConditionHeader';
+import { dashboardEditActions } from '../edit-pane/shared';
+
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { handleDeleteNonGroupCondition } from './shared';
-
-export type VariableConditionValue = {
-  name: string;
-  operator: '=' | '!=';
-  value: string;
-};
+import {
+  ConditionalRenderingSerializerRegistryItem,
+  VariableConditionValue,
+  VariableConditionValueOperator,
+} from './types';
+import { translatedItemType } from './utils';
 
 type ConditionalRenderingVariableState = ConditionalRenderingBaseState<VariableConditionValue>;
 
 export class ConditionalRenderingVariable extends ConditionalRenderingBase<ConditionalRenderingVariableState> {
+  public static Component = ConditionalRenderingVariableRenderer;
+
+  public static serializer: ConditionalRenderingSerializerRegistryItem = {
+    id: 'ConditionalRenderingVariable',
+    name: 'Variable',
+    deserialize: this.deserialize,
+  };
+
   public get title(): string {
-    return t('dashboard.conditional-rendering.variable.label', 'Variable');
+    return t('dashboard.conditional-rendering.conditions.variable.label', 'Template variable');
+  }
+
+  public get info(): string {
+    return t(
+      'dashboard.conditional-rendering.conditions.variable.info',
+      'Show or hide the {{type}} dynamically based on the variable value.',
+      { type: translatedItemType(this.getItemType()) }
+    );
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: (v) => {
       if (v.state.name === this.state.value.name) {
-        this.getConditionalLogicRoot().notifyChange();
+        this.notifyChange();
       }
     },
   });
@@ -37,25 +54,32 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
       return true;
     }
 
-    const variable = sceneGraph.getVariables(this).state.variables.find((v) => v.state.name === this.state.value.name);
+    const variable = sceneGraph.getVariables(this).getByName(this.state.value.name);
 
-    // name is defined but no variable found - return false
     if (!variable) {
-      return false;
-    }
-    const value = variable.getValue();
-
-    let hit = Array.isArray(value) ? value.includes(this.state.value.value) : value === this.state.value.value;
-
-    if (this.state.value.operator === '!=') {
-      hit = !hit;
+      return true;
     }
 
-    return hit;
-  }
+    const variableValue = variable.getValue() ?? '';
 
-  public render(): ReactNode {
-    return <ConditionalRenderingVariableRenderer model={this} />;
+    let hit: boolean;
+
+    if (this.state.value.operator === '=' || this.state.value.operator === '!=') {
+      hit = Array.isArray(variableValue)
+        ? variableValue.includes(this.state.value.value.toString())
+        : variableValue === this.state.value.value.toString();
+    } else {
+      try {
+        const regex = new RegExp(this.state.value.value);
+        hit = Array.isArray(variableValue)
+          ? variableValue.some((currentVariableValue) => regex.test(currentVariableValue.toString()))
+          : regex.test(variableValue.toString());
+      } catch (err) {
+        return true;
+      }
+    }
+
+    return this.state.value.operator === '!=' || this.state.value.operator === '!~' ? !hit : hit;
   }
 
   public serialize(): ConditionalRenderingVariableKind {
@@ -63,76 +87,170 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
       kind: 'ConditionalRenderingVariable',
       spec: {
         variable: this.state.value.name,
-        operator: this.state.value.operator === '=' ? 'equals' : 'notEquals',
+        operator: this._getLongOperator(this.state.value.operator),
         value: this.state.value.value,
       },
     };
   }
 
-  public onDelete() {
-    handleDeleteNonGroupCondition(this);
+  public static deserialize(model: ConditionalRenderingVariableKind): ConditionalRenderingVariable {
+    return new ConditionalRenderingVariable({
+      value: {
+        name: model.spec.variable,
+        operator: ConditionalRenderingVariable._getShortOperator(model.spec.operator),
+        value: model.spec.value,
+      },
+    });
+  }
+
+  public static createEmpty(name: string): ConditionalRenderingVariable {
+    return new ConditionalRenderingVariable({ value: { name, operator: '=', value: '' } });
+  }
+
+  private _getLongOperator(operator: VariableConditionValueOperator): ConditionalRenderingVariableSpec['operator'] {
+    switch (operator) {
+      case '=':
+        return 'equals';
+
+      case '!=':
+        return 'notEquals';
+
+      case '=~':
+        return 'matches';
+
+      case '!~':
+        return 'notMatches';
+    }
+  }
+
+  private static _getShortOperator(
+    operator: ConditionalRenderingVariableSpec['operator']
+  ): VariableConditionValueOperator {
+    switch (operator) {
+      case 'equals':
+        return '=';
+
+      case 'notEquals':
+        return '!=';
+
+      case 'matches':
+        return '=~';
+
+      case 'notMatches':
+        return '!~';
+    }
   }
 }
 
 function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<ConditionalRenderingVariable>) {
+  const { value } = model.useState();
+
+  const [actualValue, setActualValue] = useState(value.value);
+
+  useEffect(() => {
+    setActualValue(value.value);
+  }, [value.value]);
+
   const variables = useMemo(() => sceneGraph.getVariables(model), [model]);
-  const variableNames = useMemo(
+
+  const variableNames: ComboboxOption[] = useMemo(
     () => variables.state.variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
     [variables.state.variables]
   );
-  const operatorOptions: Array<ComboboxOption<'=' | '!='>> = useMemo(
+
+  const operatorOptions: Array<ComboboxOption<VariableConditionValueOperator>> = useMemo(
     () => [
-      { value: '=', description: t('dashboard.conditional-rendering.variable.operator.equals', 'Equals') },
-      { value: '!=', description: t('dashboard.conditional-rendering.variable.operator.not-equal', 'Not equal') },
+      { value: '=', description: t('dashboard.conditional-rendering.conditions.variable.operator.equals', 'Equals') },
+      {
+        value: '!=',
+        description: t('dashboard.conditional-rendering.conditions.variable.operator.not-equals', 'Not equals'),
+      },
+      {
+        value: '=~',
+        description: t('dashboard.conditional-rendering.conditions.variable.operator.matches', 'Matches'),
+      },
+      {
+        value: '!~',
+        description: t('dashboard.conditional-rendering.conditions.variable.operator.not-matches', 'Not matches'),
+      },
     ],
     []
   );
-  const { value } = model.useState();
 
-  const styles = useStyles2(getStyles);
+  const valueError = useMemo(() => {
+    if (value.operator === '=~' || value.operator === '!~') {
+      try {
+        new RegExp(actualValue);
+        return '';
+      } catch (err) {
+        return t('dashboard.conditional-rendering.conditions.variable.error.invalid-regex', 'Invalid regex');
+      }
+    }
+
+    return '';
+  }, [actualValue, value.operator]);
+
+  const undoText = t('dashboard.edit-actions.edit-template-variable-rule', 'Change template variable rule');
 
   return (
-    <Stack direction="column">
-      <ConditionHeader title={model.title} onDelete={() => model.onDelete()} />
-      <Stack direction="column">
-        <Stack direction="row" gap={0.5} grow={1}>
-          <Field
-            label={t('dashboard.conditional-rendering.variable.select-variable', 'Select variable')}
-            className={styles.variableNameSelect}
-          >
-            <Combobox
-              options={variableNames}
-              value={value.name}
-              onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
-            />
-          </Field>
-          <Field
-            label={t('dashboard.conditional-rendering.variable.select-operator', 'Operator')}
-            className={styles.operatorSelect}
-          >
-            <Combobox
-              options={operatorOptions}
-              value={value.operator}
-              onChange={(option) => model.setStateAndNotify({ value: { ...value, operator: option.value } })}
-            />
-          </Field>
-        </Stack>
-        <Field label={t('dashboard.conditional-rendering.variable.value-input', 'Value')}>
-          <Input
-            value={value.value}
-            onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
+    <Stack direction="column" gap={0.5}>
+      <Stack direction="row" gap={0.5} grow={1}>
+        <Box flex={1}>
+          <Combobox
+            placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
+            options={variableNames}
+            value={value.name}
+            onChange={(option) => {
+              if (option.value !== value.name) {
+                dashboardEditActions.edit({
+                  description: undoText,
+                  source: model,
+                  perform: () => model.setStateAndNotify({ value: { ...value, name: option.value } }),
+                  undo: () => model.setStateAndNotify({ value: { ...value, name: value.name } }),
+                });
+              }
+            }}
           />
-        </Field>
+        </Box>
+
+        <Combobox
+          width="auto"
+          minWidth={10}
+          options={operatorOptions}
+          value={value.operator}
+          onChange={(option) => {
+            if (option.value !== value.operator) {
+              dashboardEditActions.edit({
+                description: undoText,
+                source: model,
+                perform: () => model.setStateAndNotify({ value: { ...value, operator: option.value } }),
+                undo: () => model.setStateAndNotify({ value: { ...value, operator: value.operator } }),
+              });
+            }
+          }}
+        />
       </Stack>
+      <Field error={valueError} invalid={!!valueError} noMargin>
+        <Input
+          placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
+          value={actualValue}
+          onChange={(evt) => {
+            if (evt.currentTarget.value !== value.value) {
+              setActualValue(evt.currentTarget.value);
+            }
+          }}
+          onBlur={() => {
+            if (actualValue !== value.value) {
+              dashboardEditActions.edit({
+                description: undoText,
+                source: model,
+                perform: () => model.setStateAndNotify({ value: { ...value, value: actualValue } }),
+                undo: () => model.setStateAndNotify({ value: { ...value, value: value.value } }),
+              });
+            }
+          }}
+        />
+      </Field>
     </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  variableNameSelect: css({
-    flexGrow: 1,
-  }),
-  operatorSelect: css({
-    width: theme.spacing(12),
-  }),
-});

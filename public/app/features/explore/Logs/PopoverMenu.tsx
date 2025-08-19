@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { copyText } from '../../logs/utils';
 

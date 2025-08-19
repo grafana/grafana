@@ -33,14 +33,12 @@ const setup = (propOverrides?: Partial<KeyValuesTableProps>) => {
 
 describe('LinkValue', () => {
   it('renders as expected', () => {
-    const title = 'titleValue';
-    const href = 'hrefValue';
+    const link = {
+      title: 'titleValue',
+      path: 'hrefValue',
+    };
     const childrenText = 'childrenTextValue';
-    render(
-      <LinkValue href={href} title={title}>
-        {childrenText}
-      </LinkValue>
-    );
+    render(<LinkValue link={link}>{childrenText}</LinkValue>);
     expect(screen.getByRole('link', { name: 'titleValue' })).toBeInTheDocument();
     expect(screen.getByText(/^childrenTextValue$/)).toBeInTheDocument();
   });
@@ -73,8 +71,8 @@ describe('KeyValuesTable tests', () => {
         array[i].key === 'span.kind'
           ? [
               {
-                url: `http://example.com/?kind=${encodeURIComponent(array[i].value)}`,
-                text: `More info about ${array[i].value}`,
+                path: `http://example.com/?kind=${encodeURIComponent(array[i].value)}`,
+                title: `More info about ${array[i].value}`,
               },
             ]
           : [],

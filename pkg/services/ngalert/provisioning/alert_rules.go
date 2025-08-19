@@ -271,9 +271,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 // FilterOptions provides filtering for alert rule queries.
 // All fields are optional and will be applied as filters if provided.
 type FilterOptions struct {
-	ImportedPrometheusRule *bool
-	RuleGroups             []string
-	NamespaceUIDs          []string
+	HasPrometheusRuleDefinition *bool
+	RuleGroups                  []string
+	NamespaceUIDs               []string
 }
 
 func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertRulesQuery {
@@ -281,8 +281,8 @@ func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertR
 		return q
 	}
 
-	if opts.ImportedPrometheusRule != nil {
-		q.ImportedPrometheusRule = opts.ImportedPrometheusRule
+	if opts.HasPrometheusRuleDefinition != nil {
+		q.HasPrometheusRuleDefinition = opts.HasPrometheusRuleDefinition
 	}
 
 	if len(opts.NamespaceUIDs) > 0 {
@@ -448,6 +448,20 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 	}
 
 	return service.persistDelta(ctx, user, delta, provenance)
+}
+
+func (service *AlertRuleService) ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance) error {
+	err := service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		for _, group := range groups {
+			err := service.ReplaceRuleGroup(ctx, user, *group, provenance)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return err
 }
 
 func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string, provenance models.Provenance) error {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -37,7 +38,7 @@ var (
 	}
 )
 
-func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
+func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
@@ -46,11 +47,11 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alph
 		return v0alpha1.SearchResults{}, nil
 	}
 
-	titleIDX := 0
+	titleIDX := -1
 	folderIDX := -1
 	tagsIDX := -1
-	scoreIDX := 0
-	explainIDX := 0
+	scoreIDX := -1
+	explainIDX := -1
 
 	for i, v := range result.Results.Columns {
 		switch v.Name {
@@ -101,19 +102,24 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alph
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
-			Title:    string(row.Cells[titleIDX]),
 			Field:    fields,
 		}
-		if folderIDX > 0 && row.Cells[folderIDX] != nil {
+		if titleIDX >= 0 && row.Cells[titleIDX] != nil {
+			hit.Title = string(row.Cells[titleIDX])
+		} else {
+			hit.Title = "(no title)"
+		}
+
+		if folderIDX >= 0 && row.Cells[folderIDX] != nil {
 			hit.Folder = string(row.Cells[folderIDX])
 		}
-		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
+		if tagsIDX >= 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
 		}
-		if explainIDX > 0 && row.Cells[explainIDX] != nil {
+		if explainIDX >= 0 && row.Cells[explainIDX] != nil {
 			_ = json.Unmarshal(row.Cells[explainIDX], &hit.Explain)
 		}
-		if scoreIDX > 0 && row.Cells[scoreIDX] != nil {
+		if scoreIDX >= 0 && row.Cells[scoreIDX] != nil {
 			_, _ = binary.Decode(row.Cells[scoreIDX], binary.BigEndian, &hit.Score)
 		}
 

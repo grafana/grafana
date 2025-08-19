@@ -1,8 +1,10 @@
 import { DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
-import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
+import { mockTimeRange } from '@grafana/plugin-ui';
+import { ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { createLogRow } from './__mocks__/logRow';
-import { getAllFields, createLogLineLinks, FieldDef } from './logParser';
+import { getAllFields, createLogLineLinks, FieldDef, getDataframeFields } from './logParser';
+import { createLogRow } from './mocks/logRow';
 
 describe('logParser', () => {
   describe('getAllFields', () => {
@@ -460,6 +462,64 @@ describe('logParser', () => {
 
       const fields = createLogLineLinks([fieldWithVarLink]);
       expect(fields.length).toBe(0);
+    });
+  });
+
+  describe('getDataframeFields', () => {
+    it('should add row labels as variables for links', () => {
+      const row = createLogRow({
+        labels: { service_name: 'checkout', service_namespace: 'prod' },
+        dataFrame: {
+          refId: 'A',
+          fields: [
+            testTimeField,
+            testLineField,
+            {
+              name: 'link',
+              type: FieldType.string,
+              config: {
+                links: [
+                  {
+                    title: 'link1',
+                    url: 'https://service.com/${__labels.tags["service_namespace"]}/${__labels.tags["service_name"]}',
+                  },
+                ],
+              },
+              values: ['some'],
+            },
+          ],
+          length: 1,
+        },
+      });
+
+      const getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
+        return getFieldLinksForExplore({
+          field,
+          rowIndex,
+          range: mockTimeRange(),
+          dataFrame: dataFrame,
+          vars,
+        });
+      };
+
+      const fields = getDataframeFields(row, getFieldLinks);
+      expect(fields).toHaveLength(1);
+      expect(fields[0].links).toHaveLength(1);
+      expect(fields[0].links).toMatchObject([
+        {
+          href: 'https://service.com/prod/checkout',
+          variables: [
+            {
+              fieldPath: 'tags["service_namespace"]',
+              format: undefined,
+              found: true,
+              match: '${__labels.tags["service_namespace"]}',
+              value: 'prod',
+              variableName: '__labels',
+            },
+          ],
+        },
+      ]);
     });
   });
 });

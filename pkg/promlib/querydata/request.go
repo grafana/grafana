@@ -101,45 +101,32 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	var (
-		hasPromQLScopeFeatureFlag         = s.featureToggles.IsEnabled("promQLScope")
-		hasPrometheusRunQueriesInParallel = s.featureToggles.IsEnabled("prometheusRunQueriesInParallel")
+		hasPromQLScopeFeatureFlag = s.featureToggles.IsEnabled("promQLScope")
+		m                         sync.Mutex
 	)
 
-	if hasPrometheusRunQueriesInParallel {
-		var (
-			m sync.Mutex
-		)
-
-		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
-		if err != nil {
-			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), "prometheusRunQueriesInParallel")
-			concurrentQueryCount = 10
-		}
-
-		_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
-			query := req.Queries[idx]
-			r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag, true)
-			if r != nil {
-				m.Lock()
-				result.Responses[query.RefID] = *r
-				m.Unlock()
-			}
-			return nil
-		})
-	} else {
-		for _, q := range req.Queries {
-			r := s.handleQuery(ctx, q, fromAlert, hasPromQLScopeFeatureFlag, false)
-			if r != nil {
-				result.Responses[q.RefID] = *r
-			}
-		}
+	concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
+	if err != nil {
+		logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), "prometheusRunQueriesInParallel")
+		concurrentQueryCount = 10
 	}
+
+	_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
+		query := req.Queries[idx]
+		r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag)
+		if r != nil {
+			m.Lock()
+			result.Responses[query.RefID] = *r
+			m.Unlock()
+		}
+		return nil
+	})
 
 	return &result, nil
 }
 
 func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert,
-	hasPromQLScopeFeatureFlag, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
+	hasPromQLScopeFeatureFlag bool) *backend.DataResponse {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	defer span.End()
 	query, err := models.Parse(span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
@@ -149,14 +136,14 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 		}
 	}
 
-	r := s.fetch(traceCtx, s.client, query, hasPrometheusRunQueriesInParallel)
+	r := s.fetch(traceCtx, s.client, query)
 	if r == nil {
 		s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 	}
 	return r
 }
 
-func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
+func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
 	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr /*, "queryTimeout", s.QueryTimeout*/)
 
@@ -171,61 +158,41 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 	)
 
 	if q.InstantQuery {
-		if hasPrometheusRunQueriesInParallel {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				res := s.instantQuery(traceCtx, client, q)
-				m.Lock()
-				addDataResponse(&res, dr)
-				m.Unlock()
-			}()
-		} else {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 			res := s.instantQuery(traceCtx, client, q)
+			m.Lock()
 			addDataResponse(&res, dr)
-		}
+			m.Unlock()
+		}()
 	}
 
 	if q.RangeQuery {
-		if hasPrometheusRunQueriesInParallel {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				res := s.rangeQuery(traceCtx, client, q)
-				m.Lock()
-				addDataResponse(&res, dr)
-				m.Unlock()
-			}()
-		} else {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 			res := s.rangeQuery(traceCtx, client, q)
+			m.Lock()
 			addDataResponse(&res, dr)
-		}
+			m.Unlock()
+		}()
 	}
 
 	if q.ExemplarQuery {
-		if hasPrometheusRunQueriesInParallel {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				res := s.exemplarQuery(traceCtx, client, q)
-				m.Lock()
-				if res.Error != nil {
-					// If exemplar query returns error, we want to only log it and
-					// continue with other results processing
-					logger.Error("Exemplar query failed", "query", q.Expr, "err", res.Error)
-				}
-				dr.Frames = append(dr.Frames, res.Frames...)
-				m.Unlock()
-			}()
-		} else {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 			res := s.exemplarQuery(traceCtx, client, q)
+			m.Lock()
 			if res.Error != nil {
 				// If exemplar query returns error, we want to only log it and
 				// continue with other results processing
 				logger.Error("Exemplar query failed", "query", q.Expr, "err", res.Error)
 			}
 			dr.Frames = append(dr.Frames, res.Frames...)
-		}
+			m.Unlock()
+		}()
 	}
 	wg.Wait()
 

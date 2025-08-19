@@ -146,7 +146,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	rcv, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	rcv, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
-	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
+	receivers, err := legacy_storage.PostableApiReceiversToReceivers(postables, storedProvenances)
 	if err != nil {
 		return nil, err
 	}
@@ -241,74 +241,6 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	return limitOffset(filtered, q.Offset, q.Limit), nil
 }
 
-// ListReceivers returns a list of receivers a user has access to.
-// Receivers can be filtered by name.
-// This offers an looser permissions compared to GetReceivers. When a user doesn't have read access it will check for list access instead of returning an empty list.
-// If the users has list access, all receiver settings will be removed from the response. This option is for backwards compatibility with the v1/receivers endpoint
-// and should be removed when FGAC is fully implemented.
-func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListReceiversQuery, user identity.Requester) ([]*models.Receiver, error) { // TODO: Remove this method with FGAC.
-	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.list", trace.WithAttributes(
-		attribute.Int64("query_org_id", q.OrgID),
-		attribute.StringSlice("query_names", q.Names),
-		attribute.Int("query_limit", q.Limit),
-		attribute.Int("query_offset", q.Offset),
-	))
-	defer span.End()
-
-	listAccess, err := rs.authz.HasList(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	uids := make([]string, 0, len(q.Names))
-	for _, name := range q.Names {
-		uids = append(uids, legacy_storage.NameToUid(name))
-	}
-
-	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
-	if err != nil {
-		return nil, err
-	}
-	postables := revision.GetReceivers(uids)
-
-	span.AddEvent("Loaded receivers", trace.WithAttributes(
-		attribute.String("concurrency_token", revision.ConcurrencyToken),
-		attribute.Int("count", len(postables)),
-	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
-	if err != nil {
-		return nil, err
-	}
-
-	if !listAccess {
-		var err error
-		receivers, err = rs.authz.FilterRead(ctx, user, receivers...)
-		if err != nil {
-			return nil, err
-		}
-
-		span.AddEvent("Applied access control filter", trace.WithAttributes(
-			attribute.Int("count", len(receivers)),
-		))
-	}
-
-	// Remove settings.
-	for _, r := range receivers {
-		for _, integration := range r.Integrations {
-			integration.Settings = nil
-			integration.SecureSettings = nil
-			integration.DisableResolveMessage = false
-		}
-	}
-
-	return limitOffset(receivers, q.Offset, q.Limit), nil
-}
-
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
 func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance definitions.Provenance, version string, orgID int64, user identity.Requester) error {
@@ -337,7 +269,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err != nil {
 		return err
 	}
-	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
 	if err != nil {
 		return err
 	}
@@ -439,7 +371,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err = PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
+	result, err = legacy_storage.PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
 	if err != nil {
 		return nil, err
 	}
@@ -480,7 +412,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
 	if err != nil {
 		return nil, err
 	}
@@ -567,7 +499,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err := PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
+	result, err := legacy_storage.PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
 	if err != nil {
 		return nil, err
 	}

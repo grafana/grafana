@@ -1,7 +1,13 @@
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { t } from '@grafana/i18n';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { ConditionalRenderingChangedEvent } from '../edit-pane/shared';
+
+import { ConditionalRenderingBase } from './ConditionalRenderingBase';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
+import { ItemsWithConditionalRendering } from './types';
+import { getItemType, translatedItemType } from './utils';
 
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
@@ -9,6 +15,14 @@ export interface ConditionalRenderingState extends SceneObjectState {
 
 export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingState> {
   public static Component = ConditionalRenderingRenderer;
+
+  public get info(): string {
+    return t(
+      'dashboard.conditional-rendering.root.info',
+      'Set rules to control {{type}} visibility by matching any or all rules.',
+      { type: translatedItemType(this.getItemType()) }
+    );
+  }
 
   public constructor(state: ConditionalRenderingState) {
     super(state);
@@ -18,7 +32,7 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
 
   private _activationHandler() {
     // This ensures that all children are activated when conditional rendering is activated
-    // We need this in order to allow children to subscribe to variable changes etc.
+    // We need this to allow children to subscribe to variable changes etc.
     this.forEachChild((child) => {
       if (!child.isActive) {
         this._subs.add(child.activate());
@@ -32,19 +46,32 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
 
   public notifyChange() {
     this.parent?.forceRender();
+    this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
   }
 
-  public static createEmpty(): ConditionalRendering {
-    return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty() });
+  public deleteItem<T extends ConditionalRenderingBase>(item: T) {
+    sceneGraph.getAncestor(item, ConditionalRenderingGroup).removeItem(item.state.key!);
   }
 
   public serialize(): ConditionalRenderingGroupKind {
     return this.state.rootGroup.serialize();
+  }
+
+  public getItem(): SceneObject {
+    return this.parent!;
+  }
+
+  public getItemType(): ItemsWithConditionalRendering {
+    return getItemType(this.getItem());
+  }
+
+  public static createEmpty(): ConditionalRendering {
+    return new ConditionalRendering({ rootGroup: ConditionalRenderingGroup.createEmpty() });
   }
 }
 
 function ConditionalRenderingRenderer({ model }: SceneComponentProps<ConditionalRendering>) {
   const { rootGroup } = model.useState();
 
-  return <rootGroup.Component model={rootGroup} />;
+  return rootGroup.render(false);
 }

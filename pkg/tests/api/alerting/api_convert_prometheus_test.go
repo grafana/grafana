@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"testing"
 	"time"
@@ -17,6 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	folderUIDHeader           = "X-Grafana-Alerting-Folder-UID"
+	targetDatasourceUIDHeader = "X-Grafana-Alerting-Target-Datasource-UID"
 )
 
 var (
@@ -99,8 +105,80 @@ var (
 	}
 )
 
-func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
+func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
+		testinfra.SQLiteIntegrationTest(t)
+
+		dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			DisableAnonymous:      true,
+			AppModeProduction:     true,
+			EnableRecordingRules:  true,
+		})
+
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
+
+		sourceDS := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+		targetDS := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+		recordingGroup := apimodels.PrometheusRuleGroup{
+			Name:     "test-recording-group",
+			Interval: prommodel.Duration(60 * time.Second),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Record: "test_recording_metric",
+					Expr:   "sum(up) by (job)",
+					Labels: map[string]string{
+						"env": "test",
+					},
+				},
+			},
+		}
+
+		namespace := "test-recording-namespace"
+		namespaceUID := util.GenerateShortUID()
+		apiClient.CreateFolder(t, namespaceUID, namespace)
+
+		t.Run("recording rules should use specified target datasource", func(t *testing.T) {
+			headers := map[string]string{
+				"Content-Type":            "application/json",
+				targetDatasourceUIDHeader: targetDS.Body.Datasource.UID,
+			}
+
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace, sourceDS.Body.Datasource.UID, recordingGroup, headers)
+
+			ruleGroup, _, _ := apiClient.GetRulesGroupWithStatus(t, namespaceUID, recordingGroup.Name)
+			require.Len(t, ruleGroup.Rules, 1)
+
+			rule := ruleGroup.Rules[0]
+			require.NotNil(t, rule.GrafanaManagedAlert.Record)
+			require.Equal(t, targetDS.Body.Datasource.UID, rule.GrafanaManagedAlert.Record.TargetDatasourceUID)
+			require.NotEmpty(t, rule.GrafanaManagedAlert.Data)
+			require.Equal(t, sourceDS.Body.Datasource.UID, rule.GrafanaManagedAlert.Data[0].DatasourceUID)
+		})
+	}
+
+	t.Run("with the mimirtool paths", func(t *testing.T) {
+		runTest(t, false)
+	})
+
+	t.Run("with the cortextool Loki paths", func(t *testing.T) {
+		runTest(t, true)
+	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	runTest := func(t *testing.T, enableLokiPaths bool, postContentType string) {
 		testinfra.SQLiteIntegrationTest(t)
 
 		// Setup Grafana and its Database
@@ -109,19 +187,12 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create users to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -133,15 +204,72 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 
 		namespace1 := "test-namespace-1"
 		namespace2 := "test-namespace-2"
+		namespace3 := "test-namespace-3"
+		namespace4 := "test-namespace-4"
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
 
+		postContentTypeHeader := map[string]string{
+			"Content-Type": postContentType,
+		}
+
+		t.Run("create multiple namespaces at once", func(t *testing.T) {
+			nsUID := util.GenerateShortUID()
+			nsTitle := "multiple-namespaces-folder"
+			apiClient.CreateFolder(t, nsUID, nsTitle)
+
+			ns := map[string][]apimodels.PrometheusRuleGroup{
+				namespace1: {promGroup1},
+				namespace2: {promGroup2},
+				namespace3: {promGroup3},
+				namespace4: {promGroup1, promGroup2, promGroup3},
+			}
+
+			// We will create the namespaces in a separate folder, so we need to
+			// pass the folder UID in the header.
+			headers := map[string]string{
+				"Content-Type":  postContentType,
+				folderUIDHeader: nsUID,
+			}
+
+			apiClient.ConvertPrometheusPostRuleGroups(t, ds.Body.Datasource.UID, ns, headers)
+
+			// Check namespaces
+			ns1 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace1, headers)
+			expectedNs1 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace1: {promGroup1},
+			}
+			require.Equal(t, expectedNs1, ns1)
+
+			ns2 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace2, headers)
+			expectedNs2 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace2: {promGroup2},
+			}
+			require.Equal(t, expectedNs2, ns2)
+
+			ns3 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace3, headers)
+			expectedNs3 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace3: {promGroup3},
+			}
+			require.Equal(t, expectedNs3, ns3)
+
+			ns4 := apiClient.ConvertPrometheusGetNamespaceRules(t, namespace4, headers)
+			expectedNs4 := map[string][]apimodels.PrometheusRuleGroup{
+				namespace4: {promGroup1, promGroup2, promGroup3},
+			}
+			require.Equal(t, expectedNs4, ns4)
+
+			// Check all namespaces at once
+			namespaces := apiClient.ConvertPrometheusGetAllRules(t, headers)
+			require.Equal(t, ns, namespaces)
+		})
+
 		t.Run("create rule groups and get them back", func(t *testing.T) {
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, postContentTypeHeader)
 
 			// create a third group in a different namespace
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, postContentTypeHeader)
 
 			// And a non-provisioned rule in another namespace
 			namespace3UID := util.GenerateShortUID()
@@ -173,11 +301,16 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusForbidden, status, raw)
 		})
 
+		t.Run("with incorrect content-type should receive 415", func(t *testing.T) {
+			_, status, raw := apiClient.RawConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, map[string]string{"Content-Type": "application/xml"})
+			requireStatusCode(t, http.StatusUnsupportedMediaType, status, raw)
+		})
+
 		t.Run("delete one rule group", func(t *testing.T) {
 			// Create three groups
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, nil)
-			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, nil)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup1, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace1, ds.Body.Datasource.UID, promGroup2, postContentTypeHeader)
+			apiClient.ConvertPrometheusPostRuleGroup(t, namespace2, ds.Body.Datasource.UID, promGroup3, postContentTypeHeader)
 
 			// delete the first one
 			apiClient.ConvertPrometheusDeleteRuleGroup(t, namespace1, promGroup1.Name, nil)
@@ -202,16 +335,57 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 		})
 	}
 
-	t.Run("with the mimirtool paths", func(t *testing.T) {
-		runTest(t, false)
-	})
+	const applicationYAML = "application/yaml"
+	const applicationJSON = "application/json"
 
-	t.Run("with the cortextool Loki paths", func(t *testing.T) {
-		runTest(t, true)
-	})
+	cases := []struct {
+		name            string
+		contentType     string
+		enableLokiPaths bool
+	}{
+		{
+			name:            "with the mimirtool paths; empty content-type",
+			contentType:     "",
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; empty content-type",
+			contentType:     "",
+			enableLokiPaths: true,
+		},
+		{
+			name:            "with the mimirtool paths; yaml",
+			contentType:     applicationYAML,
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; yaml",
+			contentType:     applicationYAML,
+			enableLokiPaths: true,
+		},
+		{
+			name:            "with the mimirtool paths; json",
+			contentType:     applicationJSON,
+			enableLokiPaths: false,
+		},
+		{
+			name:            "with the cortextool Loki paths; json",
+			contentType:     applicationJSON,
+			enableLokiPaths: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			runTest(t, tc.enableLokiPaths, tc.contentType)
+		})
+	}
 }
 
 func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -221,19 +395,12 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create a user to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -299,6 +466,9 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -308,19 +478,12 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create users to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -387,6 +550,9 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -396,19 +562,12 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-		// Create users to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
@@ -501,10 +660,11 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
-
-		folderUIDHeader := "X-Grafana-Alerting-Folder-UID"
 
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -512,18 +672,12 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
@@ -605,6 +759,9 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -614,19 +771,12 @@ func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create admin user
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := adminClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
@@ -721,6 +871,9 @@ func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -730,19 +883,12 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"alertingConversionAPI", "grafanaManagedRecordingRulesDatasources", "grafanaManagedRecordingRules"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create users with different permissions
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -1019,4 +1165,70 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 	t.Run("with the cortextool Loki paths", func(t *testing.T) {
 		runTest(t, true)
 	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_GroupLabels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableRecordingRules:  true,
+	})
+
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, gpath)
+	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+	testGroup := apimodels.PrometheusRuleGroup{
+		Name:     "test-group-with-labels",
+		Interval: prommodel.Duration(60 * time.Second),
+		Labels: map[string]string{
+			"group_label": "value-1",
+		},
+		Rules: []apimodels.PrometheusRule{
+			{
+				Alert: "TestAlert",
+				Expr:  "up == 0",
+				For:   util.Pointer(prommodel.Duration(2 * time.Minute)),
+				Labels: map[string]string{
+					"rule_label": "value-2",
+				},
+				Annotations: map[string]string{
+					"annotation-1": "annotation-value",
+				},
+			},
+		},
+	}
+
+	namespace := "test-namespace-1"
+	namespaceUID := util.GenerateShortUID()
+	apiClient.CreateFolder(t, namespaceUID, namespace)
+
+	apiClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, testGroup, nil)
+
+	expectedLabels := make(map[string]string)
+	maps.Copy(expectedLabels, testGroup.Labels)
+	maps.Copy(expectedLabels, testGroup.Rules[0].Labels)
+
+	// Verify the Import API returns the expected merged format
+	group := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace, testGroup.Name, nil)
+	testGroup.Labels = nil
+	testGroup.Rules[0].Labels = expectedLabels
+	require.Equal(t, testGroup, group)
+
+	// Grafana should return the additional internal label
+	expectedLabels[models.ConvertedPrometheusRuleLabel] = "true"
+	ruleGroup, _, _ := apiClient.GetRulesGroupWithStatus(t, namespaceUID, testGroup.Name)
+	require.Len(t, ruleGroup.Rules, 1)
+
+	rule := ruleGroup.Rules[0]
+
+	require.Equal(t, expectedLabels, rule.Labels)
 }

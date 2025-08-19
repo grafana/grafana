@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
@@ -11,7 +12,7 @@ import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter'
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
-import { DashboardEditPaneRenderer } from './DashboardEditPane';
+import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 import { useEditPaneCollapsed } from './shared';
 
 interface Props {
@@ -43,19 +44,27 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 0.8,
+      initialSize: 330,
       handleSize: 'sm',
+      usePixels: true,
+      collapseBelowPixels: 250,
       collapsed: isCollapsed,
-
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
     });
 
   useEffect(() => {
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
+
+  /**
+   * Enable / disable selection based on dashboard isEditing state
+   */
+  useEffect(() => {
+    if (isEditing) {
+      editPane.enableSelection();
+    } else {
+      editPane.disableSelection();
+    }
+  }, [isEditing, editPane]);
 
   const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const containerStyle: CSSProperties = {};
@@ -90,18 +99,26 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
           <NavToolbarActions dashboard={dashboard} />
           <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
           <div className={styles.bodyWrapper}>
-            <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
+            <div
+              className={cx(styles.body, isEditing && styles.bodyEditing)}
+              data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+              ref={onBodyRef}
+            >
               {body}
             </div>
           </div>
         </div>
         {isEditing && (
           <>
-            <div {...splitterProps} data-edit-pane-splitter={true} />
+            <div
+              {...splitterProps}
+              className={cx(splitterProps.className, styles.splitter)}
+              data-edit-pane-splitter={true}
+            />
             <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
               <DashboardEditPaneRenderer
                 editPane={editPane}
-                isCollapsed={splitterState.collapsed}
+                isCollapsed={isCollapsed}
                 onToggleCollapse={onToggleCollapse}
                 openOverlay={selectionContext.selected.length > 0}
               />
@@ -141,10 +158,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       label: 'body',
       display: 'flex',
       flexGrow: 1,
-      gap: '8px',
+      gap: theme.spacing(1),
       boxSizing: 'border-box',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2, 2, 2),
+      // without top padding the fixed controls headers is rendered over the selection outline.
+      padding: theme.spacing(0.125, 2, 2, 2),
     }),
     bodyEditing: css({
       position: 'absolute',
@@ -154,13 +172,19 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       bottom: 0,
       overflow: 'auto',
       scrollbarWidth: 'thin',
-      // The fixed controls headers is otherwise rendered over the selection outlinem, Maybe there is an other solution
-      paddingTop: '2px',
+      scrollbarGutter: 'stable',
+      // Because the edit pane splitter handle area adds padding we can reduce it here
+      paddingRight: theme.spacing(1),
     }),
     editPane: css({
       flexDirection: 'column',
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
+      // borderLeft: `1px solid ${theme.colors.border.weak}`,
+      // background: theme.colors.background.primary,
+    }),
+    splitter: css({
+      '&:after': {
+        display: 'none',
+      },
     }),
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {

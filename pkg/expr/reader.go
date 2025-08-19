@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -44,6 +45,7 @@ func NewExpressionQueryReader(features featuremgmt.FeatureToggles) *ExpressionQu
 
 // nolint:gocyclo
 func (h *ExpressionQueryReader) ReadQuery(
+	ctx context.Context,
 	// Properties that have been parsed off the same node
 	common data.DataQuery,
 	// An iterator with context for the full node (include common values)
@@ -126,9 +128,8 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 
 	case QueryTypeSQL:
-		enabled := enableSqlExpressions(h)
-		if !enabled {
-			return eq, fmt.Errorf("sqlExpressions is not implemented")
+		if !h.features.IsEnabledGlobally(featuremgmt.FlagSqlExpressions) {
+			return eq, fmt.Errorf("sql expressions are disabled")
 		}
 		q := &SQLExpression{}
 		err = iter.ReadVal(q)
@@ -136,7 +137,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Properties = q
 			// TODO: Cascade limit from Grafana config in this (new Expression Parser) branch of the code
 			cellLimit := 0 // zero means no limit
-			eq.Command, err = NewSQLCommand(common.RefID, q.Expression, int64(cellLimit))
+			eq.Command, err = NewSQLCommand(ctx, common.RefID, q.Format, q.Expression, int64(cellLimit), 0, 0)
 		}
 
 	case QueryTypeThreshold:
@@ -159,7 +160,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Command = threshold
 			eq.Properties = q
 
-			if firstCondition.UnloadEvaluator != nil && h.features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
+			if firstCondition.UnloadEvaluator != nil {
 				unloading, err := NewThresholdCommand(common.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
 				unloading.Invert = true
 				if err != nil {
@@ -191,12 +192,4 @@ func getReferenceVar(exp string, refId string) (string, error) {
 		return "", fmt.Errorf("no variable specified to reference for refId %v", refId)
 	}
 	return exp, nil
-}
-
-func enableSqlExpressions(h *ExpressionQueryReader) bool {
-	enabled := !h.features.IsEnabledGlobally(featuremgmt.FlagSqlExpressions)
-	if enabled {
-		return false
-	}
-	return false
 }

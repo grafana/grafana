@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, PluginErrorCode } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
-import { InstallControlsButton } from '../components/InstallControls';
+import { InstallControlsButton } from '../components/InstallControls/InstallControlsButton';
 import {
   getLatestCompatibleVersion,
   hasInstallControlWarning,
@@ -26,7 +27,7 @@ export const PluginActions = ({ plugin }: Props) => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
 
-  if (!plugin) {
+  if (!plugin || plugin.angularDetected) {
     return null;
   }
 
@@ -51,7 +52,9 @@ export const PluginActions = ({ plugin }: Props) => {
       {needReload && (
         <Stack alignItems="center">
           <Icon name="exclamation-triangle" />
-          <span className={styles.message}>Refresh the page to see the changes</span>
+          <span className={styles.message}>
+            <Trans i18nKey="plugins.plugin-actions.refresh-changes">Refresh the page to see the changes</Trans>
+          </span>
         </Stack>
       )}
     </Stack>

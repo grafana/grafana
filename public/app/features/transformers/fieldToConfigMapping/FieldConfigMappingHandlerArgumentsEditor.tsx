@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { ColorPicker, Input } from '@grafana/ui';
 
 import { HandlerArguments } from './fieldToConfigMapping';
@@ -38,7 +39,10 @@ export function FieldConfigMappingHandlerArgumentsEditor({ handlerArguments, han
         <Input
           type="text"
           value={'Threshold color'}
-          aria-label={'Threshold color'}
+          aria-label={t(
+            'transformers.field-config-mapping-handler-arguments-editor.aria-label-threshold-color',
+            'Threshold color'
+          )}
           disabled
           width={20}
           prefix={

@@ -14,7 +14,7 @@
 
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
-import cx from 'classnames';
+import { useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
@@ -25,26 +25,84 @@ import {
   TimeRange,
   TraceKeyValuePair,
   TraceLog,
+  PluginExtensionResourceAttributesContext,
+  PluginExtensionPoints,
+  IconName,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc, TNil } from '../../types';
-import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { SpanLinkFunc } from '../../types/links';
+import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
-import AccordianText from './AccordianText';
 import DetailState from './DetailState';
+import { ShareSpanButton } from './ShareSpanButton';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
+
+const useResourceAttributesExtensionLinks = (
+  process: TraceProcess,
+  spanTags: TraceKeyValuePair[],
+  datasourceType: string,
+  datasourceUid: string
+) => {
+  // Stable context for useMemo inside usePluginLinks
+  const context: PluginExtensionResourceAttributesContext = useMemo(() => {
+    const attributes = (process.tags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
+      if (acc[tag.key]) {
+        acc[tag.key].push(tag.value);
+      } else {
+        acc[tag.key] = [tag.value];
+      }
+      return acc;
+    }, {});
+
+    const spanAttributes = (spanTags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
+      if (acc[tag.key]) {
+        acc[tag.key].push(tag.value);
+      } else {
+        acc[tag.key] = [tag.value];
+      }
+      return acc;
+    }, {});
+
+    return {
+      attributes,
+      spanAttributes,
+      datasource: {
+        type: datasourceType,
+        uid: datasourceUid,
+      },
+    };
+  }, [process.tags, spanTags, datasourceType, datasourceUid]);
+
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
+    limitPerPlugin: 10,
+    context,
+  });
+
+  const resourceLinksGetter = useCallback(
+    (pairs: TraceKeyValuePair[], index: number) => {
+      const { key } = pairs[index] ?? {};
+      return links.filter((link) => link.category === key);
+    },
+    [links]
+  );
+
+  return resourceLinksGetter;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -55,44 +113,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: '0 1rem',
       marginBottom: '0.25rem',
     }),
+    content: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
     listWrapper: css({
       overflow: 'hidden',
+      flexGrow: 1,
+      display: 'flex',
+      justifyContent: 'flex-end',
     }),
     list: css({
-      textAlign: 'right',
+      textAlign: 'left',
     }),
     operationName: css({
       margin: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      flexBasis: '50%',
+      maxWidth: '50%',
       flexGrow: 0,
       flexShrink: 0,
-    }),
-    debugInfo: css({
-      label: 'debugInfo',
-      display: 'block',
-      letterSpacing: '0.25px',
-      margin: '0.5em 0 -0.75em',
-      textAlign: 'right',
-    }),
-    debugLabel: css({
-      label: 'debugLabel',
-      '&::before': {
-        color: autoColor(theme, '#bbb'),
-        content: 'attr(data-label)',
-      },
-    }),
-    debugValue: css({
-      label: 'debugValue',
-      backgroundColor: 'inherit',
-      border: 'none',
-      color: autoColor(theme, '#888'),
-      cursor: 'pointer',
-      '&:hover': {
-        color: autoColor(theme, '#333'),
-      },
     }),
     AccordianWarnings: css({
       label: 'AccordianWarnings',
@@ -116,20 +156,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'AccordianWarningsLabel',
       color: autoColor(theme, '#d36c08'),
     }),
-    AccordianKeyValuesItem: css({
-      marginBottom: theme.spacing(0.5),
-    }),
     Textarea: css({
       wordBreak: 'break-all',
       whiteSpace: 'pre',
-    }),
-    LinkIcon: css({
-      fontSize: '1.5em',
     }),
     linkList: css({
       display: 'flex',
       flexWrap: 'wrap',
       gap: '10px',
+      marginBottom: theme.spacing(2),
     }),
   };
 };
@@ -143,8 +178,8 @@ export type TraceFlameGraphs = {
 };
 
 export type SpanDetailProps = {
+  color: string;
   detailState: DetailState;
-  linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
@@ -163,6 +198,7 @@ export type SpanDetailProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  datasourceUid: string;
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
@@ -172,8 +208,8 @@ export type SpanDetailProps = {
 
 export default function SpanDetail(props: SpanDetailProps) {
   const {
+    color,
     detailState,
-    linksGetter,
     logItemToggle,
     logsToggle,
     processToggle,
@@ -189,6 +225,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     createSpanLink,
     createFocusSpanLink,
     datasourceType,
+    datasourceUid,
     traceFlameGraphs,
     setTraceFlameGraphs,
     traceToProfilesOptions,
@@ -218,28 +255,34 @@ export default function SpanDetail(props: SpanDetailProps) {
     references,
     stackTraces,
   } = span;
+
   const { timeZone } = props;
+  const durationIcon: IconName = 'hourglass';
+  const startIcon: IconName = 'clock-nine';
+
   let overviewItems = [
     {
       key: 'svc',
-      label: 'Service:',
+      label: t('explore.span-detail.overview-items.label.service', 'Service:'),
       value: process.serviceName,
     },
     {
       key: 'duration',
-      label: 'Duration:',
+      label: t('explore.span-detail.overview-items.label.duration', 'Duration:'),
       value: formatDuration(duration),
+      icon: durationIcon,
     },
     {
       key: 'start',
-      label: 'Start Time:',
+      label: t('explore.span-detail.overview-items.label.start-time', 'Start Time:'),
       value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
+      icon: startIcon,
     },
     ...(span.childSpanCount > 0
       ? [
           {
             key: 'child_count',
-            label: 'Child Count:',
+            label: t('explore.span-detail.overview-items.label.child-count', 'Child Count:'),
             value: span.childSpanCount,
           },
         ]
@@ -247,51 +290,50 @@ export default function SpanDetail(props: SpanDetailProps) {
   ];
 
   const styles = useStyles2(getStyles);
-
   if (span.kind) {
     overviewItems.push({
       key: KIND,
-      label: 'Kind:',
+      label: t('explore.span-detail.label.kind', 'Kind:'),
       value: span.kind,
     });
   }
   if (span.statusCode !== undefined) {
     overviewItems.push({
       key: STATUS,
-      label: 'Status:',
+      label: t('explore.span-detail.label.status', 'Status:'),
       value: SpanStatusCode[span.statusCode].toLowerCase(),
     });
   }
   if (span.statusMessage) {
     overviewItems.push({
       key: STATUS_MESSAGE,
-      label: 'Status Message:',
+      label: t('explore.span-detail.label.status-message', 'Status Message:'),
       value: span.statusMessage,
     });
   }
   if (span.instrumentationLibraryName) {
     overviewItems.push({
       key: LIBRARY_NAME,
-      label: 'Library Name:',
+      label: t('explore.span-detail.label.library-name', 'Library Name:'),
       value: span.instrumentationLibraryName,
     });
   }
   if (span.instrumentationLibraryVersion) {
     overviewItems.push({
       key: LIBRARY_VERSION,
-      label: 'Library Version:',
+      label: t('explore.span-detail.label.library-version', 'Library Version:'),
       value: span.instrumentationLibraryVersion,
     });
   }
   if (span.traceState) {
     overviewItems.push({
       key: TRACE_STATE,
-      label: 'Trace State:',
+      label: t('explore.span-detail.label.trace-state', 'Trace State:'),
       value: span.traceState,
     });
   }
 
-  const { profileLinkButtons, logLinkButton, sessionLinkButton } = getSpanDetailLinkButtons({
+  const linksComponent = getSpanDetailLinkButtons({
     span,
     createSpanLink,
     datasourceType,
@@ -301,37 +343,34 @@ export default function SpanDetail(props: SpanDetailProps) {
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
+  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, tags, datasourceType, datasourceUid);
+
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
-        <h2 className={styles.operationName} title={operationName}>
+        <h6 className={styles.operationName} title={operationName}>
           {operationName}
-        </h2>
+        </h6>
         <div className={styles.listWrapper}>
-          <LabeledList className={styles.list} divider={true} items={overviewItems} />
+          <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
+        <ShareSpanButton focusSpanLink={focusSpanLink} />
       </div>
-      <div className={styles.linkList}>
-        {logLinkButton}
-        {profileLinkButtons}
-        {sessionLinkButton}
-      </div>
-      <Divider spacing={1} />
-      <div>
+      <div className={styles.linkList}>{linksComponent}</div>
+      <div className={styles.content}>
         <div>
           <AccordianKeyValues
             data={tags}
-            label="Span Attributes"
-            linksGetter={linksGetter}
+            label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
             isOpen={isTagsOpen}
+            linksGetter={resourceLinksGetter}
             onToggle={() => tagsToggle(spanID)}
           />
           {process.tags && (
             <AccordianKeyValues
-              className={styles.AccordianKeyValuesItem}
               data={process.tags}
-              label="Resource Attributes"
-              linksGetter={linksGetter}
+              label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
+              linksGetter={resourceLinksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
             />
@@ -339,7 +378,6 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs
-            linksGetter={linksGetter}
             logs={logs}
             isOpen={logsState.isOpen}
             openedItems={logsState.openedItems}
@@ -348,44 +386,39 @@ export default function SpanDetail(props: SpanDetailProps) {
             timestamp={traceStartTime}
           />
         )}
+
         {warnings && warnings.length > 0 && (
-          <AccordianText
-            className={styles.AccordianWarnings}
-            headerClassName={styles.AccordianWarningsHeader}
-            label={<span className={styles.AccordianWarningsLabel}>Warnings</span>}
-            data={warnings}
+          <AccordianKeyValues
+            data={warnings.map((warning) => ({
+              key: '',
+              value: warning,
+              type: 'text',
+            }))}
+            showSummary={false}
+            showCountBadge={true}
             isOpen={isWarningsOpen}
+            onlyValues={true}
             onToggle={() => warningsToggle(spanID)}
+            label={t('explore.span-detail.warnings', 'Warnings')}
           />
         )}
+
         {stackTraces?.length ? (
-          <AccordianText
-            label="Stack trace"
-            data={stackTraces}
+          <AccordianKeyValues
+            data={stackTraces.map((stackTrace) => ({
+              key: '',
+              value: stackTrace,
+              type: 'code',
+            }))}
+            onlyValues={true}
+            showSummary={false}
+            showCountBadge={true}
             isOpen={isStackTracesOpen}
-            TextComponent={(textComponentProps) => {
-              let text;
-              if (textComponentProps.data?.length > 1) {
-                text = textComponentProps.data
-                  .map((stackTrace, index) => `StackTrace ${index + 1}:\n${stackTrace}`)
-                  .join('\n');
-              } else {
-                text = textComponentProps.data?.[0];
-              }
-              return (
-                <TextArea
-                  className={styles.Textarea}
-                  style={{ cursor: 'unset' }}
-                  readOnly
-                  cols={10}
-                  rows={10}
-                  value={text}
-                />
-              );
-            }}
             onToggle={() => stackTracesToggle(spanID)}
+            label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
           />
         ) : null}
+
         {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
           <AccordianReferences
             data={references}
@@ -408,29 +441,6 @@ export default function SpanDetail(props: SpanDetailProps) {
             traceName={traceName}
           />
         )}
-        <small className={styles.debugInfo}>
-          {/* TODO: fix keyboard a11y */}
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-          <a
-            {...focusSpanLink}
-            onClick={(e) => {
-              // click handling logic copied from react router:
-              // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
-              if (
-                focusSpanLink.onClick &&
-                e.button === 0 && // Ignore everything but left clicks
-                (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
-                !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
-              ) {
-                e.preventDefault();
-                focusSpanLink.onClick(e);
-              }
-            }}
-          >
-            <Icon name={'link'} className={cx(alignIcon, styles.LinkIcon)}></Icon>
-          </a>
-          <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
-        </small>
       </div>
     </div>
   );

@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 
-import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -12,7 +14,6 @@ import { DashboardSettingsButton } from './actions/DashboardSettingsButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { EditDashboardSwitch } from './actions/EditDashboardSwitch';
-import { EditSchemaV2Button } from './actions/EditSchemaV2Button';
 import { ExportDashboardButton } from './actions/ExportDashboardButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
@@ -22,12 +23,13 @@ import { SaveDashboard } from './actions/SaveDashboard';
 import { SaveLibraryPanelButton } from './actions/SaveLibraryPanelButton';
 import { ShareDashboardButton } from './actions/ShareDashboardButton';
 import { UnlinkLibraryPanelButton } from './actions/UnlinkLibraryPanelButton';
-import { renderActionElements } from './utils';
+import { ToolbarActionProps } from './types';
+import { getDynamicActions, renderActionElements } from './utils';
 
 export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const styles = useStyles2(getStyles);
   const { editPanel, editable, editview, isEditing, uid, meta, viewPanelScene } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const styles = useStyles2(getStyles);
 
   const isEditable = Boolean(editable);
   const canSave = Boolean(meta.canSave);
@@ -44,12 +46,15 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
 
   const showPanelButtons = isEditingPanel && !hasEditView && !isViewingPanel;
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
-  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+  const showShareButton = hasUid && !isSnapshot && !isPlaying && !isEditingPanel;
 
   return (
     <ToolbarButtonRow alignment="right" className={styles.container}>
       {renderActionElements(
         [
+          // This adds the presence indicators in enterprise
+          // Leaving group empty here as these are sometimes not rendered leaving separators with blank space between them
+          ...getDynamicActions(dynamicDashNavActions.right, '', !isEditingPanel && !isEditingDashboard),
           {
             key: 'play-list-previous-button',
             component: PlayListPreviousButton,
@@ -99,10 +104,16 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             condition: showPanelButtons && isEditingLibraryPanel,
           },
           {
-            key: 'edit-schema-v2-button',
-            component: EditSchemaV2Button,
+            key: 'dashboard-undo',
+            component: UndoButton,
             group: 'dashboard',
-            condition: isEditingAndShowingDashboard && hasUid,
+            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
+          },
+          {
+            key: 'dashboard-redo',
+            component: RedoButton,
+            group: 'dashboard',
+            condition: isEditingAndShowingDashboard && dashboard.canEditDashboard(),
           },
           {
             key: 'dashboard-settings',
@@ -120,13 +131,20 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'make-dashboard-editable-button',
             component: MakeDashboardEditableButton,
             group: 'save-edit',
-            condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditable,
+            condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditable && !isPlaying,
           },
           {
             key: 'edit-dashboard-switch',
             component: EditDashboardSwitch,
             group: 'save-edit',
-            condition: dashboard.canEditDashboard() && !isEditingLibraryPanel && !isViewingPanel && isEditable,
+            condition:
+              dashboard.canEditDashboard() &&
+              !isEditingPanel &&
+              !isEditingLibraryPanel &&
+              !isViewingPanel &&
+              isEditable &&
+              !isPlaying &&
+              !isEditingPanel,
           },
           {
             key: 'new-export-dashboard-button',
@@ -147,8 +165,42 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   );
 };
 
-const getStyles = () => ({
-  container: css({
-    flex: 1,
-  }),
+export const undoButtonID = 'undo-button';
+function UndoButton({ dashboard }: ToolbarActionProps) {
+  const editPane = dashboard.state.editPane;
+  const { undoStack } = editPane.useState();
+  const undoAction = undoStack[undoStack.length - 1];
+  const tooltip = `Undo${undoAction?.description ? ` '${undoAction.description}'` : ''}`;
+
+  return (
+    <ToolbarButton
+      id={undoButtonID}
+      icon="corner-up-left"
+      disabled={undoStack.length === 0}
+      onClick={() => editPane.undoAction()}
+      tooltip={tooltip}
+    />
+  );
+}
+
+export const redoButtonId = 'redo-button';
+function RedoButton({ dashboard }: ToolbarActionProps) {
+  const editPane = dashboard.state.editPane;
+  const { redoStack } = editPane.useState();
+  const redoAction = redoStack[redoStack.length - 1];
+  const tooltip = `Redo${redoAction?.description ? ` '${redoAction.description}'` : ''}`;
+
+  return (
+    <ToolbarButton
+      id={redoButtonId}
+      icon="corner-up-right"
+      disabled={redoStack.length === 0}
+      tooltip={tooltip}
+      onClick={() => editPane.redoAction()}
+    />
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({ paddingLeft: theme.spacing(0.5) }),
 });

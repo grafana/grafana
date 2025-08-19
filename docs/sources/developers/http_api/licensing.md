@@ -75,9 +75,9 @@ Status codes:
 
 ## Add license
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Grafana Enterprise v7.4+.
-{{% /admonition %}}
+{{< /admonition >}}
 
 `POST /api/licensing/token`
 
@@ -112,22 +112,36 @@ Content-Type: application/json
 Content-Length: 357
 
 {
-  "jti":"2",
-  "iss":"https://grafana.com",
-  "sub":"https://play.grafana.org/"
-  "lid":"1",
-  "included_users":15,
-  "lic_exp_warn_days":30,
-  "tok_exp_warn_days":2,
-  "update_days":1,
-  "prod":["grafana-enterprise"],
-  "company":"Grafana Labs"
+"status":0,
+"jti":"",
+"iss":"",
+"sub":"",
+"iat":0,
+"exp":0,
+"nbf":0,
+"lexp":0,
+"lid":"",
+"limit_by":"",
+"included_users":0,
+"lic_exp_warn_days":0,
+"tok_exp_warn_days":0,
+"update_days":0,
+"prod":null,
+"company":"",
+"account":"",
+"slug":"",
+"usage_billing":false,
+"max_concurrent_user_sessions":0,
+"details_url":"",
+"trial":false,
+"trial_exp":0,
+"anonymousRatio":0
 }
 
 ```
 
-The response is a JSON blob available for debugging purposes. The
-available fields may change at any time without any prior notice.
+The response is a JSON blob with specific values intentionally not shown. The
+available fields may change at any time without any prior notice. Refer to [Check license availability](#check-license-availability) for information on using the API to check the status of your license.
 
 Status Codes:
 
@@ -137,9 +151,9 @@ Status Codes:
 
 ## Manually force license refresh
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Grafana Enterprise v7.4+.
-{{% /admonition %}}
+{{< /admonition >}}
 
 `POST /api/licensing/token/renew`
 
@@ -198,9 +212,9 @@ Status Codes:
 
 ## Remove license from database
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Grafana Enterprise v7.4+.
-{{% /admonition %}}
+{{< /admonition >}}
 
 `DELETE /api/licensing/token`
 

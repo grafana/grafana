@@ -1,7 +1,7 @@
 ﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Button, LinkButton } from '../Button';
+import { Button, LinkButton } from '../Button/Button';
 
 import { Toggletip } from './Toggletip';
 
@@ -75,7 +75,7 @@ describe('Toggletip', () => {
     const button = screen.getByTestId('myButton');
     await userEvent.click(button);
 
-    expect(await screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 

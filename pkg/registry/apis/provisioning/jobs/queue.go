@@ -3,45 +3,44 @@ package jobs
 import (
 	"context"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
+// RepoGetter is a function that can be called to get a repository by name
+//
+//go:generate mockery --name RepoGetter --structname MockRepoGetter --inpackage --filename repo_getter_mock.go --with-expecter
 type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
 }
 
-// Basic job queue infrastructure
-type JobQueue interface {
-	// Add a new Job to the Queue.  The status must be empty
-	Add(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
-
-	// Get the next job we should process
-	Next(ctx context.Context) *provisioning.Job
-
-	// Update the status on a given job
-	// This is only valid if current job is not finished
-	Update(ctx context.Context, namespace string, name string, status provisioning.JobStatus) error
-
-	// Register a worker (inline for now)
-	Register(worker Worker)
-}
-
+// JobProgressRecorder is a function that can be called to record the progress of a job
+//
+//go:generate mockery --name JobProgressRecorder --structname MockJobProgressRecorder --inpackage --filename job_progress_recorder_mock.go --with-expecter
 type JobProgressRecorder interface {
 	Record(ctx context.Context, result JobResourceResult)
-	SetMessage(msg string)
-	GetMessage() string
-	SetRef(ref string)
-	GetRef() string
-	SetTotal(total int)
+	ResetResults()
+	SetFinalMessage(ctx context.Context, msg string)
+	SetMessage(ctx context.Context, msg string)
+	SetTotal(ctx context.Context, total int)
 	TooManyErrors() error
+	StrictMaxErrors(maxErrors int)
+	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)
 	Complete(ctx context.Context, err error) provisioning.JobStatus
 }
 
+// Worker is a worker that can process a job
+//
+//go:generate mockery --name Worker --structname MockWorker --inpackage --filename worker_mock.go --with-expecter
 type Worker interface {
 	IsSupported(ctx context.Context, job provisioning.Job) bool
+	// Process the job. The job status should be updated as the job progresses.
+	//
+	// The job spec and metadata MUST not be modified in the storage layer while this is running. All updates go via the progress type.
 	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress JobProgressRecorder) error
 }
 
 // ProgressFn is a function that can be called to update the progress of a job
+//
+//go:generate mockery --name ProgressFn --structname MockProgressFn --inpackage --filename progress_fn_mock.go --with-expecter
 type ProgressFn func(ctx context.Context, status provisioning.JobStatus) error

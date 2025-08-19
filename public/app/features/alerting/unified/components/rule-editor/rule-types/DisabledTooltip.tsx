@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Tooltip } from '@grafana/ui';
 
 type Props = {
@@ -12,7 +13,13 @@ const DisabledTooltip = ({ children, visible = false }: React.PropsWithChildren<
   }
 
   return (
-    <Tooltip content="You do not appear to have any compatible datasources." placement="top">
+    <Tooltip
+      content={t(
+        'alerting.disabled-tooltip.content-appear-compatible-datasources',
+        'You do not appear to have any compatible datasources.'
+      )}
+      placement="top"
+    >
       <div>{children}</div>
     </Tooltip>
   );

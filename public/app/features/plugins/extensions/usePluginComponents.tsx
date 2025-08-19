@@ -28,8 +28,8 @@ export function usePluginComponents<Props extends object = {}>({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
-    const enableRestrictions = isGrafanaDevMode() && pluginContext;
+    const isInsidePlugin = Boolean(pluginContext);
+    const isCoreGrafanaPlugin = pluginContext?.meta.module.startsWith('core:') ?? false;
     const components: Array<ComponentTypeWithExtensionMeta<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
@@ -38,11 +38,24 @@ export function usePluginComponents<Props extends object = {}>({
       extensionPointId,
     });
 
-    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
+    // Don't show extensions if the extension-point id is invalid in DEV mode
+    if (
+      isGrafanaDevMode() &&
+      !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, isCoreGrafanaPlugin, log: pointLog })
+    ) {
+      return {
+        isLoading: false,
+        components: [],
+      };
     }
 
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+    // Don't show extensions if the extension-point misses meta info (plugin.json) in DEV mode
+    if (
+      isGrafanaDevMode() &&
+      !isCoreGrafanaPlugin &&
+      pluginContext &&
+      isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)
+    ) {
       pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,
@@ -85,12 +98,12 @@ export function usePluginComponents<Props extends object = {}>({
   }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
 }
 
-// exported so it can be used in tests
 export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
   registryItem: AddedComponentRegistryItem<Props>,
   extensionPointId: string
 ): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
+
   function ComponentWithMeta(props: Props) {
     return <Component {...props} />;
   }

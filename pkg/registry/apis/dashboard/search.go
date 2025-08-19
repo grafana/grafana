@@ -18,32 +18,32 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
-
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
 	log      log.Logger
-	client   resource.ResourceIndexClient
+	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resource.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher)
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher, features)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
@@ -238,8 +238,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		page, _ = strconv.Atoi(queryParams.Get("page"))
 	}
 
-	searchRequest := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{},
+	searchRequest := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{},
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
@@ -258,14 +258,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	searchRequest.Fields = fields
 
 	types := queryParams["type"]
-	var federate *resource.ResourceKey
+	var federate *resourcepb.ResourceKey
 	switch len(types) {
 	case 0:
 		// When no type specified, search for dashboards
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
 		if err == nil {
-			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+			federate, err = asResourceKey(user.GetNamespace(), folders.RESOURCE)
 		}
 	case 1:
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), types[0])
@@ -282,7 +282,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if federate != nil {
-		searchRequest.Federated = []*resource.ResourceKey{federate}
+		searchRequest.Federated = []*resourcepb.ResourceKey{federate}
 	}
 
 	// Add sorting
@@ -291,7 +291,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			if slices.Contains(search.DashboardFields(), sort) {
 				sort = resource.SEARCH_FIELD_PREFIX + sort
 			}
-			s := &resource.ResourceSearchRequest_Sort{Field: sort}
+			s := &resourcepb.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
 				s.Desc = true
 				s.Field = s.Field[1:]
@@ -302,9 +302,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	// The facet term fields
 	if facets, ok := queryParams["facet"]; ok {
-		searchRequest.Facet = make(map[string]*resource.ResourceSearchRequest_Facet)
+		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
 		for _, v := range facets {
-			searchRequest.Facet[v] = &resource.ResourceSearchRequest_Facet{
+			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
 				Limit: 50,
 			}
@@ -313,7 +313,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	// The tags filter
 	if tags, ok := queryParams["tag"]; ok {
-		searchRequest.Options.Fields = []*resource.Requirement{{
+		searchRequest.Options.Fields = []*resourcepb.Requirement{{
 			Key:      "tags",
 			Operator: "=",
 			Values:   tags,
@@ -344,7 +344,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		if folder == rootFolder {
 			folder = "" // root folder is empty in the search index
 		}
-		searchRequest.Options.Fields = []*resource.Requirement{{
+		searchRequest.Options.Fields = []*resourcepb.Requirement{{
 			Key:      "folder",
 			Operator: "=",
 			Values:   []string{folder},
@@ -353,9 +353,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	if len(names) > 0 {
 		if searchRequest.Options.Fields == nil {
-			searchRequest.Options.Fields = []*resource.Requirement{}
+			searchRequest.Options.Fields = []*resourcepb.Requirement{}
 		}
-		namesFilter := []*resource.Requirement{{
+		namesFilter := []*resourcepb.Requirement{{
 			Key:      "name",
 			Operator: "in",
 			Values:   names,
@@ -396,7 +396,7 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 }
 
 // Given a namespace and type convert it to a search key
-func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
+func asResourceKey(ns string, k string) (*resourcepb.ResourceKey, error) {
 	key, err := resource.AsResourceKey(ns, k)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
@@ -406,11 +406,6 @@ func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
 }
 
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
-		s.log.Warn("Tried to search for 'sharedwithme' dashboards with ", featuremgmt.FlagUnifiedStorageSearchPermissionFiltering, " disabled")
-		return []string{}, nil
-	}
-
 	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
@@ -434,12 +429,12 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
-	dashboardSearchRequest := &resource.ResourceSearchRequest{
+	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
 		Fields: []string{"folder"},
 		Limit:  int64(len(dashboardUids)),
-		Options: &resource.ListOptions{
+		Options: &resourcepb.ListOptions{
 			Key: key,
-			Fields: []*resource.Requirement{{
+			Fields: []*resourcepb.Requirement{{
 				Key:      "name",
 				Operator: "in",
 				Values:   dashboardUids,
@@ -473,17 +468,17 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	// only folders the user has access to will be returned here
-	folderKey, err := asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
+	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
 	if err != nil {
 		return sharedDashboards, err
 	}
 
-	folderSearchRequest := &resource.ResourceSearchRequest{
+	folderSearchRequest := &resourcepb.ResourceSearchRequest{
 		Fields: []string{"folder"},
 		Limit:  int64(len(allFolders)),
-		Options: &resource.ListOptions{
+		Options: &resourcepb.ListOptions{
 			Key: folderKey,
-			Fields: []*resource.Requirement{{
+			Fields: []*resourcepb.Requirement{{
 				Key:      "name",
 				Operator: "in",
 				Values:   allFolders,

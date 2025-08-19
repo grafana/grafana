@@ -50,8 +50,8 @@ func TestQueryData(t *testing.T) {
 				shouldPassThrough: false,
 			},
 			{
-				err:               plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
-				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
+				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
+				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
 				shouldPassThrough: true,
 			},
 			{
@@ -156,7 +156,10 @@ func TestCheckHealth(t *testing.T) {
 	})
 }
 
-func TestCallResource(t *testing.T) {
+func TestIntegrationCallResource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	registry := fakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{

@@ -16,9 +16,9 @@ weight: 1400
 
 {{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If Users use the same email address in Okta that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -30,7 +30,6 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. For **Sign-in method**, select **OIDC - OpenID Connect**.
 1. For **Application type**, select **Web Application** and click **Next**.
 1. Configure **New Web App Integration Operations**:
-
    - **App integration name**: Choose a name for the app.
    - **Logo (optional)**: Add a logo.
    - **Grant type**: Select **Authorization Code** and **Refresh Token**.
@@ -54,7 +53,6 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. In the **Okta Admin Console**, select **Directory > Profile Editor**.
 1. Select the Okta Application Profile you created previously (the default name for this is `<App name> User`).
 1. Select **Add Attribute** and fill in the following fields:
-
    - **Data Type**: string
    - **Display Name**: Meaningful name. For example, `Grafana Role`.
    - **Variable Name**: Meaningful name. For example, `grafana_role`.
@@ -82,9 +80,9 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. Include the `groups` scope in the **Scopes** field in Grafana of the Okta integration.
    For Terraform or in the Grafana configuration file, include the `groups` scope in `scopes` field.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you configure the `groups` claim differently, ensure that the `groups` claim is a string array.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Optional: Add the role attribute to the User (default) Okta profile
 
@@ -101,27 +99,19 @@ If you want to configure the role for all users in the Okta directory, you can a
 
 ## Configure Okta authentication client using the Grafana UI
 
-{{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
-{{% /admonition %}}
-
 As a Grafana Admin, you can configure Okta OAuth2 client from within Grafana using the Okta UI. To do this, navigate to **Administration > Authentication > Okta** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
 
 If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure Okta authentication client using the Terraform provider
-
-{{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
-{{% /admonition %}}
 
 ```terraform
 resource "grafana_sso_settings" "okta_sso_settings" {
@@ -169,7 +159,7 @@ To integrate your Okta OIDC provider with Grafana using our Okta OIDC integratio
 
 1. Optional: [Configure a refresh token](#configure-a-refresh-token).
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure group synchronization](#configure-group-synchronization-enterprise-only).
+1. Optional: [Configure team synchronization](#configure-team-synchronization-enterprise-only).
 1. Restart Grafana.
 
    You should now see a Okta OIDC login button on the login page and be able to log in or sign up with your OIDC provider.
@@ -208,9 +198,9 @@ At the configuration file, extend the `scopes` in `[auth.okta]` section with `of
 
 ### Configure role mapping
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from the auth provider upon user login.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option against the `api_url` (`/userinfo` OIDC endpoint) endpoint payload.
 
@@ -230,9 +220,9 @@ To learn about adding custom claims to the user info in Okta, refer to [add cust
 
 #### Org roles mapping example
 
-{{% admonition type="note" %}}
-Available in on-premise Grafana installations.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in self-managed Grafana installations.
+{{< /admonition >}}
 
 In this example, the `org_mapping` uses the `groups` attribute as the source (`org_attribute_path`) to map the current user to different organizations and roles. The user has been granted the role of a `Viewer` in the `org_foo` org if they are a member of the `Group 1` group, the role of an `Editor` in the `org_bar` org if they are a member of the `Group 2` group, and the role of an `Editor` in the `org_baz`(OrgID=3) org.
 
@@ -243,18 +233,20 @@ org_attribute_path = groups
 org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 ```
 
-### Configure group synchronization (Enterprise only)
+### Configure team synchronization
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
-By using group synchronization, you can link your Okta groups to teams and roles within Grafana. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
-Teams and roles get synchronized when the user logs in.
+By using Team Sync, you can link your Okta groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+
+Map your Okta groups to teams in Grafana so that your users will automatically be added to
+the correct teams.
 
 Okta groups can be referenced by group names, like `Admins` or `Editors`.
 
-To learn more about how to configure group synchronization, refer to [Configure team sync](../../configure-team-sync/) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
+To learn more about Team Sync, refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
 
 ## Configuration options
 

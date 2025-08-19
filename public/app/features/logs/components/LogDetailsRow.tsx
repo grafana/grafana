@@ -14,6 +14,7 @@ import {
   LogLabelStatsModel,
   LogRowModel,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   ClipboardButton,
@@ -31,6 +32,10 @@ import { getLabelTypeFromRow } from '../utils';
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
 
+interface LinkModelWithIcon extends LinkModel<Field> {
+  icon?: IconName;
+}
+
 export interface Props extends Themeable2 {
   parsedValues: string[];
   parsedKeys: string[];
@@ -39,7 +44,7 @@ export interface Props extends Themeable2 {
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  links?: Array<LinkModel<Field>>;
+  links?: LinkModelWithIcon[];
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
@@ -78,6 +83,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
     }),
     copyButton: css({
       '& > button': {
+        gap: 0,
         color: theme.colors.text.secondary,
         padding: 0,
         justifyContent: 'center',
@@ -244,7 +250,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <div className={`log-details-value-copy ${styles.copyButton}`}>
         <ClipboardButton
           getText={() => val}
-          title="Copy value to clipboard"
+          aria-label={t('logs.un-themed-log-details-row.title-copy-value-to-clipboard', 'Copy value to clipboard')}
           fill="text"
           variant="secondary"
           icon="copy"
@@ -304,9 +310,21 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     const toggleFieldButton =
       displayedFields && parsedKeys != null && displayedFields.includes(parsedKeys[0]) ? (
-        <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
+        <IconButton
+          variant="primary"
+          tooltip={t('logs.un-themed-log-details-row.toggle-field-button.tooltip-hide-this-field', 'Hide this field')}
+          name="eye"
+          onClick={this.hideField}
+        />
       ) : (
-        <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
+        <IconButton
+          tooltip={t(
+            'logs.un-themed-log-details-row.toggle-field-button.tooltip-field-instead-message',
+            'Show this field instead of the message'
+          )}
+          name="eye"
+          onClick={this.showField}
+        />
       );
 
     return (
@@ -325,7 +343,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   />
                   <IconButton
                     name="search-minus"
-                    tooltip={`Filter out value${refIdTooltip}`}
+                    tooltip={
+                      app === CoreApp.Explore && row.dataFrame?.refId
+                        ? t('logs.un-themed-log-details-row.filter-out-query', 'Filter out value in query {{query}}', {
+                            query: row.dataFrame?.refId,
+                          })
+                        : t('logs.un-themed-log-details-row.filter-out', 'Filter out value')
+                    }
                     onClick={this.filterOutLabel}
                   />
                 </>
@@ -335,7 +359,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 <IconButton
                   variant={showFieldsStats ? 'primary' : 'secondary'}
                   name="signal"
-                  tooltip="Ad-hoc statistics"
+                  tooltip={t('logs.un-themed-log-details-row.tooltip-adhoc-statistics', 'Ad-hoc statistics')}
                   className="stats-button"
                   disabled={!singleKey}
                   onClick={this.showStats}
@@ -372,6 +396,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                             typeof pinLineButtonTooltipTitle === 'object' && link.onClick
                               ? pinLineButtonTooltipTitle
                               : undefined,
+                          variant: 'secondary',
+                          fill: 'outline',
+                          ...(link.icon && { icon: link.icon }),
                         }}
                         link={link}
                       />
@@ -388,7 +415,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
-                tooltip="Hide ad-hoc statistics"
+                tooltip={t('logs.un-themed-log-details-row.tooltip-hide-adhoc-statistics', 'Hide ad-hoc statistics')}
                 onClick={this.showStats}
               />
             </td>

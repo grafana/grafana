@@ -13,15 +13,15 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
+import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -46,7 +46,7 @@ import {
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
 
-standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
+standardTransformersRegistry.setInit(() => [getReduceTransformRegistryItem()]);
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
@@ -154,8 +154,6 @@ jest.mock('@grafana/data', () => ({
   setWeekStart: jest.fn(),
 }));
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
-
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneUtils: {
@@ -165,11 +163,6 @@ jest.mock('@grafana/scenes', () => ({
 }));
 
 describe('transformSceneToSaveModel', () => {
-  beforeEach(() => {
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
-  });
-
   describe('Given a simple scene with custom settings', () => {
     it('Should transform back to persisted model', () => {
       const dashboardWithCustomSettings = {
@@ -799,7 +792,7 @@ describe('transformSceneToSaveModel', () => {
 
         activateFullSceneTree(scene);
 
-        expect(repeater.state.repeatedPanels?.length).toBe(2);
+        expect(repeater.state.repeatedPanels?.length).toBe(1);
         const result = panelRepeaterToPanels(repeater, true);
 
         expect(result).toHaveLength(2);

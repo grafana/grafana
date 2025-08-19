@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Spinner, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { CTAInfo } from './CTAInfo';
 
@@ -9,6 +9,7 @@ interface SnapshotCTAProps {
   onClick: () => void;
 }
 
+// TODO: this can be removed with the new configuration flow merged.
 export function BuildSnapshotCTA(props: SnapshotCTAProps) {
   const { disabled, isLoading, onClick } = props;
 
@@ -31,7 +32,12 @@ export function BuildSnapshotCTA(props: SnapshotCTAProps) {
         </Trans>
       </Text>
 
-      <Button disabled={disabled} onClick={onClick} icon={isLoading ? 'spinner' : undefined}>
+      <Button
+        disabled={disabled}
+        onClick={onClick}
+        icon={isLoading ? 'spinner' : undefined}
+        data-testid="migrate-to-cloud-configure-snapshot-build-snapshot-button"
+      >
         <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
       </Button>
     </CTAInfo>
@@ -42,20 +48,10 @@ export function CreatingSnapshotCTA(props: SnapshotCTAProps) {
   const { disabled, isLoading, onClick } = props;
 
   return (
-    <CTAInfo
-      title={t('migrate-to-cloud.building-snapshot.title', 'Building installation snapshot')}
-      accessory={<Spinner inline />}
-    >
+    <CTAInfo title={t('migrate-to-cloud.building-snapshot.title', 'Building snapshot')} accessory={<Spinner inline />}>
       <Text element="p" variant="body" color="secondary">
         <Trans i18nKey="migrate-to-cloud.building-snapshot.description">
-          We&apos;re creating a point-in-time snapshot of the current state of this installation. Once the snapshot is
-          complete. you&apos;ll be able to upload it to Grafana Cloud.
-        </Trans>
-      </Text>
-
-      <Text element="p" variant="body" color="secondary">
-        <Trans i18nKey="migrate-to-cloud.building-snapshot.description-eta">
-          Creating a snapshot typically takes less than two minutes.
+          We&apos;re gathering your resources for migration to Grafana Cloud. This should only take a moment.
         </Trans>
       </Text>
 

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 var (

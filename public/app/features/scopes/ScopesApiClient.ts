@@ -1,10 +1,9 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, config } from '@grafana/runtime';
 
 import { getAPINamespace } from '../../api/utils';
 
-import { NodeReason, NodesMap, SelectedScope, TreeScope } from './selector/types';
-import { getEmptyScopeObject } from './utils';
+import { ScopeNavigation } from './dashboards/types';
 
 const apiGroup = 'scope.grafana.app';
 const apiVersion = 'v0alpha1';
@@ -12,77 +11,50 @@ const apiNamespace = getAPINamespace();
 const apiUrl = `/apis/${apiGroup}/${apiVersion}/namespaces/${apiNamespace}`;
 
 export class ScopesApiClient {
-  private scopesCache = new Map<string, Promise<Scope>>();
+  async fetchScope(name: string): Promise<Scope | undefined> {
+    try {
+      return await getBackendSrv().get<Scope>(apiUrl + `/scopes/${name}`);
+    } catch (err) {
+      // TODO: maybe some better error handling
+      console.error(err);
+      return undefined;
+    }
+  }
 
-  async fetchScope(name: string): Promise<Scope> {
-    if (this.scopesCache.has(name)) {
-      return this.scopesCache.get(name)!;
+  async fetchMultipleScopes(scopesIds: string[]): Promise<Scope[]> {
+    const scopes = await Promise.all(scopesIds.map((id) => this.fetchScope(id)));
+    return scopes.filter((scope) => scope !== undefined);
+  }
+
+  /**
+   * Fetches a map of nodes based on the specified options.
+   *
+   * @param {Object} options An object to configure the node fetch operation.
+   * @param {string|undefined} options.parent The parent node identifier to fetch children for, or undefined if no parent scope is required.
+   * @param {string|undefined} options.query A query string to filter the nodes, or undefined for no filtering.
+   * @param {number|undefined} options.limit The maximum number of nodes to fetch, defaults to 1000 if undefined. Must be between 1 and 10000.
+   * @return {Promise<ScopeNode[]>} A promise that resolves to a map of fetched nodes. Returns an empty object if an error occurs.
+   */
+  async fetchNodes(options: { parent?: string; query?: string; limit?: number }): Promise<ScopeNode[]> {
+    const limit = options.limit ?? 1000;
+
+    if (!(0 < limit && limit <= 10000)) {
+      throw new Error('Limit must be between 1 and 10000');
     }
 
-    const response = new Promise<Scope>(async (resolve) => {
-      const basicScope = getEmptyScopeObject(name);
-
-      try {
-        const serverScope = await getBackendSrv().get<Scope>(apiUrl + `/scopes/${name}`);
-
-        const scope = {
-          ...basicScope,
-          ...serverScope,
-          metadata: {
-            ...basicScope.metadata,
-            ...serverScope.metadata,
-          },
-          spec: {
-            ...basicScope.spec,
-            ...serverScope.spec,
-          },
-        };
-
-        resolve(scope);
-      } catch (err) {
-        this.scopesCache.delete(name);
-
-        resolve(basicScope);
-      }
-    });
-
-    this.scopesCache.set(name, response);
-
-    return response;
-  }
-
-  async fetchMultipleScopes(treeScopes: TreeScope[]): Promise<SelectedScope[]> {
-    const scopes = await Promise.all(treeScopes.map(({ scopeName }) => this.fetchScope(scopeName)));
-
-    return scopes.map<SelectedScope>((scope, idx) => {
-      return {
-        scope,
-        path: treeScopes[idx].path,
-      };
-    });
-  }
-
-  async fetchNode(parent: string, query: string): Promise<NodesMap> {
     try {
       const nodes =
-        (await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, { parent, query }))
-          ?.items ?? [];
+        (
+          await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, {
+            parent: options.parent,
+            query: options.query,
+            limit,
+          })
+        )?.items ?? [];
 
-      return nodes.reduce<NodesMap>((acc, { metadata: { name }, spec }) => {
-        acc[name] = {
-          name,
-          ...spec,
-          expandable: spec.nodeType === 'container',
-          selectable: spec.linkType === 'scope',
-          expanded: false,
-          query: '',
-          reason: NodeReason.Result,
-          nodes: {},
-        };
-        return acc;
-      }, {});
+      return nodes;
     } catch (err) {
-      return {};
+      return [];
     }
   }
 
@@ -98,6 +70,30 @@ export class ScopesApiClient {
       return response?.items ?? [];
     } catch (err) {
       return [];
+    }
+  };
+
+  public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+    try {
+      const response = await getBackendSrv().get<{ items: ScopeNavigation[] }>(apiUrl + `/find/scope_navigations`, {
+        scope: scopeNames,
+      });
+
+      return response?.items ?? [];
+    } catch (err) {
+      return [];
+    }
+  };
+
+  public fetchScopeNode = async (scopeNodeId: string): Promise<ScopeNode | undefined> => {
+    if (!config.featureToggles.useScopeSingleNodeEndpoint) {
+      return Promise.resolve(undefined);
+    }
+    try {
+      const response = await getBackendSrv().get<ScopeNode>(apiUrl + `/scopenodes/${scopeNodeId}`);
+      return response;
+    } catch (err) {
+      return undefined;
     }
   };
 }

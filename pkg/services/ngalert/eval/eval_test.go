@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -591,7 +592,15 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			expressions := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
+			expressions := expr.ProvideService(
+				&setting.Cfg{ExpressionsEnabled: true},
+				nil,
+				nil,
+				featuremgmt.WithFeatures(),
+				nil,
+				tracing.InitializeTracerForTest(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
+			)
 			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
 
@@ -710,7 +719,19 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()))
+			evaluator := NewEvaluatorFactory(
+				setting.UnifiedAlertingSettings{},
+				cacheService,
+				expr.ProvideService(
+					&setting.Cfg{ExpressionsEnabled: true},
+					nil,
+					nil,
+					featuremgmt.WithFeatures(),
+					nil,
+					tracing.InitializeTracerForTest(),
+					dsquerierclient.NewNullQSDatasourceClientBuilder(),
+				),
+			)
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)
@@ -730,6 +751,67 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestQueryDataResponseToExecutionResults(t *testing.T) {
+	t.Run("should set datasource type for captured values", func(t *testing.T) {
+		c := models.Condition{
+			Condition: "B",
+			Data: []models.AlertQuery{
+				{
+					RefID:         "A",
+					DatasourceUID: "test-ds",
+				},
+				{
+					RefID:         "B",
+					DatasourceUID: expr.DatasourceUID,
+				},
+			},
+		}
+
+		execResp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{
+						{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						},
+					},
+				},
+				"B": {
+					Frames: []*data.Frame{
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		results := queryDataResponseToExecutionResults(c, execResp)
+		evaluatedResults := evaluateExecutionResult(results, time.Now())
+
+		require.Len(t, evaluatedResults, 1)
+		result := evaluatedResults[0]
+
+		// Validate that IsDatasourceNode were correctly set
+		require.True(t, result.Values["A"].IsDatasourceNode)
+		require.False(t, result.Values["B"].IsDatasourceNode)
+	})
 }
 
 func TestEvaluate(t *testing.T) {
@@ -1054,6 +1136,109 @@ func TestEvaluate(t *testing.T) {
 				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=10 ], [ var='C' labels={foo=bar} value=1 ]",
 			}},
 		},
+		{
+			name: "range query with reducer includes only reducer and condition values in EvaluationString",
+			cond: models.Condition{
+				Condition: "C",
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						// This simulates a range query data response with time series data
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Time",
+									nil,
+									[]time.Time{time.Now(), time.Now().Add(10 * time.Second)},
+								),
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0), util.Pointer(20.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						// Reduce node
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(15.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(15.0),
+									},
+								},
+							},
+						}},
+					},
+					"C": {
+						// Threshold
+						Frames: []*data.Frame{{
+							RefID: "C",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(15.0),
+									},
+									{
+										Var:              "C",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(1.0),
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"B": {
+						Var:              "B",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            util.Pointer(15.0),
+					},
+					"C": {
+						Var:              "C",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            util.Pointer(1.0),
+					},
+				},
+				// Note the absence of "A" in the EvaluationString.
+				// For range queries, the raw datasource values are not included
+				EvaluationString: "[ var='B' labels={foo=bar} value=15 ], [ var='C' labels={foo=bar} value=1 ]",
+			}},
+		},
 	}
 
 	for _, tc := range cases {
@@ -1354,7 +1539,7 @@ func TestCreate(t *testing.T) {
 
 		factory := evaluatorImpl{
 			expressionService: fakeExpressionService{
-				buildHook: func(req *expr.Request) (expr.DataPipeline, error) {
+				buildHook: func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
 					if request != nil {
 						assert.Fail(t, "BuildPipeline was called twice but should be only once")
 					}
@@ -1377,15 +1562,15 @@ func TestCreate(t *testing.T) {
 
 type fakeExpressionService struct {
 	hook      func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
-	buildHook func(req *expr.Request) (expr.DataPipeline, error)
+	buildHook func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error)
 }
 
 func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 	return f.hook(ctx, now, pipeline)
 }
 
-func (f fakeExpressionService) BuildPipeline(req *expr.Request) (expr.DataPipeline, error) {
-	return f.buildHook(req)
+func (f fakeExpressionService) BuildPipeline(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
+	return f.buildHook(ctx, req)
 }
 
 type fakeNode struct {

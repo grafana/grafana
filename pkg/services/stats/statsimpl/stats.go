@@ -51,7 +51,6 @@ func (ss *sqlStatsService) getDashboardCount(ctx context.Context, orgs []*org.Or
 		}
 		count += dashsCount
 	}
-
 	return count, nil
 }
 
@@ -72,20 +71,16 @@ func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) 
 }
 
 func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	total := 0
+	total := int64(0)
 	for _, org := range orgs {
-		ctx, ident := identity.WithServiceIdentity(ctx, org.ID)
-		folders, err := ss.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
-			OrgID:        org.ID,
-			SignedInUser: ident,
-		})
+		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
+		folderCount, err := ss.folderSvc.CountFoldersInOrg(ctx, org.ID)
 		if err != nil {
 			return 0, err
 		}
-
-		total += len(folders)
+		total += folderCount
 	}
-	return int64(total), nil
+	return total, nil
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
@@ -156,18 +151,12 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, model.PanelElement)
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, model.VariableElement)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
 		sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
 		if ss.IsUnifiedAlertingEnabled() {
 			sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
-		}
-		// currently not supported when dashboards are in unified storage
-		if !ss.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-			sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanValue(false))
-			sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanValue(false))
 		}
 
 		sb.Write(ss.roleCounterSQL(ctx))

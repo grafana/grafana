@@ -1,35 +1,36 @@
-import { reportInteraction } from '@grafana/runtime';
-import { Button, Stack } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { t } from 'app/core/internationalization';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
-import { AccessControlAction } from 'app/types';
+import { t } from '@grafana/i18n';
+import { ToolbarButton } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-export function InviteUserButton() {
-  return config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) ? (
-    <Stack gap={2} alignItems="center">
-      <NavToolbarSeparator />
-      <Button
-        icon="add-user"
-        size="sm"
-        variant="secondary"
-        fill="solid"
-        onClick={() => {
-          reportInteraction('invite_user_button_clicked', {
-            placement: 'top_bar_right',
-          });
+import { performInviteUserClick, shouldRenderInviteUserButton } from './InviteUserButtonUtils';
 
-          const url = getExternalUserMngLinkUrl('invite-user-top-bar');
-          window.open(url.toString(), '_blank');
-        }}
-        tooltip={t('navigation.invite-user.invite-tooltip', 'Invite new member')}
-      >
-        {t('navigation.invite-user.invite-button', 'Invite')}
-      </Button>
-      <NavToolbarSeparator />
-    </Stack>
-  ) : null;
+export function InviteUserButton() {
+  const isLargeScreen = useMediaQueryMinWidth('lg');
+
+  const handleClick = () => {
+    try {
+      performInviteUserClick('top_bar_right', 'invite-user-top-bar');
+    } catch (error) {
+      console.error('Failed to handle invite user click:', error);
+    }
+  };
+
+  return (
+    shouldRenderInviteUserButton() && (
+      <>
+        <ToolbarButton
+          icon="add-user"
+          iconOnly={!isLargeScreen}
+          onClick={handleClick}
+          tooltip={t('navigation.invite-user.invite-tooltip', 'Invite user')}
+          aria-label={t('navigation.invite-user.invite-tooltip', 'Invite user')}
+        >
+          {isLargeScreen ? t('navigation.invite-user.invite-button', 'Invite') : undefined}
+        </ToolbarButton>
+        <NavToolbarSeparator />
+      </>
+    )
+  );
 }

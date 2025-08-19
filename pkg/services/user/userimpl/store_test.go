@@ -3,12 +3,16 @@ package userimpl
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -34,7 +38,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	ss, cfg := db.InitTestDBWithCfg(t)
-	quotaService := quotaimpl.ProvideService(ss, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), ss, cfgProvider)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
@@ -393,7 +399,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			_, err = userStore.GetSignedInUser(context.Background(),
 				&user.GetSignedInUserQuery{
 					OrgID:  users[1].OrgID,
-					UserID: userID}) // zero
+					UserID: userID,
+				}) // zero
 			require.Error(t, err)
 		}
 	})
@@ -736,6 +743,47 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.True(t, usr.IsDisabled)
 	})
 
+	t.Run("Update IsProvisioned", func(t *testing.T) {
+		// Create a user with IsProvisioned set to false (default)
+		id, err := userStore.Insert(context.Background(), &user.User{
+			Name:    "provisioned_user",
+			Email:   "provisioned@test.com",
+			Login:   "provisioned_user",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		// Verify initial state
+		usr, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.False(t, usr.IsProvisioned)
+
+		// Update user to set IsProvisioned to true
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:        id,
+			IsProvisioned: boolPtr(true),
+		})
+		require.NoError(t, err)
+
+		// Verify IsProvisioned is now true
+		usr, err = userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.True(t, usr.IsProvisioned)
+
+		// Update user to set IsProvisioned to false
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:        id,
+			IsProvisioned: boolPtr(false),
+		})
+		require.NoError(t, err)
+
+		// Verify IsProvisioned is now false
+		usr, err = userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.False(t, usr.IsProvisioned)
+	})
+
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
 		ss = db.InitTestDB(t)
 
@@ -848,6 +896,105 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		assert.Equal(t, queryResult.OrgName, "user1@test.com")
 		assert.Equal(t, queryResult.IsGrafanaAdmin, false)
 	})
+
+	t.Run("Can get users by UID list", func(t *testing.T) {
+		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
+				Email:      fmt.Sprint("USERLISTUIDTEST", i, "@test.com"),
+				Name:       fmt.Sprint("USERLISTUIDTEST", i),
+				Login:      fmt.Sprint("loginUSERLISTUIDTEST", i),
+				IsDisabled: false,
+			}
+		})
+
+		sort.Slice(users, func(i, j int) bool {
+			return users[i].ID < users[j].ID
+		})
+
+		alluids := make([]string, 0, 5)
+		for _, user := range users {
+			alluids = append(alluids, user.UID)
+		}
+
+		resultOnlyUIDs, err := userStore.ListByIdOrUID(context.Background(), alluids, []int64{})
+		require.NoError(t, err)
+
+		sort.Slice(resultOnlyUIDs, func(i, j int) bool {
+			return resultOnlyUIDs[i].ID < resultOnlyUIDs[j].ID
+		})
+		require.Equal(t, len(resultOnlyUIDs), len(users))
+		ignoreTimeFields := cmpopts.IgnoreFields(user.User{}, "Created", "Updated", "LastSeenAt")
+		if diff := cmp.Diff(users, resultOnlyUIDs, ignoreTimeFields); diff != "" {
+			t.Errorf("structs don't match (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("Can get users by ID list", func(t *testing.T) {
+		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
+				Email:      fmt.Sprint("USERLISTIDTEST", i, "@test.com"),
+				Name:       fmt.Sprint("USERLISTIDTEST", i),
+				Login:      fmt.Sprint("loginUSERLISTIDTEST", i),
+				IsDisabled: false,
+			}
+		})
+
+		sort.Slice(users, func(i, j int) bool {
+			return users[i].ID < users[j].ID
+		})
+
+		allids := make([]int64, 0, 5)
+		for _, user := range users {
+			allids = append(allids, user.ID)
+		}
+
+		resultOnlyIDs, err := userStore.ListByIdOrUID(context.Background(), []string{}, allids)
+		require.NoError(t, err)
+
+		sort.Slice(resultOnlyIDs, func(i, j int) bool {
+			return resultOnlyIDs[i].ID < resultOnlyIDs[j].ID
+		})
+		ignoreTimeFields := cmpopts.IgnoreFields(user.User{}, "Created", "Updated", "LastSeenAt")
+		if diff := cmp.Diff(users, resultOnlyIDs, ignoreTimeFields); diff != "" {
+			t.Errorf("structs don't match (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("Can get users by UID and ID list", func(t *testing.T) {
+		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
+				Email:      fmt.Sprint("USERLISTUIDANDIDTEST", i, "@test.com"),
+				Name:       fmt.Sprint("USERLISTUIDANDIDTEST", i),
+				Login:      fmt.Sprint("loginUSERLISTUIDANDIDTEST", i),
+				IsDisabled: false,
+			}
+		})
+
+		sort.Slice(users, func(i, j int) bool {
+			return users[i].ID < users[j].ID
+		})
+
+		ids := make([]int64, 0, 2)
+		uids := make([]string, 0, 3)
+		for i, user := range users {
+			if i < 2 {
+				ids = append(ids, user.ID)
+			} else {
+				uids = append(uids, user.UID)
+			}
+		}
+
+		resultOnlyIDs, err := userStore.ListByIdOrUID(context.Background(), uids, ids)
+		require.NoError(t, err)
+
+		sort.Slice(resultOnlyIDs, func(i, j int) bool {
+			return resultOnlyIDs[i].ID < resultOnlyIDs[j].ID
+		})
+		ignoreTimeFields := cmpopts.IgnoreFields(user.User{}, "Created", "Updated", "LastSeenAt")
+		if diff := cmp.Diff(users, resultOnlyIDs, ignoreTimeFields); diff != "" {
+			t.Errorf("structs don't match (-want +got):\n%s", diff)
+		}
+	})
 }
 
 func TestIntegrationUserUpdate(t *testing.T) {
@@ -905,24 +1052,29 @@ func TestIntegrationUserUpdate(t *testing.T) {
 	})
 }
 
-func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.CreateUserCommand) []user.User {
+func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.CreateUserCommand) []*user.User {
 	t.Helper()
 
-	users := make([]user.User, 5)
+	users := make([]*user.User, 5)
 	for i := 0; i < 5; i++ {
 		cmd := fn(i)
 		user, err := svc.Create(context.Background(), cmd)
 		require.Nil(t, err)
-		users[i] = *user
+		users[i] = user
 	}
 
 	return users
 }
 
-func TestMetricsUsage(t *testing.T) {
+func TestIntegrationMetricsUsage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	quotaService := quotaimpl.ProvideService(ss, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), ss, cfgProvider)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 
@@ -981,7 +1133,9 @@ func assertEqualUser(t *testing.T, expected, got *user.User) {
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(

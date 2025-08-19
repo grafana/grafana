@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { UserDTO } from '../../../types';
+import { UserDTO } from 'app/types/user';
 
 import { UsersTable, UsersTableProps } from './UsersTable';
 

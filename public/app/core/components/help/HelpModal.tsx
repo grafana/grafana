@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
 const getShortcuts = (modKey: string) => {
@@ -129,8 +129,24 @@ const getShortcuts = (modKey: string) => {
           description: t('help-modal.shortcuts-description.toggle-panel-fullscreen', 'Toggle panel fullscreen view'),
         },
         {
+          keys: ['p', 'u'],
+          description: t('help-modal.shortcuts-description.open-share-link-drawer', 'Share panel link'),
+        },
+        {
+          keys: ['p', 'e'],
+          description: t('help-modal.shortcuts-description.open-share-embed-drawer', 'Share panel embed'),
+        },
+        {
           keys: ['p', 's'],
-          description: t('help-modal.shortcuts-description.open-shared-modal', 'Open Panel Share Modal'),
+          description: t('help-modal.shortcuts-description.open-shared-modal', 'Share panel snapshot'),
+        },
+        {
+          keys: ['p', 'x'],
+          description: t('help-modal.shortcuts-description.explore-panel', 'Explore panel'),
+        },
+        {
+          keys: ['i'],
+          description: t('help-modal.shortcuts-description.inspect-panel', 'Inspect panel'),
         },
         { keys: ['p', 'd'], description: t('help-modal.shortcuts-description.duplicate-panel', 'Duplicate Panel') },
         { keys: ['p', 'r'], description: t('help-modal.shortcuts-description.remove-panel', 'Remove Panel') },

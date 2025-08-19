@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
-import { isDisabledAngularPlugin } from '../../helpers';
+import { getExternalManageLink, isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -134,9 +136,14 @@ export function InstallControlsButton({
     <>
       <ConfirmModal
         isOpen={isConfirmModalVisible}
-        title={`Uninstall ${plugin.name}`}
-        body="Are you sure you want to uninstall this plugin?"
-        confirmText="Confirm"
+        title={t('plugins.install-controls-button.title-uninstall-modal', 'Uninstall {{plugin}}', {
+          plugin: plugin.name,
+        })}
+        body={t(
+          'plugins.install-controls-button.uninstall-controls.body-uninstall-plugin',
+          'Are you sure you want to uninstall this plugin?'
+        )}
+        confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-confirm', 'Confirm')}
         icon="exclamation-triangle"
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}
@@ -161,6 +168,22 @@ export function InstallControlsButton({
     );
   }
 
+  const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
+
+  // Show learn more button for an enterprise plugin if your on OSS
+  if (plugin.isEnterprise && isOpenSource) {
+    return (
+      <LinkButton
+        href={`${getExternalManageLink(plugin.id)}?utm_source=grafana_catalog_learn_more`}
+        target="_blank"
+        rel="noopener noreferrer"
+        icon="external-link-alt"
+      >
+        <Trans i18nKey="plugins.install-controls-warning.learn-more">Learn more</Trans>
+      </LinkButton>
+    );
+  }
+
   if (!plugin.isPublished || hasInstallWarning) {
     // Cannot be updated or installed
     return null;
@@ -173,17 +196,23 @@ export function InstallControlsButton({
       <Stack alignItems="flex-start" width="auto" height="auto">
         {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
           <Button disabled={disableUpdate} onClick={onUpdate}>
-            {isInstalling ? 'Updating' : 'Update'}
+            {isInstalling
+              ? t('plugins.install-controls.updating', 'Updating')
+              : t('plugins.install-controls.update', 'Update')}
           </Button>
         )}
         {uninstallControls}
       </Stack>
     );
   }
-  const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
+
+  const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
+
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
-      {isInstalling ? 'Installing' : 'Install'}
+      {isInstalling
+        ? t('plugins.install-controls.installing', 'Installing')
+        : t('plugins.install-controls.install', 'Install')}
     </Button>
   );
 }

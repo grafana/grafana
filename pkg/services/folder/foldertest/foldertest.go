@@ -8,25 +8,59 @@ import (
 )
 
 type FakeService struct {
+	ExpectedFoldersRef       []*folder.FolderReference
 	ExpectedFolders          []*folder.Folder
 	ExpectedFolder           *folder.Folder
 	ExpectedHitList          model.HitList
 	ExpectedError            error
 	ExpectedDescendantCounts map[string]int64
 	LastQuery                folder.GetFoldersQuery
+	foldersByUID             map[string]*folder.Folder
 }
 
 func NewFakeService() *FakeService {
-	return &FakeService{}
+	return &FakeService{
+		foldersByUID: make(map[string]*folder.Folder),
+	}
+}
+
+func (s *FakeService) AddFolder(f *folder.Folder) {
+	if s.foldersByUID == nil {
+		s.foldersByUID = make(map[string]*folder.Folder)
+	}
+	s.foldersByUID[f.UID] = f
+	s.ExpectedFolders = append(s.ExpectedFolders, f)
+}
+
+func (s *FakeService) SetFolders(folders map[string]*folder.Folder) {
+	s.foldersByUID = folders
+	s.ExpectedFolders = make([]*folder.Folder, 0, len(folders))
+	for _, f := range folders {
+		s.ExpectedFolders = append(s.ExpectedFolders, f)
+	}
 }
 
 var _ folder.Service = (*FakeService)(nil)
 
-func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
+func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	if s.ExpectedError != nil {
+		return nil, s.ExpectedError
+	}
+
+	if s.ExpectedFoldersRef != nil {
+		return s.ExpectedFoldersRef, nil
+	}
+
+	var result []*folder.FolderReference
+	for _, f := range s.ExpectedFolders {
+		if f.OrgID == q.OrgID && f.ParentUID == q.UID {
+			result = append(result, f.ToFolderReference())
+		}
+	}
+	return result, nil
 }
-func (s *FakeService) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
+func (s *FakeService) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	return s.ExpectedFoldersRef, s.ExpectedError
 }
 
 func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -44,6 +78,11 @@ func (s *FakeService) CreateLegacy(ctx context.Context, cmd *folder.CreateFolder
 }
 
 func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+	if q.UID != nil && s.foldersByUID != nil {
+		if f, exists := s.foldersByUID[*q.UID]; exists {
+			return f, nil
+		}
+	}
 	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
@@ -83,7 +122,23 @@ func (s *FakeService) GetDescendantCountsLegacy(ctx context.Context, q *folder.G
 }
 
 func (s *FakeService) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
+	if s.foldersByUID != nil && len(q.UIDs) > 0 {
+		var result []*folder.Folder
+		for _, uid := range q.UIDs {
+			if f, exists := s.foldersByUID[uid]; exists {
+				result = append(result, f)
+			}
+		}
+		return result, nil
+	}
+
+	folders := make([]*folder.Folder, 0, len(s.ExpectedFolders))
+	for _, f := range s.ExpectedFolders {
+		if f.OrgID == q.OrgID {
+			folders = append(folders, f)
+		}
+	}
+	return folders, s.ExpectedError
 }
 
 func (s *FakeService) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
@@ -93,4 +148,8 @@ func (s *FakeService) SearchFolders(ctx context.Context, q folder.SearchFoldersQ
 func (s *FakeService) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	s.LastQuery = q
 	return s.ExpectedFolders, s.ExpectedError
+}
+
+func (s *FakeService) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	return int64(len(s.ExpectedFolders)), s.ExpectedError
 }

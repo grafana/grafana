@@ -41,9 +41,10 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				QueryOffset: util.Pointer(prommodel.Duration(1 * time.Minute)),
 				Rules: []PrometheusRule{
 					{
-						Alert: "alert-1",
-						Expr:  "cpu_usage > 80",
-						For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Alert:         "alert-1",
+						Expr:          "cpu_usage > 80",
+						For:           util.Pointer(prommodel.Duration(5 * time.Minute)),
+						KeepFiringFor: util.Pointer(prommodel.Duration(60 * time.Second)),
 						Labels: map[string]string{
 							"severity": "critical",
 						},
@@ -56,22 +57,76 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:      "rules with keep_firing_for are not supported",
+			// If the rule group has no recording rules, the target datasource
+			// can be anything and should not be validated.
+			name:      "alert rules with non-prometheus target datasource",
 			orgID:     1,
 			namespace: "namespaceUID",
 			promGroup: PrometheusRuleGroup{
 				Name:     "test-group-1",
-				Interval: prommodel.Duration(1 * time.Minute),
+				Interval: prommodel.Duration(10 * time.Second),
 				Rules: []PrometheusRule{
 					{
-						Alert:         "alert-1",
-						Expr:          "up == 0",
-						KeepFiringFor: util.Pointer(prommodel.Duration(5 * time.Minute)),
+						Alert: "alert-1",
+						Expr:  "up == 0",
 					},
 				},
 			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
+			expectError: false,
+		},
+		{
+			// If the rule group has recording rules and a non-prometheus target datasource,
+			// we should return an error
+			name:      "recording rules with non-prometheus target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "test-group-1",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
 			expectError: true,
-			errorMsg:    "keep_firing_for is not supported",
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
+		},
+		{
+			// If the rule group has recording rules and a non-prometheus target datasource,
+			// we should return an error
+			name:      "mixed group with both alert and recording rules requires prometheus target datasource",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name:     "mixed-rules-group",
+				Interval: prommodel.Duration(10 * time.Second),
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+					{
+						Record: "some_metric",
+						Expr:   "sum(rate(http_requests_total[5m]))",
+					},
+				},
+			},
+			config: Config{
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: "non-prometheus-datasource",
+			},
+			expectError: true,
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
 		},
 		{
 			name:      "rule group with empty interval",
@@ -87,6 +142,22 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				},
 			},
 			expectError: false,
+		},
+		{
+			name:      "rule group with empty name",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name: "",
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "rule group name must not be empty",
 		},
 		{
 			name:      "recording rule",
@@ -258,9 +329,16 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				}
 				require.Equal(t, expectedFor, grafanaRule.For, tc.name)
 
+				var expectedKeepFiringFor time.Duration
+				if promRule.KeepFiringFor != nil {
+					expectedKeepFiringFor = time.Duration(*promRule.KeepFiringFor)
+				}
+				require.Equal(t, expectedKeepFiringFor, grafanaRule.KeepFiringFor, tc.name)
+
 				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
 				maps.Copy(expectedLabels, tc.promGroup.Labels)
 				maps.Copy(expectedLabels, promRule.Labels)
+				expectedLabels = withInternalLabel(expectedLabels)
 
 				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
 				u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
@@ -280,8 +358,17 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 				require.Equal(t, models.Duration(evalOffset), grafanaRule.Data[0].RelativeTimeRange.To)
 				require.Equal(t, models.Duration(10*time.Minute+evalOffset), grafanaRule.Data[0].RelativeTimeRange.From)
-				require.Equal(t, util.Pointer(1), grafanaRule.MissingSeriesEvalsToResolve)
+				require.Equal(t, util.Pointer(int64(1)), grafanaRule.MissingSeriesEvalsToResolve)
 
+				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
+				require.Equal(t, models.OK, grafanaRule.NoDataState)
+
+				// Update the rule with the group-level labels,
+				// to test that they are saved to the rule definition.
+				mergedLabels := make(map[string]string)
+				maps.Copy(mergedLabels, tc.promGroup.Labels)
+				maps.Copy(mergedLabels, promRule.Labels)
+				promRule.Labels = mergedLabels
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
 				require.Equal(t, string(originalRuleDefinition), grafanaRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
@@ -486,11 +573,11 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		// Check that the labels are merged and the rule label takes precedence
 		require.Equal(
 			t,
-			map[string]string{
+			withInternalLabel(map[string]string{
 				"group_label":  "group_value",
 				"rule_label":   "rule_value",
 				"common_label": "rule_value",
-			},
+			}),
 			grafanaGroup.Rules[0].Labels,
 		)
 	})
@@ -522,11 +609,11 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		// Check that the labels are merged and the rule label takes precedence
 		require.Equal(
 			t,
-			map[string]string{
+			withInternalLabel(map[string]string{
 				"group_label":  "group_value",
 				"rule_label":   "rule_value",
 				"common_label": "rule_value",
-			},
+			}),
 			grafanaGroup.Rules[0].Labels,
 		)
 	})
@@ -550,8 +637,7 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
 		require.NoError(t, err)
 		require.Len(t, grafanaGroup.Rules, 1)
-
-		require.Equal(t, promGroup.Labels, grafanaGroup.Rules[0].Labels)
+		require.Equal(t, withInternalLabel(promGroup.Labels), grafanaGroup.Rules[0].Labels)
 	})
 
 	t.Run("rule and group with nil labels", func(t *testing.T) {
@@ -569,7 +655,78 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
 		require.NoError(t, err)
 		require.Len(t, grafanaGroup.Rules, 1)
-		require.Empty(t, grafanaGroup.Rules[0].Labels)
+		require.Equal(t, withInternalLabel(map[string]string{}), grafanaGroup.Rules[0].Labels)
+	})
+}
+
+func TestPrometheusRulesToGrafana_ExtraLabels(t *testing.T) {
+	cfg := Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
+		ExtraLabels: map[string]string{
+			"extra_label":  "extra_value",
+			"common_label": "extra_value",
+			"rule_label":   "value_from_extra_labels",
+		},
+	}
+	converter, err := NewConverter(cfg)
+	require.NoError(t, err)
+
+	t.Run("extra labels are merged with group and rule labels", func(t *testing.T) {
+		promGroup := PrometheusRuleGroup{
+			Name:     "test-group-1",
+			Interval: prommodel.Duration(10 * time.Second),
+			Labels: map[string]string{
+				"group_label":  "group_value",
+				"common_label": "group_value",
+			},
+			Rules: []PrometheusRule{
+				{
+					Alert: "alert-1",
+					Expr:  "cpu_usage > 80",
+					Labels: map[string]string{
+						"rule_label": "rule_value",
+					},
+				},
+			},
+		}
+
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
+		require.NoError(t, err)
+		require.Len(t, grafanaGroup.Rules, 1)
+
+		expectedLabels := withInternalLabel(map[string]string{
+			"extra_label":  "extra_value",
+			"common_label": "group_value",
+			"group_label":  "group_value",
+			"rule_label":   "rule_value",
+		})
+		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
+	})
+
+	t.Run("extra labels are not applied to recording rules", func(t *testing.T) {
+		promGroup := PrometheusRuleGroup{
+			Name:     "test-group-2",
+			Interval: prommodel.Duration(10 * time.Second),
+			Rules: []PrometheusRule{
+				{
+					Record: "http_requests_total:rate5m",
+					Expr:   "rate(http_requests_total[5m])",
+				},
+			},
+		}
+
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
+		require.NoError(t, err)
+		require.Len(t, grafanaGroup.Rules, 1)
+
+		expectedLabels := withInternalLabel(make(map[string]string))
+		require.Equal(t, expectedLabels, grafanaGroup.Rules[0].Labels)
+
+		for key := range cfg.ExtraLabels {
+			require.NotContains(t, grafanaGroup.Rules[0].Labels, key)
+		}
 	})
 }
 
@@ -745,4 +902,110 @@ func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPrometheusRulesToGrafana_NotificationSettings(t *testing.T) {
+	orgID := int64(1)
+	namespace := "namespace"
+
+	promGroup := PrometheusRuleGroup{
+		Name: "test-group",
+		Rules: []PrometheusRule{
+			{
+				Alert: "test-alert",
+				Expr:  "up == 0",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name                 string
+		notificationSettings []models.NotificationSettings
+	}{
+		{
+			name: "with notification settings specified",
+			notificationSettings: []models.NotificationSettings{
+				{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"alertname", "instance"},
+				},
+			},
+		},
+		{
+			name:                 "without notification settings",
+			notificationSettings: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Config{
+				DatasourceUID:        "datasource-uid",
+				DatasourceType:       datasources.DS_PROMETHEUS,
+				DefaultInterval:      1 * time.Minute,
+				NotificationSettings: tc.notificationSettings,
+			}
+
+			converter, err := NewConverter(cfg)
+			require.NoError(t, err)
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+			require.NoError(t, err)
+			require.Len(t, grafanaGroup.Rules, 1)
+
+			if tc.notificationSettings != nil {
+				require.NotNil(t, grafanaGroup.Rules[0].NotificationSettings)
+				require.Len(t, grafanaGroup.Rules[0].NotificationSettings, len(tc.notificationSettings))
+				require.Equal(t, tc.notificationSettings, grafanaGroup.Rules[0].NotificationSettings)
+			} else {
+				require.Nil(t, grafanaGroup.Rules[0].NotificationSettings)
+			}
+		})
+	}
+}
+
+func TestQueryModelContainsRequiredParameters(t *testing.T) {
+	cfg := Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 1 * time.Minute,
+	}
+	converter, err := NewConverter(cfg)
+	require.NoError(t, err)
+
+	promRule := PrometheusRule{
+		Alert: "test-alert",
+		Expr:  "up == 0",
+	}
+
+	queries, err := converter.createQuery(promRule.Expr, false, PrometheusRuleGroup{})
+	require.NoError(t, err)
+	require.Len(t, queries, 3)
+
+	for _, query := range queries {
+		var model map[string]any
+		err = json.Unmarshal(query.Model, &model)
+		require.NoError(t, err)
+
+		// Check intervalMs
+		intervalMs, exists := model["intervalMs"]
+		require.True(t, exists)
+		_, isNumber := intervalMs.(float64)
+		require.True(t, isNumber, "intervalMs should be a number")
+
+		// Check maxDataPoints
+		maxDataPoints, exists := model["maxDataPoints"]
+		require.True(t, exists)
+		_, isNumber = maxDataPoints.(float64)
+		require.True(t, isNumber, "maxDataPoints should be a number")
+	}
+}
+
+func withInternalLabel(l map[string]string) map[string]string {
+	result := map[string]string{
+		models.ConvertedPrometheusRuleLabel: "true",
+	}
+	maps.Copy(result, l)
+
+	return result
 }

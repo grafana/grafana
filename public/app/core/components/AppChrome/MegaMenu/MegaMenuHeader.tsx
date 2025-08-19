@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
 
 import { Branding } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
 export interface Props {
   handleMegaMenu: () => void;
@@ -22,6 +22,7 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
+
   const styles = getStyles(theme);
 
   return (
@@ -78,8 +79,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     justifyContent: 'space-between',
     padding: theme.spacing(0, 1, 0, 0.75),
-    height: TOP_BAR_LEVEL_HEIGHT,
-    minHeight: TOP_BAR_LEVEL_HEIGHT,
+    height: getChromeHeaderLevelHeight(),
+    flexShrink: 0,
   }),
   img: css({
     alignSelf: 'center',

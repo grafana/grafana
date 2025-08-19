@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -61,14 +61,14 @@ func newNotifier(b *backend) (eventNotifier, error) {
 }
 
 type channelNotifier struct {
-	log        log.Logger
+	log        logging.Logger
 	bufferSize int
 
 	mu          sync.RWMutex
 	subscribers map[chan *resource.WrittenEvent]bool
 }
 
-func newChannelNotifier(bufferSize int, log log.Logger) *channelNotifier {
+func newChannelNotifier(bufferSize int, log logging.Logger) *channelNotifier {
 	return &channelNotifier{
 		subscribers: make(map[chan *resource.WrittenEvent]bool),
 		log:         log,

@@ -1,7 +1,7 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Role } from 'app/types';
+import { Role } from 'app/types/accessControl';
 
-import { addDisplayNameForFixedRole } from './utils';
+import { addDisplayNameForFixedRole, addFilteredDisplayName } from './utils';
 
 export const fetchRoleOptions = async (orgId?: number): Promise<Role[]> => {
   let rolesUrl = '/api/access-control/roles?delegatable=true';
@@ -12,7 +12,7 @@ export const fetchRoleOptions = async (orgId?: number): Promise<Role[]> => {
   if (!roles || !roles.length) {
     return [];
   }
-  return roles.map(addDisplayNameForFixedRole);
+  return roles.map(addDisplayNameForFixedRole).map(addFilteredDisplayName);
 };
 
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
@@ -25,7 +25,7 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     if (!roles || !roles.length) {
       return [];
     }
-    return roles.map(addDisplayNameForFixedRole);
+    return roles.map(addDisplayNameForFixedRole).map(addFilteredDisplayName);
   } catch (error) {
     if (isFetchError(error)) {
       error.isHandled = true;
@@ -57,7 +57,7 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
     if (!roles || !roles.length) {
       return [];
     }
-    return roles.map(addDisplayNameForFixedRole);
+    return roles.map(addDisplayNameForFixedRole).map(addFilteredDisplayName);
   } catch (error) {
     if (isFetchError(error)) {
       error.isHandled = true;

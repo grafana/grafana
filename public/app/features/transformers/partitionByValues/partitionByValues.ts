@@ -8,8 +8,8 @@ import {
   DataTransformContext,
   FieldMatcher,
 } from '@grafana/data';
-import { getMatcherConfig } from '@grafana/data/src/transformations/transformers/filterByName';
-import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
+import { getMatcherConfig, noopTransformer } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 
 import { partition } from './partition';
 
@@ -63,35 +63,39 @@ function buildFieldLabels(names: string[], values: unknown[]) {
   return labels;
 }
 
-export const partitionByValuesTransformer: SynchronousDataTransformerInfo<PartitionByValuesTransformerOptions> = {
-  id: DataTransformerID.partitionByValues,
-  name: 'Partition by values',
-  description: `Splits a one-frame dataset into multiple series discriminated by unique/enum values in one or more fields.`,
-  defaultOptions: {
-    keepFields: false,
-  },
+export const getPartitionByValuesTransformer: () => SynchronousDataTransformerInfo<PartitionByValuesTransformerOptions> =
+  () => ({
+    id: DataTransformerID.partitionByValues,
+    name: t('transformers.get-partition-by-values-transformer.name.partition-by-values', 'Partition by values'),
+    description: t(
+      'transformers.get-partition-by-values-transformer.description.split-oneframe-dataset-multiple-series',
+      'Split a one-frame dataset into multiple series.'
+    ),
+    defaultOptions: {
+      keepFields: false,
+    },
 
-  operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => partitionByValuesTransformer.transformer(options, ctx)(data))),
+    operator: (options, ctx) => (source) =>
+      source.pipe(map((data) => getPartitionByValuesTransformer().transformer(options, ctx)(data))),
 
-  transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
-    const matcherConfig = getMatcherConfig({ names: options.fields });
+    transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
+      const matcherConfig = getMatcherConfig({ names: options.fields });
 
-    if (!matcherConfig) {
-      return noopTransformer.transformer({}, ctx);
-    }
-
-    const matcher = getFieldMatcher(matcherConfig);
-
-    return (data: DataFrame[]) => {
-      if (!data.length) {
-        return data;
+      if (!matcherConfig) {
+        return noopTransformer.transformer({}, ctx);
       }
-      // error if > 1 frame?
-      return partitionByValues(data[0], matcher, options);
-    };
-  },
-};
+
+      const matcher = getFieldMatcher(matcherConfig);
+
+      return (data: DataFrame[]) => {
+        if (!data.length) {
+          return data;
+        }
+        // error if > 1 frame?
+        return partitionByValues(data[0], matcher, options);
+      };
+    },
+  });
 
 // Split a single frame dataset into multiple frames based on values in a set of fields
 export function partitionByValues(

@@ -7,13 +7,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -94,15 +95,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		SignedInUser: user,
 		OrgID:        orgId,
 	}
-	if options.Continue != "" {
-		query.Page = paging.page
-		query.Limit = paging.limit
-	} else if options.Limit > 0 {
-		query.Limit = options.Limit
-		query.Page = 1
-		// also need to update the paging token so the continue token is correct
-		paging.limit = options.Limit
-		paging.page = 1
+
+	// paging is always retrieved from the continue token
+	query.Limit = paging.limit
+	query.Page = paging.page
+
+	if options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
+		query.WithFullpath = true
+		query.WithFullpathUIDs = true
 	}
 
 	hits, err := s.service.GetFoldersLegacy(ctx, query)
@@ -110,7 +110,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &v0alpha1.FolderList{}
+	list := &folders.FolderList{}
 	for _, v := range hits {
 		r, err := convertToK8sResource(v, s.namespacer)
 		if err != nil {
@@ -172,7 +172,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	p, ok := obj.(*v0alpha1.Folder)
+	p, ok := obj.(*folders.Folder)
 	if !ok {
 		return nil, fmt.Errorf("expected folder?")
 	}
@@ -189,12 +189,16 @@ func (s *legacyStorage) Create(ctx context.Context,
 	}
 
 	parent := accessor.GetFolder()
+	descr := ""
+	if p.Spec.Description != nil {
+		descr = *p.Spec.Description
+	}
 
 	out, err := s.service.CreateLegacy(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
 		UID:          p.Name,
 		Title:        p.Spec.Title,
-		Description:  p.Spec.Description,
+		Description:  descr,
 		OrgID:        info.OrgID,
 		ParentUID:    parent,
 	})
@@ -242,11 +246,11 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return oldObj, created, err
 	}
-	f, ok := obj.(*v0alpha1.Folder)
+	f, ok := obj.(*folders.Folder)
 	if !ok {
 		return nil, created, fmt.Errorf("expected folder after update")
 	}
-	old, ok := oldObj.(*v0alpha1.Folder)
+	old, ok := oldObj.(*folders.Folder)
 	if !ok {
 		return nil, created, fmt.Errorf("expected old object to be a folder also")
 	}
@@ -263,7 +267,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 			NewParentUID: newParent,
 		})
 		if err != nil {
-			return nil, created, fmt.Errorf("error changing parent folder spec")
+			return nil, created, err
 		}
 	}
 
@@ -279,7 +283,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		changed = true
 	}
 	if f.Spec.Description != old.Spec.Description {
-		cmd.NewDescription = &f.Spec.Description
+		cmd.NewDescription = f.Spec.Description
 		changed = true
 	}
 	if changed {
@@ -307,17 +311,19 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*v0alpha1.Folder)
+	p, ok := v.(*folders.Folder)
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
+
 	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
 		UID:          name,
 		OrgID:        info.OrgID,
 		SignedInUser: user,
 
 		// This would cascade delete into alert rules
-		ForceDeleteRules: false,
+		ForceDeleteRules:  false,
+		RemovePermissions: utils.GetFolderRemovePermissions(ctx, true),
 	})
 	return p, true, err // true is instant delete
 }

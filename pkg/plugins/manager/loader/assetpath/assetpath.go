@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
@@ -16,107 +18,77 @@ import (
 // It supports core plugins, external plugins stored on the local filesystem, and external plugins stored
 // on the plugins CDN, and it will switch to the correct implementation depending on the plugin and the config.
 type Service struct {
-	cdn *pluginscdn.Service
-	cfg *config.PluginManagementCfg
+	cdn           *pluginscdn.Service
+	cfg           *config.PluginManagementCfg
+	assetProvider pluginassets.Provider
 }
 
-func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *Service {
-	return &Service{cfg: cfg, cdn: cdn}
-}
-
-type PluginInfo struct {
-	pluginJSON plugins.JSONData
-	class      plugins.Class
-	fs         plugins.FS
-	parent     *PluginInfo
-}
-
-func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, fs plugins.FS, parent *PluginInfo) PluginInfo {
-	return PluginInfo{
-		pluginJSON: pluginJSON,
-		class:      class,
-		fs:         fs,
-		parent:     parent,
-	}
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, assetProvider pluginassets.Provider) *Service {
+	return &Service{cfg: cfg, cdn: cdn, assetProvider: assetProvider}
 }
 
 func DefaultService(cfg *config.PluginManagementCfg) *Service {
-	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg)}
+	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg), assetProvider: fakes.NewFakeAssetProvider()}
 }
 
 // Base returns the base path for the specified plugin.
-func (s *Service) Base(n PluginInfo) (string, error) {
-	if n.class == plugins.ClassCore {
-		baseDir := getBaseDir(n.fs.Base())
-		return path.Join("public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
+func (s *Service) Base(n pluginassets.PluginInfo) (string, error) {
+	if s.cfg.Features.PluginAssetProvider {
+		return s.assetProvider.AssetPath(n)
 	}
-	if n.class == plugins.ClassCDN {
-		return n.fs.Base(), nil
+
+	if n.Class == plugins.ClassCDN {
+		return n.FS.Base(), nil
 	}
-	if s.cdn.PluginSupported(n.pluginJSON.ID) {
-		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "")
+	if s.cdn.PluginSupported(n.JsonData.ID) {
+		return s.cdn.AssetURL(n.JsonData.ID, n.JsonData.Info.Version, "")
 	}
-	if n.parent != nil {
-		relPath, err := n.parent.fs.Rel(n.fs.Base())
+	if n.Parent != nil {
+		relPath, err := n.Parent.FS.Rel(n.FS.Base())
 		if err != nil {
 			return "", err
 		}
-		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
-			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, relPath)
+		if s.cdn.PluginSupported(n.Parent.JsonData.ID) {
+			return s.cdn.AssetURL(n.Parent.JsonData.ID, n.Parent.JsonData.Info.Version, relPath)
 		}
-		return path.Join("public/plugins", n.parent.pluginJSON.ID, relPath), nil
 	}
 
-	return path.Join("public/plugins", n.pluginJSON.ID), nil
+	return path.Join("public/plugins", n.JsonData.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
-func (s *Service) Module(n PluginInfo) (string, error) {
-	if n.class == plugins.ClassCore {
-		if filepath.Base(n.fs.Base()) == "dist" {
-			// The core plugin has been built externally, use the module from the dist folder
-		} else {
-			baseDir := getBaseDir(n.fs.Base())
-			return path.Join("core:plugin", baseDir), nil
-		}
-	}
-	if n.class == plugins.ClassCDN {
-		return pluginscdn.JoinPath(n.fs.Base(), "module.js")
+func (s *Service) Module(n pluginassets.PluginInfo) (string, error) {
+	if s.cfg.Features.PluginAssetProvider {
+		return s.assetProvider.Module(n)
 	}
 
-	if s.cdn.PluginSupported(n.pluginJSON.ID) {
-		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "module.js")
-	}
-	if n.parent != nil {
-		relPath, err := n.parent.fs.Rel(n.fs.Base())
-		if err != nil {
-			return "", err
-		}
-		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
-			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(relPath, "module.js"))
-		}
-		return path.Join("public/plugins", n.parent.pluginJSON.ID, relPath, "module.js"), nil
+	if n.Class == plugins.ClassCore && filepath.Base(n.FS.Base()) != "dist" {
+		return path.Join("core:plugin", filepath.Base(n.FS.Base())), nil
 	}
 
-	return path.Join("public/plugins", n.pluginJSON.ID, "module.js"), nil
+	return s.RelativeURL(n, "module.js")
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
-func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
-	if n.class == plugins.ClassCDN {
-		return pluginscdn.JoinPath(n.fs.Base(), pathStr)
+func (s *Service) RelativeURL(n pluginassets.PluginInfo, pathStr string) (string, error) {
+	if s.cfg.Features.PluginAssetProvider {
+		return s.assetProvider.AssetPath(n, pathStr)
 	}
 
-	if s.cdn.PluginSupported(n.pluginJSON.ID) {
-		return s.cdn.NewCDNURLConstructor(n.pluginJSON.ID, n.pluginJSON.Info.Version).StringPath(pathStr)
+	if n.Class == plugins.ClassCDN {
+		return pluginscdn.JoinPath(n.FS.Base(), pathStr)
 	}
-	if n.parent != nil {
-		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
-			relPath, err := n.parent.fs.Rel(n.fs.Base())
+
+	if s.cdn.PluginSupported(n.JsonData.ID) {
+		return s.cdn.NewCDNURLConstructor(n.JsonData.ID, n.JsonData.Info.Version).StringPath(pathStr)
+	}
+	if n.Parent != nil {
+		if s.cdn.PluginSupported(n.Parent.JsonData.ID) {
+			relPath, err := n.Parent.FS.Rel(n.FS.Base())
 			if err != nil {
 				return "", err
 			}
-			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(relPath, pathStr))
+			return s.cdn.AssetURL(n.Parent.JsonData.ID, n.Parent.JsonData.Info.Version, path.Join(relPath, pathStr))
 		}
 	}
 	// Local
@@ -145,11 +117,21 @@ func (s *Service) DefaultLogoPath(pluginType plugins.Type) string {
 	return path.Join("public/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
 }
 
-func getBaseDir(pluginDir string) string {
-	baseDir := filepath.Base(pluginDir)
-	// Decoupled core plugins will be suffixed with "dist" if they have been built
-	if baseDir == "dist" {
-		return filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
+func (s *Service) GetTranslations(n pluginassets.PluginInfo) (map[string]string, error) {
+	pathToTranslations, err := s.RelativeURL(n, "locales")
+	if err != nil {
+		return nil, fmt.Errorf("get locales: %w", err)
 	}
-	return baseDir
+
+	// loop through all the languages specified in the plugin.json and add them to the list
+	translations := map[string]string{}
+	for _, language := range n.JsonData.Languages {
+		file := fmt.Sprintf("%s.json", n.JsonData.ID)
+		translations[language], err = url.JoinPath(pathToTranslations, language, file)
+		if err != nil {
+			return nil, fmt.Errorf("join path: %w", err)
+		}
+	}
+
+	return translations, nil
 }

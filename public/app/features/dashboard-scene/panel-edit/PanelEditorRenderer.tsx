@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -25,12 +26,10 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 0.8,
+      initialSize: 330,
+      usePixels: true,
       collapsed: isCollapsed,
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
+      collapseBelowPixels: 250,
     });
 
   useEffect(() => {
@@ -53,12 +52,15 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {splitterState.collapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
-                tooltip={'Open options pane'}
+                tooltip={t('dashboard-scene.panel-editor-renderer.tooltip-open-options-pane', 'Open options pane')}
                 icon={'arrow-to-right'}
                 onClick={onToggleCollapse}
                 variant="canvas"
                 className={styles.rotate180}
-                aria-label={'Open options pane'}
+                aria-label={t(
+                  'dashboard-scene.panel-editor-renderer.aria-label-open-options-pane',
+                  'Open options pane'
+                )}
               />
             </div>
           )}
@@ -83,9 +85,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       direction: 'column',
       dragPosition: 'start',
       initialSize: 0.5,
-      paneOptions: {
-        collapseBelowPixels: 150,
-      },
+      collapseBelowPixels: 150,
     });
 
   containerProps.className = cx(containerProps.className, styles.container);
@@ -127,13 +127,13 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
               {splitterState.collapsed && (
                 <div className={styles.expandDataPane}>
                   <Button
-                    tooltip={'Open query pane'}
+                    tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
                     icon={'arrow-to-right'}
                     onClick={onToggleCollapse}
                     variant="secondary"
                     size="sm"
                     className={styles.openDataPaneButton}
-                    aria-label={'Open query pane'}
+                    aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
                   />
                 </div>
               )}
@@ -195,6 +195,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       width: '100%',
       height: '100%',
+      overflow: 'unset',
     }),
     body: css({
       label: 'body',
@@ -207,6 +208,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
+      marginTop: theme.spacing(2),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      borderTopLeftRadius: theme.shape.radius.default,
     }),
     expandOptionsWrapper: css({
       display: 'flex',

@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { monacoTypes } from '@grafana/ui';
 
-import { emptyTags, testIntrinsics, v1Tags, v2Tags } from '../SearchTraceQLEditor/utils.test';
+import { v1Tags, v2Tags, emptyTags, testIntrinsics } from '../SearchTraceQLEditor/mocks';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { Scope, TempoJsonData } from '../types';

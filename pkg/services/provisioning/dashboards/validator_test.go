@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -30,7 +31,10 @@ const (
 	twoDashboardsWithUID   = "testdata/test-dashboards/two-dashboards-with-uid"
 )
 
-func TestDuplicatesValidator(t *testing.T) {
+func TestIntegrationDuplicatesValidator(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
@@ -44,7 +48,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	logger := log.New("test.logger")
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql)
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
@@ -52,7 +56,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), grafanasort.ProvideService())
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), grafanasort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"

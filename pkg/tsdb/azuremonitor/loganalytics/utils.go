@@ -1,27 +1,39 @@
 package loganalytics
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/andybalholm/brotli"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
-func AddCustomDataLink(frame data.Frame, dataLink data.DataLink) data.Frame {
+func AddCustomDataLink(frame data.Frame, dataLink data.DataLink, singleField bool) data.Frame {
 	for i := range frame.Fields {
 		if frame.Fields[i].Config == nil {
 			frame.Fields[i].Config = &data.FieldConfig{}
 		}
 
 		frame.Fields[i].Config.Links = append(frame.Fields[i].Config.Links, dataLink)
+
+		// Queries using the trace viz only need the link added to a single field
+		if singleField {
+			break
+		}
 	}
 	return frame
 }
+
+const SingleField bool = true
+const MultiField bool = false
 
 func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 	linkTitle := "View query in Azure Portal"
@@ -35,7 +47,7 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 		URL:         dl,
 	}
 
-	frame = AddCustomDataLink(frame, deepLink)
+	frame = AddCustomDataLink(frame, deepLink, MultiField)
 
 	return frame
 }
@@ -135,4 +147,41 @@ func ConvertTime(timeStamp string) (time.Time, error) {
 
 func GetDataVolumeRawQuery(table string) string {
 	return fmt.Sprintf("Usage \n| where DataType == \"%s\"\n| where IsBillable == true\n| summarize BillableDataGB = round(sum(Quantity) / 1000, 3)", table)
+}
+
+// This function handles various compression mechanisms that may have been used on a response body
+func decode(encoding string, original io.ReadCloser) ([]byte, error) {
+	var reader io.Reader
+	var err error
+	switch encoding {
+	case "gzip":
+		reader, err = gzip.NewReader(original)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				backend.Logger.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "deflate":
+		reader = flate.NewReader(original)
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				backend.Logger.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "br":
+		reader = brotli.NewReader(original)
+	case "":
+		reader = original
+	default:
+		return nil, fmt.Errorf("unexpected encoding type %v", err)
+	}
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }

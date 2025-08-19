@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -11,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
-	"xorm.io/xorm"
 )
 
 type rawPermission struct {
@@ -56,7 +55,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			fmt.Printf("failed to close xorm engine: %v", err)
+			t.Logf("failed to close xorm engine: %v", err)
 		}
 	})
 

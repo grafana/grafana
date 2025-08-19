@@ -14,7 +14,6 @@ package dashboard
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 	time "time"
 )
 
@@ -284,6 +283,7 @@ type DashboardLink struct {
 // NewDashboardLink creates a new DashboardLink object.
 func NewDashboardLink() *DashboardLink {
 	return &DashboardLink{
+		Tags:        []string{},
 		AsDropdown:  false,
 		TargetBlank: false,
 		IncludeVars: false,
@@ -366,7 +366,8 @@ type FieldConfigSource struct {
 // NewFieldConfigSource creates a new FieldConfigSource object.
 func NewFieldConfigSource() *FieldConfigSource {
 	return &FieldConfigSource{
-		Defaults: *NewFieldConfig(),
+		Defaults:  *NewFieldConfig(),
+		Overrides: []DashboardFieldConfigSourceOverrides{},
 	}
 }
 
@@ -450,9 +451,24 @@ type ValueMap struct {
 // NewValueMap creates a new ValueMap object.
 func NewValueMap() *ValueMap {
 	return &ValueMap{
-		Type: MappingTypeValueToText,
+		Type:    MappingTypeValueToText,
+		Options: map[string]ValueMappingResult{},
 	}
 }
+
+// Supported value mapping types
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+type MappingType string
+
+const (
+	MappingTypeValueToText  MappingType = "value"
+	MappingTypeRangeToText  MappingType = "range"
+	MappingTypeRegexToText  MappingType = "regex"
+	MappingTypeSpecialValue MappingType = "special"
+)
 
 // Result used as replacement with text and color when the value matches
 type ValueMappingResult struct {
@@ -541,7 +557,9 @@ type ThresholdsConfig struct {
 
 // NewThresholdsConfig creates a new ThresholdsConfig object.
 func NewThresholdsConfig() *ThresholdsConfig {
-	return &ThresholdsConfig{}
+	return &ThresholdsConfig{
+		Steps: []Threshold{},
+	}
 }
 
 // Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
@@ -666,6 +684,7 @@ func NewRowPanel() *RowPanel {
 	return &RowPanel{
 		Type:      "row",
 		Collapsed: false,
+		Panels:    []Panel{},
 	}
 }
 
@@ -706,6 +725,10 @@ type VariableModel struct {
 	// Optional field, if you want to extract part of a series name or metric node segment.
 	// Named capture groups can be used to separate the display text and value.
 	Regex *string `json:"regex,omitempty"`
+	// Additional static options for query variable
+	StaticOptions []VariableOption `json:"staticOptions,omitempty"`
+	// Ordering of static options in relation to options returned from data source for query variable
+	StaticOptionsOrder *VariableModelStaticOptionsOrder `json:"staticOptionsOrder,omitempty"`
 }
 
 // NewVariableModel creates a new VariableModel object.
@@ -866,6 +889,7 @@ type AnnotationPanelFilter struct {
 func NewAnnotationPanelFilter() *AnnotationPanelFilter {
 	return &AnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
+		Ids:     []uint8{},
 	}
 }
 
@@ -888,7 +912,9 @@ type AnnotationTarget struct {
 
 // NewAnnotationTarget creates a new AnnotationTarget object.
 func NewAnnotationTarget() *AnnotationTarget {
-	return &AnnotationTarget{}
+	return &AnnotationTarget{
+		Tags: []string{},
+	}
 }
 
 // A dashboard snapshot shares an interactive dashboard publicly.
@@ -928,20 +954,6 @@ func NewSnapshot() *Snapshot {
 	return &Snapshot{}
 }
 
-// Supported value mapping types
-// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
-// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
-// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
-// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-type MappingType string
-
-const (
-	MappingTypeValueToText  MappingType = "value"
-	MappingTypeRangeToText  MappingType = "range"
-	MappingTypeRegexToText  MappingType = "regex"
-	MappingTypeSpecialValue MappingType = "special"
-)
-
 type DashboardSpecTime struct {
 	From string `json:"from"`
 	To   string `json:"to"`
@@ -973,7 +985,8 @@ type DashboardFieldConfigSourceOverrides struct {
 // NewDashboardFieldConfigSourceOverrides creates a new DashboardFieldConfigSourceOverrides object.
 func NewDashboardFieldConfigSourceOverrides() *DashboardFieldConfigSourceOverrides {
 	return &DashboardFieldConfigSourceOverrides{
-		Matcher: *NewMatcherConfig(),
+		Matcher:    *NewMatcherConfig(),
+		Properties: []DynamicConfigValue{},
 	}
 }
 
@@ -1036,6 +1049,14 @@ const (
 	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
 )
 
+type VariableModelStaticOptionsOrder string
+
+const (
+	VariableModelStaticOptionsOrderBefore VariableModelStaticOptionsOrder = "before"
+	VariableModelStaticOptionsOrderAfter  VariableModelStaticOptionsOrder = "after"
+	VariableModelStaticOptionsOrderSorted VariableModelStaticOptionsOrder = "sorted"
+)
+
 type ValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {
 	ValueMap        *ValueMap        `json:"ValueMap,omitempty"`
 	RangeMap        *RangeMap        `json:"RangeMap,omitempty"`
@@ -1063,7 +1084,7 @@ func (resource ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) MarshalJSON() ([]b
 		return json.Marshal(resource.SpecialValueMap)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `ValueMapOrRangeMapOrRegexMapOrSpecialValueMap` from JSON.
@@ -1080,7 +1101,7 @@ func (resource *ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) UnmarshalJSON(raw
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1118,7 +1139,7 @@ func (resource *ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) UnmarshalJSON(raw
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type StringOrMap struct {
@@ -1141,7 +1162,7 @@ func (resource StringOrMap) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.Map)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrMap` from JSON.
@@ -1195,7 +1216,7 @@ func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.

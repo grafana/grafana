@@ -23,9 +23,9 @@ weight: 1000
 
 This topic describes how to configure GitLab OAuth authentication.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If Users use the same email address in GitLab that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -43,27 +43,19 @@ Ensure you know how to create a GitLab OAuth application. Consult GitLab's docum
 
 ## Configure GitLab authentication client using the Grafana UI
 
-{{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
-{{% /admonition %}}
-
 As a Grafana Admin, you can configure GitLab OAuth client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > GitLab** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
 If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure GitLab authentication client using the Terraform provider
-
-{{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
-{{% /admonition %}}
 
 ```terraform
 resource "grafana_sso_settings" "gitlab_sso_settings" {
@@ -96,7 +88,6 @@ Ensure that you have access to the [Grafana configuration file](../../../configu
 To configure GitLab authentication with Grafana, follow these steps:
 
 1. Create an OAuth application in GitLab.
-
    1. Set the redirect URI to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/gitlab`.
 
       Ensure that the Redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/gitlab`.
@@ -119,7 +110,7 @@ To configure GitLab authentication with Grafana, follow these steps:
    a. Set `use_refresh_token` to `true` in `[auth.gitlab]` section in Grafana configuration file.
 
 1. [Configure role mapping](#configure-role-mapping).
-1. Optional: [Configure group synchronization](#configure-group-synchronization).
+1. Optional: [Configure team synchronization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
 1. Restart Grafana.
 
    You should now see a GitLab login button on the login page and be able to log in or sign up with your GitLab accounts.
@@ -134,9 +125,9 @@ By default, GitLab provides a refresh token.
 
 Refresh token fetching and access token expiration check is enabled by default for the GitLab provider since Grafana v10.1.0. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
 
-{{% admonition type="note" %}}
-The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0. Use the `use_refresh_token` configuration value instead for configuring refresh token fetching and access token expiration check.
+{{< /admonition >}}
 
 ### Configure allowed groups
 
@@ -242,24 +233,24 @@ use_pkce = true
 use_refresh_token = true
 ```
 
-## Configure group synchronization
+## Configure team synchronization
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
 {{< /admonition >}}
 
-Grafana supports synchronization of GitLab groups with Grafana teams and roles. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
-Teams and roles get synchronized when the user logs in.
+By using Team Sync, you can map GitLab groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
 GitLab groups are referenced by the group name. For example, `developers`. To reference a subgroup `frontend`, use `developers/frontend`.
 Note that in GitLab, the group or subgroup name does not always match its display name, especially if the display name contains spaces or special characters.
 Make sure you always use the group or subgroup name as it appears in the URL of the group or subgroup.
 
-To learn more about group synchronization, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync).
+To learn more about Team Sync, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/).
 
 ## Configuration options
 
-The table below describes all GitLab OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
+The following table describes all GitLab OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
 
 {{< admonition type="note" >}}
 If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`
@@ -278,6 +269,7 @@ If the configuration option requires a JMESPath expression that includes a colon
 | `scopes`                     | No       | Yes                | List of comma or space-separated GitLab OAuth scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `openid email profile`               |
 | `allow_sign_up`              | No       | Yes                | Whether to allow new Grafana user creation through GitLab login. If set to `false`, then only existing Grafana users can log in with GitLab OAuth.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `true`                               |
 | `auto_login`                 | No       | Yes                | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `false`                              |
+| `login_prompt`               | No       | Yes                | Indicates the type of user interaction when the user logs in with GitLab. Available values are `login`, `consent` and `select_account`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |                                      |
 | `role_attribute_path`        | No       | Yes                | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the GitLab OAuth token. If no role is found, Grafana creates a JSON data with `groups` key that maps to groups obtained from GitLab's `/oauth/userinfo` endpoint, and evaluates the expression using this data. Finally, if a valid role is still not found, the expression is evaluated against the user information retrieved from `api_url/users` endpoint and groups retrieved from `api_url/groups` endpoint. The result of the evaluation should be a valid Grafana role (`None`, `Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping](#configure-role-mapping). |                                      |
 | `role_attribute_strict`      | No       | Yes                | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping](#configure-role-mapping).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `false`                              |
 | `org_mapping`                | No       | No                 | List of comma- or space-separated `<ExternalGitlabGroupName>:<OrgIdOrName>:<Role>` mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`. For more information on external organization to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example).                                                                                                                                                                                                                                                                                                                                                                                                                           |                                      |

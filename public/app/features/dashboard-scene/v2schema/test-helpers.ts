@@ -10,7 +10,7 @@ import {
   SceneVariableState,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -41,7 +41,8 @@ export function validateVariable<
     expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
       `${variableKind.spec.filters[0].key}="${variableKind.spec.filters[0].value}"`
     );
-    expect(sceneVariable?.state.datasource).toEqual(variableKind.spec.datasource);
+    expect(sceneVariable?.state.datasource?.type).toEqual(variableKind.group);
+    expect(sceneVariable?.state.datasource?.uid).toEqual(variableKind.datasource?.name);
   } else if (variableKind.kind !== 'AdhocVariable') {
     expect(sceneVariable).toBeInstanceOf(sceneVariableClass);
     expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
@@ -52,7 +53,8 @@ export function validateVariable<
     expect(sceneVariable?.state.pluginId).toBe(variableKind.spec.pluginId);
   }
   if (sceneVariable instanceof QueryVariable && variableKind.kind === 'QueryVariable') {
-    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
+    expect(sceneVariable?.state.datasource?.type).toBe(variableKind.spec.query?.group);
+    expect(sceneVariable?.state.datasource?.uid).toBe(variableKind.spec.query?.datasource?.name);
     expect(sceneVariable?.state.query).toEqual(variableKind.spec.query.spec);
   }
   if (sceneVariable instanceof CustomVariable && variableKind.kind === 'CustomVariable') {
@@ -66,8 +68,8 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   if (panel.kind === 'Panel') {
     expect(vizPanel.state.title).toBe(panel.spec.title);
     expect(vizPanel.state.description).toBe(panel.spec.description);
-    expect(vizPanel.state.pluginId).toBe(panel.spec.vizConfig.kind);
-    expect(vizPanel.state.pluginVersion).toBe(panel.spec.vizConfig.spec.pluginVersion);
+    expect(vizPanel.state.pluginId).toBe(panel.spec.vizConfig.group);
+    expect(vizPanel.state.pluginVersion).toBe(panel.spec.vizConfig.version);
     expect(vizPanel.state.options).toEqual(panel.spec.vizConfig.spec.options);
     expect(vizPanel.state.fieldConfig).toEqual(panel.spec.vizConfig.spec.fieldConfig);
     expect(getPanelIdForVizPanel(vizPanel)).toBe(panel.spec.id);

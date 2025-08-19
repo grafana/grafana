@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { ReactNode, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange } from '@grafana/data';
-import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
+import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange, rangeUtil } from '@grafana/data';
+// import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/internal';
+import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { LoadingIndicator } from './LoadingIndicator';
 
@@ -81,6 +81,9 @@ export const InfiniteScroll = ({
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
+    if (scrollElement.scrollHeight <= scrollElement.clientHeight) {
+      return;
+    }
 
     function handleScroll(event: Event | WheelEvent) {
       if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
@@ -141,8 +144,8 @@ export const InfiniteScroll = ({
   }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone, topScrollEnabled]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
-  const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
-  const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && isRelativeTime(range.raw.to);
+  const hideTopMessage = sortOrder === LogsSortOrder.Descending && rangeUtil.isRelativeTime(range.raw.to);
+  const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && rangeUtil.isRelativeTime(range.raw.to);
 
   const loadOlderLogs = useCallback(() => {
     //If we are not on the last page, use next page's range
@@ -211,7 +214,7 @@ const styles = {
 
 const outOfRangeMessage = (
   <div className={styles.messageContainer} data-testid="end-of-range">
-    End of the selected time range.
+    <Trans i18nKey="logs.out-of-range-message.end-of-the-selected-time-range">End of the selected time range.</Trans>
   </div>
 );
 
@@ -227,10 +230,6 @@ export function shouldLoadMore(
   element: HTMLDivElement,
   lastScroll: number
 ): ScrollDirection {
-  // Disable behavior if there is no scroll
-  if (element.scrollHeight <= element.clientHeight) {
-    return ScrollDirection.NoScroll;
-  }
   const delta = event instanceof WheelEvent ? event.deltaY : element.scrollTop - lastScroll;
   if (delta === 0) {
     return ScrollDirection.NoScroll;
@@ -310,7 +309,7 @@ function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, 
 export const SCROLLING_THRESHOLD = 1e3;
 
 // To get more logs, the difference between the visible range and the current range should be 1 second or more.
-function canScrollTop(
+export function canScrollTop(
   visibleRange: AbsoluteTimeRange,
   currentRange: TimeRange,
   timeZone: TimeZone,
@@ -345,5 +344,7 @@ export function canScrollBottom(
 
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
 function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
-  return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
+  return rangeUtil.isRelativeTimeRange(timeRange.raw)
+    ? rangeUtil.convertRawToRange(timeRange.raw, timeZone)
+    : timeRange;
 }

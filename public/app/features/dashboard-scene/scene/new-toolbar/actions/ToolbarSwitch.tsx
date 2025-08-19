@@ -11,8 +11,8 @@ interface Props {
   checkedIcon?: IconName;
   checkedLabel?: string;
   disabled?: boolean;
-  'data-testId'?: string;
-  onClick: (evt: MouseEvent<HTMLDivElement>) => void;
+  'data-testid'?: string;
+  onClick: (evt: MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const ToolbarSwitch = ({
@@ -23,7 +23,7 @@ export const ToolbarSwitch = ({
   checkedLabel,
   disabled,
   onClick,
-  'data-testId': dataTestId,
+  'data-testid': dataTestId,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -32,9 +32,8 @@ export const ToolbarSwitch = ({
 
   return (
     <Tooltip content={labelText}>
-      <div
+      <button
         aria-label={labelText}
-        role="button"
         className={cx({
           [styles.container]: true,
           [styles.containerChecked]: checked,
@@ -46,7 +45,7 @@ export const ToolbarSwitch = ({
         <div className={cx(styles.box, checked && styles.boxChecked)}>
           <Icon name={iconName} size="xs" />
         </div>
-      </div>
+      </button>
     </Tooltip>
   );
 };

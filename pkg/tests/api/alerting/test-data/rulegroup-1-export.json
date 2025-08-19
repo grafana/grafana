@@ -36,7 +36,8 @@
           "labels": {
             "label1": "test-label"
           },
-          "isPaused": false
+          "isPaused": false,
+          "missing_series_evals_to_resolve": 1
         },
         {
           "uid": "<dynamic>",
@@ -67,7 +68,8 @@
           "labels": {
             "label1": "test-label"
           },
-          "isPaused": false
+          "isPaused": false,
+          "missing_series_evals_to_resolve": 2
         }
       ]
     }

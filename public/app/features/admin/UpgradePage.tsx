@@ -3,12 +3,17 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans, t } from 'app/core/internationalization';
+import { StoreState } from 'app/types/store';
+import checkmarkSvg from 'img/licensing/checkmark.svg';
+import customerSupportSvg from 'img/licensing/customer_support.svg';
+import handinhandSupportSvg from 'img/licensing/handinhand_support.svg';
+import pluginEnterpriseSvg from 'img/licensing/plugin_enterprise.svg';
+import slaSvg from 'img/licensing/sla.svg';
 
 import { getNavModel } from '../../core/selectors/navModel';
-import { StoreState } from '../../types';
 
 import { LicenseChrome } from './LicenseChrome';
 import { ServerStats } from './ServerStats';
@@ -112,26 +117,27 @@ const ServiceInfo = () => {
       <List>
         <Item
           title={t('admin.service-info.title-enterprise-plugins', 'Enterprise Plugins')}
-          image="public/img/licensing/plugin_enterprise.svg"
+          image={pluginEnterpriseSvg}
         />
-        <Item
-          title={t('admin.service-info.title-critical-sla-hours', 'Critical SLA: 2 hours')}
-          image="public/img/licensing/sla.svg"
-        />
+        <Item title={t('admin.service-info.title-critical-sla-hours', 'Critical SLA: 2 hours')} image={slaSvg} />
         <Item
           title={t('admin.service-info.title-unlimited-expert-support', 'Unlimited Expert Support')}
-          image="public/img/licensing/customer_support.svg"
+          image={customerSupportSvg}
         >
-          24 x 7 x 365 support via
+          <Trans i18nKey="admin.service-info.year-round-support">24 × 7 × 365 support via</Trans>
           <List nested={true}>
-            <Item title="Email" />
-            <Item title="Private Slack channel" />
-            <Item title="Phone" />
+            <Item title={t('admin.service-info.title-email', 'Email')} />
+            <Item title={t('admin.service-info.title-private-slack-channel', 'Private Slack channel')} />
+            <Item title={t('admin.service-info.title-phone', 'Phone')} />
           </List>
         </Item>
-        <Item title="Hand-in-hand support" image="public/img/licensing/handinhand_support.svg">
-          in the upgrade process
-        </Item>
+        <Item
+          title={t(
+            'admin.service-info.title-handinhand-support-in-the-upgrade-process',
+            'Hand-in-hand support in the upgrade process'
+          )}
+          image={handinhandSupportSvg}
+        />
       </List>
 
       <div style={{ marginTop: '20px' }}>
@@ -170,7 +176,7 @@ const FeatureListing = () => {
       <Item title={t('admin.feature-listing.title-team-sync', 'Team Sync')}>
         <Trans i18nKey="admin.get-enterprise.team-sync-details">LDAP, GitHub OAuth, Auth Proxy, Okta</Trans>
       </Item>
-      <Item title={t('admin.feature-listing.title-white-labeling', 'White labeling')} />
+      <Item title={t('admin.feature-listing.title-custom-branding', 'Custom branding')} />
       <Item title={t('admin.feature-listing.title-auditing', 'Auditing')} />
       <Item title={t('admin.feature-listing.title-settings-updates-at-runtime', 'Settings updates at runtime')} />
       <Item title={t('admin.feature-listing.title-grafana-usage-insights', 'Grafana usage insights')}>
@@ -190,7 +196,7 @@ const FeatureListing = () => {
       </Item>
       <Item title={t('admin.feature-listing.title-enterprise-plugins', 'Enterprise plugins')}>
         <List nested={true}>
-          {/* eslint-disable @grafana/no-untranslated-strings */}
+          {/* eslint-disable @grafana/i18n/no-untranslated-strings */}
           <Item title="Oracle" />
           <Item title="Splunk" />
           <Item title="Service Now" />
@@ -206,7 +212,7 @@ const FeatureListing = () => {
           <Item title="Salesforce" />
           <Item title="Snowflake" />
           <Item title="Wavefront" />
-          {/* eslint-enable @grafana/no-untranslated-strings */}
+          {/* eslint-enable @grafana/i18n/no-untranslated-strings */}
         </List>
       </Item>
     </List>
@@ -237,7 +243,7 @@ interface ItemProps {
 }
 
 const Item = ({ children, title, image }: React.PropsWithChildren<ItemProps>) => {
-  const imageUrl = image ? image : 'public/img/licensing/checkmark.svg';
+  const imageUrl = image ? image : checkmarkSvg;
   const itemStyle = css({
     display: 'flex',
 

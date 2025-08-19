@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -18,9 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -44,8 +47,24 @@ type pluginRegistry struct {
 var _ clientapi.QueryDataClient = (*pluginClient)(nil)
 var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
+var k8sForbiddenError error = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Message: "Access denied to the data source",
+	},
+}
+
+var k8sNotFoundError error = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusNotFound,
+		Message: "Data source not found",
+	},
+}
+
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
-func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
+func newQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
 		pCtxProvider: ctx,
@@ -73,7 +92,23 @@ func (d *pluginClient) CanQueryDataSource(ctx context.Context, uid string) (bool
 	return d.ac.Evaluate(ctx, user, evaluate)
 }
 
-// ExecuteQueryData implements QueryHelper.
+// this handles the special `--grafana--` data source
+func getGrafanaDataSourceSettings(ctx context.Context) (*backend.DataSourceInstanceSettings, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ds := grafanads.DataSourceModel(user.GetOrgID())
+
+	decryptFunc := func(ds *datasources.DataSource) (map[string]string, error) {
+		// we do not need to handle any secrets
+		return nil, nil
+	}
+
+	return adapters.ModelToInstanceSettings(ds, decryptFunc)
+}
+
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {
@@ -89,18 +124,26 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	}
 
 	if !canQuery {
-		status := metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Message: "Access denied to the data source",
-		}
-		return nil, &apierrors.StatusError{ErrStatus: status}
+		return nil, k8sForbiddenError
 	}
 
-	// NOTE: this depends on uid unique across datasources
-	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
+	var settings *backend.DataSourceInstanceSettings
+
+	// we need to special-case the "--grafana--" data source
+	if dsRef.UID == grafanads.DatasourceUID {
+		settings, err = getGrafanaDataSourceSettings(ctx)
+	} else {
+		// NOTE: this depends on uid unique across datasources
+		settings, err = d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
+	}
+
 	if err != nil {
-		return nil, err
+		// there is no better way to differentiate between plugin-not-found and other-error
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return nil, k8sNotFoundError
+		} else {
+			return nil, err
+		}
 	}
 
 	qdr := &backend.QueryDataRequest{

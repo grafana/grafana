@@ -2,13 +2,13 @@
 
 ## Exporting code conventions
 
-`@grafana/ui` makes use of `exports` in package.json to define three entrypoints that Grafana core and Grafana plugins can access. Before exposing anything in this package please consider the table below.
+`@grafana/ui`, `@grafana/data` and `@grafana/runtime` makes use of `exports` in package.json to define three entrypoints that Grafana core and Grafana plugins can access. Before exposing anything in these packages please consider the table below to better understand the use case of each export.
 
-| Entrypoint Name | Import Path            | Description                                                                                                                                                                     | Available to Grafana | Available to plugins |
-| --------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
-| `./`            | `@grafana/ui`          | The public API entrypoint. If the code is stable and you want to share it everywhere, this is the place to export it.                                                           | ✅                   | ✅                   |
-| `./unstable`    | `@grafana/ui/unstable` | The public API entrypoint for all experimental code. If you want to iterate and test code from Grafana and plugins, this is the place to export it.                             | ✅                   | ✅                   |
-| `./internal`    | `@grafana/ui/internal` | The private API entrypoint for internal code shared with Grafana. If you need to import code in Grafana but don't want to expose it to plugins, this is the place to export it. | ✅                   | ❌                   |
+| Export Name  | Import Path            | Description                                                                                                                                                                     | Available to Grafana | Available to plugins |
+| ------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
+| `./`         | `@grafana/ui`          | The public API entrypoint. If the code is stable and you want to share it everywhere, this is the place to export it.                                                           | ✅                   | ✅                   |
+| `./unstable` | `@grafana/ui/unstable` | The public API entrypoint for all experimental code. If you want to iterate and test code from Grafana and plugins, this is the place to export it.                             | ✅                   | ✅                   |
+| `./internal` | `@grafana/ui/internal` | The private API entrypoint for internal code shared with Grafana. If you need to import code in Grafana but don't want to expose it to plugins, this is the place to export it. | ✅                   | ❌                   |
 
 ## Versioning
 
@@ -53,7 +53,6 @@ Every commit to main that has changes within the `packages` directory is a subje
 3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
 4. Run `yarn packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for yarn to replace properties in the package.json files declared in the `publishConfig` property.
 5. Depending on whether or not it's a prerelease:
-
    - When releasing a prerelease run `./scripts/publish-npm-packages.sh --dist-tag 'next' --registry 'https://registry.npmjs.org/'` to publish new versions.
    - When releasing a stable version run `./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'` to publish new versions.
    - When releasing a test version run `./scripts/publish-npm-packages.sh --dist-tag 'test' --registry 'https://registry.npmjs.org/'` to publish test versions.

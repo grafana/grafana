@@ -14,7 +14,9 @@ import (
 )
 
 type SecretsRotator interface {
+	// ReEncrypt returns true on success, false on any failure.
 	ReEncrypt(context.Context, *manager.SecretsService, db.DB) bool
+	// Rollback returns true on success, false on any failure.
 	Rollback(context.Context, *manager.SecretsService, encryption.Internal, db.DB, string) bool
 }
 
@@ -43,7 +45,7 @@ func ProvideSecretsMigrator(
 		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true, encoding: base64.RawStdEncoding},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
-		b64Secret{simpleSecret: simpleSecret{tableName: "signing_key", columnName: "private_key"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "signing_key", columnName: "private_key"}, encoding: base64.RawStdEncoding},
 		alertingSecret{},
 		ssoSettingsSecret{},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "access_token"}, encoding: base64.StdEncoding},
@@ -51,6 +53,7 @@ func ProvideSecretsMigrator(
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "refresh_token"}, encoding: base64.StdEncoding},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "session_id"}, encoding: base64.StdEncoding},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_external_session", columnName: "name_id"}, encoding: base64.StdEncoding},
+		provisioningSecrets{},
 	}
 
 	return &SecretsMigrator{
@@ -93,12 +96,12 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 	var anyFailure bool
 
 	for _, r := range m.rotators {
-		if failed := r.Rollback(ctx,
+		if success := r.Rollback(ctx,
 			m.secretsSrv,
 			m.encryptionSrv,
 			m.sqlStore,
 			m.settings.KeyValue("security", "secret_key").Value(),
-		); failed {
+		); !success {
 			anyFailure = true
 		}
 	}

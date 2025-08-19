@@ -1,13 +1,15 @@
 import { isArray } from 'lodash';
+import moment from 'moment';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
-  getFrameDisplayName,
-  dateTime,
   DataQueryRequest,
+  dateMath,
+  dateTime,
+  getFrameDisplayName,
   MetricFindValue,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
@@ -373,62 +375,220 @@ describe('graphiteDatasource', () => {
 
   describe('building graphite params', () => {
     it('should return empty array if no targets', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{}],
-      });
+      const originalTargetMap = { A: '' };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{}],
+        },
+        originalTargetMap
+      );
       expect(results.length).toBe(0);
     });
 
     it('should uri escape targets', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
-      });
+      const originalTargetMap = {
+        A: 'prod1.{test,test2}',
+        B: 'prod2.count',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
+        },
+        originalTargetMap
+      );
       expect(results).toContain('target=prod1.%7Btest%2Ctest2%7D');
     });
 
     it('should replace target placeholder', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: 'series2',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
+        },
+        originalTargetMap
+      );
       expect(results[2]).toBe('target=asPercent(series1%2Cseries2)');
     });
 
     it('should replace target placeholder for hidden series', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [
-          { target: 'series1', hide: true },
-          { target: 'sumSeries(#A)', hide: true },
-          { target: 'asPercent(#A,#B)' },
-        ],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: 'sumSeries(#A)',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [
+            { target: 'series1', hide: true },
+            { target: 'sumSeries(#A)', hide: true },
+            { target: 'asPercent(#A,#B)' },
+          ],
+        },
+        originalTargetMap
+      );
       expect(results[0]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should replace target placeholder when nesting query references', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: 'sumSeries(#A)',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
+        },
+        originalTargetMap
+      );
       expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
+    it('should replace target placeholder when nesting query references with template variables', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'metric', current: { value: ['aMetricName'] } }]);
+      const originalTargetMap = {
+        A: '[[metric]]',
+        B: 'sumSeries(#A)',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '[[metric]]' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
+        },
+        originalTargetMap
+      );
+      expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(aMetricName,sumSeries(aMetricName))'));
+    });
+
+    it('should use scoped variables when nesting query references', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'metric', current: { value: ['globalValue'] } }]);
+
+      const originalTargetMap = {
+        A: '$metric',
+        B: 'sumSeries(#A)',
+      };
+
+      const scopedVars = {
+        metric: { text: 'scopedValue', value: 'scopedValue' },
+      };
+
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '$metric' }, { target: 'sumSeries(#A)' }],
+        },
+        originalTargetMap,
+        scopedVars
+      );
+
+      expect(results[1]).toBe('target=' + encodeURIComponent('sumSeries(scopedValue)'));
+    });
+
+    it('should apply scoped variables to nested references with hidden targets', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'server', current: { value: ['global'] } }]);
+
+      const originalTargetMap = {
+        A: '$server.cpu',
+        B: 'avg(#A)',
+      };
+
+      const scopedVars = {
+        server: { text: 'web01', value: 'web01' },
+      };
+
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '$server.cpu', hide: true }, { target: 'avg(#A)' }],
+        },
+        originalTargetMap,
+        scopedVars
+      );
+
+      expect(results[0]).toBe('target=' + encodeURIComponent('avg(web01.cpu)'));
+    });
+
+    it('should not recursively replace queries that reference themselves', () => {
+      const originalTargetMap = {
+        A: 'sumSeries(carbon.test.test-host.cpuUsage, #A)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'sumSeries(carbon.test.test-host.cpuUsage, #A)' }],
+        },
+        originalTargetMap
+      );
+      expect(results[0]).toBe(
+        'target=' +
+          encodeURIComponent('sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))')
+      );
+    });
+
+    it('should not recursively replace queries that reference themselves, but will replace nested references', () => {
+      const originalTargetMap = {
+        A: 'sumSeries(carbon.test.test-host.cpuUsage, #A, #B)',
+        B: 'add(carbon.test.test-host.cpuUsage, 1.5)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [
+            {
+              target: 'sumSeries(carbon.test.test-host.cpuUsage, #A, #B)',
+            },
+            {
+              target: 'add(carbon.test.test-host.cpuUsage, 1.5)',
+            },
+          ],
+        },
+        originalTargetMap
+      );
+      expect(results[0]).toBe(
+        'target=' +
+          encodeURIComponent(
+            'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
+          )
+      );
+    });
+
     it('should fix wrong minute interval parameters', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
-      });
+      const originalTargetMap = {
+        A: "summarize(prod.25m.count, '25m', 'sum')",
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
+        },
+        originalTargetMap
+      );
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
     it('should fix wrong month interval parameters', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
-      });
+      const originalTargetMap = {
+        A: "summarize(prod.5M.count, '5M', 'sum')",
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
+        },
+        originalTargetMap
+      );
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
     it('should ignore empty targets', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'series1' }, { target: '' }],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: '',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'series1' }, { target: '' }],
+        },
+        originalTargetMap
+      );
       expect(results.length).toBe(2);
     });
 
@@ -442,9 +602,15 @@ describe('graphiteDatasource', () => {
           },
         ]);
 
-        const results = ctx.ds.buildGraphiteParams({
-          targets: [{ target: 'my.$metric.*' }],
-        });
+        const originalTargetMap = {
+          A: 'my.$metric.*',
+        };
+        const results = ctx.ds.buildGraphiteParams(
+          {
+            targets: [{ target: 'my.$metric.*' }],
+          },
+          originalTargetMap
+        );
         expect(results).toStrictEqual(['target=my.b.*', 'format=json']);
       });
 
@@ -456,10 +622,13 @@ describe('graphiteDatasource', () => {
             current: { value: ['a', 'b'] },
           },
         ]);
-
-        const results = ctx.ds.buildGraphiteParams({
-          targets: [{ target: 'my.[[metric]].*' }],
-        });
+        const originalTargetMap = { A: 'my.[[metric]].*' };
+        const results = ctx.ds.buildGraphiteParams(
+          {
+            targets: [{ target: 'my.[[metric]].*' }],
+          },
+          originalTargetMap
+        );
 
         expect(results).toStrictEqual(['target=my.%7Ba%2Cb%7D.*', 'format=json']);
       });
@@ -787,6 +956,31 @@ describe('graphiteDatasource', () => {
     it('does not extract metrics when the config does not match', async () => {
       await assertQueryExport('interpolate(alias(test.west.001.cpu))', []);
       await assertQueryExport('interpolate(alias(servers.west.001))', []);
+    });
+  });
+
+  describe('translateTime', () => {
+    it('does not mutate passed in date', async () => {
+      const date = new Date('2025-06-30T00:00:59.000Z');
+      const functionDate = moment(date);
+      const updatedDate = ctx.ds.translateTime(
+        dateMath.toDateTime(functionDate.toDate(), { roundUp: undefined, timezone: undefined })!,
+        true
+      );
+
+      expect(functionDate.toDate()).toEqual(date);
+      expect(updatedDate).not.toEqual(date.getTime());
+    });
+    it('does not mutate passed in relative date - string', async () => {
+      const date = 'now-1m';
+      const updatedDate = ctx.ds.translateTime(date, true);
+
+      expect(updatedDate).not.toEqual(date);
+    });
+    it('returns the input if the input is invalid', async () => {
+      const updatedDate = ctx.ds.translateTime('', true);
+
+      expect(updatedDate).toBe('');
     });
   });
 });

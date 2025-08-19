@@ -1,5 +1,5 @@
 import { zip } from 'lodash';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   CloudRuleIdentifier,
@@ -76,6 +76,8 @@ export function useRuleGroupIsInSync() {
         ruleSourceName: dsFeatures.name,
         namespace: namespace,
         groupName: ruleIdentifier.groupName,
+        limitAlerts: 0,
+        excludeAlerts: true,
       };
       const rulerParams: Parameters<typeof fetchRuleGroup>[0] = {
         namespace,
@@ -151,21 +153,31 @@ export function useRuleGroupIsInSync() {
 
 export function useRuleGroupConsistencyCheck() {
   const { isGroupInSync } = useRuleGroupIsInSync();
+  const [groupConsistent, setGroupConsistent] = useState<boolean | undefined>();
 
-  const consistencyInterval = useRef<number | undefined>();
+  const apiCheckInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
+  const timeoutInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
 
   useEffect(() => {
     return () => {
-      clearConsistencyInterval();
+      clearTimeoutInterval();
+      clearApiCheckInterval();
     };
   }, []);
 
-  const clearConsistencyInterval = () => {
-    if (consistencyInterval.current) {
-      clearInterval(consistencyInterval.current);
-      consistencyInterval.current = undefined;
+  function clearTimeoutInterval() {
+    if (timeoutInterval.current) {
+      clearTimeout(timeoutInterval.current);
+      timeoutInterval.current = undefined;
     }
-  };
+  }
+
+  function clearApiCheckInterval() {
+    if (apiCheckInterval.current) {
+      clearTimeout(apiCheckInterval.current);
+      apiCheckInterval.current = undefined;
+    }
+  }
 
   /**
    * Waits for the rule group to be consistent between Prometheus and the Ruler.
@@ -174,11 +186,12 @@ export function useRuleGroupConsistencyCheck() {
    */
   async function waitForGroupConsistency(groupIdentifier: RuleGroupIdentifierV2) {
     // We can wait only for one rule group at a time
-    clearConsistencyInterval();
+    clearTimeoutInterval();
+    clearApiCheckInterval();
 
     const timeoutPromise = new Promise<void>((_, reject) => {
-      setTimeout(() => {
-        clearConsistencyInterval();
+      timeoutInterval.current = setTimeout(() => {
+        clearApiCheckInterval();
         const error = new Error('Timeout while waiting for rule group consistency');
         logError(error, { groupOrigin: groupIdentifier.groupOrigin });
         reject(error);
@@ -186,37 +199,47 @@ export function useRuleGroupConsistencyCheck() {
     });
 
     const waitPromise = new Promise<void>((resolve, reject) => {
-      performance.mark('waitForGroupConsistency:started');
-      consistencyInterval.current = setInterval(() => {
+      function logWaitingTime() {
+        performance.mark('waitForGroupConsistency:finished');
+        const duration = performance.measure(
+          'waitForGroupConsistency',
+          'waitForGroupConsistency:started',
+          'waitForGroupConsistency:finished'
+        );
+        logMeasurement(
+          'alerting:wait-for-group-consistency',
+          { duration: duration.duration },
+          { groupOrigin: groupIdentifier.groupOrigin }
+        );
+      }
+
+      function checkGroupConsistency() {
         isGroupInSync(groupIdentifier)
           .then((inSync) => {
+            setGroupConsistent(inSync);
             if (inSync) {
-              performance.mark('waitForGroupConsistency:finished');
-              const duration = performance.measure(
-                'waitForGroupConsistency',
-                'waitForGroupConsistency:started',
-                'waitForGroupConsistency:finished'
-              );
-              logMeasurement(
-                'alerting:wait-for-group-consistency',
-                { duration: duration.duration },
-                { groupOrigin: groupIdentifier.groupOrigin }
-              );
-              clearConsistencyInterval();
+              logWaitingTime();
               resolve();
+            } else {
+              apiCheckInterval.current = setTimeout(checkGroupConsistency, CONSISTENCY_CHECK_POOL_INTERVAL);
             }
           })
           .catch((error) => {
-            clearConsistencyInterval();
             reject(error);
+          })
+          .finally(() => {
+            clearTimeoutInterval();
           });
-      }, CONSISTENCY_CHECK_POOL_INTERVAL);
+      }
+
+      performance.mark('waitForGroupConsistency:started');
+      checkGroupConsistency();
     });
 
     return Promise.race([timeoutPromise, waitPromise]);
   }
 
-  return { waitForGroupConsistency };
+  return { waitForGroupConsistency, groupConsistent };
 }
 
 export function usePrometheusConsistencyCheck() {

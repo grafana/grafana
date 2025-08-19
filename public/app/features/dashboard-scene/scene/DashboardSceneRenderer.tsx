@@ -1,17 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
+import { ScopesContext } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
-import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -23,12 +23,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelSearch,
     panelsPerRow,
     isEditing,
-    scopesBridge,
     layoutOrchestrator,
   } = model.useState();
-  const { placeholder } = layoutOrchestrator.useState();
   const { type } = useParams();
   const location = useLocation();
+  const scopesContext = useContext(ScopesContext);
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
@@ -49,10 +48,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
   }, [isSettingsOpen, editPanel, viewPanelScene, model]);
 
+  useEffect(() => {
+    if (scopesContext && isEditing) {
+      scopesContext.setReadOnly(true);
+
+      return () => {
+        scopesContext.setReadOnly(false);
+      };
+    }
+
+    return;
+  }, [scopesContext, isEditing]);
+
   if (editview) {
     return (
       <>
-        {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
         <editview.Component model={editview} />
         {overlay && <overlay.Component model={overlay} />}
       </>
@@ -60,23 +70,17 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
-    if (panelSearch || panelsPerRow) {
+    if (!viewPanelScene && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
 
-    return (
-      <>
-        <DashboardAngularDeprecationBanner dashboard={model} key="angular-deprecation-banner" />
-        <bodyToRender.Component model={bodyToRender} />
-      </>
-    );
+    return <bodyToRender.Component model={bodyToRender} />;
   }
 
   return (
     <>
-      {placeholder && <placeholder.Component model={placeholder} />}
+      {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
-        {scopesBridge && <scopesBridge.Component model={scopesBridge} />}
         {editPanel && <editPanel.Component model={editPanel} />}
         {!editPanel && (
           <DashboardEditPaneSplitter

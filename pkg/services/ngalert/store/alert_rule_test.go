@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"math/rand/v2"
 	"slices"
 	"strings"
 	"testing"
@@ -13,8 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,12 +27,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -43,7 +43,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	logger := &logtest.Fake{}
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
@@ -238,14 +238,14 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
-		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
 	}
 
 	sqlStore := db.InitTestDB(t)
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	fakeFolderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	logger := &logtest.Fake{}
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures()
 
 	gen := models.RuleGen
@@ -258,15 +258,38 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
-	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
 	rule3FolderTitle := "folder-" + rule3.Title
-	createFolder(t, store, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
-	createFolder(t, store, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
-	createFolder(t, store, rule3.NamespaceUID, rule3FolderTitle, rule3.OrgID, "")
 
-	createFolder(t, store, rule2.NamespaceUID, "same UID folder", gen.GenerateRef().OrgID, "") // create a folder with the same UID but in the different org
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule1.NamespaceUID,
+		Title:     rule1FolderTitle,
+		OrgID:     rule1.OrgID,
+		ParentUID: parentFolderUid,
+		Fullpath:  rule1FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule2.NamespaceUID,
+		Title:     rule2FolderTitle,
+		OrgID:     rule2.OrgID,
+		ParentUID: "",
+		Fullpath:  rule2FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule3.NamespaceUID,
+		Title:     rule3FolderTitle,
+		OrgID:     rule3.OrgID,
+		ParentUID: "",
+		Fullpath:  rule3FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       parentFolderUid,
+		Title:     parentFolderTitle,
+		OrgID:     rule1.OrgID,
+		ParentUID: "",
+		Fullpath:  parentFolderTitle,
+	})
 
 	tc := []struct {
 		name         string
@@ -343,7 +366,14 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}
 
 	t.Run("when nested folders are enabled folders should contain full path", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:       rule1.NamespaceUID,
+			Title:     rule1FolderTitle,
+			OrgID:     rule1.OrgID,
+			ParentUID: parentFolderUid,
+			Fullpath:  parentFolderTitle + "/" + rule1FolderTitle,
+		})
+
 		query := &models.GetAlertRulesForSchedulingQuery{
 			PopulateFolders: true,
 		}
@@ -535,7 +565,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all version and insert one with empty rule_uid when DeletedRuleRetention is set", func(t *testing.T) {
-		orgID := int64(rand.Intn(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -602,7 +632,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if DeletedRuleRetention = 0", func(t *testing.T) {
-		orgID := int64(rand.Intn(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -655,7 +685,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if permanently is true", func(t *testing.T) {
-		orgID := int64(rand.Intn(1000))
+		orgID := int64(rand.IntN(1000)) + 1
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -839,7 +869,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
+		require.ErrorContains(t, err, fmt.Sprintf("Failed to save alert rule '%s' in organization %d due to conflict", cp.UID, cp.OrgID))
 	})
 
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
@@ -907,7 +937,9 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rules := gen.GenerateManyRef(3)
 	receiveRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))).GenerateManyRef(3)
-	timeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	mutetimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	activeTimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithActiveTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	timeIntervalRules := append(mutetimeIntervalRules, activeTimeIntervalRules...)
 	noise := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(timeIntervalName), models.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
 
 	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(timeIntervalRules)+len(noise))
@@ -959,16 +991,21 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			deref[i], deref[j] = deref[j], deref[i]
 		})
 		for _, rule := range deref {
-			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 || len(rule.NotificationSettings[0].ActiveTimeIntervals) == 0 {
 				continue
 			}
 			if len(expected) > 0 {
-				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) {
+				if rule.NotificationSettings[0].Receiver == receiver && (slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) || slices.Contains(rule.NotificationSettings[0].ActiveTimeIntervals, intervalName)) {
 					expected = append(expected, rule.GetKey())
 				}
 			} else {
 				receiver = rule.NotificationSettings[0].Receiver
-				intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				if len(rule.NotificationSettings[0].MuteTimeIntervals) > 0 {
+					intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				}
+				if len(rule.NotificationSettings[0].ActiveTimeIntervals) > 0 {
+					intervalName = rule.NotificationSettings[0].ActiveTimeIntervals[0]
+				}
 				expected = append(expected, rule.GetKey())
 			}
 		}
@@ -1278,7 +1315,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			TimeIntervalName: timeInterval,
 		})
 		require.NoError(t, err)
-		require.EqualValuesf(t, expected, maps.Keys(actual), "got more rules than expected: %#v", actual)
+		require.EqualValuesf(t, expected, slices.Collect(maps.Keys(actual)), "got more rules than expected: %#v", actual)
 	})
 }
 
@@ -1367,7 +1404,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	t.Run("GetAlertRulesGroupByRuleUID", func(t *testing.T) {
 		t.Run("should return rules that belong to only that group", func(t *testing.T) {
 			result, err := store.GetAlertRulesGroupByRuleUID(context.Background(), &models.GetAlertRulesGroupByRuleUIDQuery{
-				UID:   group1[rand.Intn(len(group1))].UID,
+				UID:   group1[rand.IntN(len(group1))].UID,
 				OrgID: groupKey1.OrgID,
 			})
 			require.NoError(t, err)
@@ -1440,12 +1477,12 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	})
 }
 
-func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
+func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -1489,12 +1526,12 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	})
 }
 
-func TestGetRuleVersions(t *testing.T) {
+func TestIntegrationGetRuleVersions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -1527,7 +1564,7 @@ func TestGetRuleVersions(t *testing.T) {
 	})
 
 	t.Run("should not remove versions without diff", func(t *testing.T) {
-		for i := 0; i < rand.Intn(2)+1; i++ {
+		for i := 0; i < rand.IntN(2)+1; i++ {
 			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
 			require.NoError(t, err)
 			rn := models.CopyRule(r)
@@ -1559,14 +1596,14 @@ func TestGetRuleVersions(t *testing.T) {
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
-	t.Helper()
+func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
+	tb.Helper()
 	if generator == nil {
 		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generator.GenerateRef()
 	converted, err := alertRuleFromModelsAlertRule(*rule)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	err = store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		converted.ID = 0
 		_, err := sess.Table(alertRule{}).InsertOne(&converted)
@@ -1585,33 +1622,12 @@ func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerat
 		rule = &r
 		return err
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return rule
 }
 
-func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, parentUID string) {
-	t.Helper()
-	u := &user.SignedInUser{
-		UserID:         1,
-		OrgID:          orgID,
-		OrgRole:        org.RoleAdmin,
-		IsGrafanaAdmin: true,
-	}
-
-	_, err := store.FolderService.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          uid,
-		OrgID:        orgID,
-		Title:        title,
-		Description:  "",
-		SignedInUser: u,
-		ParentUID:    parentUID,
-	})
-
-	require.NoError(t, err)
-}
-
-func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
+func setupFolderService(t testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -1625,23 +1641,20 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	usr := models.UserUID("test")
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
-		BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second,
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
 	}
 	sqlStore := db.InitTestDB(t)
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
 	b := &fakeBus{}
-	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
 	generator := models.RuleGen
-	generator = generator.With(generator.WithIntervalMatching(store.Cfg.BaseInterval), generator.WithUniqueOrgID())
+	generator = generator.With(generator.WithIntervalMatching(cfg.BaseInterval), generator.WithUniqueOrgID())
 
 	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
-		alertingCfgSnapshot := cfg.UnifiedAlerting
-		defer func() {
-			cfg.UnifiedAlerting = alertingCfgSnapshot
-		}()
-		cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: alertingCfgSnapshot.BaseInterval, RuleVersionRecordLimit: 10}
+		cfg := setting.UnifiedAlertingSettings{BaseInterval: cfg.BaseInterval, RuleVersionRecordLimit: 10}
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg, b)
+
 		rule := createRule(t, store, generator)
 		firstNewRule := models.CopyRule(rule)
 		firstNewRule.Title = util.GenerateShortUID()
@@ -1685,42 +1698,26 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	})
 
 	t.Run("only oldest records surpassing the limit should be deleted", func(t *testing.T) {
-		alertingCfgSnapshot := cfg.UnifiedAlerting
-		defer func() {
-			cfg.UnifiedAlerting = alertingCfgSnapshot
-		}()
-		cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: alertingCfgSnapshot.BaseInterval, RuleVersionRecordLimit: 1}
+		cfg := setting.UnifiedAlertingSettings{BaseInterval: cfg.BaseInterval, RuleVersionRecordLimit: 2}
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg, b)
 		rule := createRule(t, store, generator)
-		oldRule := models.CopyRule(rule)
-		oldRule.Title = "old-record"
-		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule,
-			New:      *oldRule,
-		}}) // first entry in `rule_version_history` table happens here
-		require.NoError(t, err)
 
-		rule.Version = rule.Version + 1
-		middleRule := models.CopyRule(rule)
-		middleRule.Title = "middle-record"
-		err = store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule,
-			New:      *middleRule,
-		}}) // second entry in `rule_version_history` table happens here
-		require.NoError(t, err)
+		for i := 0; i < 4; i++ {
+			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
+			require.NoError(t, err)
+			rn := models.CopyRule(r)
+			rn.Title = util.GenerateShortUID()
+			err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+				{
+					Existing: r,
+					New:      *rn,
+				},
+			})
+			require.NoError(t, err)
+		}
 
-		rule.Version = rule.Version + 1
-		newerRule := models.CopyRule(rule)
-		newerRule.Title = "newer-record"
-		err = store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule,
-			New:      *newerRule,
-		}}) // second entry in `rule_version_history` table happens here
+		rule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
 		require.NoError(t, err)
-
-		// only the `old-record` should be deleted since limit is set to 1 and there are total 2 records
-		rowsAffected, err := store.deleteOldAlertRuleVersions(context.Background(), rule.UID, rule.OrgID, 1)
-		require.NoError(t, err)
-		require.Equal(t, int64(2), rowsAffected)
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			var alertRuleVersions []*alertRuleVersion
@@ -1729,22 +1726,176 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 				return err
 			}
 			require.NoError(t, err)
-			assert.Len(t, alertRuleVersions, 1)
-			assert.Equal(t, "newer-record", alertRuleVersions[0].Title)
+			assert.Len(t, alertRuleVersions, 2)
+			assert.Equal(t, rule.Title, alertRuleVersions[0].Title)
+			assert.Equal(t, rule.Version, alertRuleVersions[0].Version)
 			return err
 		})
 		require.NoError(t, err)
 	})
+}
 
-	t.Run("limit set to 0 should not fail", func(t *testing.T) {
-		count, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, 0)
+func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
+	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := &fakeBus{}
+	orgID := int64(1)
+	ruleGen := models.RuleGen.With(
+		models.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		models.RuleMuts.WithOrgID(orgID),
+	)
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
+
+	// set test params
+	numFolders := 10
+	numRules := 50
+	rulesPerGroup := 5
+	totalGroups := numRules / rulesPerGroup // 10
+
+	// create rules with different group names
+	rules, _ := createManyRules(t,
+		store,
+		ruleGen,
+		numFolders,
+		numRules,
+		rulesPerGroup,
+	)
+	// sort rules by folder, then group, then group index
+	slices.SortStableFunc(rules, func(a, b *models.AlertRule) int {
+		if a.NamespaceUID != b.NamespaceUID {
+			return strings.Compare(a.NamespaceUID, b.NamespaceUID)
+		}
+		if a.RuleGroup != b.RuleGroup {
+			return strings.Compare(a.RuleGroup, b.RuleGroup)
+		}
+		return a.RuleGroupIndex - b.RuleGroupIndex
+	})
+
+	t.Run("should return all rules when no limit passed", func(t *testing.T) {
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+		})
 		require.NoError(t, err)
-		require.Equal(t, int64(0), count)
+		require.Len(t, result, 50, "should return all rules when no limit is set")
+		require.Empty(t, continueToken, "continue token should be empty when no limit is set")
 	})
-	t.Run("limit set to negative should fail", func(t *testing.T) {
-		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, -1)
-		require.Error(t, err)
+
+	t.Run("should return paginated results when group limit is set", func(t *testing.T) {
+		// random number from 1 to totalGroups - 1 (to ensure we always receive less than totalGroups)
+		groupLimit := rand.Int64N(int64(totalGroups)-1) + 1
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			GroupLimit:          groupLimit,
+		})
+		require.NoError(t, err)
+		expectedRuleCount := groupLimit * int64(rulesPerGroup)
+		require.Len(t, result, int(expectedRuleCount), fmt.Sprintf("should return %d rules when group limit is set", expectedRuleCount))
+		require.NotEmpty(t, continueToken, "continue token should not be empty when limit is set")
 	})
+
+	t.Run("pagination should all for continuation", func(t *testing.T) {
+		groupLimit := int64(2) // fixed group limit for this test
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			GroupLimit:          groupLimit,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, int(groupLimit*int64(rulesPerGroup)), "should return rules for the first two groups")
+		require.NotEmpty(t, continueToken, "continue token should not be empty")
+
+		for i, rule := range result {
+			expected := rules[i].RuleGroup
+			actual := rule.RuleGroup
+			require.Equal(t, expected, actual, "rules should be ordered by group name")
+		}
+
+		resultRules := make([]*models.AlertRule, 0, len(result))
+		resultRules = append(resultRules, result...)
+
+		// Continue from previous, fetching the rest of the rules
+		result, continueToken, err = store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			GroupContinueToken:  continueToken,
+		})
+		require.NoError(t, err)
+		resultRules = append(resultRules, result...)
+		require.Len(t, resultRules, numRules, "should return all rules when continuing from the last token")
+		require.Empty(t, continueToken, "continue token should be empty when all rules are fetched")
+		for i, rule := range resultRules {
+			expected := rules[i].RuleGroup
+			actual := rule.RuleGroup
+			require.Equal(t, expected, actual, "rules should be ordered by group name")
+		}
+	})
+}
+
+func Benchmark_ListAlertRules(b *testing.B) {
+	orgID := int64(1)
+	ruleGen := models.RuleGen
+
+	// init
+	sqlStore := db.InitTestDB(b)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
+	}
+	folderService := setupFolderService(b, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
+
+	ruleGen = ruleGen.With(
+		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		ruleGen.WithOrgID(orgID),
+	)
+
+	// define benchmark parameters
+	numFolders := 5
+	numRules := 10000
+	rulesPerGroup := 100
+	assert.Greater(b, numRules, rulesPerGroup, "n must be greater than rulesPerGroup")
+	assert.Equal(b, 0, numRules%rulesPerGroup, "n % rulesPerGroup must be zero to create equal groups")
+
+	// create rules and folders (5 folders, each with n/rulesPerGroup rules)
+	_, _ = createManyRules(b,
+		store,
+		ruleGen,
+		numFolders,    // number of folders
+		numRules,      // total number of rules
+		rulesPerGroup, // rules per group
+	)
+
+	b.Run(fmt.Sprintf("list %d rules unpaginated", numRules), func(b *testing.B) {
+		for b.Loop() {
+			_, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID: orgID,
+			})
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+
+	for _, groupLimit := range []int{1, 2, 5, 10, 50, 100} {
+		b.Run(fmt.Sprintf("list %d groups paginated", groupLimit), func(b *testing.B) {
+			for b.Loop() {
+				_, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+					ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+					GroupLimit:          int64(groupLimit),
+				})
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
 }
 
 func TestIntegration_ListAlertRules(t *testing.T) {
@@ -1754,7 +1905,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
-		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
 	}
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -1764,7 +1915,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
 		ruleGen.WithOrgID(orgID),
 	)
-	t.Run("filter by ImportedPrometheusRule", func(t *testing.T) {
+	t.Run("filter by HasPrometheusRuleDefinition", func(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		regularRule := createRule(t, store, ruleGen)
 		importedRule := createRule(t, store, ruleGen.With(
@@ -1794,8 +1945,8 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		for _, tt := range tc {
 			t.Run(tt.name, func(t *testing.T) {
 				query := &models.ListAlertRulesQuery{
-					OrgID:                  orgID,
-					ImportedPrometheusRule: tt.importedPrometheusRule,
+					OrgID:                       orgID,
+					HasPrometheusRuleDefinition: tt.importedPrometheusRule,
 				}
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)
@@ -1834,24 +1985,26 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID))
 
-	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate(), gen.Generate()})
 	require.NoError(t, err)
-	rule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	rule1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	require.NoError(t, err)
+	rule2, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[1].UID})
 	require.NoError(t, err)
 
 	clk.Add(1 * time.Hour)
-	rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+	rule1v2 := models.CopyRule(rule1, gen.WithTitle(util.GenerateShortUID()))
 	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 		{
-			Existing: rule,
-			New:      *rule2,
+			Existing: rule1,
+			New:      *rule1v2,
 		},
 	})
 	require.NoError(t, err)
-	rule2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	rule1v2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
 	require.NoError(t, err)
 
-	versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rule.GUID)
+	versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rule1.GUID)
 	require.NoError(t, err)
 	require.Len(t, versions, 2)
 
@@ -1861,16 +2014,29 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		require.Empty(t, list)
 	})
 
+	// delete the second rule
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule2.UID)
 	require.NoError(t, err)
+
+	// and the first rule hour later
+	clk.Add(1 * time.Hour)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule1.UID)
+	require.NoError(t, err)
+
+	t.Run("should return deleted rules sorted by date desc", func(t *testing.T) {
+		list, err := store.ListDeletedRules(context.Background(), orgID)
+		require.NoError(t, err)
+		require.Len(t, list, 2)
+		require.Equal(t, rule1.GUID, list[0].GUID)
+		require.Equal(t, rule2.GUID, list[1].GUID)
+	})
 
 	t.Run("should return the last deleted rule", func(t *testing.T) {
 		list, err := store.ListDeletedRules(context.Background(), orgID)
 		require.NoError(t, err)
-		require.Len(t, list, 1)
 		assert.Empty(t, list[0].UID)
-		assert.Empty(t, rule2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
+		assert.Empty(t, rule1v2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
 		assert.Equal(t, list[0].Updated.UTC(), clk.Now().UTC())
 		assert.EqualValues(t, list[0].UpdatedBy, util.Pointer(models.UserUID("test")))
 	})
@@ -1905,7 +2071,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	gen := models.RuleGen
-	orgID := int64(rand.Intn(1000))
+	orgID := int64(rand.IntN(1000)) + 1
 
 	gen = gen.With(gen.WithOrgID(orgID))
 
@@ -1971,4 +2137,28 @@ func (f *fakeBus) Publish(ctx context.Context, msg bus.Msg) error {
 	}
 
 	return nil
+}
+
+func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
+	tb.Helper()
+
+	require.Greater(tb, numRules, 0, "numRules must be greater than 0")
+	require.Greater(tb, numFolders, 0, "numFolders must be greater than 0")
+	require.Greater(tb, numRules, rulesPerGroup, "numRules must be greater than rulesPerGroup")
+	require.Greater(tb, rulesPerGroup, 0, "rulesPerGroup must be greater than 0")
+	require.Equal(tb, numRules%rulesPerGroup, 0, "numRules % rulesPerGroup must be zero to create equal groups")
+
+	rules := make([]*models.AlertRule, 0, numRules)
+	namespaceUIDs := make([]string, numFolders)
+	for i := range namespaceUIDs {
+		namespaceUIDs[i] = fmt.Sprintf("ns-%d", i)
+	}
+	for i := 0; i < numRules; i++ {
+		gen := ruleGen.With(
+			ruleGen.WithNamespaceUID(namespaceUIDs[i%numFolders]),
+			ruleGen.WithGroupName(fmt.Sprintf("group_%d", i%(numRules/rulesPerGroup))),
+		)
+		rules = append(rules, createRule(tb, store, gen))
+	}
+	return rules, namespaceUIDs
 }

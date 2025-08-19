@@ -1,4 +1,13 @@
-import { SceneObject } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  MultiValueVariableState,
+  SceneObject,
+  SceneVariable,
+  SceneVariableSet,
+  VariableValueSingle,
+} from '@grafana/scenes';
+
+import { DashboardScene } from '../scene/DashboardScene';
 
 const CLONE_KEY = '-clone-';
 const CLONE_SEPARATOR = '/';
@@ -81,4 +90,38 @@ export function containsCloneKey(key: string): boolean {
 export function useIsClone(scene: SceneObject): boolean {
   const { key } = scene.useState();
   return isClonedKey(key!);
+}
+
+/**
+ * Useful hook for checking if a scene is in a clone chain
+ * @param scene
+ */
+export function useHasClonedParents(scene: SceneObject): boolean {
+  if (isClonedKey(scene.state.key!)) {
+    return true;
+  }
+
+  if (!scene.parent || scene.parent instanceof DashboardScene) {
+    return false;
+  }
+
+  return useHasClonedParents(scene.parent);
+}
+
+export function getLocalVariableValueSet(
+  variable: SceneVariable<MultiValueVariableState>,
+  value: VariableValueSingle,
+  text: VariableValueSingle
+): SceneVariableSet {
+  return new SceneVariableSet({
+    variables: [
+      new LocalValueVariable({
+        name: variable.state.name,
+        value,
+        text,
+        isMulti: variable.state.isMulti,
+        includeAll: variable.state.includeAll,
+      }),
+    ],
+  });
 }

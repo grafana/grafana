@@ -11,20 +11,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"reflect"
 	"runtime"
 	"sync"
 	"time"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 const (
 	// Version show the xorm's version
 	Version string = "0.8.0.1015"
-
-	Spanner = "spanner"
 )
 
 func regDrvsNDialects() bool {
@@ -95,17 +94,12 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		tagHandlers:     defaultTagHandlers,
 		defaultContext:  context.Background(),
 		timestampFormat: "2006-01-02 15:04:05",
+		randomIDGen:     newSnowflake(rand.Int64N(1024)).Generate,
 	}
 
 	switch uri.DbType {
 	case core.SQLITE:
 		engine.DatabaseTZ = time.UTC
-	case Spanner:
-		engine.DatabaseTZ = time.UTC
-		// We need to specify "Z" to indicate that timestamp is in UTC.
-		// Otherwise Spanner uses default America/Los_Angeles timezone.
-		// https://cloud.google.com/spanner/docs/reference/standard-sql/data-types#time_zones
-		engine.timestampFormat = "2006-01-02 15:04:05Z"
 	default:
 		engine.DatabaseTZ = time.Local
 	}
@@ -117,7 +111,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	runtime.SetFinalizer(engine, close)
 
-	if ext, ok := dialect.(DialectExt); ok {
+	if ext, ok := dialect.(DialectWithSequenceGenerator); ok {
 		engine.sequenceGenerator, err = ext.CreateSequenceGenerator(db.DB)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create sequence generator: %w", err)
@@ -138,9 +132,14 @@ type SequenceGenerator interface {
 	Reset()
 }
 
-type DialectExt interface {
+type DialectWithSequenceGenerator interface {
 	core.Dialect
 
 	// CreateSequenceGenerator returns optional generator used to create AUTOINCREMENT ids for inserts.
 	CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
+}
+
+type DialectWithRetryableErrors interface {
+	core.Dialect
+	RetryOnError(err error) bool
 }

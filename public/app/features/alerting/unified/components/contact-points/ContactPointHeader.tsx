@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
@@ -67,16 +67,15 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    * Used to determine whether to show the "Unused" badge
    */
   const isReferencedByAnything = usingK8sApi ? Boolean(numberOfPolicies || numberOfRules) : policies.length > 0;
-
   /** Does the current user have permissions to edit the contact point? */
-  const hasAbilityToEdit = canEditEntity(contactPoint) || editAllowed;
+  const hasAbilityToEdit = usingK8sApi ? canEditEntity(contactPoint) : editAllowed;
   /** Can the contact point actually be edited via the UI? */
   const contactPointIsEditable = !provisioned;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
   const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
 
   /** Does the current user have permissions to delete the contact point? */
-  const hasAbilityToDelete = canDeleteEntity(contactPoint) || deleteAllowed;
+  const hasAbilityToDelete = usingK8sApi ? canDeleteEntity(contactPoint) : deleteAllowed;
   /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
   const contactPointIsDeleteable = !provisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
@@ -86,7 +85,11 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   if (showManagePermissions) {
     menuActions.push(
       <Fragment key="manage-permissions">
-        <Menu.Item icon="unlock" label="Manage permissions" onClick={() => setShowPermissionsDrawer(true)} />
+        <Menu.Item
+          icon="unlock"
+          label={t('alerting.contact-point-header.label-manage-permissions', 'Manage permissions')}
+          onClick={() => setShowPermissionsDrawer(true)}
+        />
       </Fragment>
     );
   }
@@ -96,8 +99,8 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
       <Fragment key="export-contact-point">
         <Menu.Item
           icon="download-alt"
-          label="Export"
-          ariaLabel="export"
+          label={t('alerting.contact-point-header.export-label-export', 'Export')}
+          ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
           disabled={!exportAllowed}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
@@ -155,8 +158,8 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         )}
       >
         <Menu.Item
-          label="Delete"
-          ariaLabel="delete"
+          label={t('alerting.contact-point-header.label-delete', 'Delete')}
+          ariaLabel={t('alerting.contact-point-header.ariaLabel-delete', 'Delete')}
           icon="trash-alt"
           destructive
           disabled={!canBeDeleted}
@@ -213,20 +216,34 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
-          tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
+          tooltip={
+            provisioned
+              ? t(
+                  'alerting.contact-point-header.tooltip-provisioned-contact-points',
+                  'Provisioned contact points cannot be edited in the UI'
+                )
+              : undefined
+          }
           variant="secondary"
           size="sm"
           icon={canEdit ? 'pen' : 'eye'}
           type="button"
-          aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
         >
-          {canEdit ? 'Edit' : 'View'}
+          {canEdit
+            ? t('alerting.contact-point-header.button-edit', 'Edit')
+            : t('alerting.contact-point-header.button-view', 'View')}
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
-            <MoreButton aria-label={`More actions for contact point "${contactPoint.name}"`} />
+            <MoreButton
+              aria-label={t(
+                'alerting.contact-point-header.aria-label-more-actions',
+                'More actions for contact point "{{contactPointName}}"',
+                { contactPointName: contactPoint.name }
+              )}
+            />
           </Dropdown>
         )}
       </Stack>

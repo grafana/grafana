@@ -1,11 +1,50 @@
 package migration
 
-import "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+import (
+	"sync"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+)
+
+// Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
+func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider, panelProvider schemaversion.PanelPluginInfoProvider) {
+	migratorInstance.init(dsInfoProvider, panelProvider)
+}
+
+// Migrate migrates the given dashboard to the target version.
+// This will block until the migrator is initialized.
 func Migrate(dash map[string]interface{}, targetVersion int) error {
-	if dash == nil {
-		dash = map[string]interface{}{}
+	return migratorInstance.migrate(dash, targetVersion)
+}
+
+var (
+	migratorInstance = &migrator{
+		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:      make(chan struct{}),
 	}
+	initOnce sync.Once
+)
+
+type migrator struct {
+	ready      chan struct{}
+	migrations map[int]schemaversion.SchemaVersionMigrationFunc
+}
+
+func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider, panelProvider schemaversion.PanelPluginInfoProvider) {
+	initOnce.Do(func() {
+		m.migrations = schemaversion.GetMigrations(dsInfoProvider, panelProvider)
+		close(m.ready)
+	})
+}
+
+func (m *migrator) migrate(dash map[string]interface{}, targetVersion int) error {
+	if dash == nil {
+		return schemaversion.NewMigrationError("dashboard is nil", 0, targetVersion)
+	}
+
+	// wait for the migrator to be initialized
+	<-m.ready
+
 	inputVersion := schemaversion.GetSchemaVersion(dash)
 	dash["schemaVersion"] = inputVersion
 
@@ -16,9 +55,9 @@ func Migrate(dash map[string]interface{}, targetVersion int) error {
 	}
 
 	for nextVersion := inputVersion + 1; nextVersion <= targetVersion; nextVersion++ {
-		if migration, ok := schemaversion.Migrations[nextVersion]; ok {
+		if migration, ok := m.migrations[nextVersion]; ok {
 			if err := migration(dash); err != nil {
-				return schemaversion.NewMigrationError("migration failed", inputVersion, nextVersion)
+				return schemaversion.NewMigrationError("migration failed: "+err.Error(), inputVersion, nextVersion)
 			}
 			dash["schemaVersion"] = nextVersion
 		}

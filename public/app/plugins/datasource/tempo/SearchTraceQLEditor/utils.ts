@@ -1,11 +1,11 @@
 import { startCase, uniq } from 'lodash';
 
-import { AdHocVariableFilter, ScopedVars, SelectableValue } from '@grafana/data';
+import { ScopedVars, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { getEscapedSpanNames } from '../datasource';
+import { getEscapedRegexValues, getEscapedValues } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
@@ -32,10 +32,16 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
 
 const isRegExpOperator = (operator: string) => operator === '=~' || operator === '!~';
 
-const escapeValues = (values: string[]) => getEscapedSpanNames(values);
-
 export const valueHelper = (f: TraceqlFilter) => {
-  const value = Array.isArray(f.value) && isRegExpOperator(f.operator!) ? escapeValues(f.value) : f.value;
+  let value = f.value;
+
+  if (Array.isArray(value) && !f.isCustomValue) {
+    value = getEscapedValues(value);
+
+    if (isRegExpOperator(f.operator!)) {
+      value = getEscapedRegexValues(value);
+    }
+  }
 
   if (Array.isArray(value) && value.length > 1) {
     return `"${value.join('|')}"`;
@@ -79,23 +85,6 @@ export const filterToQuerySection = (f: TraceqlFilter, filters: TraceqlFilter[],
   }
 
   return `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`;
-};
-
-export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[], lp: TempoLanguageProvider) => {
-  return `{${filters
-    .filter((f) => f.key && f.operator && f.value)
-    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f, lp)}`)
-    .join(' && ')}}`;
-};
-
-const adHocValueHelper = (f: AdHocVariableFilter, lp: TempoLanguageProvider) => {
-  if (lp.getIntrinsics().find((t) => t === f.key)) {
-    return f.value;
-  }
-  if (parseInt(f.value, 10).toString() === f.value) {
-    return f.value;
-  }
-  return `"${f.value}"`;
 };
 
 export const getTagWithoutScope = (tag: string) => {

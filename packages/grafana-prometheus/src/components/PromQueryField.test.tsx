@@ -1,12 +1,12 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.test.tsx
-import { getByTestId, render, screen, waitFor } from '@testing-library/react';
+import { getByTestId, render, screen } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, DataFrame, LoadingState, PanelData } from '@grafana/data';
+import { CoreApp, DataFrame, dateTime, LoadingState, PanelData } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
-import PromQlLanguageProvider from '../language_provider';
+import * as queryHints from '../query_hints';
 
 import { PromQueryField } from './PromQueryField';
 import { Props } from './monaco-query-field/MonacoQueryFieldProps';
@@ -28,10 +28,9 @@ const defaultProps = {
     languageProvider: {
       start: () => Promise.resolve([]),
       syntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
+      // getLabelKeys: () => [],
+      retrieveMetrics: () => [],
     },
-    getInitHints: () => [],
   } as unknown as PrometheusDatasource,
   query: {
     expr: '',
@@ -40,12 +39,24 @@ const defaultProps = {
   onRunQuery: () => {},
   onChange: () => {},
   history: [],
+  range: {
+    from: dateTime('2022-01-01T00:00:00Z'),
+    to: dateTime('2022-01-02T00:00:00Z'),
+    raw: {
+      from: 'now-1d',
+      to: 'now',
+    },
+  },
 };
 
 describe('PromQueryField', () => {
   beforeAll(() => {
     // @ts-ignore
     window.getSelection = () => {};
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   it('renders metrics chooser regularly if lookups are not disabled in the datasource settings', async () => {
@@ -69,10 +80,25 @@ describe('PromQueryField', () => {
     expect(bcButton).toBeDisabled();
   });
 
+  it('renders no metrics chooser if hidden by props', async () => {
+    const props = {
+      ...defaultProps,
+      hideMetricsBrowser: true,
+    };
+    const queryField = render(<PromQueryField {...props} />);
+
+    // wait for component to render
+    await screen.findByTestId('dummy-code-input');
+
+    expect(queryField.queryByRole('button')).not.toBeInTheDocument();
+  });
+
   it('renders an initial hint if no data and initial hint provided', async () => {
     const props = defaultProps;
     props.datasource.lookupsDisabled = true;
-    props.datasource.getInitHints = () => [{ label: 'Initial hint', type: 'INFO' }];
+
+    jest.spyOn(queryHints, 'getInitHints').mockReturnValue([{ label: 'Initial hint', type: 'INFO' }]);
+
     render(<PromQueryField {...props} />);
 
     // wait for component to render
@@ -84,7 +110,6 @@ describe('PromQueryField', () => {
   it('renders query hint if data, query hint and initial hint provided', async () => {
     const props = defaultProps;
     props.datasource.lookupsDisabled = true;
-    props.datasource.getInitHints = () => [{ label: 'Initial hint', type: 'INFO' }];
     props.datasource.getQueryHints = () => [{ label: 'Query hint', type: 'INFO' }];
     render(
       <PromQueryField
@@ -105,51 +130,6 @@ describe('PromQueryField', () => {
     expect(screen.queryByText('Initial hint')).not.toBeInTheDocument();
   });
 
-  it('refreshes metrics when the data source changes', async () => {
-    const defaultProps = {
-      query: { expr: '', refId: '' },
-      onRunQuery: () => {},
-      onChange: () => {},
-      history: [],
-    };
-    const metrics = ['foo', 'bar'];
-    const queryField = render(
-      <PromQueryField
-        datasource={
-          {
-            languageProvider: makeLanguageProvider({ metrics: [metrics] }),
-            getInitHints: () => [],
-          } as unknown as PrometheusDatasource
-        }
-        {...defaultProps}
-      />
-    );
-
-    // wait for component to render
-    await screen.findByRole('button');
-
-    const changedMetrics = ['baz', 'moo'];
-    queryField.rerender(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{
-          languageProvider: makeLanguageProvider({ metrics: [changedMetrics] }),
-        }}
-        {...defaultProps}
-      />
-    );
-
-    // If we check the label browser right away it should be in loading state
-    let labelBrowser = screen.getByRole('button');
-    expect(labelBrowser).toHaveTextContent('Loading');
-
-    // wait for component to rerender
-    labelBrowser = await screen.findByRole('button');
-    await waitFor(() => {
-      expect(labelBrowser).toHaveTextContent('Metrics browser');
-    });
-  });
-
   it('should not run query onBlur', async () => {
     const onRunQuery = jest.fn();
     const { container } = render(<PromQueryField {...defaultProps} app={CoreApp.Explore} onRunQuery={onRunQuery} />);
@@ -166,18 +146,3 @@ describe('PromQueryField', () => {
     expect(onRunQuery).not.toHaveBeenCalled();
   });
 });
-
-function makeLanguageProvider(options: { metrics: string[][] }) {
-  const metricsStack = [...options.metrics];
-  return {
-    histogramMetrics: [],
-    metrics: [],
-    metricsMetadata: {},
-    lookupsDisabled: false,
-    getLabelKeys: () => [],
-    start() {
-      this.metrics = metricsStack.shift();
-      return Promise.resolve([]);
-    },
-  } as any as PromQlLanguageProvider;
-}

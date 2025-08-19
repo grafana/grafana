@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -29,22 +30,24 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete            = mustTemplate("resource_delete.sql")
-	sqlResourceInsert            = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate            = mustTemplate("resource_update.sql")
-	sqlResourceRead              = mustTemplate("resource_read.sql")
-	sqlResourceStats             = mustTemplate("resource_stats.sql")
-	sqlResourceList              = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList       = mustTemplate("resource_history_list.sql")
-	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
-	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
-	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
-	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
-	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
-	sqlResourceHistoryPrune      = mustTemplate("resource_history_prune.sql")
-	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceDelete              = mustTemplate("resource_delete.sql")
+	sqlResourceInsert              = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate              = mustTemplate("resource_update.sql")
+	sqlResourceRead                = mustTemplate("resource_read.sql")
+	sqlResourceStats               = mustTemplate("resource_stats.sql")
+	sqlResourceList                = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList         = mustTemplate("resource_history_list.sql")
+	sqlResourceUpdateRV            = mustTemplate("resource_update_rv.sql")
+	sqlResourceHistoryRead         = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryReadLatestRV = mustTemplate("resource_history_read_latest_rv.sql")
+	sqlResourceHistoryUpdateRV     = mustTemplate("resource_history_update_rv.sql")
+	sqlResourceHistoryInsert       = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll         = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet          = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete       = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune        = mustTemplate("resource_history_prune.sql")
+	sqlResourceTrash               = mustTemplate("resource_trash.sql")
+	sqlResourceInsertFromHistory   = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -74,6 +77,7 @@ type sqlResourceRequest struct {
 	sqltemplate.SQLTemplate
 	GUID       string
 	WriteEvent resource.WriteEvent
+	Generation int64
 	Folder     string
 
 	// Useful when batch writing
@@ -86,7 +90,7 @@ func (r sqlResourceRequest) Validate() error {
 
 type sqlResourceInsertFromHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key *resource.ResourceKey
+	Key *resourcepb.ResourceKey
 }
 
 func (r sqlResourceInsertFromHistoryRequest) Validate() error {
@@ -113,7 +117,8 @@ func (r sqlStatsRequest) Validate() error {
 }
 
 type historyPollResponse struct {
-	Key             resource.ResourceKey
+	Key             resourcepb.ResourceKey
+	GUID            string
 	ResourceVersion int64
 	PreviousRV      *int64
 	Value           []byte
@@ -145,7 +150,7 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 		prevRV = new(int64)
 	}
 	return &historyPollResponse{
-		Key: resource.ResourceKey{
+		Key: resourcepb.ResourceKey{
 			Namespace: r.Response.Key.Namespace,
 			Group:     r.Response.Key.Group,
 			Resource:  r.Response.Key.Resource,
@@ -162,13 +167,13 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
 func NewReadResponse() *resource.BackendReadResponse {
 	return &resource.BackendReadResponse{
-		Key: &resource.ResourceKey{},
+		Key: &resourcepb.ResourceKey{},
 	}
 }
 
 type sqlResourceReadRequest struct {
 	sqltemplate.SQLTemplate
-	Request  *resource.ReadRequest
+	Request  *resourcepb.ReadRequest
 	Response *resource.BackendReadResponse
 }
 
@@ -183,35 +188,81 @@ func (r *sqlResourceReadRequest) Results() (*resource.BackendReadResponse, error
 // List
 type sqlResourceListRequest struct {
 	sqltemplate.SQLTemplate
-	Request *resource.ListRequest
+	Request *resourcepb.ListRequest
 }
 
 func (r sqlResourceListRequest) Validate() error {
 	return nil // TODO
 }
 
+type historyReadRequest struct {
+	Key             *resourcepb.ResourceKey
+	ResourceVersion int64
+}
+
+type sqlResourceHistoryReadRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadRequest
+	Response *resource.BackendReadResponse
+}
+
+func (r sqlResourceHistoryReadRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadRequest) Results() (*resource.BackendReadResponse, error) {
+	return r.Response, nil
+}
+
+type historyReadLatestRVRequest struct {
+	Key       *resourcepb.ResourceKey
+	EventType resourcepb.WatchEvent_Type
+}
+
+type sqlResourceHistoryReadLatestRVRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadLatestRVRequest
+	Response *resourceHistoryReadLatestRVResponse
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r.Response, nil
+}
+
+type resourceHistoryReadLatestRVResponse struct {
+	ResourceVersion int64
+}
+
+func (r *resourceHistoryReadLatestRVResponse) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r, nil
+}
+
 type historyListRequest struct {
 	ResourceVersion, Limit, Offset int64
 	Folder                         string
-	Options                        *resource.ListOptions
+	Options                        *resourcepb.ListOptions
 }
 type sqlResourceHistoryListRequest struct {
 	sqltemplate.SQLTemplate
 	Request  *historyListRequest
-	Response *resource.ResourceWrapper
+	Response *resourcepb.ResourceWrapper
 }
 
 func (r sqlResourceHistoryListRequest) Validate() error {
 	return nil // TODO
 }
 
-func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, error) {
+func (r sqlResourceHistoryListRequest) Results() (*resourcepb.ResourceWrapper, error) {
 	// sqlResourceHistoryListRequest is a set-returning query. As such, it
 	// should not return its *Response, since that will be overwritten in the
 	// next call to `Scan`, so it needs to return a copy of it. Note, though,
 	// that it is safe to return the same `Response.Value` since `Scan`
 	// allocates a new slice of bytes each time.
-	return &resource.ResourceWrapper{
+	return &resourcepb.ResourceWrapper{
 		ResourceVersion: r.Response.ResourceVersion,
 		Value:           r.Response.Value,
 	}, nil
@@ -243,11 +294,12 @@ func (r *sqlResourceHistoryDeleteRequest) Validate() error {
 
 type sqlGetHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key     *resource.ResourceKey
-	Trash   bool  // only deleted items
-	StartRV int64 // from NextPageToken
-	MinRV   int64 // minimum resource version for NotOlderThan
-	ExactRV int64 // exact resource version for Exact
+	Key           *resourcepb.ResourceKey
+	Trash         bool  // only deleted items
+	StartRV       int64 // from NextPageToken
+	MinRV         int64 // minimum resource version for NotOlderThan
+	ExactRV       int64 // exact resource version for Exact
+	SortAscending bool  // if true, sort by resource_version ASC, otherwise DESC
 }
 
 func (r sqlGetHistoryRequest) Validate() error {
@@ -257,8 +309,9 @@ func (r sqlGetHistoryRequest) Validate() error {
 // prune resource history
 type sqlPruneHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key          *resource.ResourceKey
-	HistoryLimit int64
+	Key                   *resourcepb.ResourceKey
+	PartitionByGeneration bool // include generation in the partition
+	HistoryLimit          int64
 }
 
 func (r *sqlPruneHistoryRequest) Validate() error {
@@ -284,7 +337,7 @@ type sqlResourceBlobInsertRequest struct {
 	sqltemplate.SQLTemplate
 	Now         time.Time
 	Info        *utils.BlobInfo
-	Key         *resource.ResourceKey
+	Key         *resourcepb.ResourceKey
 	Value       []byte
 	ContentType string
 }
@@ -298,7 +351,7 @@ func (r sqlResourceBlobInsertRequest) Validate() error {
 
 type sqlResourceBlobQueryRequest struct {
 	sqltemplate.SQLTemplate
-	Key *resource.ResourceKey
+	Key *resourcepb.ResourceKey
 	UID string
 }
 

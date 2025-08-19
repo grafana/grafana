@@ -2,13 +2,14 @@ import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableVal
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
 
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
-import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery } from './types';
-import { replaceCurrentFolderQuery } from './utils';
+import { deletedDashboardsCache } from './deletedDashboardsCache';
+import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SortOptions } from './types';
+import { filterSearchResults, replaceCurrentFolderQuery, searchHitsToDashboardSearchHits } from './utils';
 
 interface APIQuery {
   query?: string;
@@ -116,24 +117,8 @@ export class SQLSearcher implements GrafanaSearcher {
 
   // returns the appropriate sorting options
   async getSortOptions(): Promise<SelectableValue[]> {
-    // {
-    //   "sortOptions": [
-    //     {
-    //       "description": "Sort results in an alphabetically ascending order",
-    //       "displayName": "Alphabetically (A–Z)",
-    //       "meta": "",
-    //       "name": "alpha-asc"
-    //     },
-    //     {
-    //       "description": "Sort results in an alphabetically descending order",
-    //       "displayName": "Alphabetically (Z–A)",
-    //       "meta": "",
-    //       "name": "alpha-desc"
-    //     }
-    //   ]
-    // }
-    const opts = await backendSrv.get('/api/search/sorting');
-    return opts.sortOptions.map((v: any) => ({
+    const opts = await backendSrv.get<SortOptions>('/api/search/sorting');
+    return opts.sortOptions.map((v) => ({
       value: v.name,
       label: v.displayName,
     }));
@@ -146,7 +131,14 @@ export class SQLSearcher implements GrafanaSearcher {
   }
 
   async doAPIQuery(query: APIQuery): Promise<QueryResponse> {
-    const rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
+    let rsp: DashboardSearchHit[];
+
+    if (query.deleted) {
+      const allDeletedHits = await deletedDashboardsCache.get();
+      rsp = searchHitsToDashboardSearchHits(filterSearchResults(allDeletedHits, query));
+    } else {
+      rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
+    }
 
     // Field values (columnar)
     const kind: string[] = [];

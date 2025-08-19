@@ -17,8 +17,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
-
+        uses: actions/checkout@v4 # 4.2.2
+        with:
+          persist-credentials: false
       - name: Check if update branch exists
         run: |
           if git ls-remote --heads origin update-alerting-module | grep -q 'update-alerting-module'; then
@@ -28,7 +29,7 @@ jobs:
           fi
 
       - name: Setup Go
-        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # 5.3.0
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # 5.5.0
         with:
           "go-version-file": "go.mod"
 
@@ -36,7 +37,7 @@ jobs:
         id: current-commit
         run: |
           FROM_COMMIT=$(go list -m -json github.com/grafana/alerting | jq -r '.Version' | grep -oP '(?<=-)[a-f0-9]+$')
-          echo "from_commit=$FROM_COMMIT" >> $GITHUB_OUTPUT
+          echo "from_commit=$FROM_COMMIT" >> "$GITHUB_OUTPUT"
 
       - name: Get current branch name
         id: current-branch-name
@@ -46,14 +47,14 @@ jobs:
         id: latest-commit
         env:
           GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.current-branch-name.outputs.name }}
         run: |
-          BRANCH="${{ steps.current-branch-name.outputs.name }}"
-          TO_COMMIT=$(gh api repos/grafana/alerting/commits/$BRANCH  --jq '.sha')
+          TO_COMMIT="$(gh api repos/grafana/alerting/commits/"$BRANCH" --jq '.sha')"
            if [ -z "$TO_COMMIT" ]; then
-            echo "Branch $BRANCH not found in alerting repo, falling back to main branch"
+            echo "Branch $BRANCH not found in alerting repo"
             exit 1
           fi
-          echo "to_commit=$TO_COMMIT" >> $GITHUB_OUTPUT
+          echo "to_commit=$TO_COMMIT" >> "$GITHUB_OUTPUT"
 
       - name: Compare commit hashes
         run: |
@@ -73,30 +74,35 @@ jobs:
         id: check-commits
         env:
           GH_TOKEN: ${{ github.token }}
+          FROM_COMMIT: ${{ steps.current-commit.outputs.from_commit }}
+          TO_COMMIT: ${{ steps.latest-commit.outputs.to_commit }}
         run: |
-          # get all commits that contains 'Alerting:' in the message          
-          ALERTING_COMMITS=$(gh api repos/grafana/alerting/compare/${{ steps.current-commit.outputs.from_commit }}...${{ steps.latest-commit.outputs.to_commit }} \
-            --jq '.commits[].commit.message | split("\n")[0]') || true
-          
+          # get all commits that contains 'Alerting:' in the message
+          ALERTING_COMMITS="$(gh api repos/grafana/alerting/compare/"$FROM_COMMIT"..."$TO_COMMIT" \
+            --jq '.commits[].commit.message | split("\n")[0]')" || true
+
           # Use printf instead of echo -e for better multiline handling
           printf "%s\n" "$ALERTING_COMMITS"
-          
+
           # make the list for markdown and replace PR numbers with links
-          ALERTING_COMMITS_FORMATTED=$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/grafana\/pull\/\1)/g'; done)
-          
-          echo "alerting_commits<<EOF" >> $GITHUB_OUTPUT
-          echo "$ALERTING_COMMITS_FORMATTED" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          ALERTING_COMMITS_FORMATTED="$(echo "$ALERTING_COMMITS" | while read -r line; do echo "- $line" | sed -E 's/\(#([0-9]+)\)/[#\1](https:\/\/github.com\/grafana\/alerting\/pull\/\1)/g'; done)"
+
+          {
+            echo "alerting_commits<<EOF"
+            echo "$ALERTING_COMMITS_FORMATTED"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Update alerting module
         env:
           GOSUMDB: off
+          PINNED_COMMIT: ${{ steps.latest-commit.outputs.to_commit }}
         run: |
-          go get github.com/grafana/alerting@${{ steps.latest-commit.outputs.to_commit }}
+          go get github.com/grafana/alerting@"$PINNED_COMMIT"
           make update-workspace
 
       - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760 # 1.1.0
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           repo_secrets: |
             GITHUB_APP_ID=alerting-team:app-id
@@ -117,13 +123,16 @@ jobs:
           title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
           branch: alerting/update-alerting-module
           delete-branch: true
+          labels: |
+            no-changelog
+            no-backport
           body: |
             Updates Grafana Alerting module to latest version.
 
             Compare changes: https://github.com/grafana/alerting/compare/${{ steps.current-commit.outputs.from_commit }}...${{ steps.latest-commit.outputs.to_commit }}
             <details>
             <summary>Commits</summary>
-            
+
             ${{ steps.check-commits.outputs.alerting_commits }}
 
             </details>
@@ -131,6 +140,21 @@ jobs:
             Created by: [GitHub Action Job](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
       - name: Add PR URL to Summary
         if: steps.create-pr.outputs.pull-request-url != ''
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
         run: |
-          echo "## Pull Request Created" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [View Pull Request](${{ steps.create-pr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Pull Request Created"
+            echo "🔗 [View Pull Request]($PR_URL)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Send Slack Message
+        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.3
+        with:
+          method: 'chat.postMessage'
+          # send to alerting-reviews channel
+          payload-templated: true
+          payload:  |
+            {
+              "channel": "C076RNRRZ2N",
+              "text": "Update alerting module in Grafana ${{ steps.create-pr.outputs.pull-request-url }}"
+            }

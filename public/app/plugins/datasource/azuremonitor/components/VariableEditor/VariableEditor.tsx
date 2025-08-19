@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, Field, Select, Space } from '@grafana/ui';
 
@@ -10,10 +11,12 @@ import UrlBuilder from '../../azure_monitor/url_builder';
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { AzureMonitorOption } from '../../types/types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
+import { parseResourceURI } from '../ResourcePicker/utils';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
 
@@ -27,6 +30,7 @@ const removeOption: SelectableValue = { label: '-', value: '' };
 
 const VariableEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
+
   const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
     { label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery },
     { label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery },
@@ -180,7 +184,12 @@ const VariableEditor = (props: Props) => {
   useEffect(() => {
     if (subscription && resourceGroup && namespace) {
       datasource.getResourceNames(subscription, resourceGroup, namespace).then((resources) => {
-        setResources(resources.map((s) => ({ label: s.name, value: s.name })));
+        setResources(
+          resources.map((s) => {
+            const parsedResource = parseResourceURI(s.id);
+            return { label: s.name, value: parsedResource.resourceName };
+          })
+        );
       });
     }
   }, [datasource, subscription, resourceGroup, namespace]);
@@ -275,9 +284,12 @@ const VariableEditor = (props: Props) => {
 
   return (
     <>
-      <Field label="Query Type" data-testid={selectors.components.variableEditor.queryType.input}>
+      <Field
+        label={t('components.variable-editor.label-query-type', 'Query Type')}
+        data-testid={selectors.components.variableEditor.queryType.input}
+      >
         <Select
-          aria-label="select query type"
+          aria-label={t('components.variable-editor.aria-label-select-query-type', 'Select query type')}
           onChange={onQueryTypeChange}
           options={AZURE_QUERY_VARIABLE_TYPE_OPTIONS}
           width={25}
@@ -291,6 +303,8 @@ const VariableEditor = (props: Props) => {
             query={query}
             datasource={datasource}
             onChange={onQueryChange}
+            // Not applicable as the builder isn't available in the variable editor yet
+            onQueryChange={onQueryChange}
             variableOptionGroup={variableOptionGroup}
             setError={setError}
             hideFormatAs={true}
@@ -299,7 +313,13 @@ const VariableEditor = (props: Props) => {
           {errorMessage && (
             <>
               <Space v={2} />
-              <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
+              <Alert
+                severity="error"
+                title={t(
+                  'components.variable-editor.title-error-occurred',
+                  'An error occurred while requesting metadata from Azure Monitor'
+                )}
+              >
                 {errorMessage instanceof Error ? errorMessage.message : errorMessage}
               </Alert>
             </>
@@ -310,9 +330,12 @@ const VariableEditor = (props: Props) => {
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
       {requireSubscription && (
-        <Field label="Subscription" data-testid={selectors.components.variableEditor.subscription.input}>
+        <Field
+          label={t('components.variable-editor.label-subscription', 'Subscription')}
+          data-testid={selectors.components.variableEditor.subscription.input}
+        >
           <Select
-            aria-label="select subscription"
+            aria-label={t('components.variable-editor.aria-label-select-subscription', 'Select subscription')}
             onChange={onChangeSubscription}
             options={subscriptions.concat(variableOptionGroup)}
             width={25}
@@ -321,9 +344,12 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {(requireResourceGroup || hasResourceGroup) && (
-        <Field label="Resource Group" data-testid={selectors.components.variableEditor.resourceGroup.input}>
+        <Field
+          label={t('components.variable-editor.label-resource-group', 'Resource Group')}
+          data-testid={selectors.components.variableEditor.resourceGroup.input}
+        >
           <Select
-            aria-label="select resource group"
+            aria-label={t('components.variable-editor.aria-label-select-resource-group', 'Select resource group')}
             onChange={onChangeResourceGroup}
             options={
               requireResourceGroup
@@ -332,7 +358,9 @@ const VariableEditor = (props: Props) => {
             }
             width={25}
             value={query.resourceGroup || null}
-            placeholder={requireResourceGroup ? undefined : 'Optional'}
+            placeholder={
+              requireResourceGroup ? undefined : t('components.variable-editor.placeholder-resource-group', 'Optional')
+            }
           />
         </Field>
       )}
@@ -340,13 +368,13 @@ const VariableEditor = (props: Props) => {
         <Field
           label={
             queryType === AzureQueryType.CustomNamespacesQuery || queryType === AzureQueryType.CustomMetricNamesQuery
-              ? 'Resource Type'
-              : 'Namespace'
+              ? t('components.variable-editor.label-resource-type', 'Resource Type')
+              : t('components.variable-editor.label-namespace', 'Namespace')
           }
           data-testid={selectors.components.variableEditor.namespace.input}
         >
           <Select
-            aria-label="select namespace"
+            aria-label={t('components.variable-editor.aria-label-select-namespace', 'Select namespace')}
             onChange={onChangeNamespace}
             options={
               requireNamespace
@@ -355,26 +383,34 @@ const VariableEditor = (props: Props) => {
             }
             width={25}
             value={query.namespace || null}
-            placeholder={requireNamespace ? undefined : 'Optional'}
+            placeholder={
+              requireNamespace ? undefined : t('components.variable-editor.placeholder-namespace', 'Optional')
+            }
           />
         </Field>
       )}
       {hasRegion && (
-        <Field label="Region" data-testid={selectors.components.variableEditor.region.input}>
+        <Field
+          label={t('components.variable-editor.label-region', 'Region')}
+          data-testid={selectors.components.variableEditor.region.input}
+        >
           <Select
-            aria-label="select region"
+            aria-label={t('components.variable-editor.aria-label-select-region', 'Select region')}
             onChange={onChangeRegion}
             options={regions.concat(variableOptionGroup)}
             width={25}
             value={query.region || null}
-            placeholder="Optional"
+            placeholder={t('components.variable-editor.placeholder-region', 'Optional')}
           />
         </Field>
       )}
       {requireResource && (
-        <Field label="Resource" data-testid={selectors.components.variableEditor.resource.input}>
+        <Field
+          label={t('components.variable-editor.label-resource', 'Resource')}
+          data-testid={selectors.components.variableEditor.resource.input}
+        >
           <Select
-            aria-label="select resource"
+            aria-label={t('components.variable-editor.aria-label-select-resource', 'Select resource')}
             onChange={onChangeResource}
             options={resources.concat(variableOptionGroup)}
             width={25}
@@ -383,9 +419,12 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {requireCustomNamespace && (
-        <Field label={'Custom Namespace'} data-testid={selectors.components.variableEditor.customNamespace.input}>
+        <Field
+          label={t('components.variable-editor.label-custom-namespace', 'Custom Namespace')}
+          data-testid={selectors.components.variableEditor.customNamespace.input}
+        >
           <Select
-            aria-label="select custom namespace"
+            aria-label={t('components.variable-editor.aria-label-select-custom-namespace', 'Select custom namespace')}
             onChange={onChangeCustomNamespace}
             options={
               requireCustomNamespace
@@ -394,7 +433,11 @@ const VariableEditor = (props: Props) => {
             }
             width={25}
             value={query.customNamespace || null}
-            placeholder={requireCustomNamespace ? undefined : 'Optional'}
+            placeholder={
+              requireCustomNamespace
+                ? undefined
+                : t('components.variable-editor.placeholder-custom-namespace', 'Optional')
+            }
           />
         </Field>
       )}
@@ -411,7 +454,13 @@ const VariableEditor = (props: Props) => {
           {errorMessage && (
             <>
               <Space v={2} />
-              <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
+              <Alert
+                severity="error"
+                title={t(
+                  'components.variable-editor.title-error-occurred',
+                  'An error occurred while requesting metadata from Azure Monitor'
+                )}
+              >
                 {errorMessage instanceof Error ? errorMessage.message : errorMessage}
               </Alert>
             </>

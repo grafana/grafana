@@ -1,7 +1,13 @@
-import { FormEvent } from 'react';
+import React, { FormEvent } from 'react';
+import { lastValueFrom } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
-import { DataSourceVariable } from '@grafana/scenes';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+import { DataSourceVariable, SceneVariable } from '@grafana/scenes';
+import { Combobox, ComboboxOption, Input } from '@grafana/ui';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';
 import { getOptionDataSourceTypes } from '../utils';
@@ -63,6 +69,74 @@ export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVar
       onIncludeAllChange={onIncludeAllChange}
       onAllValueChange={onAllValueChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
+    />
+  );
+}
+
+export function getDataSourceVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
+  if (!(variable instanceof DataSourceVariable)) {
+    return [];
+  }
+
+  return [
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard.edit-pane.variable.datasource-options.type', 'Type'),
+      id: uuidv4(),
+      render: ({ props }) => <DataSourceTypeSelect id={props.id} variable={variable} />,
+    }),
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard.edit-pane.variable.datasource-options.name-filter', 'Name filter'),
+      id: uuidv4(),
+      description: t(
+        'dashboard.edit-pane.variable.datasource-options.name-filter-description',
+        'Regex filter for which data source instances to include. Leave empty for all.'
+      ),
+      render: ({ props }) => <DataSourceNameFilter id={props.id} variable={variable} />,
+    }),
+  ];
+}
+
+interface InputProps {
+  variable: DataSourceVariable;
+  id?: string;
+}
+
+function DataSourceTypeSelect({ variable, id }: InputProps) {
+  const { pluginId } = variable.useState();
+  const options = getOptionDataSourceTypes();
+
+  const onChange = async (value: ComboboxOption<string>) => {
+    variable.setState({ pluginId: value.value });
+    await lastValueFrom(variable.validateAndUpdate!());
+  };
+
+  return (
+    <Combobox
+      id={id}
+      options={options}
+      value={pluginId}
+      onChange={onChange}
+      placeholder={t('dashboard.edit-pane.variable.datasource-options.type-placeholder', 'Choose data source type')}
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
+    />
+  );
+}
+
+function DataSourceNameFilter({ variable, id }: InputProps) {
+  const { regex } = variable.useState();
+
+  const onBlur = async (evt: React.FormEvent<HTMLInputElement>) => {
+    variable.setState({ regex: evt.currentTarget.value });
+    await lastValueFrom(variable.validateAndUpdate!());
+  };
+
+  return (
+    <Input
+      id={id}
+      defaultValue={regex}
+      onBlur={onBlur}
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter}
+      placeholder={t('dashboard.edit-pane.variable.datasource-options.name-filter-placeholder', 'Example: /^prod/')}
     />
   );
 }

@@ -3,11 +3,14 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import grafanaIconSvg from 'img/grafana_icon.svg';
+import headerDarkSvg from 'img/licensing/header_dark.svg';
+import headerLightSvg from 'img/licensing/header_light.svg';
 
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const backgroundUrl = theme.isDark ? 'public/img/licensing/header_dark.svg' : 'public/img/licensing/header_light.svg';
+  const backgroundUrl = theme.isDark ? headerDarkSvg : headerLightSvg;
   const footerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray6;
 
   return {
@@ -56,7 +59,7 @@ export function LicenseChrome({ header, editionNotice, subheader, children }: Pr
           }}
         >
           <img
-            src="public/img/grafana_icon.svg"
+            src={grafanaIconSvg}
             alt="Grafana"
             width="80px"
             style={{ position: 'absolute', left: '23px', top: '20px' }}

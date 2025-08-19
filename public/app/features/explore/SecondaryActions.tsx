@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
 import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';
@@ -46,6 +46,7 @@ export function SecondaryActions({
   const theme = useTheme2();
   const styles = getStyles(theme);
   const exploreActiveDS = useSelector(selectExploreDSMaps);
+
   // Prefill the query library filter with the dataSource.
   // Get current dataSource that is open. As this is only used in Explore we get it from Explore state.
   const listOfDatasources = createDatasourcesList();
@@ -75,8 +76,15 @@ export function SecondaryActions({
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
               variant="canvas"
-              onClick={() => openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary)}
+              onClick={() =>
+                openQueryLibraryDrawer({
+                  datasourceFilters: activeDatasources,
+                  onSelectQuery: onSelectQueryFromLibrary,
+                  options: { context: CoreApp.Explore },
+                })
+              }
               icon="plus"
+              disabled={addQueryRowButtonDisabled}
             >
               <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add query from library</Trans>
             </ToolbarButton>

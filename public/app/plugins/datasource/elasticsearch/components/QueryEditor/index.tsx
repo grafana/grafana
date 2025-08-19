@@ -5,10 +5,11 @@ import { SemVer } from 'semver';
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { Alert, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
-import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
+import { ElasticsearchOptions } from '../../types';
 import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
@@ -18,7 +19,7 @@ import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { QueryTypeSelector } from './QueryTypeSelector';
 import { changeAliasPattern, changeQuery } from './state';
 
-export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
+export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchDataQuery, ElasticsearchOptions>;
 
 // a react hook that returns the elasticsearch database version,
 // or `null`, while loading, or if it is not possible to determine the value.
@@ -74,7 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 interface Props {
-  value: ElasticsearchQuery;
+  value: ElasticsearchDataQuery;
 }
 
 export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; onChange: (v: string) => void }) => {

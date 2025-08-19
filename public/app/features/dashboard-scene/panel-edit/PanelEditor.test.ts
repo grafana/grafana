@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import {
   CancelActivationHandler,
   CustomVariable,

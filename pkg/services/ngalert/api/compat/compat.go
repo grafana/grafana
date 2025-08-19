@@ -17,24 +17,25 @@ import (
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
 func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (models.AlertRule, error) {
 	rule := models.AlertRule{
-		ID:                   a.ID,
-		UID:                  a.UID,
-		OrgID:                a.OrgID,
-		NamespaceUID:         a.FolderUID,
-		RuleGroup:            a.RuleGroup,
-		Title:                a.Title,
-		Condition:            a.Condition,
-		Data:                 AlertQueriesFromApiAlertQueries(a.Data),
-		Updated:              a.Updated,
-		NoDataState:          models.NoDataState(a.NoDataState),          // TODO there must be a validation
-		ExecErrState:         models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
-		For:                  time.Duration(a.For),
-		KeepFiringFor:        time.Duration(a.KeepFiringFor),
-		Annotations:          a.Annotations,
-		Labels:               a.Labels,
-		IsPaused:             a.IsPaused,
-		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
-		Record:               ModelRecordFromApiRecord(a.Record),
+		ID:                          a.ID,
+		UID:                         a.UID,
+		OrgID:                       a.OrgID,
+		NamespaceUID:                a.FolderUID,
+		RuleGroup:                   a.RuleGroup,
+		Title:                       a.Title,
+		Condition:                   a.Condition,
+		Data:                        AlertQueriesFromApiAlertQueries(a.Data),
+		Updated:                     a.Updated,
+		NoDataState:                 models.NoDataState(a.NoDataState),          // TODO there must be a validation
+		ExecErrState:                models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
+		For:                         time.Duration(a.For),
+		KeepFiringFor:               time.Duration(a.KeepFiringFor),
+		Annotations:                 a.Annotations,
+		Labels:                      a.Labels,
+		IsPaused:                    a.IsPaused,
+		NotificationSettings:        NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
+		Record:                      ModelRecordFromApiRecord(a.Record),
+		MissingSeriesEvalsToResolve: a.MissingSeriesEvalsToResolve,
 	}
 
 	if rule.Type() == models.RuleTypeRecording {
@@ -47,25 +48,26 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 // ProvisionedAlertRuleFromAlertRule converts models.AlertRule to definitions.ProvisionedAlertRule and sets provided provenance status
 func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.Provenance) definitions.ProvisionedAlertRule {
 	return definitions.ProvisionedAlertRule{
-		ID:                   rule.ID,
-		UID:                  rule.UID,
-		OrgID:                rule.OrgID,
-		FolderUID:            rule.NamespaceUID,
-		RuleGroup:            rule.RuleGroup,
-		Title:                rule.Title,
-		For:                  model.Duration(rule.For),
-		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
-		Condition:            rule.Condition,
-		Data:                 ApiAlertQueriesFromAlertQueries(rule.Data),
-		Updated:              rule.Updated,
-		NoDataState:          definitions.NoDataState(rule.NoDataState),          // TODO there may be a validation
-		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
-		Annotations:          rule.Annotations,
-		Labels:               rule.Labels,
-		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
-		IsPaused:             rule.IsPaused,
-		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
-		Record:               ApiRecordFromModelRecord(rule.Record),
+		ID:                          rule.ID,
+		UID:                         rule.UID,
+		OrgID:                       rule.OrgID,
+		FolderUID:                   rule.NamespaceUID,
+		RuleGroup:                   rule.RuleGroup,
+		Title:                       rule.Title,
+		For:                         model.Duration(rule.For),
+		KeepFiringFor:               model.Duration(rule.KeepFiringFor),
+		Condition:                   rule.Condition,
+		Data:                        ApiAlertQueriesFromAlertQueries(rule.Data),
+		Updated:                     rule.Updated,
+		NoDataState:                 definitions.NoDataState(rule.NoDataState),          // TODO there may be a validation
+		ExecErrState:                definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
+		Annotations:                 rule.Annotations,
+		Labels:                      rule.Labels,
+		Provenance:                  definitions.Provenance(provenance), // TODO validate enum conversion?
+		IsPaused:                    rule.IsPaused,
+		NotificationSettings:        AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
+		Record:                      ApiRecordFromModelRecord(rule.Record),
+		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 	}
 }
 
@@ -231,6 +233,10 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	if rule.Labels != nil {
 		result.Labels = &rule.Labels
 	}
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
+		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
+	}
+
 	return result, nil
 }
 
@@ -361,6 +367,7 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 		ObjectMatchers:      route.ObjectMatchers,
 		ObjectMatchersSlice: matchers,
 		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(util.Pointer(route.ActiveTimeIntervals)),
 		Continue:            OmitDefault(util.Pointer(route.Continue)),
 		GroupWait:           toStringIfNotNil(route.GroupWait),
 		GroupInterval:       toStringIfNotNil(route.GroupInterval),
@@ -449,12 +456,13 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.Notificat
 	}
 	m := ns[0]
 	return &definitions.AlertRuleNotificationSettings{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         m.GroupWait,
-		GroupInterval:     m.GroupInterval,
-		RepeatInterval:    m.RepeatInterval,
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           m.GroupWait,
+		GroupInterval:       m.GroupInterval,
+		RepeatInterval:      m.RepeatInterval,
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
@@ -474,12 +482,13 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 	}
 
 	return &definitions.AlertRuleNotificationSettingsExport{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         toStringIfNotNil(m.GroupWait),
-		GroupInterval:     toStringIfNotNil(m.GroupInterval),
-		RepeatInterval:    toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           toStringIfNotNil(m.GroupWait),
+		GroupInterval:       toStringIfNotNil(m.GroupInterval),
+		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
@@ -490,12 +499,13 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 	}
 	return []models.NotificationSettings{
 		{
-			Receiver:          ns.Receiver,
-			GroupBy:           ns.GroupBy,
-			GroupWait:         ns.GroupWait,
-			GroupInterval:     ns.GroupInterval,
-			RepeatInterval:    ns.RepeatInterval,
-			MuteTimeIntervals: ns.MuteTimeIntervals,
+			Receiver:            ns.Receiver,
+			GroupBy:             ns.GroupBy,
+			GroupWait:           ns.GroupWait,
+			GroupInterval:       ns.GroupInterval,
+			RepeatInterval:      ns.RepeatInterval,
+			MuteTimeIntervals:   ns.MuteTimeIntervals,
+			ActiveTimeIntervals: ns.ActiveTimeIntervals,
 		},
 	}
 }

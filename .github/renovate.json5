@@ -2,20 +2,26 @@
   extends: ["config:recommended"],
   enabledManagers: ["npm"],
   ignoreDeps: [
+    // ignoring these until we can upgrade to react 19
+    // see epic here: https://github.com/grafana/grafana/issues/98813
+    '@types/react',
+    '@types/react-dom',
+    'eslint-plugin-react-hooks',
+    'react',
+    'react-dom',
+    'react-refresh',
+
     "@types/history", // this can be removed entirely when we upgrade history since v5 exposes types directly
+    "cypress", // cypress use is deprecated, we should not bump it anymore
     "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
     "react-router", // we should bump this together with history and react-router-dom
     "react-router-dom", // we should bump this together with history (see https://github.com/grafana/grafana/issues/76744)
-    "loader-utils", // v3 requires upstream changes in ngtemplate-loader. ignore, and remove when we remove angular.
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
     "@fingerprintjs/fingerprintjs", // we don't want to bump to v4 due to licensing changes
     "slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
-    // Temporarily pause updating lerna and nx until we resolve build issues
-    "lerna",
-    "nx"
   ],
   includePaths: ["package.json", "packages/**", "public/app/plugins/**"],
   ignorePaths: ["emails/**", "**/mocks/**"],
@@ -26,52 +32,76 @@
       automerge: true,
       matchCurrentVersion: "!/^0/",
       matchUpdateTypes: ["patch"],
-      matchPackageNames: ["!/^@?storybook/", "!/^@locker/"],
+      matchPackageNames: ["!/^@?storybook/", "!/^@locker/", "!/^@grafana/"],
+      minimumReleaseAge: "7 days",
+    },
+    {
+      automerge: true,
+      matchCurrentVersion: "!/^0/",
+      matchUpdateTypes: ["patch"],
+      matchPackageNames: ["/^@grafana/"],
     },
     {
       extends: ["schedule:monthly"],
       groupName: "Storybook updates",
       matchPackageNames: ["/^@?storybook/"],
       rangeStrategy: "bump",
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "React Aria",
       matchPackageNames: ["@react-aria/{/,}**", "@react-stately/{/,}**"],
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "Moveable",
       matchPackageNames: ["moveable", "react-moveable"],
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "Slate",
       matchPackageNames: ["@types/slate", "@types/slate-react", "slate", "slate-react"],
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "d3",
       matchPackageNames: ["d3{/,}**", "@types/d3{/,}**"],
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "scenes",
       matchPackageNames: ["@grafana/scenes", "@grafana/scenes-react"],
     },
     {
+      groupName: "faro",
+      matchPackageNames: ["@grafana/faro*"],
+    },
+    {
       groupName: "visx",
       matchPackageNames: ["@visx/{/,}**"],
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "uLibraries",
-      matchPackageNames: ["@leeoniya/ufuzzy", "uplot"],
+      matchPackageNames: ["@leeoniya/**", "uplot"],
       reviewers: ["leeoniya"],
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "locker",
       reviewers: ["team:grafana/plugins-platform-frontend"],
       matchPackageNames: ["@locker/{/,}**"],
+      minimumReleaseAge: "7 days",
     },
     {
       groupName: "augurs",
       matchPackageNames: ["@bsull/augurs"],
       reviewers: ["sd2k"],
+      minimumReleaseAge: "7 days",
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "prPriority": -1
     },
   ],
   pin: {

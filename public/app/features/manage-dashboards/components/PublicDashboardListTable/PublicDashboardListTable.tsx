@@ -4,6 +4,7 @@ import { useMedia } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Card,
@@ -17,7 +18,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useListPublicDashboardsQuery,
@@ -27,7 +27,7 @@ import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { PublicDashboardListResponse } from '../../types';
 

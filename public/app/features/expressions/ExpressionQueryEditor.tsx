@@ -1,9 +1,12 @@
+import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { InlineField, Select } from '@grafana/ui';
+import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
+import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
@@ -12,12 +15,30 @@ import { Threshold } from './components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
-type Props = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
+export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
 const labelWidth = 15;
 
 type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType.classic>;
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
+
+// Help text for each expression type - can be expanded with more detailed content
+const getExpressionHelpText = (type: ExpressionQueryType): PopoverContent | string => {
+  const description = expressionTypes.find(({ value }) => value === type)?.description;
+
+  switch (type) {
+    case ExpressionQueryType.sql:
+      return (
+        <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
+          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie "A", "B")
+          are available as tables and referenced by query-name. Fields are available as columns, as returned from the
+          data source.
+        </Trans>
+      );
+    default:
+      return description ?? '';
+  }
+};
 
 function useExpressionsCache() {
   const expressionCache = useRef<ExpressionTypeConfigStorage>({});
@@ -57,18 +78,20 @@ function useExpressionsCache() {
   return { getCachedExpression, setCachedExpression };
 }
 
-export function ExpressionQueryEditor(props: Props) {
+export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { query, queries, onRunQuery, onChange, app } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
+
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
   }, [query.expression, query.type, setCachedExpression]);
 
   const onSelectExpressionType = useCallback(
-    (item: SelectableValue<ExpressionQueryType>) => {
-      const cachedExpression = getCachedExpression(item.value!);
-      const defaults = getDefaults({ ...query, type: item.value! });
+    (value: ExpressionQueryType) => {
+      const cachedExpression = getCachedExpression(value!);
+      const defaults = getDefaults({ ...query, type: value! });
 
       onChange({ ...defaults, expression: cachedExpression ?? defaults.expression });
     },
@@ -95,18 +118,48 @@ export function ExpressionQueryEditor(props: Props) {
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
 
       case ExpressionQueryType.sql:
-        return <SqlExpr onChange={onChange} query={query} refIds={refIds} />;
+        return (
+          <SqlExpr
+            onChange={onChange}
+            query={query}
+            refIds={refIds}
+            queries={queries}
+            metadata={props}
+            onRunQuery={onRunQuery}
+          />
+        );
     }
   };
 
-  const selected = expressionTypes.find((o) => o.value === query.type);
+  const helperText = getExpressionHelpText(query.type);
 
   return (
     <div>
-      <InlineField label="Operation" labelWidth={labelWidth}>
-        <Select options={expressionTypes} value={selected} onChange={onSelectExpressionType} width={25} />
-      </InlineField>
+      <div className={styles.operationRow}>
+        <InlineField
+          label={t('expressions.expression-query-editor.label-operation', 'Operation')}
+          labelWidth={labelWidth}
+        >
+          <ExpressionTypeDropdown handleOnSelect={onSelectExpressionType}>
+            <Button fill="outline" icon="angle-down" iconPlacement="right" variant="secondary">
+              {expressionTypes.find(({ value }) => value === query.type)?.label}
+            </Button>
+          </ExpressionTypeDropdown>
+        </InlineField>
+        {helperText && <IconButton className={styles.infoIcon} name="info-circle" tooltip={helperText} />}
+      </div>
       {renderExpressionType()}
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  operationRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  infoIcon: css({
+    marginBottom: theme.spacing(0.5), // Align with the select field
+  }),
+});

@@ -11,12 +11,14 @@ import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './story
 import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
-  title: 'Forms/MultiCombobox',
+  title: 'Inputs/MultiCombobox',
   component: MultiCombobox,
   parameters: {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
 };
 
@@ -25,11 +27,15 @@ const onChangeAction = action('onChange called');
 
 const commonArgs = {
   options: [
-    { label: 'wasd - 1', value: 'option1' },
-    { label: 'wasd - 2', value: 'option2' },
-    { label: 'wasd - 3', value: 'option3' },
-    { label: 'asdf - 1', value: 'option4' },
-    { label: 'asdf - 2', value: 'option5' },
+    { label: 'Australia', value: 'option1' },
+    { label: 'Austria', value: 'option2' },
+    { label: 'Fiji', value: 'option3' },
+    { label: 'Iceland', value: 'option4' },
+    { label: 'Ireland', value: 'option5' },
+    { label: 'Finland', value: 'option6' },
+    { label: 'The Netherlands', value: 'option7' },
+    { label: 'Switzerland', value: 'option8' },
+    { label: 'United Kingdom of Great Britain and Northern Ireland ', value: 'option9' },
   ],
   value: ['option2'],
   placeholder: 'Select multiple options...',

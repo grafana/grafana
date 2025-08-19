@@ -6,12 +6,13 @@ import (
 )
 
 type ItemQuery struct {
-	OrgID        int64    `json:"orgId"`
-	From         int64    `json:"from"`
-	To           int64    `json:"to"`
-	UserID       int64    `json:"userId"`
-	AlertID      int64    `json:"alertId"`
-	AlertUID     string   `json:"alertUID"`
+	OrgID    int64  `json:"orgId"`
+	From     int64  `json:"from"`
+	To       int64  `json:"to"`
+	UserID   int64  `json:"userId"`
+	AlertID  int64  `json:"alertId"`
+	AlertUID string `json:"alertUID"`
+	// Deprecated: Use DashboardUID and OrgID instead
 	DashboardID  int64    `json:"dashboardId"`
 	DashboardUID string   `json:"dashboardUID"`
 	PanelID      int64    `json:"panelId"`
@@ -72,28 +73,32 @@ type GetAnnotationTagsResponse struct {
 }
 
 type DeleteParams struct {
-	OrgID       int64
-	ID          int64
-	DashboardID int64
-	PanelID     int64
+	OrgID int64
+	ID    int64
+	// Deprecated: Use DashboardUID and OrgID instead
+	DashboardID  int64
+	DashboardUID string
+	PanelID      int64
 }
 
 type Item struct {
-	ID          int64            `json:"id" xorm:"pk autoincr 'id'"`
-	OrgID       int64            `json:"orgId" xorm:"org_id"`
-	UserID      int64            `json:"userId" xorm:"user_id"`
-	DashboardID int64            `json:"dashboardId" xorm:"dashboard_id"`
-	PanelID     int64            `json:"panelId" xorm:"panel_id"`
-	Text        string           `json:"text"`
-	AlertID     int64            `json:"alertId" xorm:"alert_id"`
-	PrevState   string           `json:"prevState"`
-	NewState    string           `json:"newState"`
-	Epoch       int64            `json:"epoch"`
-	EpochEnd    int64            `json:"epochEnd"`
-	Created     int64            `json:"created"`
-	Updated     int64            `json:"updated"`
-	Tags        []string         `json:"tags"`
-	Data        *simplejson.Json `json:"data"`
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	UserID int64 `json:"userId" xorm:"user_id"`
+	// Deprecated: Use DashboardUID and OrgID instead
+	DashboardID  int64            `json:"dashboardId" xorm:"dashboard_id"`
+	DashboardUID string           `json:"dashboardUID" xorm:"dashboard_uid"`
+	PanelID      int64            `json:"panelId" xorm:"panel_id"`
+	Text         string           `json:"text"`
+	AlertID      int64            `json:"alertId" xorm:"alert_id"`
+	PrevState    string           `json:"prevState"`
+	NewState     string           `json:"newState"`
+	Epoch        int64            `json:"epoch"`
+	EpochEnd     int64            `json:"epochEnd"`
+	Created      int64            `json:"created"`
+	Updated      int64            `json:"updated"`
+	Tags         []string         `json:"tags"`
+	Data         *simplejson.Json `json:"data"`
 
 	// needed until we remove it from db
 	Type  string
@@ -106,9 +111,10 @@ func (i Item) TableName() string {
 
 // swagger:model Annotation
 type ItemDTO struct {
-	ID           int64            `json:"id" xorm:"id"`
-	AlertID      int64            `json:"alertId" xorm:"alert_id"`
-	AlertName    string           `json:"alertName"`
+	ID        int64  `json:"id" xorm:"id"`
+	AlertID   int64  `json:"alertId" xorm:"alert_id"`
+	AlertName string `json:"alertName"`
+	// Deprecated: Use DashboardUID and OrgID instead
 	DashboardID  int64            `json:"dashboardId" xorm:"dashboard_id"`
 	DashboardUID *string          `json:"dashboardUID" xorm:"dashboard_uid"`
 	PanelID      int64            `json:"panelId" xorm:"panel_id"`
@@ -164,7 +170,7 @@ func (a annotationType) String() string {
 }
 
 func (annotation *ItemDTO) GetType() annotationType {
-	if annotation.DashboardID != 0 {
+	if annotation.DashboardUID != nil && *annotation.DashboardUID != "" {
 		return Dashboard
 	}
 	return Organization

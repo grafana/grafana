@@ -84,7 +84,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		_, err = fmt.Fprintf(rw, "unexpected error %v", err)
 		if err != nil {
 			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 		}

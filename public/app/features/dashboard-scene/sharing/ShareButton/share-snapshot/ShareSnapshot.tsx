@@ -2,11 +2,11 @@ import { useState } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Spinner, Stack, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';

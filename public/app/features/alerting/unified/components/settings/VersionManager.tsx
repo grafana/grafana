@@ -4,6 +4,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
@@ -80,15 +81,28 @@ const AlertmanagerConfigurationVersionManager = ({
   };
 
   if (error) {
-    return <Alert title="Failed to load configuration history">{stringifyErrorLike(error)}</Alert>;
+    return (
+      <Alert
+        title={t(
+          'alerting.alertmanager-configuration-version-manager.title-failed-to-load-configuration-history',
+          'Failed to load configuration history'
+        )}
+      >
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
   }
 
   if (isLoading) {
-    return 'Loading...';
+    return <Trans i18nKey="alerting.alertmanager-configuration-version-manager.loading">Loading...</Trans>;
   }
 
   if (!historicalConfigs.length) {
-    return 'No previous configurations';
+    return (
+      <Trans i18nKey="alerting.alertmanager-configuration-version-manager.no-previous-configurations">
+        No previous configurations
+      </Trans>
+    );
   }
 
   // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied
@@ -145,7 +159,10 @@ const AlertmanagerConfigurationVersionManager = ({
         return (
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {isFirstItem ? (
-              <Badge text="Latest" color="blue" />
+              <Badge
+                text={t('alerting.alertmanager-configuration-version-manager.columns.text-latest', 'Latest')}
+                color="blue"
+              />
             ) : (
               <>
                 <Button
@@ -164,7 +181,7 @@ const AlertmanagerConfigurationVersionManager = ({
                     setActiveComparison([JSON.stringify(left, null, 2), JSON.stringify(right, null, 2)]);
                   }}
                 >
-                  Compare
+                  <Trans i18nKey="alerting.alertmanager-configuration-version-manager.columns.compare">Compare</Trans>
                 </Button>
                 <Button
                   variant="secondary"
@@ -176,7 +193,7 @@ const AlertmanagerConfigurationVersionManager = ({
                   }}
                   disabled={restoreVersionState.isLoading}
                 >
-                  Restore
+                  <Trans i18nKey="alerting.alertmanager-configuration-version-manager.columns.restore">Restore</Trans>
                 </Button>
               </>
             )}
@@ -188,8 +205,16 @@ const AlertmanagerConfigurationVersionManager = ({
 
   if (restoreVersionState.isLoading) {
     return (
-      <Alert severity="info" title="Restoring Alertmanager configuration">
-        This might take a while...
+      <Alert
+        severity="info"
+        title={t(
+          'alerting.alertmanager-configuration-version-manager.title-restoring-alertmanager-configuration',
+          'Restoring Alertmanager configuration'
+        )}
+      >
+        <Trans i18nKey="alerting.alertmanager-configuration-version-manager.this-might-take-a-while">
+          This might take a while...
+        </Trans>
       </Alert>
     );
   }
@@ -216,9 +241,15 @@ const AlertmanagerConfigurationVersionManager = ({
       {/* TODO make this modal persist while restore is in progress */}
       <ConfirmModal
         isOpen={confirmRestore}
-        title={'Restore Version'}
-        body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
-        confirmText={'Yes, restore configuration'}
+        title={t('alerting.alertmanager-configuration-version-manager.title-restore-version', 'Restore version')}
+        body={t(
+          'alerting.alertmanager-configuration-version-manager.body-restore-configuration-version-unsaved-changes',
+          'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'
+        )}
+        confirmText={t(
+          'alerting.alertmanager-configuration-version-manager.confirmText-yes-restore-configuration',
+          'Yes, restore configuration'
+        )}
         onConfirm={() => {
           if (activeRestoreVersion) {
             restoreVersion(activeRestoreVersion);
@@ -256,10 +287,10 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
       <Stack direction="row" alignItems="center">
         <Spacer />
         <Button variant="secondary" onClick={onCancel} disabled={disabled}>
-          Return
+          <Trans i18nKey="alerting.compare-versions.return">Return</Trans>
         </Button>
         <Button icon="history" variant="primary" onClick={onConfirm} disabled={disabled}>
-          Restore
+          <Trans i18nKey="alerting.compare-versions.restore">Restore</Trans>
         </Button>
       </Stack>
     </div>

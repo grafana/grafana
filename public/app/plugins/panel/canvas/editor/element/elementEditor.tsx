@@ -1,6 +1,7 @@
 import { get as lodashGet } from 'lodash';
 
-import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
   canvasElementRegistry,
@@ -77,7 +78,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
           options: layerTypes,
         },
         description: isUnsupported
-          ? 'Selected element type is not supported by current settings. Please enable advanced element types.'
+          ? t(
+              'canvas.element-editor.description-unsupported',
+              'Selected element type is not supported by current settings. Please enable advanced element types.'
+            )
           : '',
       });
 
@@ -100,10 +104,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       const shouldAddLayoutEditor = opts.element.item.standardEditorConfig?.layout ?? true;
       if (shouldAddLayoutEditor) {
         builder.addCustomEditor({
-          category: ['Layout'],
+          category: [t('canvas.element-editor.category-layout', 'Layout')],
           id: 'content',
           path: '__', // not used
-          name: 'Quick placement',
+          name: t('canvas.element-editor.name-quick-placement', 'Quick placement'),
           editor: PlacementEditor,
           settings: opts,
         });

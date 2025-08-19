@@ -11,11 +11,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -64,11 +66,12 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			&datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{},
 			nil, pluginconfig.NewFakePluginRequestConfigProvider()),
 		tracer:  tracing.InitializeTracerForTest(),
-		metrics: newMetrics(nil),
+		metrics: metrics.NewSSEMetrics(nil),
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	}
 	queries := []Query{{
 		RefID: "A",
@@ -89,7 +92,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		User:    &user.SignedInUser{},
 	}
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)

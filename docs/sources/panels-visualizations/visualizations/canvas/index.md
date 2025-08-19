@@ -21,11 +21,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
-  add-field-from-calculation-transform:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
 ---
 
 # Canvas
@@ -63,9 +58,9 @@ Elements are the basic building blocks of a canvas and they help you visualize d
 
 Add elements in the [Layer](#layer-options) section of canvas options.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Element snapping and alignment only works when the canvas is not zoomed in.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Element types
 
@@ -136,9 +131,9 @@ The server element lets you easily represent a single server, a stack of servers
 
 The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
-{{% /admonition %}}
+{{< /admonition >}}
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="650px" alt="Canvas button element demo" >}}
 
@@ -267,13 +262,25 @@ Use the following pointer and keyboard strokes:
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
 
+##### Zoom to content
+
+When you toggle on the **Zoom to content** switch, Grafana automatically adjusts the view to fit all visible elements in your canvas visualization into the viewport, adding a small margin around the edges. This makes it easy to reset your view, present content, or switch between devices without losing your framing. The content will re‑fit even if you resize the panel.
+
 ##### Infinite panning
 
 You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
-{{% /admonition %}}
+{{< /admonition >}}
+
+### Tooltip options
+
+The **Tooltip mode** setting controls the display of tooltips when hovering over canvas elements that are connected to data, data links, or actions.
+The options are:
+
+- **Enabled** - Show a tooltip when the cursor hovers over an element.
+- **Disabled** - Tooltips are not shown on hover.
 
 ### Layer options
 
@@ -447,19 +454,20 @@ To add a data link, follow these steps:
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
 1. Scroll down to the **Data links and actions** section and expand it.
 1. Click **+ Add action**.
-1. In the dialog box that opens, set the action options:
+   In the dialog box that opens, set the action options:
 
-   | Option               | Description                                                                                                                                                                                     |
-   | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                               |
-   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                           |
-   | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                        |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                      |
-   | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
-   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                   |
-   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                         |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                |
-   | Body                 | The body of the request.                                                                                                                                                                        |
+   | Option               | Description                                                                                                                                                                                                                                 |
+   | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
+   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
+   | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                                                                    |
+   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                             |
+   | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
+   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
+   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                                                            |
+   | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
@@ -474,7 +482,6 @@ You can style the selected connection using the following options:
 - **Size** - Control the size of the connection by entering a number in the **Value** field.
 - **Radius** - Add curve to the connection by entering a value to represent the degree.
 - **Arrow Direction** - Control the appearance of the arrow head. Choose from:
-
   - **Forward** - The arrow head points in the direction in which the connection was drawn.
   - **Reverse** - The arrow head points in the opposite direction of which the connection was drawn.
   - **Both** - Adds arrow heads to both ends of the connection.

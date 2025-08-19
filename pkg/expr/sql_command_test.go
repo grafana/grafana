@@ -10,12 +10,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 func TestNewCommand(t *testing.T) {
-	cmd, err := NewSQLCommand("a", "select a from foo, bar", 0)
+	cmd, err := NewSQLCommand(t.Context(), "a", "", "select a from foo, bar", 0, 0, 0)
 	if err != nil && strings.Contains(err.Error(), "feature is not enabled") {
 		return
 	}
@@ -123,7 +126,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd, err := NewSQLCommand("a", "select a from foo, bar", tt.limit)
+			cmd, err := NewSQLCommand(t.Context(), "a", "", "select a from foo, bar", tt.limit, 0, 0)
 			require.NoError(t, err, "Failed to create SQL command")
 
 			vars := mathexp.Vars{}
@@ -134,16 +137,38 @@ func TestSQLCommandCellLimits(t *testing.T) {
 				}
 			}
 
-			_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
+			res, _ := cmd.Execute(context.Background(), time.Now(), vars, &testTracer{}, metrics.NewTestMetrics())
 
 			if tt.expectError {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.errorContains)
+				require.Error(t, res.Error)
+				require.ErrorContains(t, res.Error, tt.errorContains)
 			} else {
 				require.NoError(t, err)
 			}
 		})
 	}
+}
+
+func TestSQLCommandMetrics(t *testing.T) {
+	// Create test metrics
+	m := metrics.NewTestMetrics()
+
+	// Create a command
+	cmd, err := NewSQLCommand(t.Context(), "A", "someformat", "select * from foo", 0, 0, 0)
+	require.NoError(t, err)
+
+	// Execute successful command
+	_, err = cmd.Execute(context.Background(), time.Now(), mathexp.Vars{}, &testTracer{}, m)
+	require.NoError(t, err)
+
+	// Verify error count was not incremented
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCount), "Expected error metric not to be recorded")
+
+	// Verify duration was recorded
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandDuration), "Expected duration metric to be recorded")
+
+	// Verify cell count was recorded
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCellCount), "Expected cell count metric to be recorded")
 }
 
 type testTracer struct {
@@ -163,3 +188,8 @@ type testSpan struct {
 
 func (ts *testSpan) End(opt ...trace.SpanEndOption) {
 }
+
+func (ts *testSpan) RecordError(err error, opt ...trace.EventOption) {
+}
+
+func (ts *testSpan) SetStatus(code codes.Code, msg string) {}

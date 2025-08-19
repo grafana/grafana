@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -12,7 +12,6 @@ const (
 	SQLite   = "sqlite3"
 	MySQL    = "mysql"
 	MSSQL    = "mssql"
-	Spanner  = "spanner"
 )
 
 type Migration interface {

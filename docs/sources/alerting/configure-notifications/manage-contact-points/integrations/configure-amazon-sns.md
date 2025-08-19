@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Amazon SNS
 title: Configure Amazon SNS for Alerting
-weight: 100
+weight: 102
 refs:
   notification-templates:
     - pattern: /docs/grafana/
@@ -89,11 +89,9 @@ This section outlines a minimal setup to configure Amazon SNS with Alerting.
 ### 1. Create an SNS Topic and Email Subscriber
 
 1. **Navigate to SNS in AWS Console**:
-
    - Go to the [Amazon SNS Console](https://console.aws.amazon.com/sns/v3/home).
 
 2. **Create a new topic**:
-
    - On the **Topics** page, choose **"Create topic"**.
    - Select **"Standard"** as the type.
    - Enter a **Name** for your topic, e.g., `My-Topic`.
@@ -110,11 +108,9 @@ This section outlines a minimal setup to configure Amazon SNS with Alerting.
 ### 2. Create an IAM Policy, User, and Access Key
 
 1. **Navigate to IAM in AWS Console**:
-
    - Go to the [IAM Console](https://console.aws.amazon.com/iam/home).
 
 2. **Create a new policy**:
-
    - On the **Policies** page, choose **"Create policy"**.
    - Switch to the **"JSON"** tab and paste the following policy, replacing `Resource` with your SNS topic ARN:
 
@@ -134,7 +130,6 @@ This section outlines a minimal setup to configure Amazon SNS with Alerting.
    - Click **"Next"**, name it (e.g., `SNSPublishPolicy`), and click **"Create policy"**.
 
 3. **Create a new IAM user and assign the policy**
-
    - In the IAM Console, on the **Users** page, choose **"Create user"**.
    - Enter a **User name**, e.g., `alerting-sns-user`.
    - Click **"Next"**.

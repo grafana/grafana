@@ -6,23 +6,164 @@ on:
       - main
       - release-*.*.*
 
+permissions: {}
+
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-frontend-unit-tests.yml
+
   frontend-unit-tests:
-    runs-on: ubuntu-latest-8-cores
-    name: "Unit tests (${{ matrix.chunk }} / 8)"
+    permissions:
+      contents: read
+      id-token: write
+    needs:
+      - detect-changes
+    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
+    # the `frontend-unit-tests-enterprise` workflow will run instead
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64-large
+    name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
+      fail-fast: false
       matrix:
-        chunk: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        total: [16]
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
       with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
-    - run: yarn install --immutable --check-cache
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      run: yarn install --immutable
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
     - run: yarn run test:ci
       env:
-        TEST_MAX_WORKERS: 2
-        TEST_SHARD: ${{ matrix.chunk }}
-        TEST_SHARD_TOTAL: 8
+        TEST_MAX_WORKERS: 4
+        TEST_SHARD: ${{ matrix.shard }}
+        TEST_SHARD_TOTAL: ${{ matrix.total }}
+
+  frontend-unit-tests-enterprise:
+    permissions:
+      contents: read
+      id-token: write
+    needs:
+      - detect-changes
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64-large
+    name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        total: [16]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Setup Enterprise
+      uses: ./.github/actions/setup-enterprise
+      with:
+        github-app-name: 'grafana-ci-bot'
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      run: yarn install --immutable
+      env:
+        # Switch from default hardened mode to faster mode for internal PRs
+        YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
+    - run: yarn run test:ci
+      env:
+        TEST_MAX_WORKERS: 4
+        TEST_SHARD: ${{ matrix.shard }}
+        TEST_SHARD_TOTAL: ${{ matrix.total }}
+
+  frontend-decoupled-plugin-tests:
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64-large
+    name: "Decoupled plugin tests"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      run: yarn install --immutable
+      env:
+        # Switch from default hardened mode to faster mode for internal PRs
+        YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
+    - run: yarn run plugin:test:ci
+
+  frontend-packages-unit-tests:
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64-large
+    name: "Packages unit tests"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Yarn install
+      run: yarn install --immutable
+      env:
+        # Switch from default hardened mode to faster mode for internal PRs
+        YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
+        PUPPETEER_SKIP_DOWNLOAD: true
+        CYPRESS_INSTALL_BINARY: 0
+    - run: yarn run packages:test:ci
+
+  # This is the job that is actually required by rulesets.
+  # We need to require EITHER the OSS or the Enterprise job to pass.
+  # However, if one is skipped, GitHub won't flat-map the shards,
+  #   so they won't be accepted by a ruleset.
+  required-frontend-unit-tests:
+    needs:
+      - frontend-unit-tests
+      - frontend-unit-tests-enterprise
+      - frontend-decoupled-plugin-tests
+      - frontend-packages-unit-tests
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All frontend unit tests complete
+    runs-on: ubuntu-x64-small
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check test suites
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more unit test jobs have failed"
+          success-message: "All unit tests completed successfully"

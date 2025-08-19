@@ -2,21 +2,20 @@
 import { useCallback } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
+import { getDebounceTimeInMilliseconds } from '../../caching';
 import { PrometheusDatasource } from '../../datasource';
-import { getMetadataString } from '../../language_provider';
 import { truncateResult } from '../../language_utils';
-import { promQueryModeller } from '../PromQueryModeller';
+import { PromMetricsMetadata } from '../../types';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
+import { promQueryModeller } from '../shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
 import { MetricCombobox } from './MetricCombobox';
-import { MetricSelect } from './MetricSelect';
 
-export interface MetricsLabelsSectionProps {
+interface MetricsLabelsSectionProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
@@ -65,23 +64,24 @@ export function MetricsLabelsSection({
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
     // If no metric we need to use a different method
     if (!query.metric) {
-      await datasource.languageProvider.fetchLabels(timeRange);
-      return datasource.languageProvider.getLabelKeys().map((k) => ({ value: k }));
+      await datasource.languageProvider.queryLabelKeys(timeRange);
+      return datasource.languageProvider.retrieveLabelKeys().map((k) => ({ value: k }));
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
 
-    let labelsIndex: Record<string, string[]> = await datasource.languageProvider.fetchLabelsWithMatch(timeRange, expr);
+    let labelsIndex: string[] = await datasource.languageProvider.queryLabelKeys(timeRange, expr);
 
     // filter out already used labels
-    return Object.keys(labelsIndex)
+    return labelsIndex
       .filter((labelName) => !labelsToConsider.find((filter) => filter.label === labelName))
       .map((k) => ({ value: k }));
   };
 
-  const getLabelValuesAutocompleteSuggestions = (
+  const getLabelValuesAutocompleteSuggestions = async (
     queryString?: string,
     labelName?: string
   ): Promise<SelectableValue[]> => {
@@ -93,6 +93,7 @@ export function MetricsLabelsSection({
     const labelsToConsider = query.labels.filter((x) => x.label !== forLabel.label);
     labelsToConsider.push(forLabel);
     if (query.metric) {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     }
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
@@ -101,63 +102,8 @@ export function MetricsLabelsSection({
       value: datasource.interpolateString(labelObject.value),
     }));
     const expr = promQueryModeller.renderLabels(interpolatedLabelsToConsider);
-    let response: Promise<SelectableValue[]>;
-    if (datasource.hasLabelsMatchAPISupport()) {
-      response = getLabelValuesFromLabelValuesAPI(forLabel, expr);
-    } else {
-      response = getLabelValuesFromSeriesAPI(forLabel, expr);
-    }
-
-    return response.then((response: SelectableValue[]) => {
-      truncateResult(response);
-      return response;
-    });
-  };
-
-  /**
-   * Helper function to fetch and format label value results from legacy API
-   * @param forLabel
-   * @param promQLExpression
-   */
-  const getLabelValuesFromSeriesAPI = (
-    forLabel: Partial<QueryBuilderLabelFilter>,
-    promQLExpression: string
-  ): Promise<SelectableValue[]> => {
-    if (!forLabel.label) {
-      return Promise.resolve([]);
-    }
-    const result = datasource.languageProvider.fetchSeries(timeRange, promQLExpression);
-    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result.then((result) => {
-      // This query returns duplicate values, scrub them out
-      const set = new Set<string>();
-      result.forEach((labelValue) => {
-        const labelNameString = labelValue[forLabelInterpolated];
-        set.add(labelNameString);
-      });
-
-      return Array.from(set).map((labelValues: string) => ({ label: labelValues, value: labelValues }));
-    });
-  };
-
-  /**
-   * Helper function to fetch label values from a promql string expression and a label
-   * @param forLabel
-   * @param promQLExpression
-   */
-  const getLabelValuesFromLabelValuesAPI = (
-    forLabel: Partial<QueryBuilderLabelFilter>,
-    promQLExpression: string
-  ): Promise<SelectableValue[]> => {
-    if (!forLabel.label) {
-      return Promise.resolve([]);
-    }
-
-    const requestId = `[${datasource.uid}][${query.metric}][${forLabel.label}][${forLabel.op}]`;
-
-    return datasource.languageProvider
-      .fetchSeriesValuesWithMatch(timeRange, forLabel.label, promQLExpression, requestId)
-      .then((response) => response.map((v) => ({ value: v, label: v })));
+    const values = await datasource.languageProvider.queryLabelValues(timeRange, forLabel.label, expr);
+    return truncateResult(values).map(toSelectableValue);
   };
 
   /**
@@ -171,10 +117,11 @@ export function MetricsLabelsSection({
     }
     // If no metric is selected, we can get the raw list of labels
     if (!query.metric) {
-      return (await datasource.languageProvider.getLabelValues(timeRange, forLabel.label)).map((v) => ({ value: v }));
+      return (await datasource.languageProvider.queryLabelValues(timeRange, forLabel.label)).map((v) => ({ value: v }));
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
 
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
@@ -184,23 +131,16 @@ export function MetricsLabelsSection({
     }));
 
     const expr = promQueryModeller.renderLabels(interpolatedLabelsToConsider);
-
-    if (datasource.hasLabelsMatchAPISupport()) {
-      return getLabelValuesFromLabelValuesAPI(forLabel, expr);
-    } else {
-      return getLabelValuesFromSeriesAPI(forLabel, expr);
-    }
+    return (await datasource.languageProvider.queryLabelValues(timeRange, forLabel.label, expr)).map(toSelectableValue);
   };
 
   const onGetMetrics = useCallback(() => {
     return withTemplateVariableOptions(getMetrics(datasource, query, timeRange));
   }, [datasource, query, timeRange, withTemplateVariableOptions]);
 
-  const MetricSelectComponent = config.featureToggles.prometheusUsesCombobox ? MetricCombobox : MetricSelect;
-
   return (
     <>
-      <MetricSelectComponent
+      <MetricCombobox
         query={query}
         onChange={onChange}
         onGetMetrics={onGetMetrics}
@@ -209,9 +149,10 @@ export function MetricsLabelsSection({
         metricLookupDisabled={datasource.lookupsDisabled}
         onBlur={onBlur ? onBlur : () => {}}
         variableEditor={variableEditor}
+        timeRange={timeRange}
       />
       <LabelFilters
-        debounceDuration={datasource.getDebounceTimeInMilliseconds()}
+        debounceDuration={getDebounceTimeInMilliseconds(datasource.cacheLevel)}
         getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
         labelsFilters={query.labels}
         onChange={onChangeLabels}
@@ -228,6 +169,7 @@ export function MetricsLabelsSection({
  * exists.
  * @param datasource
  * @param query
+ * @param timeRange
  */
 async function getMetrics(
   datasource: PrometheusDatasource,
@@ -236,25 +178,33 @@ async function getMetrics(
 ): Promise<Array<{ value: string; description?: string }>> {
   // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
-  if (!datasource.languageProvider.metricsMetadata) {
-    await datasource.languageProvider.loadMetricsMetadata();
-  }
-
-  // Error handling for when metrics metadata returns as undefined
-  if (!datasource.languageProvider.metricsMetadata) {
-    datasource.languageProvider.metricsMetadata = {};
+  const metadata = datasource.languageProvider.retrieveMetricsMetadata();
+  if (Object.keys(metadata).length === 0) {
+    await datasource.languageProvider.queryMetricsMetadata();
   }
 
   let metrics: string[];
-  if (query.labels.length > 0) {
-    const expr = promQueryModeller.renderLabels(query.labels);
-    metrics = (await datasource.languageProvider.getSeries(timeRange, expr, true))['__name__'] ?? [];
-  } else {
-    metrics = (await datasource.languageProvider.getLabelValues(timeRange, '__name__')) ?? [];
-  }
+  const expr = promQueryModeller.renderLabels(query.labels);
+  metrics =
+    (await datasource.languageProvider.queryLabelValues(timeRange, '__name__', expr === '' ? undefined : expr)) ?? [];
 
   return metrics.map((m) => ({
     value: m,
-    description: getMetadataString(m, datasource.languageProvider.metricsMetadata!),
+    description: getMetadataString(m, datasource.languageProvider.retrieveMetricsMetadata()),
   }));
+}
+
+function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return;
+  }
+  const { type, help } = metadata[metric];
+  return `${type.toUpperCase()}: ${help}`;
+}
+
+function toSelectableValue(lv: string) {
+  return {
+    label: lv,
+    value: lv,
+  };
 }

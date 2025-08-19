@@ -21,7 +21,8 @@ var (
 
 	// Note: these are intended to be replaced by equivalent errutil implementations.
 	// Avoid creating new errors with errors.New and prefer errutil
-	ErrInvalidRequestBody     = errors.New("invalid request body")
+	ErrInvalidRequestBody     = errutil.BadRequest("accesscontrol.invalidRequestBody", errutil.WithPublicMessage("invalid request body"))
+	ErrInvalidRequest         = errutil.BadRequest("accesscontrol.invalidRequest", errutil.WithPublicMessage("invalid request"))
 	ErrFixedRolePrefixMissing = errors.New("fixed role should be prefixed with '" + FixedRolePrefix + "'")
 	ErrInvalidScope           = errors.New("invalid scope")
 	ErrResolverNotFound       = errors.New("no resolver found")

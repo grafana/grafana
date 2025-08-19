@@ -16,6 +16,7 @@ import {
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -26,6 +27,7 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
+import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQueryExtensionPoint';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
@@ -122,10 +124,10 @@ export const QueryWrapper = ({
       <div className={styles.dsTooltip}>
         <Tooltip
           content={
-            <>
+            <Trans i18nKey="alerting.selecting-data-source-tooltip.tooltip-content">
               Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
               for more information.
-            </>
+            </Trans>
           }
         >
           <Icon
@@ -168,6 +170,7 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
+        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
           query={query}
@@ -254,8 +257,11 @@ export function MaxDataPointsOption({
   return (
     <InlineField
       labelWidth={24}
-      label="Max data points"
-      tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
+      label={t('alerting.max-data-points-option.label-max-data-points', 'Max data points')}
+      tooltip={t(
+        'alerting.max-data-points-option.tooltip-max-data-points',
+        'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.'
+      )}
     >
       <Input
         type="number"
@@ -290,13 +296,13 @@ export function MinIntervalOption({
 
   return (
     <InlineField
-      label="Interval"
+      label={t('alerting.min-interval-option.label-interval', 'Interval')}
       labelWidth={24}
       tooltip={
-        <>
+        <Trans i18nKey="alerting.min-interval-option.tooltip-interval">
           Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
           your data is written every minute.
-        </>
+        </Trans>
       }
     >
       <Input

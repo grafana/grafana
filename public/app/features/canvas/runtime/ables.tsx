@@ -69,6 +69,7 @@ export const dimensionViewable = {
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     return (
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       <div
         key={'dimension-viewable'}
         className={'moveable-dimension'}

@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { notifyApp } from 'app/core/actions';
@@ -10,7 +11,6 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 import { dispatch } from 'app/store/store';
 
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
-import { t } from '../internationalization';
 
 import { copyStringToClipboard } from './explore';
 
@@ -35,13 +35,30 @@ export const createShortLink = memoizeOne(async function (path: string) {
   }
 });
 
+/**
+ * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.
+ * See https://github.com/grafana/grafana/issues/106889
+ * @param path - The long path to share.
+ * @returns A ClipboardItem for the shortened link.
+ */
+const createShortLinkClipboardItem = (path: string) => {
+  return new ClipboardItem({
+    'text/plain': createShortLink(path),
+  });
+};
+
 export const createAndCopyShortLink = async (path: string) => {
-  const shortLink = await createShortLink(path);
-  if (shortLink) {
-    copyStringToClipboard(shortLink);
+  if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+    navigator.clipboard.write([createShortLinkClipboardItem(path)]);
     dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
   } else {
-    dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    const shortLink = await createShortLink(path);
+    if (shortLink) {
+      copyStringToClipboard(shortLink);
+      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
+    } else {
+      dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    }
   }
 };
 

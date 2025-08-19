@@ -3,7 +3,7 @@ import { PropsWithChildren } from 'react';
 import { QueryLibraryContext } from './QueryLibraryContext';
 
 type Props = {
-  queryLibraryAvailable?: boolean;
+  queryLibraryEnabled?: boolean;
 };
 
 export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>) {
@@ -13,10 +13,11 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         openDrawer: jest.fn(),
         closeDrawer: jest.fn(),
         isDrawerOpen: false,
-        openAddQueryModal: jest.fn(),
-        closeAddQueryModal: jest.fn(),
         renderSaveQueryButton: jest.fn(),
-        queryLibraryEnabled: false,
+        queryLibraryEnabled: Boolean(props.queryLibraryEnabled),
+        context: 'explore',
+        triggerAnalyticsEvent: jest.fn(),
+        setNewQuery: jest.fn(),
       }}
     >
       {props.children}

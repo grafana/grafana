@@ -4,8 +4,6 @@ import { lastValueFrom, of } from 'rxjs';
 
 import {
   AdHocVariableFilter,
-  AnnotationEvent,
-  AnnotationQueryRequest,
   CoreApp,
   CustomVariableModel,
   DataQueryRequest,
@@ -18,22 +16,16 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
+import { extractResourceMatcher, extractRuleMappingFromGroups, PrometheusDatasource } from './datasource';
+import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
+import { PrometheusLanguageProviderInterface } from './language_provider';
+import { CacheRequestInfo } from './querycache/QueryCache';
 import {
-  alignRange,
-  extractRuleMappingFromGroups,
-  PrometheusDatasource,
-  prometheusRegularEscape,
-  prometheusSpecialRegexEscape,
-} from './datasource';
-import PromQlLanguageProvider from './language_provider';
-import {
-  createAnnotationResponse,
   createDataRequest,
   createDefaultPromResponse,
-  createEmptyAnnotationResponse,
   fetchMockCalledWith,
   getMockTimeRange,
-} from './test/__mocks__/datasource';
+} from './test/mocks/datasource';
 import {
   PromApplication,
   PrometheusCacheLevel,
@@ -126,7 +118,6 @@ describe('PrometheusDatasource', () => {
           prometheusType: PromApplication.Prometheus,
         },
       } as unknown as DataSourceInstanceSettings<PromOptions>;
-      const range = { from: time({ seconds: 63 }), to: time({ seconds: 183 }) };
       const directDs = new PrometheusDatasource(instanceSettings, templateSrvStub);
 
       await expect(
@@ -145,37 +136,6 @@ describe('PrometheusDatasource', () => {
           )
         )
       ).rejects.toMatchObject({ message: expect.stringMatching('Browser access') });
-
-      // Cannot test because some other tests need "./metric_find_query" to be mocked and that prevents this to be
-      // tested. Checked manually that this ends up with throwing
-      // await expect(directDs.metricFindQuery('label_names(foo)')).rejects.toBeDefined();
-
-      await expect(
-        directDs.annotationQuery({
-          range: { ...range, raw: range },
-          rangeRaw: range,
-          // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
-          dashboard: {},
-          annotation: {
-            expr: 'metric',
-            name: 'test',
-            enable: true,
-            iconColor: '',
-          },
-        })
-      ).rejects.toMatchObject({
-        message: expect.stringMatching('Browser access'),
-      });
-
-      const errorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      await directDs.getTagKeys({ filters: [] });
-      // Language provider currently catches and just logs the error
-      expect(errorMock).toHaveBeenCalledTimes(1);
-
-      await expect(directDs.getTagValues({ filters: [], key: 'A' })).rejects.toMatchObject({
-        message: expect.stringMatching('Browser access'),
-      });
     });
   });
 
@@ -411,46 +371,6 @@ describe('PrometheusDatasource', () => {
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(
         (toSeconds - fromSeconds) / 1000
       );
-    });
-  });
-
-  describe('alignRange', () => {
-    it('does not modify already aligned intervals with perfect step', () => {
-      const range = alignRange(0, 3, 3, 0);
-      expect(range.start).toEqual(0);
-      expect(range.end).toEqual(3);
-    });
-
-    it('does modify end-aligned intervals to reflect number of steps possible', () => {
-      const range = alignRange(1, 6, 3, 0);
-      expect(range.start).toEqual(0);
-      expect(range.end).toEqual(6);
-    });
-
-    it('does align intervals that are a multiple of steps', () => {
-      const range = alignRange(1, 4, 3, 0);
-      expect(range.start).toEqual(0);
-      expect(range.end).toEqual(3);
-    });
-
-    it('does align intervals that are not a multiple of steps', () => {
-      const range = alignRange(1, 5, 3, 0);
-      expect(range.start).toEqual(0);
-      expect(range.end).toEqual(3);
-    });
-
-    it('does align intervals with local midnight -UTC offset', () => {
-      //week range, location 4+ hours UTC offset, 24h step time
-      const range = alignRange(4 * 60 * 60, (7 * 24 + 4) * 60 * 60, 24 * 60 * 60, -4 * 60 * 60); //04:00 UTC, 7 day range
-      expect(range.start).toEqual(4 * 60 * 60);
-      expect(range.end).toEqual((7 * 24 + 4) * 60 * 60);
-    });
-
-    it('does align intervals with local midnight +UTC offset', () => {
-      //week range, location 4- hours UTC offset, 24h step time
-      const range = alignRange(20 * 60 * 60, (8 * 24 - 4) * 60 * 60, 24 * 60 * 60, 4 * 60 * 60); //20:00 UTC on day1, 7 days later is 20:00 on day8
-      expect(range.start).toEqual(20 * 60 * 60);
-      expect(range.end).toEqual((8 * 24 - 4) * 60 * 60);
     });
   });
 
@@ -1047,13 +967,100 @@ describe('PrometheusDatasource', () => {
       expect(rangeS).toEqual({ text: 21600, value: 21600 });
     });
   });
+
+  describe('extractResourceMatcher', () => {
+    it('should extract matcher from given query and filters', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: 'metric_name{job="testjob"}',
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [
+        {
+          key: 'instance',
+          operator: '=',
+          value: 'localhost',
+        },
+      ];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{__name__=~"metric_name",instance="localhost"}');
+    });
+
+    it('should extract matcher from given query and empty filters', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: 'metric_name{job="testjob"}',
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{__name__=~"metric_name"}');
+    });
+
+    it('should extract matcher from given empty query expr and filters', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: '',
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [
+        {
+          key: 'instance',
+          operator: '=',
+          value: 'localhost',
+        },
+      ];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{instance="localhost"}');
+    });
+
+    it('should extract matcher from given filters only', () => {
+      const queries: PromQuery[] = [];
+      const filters: AdHocVariableFilter[] = [
+        {
+          key: 'instance',
+          operator: '=',
+          value: 'localhost',
+        },
+        {
+          key: 'job',
+          operator: '!=',
+          value: 'testjob',
+        },
+      ];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{instance="localhost",job!="testjob"}');
+    });
+
+    it('should extract matcher as match-all from no query and filter', () => {
+      const queries: PromQuery[] = [];
+      const filters: AdHocVariableFilter[] = [];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBeUndefined();
+    });
+
+    it('should extract the correct matcher for queries with `... or vector(0)`', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: `sum(increase(go_cpu_classes_idle_cpu_seconds_total[$__rate_interval])) or vector(0)`,
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{__name__=~"go_cpu_classes_idle_cpu_seconds_total"}');
+    });
+  });
 });
-
-const SECOND = 1000;
-const MINUTE = 60 * SECOND;
-const HOUR = 60 * MINUTE;
-
-const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
 describe('PrometheusDatasource2', () => {
   const instanceSettings = {
@@ -1070,249 +1077,6 @@ describe('PrometheusDatasource2', () => {
     ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
   });
 
-  describe('annotationQuery', () => {
-    let results: AnnotationEvent[];
-    const options = {
-      annotation: {
-        expr: 'ALERTS{alertstate="firing"}',
-        tagKeys: 'job',
-        titleFormat: '{{alertname}}',
-        textFormat: '{{instance}}',
-      },
-      range: {
-        from: time({ seconds: 63 }),
-        to: time({ seconds: 123 }),
-      },
-    } as unknown as AnnotationQueryRequest<PromQuery>;
-
-    const response = createAnnotationResponse();
-    const emptyResponse = createEmptyAnnotationResponse();
-
-    describe('handle result with empty fields', () => {
-      it('should return empty results', async () => {
-        fetchMock.mockImplementation(() => of(emptyResponse));
-
-        await ds.annotationQuery(options).then((data) => {
-          results = data;
-        });
-
-        expect(results.length).toBe(0);
-      });
-    });
-
-    describe('when time series query is cancelled', () => {
-      it('should return empty results', async () => {
-        fetchMock.mockImplementation(() => of({ cancelled: true }));
-
-        await ds.annotationQuery(options).then((data) => {
-          results = data;
-        });
-
-        expect(results).toEqual([]);
-      });
-    });
-
-    describe('not use useValueForTime', () => {
-      beforeEach(async () => {
-        options.annotation.useValueForTime = false;
-        fetchMock.mockImplementation(() => of(response));
-
-        await ds.annotationQuery(options).then((data) => {
-          results = data;
-        });
-      });
-
-      it('should return annotation list', () => {
-        expect(results.length).toBe(1);
-        expect(results[0].tags).toContain('testjob');
-        expect(results[0].title).toBe('InstanceDown');
-        expect(results[0].text).toBe('testinstance');
-        expect(results[0].time).toBe(123);
-      });
-    });
-
-    describe('use useValueForTime', () => {
-      beforeEach(async () => {
-        options.annotation.useValueForTime = true;
-        fetchMock.mockImplementation(() => of(response));
-
-        await ds.annotationQuery(options).then((data) => {
-          results = data;
-        });
-      });
-
-      it('should return annotation list', () => {
-        expect(results[0].time).toEqual(456);
-      });
-    });
-
-    describe('step parameter', () => {
-      beforeEach(() => {
-        fetchMock.mockImplementation(() => of(response));
-      });
-
-      it('should use default step for short range if no interval is given', () => {
-        const query = {
-          ...options,
-          range: {
-            from: time({ seconds: 63 }),
-            to: time({ seconds: 123 }),
-          },
-        } as AnnotationQueryRequest<PromQuery>;
-        ds.annotationQuery(query);
-        const req = fetchMock.mock.calls[0][0];
-        expect(req.data.queries[0].interval).toBe('60s');
-      });
-
-      it('should use default step for short range when annotation step is empty string', () => {
-        const query = {
-          ...options,
-          annotation: {
-            ...options.annotation,
-            step: '',
-          },
-          range: {
-            from: time({ seconds: 63 }),
-            to: time({ seconds: 123 }),
-          },
-        } as unknown as AnnotationQueryRequest<PromQuery>;
-        ds.annotationQuery(query);
-        const req = fetchMock.mock.calls[0][0];
-        expect(req.data.queries[0].interval).toBe('60s');
-      });
-
-      it('should use custom step for short range', () => {
-        const annotation = {
-          ...options.annotation,
-          step: '10s',
-        };
-        const query = {
-          ...options,
-          annotation,
-          range: {
-            from: time({ seconds: 63 }),
-            to: time({ seconds: 123 }),
-          },
-        } as unknown as AnnotationQueryRequest<PromQuery>;
-        ds.annotationQuery(query);
-        const req = fetchMock.mock.calls[0][0];
-        expect(req.data.queries[0].interval).toBe('10s');
-      });
-    });
-
-    describe('region annotations for sectors', () => {
-      const options = {
-        annotation: {
-          expr: 'ALERTS{alertstate="firing"}',
-          tagKeys: 'job',
-          titleFormat: '{{alertname}}',
-          textFormat: '{{instance}}',
-        },
-        range: {
-          from: time({ seconds: 63 }),
-          to: time({ seconds: 900 }),
-        },
-      } as unknown as AnnotationQueryRequest;
-
-      async function runAnnotationQuery(data: number[][], overrideStep?: string) {
-        let response = createAnnotationResponse();
-        response.data.results['X'].frames[0].data.values = data;
-        if (overrideStep) {
-          const meta = response.data.results['X'].frames[0].schema.meta;
-          meta.executedQueryString = meta.executedQueryString.replace('1m0s', overrideStep);
-        }
-
-        options.annotation.useValueForTime = false;
-        fetchMock.mockImplementation(() => of(response));
-
-        return ds.annotationQuery(options);
-      }
-
-      it('should handle gaps and inactive values', async () => {
-        const results = await runAnnotationQuery([
-          [2 * 60000, 3 * 60000, 5 * 60000, 6 * 60000, 7 * 60000, 8 * 60000, 9 * 60000],
-          [1, 1, 1, 1, 1, 0, 1],
-        ]);
-        expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
-          [120000, 180000],
-          [300000, 420000],
-          [540000, 540000],
-        ]);
-      });
-
-      it('should handle single region', async () => {
-        const results = await runAnnotationQuery([
-          [2 * 60000, 3 * 60000],
-          [1, 1],
-        ]);
-        expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 180000]]);
-      });
-
-      it('should handle 0 active regions', async () => {
-        const results = await runAnnotationQuery([
-          [2 * 60000, 3 * 60000, 5 * 60000],
-          [0, 0, 0],
-        ]);
-        expect(results.length).toBe(0);
-      });
-
-      it('should handle single active value', async () => {
-        const results = await runAnnotationQuery([[2 * 60000], [1]]);
-        expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
-      });
-
-      describe('should group annotations over wider range when the step grows larger', () => {
-        const data: number[][] = [
-          [1 * 120000, 2 * 120000, 3 * 120000, 4 * 120000, 5 * 120000, 6 * 120000],
-          [1, 1, 0, 0, 1, 1],
-        ];
-
-        it('should not group annotations with the default step', async () => {
-          const results = await runAnnotationQuery(data);
-          expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
-            [120000, 120000],
-            [240000, 240000],
-            [600000, 600000],
-            [720000, 720000],
-          ]);
-        });
-
-        it('should group annotations with larger step', async () => {
-          const results = await runAnnotationQuery(data, '2m0s');
-          expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
-            [120000, 240000],
-            [600000, 720000],
-          ]);
-        });
-      });
-    });
-
-    describe('with template variables', () => {
-      afterAll(() => {
-        replaceMock.mockImplementation((a: string, ...rest: unknown[]) => a);
-      });
-
-      it('should interpolate variables in query expr', () => {
-        const query = {
-          ...options,
-          annotation: {
-            ...options.annotation,
-            expr: '$variable',
-          },
-          range: {
-            from: time({ seconds: 1 }),
-            to: time({ seconds: 2 }),
-          },
-        } as unknown as AnnotationQueryRequest<PromQuery>;
-        const interpolated = 'interpolated_expr';
-        replaceMock.mockReturnValue(interpolated);
-        ds.annotationQuery(query);
-        const req = fetchMock.mock.calls[0][0];
-        expect(req.data.queries[0].expr).toBe(interpolated);
-      });
-    });
-  });
-
   it('should give back 1 exemplar target when multiple queries with exemplar enabled and same metric', () => {
     const targetA: PromQuery = {
       refId: 'A',
@@ -1326,8 +1090,8 @@ describe('PrometheusDatasource2', () => {
     };
 
     ds.languageProvider = {
-      histogramMetrics: ['tns_request_duration_seconds_bucket'],
-    } as PromQlLanguageProvider;
+      retrieveHistogramMetrics: jest.fn().mockReturnValue(['tns_request_duration_seconds_bucket']),
+    } as unknown as PrometheusLanguageProviderInterface;
 
     const request = {
       targets: [targetA, targetB],
@@ -1488,5 +1252,74 @@ describe('modifyQuery', () => {
         });
       });
     });
+  });
+});
+
+describe('PrometheusDatasource incremental query logic', () => {
+  let ds: PrometheusDatasource;
+  let mockCache: {
+    requestInfo: jest.MockedFunction<(request: DataQueryRequest<PromQuery>) => CacheRequestInfo<PromQuery>>;
+    procFrames: jest.MockedFunction<(...args: unknown[]) => unknown[]>;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockCache = {
+      requestInfo: jest.fn().mockReturnValue({
+        requests: [{ targets: [], range: getMockTimeRange() }],
+        targetSignatures: new Map(),
+        shouldCache: true,
+      }),
+      procFrames: jest.fn().mockReturnValue([]),
+    };
+
+    const incrementalInstanceSettings = {
+      url: 'proxied',
+      id: 1,
+      uid: 'ABCDEF',
+      access: 'proxy',
+      user: 'test',
+      password: 'mupp',
+      jsonData: {
+        customQueryParameters: '',
+        cacheLevel: PrometheusCacheLevel.Low,
+        incrementalQuerying: true,
+      } as Partial<PromOptions>,
+    } as unknown as DataSourceInstanceSettings<PromOptions>;
+
+    ds = new PrometheusDatasource(incrementalInstanceSettings, templateSrvStub);
+    ds.cache = mockCache as unknown as typeof ds.cache;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should use incremental query for normal queries when incrementalQuerying is true', async () => {
+    const request = createDataRequest([{ expr: 'up', refId: 'A' }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).toHaveBeenCalled();
+  });
+
+  it('should disable incremental query when query contains $__range', async () => {
+    const request = createDataRequest([{ expr: 'rate(up[$__range])', refId: 'A' }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
+  });
+
+  it('should disable incremental query when any target contains $__range', async () => {
+    const request = createDataRequest([
+      { expr: 'up', refId: 'A' },
+      { expr: 'rate(cpu[$__range])', refId: 'B' },
+    ]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
+  });
+
+  it('should disable incremental query for instant queries', async () => {
+    const request = createDataRequest([{ expr: 'up', refId: 'A', instant: true }]);
+    await lastValueFrom(ds.query(request));
+    expect(mockCache.requestInfo).not.toHaveBeenCalled();
   });
 });

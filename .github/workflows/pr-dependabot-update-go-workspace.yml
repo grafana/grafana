@@ -17,12 +17,12 @@ permissions:
 jobs:
   update:
     runs-on: "ubuntu-latest"
-    if: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:
     - name: Retrieve GitHub App secrets
       id: get-secrets
-      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
+      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
       with:
         repo_secrets: |
           APP_ID=grafana-go-workspace-bot:app-id
@@ -42,9 +42,10 @@ jobs:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.ref }}
         token: ${{ steps.generate_token.outputs.token }}
+        persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
       with:
         go-version-file: go.mod
 
@@ -64,5 +65,5 @@ jobs:
         if ! git diff --exit-code --quiet; then
           echo "Committing and pushing workspace changes"
           git commit -a -m "update workspace"
-          git push origin $BRANCH_NAME
+          git push origin "$BRANCH_NAME"
         fi

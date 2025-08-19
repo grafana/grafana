@@ -99,8 +99,8 @@ export class GrafanaJavascriptAgentBackend
         environment: options.buildInfo.env,
       },
       instrumentations: options.allInstrumentationsEnabled
-        ? instrumentations
-        : [...getWebInstrumentations(), new TracingInstrumentation()],
+        ? [...getWebInstrumentations(), new TracingInstrumentation()]
+        : instrumentations,
       consoleInstrumentation: consoleInstrumentationOptions,
       trackWebVitalsAttribution: options.webVitalsInstrumentalizationEnabled || options.allInstrumentationsEnabled,
       transports,

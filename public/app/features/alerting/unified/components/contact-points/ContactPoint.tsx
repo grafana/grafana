@@ -3,8 +3,8 @@ import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
 import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
@@ -273,7 +273,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({
-    borderRadius: `${theme.shape.radius.default}`,
+    borderRadius: theme.shape.radius.default,
     border: `solid 1px ${theme.colors.border.weak}`,
     borderBottom: 'none',
   }),

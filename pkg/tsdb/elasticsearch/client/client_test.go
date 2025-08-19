@@ -183,6 +183,21 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Contains(t, bodyString, "metrics-2018.05.17")
 	})
 
+	t.Run("Should return DownstreamError when index is invalid", func(t *testing.T) {
+		ds := &DatasourceInfo{
+			URL:      "test",
+			Database: "index-with-no-pattern",
+			Interval: intervalMonthly,
+		}
+
+		c, err := NewClient(context.Background(), ds, log.NewNullLogger())
+		require.NoError(t, err)
+
+		_, err = c.ExecuteMultisearch(&MultiSearchRequest{Requests: []*SearchRequest{{}}})
+		assert.Equal(t, "failed to get indices from index pattern. invalid index pattern index-with-no-pattern. Specify an index with a time pattern or select 'No pattern'", err.Error())
+		require.True(t, backend.IsDownstreamError(err))
+	})
+
 	t.Run("Should return DownstreamError when decoding response fails", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Set("Content-Type", "application/x-ndjson")

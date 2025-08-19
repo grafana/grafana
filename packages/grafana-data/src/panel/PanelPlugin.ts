@@ -3,6 +3,7 @@ import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+import { PanelModel } from '../types/dashboard';
 import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
 import {
   PanelPluginMeta,
@@ -113,6 +114,7 @@ export class PanelPlugin<
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
+  shouldMigrate?: (panel: PanelModel) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
   dataSupport: PanelPluginDataSupport = {
@@ -201,10 +203,15 @@ export class PanelPlugin<
    * This function is called before the panel first loads if
    * the current version is different than the version that was saved.
    *
+   * If shouldMigrate is provided, it will be called regardless of whether
+   * the version has changed, and can explicitly opt into running the
+   * migration handler
+   *
    * This is a good place to support any changes to the options model
    */
-  setMigrationHandler(handler: PanelMigrationHandler<TOptions>) {
+  setMigrationHandler(handler: PanelMigrationHandler<TOptions>, shouldMigrate?: (panel: PanelModel) => boolean) {
     this.onPanelMigration = handler;
+    this.shouldMigrate = shouldMigrate;
     return this;
   }
 

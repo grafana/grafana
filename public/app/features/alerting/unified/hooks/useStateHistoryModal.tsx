@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
@@ -54,7 +55,7 @@ function useStateHistoryModal() {
         onDismiss={dismissModal}
         closeOnBackdropClick={true}
         closeOnEscape={true}
-        title="State history"
+        title={t('alerting.use-state-history-modal.state-history-modal.title-state-history', 'State history')}
         className={styles.modal}
         contentClassName={styles.modalContent}
       >

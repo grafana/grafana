@@ -3,6 +3,7 @@
   "name": "Jaeger",
   "id": "jaeger",
   "category": "tracing",
+  "executable": "gpx_jaeger",
 
   "backend": true,
   "metrics": true,
@@ -28,12 +29,16 @@
         "url": "https://www.jaegertracing.io"
       },
       {
-        "name": "GitHub Project",
+        "name": "Jaeger GitHub Project",
         "url": "https://github.com/jaegertracing/jaeger"
       },
       {
+        "name": "Repository",
+        "url": "https://github.com/grafana/grafana"
+      },
+      {
         "name": "Raise issue",
-        "url": "https://github.com/jaegertracing/jaeger/issues/new"
+        "url": "https://github.com/grafana/grafana/issues/new"
       },
       {
         "name": "Documentation",

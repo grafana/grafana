@@ -53,7 +53,7 @@ func (m *RawSQLMigration) SQL(dialect Dialect) string {
 		}
 	}
 
-	return dialect.NoOpSQL()
+	return ""
 }
 
 func (m *RawSQLMigration) Set(dialect string, sql string) *RawSQLMigration {
@@ -83,10 +83,6 @@ func (m *RawSQLMigration) Postgres(sql string) *RawSQLMigration {
 
 func (m *RawSQLMigration) Mssql(sql string) *RawSQLMigration {
 	return m.Set(MSSQL, sql)
-}
-
-func (m *RawSQLMigration) Spanner(sql string) *RawSQLMigration {
-	return m.Set(Spanner, sql)
 }
 
 type AddColumnMigration struct {

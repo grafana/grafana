@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ScaleDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
@@ -10,15 +11,18 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { validateScaleOptions, validateScaleConfig } from '../scale';
 import { ScaleDimensionOptions } from '../types';
 
-const fixedValueOption: SelectableValue<string> = {
-  label: 'Fixed value',
-  value: '_____fixed_____',
-};
-
 export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>) => {
-  const { value, context, onChange, item } = props;
+  const { value, context, onChange, item, id } = props;
   const { settings } = item;
   const styles = useStyles2(getStyles);
+
+  const fixedValueOption: SelectableValue<string> = useMemo(
+    () => ({
+      label: t('dimensions.scale-dimension-editor.fixed-value-option.label.fixed-value', 'Fixed value'),
+      value: '_____fixed_____',
+    }),
+    []
+  );
 
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
@@ -52,7 +56,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
         });
       }
     },
-    [validateAndDoChange, value]
+    [validateAndDoChange, value, fixedValueOption.value]
   );
 
   const onMinChange = useCallback(
@@ -91,36 +95,41 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
     [validateAndDoChange, value]
   );
 
+  const valueInputId = useId();
+  const minInputId = useId();
+  const maxInputId = useId();
+
   const val = value ?? {};
   const selectedOption = isFixed ? fixedValueOption : selectOptions.find((v) => v.value === fieldName);
   return (
     <>
       <div>
         <Select
+          inputId={id}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
-          noOptionsMessage="No fields found"
+          noOptionsMessage={t('dimensions.scale-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
         />
       </div>
       <div className={styles.range}>
         {isFixed && (
           <InlineFieldRow>
-            <InlineField label="Value" labelWidth={8} grow={true}>
-              <NumberInput value={val.fixed} {...minMaxStep} onChange={onValueChange} />
+            <InlineField label={t('dimensions.scale-dimension-editor.label-value', 'Value')} labelWidth={8} grow={true}>
+              <NumberInput id={valueInputId} value={val.fixed} {...minMaxStep} onChange={onValueChange} />
             </InlineField>
           </InlineFieldRow>
         )}
         {!isFixed && !minMaxStep.hideRange && (
           <>
             <InlineFieldRow>
-              <InlineField label="Min" labelWidth={8} grow={true}>
-                <NumberInput value={val.min} {...minMaxStep} onChange={onMinChange} />
+              <InlineField label={t('dimensions.scale-dimension-editor.label-min', 'Min')} labelWidth={8} grow={true}>
+                <NumberInput id={minInputId} value={val.min} {...minMaxStep} onChange={onMinChange} />
               </InlineField>
             </InlineFieldRow>
             <InlineFieldRow>
-              <InlineField label="Max" labelWidth={8} grow={true}>
-                <NumberInput value={val.max} {...minMaxStep} onChange={onMaxChange} />
+              <InlineField label={t('dimensions.scale-dimension-editor.label-max', 'Max')} labelWidth={8} grow={true}>
+                <NumberInput id={maxInputId} value={val.max} {...minMaxStep} onChange={onMaxChange} />
               </InlineField>
             </InlineFieldRow>
           </>

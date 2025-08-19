@@ -1,13 +1,13 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, pickBy } from 'lodash';
 
-import { createMonitoringLogger } from '@grafana/runtime';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
+import { AdvancedFilters } from './components/rules/Filter/RulesFilter.v2';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
@@ -35,23 +35,27 @@ const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger
 
 export { logError, logInfo, logMeasurement, logWarning };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
-  type: string,
-  func: TFunc,
-  context: Record<string, string>
-): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
-  return async function (...args) {
-    const startLoadingTs = performance.now();
+/**
+ * Utility function to measure performance of async operations
+ * @param func Function to measure
+ * @param measurementName Name of the measurement for logging
+ * @param context Context for logging
+ */
+export function withPerformanceLogging<TArgs extends unknown[], TReturn>(
+  func: (...args: TArgs) => Promise<TReturn>,
+  measurementName: string,
+  context: Record<string, string> = {}
+): (...args: TArgs) => Promise<TReturn> {
+  return async function (...args: TArgs): Promise<TReturn> {
+    const startMark = `${measurementName}:start`;
+    performance.mark(startMark);
 
     const response = await func(...args);
-    const loadTimesMs = performance.now() - startLoadingTs;
 
+    const loadTimeMeasure = performance.measure(measurementName, startMark);
     logMeasurement(
-      type,
-      {
-        loadTimesMs,
-      },
+      measurementName,
+      { duration: loadTimeMeasure.duration, loadTimesMs: loadTimeMeasure.duration },
       context
     );
 
@@ -218,6 +222,29 @@ export const trackRuleVersionsRestoreFail = async (
   reportInteraction('grafana_alerting_rule_versions_restore_error', { ...payload });
 };
 
+export const trackDeletedRuleRestoreSuccess = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_success');
+};
+
+export const trackDeletedRuleRestoreFail = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_error');
+};
+
+export const trackImportToGMASuccess = async (payload: {
+  importSource: 'yaml' | 'datasource';
+  isRootFolder: boolean;
+  namespace?: string;
+  ruleGroup?: string;
+  pauseRecordingRules: boolean;
+  pauseAlertingRules: boolean;
+}) => {
+  reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
+};
+
+export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+  reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
+};
+
 interface RulesSearchInteractionPayload {
   filter: string;
   triggeredBy: 'typing' | 'component';
@@ -278,6 +305,56 @@ export function trackUseCentralHistoryExpandRow() {
 
 export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; to: number }) {
   reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
+}
+
+export function trackFolderBulkActionsDeleteSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_success');
+}
+
+export function trackFolderBulkActionsDeleteFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_fail');
+}
+
+export function trackFolderBulkActionsPauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_success');
+}
+
+export function trackFolderBulkActionsUnpauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_success');
+}
+
+export function trackFolderBulkActionsPauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_fail');
+}
+
+export function trackFolderBulkActionsUnpauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
+}
+
+export function trackFilterButtonClick() {
+  reportInteraction('grafana_alerting_filter_button_click');
+}
+
+export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFilterEnabled: boolean) {
+  // Filter out empty/default values before tracking
+  const meaningfulValues = pickBy(payload, (value, key) => {
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return false;
+    }
+    if (key === 'plugins' && !pluginsFilterEnabled) {
+      return false;
+    }
+    return true;
+  });
+
+  reportInteraction('grafana_alerting_filter_button_apply_click', meaningfulValues);
+}
+
+export function trackFilterButtonClearClick() {
+  reportInteraction('grafana_alerting_filter_button_clear_click');
 }
 
 export type AlertRuleTrackingProps = {

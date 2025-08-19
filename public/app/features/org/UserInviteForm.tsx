@@ -1,6 +1,7 @@
 import { Controller } from 'react-hook-form';
 
-import { locationUtil, SelectableValue } from '@grafana/data';
+import { locationUtil, OrgRole, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -17,24 +18,25 @@ import {
   Stack,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
-import { OrgRole, useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { Form } from '../../core/components/Form/Form';
 import { addInvitee } from '../invites/state/actions';
 
 const tooltipMessage = (
   <>
-    You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
-    information in&nbsp;
-    <TextLink
-      href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
-      variant="bodySmall"
-      external
-    >
-      our documentation
-    </TextLink>
-    .
+    <Trans i18nKey="org.user-invite-form.tooltip">
+      You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find
+      more information in&nbsp;
+      <TextLink
+        href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
+        variant="bodySmall"
+        external
+      >
+        our documentation
+      </TextLink>
+      .
+    </Trans>
   </>
 );
 
@@ -77,7 +79,7 @@ export const UserInviteForm = () => {
                 error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
                 label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
               >
-                {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
                 <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
               </Field>
               <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')}>

@@ -4,6 +4,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -12,9 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/mock"
 )
 
 func ProvideTestEnv(
+	testingT interface {
+		mock.TestingT
+		Cleanup(func())
+	},
 	server *Server,
 	db db.DB,
 	cfg *setting.Cfg,
@@ -26,8 +33,11 @@ func ProvideTestEnv(
 	featureMgmt featuremgmt.FeatureToggles,
 	resourceClient resource.ResourceClient,
 	idService auth.IDService,
+	githubFactory *github.Factory,
+	repositorySecrets secrets.RepositorySecrets,
 ) (*TestEnv, error) {
 	return &TestEnv{
+		TestingT:            testingT,
 		Server:              server,
 		SQLStore:            db,
 		Cfg:                 cfg,
@@ -39,10 +49,16 @@ func ProvideTestEnv(
 		FeatureToggles:      featureMgmt,
 		ResourceClient:      resourceClient,
 		IDService:           idService,
+		GitHubFactory:       githubFactory,
+		RepositorySecrets:   repositorySecrets,
 	}, nil
 }
 
 type TestEnv struct {
+	TestingT interface {
+		mock.TestingT
+		Cleanup(func())
+	}
 	Server              *Server
 	SQLStore            db.DB
 	Cfg                 *setting.Cfg
@@ -55,4 +71,6 @@ type TestEnv struct {
 	FeatureToggles      featuremgmt.FeatureToggles
 	ResourceClient      resource.ResourceClient
 	IDService           auth.IDService
+	GitHubFactory       *github.Factory
+	RepositorySecrets   secrets.RepositorySecrets
 }

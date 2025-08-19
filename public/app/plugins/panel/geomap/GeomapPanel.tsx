@@ -1,20 +1,25 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { Map as OpenLayersMap, MapBrowserEvent, View } from 'ol';
+import OpenLayersMap from 'ol/Map';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
+import View, { ViewOptions } from 'ol/View';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, transformExtent } from 'ol/proj';
 import { Component, ReactNode } from 'react';
 import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { VariablesChanged } from 'app/features/variables/types';
 import { PanelEditExitedEvent } from 'app/types/events';
 
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
@@ -31,7 +36,13 @@ import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
 import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
-import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
+import {
+  updateMap,
+  getNewOpenLayersMap,
+  notifyPanelEditor,
+  hasVariableDependencies,
+  hasLayerData,
+} from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -72,6 +83,25 @@ export class GeomapPanel extends Component<Props, State> {
         }
       })
     );
+    // Subscribe to variable changes
+    this.subs.add(
+      appEvents.subscribe(VariablesChanged, () => {
+        if (this.mapDiv) {
+          // Check if any of the map's layers are dependent on variables
+          const hasDependencies = this.layers.some((layer) => {
+            const config = layer.options.config;
+            if (!config || typeof config !== 'object') {
+              return false;
+            }
+            return hasVariableDependencies(config);
+          });
+
+          if (hasDependencies) {
+            this.initMapRef(this.mapDiv);
+          }
+        }
+      })
+    );
   }
 
   componentDidMount() {
@@ -102,11 +132,6 @@ export class GeomapPanel extends Component<Props, State> {
       this.dataChanged(nextProps.data);
     }
 
-    // Options changed
-    if (this.props.options !== nextProps.options) {
-      this.optionsChanged(nextProps.options);
-    }
-
     return true; // always?
   }
 
@@ -117,6 +142,10 @@ export class GeomapPanel extends Component<Props, State> {
     // Check for a difference between previous data and component data
     if (this.map && this.props.data !== prevProps.data) {
       this.dataChanged(this.props.data);
+    }
+    // Handle options changes
+    if (this.props.options !== prevProps.options) {
+      this.optionsChanged(prevProps.options, this.props.options);
     }
   }
 
@@ -147,18 +176,29 @@ export class GeomapPanel extends Component<Props, State> {
    *
    * NOTE: changes to basemap and layers are handled independently
    */
-  optionsChanged(options: Options) {
-    const oldOptions = this.props.options;
-    if (options.view !== oldOptions.view) {
-      const view = this.initMapView(options.view);
+  optionsChanged(oldOptions: Options, newOptions: Options) {
+    // First check if noRepeat changed - requires full map reinitialization
+    const noRepeatChanged = oldOptions.view?.noRepeat !== newOptions.view?.noRepeat;
 
+    if (noRepeatChanged) {
+      if (this.mapDiv) {
+        this.initMapRef(this.mapDiv);
+      }
+      // Skip other options processing
+      return;
+    }
+
+    // Handle incremental view changes
+    if (oldOptions.view !== newOptions.view) {
+      const view = this.initMapView(newOptions.view);
       if (this.map && view) {
         this.map.setView(view);
       }
     }
 
-    if (options.controls !== oldOptions.controls) {
-      this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
+    // Handle controls changes
+    if (newOptions.controls !== oldOptions.controls) {
+      this.initControls(newOptions.controls ?? { showZoom: true, showAttribution: true });
     }
   }
 
@@ -182,6 +222,9 @@ export class GeomapPanel extends Component<Props, State> {
         this.map.setView(view);
       }
     }
+
+    // Update legends when data changes
+    this.setState({ legends: this.getLegends() });
   }
 
   initMapRef = async (div: HTMLDivElement) => {
@@ -201,7 +244,12 @@ export class GeomapPanel extends Component<Props, State> {
     this.byName.clear();
     const layers: MapLayerState[] = [];
     try {
-      layers.push(await initLayer(this, map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
+      // Pass noRepeat setting to basemap layer
+      const basemapOptions = {
+        ...(options.basemap ?? DEFAULT_BASEMAP_CONFIG),
+        noRepeat: options.view?.noRepeat ?? false,
+      };
+      layers.push(await initLayer(this, map, basemapOptions, true));
 
       // Default layer values
       if (!options.layers) {
@@ -242,20 +290,33 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ ttipOpen: false, ttip: undefined });
   };
 
-  pointerClickListener = (evt: MapBrowserEvent<MouseEvent>) => {
+  pointerClickListener = (evt: MapBrowserEvent<PointerEvent>) => {
     pointerClickListener(evt, this);
   };
 
-  pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>) => {
+  pointerMoveListener = (evt: MapBrowserEvent<PointerEvent>) => {
     pointerMoveListener(evt, this);
   };
 
   initMapView = (config: MapViewConfig): View | undefined => {
-    let view = new View({
+    const noRepeat = config.noRepeat ?? false;
+
+    let viewOptions: ViewOptions = {
       center: [0, 0],
       zoom: 1,
-      showFullExtent: true, // allows zooming so the full range is visible
-    });
+    };
+
+    // Only apply constraints when no-repeat is enabled
+    if (noRepeat) {
+      // Define the world extent in EPSG:3857 (Web Mercator)
+      const worldExtent = [-180, -85.05112878, 180, 85.05112878]; // [minx, miny, maxx, maxy] in EPSG:4326
+      const projectedExtent = transformExtent(worldExtent, 'EPSG:4326', 'EPSG:3857');
+      viewOptions.extent = projectedExtent;
+      viewOptions.showFullExtent = false;
+      viewOptions.constrainOnlyCenter = false;
+    }
+
+    let view = new View(viewOptions);
 
     // With shared views, all panels use the same view instance
     if (config.shared) {
@@ -366,7 +427,10 @@ export class GeomapPanel extends Component<Props, State> {
     const legends: ReactNode[] = [];
     for (const state of this.layers) {
       if (state.handler.legend) {
-        legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+        const hasData = hasLayerData(state.layer);
+        if (hasData) {
+          legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+        }
       }
     }
 
@@ -390,7 +454,7 @@ export class GeomapPanel extends Component<Props, State> {
             className={styles.map}
             // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
             tabIndex={0} // Interactivity is added through the ref
-            aria-label={`Navigable map`}
+            aria-label={t('geomap.geomap-panel.aria-label-map', 'Navigable map')}
             ref={this.initMapRef}
           ></div>
           <GeomapOverlay

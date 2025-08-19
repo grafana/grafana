@@ -13,15 +13,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          persist-credentials: false
       - name: Set go version
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
         with:
           go-version-file: go.mod
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
       - name: Open Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update alerting swagger spec"
@@ -34,4 +35,3 @@ jobs:
           labels: 'area/alerting,type/docs,no-changelog'
           team-reviewers: 'grafana/alerting-backend'
           draft: false
-

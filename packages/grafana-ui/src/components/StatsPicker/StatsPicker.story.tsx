@@ -2,33 +2,20 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { PureComponent } from 'react';
 
-import { StatsPicker } from './StatsPicker';
+import { Field } from '../Forms/Field';
+
+import { Props, StatsPicker } from './StatsPicker';
 
 interface State {
   stats: string[];
 }
 
-class WrapperWithState extends PureComponent<any, State> {
-  constructor(props: any) {
+class WrapperWithState extends PureComponent<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = {
-      stats: this.toStatsArray(props.initialReducers),
+      stats: [],
     };
-  }
-
-  toStatsArray = (txt: string): string[] => {
-    if (!txt) {
-      return [];
-    }
-    return txt.split(',').map((v) => v.trim());
-  };
-
-  componentDidUpdate(prevProps: any) {
-    const { initialReducers } = this.props;
-    if (initialReducers !== prevProps.initialReducers) {
-      console.log('Changing initial reducers');
-      this.setState({ stats: this.toStatsArray(initialReducers) });
-    }
   }
 
   render() {
@@ -36,23 +23,26 @@ class WrapperWithState extends PureComponent<any, State> {
     const { stats } = this.state;
 
     return (
-      <StatsPicker
-        placeholder={placeholder}
-        allowMultiple={allowMultiple}
-        stats={stats}
-        onChange={(stats: string[]) => {
-          action('Picked:')(stats);
-          this.setState({ stats });
-        }}
-        menuPlacement={menuPlacement}
-        width={width}
-      />
+      <Field label="Pick stats">
+        <StatsPicker
+          inputId="stats-picker"
+          placeholder={placeholder}
+          allowMultiple={allowMultiple}
+          stats={stats}
+          onChange={(stats: string[]) => {
+            action('Picked:')(stats);
+            this.setState({ stats });
+          }}
+          menuPlacement={menuPlacement}
+          width={width}
+        />
+      </Field>
     );
   }
 }
 
 const meta: Meta<typeof StatsPicker> = {
-  title: 'Pickers and Editors/StatsPicker',
+  title: 'Pickers/StatsPicker',
   component: StatsPicker,
   parameters: {
     controls: {

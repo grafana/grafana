@@ -1,6 +1,6 @@
+import { t } from '@grafana/i18n';
 import { sceneGraph, SceneGridRow, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';

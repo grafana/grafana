@@ -3,7 +3,7 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "title": "plugin.json",
-  "description": "The plugin.json file is required for all plugins. When Grafana starts, it scans the plugin folders and mounts every folder that contains a plugin.json file unless the folder contains a subfolder named dist. In that case, Grafana mounts the dist folder instead.",
+  "description": "The `plugin.json` file is required for all plugins. When Grafana starts, it scans the plugin folders and mounts every folder that contains a `plugin.json` file unless the folder contains a subfolder named `dist`. In that case, Grafana mounts the `dist` folder instead.",
   "required": ["type", "name", "id", "info", "dependencies"],
   "additionalProperties": false,
   "properties": {
@@ -99,11 +99,13 @@
             "additionalProperties": false,
             "properties": {
               "name": {
-                "type": "string"
+                "type": "string",
+                "description": "Display name of the link. Special names with predefined behavior: <br/>• `documentation` - sets Documentation link on plugins detail page<br/>• `repository` - used to determine and link to repository of the plugin<br/>• `license` - sets License link on plugins detail page<br/>• `raise issue` - sets `Raise an Issue` link on plugins detail page<br/>• `sponsorship` - sets `Sponsor this developer` link on plugins detail page to direct users to how they can support your work"
               },
               "url": {
                 "type": "string",
-                "format": "uri"
+                "format": "uri",
+                "description": "URL value to use for this specific link."
               }
             }
           }
@@ -147,7 +149,7 @@
         },
         "version": {
           "type": "string",
-          "description": "Project version of this commit, e.g. `6.7.x`.",
+          "description": "[SemVer](https://semver.org/) version of this commit, e.g. `6.7.1`.",
           "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
         }
       }
@@ -170,7 +172,7 @@
         "grafanaDependency": {
           "type": "string",
           "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?)?$"
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?)?$"
         },
         "plugins": {
           "type": "array",
@@ -191,10 +193,6 @@
               },
               "name": {
                 "type": "string"
-              },
-              "version": {
-                "type": "string",
-                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
               }
             }
           }
@@ -296,7 +294,7 @@
           },
           "action": {
             "type": "string",
-            "description": "The RBAC action a user must have to see this page in the navigation menu."
+            "description": "The RBAC action a user must have to see this page in the navigation menu. **Warning**: unless the action targets the plugin, only the action is verified, not what it applies to."
           },
           "path": {
             "type": "string",
@@ -336,7 +334,7 @@
     },
     "preload": {
       "type": "boolean",
-      "description": "Initialize plugin on startup. By default, the plugin initializes on first use. Useful for app plugins that should load without user interaction."
+      "description": "Initialize plugin on startup. By default, the plugin initializes on first use, but when preload is set to true the plugin loads when the Grafana web app loads the first time. Only applicable to app plugins. When setting to `true`, implement [frontend code splitting](https://grafana.com/developers/plugin-tools/get-started/best-practices#app-plugins) to minimise performance implications."
     },
     "queryOptions": {
       "type": "object",
@@ -362,7 +360,7 @@
       "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
       "items": {
         "type": "object",
-        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
+        "description": "",
         "additionalProperties": false,
         "properties": {
           "path": {
@@ -371,7 +369,7 @@
           },
           "method": {
             "type": "string",
-            "description": "For data source plugins. Route method matches the HTTP verb like GET or POST. Multiple methods can be provided as a comma-separated list."
+            "description": "For data source plugins. Route method matches the HTTP verb like `GET` or `POST`. Multiple methods can be provided as a comma-separated list."
           },
           "url": {
             "type": "string",
@@ -385,7 +383,7 @@
           },
           "reqAction": {
             "type": "string",
-            "description": "The RBAC action a user must have to use this route."
+            "description": "The RBAC action a user must have to use this route. **Warning**: unless the action targets the plugin (or a nested datasource plugin), only the action is verified, not what it applies to."
           },
           "headers": {
             "type": "array",
@@ -514,20 +512,22 @@
     },
     "iam": {
       "type": "object",
-      "description": "Identity and Access Management.",
+      "description": "Grafana reads the Identity and Access Management section and initializes a service account for the plugin, with a tailored set of [Grafana RBAC permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes). Grafana will share the service account's bearer token with the plugin backend using the `GF_PLUGIN_APP_CLIENT_SECRET` environment variable. Requires Grafana version 10.3.0 or later. Currently, this is behind the `externalServiceAccounts` feature toggle. To try this feature out, follow this [guide](https://grafana.com/developers/plugin-tools/how-to-guides/app-plugins/implement-rbac-in-app-plugins).",
       "properties": {
         "permissions": {
           "type": "array",
-          "description": "Permissions are the permissions that the plugin needs its associated service account to have",
+          "description": "Permissions are the permissions that the plugin needs its associated service account to have to query Grafana.",
           "items": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
               "action": {
-                "type": "string"
+                "type": "string",
+                "description": "Action, for example: `teams:read`."
               },
               "scope": {
-                "type": "string"
+                "type": "string",
+                "description": "The scope that the plugin needs to access e.g: `teams:*`."
               }
             }
           }
@@ -536,14 +536,14 @@
     },
     "roles": {
       "type": "array",
-      "description": "List of RBAC roles and their default assignments.",
+      "description": "List of RBAC roles defined by the plugin and their default assignments to basic roles (`Viewer`, `Editor`, `Admin`, `Grafana Admin`). Requires Grafana version 9.4.0 or later.",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "role": {
             "type": "object",
-            "description": "RBAC role definition to bundle related RBAC permissions on the plugin.",
+            "description": "A role groups your plugin's related RBAC permissions (ex: `Projects Admin` would group permissions to create, read, write and delete projects). The RBAC actions defined in your role must start with your plugin `id` (ex: `grafana-test-app.projects:read`).",
             "additionalProperties": false,
             "properties": {
               "name": {
@@ -552,7 +552,7 @@
               },
               "description": {
                 "type": "string",
-                "description": "Describe the aim of the role."
+                "description": "Describes the aim of the role."
               },
               "permissions": {
                 "type": "array",
@@ -574,7 +574,7 @@
           },
           "grants": {
             "type": "array",
-            "description": "Default assignments of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)",
+            "description": "Default assignments of the role to Grafana basic roles (`Viewer`, `Editor`, `Admin`, `Grafana Admin`).",
             "items": {
               "type": "string"
             }
@@ -588,20 +588,20 @@
       "properties": {
         "addedComponents": {
           "type": "array",
-          "description": "Any component extensions that your plugin registers to extension points.",
+          "description": "This list must contain all component extensions that your plugin registers to other extension points using [`.addComponent()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#addcomponent). **Components that are not listed here won't work.**",
           "items": {
             "type": "object",
             "properties": {
               "targets": {
                 "type": "array",
-                "description": "The list of the targeted extension point ids that the component is added to.",
+                "description": "The extension point ids your plugin registers the extension to, e.g. `[\"grafana/user/profile/tab\"]`",
                 "items": {
                   "type": "string"
                 }
               },
               "title": {
                 "type": "string",
-                "description": "An informative title for your component extension.",
+                "description": " The title of your component extension.",
                 "minLength": 10
               },
               "description": {
@@ -614,20 +614,20 @@
         },
         "addedLinks": {
           "type": "array",
-          "description": "Any link extensions that your plugin registers to extension points.",
+          "description": "This list must contain all link extensions that your plugin registers to other extension points using [`.addLink()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#addlink). **Links that are not listed here won't work.**",
           "items": {
             "type": "object",
             "properties": {
               "targets": {
                 "type": "array",
-                "description": "The list of the targeted extension point ids that the link is added to.",
+                "description": "The extension point ids your plugin registers the extension to, e.g. `[\"grafana/dashboard/panel/menu\"]`",
                 "items": {
                   "type": "string"
                 }
               },
               "title": {
                 "type": "string",
-                "description": "An informative title for your link extension.",
+                "description": "The title of your link extension.",
                 "minLength": 10
               },
               "description": {
@@ -640,18 +640,18 @@
         },
         "exposedComponents": {
           "type": "array",
-          "description": "Any React component that your plugin exposes so it can be reused by other app plugins.",
+          "description": "This list must contain all components that your plugin exposes using [`.exposeComponent()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#exposecomponent). **Components that are not listed here won't work.**",
           "items": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string",
-                "description": "A unique identifier for your exposed component. This is used to reference the component in other plugins. It must be in the following format: '{PLUGIN_ID}/name-of-component/v1'.",
+                "description": "A unique identifier for your exposed component. This is used to reference the component in other plugins. It must be in the following format: `{PLUGIN_ID}/name-of-component/v1`. It is recommended to add a version suffix to prevent future breaking changes. E.g.: `myorg-extensions-app/exposed-component/v1`.",
                 "pattern": "^[0-9a-z]+-([0-9a-z]+-)?(app|panel|datasource)\\/[a-zA-Z0-9_-]+\\/v[0-9_.-]+$"
               },
               "title": {
                 "type": "string",
-                "description": "An informative title for your exposed component."
+                "description": "The title of your exposed component."
               },
               "description": {
                 "type": "string",
@@ -663,18 +663,18 @@
         },
         "extensionPoints": {
           "type": "array",
-          "description": "Any extension points that your plugin provides.",
+          "description": "This list must contain all extension points that your plugin defines using [`usePluginLinks()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#usepluginlinks) or [`usePluginComponents()`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#useplugincomponents). **Extension points that are not listed in here won't work.**",
           "items": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string",
-                "description": "A unique identifier for your extension point. This is used to reference the extension point in other plugins. It must be in the following format: '{PLUGIN_ID}/name-of-my-extension-point/v1'.",
+                "description": "A unique identifier for your extension point. This is used to reference the extension point in other plugins. It must be in the following format: `{PLUGIN_ID}/name-of-my-extension-point/v1`. It is recommended to add a version suffix to prevent future breaking changes. E.g.: `myorg-extensions-app/extension-point/v1`.",
                 "pattern": "^[0-9a-z]+-([0-9a-z]+-)?(app|panel|datasource)\\/[a-zA-Z0-9_-]+\\/v[0-9_.-]+$"
               },
               "title": {
                 "type": "string",
-                "description": "An informative title for your extension point."
+                "description": "The title of your extension point."
               },
               "description": {
                 "type": "string",

@@ -21,6 +21,7 @@ import (
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
+var reconcilerLogger = log.New("zanzana.reconciler")
 
 // ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
@@ -40,7 +41,7 @@ type ZanzanaReconciler struct {
 func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:      cfg,
-		log:      log.New("zanzana.reconciler"),
+		log:      reconcilerLogger,
 		features: features,
 		client:   client,
 		lock:     lock,
@@ -83,21 +84,9 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 				client,
 			),
 			newResourceReconciler(
-				"team role bindings",
-				teamRoleBindingsCollector(store),
+				"role bindings",
+				roleBindingsCollector(store),
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
-				client,
-			),
-			newResourceReconciler(
-				"user role bindings",
-				userRoleBindingsCollector(store),
-				zanzanaCollector([]string{zanzana.RelationAssignee}),
-				client,
-			),
-			newResourceReconciler(
-				"fixed role pemissions",
-				fixedRolePermissionsCollector(store),
-				zanzanaCollector(zanzana.RelationsFolder),
 				client,
 			),
 		},

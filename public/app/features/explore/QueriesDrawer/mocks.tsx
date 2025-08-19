@@ -4,7 +4,7 @@ import { QueriesDrawerContext, Tabs } from './QueriesDrawerContext';
 
 type Props = {
   setDrawerOpened?: (value: boolean) => {};
-  queryLibraryAvailable?: boolean;
+  queryLibraryEnabled?: boolean;
 } & PropsWithChildren;
 
 export function QueriesDrawerContextProviderMock(props: Props) {

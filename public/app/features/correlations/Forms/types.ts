@@ -1,8 +1,8 @@
 import { DeepMap, FieldError, FieldErrors } from 'react-hook-form';
 
 import { SupportedTransformationType } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { CorrelationExternal, CorrelationQuery } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 
 import { OmitUnion } from '../types';
 

@@ -2,14 +2,10 @@ package userimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-sql-driver/mysql"
-	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,6 +21,7 @@ type store interface {
 	Insert(context.Context, *user.User) (int64, error)
 	GetByID(context.Context, int64) (*user.User, error)
 	GetByUID(ctx context.Context, uid string) (*user.User, error)
+	ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Delete(context.Context, int64) error
@@ -75,8 +72,9 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 		})
 		return nil
 	})
+
 	if err != nil {
-		return 0, handleSQLError(err)
+		return 0, handleSQLError(ss.dialect, err)
 	}
 
 	return cmd.ID, nil
@@ -125,6 +123,25 @@ func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error
 		return nil
 	})
 	return &usr, err
+}
+
+func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	users := make([]*user.User, 0)
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Table("user").In("uid", uids).OrIn("id", ids).Find(&users)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, err
 }
 
 func (ss *sqlStore) notServiceAccountFilter() string {
@@ -257,7 +274,14 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			q = q.UseBool("is_admin")
 			usr.IsAdmin = v
 		})
-		setOptional(cmd.HelpFlags1, func(v user.HelpFlags1) { usr.HelpFlags1 = *cmd.HelpFlags1 })
+		setOptional(cmd.HelpFlags1, func(v user.HelpFlags1) {
+			q = q.MustCols("help_flags1")
+			usr.HelpFlags1 = *cmd.HelpFlags1
+		})
+		setOptional(cmd.IsProvisioned, func(v bool) {
+			q = q.UseBool("is_provisioned")
+			usr.IsProvisioned = v
+		})
 
 		if _, err := q.Update(&usr); err != nil {
 			return err
@@ -374,6 +398,7 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			Theme:          usr.Theme,
 			IsGrafanaAdmin: usr.IsAdmin,
 			IsDisabled:     usr.IsDisabled,
+			IsProvisioned:  usr.IsProvisioned,
 			OrgID:          usr.OrgID,
 			UpdatedAt:      usr.Updated,
 			CreatedAt:      usr.Created,
@@ -402,12 +427,17 @@ func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 
 func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
 	sb := &db.SQLBuilder{}
-	sb.Write("SELECT ")
-	sb.Write(`(SELECT COUNT (*) from ` + ss.dialect.Quote("org_user") + ` AS ou ` +
-		`LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id ` +
-		`WHERE ou.role =? ` +
-		`AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + ` ` +
-		`AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `) AS user_accounts_with_no_role`)
+	sb.Write(`
+		SELECT sub.user_accounts_with_no_role
+		FROM (
+		  SELECT COUNT(*) AS user_accounts_with_no_role
+		  FROM ` + ss.dialect.Quote("org_user") + ` AS ou
+		  LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id
+		  WHERE ou.role = ?
+		  AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + `
+		  AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `
+		) AS sub
+	`)
 	sb.AddParams("None")
 
 	var countStats int64
@@ -461,8 +491,6 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		Users: make([]*user.UserSearchHitDTO, 0),
 	}
 	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		queryWithWildcards := "%" + query.Query + "%"
-
 		whereConditions := make([]string, 0)
 		whereParams := make([]any, 0)
 		sess := dbSess.Table("user").Alias("u")
@@ -491,8 +519,11 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
-			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")
-			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+			emailSql, emailArg := ss.dialect.LikeOperator("email", true, query.Query, true)
+			nameSql, nameArg := ss.dialect.LikeOperator("name", true, query.Query, true)
+			loginSql, loginArg := ss.dialect.LikeOperator("login", true, query.Query, true)
+			whereConditions = append(whereConditions, fmt.Sprintf("(%s OR %s OR %s)", emailSql, nameSql, loginSql))
+			whereParams = append(whereParams, emailArg, nameArg, loginArg)
 		}
 
 		if query.IsDisabled != nil {
@@ -526,7 +557,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			sess.Limit(query.Limit, offset)
 		}
 
-		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
+		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module", "u.is_provisioned")
 
 		if len(query.SortOpts) > 0 {
 			for i := range query.SortOpts {
@@ -585,29 +616,9 @@ func setOptional[T any](v *T, add func(v T)) {
 	}
 }
 
-func handleSQLError(err error) error {
-	if isUniqueConstraintError(err) {
+func handleSQLError(dialect migrator.Dialect, err error) error {
+	if dialect.IsUniqueConstraintViolation(err) {
 		return user.ErrUserAlreadyExists
 	}
 	return err
-}
-
-func isUniqueConstraintError(err error) bool {
-	// check mysql error code
-	var me *mysql.MySQLError
-	if errors.As(err, &me) && me.Number == 1062 {
-		return true
-	}
-
-	// for postgres we check the error message
-	if strings.Contains(err.Error(), "duplicate key value") {
-		return true
-	}
-
-	var se sqlite3.Error
-	if errors.As(err, &se) && se.ExtendedCode == sqlite3.ErrConstraintUnique {
-		return true
-	}
-
-	return false
 }

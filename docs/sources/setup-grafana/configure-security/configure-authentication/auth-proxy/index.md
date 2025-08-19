@@ -120,9 +120,7 @@ In this example we use Apache as a reverse proxy in front of Grafana. Apache han
 - The first four lines of the virtualhost configuration are standard, so we won’t go into detail on what they do.
 
 - We use a **\<proxy>** configuration block for applying our authentication rules to every proxied request. These rules include requiring basic authentication where user:password credentials are stored in the **/etc/apache2/grafana_htpasswd** file. This file can be created with the `htpasswd` command.
-
   - The next part of the configuration is the tricky part. We use Apache’s rewrite engine to create our **X-WEBAUTH-USER header**, populated with the authenticated user.
-
     - **RewriteRule .\* - [E=PROXY_USER:%{LA-U:REMOTE_USER}, NS]**: This line is a little bit of magic. What it does, is for every request use the rewriteEngines look-ahead (LA-U) feature to determine what the REMOTE_USER variable would be set to after processing the request. Then assign the result to the variable PROXY_USER. This is necessary as the REMOTE_USER variable is not available to the RequestHeader function.
 
     - **RequestHeader set X-WEBAUTH-USER “%{PROXY_USER}e”**: With the authenticated username now stored in the PROXY_USER variable, we create a new HTTP request header that will be sent to our backend Grafana containing the username.
@@ -150,7 +148,7 @@ header_property = username
 auto_sign_up = true
 ```
 
-Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We don't expose
+Launch the Grafana container, using our custom `grafana.ini` to replace `/etc/grafana/grafana.ini`. We don't expose
 any ports for this container as it will only be connected to by our Apache container.
 
 ```bash
@@ -161,7 +159,7 @@ docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana graf
 
 For this example we use the official Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
 
-- Create a file `httpd.conf` with the following contents
+- Create a file named `httpd.conf` with the following contents
 
 ```bash
 ServerRoot "/usr/local/apache2"
@@ -216,13 +214,13 @@ ProxyPass / http://grafana:3000/
 ProxyPassReverse / http://grafana:3000/
 ```
 
-- Create a htpasswd file. We create a new user **anthony** with the password **password**
+- Create a `htpasswd` file. We create a new user **anthony** with the password **password**
 
   ```bash
   htpasswd -bc htpasswd anthony password
   ```
 
-- Launch the httpd container using our custom httpd.conf and our htpasswd file. The container will listen on port 80, and we create a link to the **grafana** container so that this container can resolve the hostname **grafana** to the Grafana container’s IP address.
+- Launch the Apache HTTP server container using our custom `httpd.conf` and our `htpasswd` file. The container will listen on port 80, and we create a link to the **grafana** container so that this container can resolve the hostname **grafana** to the Grafana container’s IP address.
 
   ```bash
   docker run -i -p 80:80 --link grafana:grafana -v $(pwd)/httpd.conf:/usr/local/apache2/conf/httpd.conf -v $(pwd)/htpasswd:/tmp/htpasswd httpd:2.4
@@ -230,15 +228,18 @@ ProxyPassReverse / http://grafana:3000/
 
 ### Use grafana.
 
-With our Grafana and Apache containers running, you can now connect to http://localhost/ and log in using the username/password we created in the htpasswd file.
+With our Grafana and Apache containers running, you can now connect to http://localhost/ and log in using the username and password we created in the `htpasswd` file.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If the user is deleted from Grafana, the user will be not be able to login and resync until after the `sync_ttl` has expired.
-{{% /admonition %}}
+{{< /admonition >}}
 
-### Team Sync (Enterprise only)
+### Team Sync
 
-> Only available in Grafana Enterprise v6.3+
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
+
+{{< /admonition >}}
 
 With Team Sync, it's possible to set up synchronization between teams in your authentication provider and Grafana. You can send Grafana values as part of an HTTP header and have Grafana map them to your team structure. This allows you to put users into specific teams automatically.
 
@@ -309,9 +310,9 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 An empty `X-WEBAUTH-GROUPS` or the absence of a groups header will remove the user from all teams.
-{{% /admonition %}}
+{{< /admonition >}}
 
 [Learn more about Team Sync](../../configure-team-sync/)
 
@@ -321,5 +322,5 @@ With `enable_login_token` set to `true` Grafana will, after successful auth prox
 a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route.
 Requests via other routes will be authenticated using the cookie.
 
-Use settings `login_maximum_inactive_lifetime_duration` and `login_maximum_lifetime_duration` under `[auth]` to control session
+Use the settings `login_maximum_inactive_lifetime_duration` and `login_maximum_lifetime_duration` under `[auth]` to control session
 lifetime.

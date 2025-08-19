@@ -3,21 +3,16 @@ import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import {
-  AppNotificationSeverity,
-  LdapError,
-  LdapUser,
-  StoreState,
-  SyncInfo,
-  LdapConnectionInfo,
-  AccessControlAction,
-} from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
+import { LdapConnectionInfo, LdapUser, SyncInfo, LdapError } from 'app/types/ldap';
+import { StoreState } from 'app/types/store';
 
 import {
   loadLdapState,

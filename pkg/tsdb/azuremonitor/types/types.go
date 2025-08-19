@@ -210,3 +210,119 @@ type SubscriptionsResponse struct {
 }
 
 var ErrorAzureHealthCheck = errors.New("health check failed")
+
+// AzureLogAnalyticsMetadata represents the metadata response from the Azure Log Analytics API.
+// Types are taken from https://learn.microsoft.com/en-us/rest/api/loganalytics/metadata/get
+type AzureLogAnalyticsMetadata struct {
+	Applications  []MetadataApplications  `json:"applications"`
+	Categories    []MetadataCategories    `json:"categories"`
+	Functions     []MetadataFunctions     `json:"functions"`
+	Permissions   []MetadataPermissions   `json:"permissions"`
+	Queries       []MetadataQueries       `json:"queries"`
+	ResourceTypes []MetadataResourceTypes `json:"resourceTypes"`
+	Resources     []Resources             `json:"resources"`
+	Solutions     []MetadataSolutions     `json:"solutions"`
+	Tables        []MetadataTable         `json:"tables"`
+	Workspaces    []MetadataWorkspaces    `json:"workspaces"`
+}
+
+// MetadataTable represents a table entry in the metadata response.
+type MetadataTable struct {
+	Columns        []Columns      `json:"columns"`
+	Description    string         `json:"description"`
+	ID             string         `json:"id"`
+	Labels         []string       `json:"labels"`
+	Name           string         `json:"name"`
+	Properties     map[string]any `json:"properties"`
+	Tags           map[string]any `json:"tags"`
+	TimespanColumn string         `json:"timespanColumn"`
+	TableType      string         `json:"tableType"`
+	HasData        bool           `json:"hasData"`
+}
+
+type Columns struct {
+	Description      string         `json:"description"`
+	IsPreferredFacet bool           `json:"isPreferredFacet"`
+	Name             string         `json:"name"`
+	Source           map[string]any `json:"source"`
+	Type             string         `json:"type"`
+}
+
+type MetadataApplications struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Region     string `json:"region"`
+	ResourceId string `json:"resourceId"`
+}
+
+type MetadataWorkspaces struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Region     string `json:"region"`
+	ResourceId string `json:"resourceId"`
+}
+
+type MetadataCategories struct {
+	Description string `json:"description"`
+	DisplayName string `json:"displayName"`
+	ID          string `json:"id"`
+}
+
+type MetadataFunctions struct {
+	Body        string         `json:"string"`
+	Description string         `json:"description"`
+	DisplayName string         `json:"displayName"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Parameters  string         `json:"parameters"`
+	Properties  map[string]any `json:"properties"`
+	Tags        map[string]any `json:"tags"`
+}
+
+type MetadataPermissions struct {
+	Applications []Applications `json:"applications"`
+	Resources    []Resources    `json:"resources"`
+	Workspaces   []Workspaces   `json:"workspaces"`
+}
+
+type MetadataQueries struct {
+	Body        string         `json:"string"`
+	Description string         `json:"description"`
+	DisplayName string         `json:"displayName"`
+	ID          string         `json:"id"`
+	Labels      []string       `json:"labels"`
+	Properties  map[string]any `json:"properties"`
+	Tags        map[string]any `json:"tags"`
+}
+
+type MetadataResourceTypes struct {
+	Description string         `json:"description"`
+	DisplayName string         `json:"displayName"`
+	ID          string         `json:"id"`
+	Labels      []string       `json:"labels"`
+	Properties  map[string]any `json:"properties"`
+	Tags        map[string]any `json:"tags"`
+	Type        string         `json:"type"`
+}
+
+type MetadataSolutions struct {
+	Description string         `json:"description"`
+	DisplayName string         `json:"displayName"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Properties  map[string]any `json:"properties"`
+	Tags        map[string]any `json:"tags"`
+}
+
+type Applications struct {
+	ResourceId string `json:"resourceId"`
+}
+
+type Resources struct {
+	DenyTables []string `json:"denyTables"`
+	ResourceId string   `json:"resourceId"`
+}
+type Workspaces struct {
+	DenyTables []string `json:"denyTables"`
+	ResourceId string   `json:"resourceId"`
+}

@@ -2,14 +2,15 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
+
 import { ShareModal } from './ShareModal';
-import { Playlist } from './types';
 
 interface Props {
   setStartPlaylist: (playlistItem: Playlist) => void;
@@ -21,7 +22,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
   return (
     <Card>
       <Card.Heading>
-        {playlist.name}
+        {playlist.spec?.title}
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
@@ -30,7 +31,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
               iconSize="lg"
               onClick={() => {
                 showModal(ShareModal, {
-                  playlistUid: playlist.uid,
+                  playlistUid: playlist.metadata?.name ?? '',
                   onDismiss: hideModal,
                 });
               }}
@@ -44,7 +45,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Button>
         {contextSrv.isEditor && (
           <>
-            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.uid}`} icon="cog">
+            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
             </LinkButton>
             <Button

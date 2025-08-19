@@ -3,7 +3,7 @@ import { screen } from 'test/test-utils';
 import { byText } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { discoverFeaturesByUid } from '../api/buildInfo';
@@ -29,8 +29,6 @@ jest.mock('../api/ruler', () => ({
   fetchRulerRulesNamespace: jest.fn(),
 }));
 
-// there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
-// lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
   // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
@@ -181,7 +179,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     await ui.inputs.name.find();
 
-    const switchToCloudButton = screen.getByText('Data source-managed');
+    const switchToCloudButton = await screen.findByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
 
     await user.click(switchToCloudButton);

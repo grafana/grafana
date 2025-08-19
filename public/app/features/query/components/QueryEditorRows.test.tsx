@@ -1,9 +1,9 @@
 import { fireEvent, queryByLabelText, render, screen } from '@testing-library/react';
 
-import { type DataQuery } from '@grafana/schema';
+import { DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
-import createMockPanelData from 'app/plugins/datasource/azuremonitor/__mocks__/panelData';
+import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 
 import { QueryEditorRows, Props } from './QueryEditorRows';
 
@@ -17,22 +17,21 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
-      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-      getInstanceSettings: () => ({
-        ...mockDS,
-        meta: {
-          ...mockDS.meta,
-          alerting: true,
-          mixed: true,
-        },
-      }),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => ({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        mixed: true,
+      },
     }),
-  };
-});
+  }),
+}));
 
 const props: Props = {
   queries: [
@@ -55,20 +54,50 @@ const props: Props = {
   onRunQueries: function (): void {
     throw new Error('Function not implemented.');
   },
+  onUpdateDatasources: function (datasource: DataSourceRef): void {
+    throw new Error('Function not implemented.');
+  },
   data: createMockPanelData(),
 };
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve(mockDS),
-      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve(mockDS),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => mockDS,
+  }),
+}));
 
 describe('QueryEditorRows', () => {
+  it('Should call onQueriesChange with skipAutoImport when replacing query', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacementQuery = {
+      refId: 'A',
+      datasource: { uid: 'new-datasource', type: 'prometheus' },
+      expr: 'new query content',
+    };
+
+    component.onReplaceQuery(replacementQuery, 0);
+
+    expect(onQueriesChangeMock).toHaveBeenCalledWith(
+      [
+        { ...replacementQuery, refId: 'A' }, // preserves original refId
+        props.queries[1], // second query unchanged
+      ],
+      { skipAutoImport: true }
+    );
+  });
+
   it('Should render queries', async () => {
     const {
       renderResult: { rerender },

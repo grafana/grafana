@@ -35,13 +35,15 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
-    lastCommitDate: remote?.lastCommitDate,
     changelog: remote?.changelog || localChangelog,
     licenseUrl: remote?.licenseUrl,
     documentationUrl: remote?.documentationUrl,
+    sponsorshipUrl: remote?.sponsorshipUrl,
+    repositoryUrl: remote?.repositoryUrl,
     raiseAnIssueUrl: remote?.raiseAnIssueUrl,
     signatureType: local?.signatureType || (remote?.signatureType !== '' ? remote?.signatureType : undefined),
     signature: local?.signature,
+    screenshots: remote?.json?.info.screenshots || local?.info.screenshots,
   };
 }
 
@@ -168,9 +170,7 @@ export async function installPlugin(id: string, version?: string) {
   // on the backend.
   return await getBackendSrv().post(
     `${API_ROOT}/${id}/install`,
-    {
-      version,
-    },
+    { version },
     {
       // Error is displayed in the page
       showErrorAlert: false,
@@ -192,9 +192,4 @@ export async function updatePluginSettings(id: string, data: Partial<PluginMeta>
   return response?.data;
 }
 
-export const api = {
-  getRemotePlugins,
-  getInstalledPlugins: getLocalPlugins,
-  installPlugin,
-  uninstallPlugin,
-};
+export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };

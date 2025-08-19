@@ -42,6 +42,14 @@ if (config.featureToggles.lokiShardSplitting) {
   });
 }
 
+if (config.featureToggles.lokiExperimentalStreaming) {
+  queryTypeOptions.push({
+    value: LokiQueryType.Stream,
+    label: 'Stream',
+    description: 'Run a query and keep sending results on an interval',
+  });
+}
+
 export function getQueryDirectionLabel(direction: LokiQueryDirection) {
   return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
 }

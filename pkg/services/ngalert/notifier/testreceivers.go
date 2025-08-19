@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	v2 "github.com/prometheus/alertmanager/api/v2"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
@@ -13,7 +14,7 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
-		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for _, gr := range r.GrafanaManagedReceivers {
 			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
@@ -23,20 +24,29 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 				SecureSettings:        gr.SecureSettings,
 			})
 		}
-		receivers = append(receivers, &alertingNotify.APIReceiver{
+		recv := &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
 			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
 				Integrations: integrations,
 			},
-		})
+		}
+		err := patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
+		if err != nil {
+			return nil, 0, err
+		}
+		receivers = append(receivers, recv)
 	}
-	var alert *alertingNotify.TestReceiversConfigAlertParams
+	a := &alertingNotify.PostableAlert{}
 	if c.Alert != nil {
-		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+		a.Annotations = v2.ModelLabelSetToAPILabelSet(c.Alert.Annotations)
+		a.Labels = v2.ModelLabelSetToAPILabelSet(c.Alert.Labels)
 	}
-
+	AddDefaultLabelsAndAnnotations(a)
 	return am.Base.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
-		Alert:     alert,
+		Alert: &alertingNotify.TestReceiversConfigAlertParams{
+			Annotations: v2.APILabelSetToModelLabelSet(a.Annotations),
+			Labels:      v2.APILabelSetToModelLabelSet(a.Labels),
+		},
 		Receivers: receivers,
 	})
 }

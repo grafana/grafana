@@ -18,10 +18,12 @@ import {
   outerJoinDataFrames,
   ValueMapping,
   ThresholdsConfig,
+  applyNullInsertThreshold,
+  nullToValue,
+  SpecialValueMatch,
 } from '@grafana/data';
-import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
-import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
+import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
   VizLegendOptions,
   AxisPlacement,
@@ -72,6 +74,12 @@ const defaultConfig: PanelFieldConfig = {
   fillOpacity: 80,
 };
 
+/** Checks if a mapped value of the specified type exists for the given field */
+export const hasSpecialMappedValue = (field: Field, match: SpecialValueMatch): boolean =>
+  field.config.mappings?.some(
+    (mapping: ValueMapping): boolean => mapping.type === MappingType.SpecialValue && mapping.options.match === match
+  ) || false;
+
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
   theme,
@@ -94,15 +102,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     const mode = field.config?.color?.mode;
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
-
-  const hasMappedNull = (field: Field) => {
-    return (
-      field.config.mappings?.some(
-        (mapping) => mapping.type === MappingType.SpecialValue && mapping.options.match === 'null'
-      ) || false
-    );
-  };
-
   const getValueColorFn = (seriesIdx: number, value: unknown) => {
     const field = frame.fields[seriesIdx];
 
@@ -121,7 +120,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
-    hasMappedNull: (seriesIdx) => hasMappedNull(frame.fields[seriesIdx]),
+    hasMappedNull: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.Null) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
+    hasMappedNaN: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NaN) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
     mergeValues,
     rowHeight: rowHeight,
     colWidth: colWidth,
@@ -306,8 +310,9 @@ export function prepareTimelineFields(
   timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
+  // this allows PanelDataErrorView to show the default noValue message
   if (!series?.length) {
-    return { warn: 'No data in response' };
+    return { warn: '' };
   }
 
   cacheFieldDisplayNames(series);
@@ -322,7 +327,7 @@ export function prepareTimelineFields(
     for (let i = 0; i < frame.fields.length; i++) {
       let f = frame.fields[i];
 
-      if (f.type === FieldType.time) {
+      if (f.type === FieldType.time && typeof f.values[0] === 'number') {
         if (startFieldIdx === -1) {
           startFieldIdx = i;
         } else if (endFieldIdx === -1) {
@@ -385,9 +390,11 @@ export function prepareTimelineFields(
     for (let field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
-          isTimeseries = true;
-          hasTimeseries = true;
-          fields.push(field);
+          if (typeof field.values[0] === 'number') {
+            isTimeseries = true;
+            hasTimeseries = true;
+            fields.push(field);
+          }
           break;
         case FieldType.enum:
         case FieldType.number:
@@ -433,10 +440,10 @@ export function prepareTimelineFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: 'Data does not have a time field' };
+    return { warn: t('timeline.missing-field.time', 'Data does not have a time field') };
   }
   if (!frames.length) {
-    return { warn: 'No graphable fields' };
+    return { warn: t('timeline.missing-field.all', 'No graphable fields') };
   }
 
   return { frames };
@@ -664,7 +671,7 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
  * This function calculates with 30 days month and 365 days year.
  * adapted from https://gist.github.com/remino/1563878
  * @param milliSeconds The duration in milliseconds
- * @returns A formated string of the duration
+ * @returns A formatted string of the duration
  */
 export function fmtDuration(milliSeconds: number): string {
   if (milliSeconds < 0 || Number.isNaN(milliSeconds)) {

@@ -14,7 +14,6 @@ package dataquery
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 type MetricStat struct {
@@ -163,6 +162,18 @@ func NewQueryEditorFunctionExpression() *QueryEditorFunctionExpression {
 	}
 }
 
+type QueryEditorExpressionType string
+
+const (
+	QueryEditorExpressionTypeProperty          QueryEditorExpressionType = "property"
+	QueryEditorExpressionTypeOperator          QueryEditorExpressionType = "operator"
+	QueryEditorExpressionTypeOr                QueryEditorExpressionType = "or"
+	QueryEditorExpressionTypeAnd               QueryEditorExpressionType = "and"
+	QueryEditorExpressionTypeGroupBy           QueryEditorExpressionType = "groupBy"
+	QueryEditorExpressionTypeFunction          QueryEditorExpressionType = "function"
+	QueryEditorExpressionTypeFunctionParameter QueryEditorExpressionType = "functionParameter"
+)
+
 type QueryEditorFunctionParameterExpression struct {
 	Type QueryEditorExpressionType `json:"type"`
 	Name *string                   `json:"name,omitempty"`
@@ -195,7 +206,9 @@ type QueryEditorProperty struct {
 
 // NewQueryEditorProperty creates a new QueryEditorProperty object.
 func NewQueryEditorProperty() *QueryEditorProperty {
-	return &QueryEditorProperty{}
+	return &QueryEditorProperty{
+		Type: QueryEditorPropertyTypeString,
+	}
 }
 
 type QueryEditorPropertyType string
@@ -264,18 +277,6 @@ type QueryEditorOperatorType = StringOrBoolOrInt64
 func NewQueryEditorOperatorType() *QueryEditorOperatorType {
 	return NewStringOrBoolOrInt64()
 }
-
-type QueryEditorExpressionType string
-
-const (
-	QueryEditorExpressionTypeProperty          QueryEditorExpressionType = "property"
-	QueryEditorExpressionTypeOperator          QueryEditorExpressionType = "operator"
-	QueryEditorExpressionTypeOr                QueryEditorExpressionType = "or"
-	QueryEditorExpressionTypeAnd               QueryEditorExpressionType = "and"
-	QueryEditorExpressionTypeGroupBy           QueryEditorExpressionType = "groupBy"
-	QueryEditorExpressionTypeFunction          QueryEditorExpressionType = "function"
-	QueryEditorExpressionTypeFunctionParameter QueryEditorExpressionType = "functionParameter"
-)
 
 type QueryEditorOperatorValueType = StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType
 
@@ -430,7 +431,7 @@ func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
@@ -483,7 +484,7 @@ func (resource QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Mar
 		return json.Marshal(resource.QueryEditorFunctionExpression)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `QueryEditorPropertyExpressionOrQueryEditorFunctionExpression` from JSON.
@@ -500,7 +501,7 @@ func (resource *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Un
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -522,7 +523,7 @@ func (resource *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Un
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression struct {
@@ -545,7 +546,7 @@ func (resource ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression) 
 		return json.Marshal(resource.ArrayOfQueryEditorArrayExpression)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression` from JSON.
@@ -609,7 +610,7 @@ func (resource StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType) MarshalJSON(
 		return json.Marshal(resource.ArrayOfQueryEditorOperatorType)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType` from JSON.
@@ -688,7 +689,7 @@ func (resource StringOrBoolOrInt64) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.Int64)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64` from JSON.

@@ -3,33 +3,36 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { OnNodeUpdate } from './types';
+import { TreeNode } from './types';
 
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
-  nodePath: string[];
-  query: string;
-  onNodeUpdate: OnNodeUpdate;
+  searchArea: string;
+  treeNode: TreeNode;
+  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
 }
 
-export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
+export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate, searchArea }: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
-  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({ value: query, dirty: false });
+  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({
+    value: treeNode.query,
+    dirty: false,
+  });
 
   useEffect(() => {
-    if (!inputState.dirty && inputState.value !== query) {
-      setInputState({ value: query, dirty: false });
+    if (!inputState.dirty && inputState.value !== treeNode.query) {
+      setInputState({ value: treeNode.query, dirty: false });
     }
-  }, [inputState, query]);
+  }, [inputState, treeNode.query]);
 
   useDebounce(
     () => {
       if (inputState.dirty) {
-        onNodeUpdate(nodePath, true, inputState.value);
+        onNodeUpdate(treeNode.scopeNodeId, true, inputState.value);
       }
     },
     500,
@@ -40,9 +43,16 @@ export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpda
     return null;
   }
 
+  const searchLabel = t('scopes.tree.search', 'Search {{parentTitle}}', {
+    parentTitle: searchArea,
+  });
+
   return (
     <FilterInput
-      placeholder={t('scopes.tree.search', 'Search')}
+      placeholder={searchLabel}
+      // Don't do autofocus for root node
+      autoFocus={treeNode.scopeNodeId !== ''}
+      aria-label={searchLabel}
       value={inputState.value}
       className={styles.input}
       data-testid="scopes-tree-search"

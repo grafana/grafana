@@ -1,7 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
+import { TextLink } from '../Link/TextLink';
 import { TagList } from '../Tags/TagList';
 
 import { Card } from './Card';
@@ -9,13 +10,12 @@ import { Card } from './Card';
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
 const meta: Meta<typeof Card> = {
-  title: 'General/Card',
+  title: 'Layout/Card',
   component: Card,
-  // nosort is a custom tag used so the stories shown in docs keep the order they are defined in the file
-  tags: ['autodocs', 'nosort'],
+  tags: ['autodocs'],
   parameters: {
     controls: {
-      exclude: ['onClick', 'href', 'heading', 'description', 'className'],
+      exclude: ['onClick', 'href', 'heading', 'description', 'className', 'noMargin'],
     },
   },
 };
@@ -25,7 +25,7 @@ const meta: Meta<typeof Card> = {
  */
 export const Basic: StoryFn<typeof Card> = (args) => {
   return (
-    <Card {...args}>
+    <Card noMargin {...args}>
       <Card.Heading>Filter by name</Card.Heading>
       <Card.Description>
         Filter data by query. This is useful if you are sharing the results from a different panel that has many queries
@@ -41,7 +41,7 @@ export const Basic: StoryFn<typeof Card> = (args) => {
  */
 export const MultipleMetadataElements: StoryFn<typeof Card> = (args) => {
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Meta>{['Folder: Test', 'Views: 100']}</Card.Meta>
     </Card>
@@ -54,7 +54,7 @@ export const MultipleMetadataElements: StoryFn<typeof Card> = (args) => {
  */
 export const ComplexMetadataElements: StoryFn<typeof Card> = (args) => {
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Meta>
         <>Grafana</>
@@ -71,13 +71,13 @@ export const ComplexMetadataElements: StoryFn<typeof Card> = (args) => {
  */
 export const MultipleMetadataWithCustomSeparator: StoryFn<typeof Card> = (args) => {
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Meta separator={'-'}>
         Grafana
-        <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="prom-link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
     </Card>
   );
@@ -90,7 +90,7 @@ export const MultipleMetadataWithCustomSeparator: StoryFn<typeof Card> = (args) 
  */
 export const Tags: StoryFn<typeof Card> = (args) => {
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Description>Card with a list of tags</Card.Description>
       <Card.Tags>
@@ -105,7 +105,7 @@ export const Tags: StoryFn<typeof Card> = (args) => {
  */
 export const AsALink: StoryFn<typeof Card> = (args) => {
   return (
-    <Card href="https://grafana.com">
+    <Card noMargin href="https://grafana.com">
       <Card.Heading>Redirect to Grafana</Card.Heading>
       <Card.Description>Clicking this card will redirect to grafana website</Card.Description>
     </Card>
@@ -119,7 +119,7 @@ export const AsALink: StoryFn<typeof Card> = (args) => {
  */
 export const AsAButton: StoryFn<typeof Card> = (args) => {
   return (
-    <Card onClick={() => alert('Hello, Grafana!')}>
+    <Card noMargin onClick={() => alert('Hello, Grafana!')}>
       <Card.Heading>Hello, Grafana</Card.Heading>
       <Card.Description>Clicking this card will create an alert</Card.Description>
     </Card>
@@ -131,27 +131,27 @@ export const AsAButton: StoryFn<typeof Card> = (args) => {
  */
 export const InsideAListItem: StoryFn<typeof Card> = (args) => {
   return (
-    <ul style={{ padding: '20px', listStyle: 'none', display: 'grid' }}>
+    <ul style={{ padding: '20px', listStyle: 'none', display: 'grid', gap: '8px' }}>
       <li>
-        <Card>
+        <Card noMargin>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
       </li>
       <li>
-        <Card>
+        <Card noMargin>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
       </li>
       <li>
-        <Card>
+        <Card noMargin>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
       </li>
       <li>
-        <Card>
+        <Card noMargin>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
@@ -161,20 +161,20 @@ export const InsideAListItem: StoryFn<typeof Card> = (args) => {
 };
 
 /**
- * Cards can also be rendered with media content such icons or images. Such elements need to be wrapped in `Card.Figure` component.
+ * Cards can also be rendered with media content such as icons or images. Such elements need to be wrapped in `Card.Figure` component.
  */
 export const WithMediaElements: StoryFn<typeof Card> = (args) => {
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Figure>
         <img src={logo} alt="Grafana Logo" width="40" height="40" />
       </Card.Figure>
       <Card.Meta>
         Grafana
-        <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="prom-link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
     </Card>
   );
@@ -187,13 +187,13 @@ export const WithMediaElements: StoryFn<typeof Card> = (args) => {
  */
 export const ActionCards: StoryFn<typeof Card> = (args) => {
   return (
-    <Card {...args}>
+    <Card noMargin {...args}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Meta>
         Prometheus
-        <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="link2" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" height="40" width="40" />
@@ -220,13 +220,13 @@ export const ActionCards: StoryFn<typeof Card> = (args) => {
  */
 export const DisabledState: StoryFn<typeof Card> = (args) => {
   return (
-    <Card disabled>
+    <Card noMargin disabled>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Meta>
         Grafana
-        <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="prom-link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
       <Card.Figure>
         <img src={logo} alt="Grafana Logo" width="40" height="40" />
@@ -249,7 +249,7 @@ export const DisabledState: StoryFn<typeof Card> = (args) => {
 
 export const Selectable: StoryFn<typeof Card> = () => {
   return (
-    <Card isSelected disabled>
+    <Card noMargin isSelected disabled>
       <Card.Heading>Option #1</Card.Heading>
       <Card.Description>This is a really great option, you will not regret it.</Card.Description>
       <Card.Figure>
@@ -261,7 +261,7 @@ export const Selectable: StoryFn<typeof Card> = () => {
 
 export const Full: StoryFn<typeof Card> = (args) => {
   return (
-    <Card {...args}>
+    <Card noMargin {...args}>
       <Card.Heading>Card title</Card.Heading>
       <Card.Description>
         Description, body text. Greetings! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
@@ -270,9 +270,9 @@ export const Full: StoryFn<typeof Card> = (args) => {
       </Card.Description>
       <Card.Meta>
         {['Subtitle', 'Meta info 1', 'Meta info 2']}
-        <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
+        <TextLink key="link" href="https://ops-us-east4.grafana.net/api/prom" external>
           https://ops-us-east4.grafana.net/api/prom
-        </a>
+        </TextLink>
       </Card.Meta>
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" height="40" width="40" />

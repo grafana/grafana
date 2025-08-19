@@ -123,7 +123,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		}
 
 		frame.Meta.Custom = map[string]interface{}{
-			"partial": tr.GetStatus() == tempopb.TraceByIDResponse_PARTIAL,
+			"partial": tr.GetStatus() == tempopb.PartialStatus_PARTIAL,
 			"message": tr.GetMessage(),
 		}
 	}
@@ -135,7 +135,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	return result, nil
 }
 
-func (s *Service) performTraceRequest(ctx context.Context, dsInfo *Datasource, apiVersion TraceRequestApiVersion, model *dataquery.TempoQuery, query backend.DataQuery, span trace.Span) (*http.Response, []byte, error) {
+func (s *Service) performTraceRequest(ctx context.Context, dsInfo *DatasourceInfo, apiVersion TraceRequestApiVersion, model *dataquery.TempoQuery, query backend.DataQuery, span trace.Span) (*http.Response, []byte, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	request, err := s.createRequest(ctx, dsInfo, apiVersion, *model.Query, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
 
@@ -177,7 +177,7 @@ const (
 	TraceRequestApiVersionV2
 )
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, apiVersion TraceRequestApiVersion, traceID string, start int64, end int64) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, dsInfo *DatasourceInfo, apiVersion TraceRequestApiVersion, traceID string, start int64, end int64) (*http.Request, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	var baseUrl string
 	var tempoQuery string

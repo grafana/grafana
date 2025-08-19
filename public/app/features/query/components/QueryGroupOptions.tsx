@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import React, { useState, ChangeEvent, FocusEvent, useCallback } from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 interface Props {
   options: QueryGroupOptions;
@@ -159,11 +160,14 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
     return (
       <>
         <InlineLabel tooltip={tooltip} htmlFor="cache-timeout-id">
-          Cache timeout
+          <Trans i18nKey="query.query-group-options-editor.render-cache-timeout-option.cache-timeout">
+            Cache timeout
+          </Trans>
         </InlineLabel>
         <Input
           id="cache-timeout-id"
           type="text"
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="60"
           spellCheck={false}
           onBlur={onCacheTimeoutBlur}
@@ -182,9 +186,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
     return (
       <>
-        <InlineLabel tooltip={tooltip}>Cache TTL</InlineLabel>
+        <InlineLabel tooltip={tooltip}>
+          <Trans i18nKey="query.query-group-options-editor.render-query-caching-ttloption.cache-ttl">Cache TTL</Trans>
+        </InlineLabel>
         <Input
           type="number"
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder={`${dataSource.cachingConfig.TTLMs}`}
           spellCheck={false}
           onBlur={onQueryCachingTTLBlur}
@@ -204,17 +211,20 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           htmlFor="max-data-points-input"
           tooltip={
-            <>
+            <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.max-data-points-tooltip">
               The maximum data points per series. Used directly by some data sources and used in calculation of auto
               interval. With streaming data this value is used for the rolling buffer.
-            </>
+            </Trans>
           }
         >
-          Max data points
+          <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.max-data-points">
+            Max data points
+          </Trans>
         </InlineLabel>
         <Input
           id="max-data-points-input"
           type="number"
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder={`${realMd}`}
           spellCheck={false}
           onBlur={onMaxDataPointsBlur}
@@ -223,7 +233,11 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         {isAuto && (
           <>
             <span className={cx(styles.noSquish, styles.operator)}>=</span>
-            <span className={cx(styles.noSquish, styles.left)}>Width of panel</span>
+            <span className={cx(styles.noSquish, styles.left)}>
+              <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.width-of-panel">
+                Width of panel
+              </Trans>
+            </span>
           </>
         )}
       </>
@@ -239,18 +253,19 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           className={styles.firstColumn}
           tooltip={
-            <>
+            <Trans i18nKey="query.query-group-options-editor.render-interval-option.min-interval-tooltip">
               A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if
               your data is written every minute. Default value can be set in data source settings for most data sources.
-            </>
+            </Trans>
           }
           htmlFor="min-interval-input"
         >
-          Min interval
+          <Trans i18nKey="query.query-group-options-editor.render-interval-option.min-interval">Min interval</Trans>
         </InlineLabel>
         <Input
           id="min-interval-input"
           type="text"
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder={`${minIntervalOnDs}`}
           spellCheck={false}
           onBlur={onMinIntervalBlur}
@@ -259,18 +274,22 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           className={styles.firstColumn}
           tooltip={
-            <>
+            <Trans i18nKey="query.query-group-options-editor.render-interval-option.interval-tooltip">
               The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
               <code>$__interval_ms</code>. This value is not exactly equal to <code>Time range / max data points</code>,
               it will approximate a series of magic number.
-            </>
+            </Trans>
           }
         >
-          Interval
+          <Trans i18nKey="query.query-group-options-editor.render-interval-option.interval">Interval</Trans>
         </InlineLabel>
         <span className={styles.noSquish}>{realInterval}</span>
         <span className={cx(styles.noSquish, styles.operator)}>=</span>
-        <span className={cx(styles.noSquish, styles.left)}>Time range / max data points</span>
+        <span className={cx(styles.noSquish, styles.left)}>
+          <Trans i18nKey="query.query-group-options-editor.render-interval-option.time-range-max-data-points">
+            Time range / max data points
+          </Trans>
+        </span>
       </>
     );
   };
@@ -289,8 +308,16 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
     return (
       <>
-        {<span className={styles.collapsedText}>MD = {mdDesc}</span>}
-        {<span className={styles.collapsedText}>Interval = {intervalDesc}</span>}
+        {
+          <span className={styles.collapsedText}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {{ mdDesc }}</Trans>
+          </span>
+        }
+        {
+          <span className={styles.collapsedText}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {{ intervalDesc }}</Trans>
+          </span>
+        }
       </>
     );
   };
@@ -299,7 +326,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
     <QueryOperationRow
       id="Query options"
       index={0}
-      title="Query options"
+      title={t('query.query-group-options-editor.Query options-title-query-options', 'Query options')}
       headerElement={renderCollapsedText()}
       isOpen={isOpen}
       onOpen={onOpenOptions}
@@ -314,19 +341,23 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           htmlFor="relative-time-input"
           tooltip={
-            <>
+            <Trans
+              i18nKey="query.query-group-options-editor.relative-time-tooltip"
+              values={{ relativeFrom: 'now-5m', relativeTo: '5m', variable: '$_relativeTime' }}
+            >
               Overrides the relative time range for individual panels, which causes them to be different than what is
               selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
-              the Last 5 minutes the Relative time should be <code>now-5m</code> and <code>5m</code>, or variables like{' '}
-              <code>$_relativeTime</code>.
-            </>
+              the Last 5 minutes the Relative time should be <code>{'{{relativeFrom}}'}</code> and{' '}
+              <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
+            </Trans>
           }
         >
-          Relative time
+          <Trans i18nKey="query.query-group-options-editor.relative-time">Relative time</Trans>
         </InlineLabel>
         <Input
           id="relative-time-input"
           type="text"
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="1h"
           onChange={onRelativeTimeChange}
           onBlur={onOverrideTime}
@@ -337,18 +368,22 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           htmlFor="time-shift-input"
           className={styles.firstColumn}
           tooltip={
-            <>
+            <Trans
+              i18nKey="query.query-group-options-editor.time-shift-tooltip"
+              values={{ relativeFrom: 'now-1h', relativeTo: '1h', variable: '$_timeShift' }}
+            >
               Overrides the time range for individual panels by shifting its start and end relative to the time picker.
-              For example to configure the Last 1h the Time shift should be <code>now-1h</code> and <code>1h</code>, or
-              variables like <code>$_timeShift</code>.
-            </>
+              For example to configure the Last 1h the Time shift should be <code>{'{{relativeFrom}}'}</code> and{' '}
+              <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
+            </Trans>
           }
         >
-          Time shift
+          <Trans i18nKey="query.query-group-options-editor.time-shift">Time shift</Trans>
         </InlineLabel>
         <Input
           id="time-shift-input"
           type="text"
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="1h"
           onChange={onTimeShiftChange}
           onBlur={onTimeShift}
@@ -358,7 +393,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         {(timeRangeShift || timeRangeFrom) && (
           <>
             <InlineLabel htmlFor="hide-time-info-switch" className={styles.firstColumn}>
-              Hide time info
+              <Trans i18nKey="query.query-group-options-editor.hide-time-info">Hide time info</Trans>
             </InlineLabel>
             <InlineSwitch
               id="hide-time-info-switch"

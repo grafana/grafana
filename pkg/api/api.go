@@ -40,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -48,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -84,6 +84,17 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
+
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagMultiTenantFrontend) {
+		index, err := frontend.NewIndexProvider(hs.Cfg, hs.License)
+		if err != nil {
+			panic(err) // ???
+		}
+		r.Get("/femt", index.HandleRequest)
+
+		// Temporarily expose the full bootdata via API
+		r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
+	}
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
@@ -165,7 +176,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
-	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
 	if hs.Cfg.PublicDashboardsEnabled {
 		// list public dashboards
@@ -181,10 +191,6 @@ func (hs *HTTPServer) registerRoutes() {
 		)
 	}
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		r.Get("/dashboard/recently-deleted", reqOrgAdmin, hs.Index)
-	}
-
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 	r.Get("/drilldown", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
@@ -195,6 +201,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/library-panels/", reqSignedIn, hs.Index)
 	r.Get("/monitoring/", reqSignedIn, hs.Index)
 	r.Get("/monitoring/*", reqSignedIn, hs.Index)
+	r.Get("/observability/", reqSignedIn, hs.Index)
+	r.Get("/observability/*", reqSignedIn, hs.Index)
 	r.Get("/alerts-and-incidents", reqSignedIn, hs.Index)
 	r.Get("/alerts-and-incidents/*", reqSignedIn, hs.Index)
 
@@ -245,18 +253,18 @@ func (hs *HTTPServer) registerRoutes() {
 
 	adminAuthPageEvaluator := func() ac.Evaluator {
 		authnSettingsEval := ssoutils.EvalAuthenticationSettings(hs.Cfg)
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-			return ac.EvalAny(authnSettingsEval, ssoutils.OauthSettingsEvaluator(hs.Cfg))
-		}
-		return authnSettingsEval
+
+		return ac.EvalAny(authnSettingsEval, ssoutils.OauthSettingsEvaluator(hs.Cfg))
 	}
 
 	r.Get("/admin/authentication", authorize(adminAuthPageEvaluator()), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		providerParam := ac.Parameter(":provider")
-		r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
-	}
+
+	providerParam := ac.Parameter(":provider")
+	r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
+
+	// ShortURL API
+	hs.registerShortURLAPI(r)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -386,14 +394,6 @@ func (hs *HTTPServer) registerRoutes() {
 		// orgs (admin routes)
 		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
 
-		// auth api keys
-		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			apikeyIDScope := ac.Scope("apikeys", "id", ac.Parameter(":id"))
-			keysRoute.Get("/", authorize(ac.EvalPermission(ac.ActionAPIKeyRead)), routing.Wrap(hs.GetAPIKeys))
-			keysRoute.Post("/", authorize(ac.EvalPermission(ac.ActionAPIKeyCreate)), quota(string(apikey.QuotaTargetSrv)), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Delete("/:id", authorize(ac.EvalPermission(ac.ActionAPIKeyDelete, apikeyIDScope)), routing.Wrap(hs.DeleteAPIKey))
-		}, requestmeta.SetOwner(requestmeta.TeamAuth))
-
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
 			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
@@ -466,22 +466,12 @@ func (hs *HTTPServer) registerRoutes() {
 			dashUIDScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead, dashUIDScope)), routing.Wrap(hs.GetDashboard))
-
-			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.SoftDeleteDashboard))
-			} else {
-				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.DeleteDashboardByUID))
-			}
+			dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.DeleteDashboardByUID))
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				dashUidRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.GetDashboardVersions))
 				dashUidRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.RestoreDashboardVersion))
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.GetDashboardVersion))
-
-				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-					dashUidRoute.Patch("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.RestoreDeletedDashboard))
-					dashUidRoute.Delete("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.HardDeleteDashboardByUID))
-				}
 
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
@@ -561,9 +551,6 @@ func (hs *HTTPServer) registerRoutes() {
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
 		}, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
-
-		// short urls
-		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
 	}, reqSignedIn)
 
 	// admin api

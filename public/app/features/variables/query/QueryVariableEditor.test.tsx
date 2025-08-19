@@ -51,15 +51,14 @@ const setupTestContext = async (options: Partial<Props>) => {
   return { rerender, props };
 };
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: async () => ds,
-      getList: () => [mockDS],
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: async () => ds,
+    getList: () => [mockDS],
+    getInstanceSettings: () => mockDS,
+  }),
+}));
 
 const defaultIdentifier: KeyedVariableIdentifier = { type: 'query', rootStateKey: 'key', id: NEW_VARIABLE_ID };
 

@@ -349,7 +349,7 @@ func getPipelineAggField(m *MetricAgg) string {
 func isQueryWithError(query *Query) error {
 	if len(query.BucketAggs) == 0 {
 		// If no aggregations, only document and logs queries are valid
-		if len(query.Metrics) == 0 || !(isLogsQuery(query) || isDocumentQuery(query)) {
+		if len(query.Metrics) == 0 || (!isLogsQuery(query) && !isDocumentQuery(query)) {
 			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
 	}

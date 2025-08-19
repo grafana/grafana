@@ -1,19 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId, useRef, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
+import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
 import { PanelDescription } from './PanelDescription';
@@ -69,6 +71,10 @@ interface BaseProps {
    */
   onMouseMove?: () => void;
   onMouseEnter?: () => void;
+  /**
+   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
+   */
+  showMenuAlways?: boolean;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -86,10 +92,6 @@ interface AutoSize extends BaseProps {
 interface Collapsible {
   collapsible: boolean;
   collapsed?: boolean;
-  /**
-   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
-   */
-  showMenuAlways?: boolean;
   /**
    * callback when collapsing or expanding the panel
    */
@@ -151,7 +153,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownPos = useRef<{ screenX: number; screenY: number }>({ screenX: 0, screenY: 0 });
+  const pointerDistance = usePointerDistance();
 
   const hasHeader = !hoverHeader;
 
@@ -198,35 +200,45 @@ export function PanelChrome({
 
   // Handle drag & selection events
   // Mainly the tricky bit of differentiating between dragging and selecting
+  const onPointerUp = React.useCallback(
+    (evt: React.PointerEvent) => {
+      if (
+        pointerDistance.check(evt) ||
+        (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
+      ) {
+        return;
+      }
 
-  const onPointerUp = (evt: React.PointerEvent) => {
-    evt.stopPropagation();
+      // setTimeout is needed here because onSelect stops the event propagation
+      // By doing so, the event won't get to the document and drag will never be stopped
+      setTimeout(() => onSelect?.(evt));
+    },
+    [dragClassCancel, onSelect, pointerDistance]
+  );
 
-    const distance = Math.hypot(
-      pointerDownPos.current.screenX - evt.screenX,
-      pointerDownPos.current.screenY - evt.screenY
-    );
+  const onPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      evt.stopPropagation();
 
-    pointerDownPos.current = { screenX: 0, screenY: 0 };
+      pointerDistance.set(evt);
 
-    // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
-    if (
-      distance > 10 ||
-      (dragClassCancel && evt.target instanceof HTMLElement && evt.target.closest(`.${dragClassCancel}`))
-    ) {
-      return;
-    }
+      onDragStart?.(evt);
+    },
+    [pointerDistance, onDragStart]
+  );
 
-    onSelect?.(evt);
-  };
+  const onContentPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      // Ignore clicks inside buttons, links, canvas and svg elments
+      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      if (evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+        return;
+      }
 
-  const onPointerDown = (evt: React.PointerEvent) => {
-    evt.stopPropagation();
-
-    pointerDownPos.current = { screenX: evt.screenX, screenY: evt.screenY };
-
-    onDragStart?.(evt);
-  };
+      onSelect?.(evt);
+    },
+    [onSelect]
+  );
 
   const headerContent = (
     <>
@@ -264,7 +276,9 @@ export function PanelChrome({
               <Icon
                 name={!collapsed ? 'angle-down' : 'angle-right'}
                 aria-hidden={!!title}
-                aria-label={!title ? 'toggle collapse panel' : undefined}
+                aria-label={
+                  !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
+                }
               />
               <Text variant="h6" truncate id={panelTitleId}>
                 {title}
@@ -279,7 +293,13 @@ export function PanelChrome({
         {titleItems}
       </div>
       {loadingState === LoadingState.Streaming && (
-        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+        <Tooltip
+          content={
+            onCancelQuery
+              ? t('grafana-ui.panel-chrome.tooltip-stop-streaming', 'Stop streaming')
+              : t('grafana-ui.panel-chrome.tooltip-streaming', 'Streaming')
+          }
+        >
           <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
             <Icon name="circle-mono" size="md" className={styles.streaming} />
           </TitleItem>
@@ -287,7 +307,7 @@ export function PanelChrome({
       )}
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
-          <Tooltip content="Cancel query">
+          <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
             <TitleItem
               className={cx(dragClassCancel, styles.pointer)}
               data-testid="panel-cancel-query"
@@ -324,7 +344,10 @@ export function PanelChrome({
     >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
-          <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
+          <LoadingBar
+            width={loadingBarWidth}
+            ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-loading', 'Panel loading bar')}
+          />
         ) : null}
       </div>
 
@@ -342,7 +365,11 @@ export function PanelChrome({
 
           {statusMessage && (
             <div className={styles.errorContainerFloating}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+              <PanelStatus
+                message={statusMessage}
+                onClick={statusMessageOnClick}
+                ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+              />
             </div>
           )}
         </>
@@ -352,7 +379,7 @@ export function PanelChrome({
         <div
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
-          data-testid="header-container"
+          data-testid={selectors.components.Panels.Panel.headerContainer}
           onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
@@ -360,7 +387,11 @@ export function PanelChrome({
         >
           {statusMessage && (
             <div className={dragClassCancel}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+              <PanelStatus
+                message={statusMessage}
+                onClick={statusMessageOnClick}
+                ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+              />
             </div>
           )}
 
@@ -384,6 +415,7 @@ export function PanelChrome({
           data-testid={selectors.components.Panels.Panel.content}
           className={cx(styles.content, height === undefined && styles.containNone)}
           style={contentStyle}
+          onPointerDown={onContentPointerDown}
         >
           {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
         </div>

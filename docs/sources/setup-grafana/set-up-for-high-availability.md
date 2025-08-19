@@ -19,17 +19,23 @@ weight: 900
 
 # Set up Grafana for high availability
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To prevent duplicate alerts in Grafana high availability, additional steps are required.
 
 Please refer to [Alerting high availability](#alerting-high-availability) for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Grafana uses an embedded sqlite3 database to store users, dashboards, and other persistent data by default. For high availability, you must use a shared database to store this data. This shared database can be either MySQL or Postgres.
 
 <div class="text-center">
   <img src="/static/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
 </div>
+
+## Architecture
+
+Your Grafana high availability environment will consist of two or more Grafana servers (cluster nodes) served by a load balancing reverse proxy. The cluster uses an active-active architecture with the load balancer allocating traffic between nodes and re-allocating traffic to surviving nodes should there be failures. You need to configure your load balancer with a listener that responds to a shared cluster hostname. The shared name is the hostname your users use to access Grafana.
+
+For ease of use, we recommend you configure your load balancer to provide SSL termination. The shared Grafana database tracks session information, so your load balancer won't need to provide session affinity services. See your load balancer's documentation for details on its configuration and operations.
 
 ## Before you begin
 
@@ -38,6 +44,14 @@ Before you complete the following tasks, configure a MySQL or Postgres database 
 ## Configure multiple Grafana servers to use the same database
 
 Once you have a Postgres or MySQL database available, you can configure your multiple Grafana instances to use a shared backend database. Grafana has default and custom configuration files, and you can update the database settings by updating your custom configuration file as described in the [[database]](../configure-grafana/#database). Once configured to use a shared database, your multiple Grafana instances will persist all long-term data in that database.
+
+## Grafana Enterprise only: License your Grafana servers
+
+If you're using Grafana Enterprise:
+
+1. Get a license token in the name of your cluster's shared hostname.
+1. Edit the [`root_url`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url) setting in each node's `grafana.ini` configuration file to reflect the cluster's shared hostname.
+1. Install the license key as normal. For more information on installing your license key, refer to [Add your license to a Grafana instance](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/enterprise-licensing/#step-2-add-your-license-to-a-grafana-instance).
 
 ## Alerting high availability
 

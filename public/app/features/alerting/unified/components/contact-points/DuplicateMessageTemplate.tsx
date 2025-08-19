@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
 
 import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -48,14 +48,27 @@ const DuplicateMessageTemplateComponent = () => {
   }
 
   if (isLoading) {
-    return <LoadingPlaceholder text="Loading notification template" />;
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.duplicate-message-template.text-loading-notification-template',
+          'Loading notification template'
+        )}
+      />
+    );
   }
 
   if (error) {
     return isNotFoundError(error) ? (
       notFoundComponent
     ) : (
-      <Alert title="Error loading notification template" severity="error">
+      <Alert
+        title={t(
+          'alerting.duplicate-message-template.title-error-loading-notification-template',
+          'Error loading notification template'
+        )}
+        severity="error"
+      >
         {stringifyErrorLike(error)}
       </Alert>
     );

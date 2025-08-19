@@ -1,12 +1,18 @@
-// This import has side effects, and must be at the top so jQuery is made global before
-// angular is imported.
+// This import has side effects, and must be at the top so jQuery is made global first
 import './global-jquery-shim';
 
-import angular from 'angular';
 import { TransformStream } from 'node:stream/web';
 import { TextEncoder, TextDecoder } from 'util';
 
-import { EventBusSrv } from '@grafana/data';
+// we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
+jest.isolateModulesAsync(async () => {
+  const { EventBusSrv } = await import('@grafana/data');
+  const testAppEvents = new EventBusSrv();
+  jest.mock('../app/core/core', () => ({
+    ...jest.requireActual('../app/core/core'),
+    appEvents: testAppEvents,
+  }));
+});
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 import 'blob-polyfill';
@@ -16,18 +22,17 @@ import './mocks/workers';
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
 
-const testAppEvents = new EventBusSrv();
 const global = window as any;
-global.$ = global.jQuery = $;
 
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {
-  angularSupportEnabled: true,
   featureToggles: {},
 };
 global.grafanaBootData = {
   settings,
-  user: {},
+  user: {
+    locale: 'en-US',
+  },
   navTree: [],
 };
 
@@ -41,14 +46,6 @@ window.matchMedia = (query) => ({
   removeEventListener: jest.fn(),
   dispatchEvent: jest.fn(),
 });
-
-angular.module('grafana', ['ngRoute']);
-angular.module('grafana.services', ['ngRoute', '$strap.directives']);
-angular.module('grafana.panels', []);
-angular.module('grafana.controllers', []);
-angular.module('grafana.directives', []);
-angular.module('grafana.filters', []);
-angular.module('grafana.routes', ['ngRoute']);
 
 // mock the intersection observer and just say everything is in view
 const mockIntersectionObserver = jest
@@ -70,12 +67,6 @@ global.TextDecoder = TextDecoder;
 global.TransformStream = TransformStream;
 // add scrollTo interface since it's not implemented in jsdom
 Element.prototype.scrollTo = () => {};
-
-jest.mock('../app/core/core', () => ({
-  ...jest.requireActual('../app/core/core'),
-  appEvents: testAppEvents,
-}));
-jest.mock('../app/angular/partials', () => ({}));
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {

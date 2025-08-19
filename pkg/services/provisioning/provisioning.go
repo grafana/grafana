@@ -171,33 +171,36 @@ type ProvisioningServiceImpl struct {
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
-	err := ps.ProvisionDatasources(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision data sources", "error", err)
-		return err
-	}
-
-	err = ps.ProvisionPlugins(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-
-	err = ps.ProvisionAlerting(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision alerting", "error", err)
-		return err
-	}
-
+	// We had to move the initialization of OSS provisioners to Run()
+	// because they need the /apis/* endpoints to be ready and listening.
+	// They query these endpoints to retrieve folders and dashboards.
 	return nil
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	var err error
 
-	// run Init Provisioners only once
+	// Run Datasources, Plugins and Alerting Provisioning only once.
+	// It can't be initialized at RunInitProvisioners because it
+	// depends on the /apis endpoints to be already running and listeningq
 	ps.onceInitProvisioners.Do(func() {
-		err = ps.RunInitProvisioners(ctx)
+		err = ps.ProvisionDatasources(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision data sources", "error", err)
+			return
+		}
+
+		err = ps.ProvisionPlugins(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision plugins", "error", err)
+			return
+		}
+
+		err = ps.ProvisionAlerting(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision alerting", "error", err)
+			return
+		}
 	})
 
 	if err != nil {
@@ -241,6 +244,8 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
 	if err := ps.provisionDatasources(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "Datasource provisioning error", err)
@@ -251,6 +256,8 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
 	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "app provisioning error", err)
@@ -287,7 +294,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.alertingStore,
 		ps.alertingStore,
 		ps.folderService,
-		//ps.dashboardService,
+		// ps.dashboardService,
 		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -297,7 +304,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService))
 	receiverSvc := notifier.NewReceiverService(
 		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,

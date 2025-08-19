@@ -19,6 +19,22 @@ describe('objects', () => {
       world: {
         deeper: 10,
         arr: [null, 1, 'hello'],
+        value: -Infinity,
+      },
+      simple: 'A',
+    });
+    expect(value.hello).toBeNull();
+    expect(value.world.foo).toBeNull();
+    expect(value.bar).toBeUndefined();
+  });
+
+  it('returns a clean copy with Infinity converted to 0', () => {
+    const copy = sortedDeepCloneWithoutNulls(value, true);
+    expect(copy).toMatchObject({
+      world: {
+        deeper: 10,
+        arr: [null, 1, 'hello'],
+        value: 0,
       },
       simple: 'A',
     });

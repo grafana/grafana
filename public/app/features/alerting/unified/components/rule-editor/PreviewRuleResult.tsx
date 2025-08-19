@@ -3,6 +3,7 @@ import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { FieldConfigSource, FieldMatcherID, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
 import { TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
@@ -17,6 +18,7 @@ type Props = {
 export function PreviewRuleResult(props: Props): React.ReactElement | null {
   const { preview } = props;
   const styles = useStyles2(getStyles);
+
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [
@@ -36,7 +38,9 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
   if (data.state === LoadingState.Loading) {
     return (
       <div className={styles.container}>
-        <span>Loading preview...</span>
+        <span>
+          <Trans i18nKey="alerting.preview-rule-result.loading-preview">Loading preview...</Trans>
+        </span>
       </div>
     );
   }
@@ -44,16 +48,23 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
   if (data.state === LoadingState.Error) {
     return (
       <div className={styles.container}>
-        {data.error ? messageFromError(data.error) : 'Failed to preview alert rule'}
+        {data.error
+          ? messageFromError(data.error)
+          : t('alerting.preview-rule-result.preview-failed', 'Failed to preview alert rule')}
       </div>
     );
   }
+
   return (
     <div className={styles.container}>
-      <span>
-        Preview based on the result of running the query, for this moment.{' '}
-        {ruleType === RuleFormType.grafana ? 'Configuration for `no data` and `error handling` is not applied.' : null}
-      </span>
+      <Trans i18nKey="alerting.preview-rule-result.preview-based-on-query-result">
+        Preview based on the result of running the query, for this moment.
+      </Trans>
+      {ruleType === RuleFormType.grafana && (
+        <Trans i18nKey="alerting.preview-rule-result.no-data-error-handling-not-applied">
+          Configuration for `no data` and `error handling` is not applied.
+        </Trans>
+      )}
       <div className={styles.table}>
         <AutoSizer>
           {({ width, height }) => (

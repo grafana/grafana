@@ -12,5 +12,6 @@ export interface FormAmRoute {
   groupIntervalValue: string;
   repeatIntervalValue: string;
   muteTimeIntervals: string[];
+  activeTimeIntervals: string[];
   routes: FormAmRoute[];
 }

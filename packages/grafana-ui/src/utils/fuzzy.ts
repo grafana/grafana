@@ -1,6 +1,6 @@
 import { last } from 'lodash';
 
-import { HighlightPart } from '../types';
+import { HighlightPart } from '../types/completion';
 
 type FuzzyMatch = {
   /**

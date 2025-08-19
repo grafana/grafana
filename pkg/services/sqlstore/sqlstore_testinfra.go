@@ -4,10 +4,12 @@
 package sqlstore
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,10 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-// testingTB is an interface that is implemented by *testing.T and *testing.B. Similar to testing.TB.
+// TestingTB is an interface that is implemented by *testing.T and *testing.B. Similar to testing.TB.
 type TestingTB interface {
 	// Helper marks the calling function as a test helper function. See also (*testing.T).Helper.
 	Helper()
@@ -27,7 +29,13 @@ type TestingTB interface {
 	Cleanup(func())
 	// Fatalf logs a message and marks the test as failed. The syntax is similar to that of fmt.Printf. See also (*testing.T).Fatalf.
 	Fatalf(format string, args ...any)
+	// Logf formats and logs its arguments. See also (*testing.T).Logf.
+	Logf(format string, args ...any)
+	// Context returns a context that is canceled just before Cleanup-registered functions are called. See also (*testing.T).Context.
+	Context() context.Context
 }
+
+var _ TestingTB = (testing.TB)(nil)
 
 type testOptions struct {
 	FeatureFlags     map[string]bool
@@ -166,8 +174,12 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	engine.DatabaseTZ = time.UTC
 	engine.TZLocation = time.UTC
 
+	cfgDBSec := cfg.Raw.Section("database")
+	shouldEnsure := fmt.Sprintf("%t", !options.NoDefaultUserOrg && !options.Truncate)
+	cfgDBSec.Key("ensure_default_org_and_user").SetValue(shouldEnsure)
+
 	store, err := newStore(cfg, engine, features, options.MigratorFactory(features),
-		options.Bus, options.Tracer, options.NoDefaultUserOrg || options.Truncate)
+		options.Bus, options.Tracer)
 	if err != nil {
 		tb.Fatalf("failed to create a new SQLStore: %v", err)
 		panic("unreachable")
@@ -277,9 +289,7 @@ func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 		_ = engine.Close()
 	}()
 
-	// The database name has to be unique amongst all tests. It is highly unlikely we will have a collision here.
-	// The database name has to be <= 64 chars long on MySQL, and <= 31 chars on Postgres.
-	id := "grafana_test_" + randomLowerHex(18)
+	id := generateDatabaseName()
 	_, err = engine.Exec("CREATE DATABASE " + id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a new database %s: %w", id, err)
@@ -303,6 +313,12 @@ func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 		panic("unreachable; handled in the switch statement above")
 	}
 	return db, nil
+}
+
+func generateDatabaseName() string {
+	// The database name has to be unique amongst all tests. It is highly unlikely we will have a collision here.
+	// The database name has to be <= 64 chars long on MySQL, and <= 31 chars on Postgres.
+	return "grafana_test_" + randomLowerHex(18)
 }
 
 func env(name, fallback string) string {

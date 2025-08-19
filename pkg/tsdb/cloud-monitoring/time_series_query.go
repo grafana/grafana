@@ -67,6 +67,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 				Custom:              customFrameMeta,
 			}
 			frame.Meta = frameMeta
+			frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 			var err error
 			iterator := timeSeriesDataIterator{series, d}

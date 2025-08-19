@@ -23,7 +23,7 @@ describe('ConfirmButton', () => {
     expect(onConfirm).toHaveBeenCalled();
 
     // Confirm button should be visible if closeOnConfirm is false
-    expect(screen.queryByRole('button', { name: 'Confirm delete' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm delete' })).toBeInTheDocument();
   });
 
   it('should hide confirm delete when closeOnConfirm is true', async () => {

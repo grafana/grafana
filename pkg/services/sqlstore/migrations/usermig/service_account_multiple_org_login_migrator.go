@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -72,19 +72,6 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
               AND is_service_account = 1
               AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
         `)
-	case migrator.Spanner:
-		_, err = p.sess.Exec(`
-            UPDATE user
-            SET login = CONCAT('sa-', CAST(org_id AS STRING), '-',
-                CASE
-                    WHEN login LIKE 'sa-%' THEN SUBSTRING(login, 4)
-                    ELSE login
-                END
-            )
-            WHERE login IS NOT NULL
-              AND is_service_account
-              AND login NOT LIKE CONCAT('sa-', CAST(org_id AS STRING), '-%')
-        `)
 
 	default:
 		return fmt.Errorf("dialect not supported: %s", p.dialect)
@@ -140,19 +127,6 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
                     SELECT 1
                     FROM  ` + dialect.Quote("user") + `AS u2
                     WHERE u2.login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
-                );;
-        `)
-	case migrator.Spanner:
-		_, err = sess.Exec(`
-            UPDATE ` + dialect.Quote("user") + ` AS u
-            SET login = 'sa-' || CAST(u.org_id AS STRING) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS STRING)||'-'||CAST(u.org_id AS STRING))+1)
-            WHERE u.login IS NOT NULL
-                AND u.is_service_account
-                AND u.login LIKE 'sa-'||CAST(u.org_id AS STRING)||'-'||CAST(u.org_id AS STRING)||'-%'
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM  ` + dialect.Quote("user") + `AS u2
-                    WHERE u2.login = 'sa-' || CAST(u.org_id AS STRING) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS STRING)||'-'||CAST(u.org_id AS STRING))+1)
                 );;
         `)
 	default:

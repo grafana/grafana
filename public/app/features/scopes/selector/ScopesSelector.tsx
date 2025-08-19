@@ -3,10 +3,10 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t, Trans } from 'app/core/internationalization';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
@@ -31,16 +31,36 @@ export const ScopesSelector = () => {
   if (!services || !scopes || !scopes.state.enabled || !selectorServiceState) {
     return null;
   }
-  const { nodes, loadingNodeName, selectedScopes, opened, treeScopes } = selectorServiceState;
+
+  const {
+    nodes,
+    loadingNodeName,
+    opened,
+    selectedScopes,
+    appliedScopes,
+    tree,
+    scopes: scopesMap,
+  } = selectorServiceState;
   const { scopesService, scopesSelectorService, scopesDashboardsService } = services;
   const { readOnly, drawerOpened, loading } = scopes.state;
-  const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect } = scopesSelectorService;
+  const {
+    open,
+    removeAllScopes,
+    closeAndApply,
+    closeAndReset,
+    updateNode,
+    selectScope,
+    deselectScope,
+    getRecentScopes,
+  } = scopesSelectorService;
+
+  const recentScopes = getRecentScopes();
 
   const dashboardsIconLabel = readOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
     : drawerOpened
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
-      : t('scopes.dashboards.toggle..expand', 'Expand suggested dashboards list');
+      : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
   return (
     <div className={styles.container}>
@@ -56,7 +76,8 @@ export const ScopesSelector = () => {
 
       <ScopesInput
         nodes={nodes}
-        scopes={selectedScopes}
+        scopes={scopesMap}
+        appliedScopes={appliedScopes}
         disabled={readOnly}
         loading={loading}
         onInputClick={() => {
@@ -71,17 +92,25 @@ export const ScopesSelector = () => {
         <Drawer title={t('scopes.selector.title', 'Select scopes')} size="sm" onClose={closeAndReset}>
           <div className={styles.drawerContainer}>
             <div className={styles.treeContainer}>
-              {loading ? (
+              {loading || !tree ? (
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
-                <ScopesTree
-                  nodes={nodes}
-                  nodePath={['']}
-                  loadingNodeName={loadingNodeName}
-                  scopes={treeScopes}
-                  onNodeUpdate={updateNode}
-                  onNodeSelectToggle={toggleNodeSelect}
-                />
+                <>
+                  <ScopesTree
+                    tree={tree}
+                    loadingNodeName={loadingNodeName}
+                    onNodeUpdate={updateNode}
+                    recentScopes={recentScopes}
+                    selectedScopes={selectedScopes}
+                    scopeNodes={nodes}
+                    selectScope={selectScope}
+                    deselectScope={deselectScope}
+                    onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string) => {
+                      scopesSelectorService.changeScopes(scopeIds, parentNodeId);
+                      scopesSelectorService.closeAndReset();
+                    }}
+                  />
+                </>
               )}
             </div>
 

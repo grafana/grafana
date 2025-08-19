@@ -48,7 +48,11 @@ func main() {
 		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
 
-	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer())
+	pluginKindGen.AddPostprocessors(
+		corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"),
+		corecodegen.GoFormat(),
+		splitSchiffer(),
+	)
 
 	declParser := pfs.NewDeclParser(skipPlugins)
 	decls, err := declParser.Parse(os.DirFS(cwd))

@@ -21,6 +21,11 @@ on:
     - 'main'
     - 'release-*.*.*'
 
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
 jobs:
   setup:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
@@ -30,58 +35,69 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
+      private_key: ${{ steps.output.outputs.delivery_bot_pem }}
+      app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+    env:
+      HEAD_REF: ${{ github.head_ref }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      LATEST: ${{ inputs.latest && '1' || '0' }}
+      VERSION: ${{ inputs.version }}
     runs-on: ubuntu-latest
     steps:
-      # The github-release action expects a `LATEST` value of a string of either '1' or '0'
-    - if: ${{ github.event_name == 'workflow_dispatch' }}
-      run: |
-        echo setting up GITHUB_ENV for ${{ github.event_name }}
-        echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-        echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
-        echo "LATEST=${{ inputs.latest && '1' || '0' }}" >> $GITHUB_ENV
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
-        echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\/.*\///g')" >> $GITHUB_ENV
-        echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}" >> $GITHUB_ENV
-        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}" >> $GITHUB_ENV
+        {
+        echo "VERSION=$(echo "${HEAD_REF}" | sed -e 's/release\/.*\//v/g')"
+        echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}"
+        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}"
+        } >> "$GITHUB_ENV"
     - id: output
       run: |
         echo "dry_run: $DRY_RUN"
         echo "latest: $LATEST"
         echo "version: $VERSION"
 
-        echo "release_branch=$(echo $VERSION | sed -s 's/^v/release-/g')" >> "$GITHUB_OUTPUT"
-        echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
-        echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
-        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        {
+          echo "release_branch=$(echo "$VERSION" | sed -s 's/^v/release-/g')"
+          echo "dry_run=$DRY_RUN"
+          echo "latest=$LATEST"
+          echo "version=$VERSION"
+        } >> "$GITHUB_OUTPUT"
   create_next_release_branch_grafana:
     name: Create next release branch (Grafana)
     needs: setup
-    uses: ./.github/workflows/create-next-release-branch.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+    uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@main
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
-    uses: ./.github/workflows/create-next-release-branch.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+    uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@main
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
+  create_security_branch_grafana:
+    name: Create security branch (Grafana Security Mirror)
+    needs: setup
+    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
+    with:
+      release_branch: ${{ needs.setup.outputs.release_branch }}
+      security_branch_number: "01"
+      repository: grafana/grafana-security-mirror
+  create_security_branch_enterprise:
+    name: Create security branch (Enterprise)
+    needs: setup
+    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
+    with:
+      release_branch: ${{ needs.setup.outputs.release_branch }}
+      security_branch_number: "01"
+      repository: grafana/grafana-enterprise
   migrate_prs_grafana:
     needs:
       - setup
       - create_next_release_branch_grafana
-    uses: ./.github/workflows/migrate-prs.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+    uses: grafana/grafana/.github/workflows/migrate-prs.yml@main
     with:
       ownerRepo: 'grafana/grafana'
       from: ${{ needs.setup.outputs.release_branch }}
@@ -90,20 +106,14 @@ jobs:
     needs:
       - setup
       - create_next_release_branch_enterprise
-    uses: ./.github/workflows/migrate-prs.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+    uses: grafana/grafana/.github/workflows/migrate-prs.yml@main
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       from: ${{ needs.setup.outputs.release_branch }}
       to: ${{ needs.create_next_release_branch_enterprise.outputs.branch }}
   post_changelog_on_forum:
     needs: setup
-    uses: ./.github/workflows/community-release.yml
-    secrets:
-      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+    uses: grafana/grafana/.github/workflows/community-release.yml@main
     with:
       version: ${{ needs.setup.outputs.version }}
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
@@ -112,7 +122,7 @@ jobs:
     # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
     # endpoint.
     needs: setup
-    uses: ./.github/workflows/github-release.yml
+    uses: grafana/grafana/.github/workflows/github-release.yml@main
     with:
       version: ${{ needs.setup.outputs.version }}
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
@@ -120,7 +130,10 @@ jobs:
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ needs.setup.outputs.dry_run }}
+      VERSION: ${{ needs.setup.outputs.version }}
     steps:
     - run: |
-        echo announce on slack that ${{ needs.setup.outputs.version }} has been released
-        echo dry run: ${{ needs.setup.outputs.dry_run }}
+        echo announce on slack that "$VERSION" has been released
+        echo dry run: "$DRY_RUN"

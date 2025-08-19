@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole, TimeZone, dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Label, TextLink, useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
+import { AccessControlAction, Role } from 'app/types/accessControl';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { ServiceAccountProfileRow } from './ServiceAccountProfileRow';
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
@@ -47,38 +49,46 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
 
   return (
     <div className={styles.section}>
-      <h3>Information</h3>
+      <h3>
+        <Trans i18nKey="serviceaccounts.service-account-profile.information">Information</Trans>
+      </h3>
       <table className="filter-table">
         <tbody>
           {serviceAccount.id && (
             <ServiceAccountProfileRow
-              label="Numerical identifier"
+              label={t('serviceaccounts.service-account-profile.label-numerical-identifier', 'Numerical identifier')}
               value={serviceAccount.id.toString()}
               disabled={true}
             />
           )}
           <ServiceAccountProfileRow
-            label="Name"
+            label={t('serviceaccounts.service-account-profile.label-name', 'Name')}
             value={serviceAccount.name}
             onChange={!serviceAccount.isExternal ? onNameChange : undefined}
             disabled={!ableToWrite || serviceAccount.isDisabled}
           />
-          <ServiceAccountProfileRow label="ID" value={serviceAccount.login} disabled={serviceAccount.isDisabled} />
+          <ServiceAccountProfileRow
+            label={t('serviceaccounts.service-account-profile.label-id', 'ID')}
+            value={serviceAccount.login}
+            disabled={serviceAccount.isDisabled}
+          />
           <ServiceAccountRoleRow
-            label="Roles"
+            label={t('serviceaccounts.service-account-profile.label-roles', 'Roles')}
             serviceAccount={serviceAccount}
             onRoleChange={onRoleChange}
             roleOptions={roles}
           />
           <ServiceAccountProfileRow
-            label="Creation date"
+            label={t('serviceaccounts.service-account-profile.label-creation-date', 'Creation date')}
             value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
             disabled={serviceAccount.isDisabled}
           />
           {serviceAccount.isExternal && serviceAccount.requiredBy && (
             <tr>
               <td>
-                <Label>Used by</Label>
+                <Label>
+                  <Trans i18nKey="serviceaccounts.service-account-profile.used-by">Used by</Trans>
+                </Label>
               </td>
               <td>
                 <TextLink href={`/plugins/${serviceAccount.requiredBy}`}>{serviceAccount.requiredBy}</TextLink>

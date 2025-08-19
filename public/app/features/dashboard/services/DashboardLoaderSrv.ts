@@ -4,16 +4,15 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 import { appEvents } from '../../../core/core';
-import { loadDashboardFromProvisioning } from '../../provisioning/dashboardLoader';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
@@ -37,13 +36,14 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<T>;
+
   abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
-      .get(url)
+      .get(url, undefined, undefined, { validatePath: true })
       .then(this.executeScript.bind(this))
       .then(
         (result: any) => {
@@ -124,10 +124,6 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
-    } else if (type === 'provisioning' && uid && slug) {
-      promise = loadDashboardFromProvisioning(slug, uid);
-      // needed for the old architecture
-      // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv().getSnapshot(slug);
     } else if (type === 'public' && uid) {
@@ -148,8 +144,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           return result;
         })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -200,8 +196,6 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       promise = backendSrv.getPublicDashboardByUid(uid).then((result) => {
         return ResponseTransformers.ensureV2Response(result);
       });
-    } else if (type === 'provisioning' && uid && slug) {
-      promise = loadDashboardFromProvisioning(slug, uid).then((r) => ResponseTransformers.ensureV2Response(r));
     } else if (uid) {
       if (!params) {
         const cachedDashboard = stateManager.getDashboardFromCache(uid);
@@ -216,8 +210,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
           return result;
         })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -263,5 +257,6 @@ export const setDashboardLoaderSrv = (srv: DashboardLoaderSrv) => {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('dashboardLoaderSrv can be only overriden in test environment');
   }
+
   dashboardLoaderSrv = srv;
 };

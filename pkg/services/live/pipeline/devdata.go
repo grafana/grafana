@@ -12,6 +12,7 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
@@ -63,24 +64,25 @@ func postTestData() {
 		}
 		jsonData, _ := json.Marshal(d)
 		log.Println(string(jsonData))
+		httpClient := httpclient.New()
 
 		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/auto", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := httpClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
 		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/pipeline/push/stream/json/tip", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		resp, err = http.DefaultClient.Do(req)
+		resp, err = httpClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
 		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/exact", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		resp, err = http.DefaultClient.Do(req)
+		resp, err = httpClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -1,6 +1,12 @@
 import { FormEvent } from 'react';
+import { lastValueFrom } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { CustomVariable, SceneVariable } from '@grafana/scenes';
+import { TextArea } from '@grafana/ui';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { VariableLegend } from '../components/VariableLegend';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
@@ -36,18 +42,23 @@ export function CustomVariableForm({
 }: CustomVariableFormProps) {
   return (
     <>
-      <VariableLegend>Custom options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.custom-variable-form.custom-options">Custom options</Trans>
+      </VariableLegend>
 
       <VariableTextAreaField
-        name="Values separated by comma"
+        name={t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma')}
         defaultValue={query}
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
         onBlur={onQueryChange}
         required
         width={52}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
       />
-      <VariableLegend>Selection options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.custom-variable-form.selection-options">Selection options</Trans>
+      </VariableLegend>
       <SelectionOptionsForm
         multi={multi}
         includeAll={includeAll}
@@ -59,5 +70,43 @@ export function CustomVariableForm({
         onAllowCustomValueChange={onAllowCustomValueChange}
       />
     </>
+  );
+}
+
+export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
+  if (!(variable instanceof CustomVariable)) {
+    return [];
+  }
+
+  return [
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
+      id: uuidv4(),
+      render: (descriptor) => <ValuesTextField id={descriptor.props.id} variable={variable} />,
+    }),
+  ];
+}
+
+function ValuesTextField({ variable, id }: { variable: CustomVariable; id?: string }) {
+  const { query } = variable.useState();
+
+  const onBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
+    variable.setState({ query: event.currentTarget.value });
+    await lastValueFrom(variable.validateAndUpdate!());
+  };
+
+  return (
+    <TextArea
+      id={id}
+      rows={2}
+      defaultValue={query}
+      onBlur={onBlur}
+      placeholder={t(
+        'dashboard.edit-pane.variable.custom-options.values-placeholder',
+        '1, 10, mykey : myvalue, myvalue, escaped\,value'
+      )}
+      required
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
+    />
   );
 }

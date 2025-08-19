@@ -243,38 +243,15 @@
   {
     "type": "changedfiles",
     "matches": [
-      "/pkg/services/ngalert/**/*",
-      "/pkg/services/sqlstore/migrations/ualert/**/*",
-      "/pkg/services/alerting/**/*",
-      "/public/app/features/alerting/**/*",
-      "/pkg/tests/api/alerting/**/*",
-      "/pkg/tests/alertmanager/**/*"
+      "pkg/services/ngalert/**/*",
+      "pkg/services/sqlstore/migrations/ualert/**/*",
+      "pkg/services/alerting/**/*",
+      "public/app/features/alerting/**/*",
+      "pkg/tests/api/alerting/**/*",
+      "pkg/tests/alertmanager/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"
-  },
-  {
-    "type": "author",
-    "name": "pr/external",
-    "notMemberOf": {
-      "org": "grafana"
-    },
-    "ignoreList": [
-      "renovate[bot]",
-      "dependabot[bot]",
-      "grafana-delivery-bot[bot]",
-      "grafanabot"
-    ],
-    "action": "updateLabel",
-    "addLabel": "pr/external"
-  },
-  {
-    "type": "label",
-    "name": "type/docs",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/69"
-    }
   },
   {
     "type": "changedfiles",
@@ -436,5 +413,71 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/table"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/plugins/datasource/azuremonitor/**/*",
+      "pkg/tsdb/azuremonitor/**/*"
+    ],
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/190"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/plugins/datasource/graphite/**/*",
+      "pkg/tsdb/graphite/**/*"
+    ],
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/190"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/plugins/datasource/influxdb/**/*",
+      "pkg/tsdb/influx/**/*"
+    ],
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/190"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/plugins/datasource/elasticsearch/**/*",
+      "pkg/tsdb/elasticsearch/**/*"
+    ],
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/190"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/plugins/datasource/cloud-monitoring/**/*",
+      "pkg/tsdb/cloud-monitoring/**/*"
+    ],
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/190"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/plugins/datasource/opentsdb/**/*",
+      "pkg/tsdb/opentsdb/**/*"
+    ],
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/190"
+    }
   }
 ]

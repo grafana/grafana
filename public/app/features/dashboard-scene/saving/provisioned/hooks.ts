@@ -1,12 +1,16 @@
-import { skipToken } from '@reduxjs/toolkit/query/react';
+import { useState } from 'react';
 
-import { useGetFolderQuery } from 'app/api/clients/folder';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { useGetResourceRepository } from 'app/features/provisioning/hooks/useGetResourceRepository';
-import { useRepositoryList } from 'app/features/provisioning/hooks/useRepositoryList';
-import { DashboardMeta } from 'app/types';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
+import { DashboardMeta } from 'app/types/dashboard';
 
-import { getDefaultWorkflow } from './defaults';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { ProvisionedDashboardFormData } from '../shared';
+
+import { getDefaultWorkflow, getWorkflowOptions } from './defaults';
 import { generatePath } from './utils/path';
 import { generateTimestamp } from './utils/timestamp';
 
@@ -14,21 +18,21 @@ interface UseDefaultValuesParams {
   meta: DashboardMeta;
   defaultTitle: string;
   defaultDescription?: string;
+  loadedFromRef?: string;
 }
 
-export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
+export function useDefaultValues({ meta, defaultTitle, defaultDescription, loadedFromRef }: UseDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-  const repositoryConfig = useConfig({ folderUid: meta.folderUid, managerKind, managerIdentity });
-  const repository = repositoryConfig?.spec;
+  const { repository, folder, isLoading } = useGetResourceRepositoryView({
+    name: managerKind === 'repo' ? managerIdentity : undefined,
+    folderName: meta.folderUid,
+  });
   const timestamp = generateTimestamp();
 
-  // Get folder data to retrieve the folder path
-  const folderQuery = useGetFolderQuery(meta.folderUid ? { name: meta.folderUid } : skipToken);
-
-  const folderPath = meta.folderUid ? (folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '') : '';
+  const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
 
   const dashboardPath = generatePath({
     timestamp,
@@ -37,7 +41,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
     folderPath,
   });
 
-  if (folderQuery.isLoading || !repositoryConfig) {
+  if (isLoading || !repository) {
     return null;
   }
 
@@ -45,7 +49,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
     values: {
       ref: `dashboard/${timestamp}`,
       path: dashboardPath,
-      repo: managerIdentity || repositoryConfig?.metadata?.name || '',
+      repo: managerIdentity || repository?.name || '',
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -53,39 +57,69 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription }: Use
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repository),
+      workflow: getDefaultWorkflow(repository, loadedFromRef),
     },
     isNew: !meta.k8s?.name,
-    repositoryConfig: repository,
-    isGitHub: repository?.type === 'github',
+    repository,
   };
 }
 
-type UseConfigArgs = {
-  folderUid?: string;
-  managerKind?: string;
-  managerIdentity?: string;
-};
-const useConfig = ({ folderUid, managerKind, managerIdentity }: UseConfigArgs) => {
-  const repositoryConfig = useGetResourceRepository({
-    name: managerKind === 'repo' ? managerIdentity : undefined,
-    folderUid,
+export interface ProvisionedDashboardData {
+  isReady: boolean;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  defaultValues: ProvisionedDashboardFormData | null;
+  repository?: RepositoryView;
+  loadedFromRef?: string;
+  workflowOptions: Array<{ label: string; value: string }>;
+  isNew: boolean;
+  readOnly: boolean;
+}
+
+/**
+ * Custom hook to fetch and prepare data for a provisioned dashboard update/delete form.
+ * It retrieves default values, repository information, and workflow options based on the current dashboard state.
+ */
+
+export function useProvisionedDashboardData(dashboard: DashboardScene): ProvisionedDashboardData {
+  const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
+  const [params] = useUrlParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const loadedFromRef = params.get('ref') ?? undefined;
+
+  const defaultValuesResult = useDefaultValues({
+    meta,
+    defaultTitle,
+    defaultDescription,
+    loadedFromRef,
   });
 
-  const [items, isLoading] = useRepositoryList(repositoryConfig ? skipToken : undefined);
-
-  if (repositoryConfig) {
-    return repositoryConfig;
+  if (!defaultValuesResult) {
+    return {
+      isReady: false,
+      isLoading,
+      setIsLoading,
+      defaultValues: null,
+      repository: undefined,
+      loadedFromRef,
+      workflowOptions: [],
+      isNew: false,
+      readOnly: true,
+    };
   }
 
-  if (isLoading) {
-    return null;
-  }
-  const instanceConfig = items?.find((repo) => repo.spec?.sync.target === 'instance');
-  if (instanceConfig) {
-    return instanceConfig;
-  }
+  const { values, isNew, repository } = defaultValuesResult;
+  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
 
-  // Return the config, which targets the folder
-  return items?.find((repo) => repo?.metadata?.name === folderUid);
-};
+  return {
+    isReady: true,
+    defaultValues: values,
+    repository,
+    loadedFromRef,
+    workflowOptions,
+    isNew,
+    readOnly: getIsReadOnlyRepo(repository),
+    isLoading,
+    setIsLoading,
+  };
+}

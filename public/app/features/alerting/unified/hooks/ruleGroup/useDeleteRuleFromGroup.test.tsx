@@ -2,10 +2,11 @@ import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { AccessControlAction } from 'app/types';
+import server from '@grafana/test-utils/server';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import server, { setupMswServer } from '../../mockApi';
+import { setupMswServer } from '../../mockApi';
 import {
   grantUserPermissions,
   mockCombinedRule,

@@ -95,9 +95,9 @@ These are just a few examples of how Grafana can be used in M2M scenarios. The p
 
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and service accounts tokens to authenticate applications, such as Terraform, with the Grafana API.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Service accounts will eventually replace [API keys](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/) as the primary way to authenticate applications that interact with Grafana.
-{{% /admonition %}}
+{{< /admonition >}}
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
 
@@ -108,9 +108,9 @@ A common use case for creating a service account is to perform operations on aut
 
 In [Grafana Enterprise](../../../introduction/grafana-enterprise/), you can also use service accounts in combination with [role-based access control](../../../administration/roles-and-permissions/access-control/) to grant very specific permissions to applications that interact with Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Service accounts can only act in the organization they are created for. We recommend creating service accounts in each organization if you have the same task needed for multiple organizations.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The following video shows how to migrate from API keys to service accounts.
 {{< vimeo 742056367 >}}
@@ -127,19 +127,11 @@ You can create multiple tokens for the same service account. You might want to d
 - Multiple applications use the same permissions, but you want to audit or manage their actions separately.
 - You need to rotate or replace a compromised token.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 In Grafana's audit logs it will still show up as the same service account.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Service account access tokens inherit permissions from the service account.
-
-### API keys
-
-{{% admonition type="note" %}}
-Grafana recommends using service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts](./#service-accounts).
-{{% /admonition %}}
-
-You can use Grafana API keys to interact with data sources via HTTP APIs.
 
 ## How to work with roles?
 
@@ -169,9 +161,9 @@ Dashboard, folder, and data source permissions can be set through the UI or APIs
 
 ### Role-based access control
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 If you think that the basic organization and server administrator roles are too limiting, it might be beneficial to employ [role-based access control (RBAC)](../../../administration/roles-and-permissions/access-control/).
 RBAC is a flexible approach to managing user access to Grafana resources, including users, data sources, and reports. It enables easy granting, changing, and revoking of read and write access for users.
@@ -189,13 +181,13 @@ When connecting Grafana to an identity provider, it's important to think beyond 
 
 Team sync is a feature that allows you to synchronize teams or groups from your authentication provider with teams in Grafana. This means that users of specific teams or groups in LDAP, OAuth, or SAML will be automatically added or removed as members of corresponding teams in Grafana. Whenever a user logs in, Grafana will check for any changes in the teams or groups of the authentication provider and update the user's teams in Grafana accordingly. This makes it easy to manage user permissions across multiple systems.
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Team synchronization occurs only when a user logs in. However, if you are using LDAP, it is possible to enable active background synchronization. This allows for the continuous synchronization of teams.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Role Sync
 
@@ -207,14 +199,14 @@ Organization sync is the process of binding all the users from an organization i
 
 With organization sync, users from identity provider groups can be assigned to corresponding Grafana organizations. This functionality is similar to role sync but with the added benefit of specifying the organization that a user belongs to for a particular identity provider group. Please note that this feature is only available for self-hosted Grafana instances, as Cloud Grafana instances have a single organization limit.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Organization sync is currently only supported for SAML and LDAP.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You don't need to invite users through Grafana when syncing with Organization sync.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Currently, only basic roles can be mapped via Organization sync.
-{{% /admonition %}}
+{{< /admonition >}}

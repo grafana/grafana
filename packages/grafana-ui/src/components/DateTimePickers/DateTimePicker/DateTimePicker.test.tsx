@@ -30,7 +30,7 @@ describe('Date time picker', () => {
   it('should render component', () => {
     renderDatetimePicker();
 
-    expect(screen.queryByTestId('date-time-picker')).toBeInTheDocument();
+    expect(screen.getByTestId('date-time-picker')).toBeInTheDocument();
   });
 
   it.each(TEST_TIMEZONES)('input should have a value (timezone: %s)', (timeZone) => {

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,7 @@ func TestDebouncer(t *testing.T) {
 
 	t.Run("should process values after max wait", func(t *testing.T) {
 		processed := make(map[string]int, 1)
+		clockMock := clock.NewMock()
 
 		group, err := NewGroup(DebouncerOpts[string]{
 			BufferSize: 10,
@@ -62,6 +64,7 @@ func TestDebouncer(t *testing.T) {
 			},
 			MinWait: 50 * time.Millisecond,
 			MaxWait: 500 * time.Millisecond,
+			clock:   clockMock,
 		})
 		require.NoError(t, err)
 
@@ -70,20 +73,18 @@ func TestDebouncer(t *testing.T) {
 
 		group.Start(ctx)
 
-		ticker := time.NewTicker(time.Millisecond * 40)
-		defer ticker.Stop()
-
-		start := time.Now()
+		start := clockMock.Now()
 
 		for counter := 0; counter < 25; counter++ {
-			<-ticker.C
 			_ = group.Add("key1")
+			clockMock.Add(time.Millisecond * 40)
 			if processed["key1"] == 1 {
 				break
 			}
 		}
 
-		require.WithinDuration(t, start.Add(time.Millisecond*500), time.Now(), time.Millisecond*100)
+		// Make sure that the execution happened after the maxTimeout of 500ms, but before the next MaxTimeout.
+		require.WithinDuration(t, start.Add(time.Millisecond*500), clockMock.Now(), time.Millisecond*499)
 	})
 
 	t.Run("should handle buffer full", func(t *testing.T) {

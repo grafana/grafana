@@ -39,6 +39,7 @@ interface RuleBase {
   evaluationTime?: number;
   lastError?: string;
   uid?: string;
+  folderUid?: string;
 }
 
 export interface AlertingRule extends RuleBase {
@@ -143,6 +144,7 @@ export interface CombinedRule {
 export enum AlertInstanceTotalState {
   Alerting = 'alerting',
   Pending = 'pending',
+  Recovering = 'recovering',
   Normal = 'inactive',
   NoData = 'nodata',
   Error = 'error',

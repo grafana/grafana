@@ -26,9 +26,12 @@ import {
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   GrafanaAlertingRuleDefinition,
+  GrafanaPromAlertingRuleDTO,
+  GrafanaPromRecordingRuleDTO,
   GrafanaRecordingRuleDefinition,
   PostableRuleDTO,
   PromAlertingRuleState,
+  PromRuleDTO,
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerCloudRuleDTO,
@@ -81,6 +84,11 @@ function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerC
 function isCloudRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordingRuleDTO {
   return typeof rule === 'object' && 'record' in rule;
 }
+export function isCloudRulerGroup(
+  rulerRuleGroup: RulerRuleGroupDTO
+): rulerRuleGroup is RulerRuleGroupDTO<RulerCloudRuleDTO> {
+  return rulerRuleGroup.rules.every((r) => isCloudRulerRule(r));
+}
 
 /* Prometheus rules */
 
@@ -90,6 +98,14 @@ function isAlertingRule(rule?: Rule): rule is AlertingRule {
 
 function isRecordingRule(rule?: Rule): rule is RecordingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Recording;
+}
+
+function isGrafanaPromAlertingRule(rule?: Rule): rule is GrafanaPromAlertingRuleDTO {
+  return isAlertingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+}
+
+function isGrafanaPromRecordingRule(rule?: Rule): rule is GrafanaPromRecordingRuleDTO {
+  return isRecordingRule(rule) && 'folderUid' in rule && 'uid' in rule;
 }
 
 export const rulerRuleType = {
@@ -113,6 +129,11 @@ export const prometheusRuleType = {
   rule: (rule?: Rule) => isAlertingRule(rule) || isRecordingRule(rule),
   alertingRule: isAlertingRule,
   recordingRule: isRecordingRule,
+  grafana: {
+    rule: (rule?: Rule) => isGrafanaPromAlertingRule(rule) || isGrafanaPromRecordingRule(rule),
+    alertingRule: isGrafanaPromAlertingRule,
+    recordingRule: isGrafanaPromRecordingRule,
+  },
 };
 
 export function alertInstanceKey(alert: Alert): string {
@@ -145,6 +166,10 @@ export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier
 
 export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+}
+
+export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
+  return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
 }
 
 export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
@@ -187,6 +212,22 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
+export function getPendingPeriodFromRulerRule(rule: RulerRuleDTO) {
+  return rulerRuleType.any.alertingRule(rule) ? rule.for : undefined;
+}
+
+export function getKeepFiringfor(rule: CombinedRule): string | undefined {
+  if (rulerRuleType.any.recordingRule(rule.rulerRule)) {
+    return undefined;
+  }
+
+  if (isGrafanaAlertingRule(rule.rulerRule)) {
+    return rule.rulerRule.keep_firing_for;
+  }
+
+  return undefined;
+}
+
 export function getAnnotations(rule?: AlertingRule): Annotations {
   return rule?.annotations ?? {};
 }
@@ -195,7 +236,7 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule?: Rule | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): RulePluginOrigin | undefined {
   if (!rule) {
     return undefined;
   }
@@ -224,7 +265,11 @@ function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
 }
 
-export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {
+export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {
+  return group.rules.some((rule) => isPluginProvidedRule(rule));
+}
+
+export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
 
@@ -256,7 +301,13 @@ export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
     groups.forEach(({ name: groupName, rules }) => {
       rules.forEach((rule) => {
         if (rule.promRule && isAlertingRule(rule.promRule)) {
-          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
+          acc.push({
+            dataSourceName: getRulesSourceName(rulesSource),
+            namespaceName,
+            groupName,
+            ...rule,
+            namespace: { ...rule.namespace, uid: rule.promRule.folderUid },
+          });
         }
       });
     });
@@ -279,17 +330,21 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [PromAlertingRuleState.Inactive]: 'good',
   [PromAlertingRuleState.Firing]: 'bad',
   [PromAlertingRuleState.Pending]: 'warning',
+  [PromAlertingRuleState.Recovering]: 'warning',
   [GrafanaAlertState.Alerting]: 'bad',
   [GrafanaAlertState.Error]: 'bad',
   [GrafanaAlertState.NoData]: 'info',
   [GrafanaAlertState.Normal]: 'good',
   [GrafanaAlertState.Pending]: 'warning',
+  [GrafanaAlertState.Recovering]: 'warning',
   [AlertState.NoData]: 'info',
   [AlertState.Paused]: 'warning',
   [AlertState.Alerting]: 'bad',
   [AlertState.OK]: 'good',
   // AlertState.Pending is not included because the 'pending' value is already covered by `PromAlertingRuleState.Pending`
   // [AlertState.Pending]: 'warning',
+  // same for AlertState.Recovering
+  // [AlertState.Recovering]: 'warning',
   [AlertState.Unknown]: 'info',
 };
 
@@ -477,4 +532,23 @@ export function isRecordingRuleByType(type?: RuleFormType) {
 
 export function isDataSourceManagedRuleByType(type?: RuleFormType) {
   return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
+}
+
+/*
+ * Grab the UID from either a rulerRule definition or a Prometheus rule definition, only Grafana-managed rules will have a UID.
+ */
+export function getRuleUID(rule?: RulerRuleDTO | Rule) {
+  if (!rule) {
+    return;
+  }
+
+  let ruleUid: string | undefined;
+
+  if ('grafana_alert' in rule && rulerRuleType.grafana.rule(rule)) {
+    ruleUid = rule.grafana_alert.uid;
+  } else if ('uid' in rule && prometheusRuleType.grafana.rule(rule)) {
+    ruleUid = rule.uid;
+  }
+
+  return ruleUid;
 }

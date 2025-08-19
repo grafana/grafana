@@ -152,8 +152,6 @@ export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionC
   component: React.ComponentType<Props>;
 };
 
-export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
-
 export type PluginExtensionOpenModalOptions = {
   // The title of the modal
   title: string;
@@ -169,6 +167,18 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
+  /**
+   * @internal
+   * Opens the extension sidebar with the registered component.
+   * @param componentTitle The title of the component to be opened in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  openSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
+  /**
+   * @internal
+   * Closes the extension sidebar.
+   */
+  closeSidebar: () => void;
 };
 
 // Extension Points & Contexts
@@ -180,13 +190,22 @@ export enum PluginExtensionPoints {
   AlertingHomePage = 'grafana/alerting/home',
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
+  AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourceConfigActions = 'grafana/datasources/config/actions',
+  DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
+  DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
+  TraceViewHeaderActions = 'grafana/traceview/header/actions',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
+  TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
+  LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
+  AppChrome = 'grafana/app/chrome/v1',
+  ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
 }
 
 export type PluginExtensionPanelContext = {
@@ -204,7 +223,7 @@ export type PluginExtensionPanelContext = {
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
   /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
   contextHints?: string[];
-  query?: DataQuery;
+  query?: DataQuery & { expr?: string };
 };
 
 export type PluginExtensionDataSourceConfigContext<
@@ -231,66 +250,55 @@ export type PluginExtensionDataSourceConfigContext<
 
 export type PluginExtensionCommandPaletteContext = {};
 
+export type PluginExtensionResourceAttributesContext = {
+  // Key-value pairs of resource attributes, attribute name is the key
+  attributes: Record<string, string[]>;
+  spanAttributes?: Record<string, string[]>;
+  datasource: {
+    type: string;
+    uid: string;
+  };
+};
+
+export type DataSourceConfigErrorStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+  };
+  testingStatus: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+};
+
+export type PluginExtensionDataSourceConfigActionsContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+};
+
+export type PluginExtensionDataSourceConfigStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+  testingStatus?: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+  severity: 'success' | 'error' | 'warning' | 'info';
+};
+
 type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
-};
-
-// deprecated types
-
-/** @deprecated - use PluginExtensionAddedLinkConfig instead */
-export type PluginExtensionLinkConfig<Context extends object = object> = {
-  type: PluginExtensionTypes.link;
-  title: string;
-  description: string;
-
-  // A URL path that will be used as the href for the rendered link extension
-  // (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
-  path?: string;
-
-  // A function that will be called when the link is clicked
-  // (It is called with the original event object)
-  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-
-  /**
-   * The unique identifier of the Extension Point
-   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
-   */
-  extensionPointId: string;
-
-  // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
-  configure?: (context?: Readonly<Context>) =>
-    | Partial<{
-        title: string;
-        description: string;
-        path: string;
-        onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-        icon: IconName;
-        category: string;
-      }>
-    | undefined;
-
-  // (Optional) A icon that can be displayed in the ui for the extension option.
-  icon?: IconName;
-
-  // (Optional) A category to be used when grouping the options in the ui
-  category?: string;
-};
-
-/** @deprecated - use PluginAddedLinkConfig instead */
-export type PluginExtensionComponentConfig<Props = {}> = {
-  type: PluginExtensionTypes.component;
-  title: string;
-  description: string;
-
-  // The React component that will be rendered as the extension
-  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
-  component: React.ComponentType<Props>;
-
-  /**
-   * The unique identifier of the Extension Point
-   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
-   */
-  extensionPointId: string;
 };

@@ -55,9 +55,9 @@ The following list contains role-based access control actions.
 | `alert.rules.external:read`           | <ul><li>`datasources:*`</li><li>`datasources:uid:*`</li></ul>                                                       | Read alert rules in data sources that support alerting (Prometheus, Mimir, and Loki)                                                                                                                                      |
 | `alert.rules.external:write`          | <ul><li>`datasources:*`</li><li>`datasources:uid:*`</li></ul>                                                       | Create, update, and delete alert rules in data sources that support alerting (Mimir and Loki).                                                                                                                            |
 | `alert.rules:create`                  | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Create Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder and `datasources:query` in the scope of data sources the user can query.       |
-| `alert.rules:delete`                  | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Delete Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder and `datasources:query` in the scope of data sources the user can query.       |
+| `alert.rules:delete`                  | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Delete Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder.       |
 | `alert.rules:read`                    | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Read Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder and `datasources:query` in the scope of data sources the user can query.         |
-| `alert.rules:write`                   | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Update Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder and `datasources:query` in the scope of data sources the user can query.       |
+| `alert.rules:write`                   | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Update Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder. To allow query modifications add `datasources:query` in the scope of data sources the user can query.       |
 | `alert.silences:create`               | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Create rule-specific silences in a folder and its subfolders.                                                                                                                                                             |
 | `alert.silences:read`                 | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Read all general silences and rule-specific silences in a folder and its subfolders.                                                                                                                                      |
 | `alert.silences:write`                | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Update and expire rule-specific silences in a folder and its subfolders.                                                                                                                                                  |
@@ -100,8 +100,6 @@ The following list contains role-based access control actions.
 | `folders:delete`                      | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Delete one or more folders and their subfolders.                                                                                                                                                                          |
 | `folders:read`                        | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Read one or more folders and their subfolders.                                                                                                                                                                            |
 | `folders:write`                       | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Update one or more folders and their subfolders.                                                                                                                                                                          |
-| `groupsync.mappings:read`             | None                                                               | List group attribute sync mappings. To use this permission, enable the `groupAttributeSync` feature toggle.                                                                                                               |
-| `groupsync.mappings:write`            | None                                                               | List, create, update, and delete group attribute sync mappings. To use this permission, enable the `groupAttributeSync` feature toggle.                                                                                   |
 | `ldap.config:reload`                  | None                                                                                                                | Reload the LDAP configuration.                                                                                                                                                                                            |
 | `ldap.status:read`                    | None                                                                                                                | Verify the availability of the LDAP server or servers.                                                                                                                                                                    |
 | `ldap.user:read`                      | None                                                                                                                | Read users via LDAP.                                                                                                                                                                                                      |
@@ -221,8 +219,6 @@ For more information on Cloud Access Policies and how to use them, see [Access p
 
 ### Grafana Alerting Notification action definitions
 
-To use these permissions, enable the `alertingApiServer` feature toggle.
-
 | Action                                       | Applicable scopes                  | Description                                                                                                 |
 | -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*` | Read contact points.                                                                                        |
@@ -230,6 +226,7 @@ To use these permissions, enable the `alertingApiServer` feature toggle.
 | `alert.notifications.receivers:create`       | None                               | Create a new contact points. The creator is automatically granted full access to the created contact point. |
 | `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*` | Update existing contact points.                                                                             |
 | `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*` | Update and delete existing contact points.                                                                  |
+| `alert.notifications.receivers:test`         | None                               | Test contact point notification.                                                                            |
 | `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.                                                                        |
 | `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.                                                                      |
 | `alert.notifications.time-intervals:read`    | None                               | Read mute time intervals.                                                                                   |
@@ -240,6 +237,28 @@ To use these permissions, enable the `alertingApiServer` feature toggle.
 | `alert.notifications.templates:delete`       | None                               | Delete existing templates.                                                                                  |
 | `alert.notifications.routes:read`            | None                               | Read notification policies.                                                                                 |
 | `alert.notifications.routes:write`           | None                               | Create new, update or delete notification policies                                                          |
+
+### Grafana Synthetic Monitoring action definitions
+
+The following list contains role-based access control actions used by Grafana Synthetic Monitoring.
+
+| Action                                                 | Applicable scopes | Description                                                 |
+| ------------------------------------------------------ | ----------------- | ----------------------------------------------------------- |
+| `grafana-synthetic-monitoring-app:read`                | None              | Read synthetic monitoring app.                              |
+| `grafana-synthetic-monitoring-app:write`               | None              | Write synthetic monitoring app.                             |
+| `grafana-synthetic-monitoring-app.checks:read`         | None              | Read checks in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.checks:write`        | None              | Create and edit checks in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.checks:delete`       | None              | Delete checks in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.probes:read`         | None              | Read probes in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.probes:write`        | None              | Create and edit probes in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.probes:delete`       | None              | Delete probes in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.alerts:read`         | None              | Read alerts in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.alerts:write`        | None              | Create and edit alerts in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.alerts:delete`       | None              | Delete alerts in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.thresholds:read`     | None              | Read thresholds in the Synthetic Monitoring app.            |
+| `grafana-synthetic-monitoring-app.thresholds:write`    | None              | Create and edit thresholds in the Synthetic Monitoring app. |
+| `grafana-synthetic-monitoring-app.thresholds:delete`   | None              | Delete thresholds in the Synthetic Monitoring app.          |
+| `grafana-synthetic-monitoring-app.access-tokens:write` | None              | Create and delete synthetic monitoring access tokens.       |
 
 ## Scope definitions
 

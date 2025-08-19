@@ -20,8 +20,7 @@ type ExternalNameSpec struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ExternalNameList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ExternalName `json:"items,omitempty"`
+	Items []ExternalName `json:"items"`
 }

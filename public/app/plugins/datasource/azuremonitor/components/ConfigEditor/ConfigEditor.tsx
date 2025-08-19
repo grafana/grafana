@@ -1,7 +1,8 @@
 import { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
+import { t } from '@grafana/i18n';
+import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
@@ -12,7 +13,7 @@ import {
   AzureMonitorDataSourceSecureJsonData,
   AzureMonitorDataSourceSettings,
   Subscription,
-} from '../../types';
+} from '../../types/types';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
@@ -114,19 +115,27 @@ export class ConfigEditor extends PureComponent<Props, State> {
             {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
           </Alert>
         )}
-        {config.secureSocksDSProxyEnabled && (
-          <>
-            <Divider />
-            <ConfigSection
-              title="Additional settings"
-              description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
-              isCollapsible={true}
-              isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
-            >
+        <>
+          <Divider />
+          <ConfigSection
+            title={t('components.config-editor.title-additional-settings', 'Additional settings')}
+            description={t(
+              'components.config-editor.description-additional-settings',
+              'Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.'
+            )}
+            isCollapsible={true}
+            isInitiallyOpen={
+              options.jsonData.enableSecureSocksProxy !== undefined ||
+              options.jsonData.timeout !== undefined ||
+              options.jsonData.keepCookies !== undefined
+            }
+          >
+            <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+            {config.secureSocksDSProxyEnabled && (
               <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-            </ConfigSection>
-          </>
-        )}
+            )}
+          </ConfigSection>
+        </>
       </>
     );
   }

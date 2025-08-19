@@ -11,10 +11,9 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardVersionList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DashboardVersionInfo `json:"items,omitempty"`
+	Items []DashboardVersionInfo `json:"items"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -72,7 +71,7 @@ type LibraryPanelList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []LibraryPanel `json:"items,omitempty"`
+	Items []LibraryPanel `json:"items"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -83,8 +82,11 @@ type LibraryPanelSpec struct {
 	// The panel type
 	PluginVersion string `json:"pluginVersion,omitempty"`
 
-	// The panel title
+	// The title of the library panel
 	Title string `json:"title,omitempty"`
+
+	// The title of the panel when displayed in the dashboard
+	PanelTitle string `json:"panelTitle,omitempty"`
 
 	// Library panel description
 	Description string `json:"description,omitempty"`
@@ -98,9 +100,26 @@ type LibraryPanelSpec struct {
 	// The default datasource type
 	Datasource *data.DataSourceRef `json:"datasource,omitempty"`
 
+	// The grid position
+	GridPos GridPos `json:"gridPos,omitempty"`
+
+	// Whether the panel is transparent
+	Transparent bool `json:"transparent,omitempty"`
+
+	// The links for the panel
+	Links []common.Unstructured `json:"links,omitempty"`
+
 	// The datasource queries
 	// +listType=set
 	Targets []data.DataQuery `json:"targets,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+type GridPos struct {
+	W int `json:"w"`
+	H int `json:"h"`
+	X int `json:"x"`
+	Y int `json:"y"`
 }
 
 // +k8s:deepcopy-gen=true

@@ -11,7 +11,8 @@ import (
 	"regexp"
 	"strings"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/sqlite"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 var (
@@ -472,6 +473,10 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*core.Index, error) 
 
 func (db *sqlite3) Filters() []core.Filter {
 	return []core.Filter{&core.IdFilter{}}
+}
+
+func (db *sqlite3) RetryOnError(err error) bool {
+	return sqlite.IsBusyOrLocked(err)
 }
 
 type sqlite3Driver struct {

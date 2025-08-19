@@ -841,14 +841,14 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				tt.fields.cfg,
 				ProvideOrgRoleMapper(tt.fields.cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),
 				cache)
 
 			if tt.fields.usGovURL {
-				s.SocialBase.Endpoint.AuthURL = usGovAuthURL
+				s.Endpoint.AuthURL = usGovAuthURL
 			} else {
-				s.SocialBase.Endpoint.AuthURL = authURL
+				s.Endpoint.AuthURL = authURL
 			}
 
 			cl := jwt.Claims{
@@ -1019,11 +1019,11 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				tt.fields.cfg,
 				ProvideOrgRoleMapper(tt.fields.cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),
 				cache)
 
-			s.SocialBase.Endpoint.AuthURL = authURL
+			s.Endpoint.AuthURL = authURL
 
 			cl := jwt.Claims{
 				Subject:   "subject",
@@ -1119,7 +1119,7 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			require.Equal(t, tc.want.forceUseGraphAPI, s.forceUseGraphAPI)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
@@ -1276,11 +1276,27 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication":      "client_secret_post",
+					"client_id":                  "client-id",
+					"client_secret":              "client_secret",
+					"allowed_groups":             "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -1315,6 +1331,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "select_account",
 				},
 			},
 			expectError: false,
@@ -1322,6 +1339,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "select_account",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",
@@ -1360,7 +1378,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1417,7 +1435,7 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+			s := NewAzureADProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

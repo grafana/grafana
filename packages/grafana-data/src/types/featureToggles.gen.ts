@@ -24,14 +24,6 @@ export interface FeatureToggles {
   */
   disableEnvelopeEncryption?: boolean;
   /**
-  * This will use a webworker thread to processes events rather than the main thread
-  */
-  ['live-service-web-worker']?: boolean;
-  /**
-  * Use Grafana Live WebSocket to execute backend queries
-  */
-  queryOverLive?: boolean;
-  /**
   * Search for dashboards using panel title
   */
   panelTitleSearch?: boolean;
@@ -63,41 +55,9 @@ export interface FeatureToggles {
   */
   correlations?: boolean;
   /**
-  * Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-  */
-  autoMigrateOldPanels?: boolean;
-  /**
-  * Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateGraphPanel?: boolean;
-  /**
-  * Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateTablePanel?: boolean;
-  /**
-  * Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigratePiechartPanel?: boolean;
-  /**
-  * Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateWorldmapPanel?: boolean;
-  /**
-  * Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-  */
-  autoMigrateStatPanel?: boolean;
-  /**
-  * Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-  */
-  disableAngular?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;
-  /**
-  * Disable duplicated secret storage in legacy tables
-  */
-  disableSecretsCompatibility?: boolean;
   /**
   * Logs the path for requests that are instrumented as unknown
   */
@@ -119,11 +79,6 @@ export interface FeatureToggles {
   * Use double quotes to escape keyword in a MySQL query
   */
   mysqlAnsiQuotes?: boolean;
-  /**
-  * Enable folder nesting
-  * @default true
-  */
-  nestedFolders?: boolean;
   /**
   * Rule backtesting API for alerting
   */
@@ -147,10 +102,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Give users the option to configure split durations for Loki queries
-  */
-  lokiQuerySplittingConfig?: boolean;
-  /**
   * Support overriding cookie preferences per user
   */
   individualCookiePreferences?: boolean;
@@ -168,11 +119,6 @@ export interface FeatureToggles {
   */
   influxdbRunQueriesInParallel?: boolean;
   /**
-  * Enables running Prometheus queries in parallel
-  * @default true
-  */
-  prometheusRunQueriesInParallel?: boolean;
-  /**
   * Changes logs responses from Loki to be compliant with the dataplane specification.
   */
   lokiLogsDataplane?: boolean;
@@ -185,18 +131,6 @@ export interface FeatureToggles {
   * Disables dataplane specific processing in server side expressions.
   */
   disableSSEDataplane?: boolean;
-  /**
-  * Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-  */
-  alertStateHistoryLokiSecondary?: boolean;
-  /**
-  * Enable a remote Loki instance as the primary source for state history reads.
-  */
-  alertStateHistoryLokiPrimary?: boolean;
-  /**
-  * Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-  */
-  alertStateHistoryLokiOnly?: boolean;
   /**
   * Writes error logs to the request logger
   * @default true
@@ -223,25 +157,9 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Adds predefined query operations to Loki query editor
-  */
-  lokiPredefinedOperations?: boolean;
-  /**
   * Enables the plugins frontend sandbox
   */
   pluginsFrontendSandbox?: boolean;
-  /**
-  * Enables monitor only in the plugin frontend sandbox (if enabled)
-  */
-  frontendSandboxMonitorOnly?: boolean;
-  /**
-  * Enables right panel for the plugins details page
-  */
-  pluginsDetailsRightPanel?: boolean;
-  /**
-  * Enables previous SQL data source dataset dropdown behavior
-  */
-  sqlDatasourceDatabaseSelection?: boolean;
   /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
@@ -254,6 +172,7 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
+  * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
@@ -266,15 +185,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Enables response streaming of TraceQL queries of the Tempo data source
-  * @default false
-  */
-  traceQLStreaming?: boolean;
-  /**
-  * Enables metrics summary queries in the Tempo data source
-  */
-  metricsSummary?: boolean;
-  /**
   * Expose some datasources as apiservers.
   */
   datasourceAPIServers?: boolean;
@@ -286,6 +196,10 @@ export interface FeatureToggles {
   * Next generation provisioning... and git
   */
   provisioning?: boolean;
+  /**
+  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+  */
+  provisioningSecretsService?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   */
@@ -308,11 +222,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Display Angular warnings in dashboards and panels
-  * @default true
-  */
-  angularDeprecationUI?: boolean;
-  /**
   * Enable AI powered features in dashboards
   * @default true
   */
@@ -330,30 +239,9 @@ export interface FeatureToggles {
   */
   sseGroupByDatasource?: boolean;
   /**
-  * Enables RBAC support for library panels
-  */
-  libraryPanelRBAC?: boolean;
-  /**
   * Enables running Loki queries in parallel
   */
   lokiRunQueriesInParallel?: boolean;
-  /**
-  * Placeholder feature flag for internal testing
-  */
-  wargamesTesting?: boolean;
-  /**
-  * Show the new alerting insights landing page
-  * @default true
-  */
-  alertingInsights?: boolean;
-  /**
-  * Allow core plugins to be loaded as external
-  */
-  externalCorePlugins?: boolean;
-  /**
-  * Sends metrics of public grafana packages usage by plugins
-  */
-  pluginsAPIMetrics?: boolean;
   /**
   * Automatic service account and token setup for plugins
   */
@@ -377,22 +265,37 @@ export interface FeatureToggles {
   */
   formatString?: boolean;
   /**
-  * Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-  * @default true
-  */
-  kubernetesPlaylists?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
+  /**
+  * Routes library panel requests from /api to the /apis endpoint
+  */
+  kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
   /**
-  * Route the folder and dashboard service requests to k8s
+  * Routes short url requests from /api to the /apis endpoint
   */
-  kubernetesClientDashboardsFolders?: boolean;
+  kubernetesShortURLs?: boolean;
+  /**
+  * Disable schema validation for dashboards/v1
+  */
+  dashboardDisableSchemaValidationV1?: boolean;
+  /**
+  * Disable schema validation for dashboards/v2
+  */
+  dashboardDisableSchemaValidationV2?: boolean;
+  /**
+  * Log schema validation errors so they can be analyzed later
+  */
+  dashboardSchemaValidationLogging?: boolean;
+  /**
+  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+  */
+  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -410,19 +313,13 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
+  * Routes explore requests to the new query service
+  */
+  queryServiceFromExplore?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
-  /**
-  * Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-  * @default true
-  */
-  recoveryThreshold?: boolean;
-  /**
-  * Enables the loki data source to request structured metadata from the Loki server
-  * @default true
-  */
-  lokiStructuredMetadata?: boolean;
   /**
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
@@ -441,13 +338,13 @@ export interface FeatureToggles {
   */
   alertmanagerRemoteSecondary?: boolean;
   /**
+  * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
+  */
+  alertingProvenanceLockWrites?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
-  /**
-  * Disable the internal Alertmanager and only use the external one defined.
-  */
-  alertmanagerRemoteOnly?: boolean;
   /**
   * Change the way annotation permissions work by scoping them to folders and dashboards.
   * @default true
@@ -485,29 +382,18 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
-  * Enables the SSO settings API and the OAuth configuration UIs in Grafana
-  * @default true
-  */
-  ssoSettingsApi?: boolean;
-  /**
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Enables time comparison option in supported panels
+  */
+  timeComparison?: boolean;
   /**
   * Enables infinite scrolling for the Logs panel in Explore and Dashboards
   * @default true
   */
   logsInfiniteScrolling?: boolean;
-  /**
-  * Enables the new Grafana Metrics Drilldown core app
-  * @default true
-  */
-  exploreMetrics?: boolean;
-  /**
-  * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-  * @default true
-  */
-  alertingSimplifiedRouting?: boolean;
   /**
   * Enable filtering menu displayed when text of a log line is selected
   * @default true
@@ -526,11 +412,6 @@ export interface FeatureToggles {
   */
   regressionTransformation?: boolean;
   /**
-  * Enables query hints for Loki
-  * @default true
-  */
-  lokiQueryHints?: boolean;
-  /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
   kubernetesFeatureToggles?: boolean;
@@ -544,15 +425,11 @@ export interface FeatureToggles {
   */
   alertingQueryOptimization?: boolean;
   /**
-  * Enables the nested folder picker without having nested folders enabled
-  */
-  newFolderPicker?: boolean;
-  /**
-  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+  * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
+  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
   * @default true
   */
   onPremToCloudMigrations?: boolean;
@@ -566,7 +443,7 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   /**
   * Enables the compressed protobuf-based alert state storage
-  * @default false
+  * @default true
   */
   alertingSaveStateCompressed?: boolean;
   /**
@@ -574,6 +451,11 @@ export interface FeatureToggles {
   * @default false
   */
   scopeApi?: boolean;
+  /**
+  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
+  * @default false
+  */
+  useScopeSingleNodeEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into prometheus queries.
   * @default true
@@ -589,9 +471,9 @@ export interface FeatureToggles {
   */
   sqlExpressions?: boolean;
   /**
-  * Changed the layout algorithm for the node graph
+  * Enables column autocomplete for SQL Expressions
   */
-  nodeGraphDotLayout?: boolean;
+  sqlExpressionsColumnAutoComplete?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -612,6 +494,10 @@ export interface FeatureToggles {
   */
   kubernetesAggregator?: boolean;
   /**
+  * Enable CAP token based authentication in grafana's embedded kube-aggregator
+  */
+  kubernetesAggregatorCapTokenAuth?: boolean;
+  /**
   * Enable new expression parser
   */
   expressionParser?: boolean;
@@ -623,11 +509,6 @@ export interface FeatureToggles {
   * Enables the use of scope filters in Grafana
   */
   scopeFilters?: boolean;
-  /**
-  * Use the new SSO Settings API to configure the SAML connector
-  * @default true
-  */
-  ssoSettingsSAML?: boolean;
   /**
   * Require that sub claims is present in oauth tokens.
   */
@@ -667,11 +548,6 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
-  * Enables deleted dashboard restore feature
-  * @default false
-  */
-  dashboardRestore?: boolean;
-  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
   alertingDisableSendAlertsExternal?: boolean;
@@ -690,6 +566,7 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   /**
   * Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+  * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
   /**
@@ -703,12 +580,9 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   /**
   * Use the new SSO Settings API to configure LDAP
+  * @default true
   */
   ssoSettingsLDAP?: boolean;
-  /**
-  * Throws an error if a datasource has an invalid UIDs
-  */
-  failWrongDSUID?: boolean;
   /**
   * Use openFGA as authorization engine.
   */
@@ -721,11 +595,6 @@ export interface FeatureToggles {
   * Enables the scopes usage in Metrics Explore
   */
   enableScopesInMetricsExplore?: boolean;
-  /**
-  * Register Alerting APIs with the K8s API server
-  * @default true
-  */
-  alertingApiServer?: boolean;
   /**
   * Round up end time for metric queries to the next minute to avoid missing data
   * @default true
@@ -751,9 +620,9 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
-  * Send dashboard and panel names to Loki when querying
+  * Allows access to the new react-data-grid based table component.
   */
-  lokiSendDashboardPanelNames?: boolean;
+  tableNextGen?: boolean;
   /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
@@ -771,17 +640,9 @@ export interface FeatureToggles {
   */
   exploreLogsLimitedTimeRange?: boolean;
   /**
-  * Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-  */
-  homeSetupGuide?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
-  /**
-  * Enable the app sidecar feature that allows rendering 2 apps at the same time
-  */
-  appSidecar?: boolean;
   /**
   * Enable the groupsync extension for managing Group Attribute Sync feature
   */
@@ -793,6 +654,7 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
+  * @default true
   */
   improvedExternalSessionHandling?: boolean;
   /**
@@ -813,11 +675,6 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchSprinkles?: boolean;
   /**
-  * Enable permission filtering on unified storage search
-  * @default true
-  */
-  unifiedStorageSearchPermissionFiltering?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -834,15 +691,6 @@ export interface FeatureToggles {
   * Enables time pickers sync
   */
   timeRangeProvider?: boolean;
-  /**
-  * Use new combobox component for Prometheus query editor
-  */
-  prometheusUsesCombobox?: boolean;
-  /**
-  * Enables the user storage API
-  * @default true
-  */
-  userStorageAPI?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -882,15 +730,6 @@ export interface FeatureToggles {
   */
   crashDetection?: boolean;
   /**
-  * Enables querying the Jaeger data source without the proxy
-  */
-  jaegerBackendMigration?: boolean;
-  /**
-  * Uses the original report or dashboard time range instead of making an absolute transformation
-  * @default true
-  */
-  reportingUseRawTimeRange?: boolean;
-  /**
   * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
   * @default true
   */
@@ -900,6 +739,31 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorEnableUserAuth?: boolean;
+  /**
+  * Enable AI-generated alert rules.
+  * @default false
+  */
+  alertingAIGenAlertRules?: boolean;
+  /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
+  * Enable AI-improve alert rules labels and annotations.
+  * @default false
+  */
+  alertingAIImproveAlertRules?: boolean;
+  /**
+  * Enable AI-generated alerting templates.
+  * @default false
+  */
+  alertingAIGenTemplates?: boolean;
+  /**
+  * Enable AI-analyze central state history.
+  * @default false
+  */
+  alertingAIAnalyzeCentralStateHistory?: boolean;
   /**
   * Enables simplified step mode in the notifications section
   * @default true
@@ -943,26 +807,17 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+  * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
-  * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
+  * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
-  teamHttpHeadersMimir?: boolean;
+  teamHttpHeadersTempo?: boolean;
   /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
-  */
-  ABTestFeatureToggleA?: boolean;
-  /**
-  * Use new combobox component for template variables
+  * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
-  /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
-  */
-  ABTestFeatureToggleB?: boolean;
   /**
   * Enables Advisor app
   */
@@ -972,10 +827,6 @@ export interface FeatureToggles {
   */
   elasticsearchImprovedParsing?: boolean;
   /**
-  * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-  */
-  exploreMetricsUseExternalAppPlugin?: boolean;
-  /**
   * Shows defined connections for a data source in the plugins detail page
   */
   datasourceConnectionsTab?: boolean;
@@ -984,33 +835,26 @@ export interface FeatureToggles {
   */
   fetchRulesUsingPost?: boolean;
   /**
-  * Enable the alerting conversion API
-  */
-  alertingConversionAPI?: boolean;
-  /**
-  * enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
-  */
-  alertingAlertmanagerExtraDedupStage?: boolean;
-  /**
-  * works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
-  */
-  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
-  /**
   * Enables the new logs panel in Explore
   */
   newLogsPanel?: boolean;
   /**
   * Enables the temporary themes for GrafanaCon
+  * @default true
   */
   grafanaconThemes?: boolean;
-  /**
-  * Load plugins from CDN synchronously
-  */
-  pluginsCDNSyncLoader?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
   alertingJiraIntegration?: boolean;
+  /**
+  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+  */
+  useScopesNavigationEndpoint?: boolean;
+  /**
+  * Enable scope search to include all levels of the scope node tree
+  */
+  scopeSearchAllLevels?: boolean;
   /**
   * Enables the alert rule version history restore feature
   * @default true
@@ -1034,10 +878,6 @@ export interface FeatureToggles {
   */
   alertRuleRestore?: boolean;
   /**
-  * Enables writing to data sources for Grafana-managed recording rules.
-  */
-  grafanaManagedRecordingRulesDatasources?: boolean;
-  /**
   * Enables running Infinity queries in parallel
   */
   infinityRunQueriesInParallel?: boolean;
@@ -1046,23 +886,231 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables additional languages
-  */
-  extraLanguages?: boolean;
-  /**
-  * Disables backdrop blur
-  */
-  noBackdropBlur?: boolean;
-  /**
-  * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+  * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
+  * @default true
   */
   alertingMigrationUI?: boolean;
   /**
+  * Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+  * @default true
+  */
+  alertingImportYAMLUI?: boolean;
+  /**
   * Enables the unified storage history pruner
+  * @default true
   */
   unifiedStorageHistoryPruner?: boolean;
+  /**
+  * Enables the logs builder mode for the Azure Monitor data source
+  * @default false
+  */
+  azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Specifies the locale so the correct format for numbers and dates can be shown
+  */
+  localeFormatPreference?: boolean;
   /**
   * Enables the unified storage grpc connection pool
   */
   unifiedStorageGrpcConnectionPool?: boolean;
+  /**
+  * Enables the extension sidebar
+  */
+  extensionSidebar?: boolean;
+  /**
+  * Enables UI functionality to permanently delete alert rules
+  * @default true
+  */
+  alertingRulePermanentlyDelete?: boolean;
+  /**
+  * Enables the UI functionality to recover and view deleted alert rules
+  * @default true
+  */
+  alertingRuleRecoverDeleted?: boolean;
+  /**
+  * use multi-tenant path for awsTempCredentials
+  */
+  multiTenantTempCredentials?: boolean;
+  /**
+  * Enables localization for plugins
+  */
+  localizationForPlugins?: boolean;
+  /**
+  * Enables unified navbars
+  * @default false
+  */
+  unifiedNavbars?: boolean;
+  /**
+  * Enables a control component for the logs panel in Explore
+  * @default true
+  */
+  logsPanelControls?: boolean;
+  /**
+  * Enables creating metrics from profiles and storing them as recording rules
+  */
+  metricsFromProfiles?: boolean;
+  /**
+  * Enables integration with Grafana Assistant in Profiles Drilldown
+  * @default true
+  */
+  grafanaAssistantInProfilesDrilldown?: boolean;
+  /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
+  /**
+  * Enables creating alerts from Tempo data source
+  */
+  tempoAlerting?: boolean;
+  /**
+  * Enables auto-updating of users installed plugins
+  */
+  pluginsAutoUpdate?: boolean;
+  /**
+  * Register MT frontend
+  */
+  multiTenantFrontend?: boolean;
+  /**
+  * Enables the alerting list view v2 preview toggle
+  */
+  alertingListViewV2PreviewToggle?: boolean;
+  /**
+  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
+  * @default false
+  */
+  alertRuleUseFiredAtForStartsAt?: boolean;
+  /**
+  * Enables the alerting bulk actions in the UI
+  * @default true
+  */
+  alertingBulkActionsInUI?: boolean;
+  /**
+  * Registers AuthZ /apis endpoint
+  */
+  kubernetesAuthzApis?: boolean;
+  /**
+  * Registers AuthZ resource permission /apis endpoints
+  */
+  kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
+  * Enables create, delete, and update mutations for resources owned by IAM identity
+  */
+  kubernetesAuthnMutation?: boolean;
+  /**
+  * Enables restore deleted dashboards feature
+  * @default false
+  */
+  restoreDashboards?: boolean;
+  /**
+  * Skip token rotation if it was already rotated less than 5 seconds ago
+  * @default true
+  */
+  skipTokenRotationIfRecent?: boolean;
+  /**
+  * Enable configuration of alert enrichments in Grafana Cloud.
+  * @default false
+  */
+  alertEnrichment?: boolean;
+  /**
+  * Enables the API to import Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables the UI to see imported Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerUI?: boolean;
+  /**
+  * Enables image sharing functionality for dashboards
+  */
+  sharingDashboardImage?: boolean;
+  /**
+  * Prefer library panel title over viz panel title.
+  * @default false
+  */
+  preferLibraryPanelTitle?: boolean;
+  /**
+  * Use fixed-width numbers globally in the UI
+  * @default false
+  */
+  tabularNumbers?: boolean;
+  /**
+  * Enables new design for the InfluxDB data source configuration page
+  * @default false
+  */
+  newInfluxDSConfigPageDesign?: boolean;
+  /**
+  * Set this to true to enable all app chrome extensions registered by plugins.
+  * @default false
+  */
+  enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
+  /**
+  * Set this to true to use the new PluginImporter functionality
+  * @default false
+  */
+  enablePluginImporter?: boolean;
+  /**
+  * Applies OTel formatting templates to displayed logs
+  */
+  otelLogsFormatting?: boolean;
+  /**
+  * Enables the notification history feature
+  * @default false
+  */
+  alertingNotificationHistory?: boolean;
+  /**
+  * Allows decoupled core plugins to load from the Grafana CDN
+  * @default false
+  */
+  pluginAssetProvider?: boolean;
+  /**
+  * Enable dual reader for unified storage search
+  */
+  unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Supports __from and __to macros that always use the dashboard level time range
+  */
+  dashboardLevelTimeMacros?: boolean;
+  /**
+  * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
+  * @default false
+  */
+  alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
+  /**
+  * Enable favorite datasources
+  */
+  favoriteDatasources?: boolean;
+  /**
+  * New Log Context component
+  */
+  newLogContext?: boolean;
+  /**
+  * Enables new design for the Clickhouse data source configuration page
+  * @default false
+  */
+  newClickhouseConfigPageDesign?: boolean;
+  /**
+  * Enable experimental search-after-write guarantees to unified-storage search endpoints
+  * @default false
+  */
+  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
 }

@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"bytes"
 	"fmt"
-	"mime"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // LabelKeyGetHistory is used to select object history for an given resource
@@ -25,6 +25,13 @@ const LabelKeyGetTrash = "grafana.app/get-trash"
 
 // AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
 const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
+
+// AnnoKeyGrantPermissions allows users to explicitly grant themself permissions when creating
+// resoures in the "root" folder.  This annotation is not saved and invalud for update.
+const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
+
+// AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
+const AnnoGrantPermissionsDefault = "default"
 
 // DeletedGeneration is set on Resources that have been (soft) deleted
 const DeletedGeneration = int64(-999)
@@ -58,11 +65,19 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
+// Only used in modes 0-2 (legacy db) for returning the folder fullpath
+
+const LabelGetFullpath = "grafana.app/fullpath"
+const AnnoKeyFullpath = "grafana.app/fullpath"
+const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
 // Accessor functions for k8s objects
+//
+//go:generate mockery --name GrafanaMetaAccessor --structname MockGrafanaMetaAccessor --inpackage --filename meta_mock.go --with-expecter
 type GrafanaMetaAccessor interface {
 	metav1.Object
 
@@ -97,6 +112,11 @@ type GrafanaMetaAccessor interface {
 	// Deprecated: This will be removed in Grafana 13
 	SetDeprecatedInternalID(id int64)
 
+	GetFullpath() string
+	SetFullpath(path string)
+	GetFullpathUIDs() string
+	SetFullpathUIDs(uids string)
+
 	GetSpec() (any, error)
 	SetSpec(any) error
 
@@ -129,6 +149,13 @@ type GrafanaMetaAccessor interface {
 
 	// SetSourceProperties sets the source properties of the resource.
 	SetSourceProperties(SourceProperties)
+
+	// GetSecureValues reads the "secure" property on a resource
+	GetSecureValues() (common.InlineSecureValues, error)
+
+	// SetSourceProperties sets the source properties of the resource.
+	// For write commands, this may include inline secrets; read will only have references
+	SetSecureValues(common.InlineSecureValues) error
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -195,14 +222,10 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 
 func (m *grafanaMetaAccessor) GetAnnotation(key string) string {
 	anno := m.obj.GetAnnotations()
-	if anno != nil {
-		return anno[key]
+	if anno == nil {
+		return ""
 	}
-	return ""
-}
-
-func (m *grafanaMetaAccessor) get(key string) string {
-	return m.obj.GetAnnotations()[key]
+	return anno[key]
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
@@ -236,7 +259,7 @@ func (m *grafanaMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 }
 
 func (m *grafanaMetaAccessor) GetCreatedBy() string {
-	return m.get(AnnoKeyCreatedBy)
+	return m.GetAnnotation(AnnoKeyCreatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
@@ -244,7 +267,7 @@ func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedBy() string {
-	return m.get(AnnoKeyUpdatedBy)
+	return m.GetAnnotation(AnnoKeyUpdatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
@@ -252,7 +275,7 @@ func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
-	return ParseBlobInfo(m.get(AnnoKeyBlob))
+	return ParseBlobInfo(m.GetAnnotation(AnnoKeyBlob))
 }
 
 func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
@@ -264,7 +287,7 @@ func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {
-	return m.get(AnnoKeyFolder)
+	return m.GetAnnotation(AnnoKeyFolder)
 }
 
 func (m *grafanaMetaAccessor) SetFolder(uid string) {
@@ -272,7 +295,7 @@ func (m *grafanaMetaAccessor) SetFolder(uid string) {
 }
 
 func (m *grafanaMetaAccessor) GetMessage() string {
-	return m.get(AnnoKeyMessage)
+	return m.GetAnnotation(AnnoKeyMessage)
 }
 
 func (m *grafanaMetaAccessor) SetMessage(uid string) {
@@ -315,6 +338,22 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 
 	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
 	m.obj.SetLabels(labels)
+}
+
+func (m *grafanaMetaAccessor) GetFullpath() string {
+	return m.GetAnnotation(AnnoKeyFullpath)
+}
+
+func (m *grafanaMetaAccessor) SetFullpath(path string) {
+	m.SetAnnotation(AnnoKeyFullpath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
+	return m.GetAnnotation(AnnoKeyFullpathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
+	m.SetAnnotation(AnnoKeyFullpathUIDs, uids)
 }
 
 // GetAnnotations implements GrafanaMetaAccessor.
@@ -793,81 +832,154 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 	m.obj.SetAnnotations(annot)
 }
 
-type BlobInfo struct {
-	UID      string `json:"uid"`
-	Size     int64  `json:"size,omitempty"`
-	Hash     string `json:"hash,omitempty"`
-	MimeType string `json:"mime,omitempty"`
-	Charset  string `json:"charset,omitempty"` // content type = mime+charset
+// GetSecureValues implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading secure values")
+		}
+	}()
+
+	var property any // may be map or struct
+
+	f := m.r.FieldByName("Secure")
+	if f.IsValid() {
+		property = f.Interface()
+	} else {
+		// Unstructured
+		u, ok := m.raw.(*unstructured.Unstructured)
+		if ok {
+			property = u.Object["secure"]
+		}
+	}
+
+	// Not found (and no error)
+	if property == nil {
+		return nil, nil
+	}
+
+	// Try directly casting the property
+	vals, ok := property.(common.InlineSecureValues)
+	if ok {
+		return vals, nil
+	}
+
+	// Generic map
+	u, ok := property.(map[string]any)
+	if ok {
+		vals = make(common.InlineSecureValues, len(u))
+		for k, v := range u {
+			inline, ok := v.(common.InlineSecureValue)
+			if !ok {
+				sv, ok := v.(map[string]any)
+				if !ok {
+					return nil, fmt.Errorf("unsupported nested secure value: %t", v)
+				}
+				inline.Name, _, _ = unstructured.NestedString(sv, "name")
+				inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
+				create, _, _ := unstructured.NestedString(sv, "create")
+				if create != "" {
+					inline.Create = common.NewSecretValue(create)
+				}
+			}
+			vals[k] = inline
+		}
+		return vals, nil
+	}
+
+	if f.Kind() == reflect.Struct {
+		num := f.NumField()
+		vals = make(common.InlineSecureValues, num)
+		for i := range num {
+			val := f.Field(i)
+			if val.IsValid() && val.CanInterface() {
+				property = val.Interface()
+				inline, ok := property.(common.InlineSecureValue)
+				if !ok {
+					return nil, fmt.Errorf("secure property must be InlineSecureValue (found: %T)", property)
+				}
+
+				if inline.IsZero() {
+					continue // nothing
+				}
+
+				vals[getJSONFieldName(f, i)] = inline
+				continue
+			}
+			return nil, fmt.Errorf("value not an interface")
+		}
+		return vals, nil
+	}
+
+	return nil, fmt.Errorf("secure value saved in unsupported type: %T", property)
 }
 
-// Content type is mime + charset
-func (b *BlobInfo) SetContentType(v string) {
-	var params map[string]string
-	var err error
+// SetSecureValues implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("ERR: %v", r)
+			err = fmt.Errorf("error writing secure values")
+		}
+	}()
 
-	b.Charset = ""
-	b.MimeType, params, err = mime.ParseMediaType(v)
-	if err != nil {
+	f := m.r.FieldByName("Secure")
+	if f.IsValid() && f.CanSet() {
+		if f.Kind() == reflect.Struct {
+			keys := make(map[string]bool, len(vals))
+			for k := range vals {
+				keys[k] = true
+			}
+			for i := 0; i < f.NumField(); i++ {
+				val := f.Field(i)
+				if val.IsValid() && val.CanInterface() && val.CanSet() {
+					k := getJSONFieldName(f, i)
+					sv := vals[k]
+					val.Set(reflect.ValueOf(sv))
+					delete(keys, k)
+				} else {
+					return fmt.Errorf("invalid secure value: %v", val)
+				}
+			}
+			if len(keys) > 0 {
+				return fmt.Errorf("invalid secure value key: %v", keys)
+			}
+			return
+		}
+
+		// It should be a generic map
+		f.Set(reflect.ValueOf(vals))
 		return
 	}
-	b.Charset = params["charset"]
+
+	// Unstructured object
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["secure"] = vals
+		return
+	}
+
+	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
 }
 
-// Content type is mime + charset
-func (b *BlobInfo) ContentType() string {
-	sb := bytes.NewBufferString(b.MimeType)
-	if b.Charset != "" {
-		sb.WriteString("; charset=")
-		sb.WriteString(b.Charset)
+func getJSONFieldName(f reflect.Value, idx int) string {
+	field := f.Type().Field(idx)
+	fname := field.Tag.Get("json")
+	if fname == "" {
+		return field.Name
 	}
-	return sb.String()
+	fname, _ = strings.CutSuffix(fname, ",omitempty")
+	return fname
 }
 
-func (b *BlobInfo) String() string {
-	sb := bytes.NewBufferString(b.UID)
-	if b.Size > 0 {
-		sb.WriteString(fmt.Sprintf("; size=%d", b.Size))
+func ToObjectReference(obj GrafanaMetaAccessor) common.ObjectReference {
+	gvk := obj.GetGroupVersionKind()
+	return common.ObjectReference{
+		APIGroup:   gvk.Group,
+		APIVersion: gvk.Version,
+		Kind:       gvk.Kind,
+		Namespace:  obj.GetNamespace(),
+		Name:       obj.GetName(),
+		UID:        obj.GetUID(),
 	}
-	if b.Hash != "" {
-		sb.WriteString("; hash=")
-		sb.WriteString(b.Hash)
-	}
-	if b.MimeType != "" {
-		sb.WriteString("; mime=")
-		sb.WriteString(b.MimeType)
-	}
-	if b.Charset != "" {
-		sb.WriteString("; charset=")
-		sb.WriteString(b.Charset)
-	}
-	return sb.String()
-}
-
-func ParseBlobInfo(v string) *BlobInfo {
-	if v == "" {
-		return nil
-	}
-	info := &BlobInfo{}
-	for i, part := range strings.Split(v, ";") {
-		if i == 0 {
-			info.UID = part
-			continue
-		}
-		kv := strings.Split(strings.TrimSpace(part), "=")
-		if len(kv) == 2 {
-			val := kv[1]
-			switch kv[0] {
-			case "size":
-				info.Size, _ = strconv.ParseInt(val, 10, 64)
-			case "hash":
-				info.Hash = val
-			case "mime":
-				info.MimeType = val
-			case "charset":
-				info.Charset = val
-			}
-		}
-	}
-	return info
 }

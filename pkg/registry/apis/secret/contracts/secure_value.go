@@ -4,20 +4,49 @@ import (
 	"context"
 	"errors"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"k8s.io/client-go/dynamic"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
+// The maximum size of a secure value in bytes when written as raw input.
+const SecureValueRawInputMaxSizeBytes = 24576 // 24 KiB
+
+type DecryptSecureValue struct {
+	Keeper     *string
+	Ref        string
+	ExternalID string
+	Decrypters []string
+}
+
 var (
-	ErrSecureValueNotFound = errors.New("secure value not found")
+	ErrSecureValueNotFound      = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
 )
+
+type ReadOpts struct {
+	ForUpdate bool
+}
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
 type SecureValueMetadataStorage interface {
-	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error)
-	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
-	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
+	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.SecureValue, error)
+	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.SecureValue, error)
+	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
+	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
+	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
+}
+
+type SecureValueService interface {
+	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+	List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error)
+	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
+	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+}
+
+type SecureValueClient interface {
+	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
 }

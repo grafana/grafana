@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -31,6 +32,8 @@ import (
 	utilflowcontrol "k8s.io/apiserver/pkg/util/flowcontrol"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"k8s.io/utils/ptr"
+
+	"github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
 
 func RunTestWatch(ctx context.Context, t *testing.T, store storage.Interface) {
@@ -1452,7 +1455,20 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 			}
 
 			if scenario.useCurrentRV {
-				currentStorageRV, err := storage.GetCurrentResourceVersionFromStorage(ctx, store, func() runtime.Object { return &example.PodList{} }, KeyFunc("", ""), "")
+				// Get the most recent RV for this namespace
+				out := &example.PodList{}
+				if err := store.GetList(ctx, KeyFunc(ns, ""), storage.ListOptions{
+					Predicate: storage.SelectionPredicate{
+						GetAttrs: generic.GetAttrs,
+						Label:    labels.Everything(),
+						Field:    fields.Everything(),
+						Limit:    1,
+					},
+				}, out); err != nil {
+					t.Fatalf("Unable to get list: %v", err)
+				}
+
+				currentStorageRV, err := strconv.ParseInt(out.ResourceVersion, 10, 64)
 				require.NoError(t, err)
 				scenario.resourceVersion = fmt.Sprintf("%d", currentStorageRV)
 			}
@@ -1577,8 +1593,8 @@ func namespacedScopedNodeNameAttrFunc(obj runtime.Object) (labels.Set, fields.Se
 	pod := obj.(*example.Pod)
 	return nil, fields.Set{
 		"spec.nodeName":      pod.Spec.NodeName,
-		"metadata.name":      pod.ObjectMeta.Name,
-		"metadata.namespace": pod.ObjectMeta.Namespace,
+		"metadata.name":      pod.Name,
+		"metadata.namespace": pod.Namespace,
 	}, nil
 }
 
@@ -1586,7 +1602,7 @@ func clusterScopedNodeNameAttrFunc(obj runtime.Object) (labels.Set, fields.Set, 
 	pod := obj.(*example.Pod)
 	return nil, fields.Set{
 		"spec.nodeName": pod.Spec.NodeName,
-		"metadata.name": pod.ObjectMeta.Name,
+		"metadata.name": pod.Name,
 	}, nil
 }
 

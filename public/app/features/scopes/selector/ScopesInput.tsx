@@ -1,74 +1,71 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { NodesMap, SelectedScope } from './types';
+import { getPathOfNode } from './scopesTreeUtils';
+import { NodesMap, ScopesMap, SelectedScope } from './types';
+import { useScopeNode } from './useScopeNode';
 
 export interface ScopesInputProps {
   nodes: NodesMap;
-  scopes: SelectedScope[];
+  scopes: ScopesMap;
+  appliedScopes: SelectedScope[];
   disabled: boolean;
   loading: boolean;
   onInputClick: () => void;
   onRemoveAllClick: () => void;
 }
 
-export function ScopesInput({ nodes, scopes, disabled, loading, onInputClick, onRemoveAllClick }: ScopesInputProps) {
-  const styles = useStyles2(getStyles);
-
+/**
+ * Shows the applied scopes in an input like element which opens the scope selector when clicked.
+ */
+export function ScopesInput({
+  nodes,
+  scopes,
+  appliedScopes,
+  disabled,
+  loading,
+  onInputClick,
+  onRemoveAllClick,
+}: ScopesInputProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
+
+  const parentNodeId = appliedScopes[0]?.parentNodeId;
+  const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
+  const parentNodeTitle = parentNode?.spec.title;
 
   useEffect(() => {
     setTooltipVisible(false);
-  }, [scopes]);
+  }, [appliedScopes]);
 
-  const scopesPaths = useMemo(() => {
-    const pathsScopesMap = scopes.reduce<Record<string, string>>((acc, { scope, path }) => {
-      let currentLevel = nodes;
+  const tooltipContent =
+    appliedScopes.length > 0 ? <ScopesTooltip nodes={nodes} scopes={scopes} appliedScopes={appliedScopes} /> : <></>;
 
-      const titles = path.reduce<string[]>((acc, nodeName) => {
-        const cl = currentLevel?.[nodeName];
+  const scopesTitles = useMemo(
+    () =>
+      appliedScopes
+        .map(
+          (s) =>
+            // If we are still loading the scope data just show the id
+            scopes[s.scopeId]?.spec.title || s.scopeId
+        )
+        .join(' + '),
+    [appliedScopes, scopes]
+  );
 
-        if (!cl) {
-          return acc;
-        }
-
-        const { title, nodes } = cl;
-
-        currentLevel = nodes;
-
-        acc.push(title);
-
-        return acc;
-      }, []);
-
-      if (titles[0] === '') {
-        titles.splice(0, 1);
-      }
-
-      const scopeName = titles.length > 0 ? titles.pop()! : scope.spec.title;
-      const titlesString = titles.length > 0 ? titles.join(' > ') : '';
-
-      acc[titlesString] = acc[titlesString] ? `${acc[titlesString]}, ${scopeName}` : scopeName;
-
-      return acc;
-    }, {});
-
-    return (
-      <>
-        {Object.entries(pathsScopesMap).map(([path, scopesTitles]) => (
-          <p key={path} className={styles.scopePath}>
-            {path ? `${path} > ${scopesTitles}` : scopesTitles}
-          </p>
-        ))}
-      </>
-    );
-  }, [nodes, scopes, styles]);
-
-  const scopesTitles = useMemo(() => scopes.map(({ scope }) => scope.spec.title).join(', '), [scopes]);
+  const parentNodePrefix = useMemo(
+    () =>
+      parentNodeLoading ? (
+        <Skeleton width={30} height={14} />
+      ) : parentNodeTitle ? (
+        <span>{parentNodeTitle}:</span>
+      ) : undefined,
+    [parentNodeLoading, parentNodeTitle]
+  );
 
   const input = useMemo(
     () => (
@@ -80,11 +77,13 @@ export function ScopesInput({ nodes, scopes, disabled, loading, onInputClick, on
         value={scopesTitles}
         aria-label={t('scopes.selector.input.placeholder', 'Select scopes...')}
         data-testid="scopes-selector-input"
+        prefix={parentNodePrefix}
         suffix={
-          scopes.length > 0 && !disabled ? (
+          appliedScopes.length > 0 && !disabled ? (
             <IconButton
               aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
               name="times"
+              data-testid="scopes-selector-input-clear"
               onClick={() => onRemoveAllClick()}
             />
           ) : undefined
@@ -98,13 +97,56 @@ export function ScopesInput({ nodes, scopes, disabled, loading, onInputClick, on
         }}
       />
     ),
-    [disabled, loading, onInputClick, onRemoveAllClick, scopes, scopesTitles]
+    [disabled, loading, onInputClick, onRemoveAllClick, appliedScopes, scopesTitles, parentNodePrefix]
   );
 
   return (
-    <Tooltip content={scopesPaths} show={scopes.length === 0 ? false : tooltipVisible}>
+    <Tooltip content={tooltipContent} show={appliedScopes.length === 0 ? false : tooltipVisible}>
       {input}
     </Tooltip>
+  );
+}
+
+const getScopesPath = (appliedScopes: SelectedScope[], nodes: NodesMap) => {
+  let nicePath: string[] | undefined;
+
+  if (appliedScopes.length > 0 && appliedScopes[0].scopeNodeId) {
+    let path = getPathOfNode(appliedScopes[0].scopeNodeId, nodes);
+    // Get reed of empty root section and the actual scope node
+    path = path.slice(1, -1);
+
+    // We may not have all the nodes in path loaded
+    nicePath = path.map((p) => nodes[p]?.spec.title).filter((p) => p);
+  }
+
+  return nicePath;
+};
+
+export interface ScopesTooltipProps {
+  nodes: NodesMap;
+  scopes: ScopesMap;
+  appliedScopes: SelectedScope[];
+}
+
+function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
+  const styles = useStyles2(getStyles);
+
+  const nicePath = getScopesPath(appliedScopes, nodes);
+
+  const scopeNames = appliedScopes.map((s) => {
+    if (s.scopeNodeId) {
+      return nodes[s.scopeNodeId]?.spec.title || s.scopeNodeId;
+    } else {
+      return scopes[s.scopeId]?.spec.title || s.scopeId;
+    }
+  });
+
+  return (
+    <>
+      <p className={styles.scopePath}>
+        {(nicePath && nicePath.length > 0 ? nicePath.join(' > ') + ' > ' : '') + scopeNames.join(', ')}
+      </p>
+    </>
   );
 }
 
