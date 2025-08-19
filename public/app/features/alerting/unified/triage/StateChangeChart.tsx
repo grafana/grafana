@@ -12,7 +12,6 @@ interface StateChartProps {
 }
 
 const { colors } = config.theme2;
-const timelineHeight = 15;
 
 type state = 'firing' | 'pending' | 'normal';
 
@@ -48,6 +47,8 @@ interface StateRectangle {
   state: keyof typeof STATE_COLORS;
   color: string;
 }
+
+const TIMELINE_HEIGHT = 15;
 
 export function StateChangeChart({ domain }: StateChartProps) {
   const [ref, { width }] = useMeasure<HTMLDivElement>();
@@ -89,14 +90,11 @@ export function StateChangeChart({ domain }: StateChartProps) {
 
   return (
     <div ref={ref} style={{ width: '100%', overflow: 'hidden' }}>
-      {/* State Timeline */}
-      <div style={{ position: 'relative', height: timelineHeight }}>
-        <svg width="100%" height={timelineHeight} viewBox={`0 0 ${width} ${timelineHeight}`} preserveAspectRatio="none">
-          {stateRectangles.map((rect, index) => (
-            <rect key={index} x={rect.x} width={rect.width} height={timelineHeight} fill={rect.color} />
-          ))}
-        </svg>
-      </div>
+      <svg width="100%" height={TIMELINE_HEIGHT} viewBox={`0 0 ${width} ${TIMELINE_HEIGHT}`} preserveAspectRatio="none">
+        {stateRectangles.map((rect, index) => (
+          <rect key={index} x={rect.x} width={rect.width} height={TIMELINE_HEIGHT} fill={rect.color} />
+        ))}
+      </svg>
     </div>
   );
 }

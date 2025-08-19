@@ -96,10 +96,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       borderBottom: `1px solid ${theme.colors.border.medium}`,
     }),
     leftColumn: css({
-      background: `rgba(0, 0, 255, 0.1)`,
+      // background: `rgba(0, 0, 255, 0.1)`,
     }),
     rightColumn: css({
-      background: `rgba(255, 0, 0, 0.1)`,
+      // background: `rgba(255, 0, 0, 0.1)`,
     }),
     columnContent: css({
       padding: 5,
