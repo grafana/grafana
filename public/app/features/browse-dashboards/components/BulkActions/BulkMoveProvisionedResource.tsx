@@ -15,7 +15,6 @@ import { generateTimestamp } from 'app/features/dashboard-scene/saving/provision
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { useDispatch } from 'app/types/store';
 
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
@@ -43,7 +42,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
-  const dispatch = useDispatch();
 
   // Get target folder data
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
