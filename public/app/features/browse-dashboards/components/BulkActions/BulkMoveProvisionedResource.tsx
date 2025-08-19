@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -17,7 +17,6 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
-import { refreshParents } from '../../state/actions';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { useSelectionRepoValidation } from '../BrowseActions/useSelectionRepoValidation';
 import { collectSelectedItems } from '../utils';
@@ -45,15 +44,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
   const dispatch = useDispatch();
-
-  const onJobSuccess = useCallback(() => {
-    const selectedUIDs = [
-      ...Object.keys(selectedItems.folder || {}).filter((id) => selectedItems.folder[id]),
-      ...Object.keys(selectedItems.dashboard || {}).filter((id) => selectedItems.dashboard[id]),
-    ];
-    // refresh necessary parents
-    dispatch(refreshParents(selectedUIDs));
-  }, [dispatch, selectedItems]);
 
   // Get target folder data
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
@@ -118,7 +108,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           </Box>
 
           {hasSubmitted && job ? (
-            <JobStatus watch={job} jobType="move" onSuccess={onJobSuccess} />
+            <JobStatus watch={job} jobType="move" />
           ) : (
             <>
               {/* Target folder selection */}

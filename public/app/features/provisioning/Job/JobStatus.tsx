@@ -11,10 +11,9 @@ export interface JobStatusProps {
   watch: Job;
   jobType: 'sync' | 'delete' | 'move';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
-  onSuccess?: () => void;
 }
 
-export function JobStatus({ jobType, watch, onStatusChange, onSuccess }: JobStatusProps) {
+export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -58,7 +57,6 @@ export function JobStatus({ jobType, watch, onStatusChange, onSuccess }: JobStat
         repositoryName={repoLabel}
         onStatusChange={onStatusChange}
         jobType={jobType}
-        onSuccess={onSuccess}
       />
     );
   }
