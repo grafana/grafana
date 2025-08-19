@@ -32,9 +32,9 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder    = (*DataSourceAPIBuilder)(nil)
-	_ builder.APIGroupMutation   = (*DataSourceAPIBuilder)(nil)
-	_ builder.APIGroupValidation = (*DataSourceAPIBuilder)(nil)
+	_ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+	// _ builder.APIGroupMutation   = (*DataSourceAPIBuilder)(nil)
+	// _ builder.APIGroupValidation = (*DataSourceAPIBuilder)(nil)
 )
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
