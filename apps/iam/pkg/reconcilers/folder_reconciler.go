@@ -6,15 +6,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
-	"github.com/grafana/grafana-app-sdk/resource"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"k8s.io/client-go/rest"
 )
 
 // FolderStore interface for retrieving folder information
@@ -41,12 +38,6 @@ type FolderReconciler struct {
 }
 
 func NewFolderReconciler(cfg app.Config) (operator.Reconciler, error) {
-	// Create patch client
-	patchClient, err := getPatchClient(cfg.KubeConfig, foldersKind.FolderKind())
-	if err != nil {
-		return nil, fmt.Errorf("unable to create patch client for FolderReconciler: %w", err)
-	}
-
 	// Extract Zanzana address from config
 	appCfg, ok := cfg.SpecificConfig.(AppConfig)
 	if !ok {
@@ -63,27 +54,16 @@ func NewFolderReconciler(cfg app.Config) (operator.Reconciler, error) {
 	folderStore := NewAPIFolderStore(&cfg.KubeConfig)
 	permissionStore := NewZanzanaPermissionStore(zanzanaClient)
 
-	// Create the reconciler
-	reconciler, err := operator.NewOpinionatedReconciler(patchClient, "folder-iam-finalizer")
-	if err != nil {
-		return nil, err
-	}
-
 	folderReconciler := &FolderReconciler{
 		permissionStore: permissionStore,
 		folderStore:     folderStore,
 	}
 
-	reconciler.Reconciler = &operator.TypedReconciler[*foldersKind.Folder]{
+	reconciler := &operator.TypedReconciler[*foldersKind.Folder]{
 		ReconcileFunc: folderReconciler.reconcile,
 	}
 
 	return reconciler, nil
-}
-
-func getPatchClient(restConfig rest.Config, kind resource.Kind) (operator.PatchClient, error) {
-	clientGenerator := k8s.NewClientRegistry(restConfig, k8s.ClientConfig{})
-	return clientGenerator.ClientFor(kind)
 }
 
 func getZanzanaClient(addr string) (zanzana.Client, error) {
@@ -116,7 +96,7 @@ func (r *FolderReconciler) reconcile(ctx context.Context, req operator.TypedReco
 
 	err := validateFolder(req.Object)
 	if err != nil {
-		return errorWithRetryDefault(ctx, err, "Invalid folder")
+		return operator.ReconcileResult{}, err
 	}
 
 	switch req.Action {
@@ -139,12 +119,12 @@ func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *folde
 
 	parentUID, err := r.folderStore.GetFolderParent(ctx, namespace, folderUID)
 	if err != nil {
-		return errorWithRetryDefault(ctx, err, "Error getting parent UID from store")
+		return operator.ReconcileResult{}, err
 	}
 
 	parents, err := r.permissionStore.GetFolderParents(ctx, namespace, folderUID)
 	if err != nil {
-		return errorWithRetryDefault(ctx, err, "Error getting parents from permission store")
+		return operator.ReconcileResult{}, err
 	}
 
 	if (len(parents) == 0 && parentUID == "") || (len(parents) == 1 && parents[0] == parentUID) {
@@ -155,7 +135,7 @@ func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *folde
 
 	err = r.permissionStore.SetFolderParent(ctx, namespace, folderUID, parentUID)
 	if err != nil {
-		return errorWithRetryDefault(ctx, err, "Error setting parent in permission store")
+		return operator.ReconcileResult{}, err
 	}
 
 	logger.Info("Folder parent set in permission store", "folder", folderUID, "parent", parentUID, "namespace", namespace)
@@ -171,7 +151,7 @@ func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *folde
 
 	err := r.permissionStore.DeleteFolderParents(ctx, namespace, folderUID)
 	if err != nil {
-		return errorWithRetryDefault(ctx, err, "Error deleting folder from permission store")
+		return operator.ReconcileResult{}, err
 	}
 
 	logger.Info("Folder deleted from permission store", "folder", folderUID, "namespace", namespace)
@@ -190,16 +170,4 @@ func validateFolder(folder *foldersKind.Folder) error {
 		return fmt.Errorf("folder namespace is empty")
 	}
 	return nil
-}
-
-const requestRetryTimeout = 60 * time.Second
-
-func errorWithRetry(ctx context.Context, err error, message string, requeueAfter time.Duration) (operator.ReconcileResult, error) {
-	logger := logging.FromContext(ctx)
-	logger.Error(message, "error", err)
-	return operator.ReconcileResult{RequeueAfter: &requeueAfter}, err
-}
-
-func errorWithRetryDefault(ctx context.Context, err error, message string) (operator.ReconcileResult, error) {
-	return errorWithRetry(ctx, err, message, requestRetryTimeout)
 }
