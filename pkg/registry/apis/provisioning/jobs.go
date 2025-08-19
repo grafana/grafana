@@ -50,7 +50,6 @@ func (c *jobsConnector) Connect(
 	responder rest.Responder,
 ) (http.Handler, error) {
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx = r.Context()
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if r.Method == http.MethodGet {
