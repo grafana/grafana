@@ -509,7 +509,7 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		assert.Empty(collect, errType, "repository %s has health error: %s", repo.Name, errType)
 		msgs := mustNestedStringSlice(repoStatus.Object, "status", "health", "message")
 		assert.Empty(collect, msgs, "repository %s has health messages: %v", repo.Name, msgs)
-		status, found := mustNestedBool(repoStatus.Object, "status", "state", "healthy")
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
 		assert.True(collect, found, "repository %s does not have health status", repo.Name)
 		assert.True(collect, status, "repository %s is not healthy yet", repo.Name)
 	}, time.Second*10, time.Millisecond*50, "repository %s should become healthy", repo.Name)

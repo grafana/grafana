@@ -58,7 +58,7 @@ type RepositoryController struct {
 
 	jobs          jobs.Queue
 	finalizer     *finalizer
-	statusPatcher *RepositoryStatusPatcher
+	statusPatcher StatusPatcher
 
 	// Converts config to instance
 	repoGetter    RepoGetter
@@ -82,9 +82,9 @@ func NewRepositoryController(
 	tester RepositoryTester,
 	jobs jobs.Queue,
 	dualwrite dualwrite.Service,
+	healthChecker *HealthChecker,
+	statusPatcher StatusPatcher,
 ) (*RepositoryController, error) {
-	statusPatcher := NewRepositoryStatusPatcher(provisioningClient)
-	healthChecker := NewHealthChecker(tester, statusPatcher)
 	rc := &RepositoryController{
 		client:         provisioningClient,
 		resourceLister: resourceLister,

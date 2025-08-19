@@ -113,6 +113,7 @@ type APIBuilder struct {
 	access            authlib.AccessChecker
 	mutators          []controller.Mutator
 	statusPatcher     *controller.RepositoryStatusPatcher
+	healthChecker     *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -285,7 +286,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
 				})
-
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
 				}
@@ -473,7 +473,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{}, b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{}, b.healthChecker)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -683,6 +683,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 
 			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
+			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
+
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
@@ -773,6 +775,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				&repository.Tester{},
 				b.jobs,
 				b.storageStatus,
+				b.healthChecker,
+				b.statusPatcher,
 			)
 			if err != nil {
 				return err

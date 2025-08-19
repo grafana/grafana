@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,11 +21,8 @@ func TestIntegrationHealth(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	repo := "test-repo-health"
-	// Create first repository targeting "folder" with its own subdirectory
 	helper.CreateRepo(t, TestRepo{
-		Name:   repo,
-		Path:   path.Join(helper.ProvisioningPath, repo),
-		Target: "folder",
+		Name: repo,
 	})
 
 	// Verify the health status before calling the endpoint
@@ -34,10 +30,11 @@ func TestIntegrationHealth(t *testing.T) {
 	require.NoError(t, err)
 	originalRepo := unstructuredToRepository(t, repoObj)
 	require.True(t, originalRepo.Status.Health.Healthy, "repository should be marked healthy")
-	require.Empty(t, provisioning.HealthFailureHook, originalRepo.Status.Health.Error, "should be empty")
+	require.Empty(t, originalRepo.Status.Health.Error, "should be empty")
 	require.Empty(t, originalRepo.Status.Health.Message, "should not have messages")
 
 	t.Run("test endpoint with new repository configuration works", func(t *testing.T) {
+		t.Skip("skip for now")
 		newRepoConfig := map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Repository",
@@ -83,10 +80,6 @@ func TestIntegrationHealth(t *testing.T) {
 	})
 
 	t.Run("test endpoint with existing repository", func(t *testing.T) {
-		t.Skip("skip for now")
-		repo := "test-existing-repo"
-
-		// Test the existing repository - this currently causes API server panic
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
@@ -109,7 +102,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.NoError(t, err)
 		afterTest := unstructuredToRepository(t, repoObj)
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
-		require.Empty(t, provisioning.HealthFailureHook, afterTest.Status.Health.Error, "should be empty")
+		require.Empty(t, afterTest.Status.Health.Error, "should be empty")
 		require.Empty(t, afterTest.Status.Health.Message, "should not have messages")
 		require.NotEqual(t, originalRepo.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp")
 	})

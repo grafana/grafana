@@ -25,16 +25,13 @@ type testConnector struct {
 	getter        RepoGetter
 	tester        controller.RepositoryTester
 	healthChecker *controller.HealthChecker
-	statusPatcher StatusPatcherProvider
 }
 
-func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, statusPatcher StatusPatcherProvider) *testConnector {
-	statusPatcherInstance := statusPatcher.GetStatusPatcher()
+func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, healthChecker *controller.HealthChecker) *testConnector {
 	return &testConnector{
 		getter:        getter,
 		tester:        tester,
-		healthChecker: controller.NewHealthChecker(tester, statusPatcherInstance),
-		statusPatcher: statusPatcher,
+		healthChecker: healthChecker,
 	}
 }
 

@@ -108,8 +108,11 @@ func (hc *HealthChecker) hasHealthStatusChanged(old, new provisioning.HealthStat
 		return true
 	}
 
-	// Check if messages are different
 	if len(old.Message) != len(new.Message) {
+		return true
+	}
+
+	if old.Checked != new.Checked {
 		return true
 	}
 
