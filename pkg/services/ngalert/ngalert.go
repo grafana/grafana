@@ -220,6 +220,7 @@ func (ng *AlertNG) init() error {
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
 		}
+		store := notifier.NewFileStore(cfg.OrgID, ng.KVStore)
 
 		// This function will be used by the MOA to create new Alertmanagers.
 		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
@@ -227,13 +228,12 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-
-			override = remote.NewRemotePrimaryFactory(cfg, notifier.NewFileStore(cfg.OrgID, ng.KVStore), crypto, autogenFn, m, ng.tracer)
+			override = remote.NewRemotePrimaryFactory(cfg, store, crypto, autogenFn, m, ng.tracer)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
 			override = remote.NewRemoteSecondaryFactory(cfg,
-				notifier.NewFileStore(cfg.OrgID, ng.KVStore),
+				store,
 				ng.store,
 				ng.store.Cfg.RemoteAlertmanager.SyncInterval,
 				crypto,
