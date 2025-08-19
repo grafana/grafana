@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type URLPrefs struct {
@@ -52,6 +53,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	userID, _ := identity.UserIdentifier(c.GetID())
+
+	ctx := c.Req.Context()
+	flag := "nonExistingFlag"
+	nonExistingFlag, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, flag, false, openfeature.TransactionContext(ctx))
+	hs.log.Info("OpenFeature testing", "flag", flag, "evaluation details", nonExistingFlag, "error", err)
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.GetOrgID(), Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)

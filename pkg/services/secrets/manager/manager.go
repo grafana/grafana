@@ -84,7 +84,6 @@ func ProvideSecretsService(
 	}
 
 	enabled := !features.IsEnabledGlobally(featuremgmt.FlagDisableEnvelopeEncryption)
-
 	if enabled {
 		err := s.InitProviders()
 		if err != nil {
@@ -165,12 +164,15 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
 	defer span.End()
 
+	c := openfeature.TransactionContext(ctx)
+	ofRes, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, featuremgmt.FlagDisableEnvelopeEncryption, true, c)
+	s.log.Info("OpenFeature testing", "flag", featuremgmt.FlagDisableEnvelopeEncryption, "evaluation details", ofRes, "error", err)
+
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
 	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, s.cfg.SecretKey)
 	}
 
-	var err error
 	defer func() {
 		opsCounter.With(prometheus.Labels{
 			"success":   strconv.FormatBool(err == nil),
