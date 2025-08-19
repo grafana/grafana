@@ -53,7 +53,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.datasources.ListDataSource(ctx)
+	return s.datasources.ListDataSources(ctx)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -113,7 +113,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	dss, err := s.datasources.ListDataSource(ctx)
+	dss, err := s.datasources.ListDataSources(ctx)
 	if err != nil {
 		return nil, err
 	}

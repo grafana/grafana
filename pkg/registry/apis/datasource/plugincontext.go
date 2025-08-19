@@ -22,7 +22,7 @@ type PluginDatasourceProvider interface {
 	GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error)
 
 	// List all datasources (any type)
-	ListDataSource(ctx context.Context) (*datasourceV0.DataSourceList, error)
+	ListDataSources(ctx context.Context) (*datasourceV0.DataSourceList, error)
 
 	// Create a data source
 	CreateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error)
@@ -164,7 +164,7 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 }
 
 // ListDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*datasourceV0.DataSourceList, error) {
+func (q *scopedDatasourceProvider) ListDataSources(ctx context.Context) (*datasourceV0.DataSourceList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err

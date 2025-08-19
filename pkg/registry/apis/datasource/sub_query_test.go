@@ -143,7 +143,7 @@ func (m mockDatasources) GetDataSource(ctx context.Context, uid string) (*v0alph
 }
 
 // ListDataSource implements PluginDatasourceProvider.
-func (m mockDatasources) ListDataSource(ctx context.Context) (*v0alpha1.DataSourceList, error) {
+func (m mockDatasources) ListDataSources(ctx context.Context) (*v0alpha1.DataSourceList, error) {
 	return nil, nil
 }
 
