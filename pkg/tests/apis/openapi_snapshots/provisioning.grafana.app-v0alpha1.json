@@ -2859,6 +2859,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "error": {
+            "description": "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
+            "type": "string",
+            "enum": [
+              "health",
+              "hook"
+            ]
+          },
           "healthy": {
             "description": "When not healthy, requests will not be executed",
             "type": "boolean",

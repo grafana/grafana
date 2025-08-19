@@ -10,6 +10,8 @@ import (
 )
 
 // StatusPatcher defines the interface for updating repository status
+//
+//go:generate mockery --name=StatusPatcher
 type StatusPatcher interface {
 	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
 }
@@ -21,6 +23,8 @@ type HealthChecker struct {
 }
 
 // RepositoryTester defines the interface for testing repository connectivity
+//
+//go:generate mockery --name=RepositoryTester
 type RepositoryTester interface {
 	TestRepository(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, error)
 }
@@ -45,29 +49,31 @@ func (hc *HealthChecker) ShouldCheckHealth(repo *provisioning.Repository) bool {
 		return false
 	}
 
-	// If the health check has been run recently, don't run it again
-	return !hc.HasRecentFailure(repo.Status.Health, provisioning.HealthFailureHealth)
+	// Check general timing for health checks
+	return !hc.hasRecentHealthCheck(repo.Status.Health)
 }
 
-// HasRecentFailure checks if there's a recent failure of a specific type or if health check should be skipped
-func (hc *HealthChecker) HasRecentFailure(healthStatus provisioning.HealthStatus, failureType provisioning.HealthFailureType) bool {
+// hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
+func (hc *HealthChecker) hasRecentHealthCheck(healthStatus provisioning.HealthStatus) bool {
 	if healthStatus.Checked == 0 {
-		return false // Never checked, so no recent failure
+		return false // Never checked
 	}
 
 	age := time.Since(time.UnixMilli(healthStatus.Checked))
-	switch failureType {
-	case provisioning.HealthFailureHealth:
-		// General health check timing
-		if healthStatus.Healthy {
-			return age <= time.Minute*5 // Recent if checked within 5 minutes when healthy
-		}
-		return age <= time.Minute // Recent if checked within 1 minute when unhealthy
-	case provisioning.HealthFailureHook:
-		return age <= time.Minute // Recent if within 1 minute
-	default:
-		return false
+	if healthStatus.Healthy {
+		return age <= time.Minute*5 // Recent if checked within 5 minutes when healthy
 	}
+	return age <= time.Minute // Recent if checked within 1 minute when unhealthy
+}
+
+// HasRecentFailure checks if there's a recent failure of a specific type
+func (hc *HealthChecker) HasRecentFailure(healthStatus provisioning.HealthStatus, failureType provisioning.HealthFailureType) bool {
+	if healthStatus.Checked == 0 || healthStatus.Healthy || healthStatus.Error != failureType {
+		return false // No failure of this type
+	}
+
+	age := time.Since(time.UnixMilli(healthStatus.Checked))
+	return age <= time.Minute // Recent if within 1 minute
 }
 
 // RecordFailureAndUpdate records a failure and updates the repository status
