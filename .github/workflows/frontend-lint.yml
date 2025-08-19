@@ -144,7 +144,7 @@ jobs:
       contents: read
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
-    # the `lint-frontend-typecheck-enterprise` workflow will run instead
+    # the `lint-frontend-api-clients-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Verify API clients
     runs-on: ubuntu-latest
