@@ -219,8 +219,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
-				nil,
 				obj,
+				nil,
 				folders.SchemeGroupVersion.WithKind("folder"),
 				obj.Namespace,
 				obj.Name,
