@@ -152,6 +152,23 @@ func (hc *HealthChecker) RefreshHealth(ctx context.Context, repo repository.Repo
 	return testResults, newHealthStatus, nil
 }
 
+// RefreshTimestamp updates the health status timestamp without changing other fields
+func (hc *HealthChecker) RefreshTimestamp(ctx context.Context, repo *provisioning.Repository) error {
+	// Update the timestamp on the existing health status
+	healthStatus := repo.Status.Health
+	healthStatus.Checked = time.Now().UnixMilli()
+
+	// Create patch operation
+	patchOp := map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/health",
+		"value": healthStatus,
+	}
+
+	// Apply the patch
+	return hc.statusPatcher.Patch(ctx, repo, patchOp)
+}
+
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {

@@ -115,6 +115,20 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 
 		var rsp *provisioning.TestResults
 		if repo == nil {
+			healthChecker := s.healthProvider.GetHealthChecker()
+			if healthChecker == nil {
+				// Use precondition failed for when health checker is not ready yet
+				responder.Error(&errors.StatusError{
+					ErrStatus: metav1.Status{
+						Status:  metav1.StatusFailure,
+						Code:    http.StatusPreconditionFailed,
+						Reason:  metav1.StatusReason("PreconditionFailed"),
+						Message: "health checker not initialized yet, please try again",
+					},
+				})
+				return
+			}
+
 			// Testing existing repository - get it and update health
 			repo, err = s.getter.GetRepository(ctx, name)
 			if err != nil {
@@ -136,21 +150,13 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 						return errs
 					}(),
 				}
-				responder.Object(rsp.Code, rsp)
-				return
-			}
 
-			healthChecker := s.healthProvider.GetHealthChecker()
-			if healthChecker == nil {
-				// Use precondition failed for when health checker is not ready yet
-				responder.Error(&errors.StatusError{
-					ErrStatus: metav1.Status{
-						Status:  metav1.StatusFailure,
-						Code:    http.StatusPreconditionFailed,
-						Reason:  metav1.StatusReason("PreconditionFailed"),
-						Message: "health checker not initialized yet, please try again",
-					},
-				})
+				if err := healthChecker.RefreshTimestamp(ctx, repo.Config()); err != nil {
+					responder.Error(err)
+					return
+				}
+
+				responder.Object(rsp.Code, rsp)
 				return
 			}
 
