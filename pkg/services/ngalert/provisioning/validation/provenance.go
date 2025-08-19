@@ -32,6 +32,9 @@ type ProvenanceStatusTransitionValidator = func(from, to models.Provenance) erro
 // Applies relaxed checks that prevents only transition from any status to `none`.
 // Returns ErrProvenanceChangeNotAllowed if transition is not allowed
 func ValidateProvenanceRelaxed(from, to models.Provenance) error {
+	if from == models.ProvenanceConvertedPrometheus || to == models.ProvenanceConvertedPrometheus {
+		return MakeErrProvenanceChangeNotAllowed(from, to)
+	}
 	if from == models.ProvenanceNone { // allow any transition from none
 		return nil
 	}
