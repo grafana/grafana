@@ -3,7 +3,6 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -133,23 +132,18 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
+	rcvs, err := rs.readReceivers(ctx, q.OrgID, revision, models.NameToUid(q.Name))
 	if err != nil {
 		return nil, err
 	}
+	if len(rcvs) == 0 {
+		return nil, legacy_storage.ErrReceiverNotFound.Errorf("")
+	}
+	rcv := rcvs[0]
 
 	span.AddEvent("Loaded receiver", trace.WithAttributes(
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
 	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	rcv, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return nil, err
-	}
 
 	auth := rs.authz.AuthorizeReadDecrypted
 	if !q.Decrypt {
@@ -195,21 +189,16 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
-	postables := revision.GetReceivers(uids)
+
+	receivers, err := rs.readReceivers(ctx, q.OrgID, revision, uids...)
+	if err != nil {
+		return nil, err
+	}
 
 	span.AddEvent("Loaded receivers", trace.WithAttributes(
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
-		attribute.Int("count", len(postables)),
+		attribute.Int("count", len(receivers)),
 	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	receivers, err := legacy_storage.PostableApiReceiversToReceivers(postables, storedProvenances)
-	if err != nil {
-		return nil, err
-	}
 
 	filterFn := rs.authz.FilterReadDecrypted
 	if !q.Decrypt {
@@ -257,22 +246,14 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err != nil {
 		return err
 	}
-	postable, err := revision.GetReceiver(uid)
-	if err != nil {
-		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
-			return nil
-		}
-		return err
-	}
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	rcvs, err := rs.readReceivers(ctx, orgID, revision, uid)
 	if err != nil {
 		return err
 	}
-	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return err
+	if len(rcvs) == 0 {
+		return nil
 	}
+	existing := rcvs[0]
 
 	logger := rs.log.FromContext(ctx).New("receiver", existing.Name, "uid", uid, "version", version, "integrations", existing.GetIntegrationTypes())
 
@@ -403,19 +384,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(r.GetUID())
-	if err != nil {
-		return nil, err
-	}
 
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
+	rcvs, err := rs.readReceivers(ctx, orgID, revision, r.GetUID())
+	if len(rcvs) == 0 {
+		return nil, legacy_storage.ErrReceiverNotFound.Errorf("")
 	}
-	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return nil, err
-	}
+	existing := rcvs[0]
 
 	// We re-encrypt the existing receiver to ensure any unencrypted secure fields that are correctly encrypted, note this should NOT re-encrypt secure fields that are already encrypted.
 	// This is rare, but can happen if a receiver is created with unencrypted secure fields and then the secure option is added later.
@@ -736,4 +710,57 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) readReceivers(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, uids ...string) ([]*models.Receiver, error) {
+	postables := revision.Config.AlertmanagerConfig.Receivers
+
+	grafanaReceivers := make(map[string]struct{}, len(postables))
+	for _, r := range postables {
+		grafanaReceivers[r.GetName()] = struct{}{}
+	}
+
+	merged, err := revision.Config.GetMergedAlertmanagerConfig()
+	if err != nil {
+		rs.log.FromContext(ctx).Warn("Failed to get merged alertmanager config. Bypassing", "error", err)
+	} else {
+		postables = merged.Config.Receivers
+	}
+
+	if len(uids) > 0 {
+		filtered := make([]*definitions.PostableApiReceiver, 0, len(uids))
+		uidsMap := make(map[string]struct{}, len(uids))
+		for _, uid := range uids {
+			uidsMap[uid] = struct{}{}
+		}
+		for _, p := range postables {
+			if _, ok := uidsMap[models.NameToUid(p.GetName())]; ok {
+				filtered = append(filtered, p)
+			}
+		}
+		postables = filtered
+	}
+
+	result := make([]*models.Receiver, 0, len(postables))
+	var storedProvenances map[string]models.Provenance
+	for _, p := range postables {
+		var provenance models.Provenance
+		if _, ok := grafanaReceivers[p.Name]; ok {
+			if storedProvenances == nil {
+				storedProvenances, err = rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+				if err != nil {
+					return nil, err
+				}
+			}
+			provenance = legacy_storage.GetReceiverProvenance(storedProvenances, p)
+		} else {
+			provenance = models.ProvenanceConvertedPrometheus
+		}
+		converted, err := legacy_storage.PostableApiReceiverToReceiver(p, provenance)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, converted)
+	}
+	return result, nil
 }
