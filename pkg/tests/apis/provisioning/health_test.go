@@ -34,7 +34,6 @@ func TestIntegrationHealth(t *testing.T) {
 	require.Empty(t, originalRepo.Status.Health.Message, "should not have messages")
 
 	t.Run("test endpoint with new repository configuration works", func(t *testing.T) {
-		t.Skip("skip for now")
 		newRepoConfig := map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Repository",
@@ -46,8 +45,9 @@ func TestIntegrationHealth(t *testing.T) {
 				},
 				"workflows": []string{"write"},
 				"sync": map[string]any{
-					"enabled": true,
-					"target":  "folder",
+					"enabled":         true,
+					"target":          "folder",
+					"intervalSeconds": 10,
 				},
 			},
 		}
