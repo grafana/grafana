@@ -12689,6 +12689,8 @@
       "label-gauge-display-mode": "Gauge display mode",
       "label-value-display": "Value display"
     },
+    "category-cell-options": "Cell options",
+    "category-table": "Table",
     "cell-types": {
       "actions": "Actions",
       "auto": "Auto",
@@ -12712,6 +12714,7 @@
       "show-all-series": "Show all columns",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
     },
+    "description-min-column-width": "The minimum width for column auto resizing",
     "description-wrap-header-text": "Enables text wrapping for column headers",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
@@ -12726,13 +12729,14 @@
       },
       "label-dynamic-height": "Dynamic height"
     },
+    "name-enable-pagination": "Enable pagination",
+    "name-min-column-width": "Minimum column width",
     "name-wrap-header-text": "Wrap header text",
     "text-wrap-options": {
       "label-wrap-text": "Wrap text"
     }
   },
-  "table-new": {
-    "category-cell-options": "Cell options",
+  "table-n": {
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
@@ -12752,7 +12756,6 @@
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
-    "description-min-column-width": "The minimum width for column auto resizing",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
@@ -12762,11 +12765,9 @@
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
     "name-count-rows": "Count rows",
-    "name-enable-pagination": "Enable pagination",
     "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
-    "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
