@@ -47,7 +47,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
       saveVariables?: boolean;
       saveRefresh?: boolean;
     }
-  ) => DashboardChangeInfo;
+  ) => Promise<DashboardChangeInfo>;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
   getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
   getSnapshotUrl: () => string | undefined;
@@ -149,10 +149,10 @@ export class V1DashboardSerializer
     };
   }
 
-  getDashboardChangesFromScene(
+  async getDashboardChangesFromScene(
     scene: DashboardScene,
     options: { saveTimeRange?: boolean; saveVariables?: boolean; saveRefresh?: boolean }
-  ) {
+  ): Promise<DashboardChangeInfo> {
     const changedSaveModel = this.getSaveModel(scene);
     const changeInfo = getRawDashboardChanges(
       this.initialSaveModel!,
@@ -359,12 +359,12 @@ export class V2DashboardSerializer
     };
   }
 
-  getDashboardChangesFromScene(
+  async getDashboardChangesFromScene(
     scene: DashboardScene,
     options: { saveTimeRange?: boolean; saveVariables?: boolean; saveRefresh?: boolean }
   ) {
     const changedSaveModel = this.getSaveModel(scene);
-    const changeInfo = getRawDashboardV2Changes(
+    const changeInfo = await getRawDashboardV2Changes(
       this.initialSaveModel!,
       changedSaveModel,
       options.saveTimeRange,

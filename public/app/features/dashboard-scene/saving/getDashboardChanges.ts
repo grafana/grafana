@@ -39,7 +39,7 @@ export function isEqual(a: VariableOption | undefined, b: VariableOption | undef
   return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
 }
 
-export function getRawDashboardV2Changes(
+export async function getRawDashboardV2Changes(
   initial: DashboardV2Spec | Dashboard,
   changed: DashboardV2Spec,
   saveTimeRange?: boolean,
@@ -49,7 +49,7 @@ export function getRawDashboardV2Changes(
   // Transform initial dashboard values to v2 spec format to ensure consistent comparison of time settings,
   // variables and refresh values. This handles cases where the initial dashboard is in v1 format
   // but was converted to v2 during runtime due to dynamic dashboard features being used.
-  const initialSaveModel = convertToV2SpecIfNeeded(initial);
+  const initialSaveModel = await convertToV2SpecIfNeeded(initial);
   const changedSaveModel = changed;
   const hasTimeChanged = getHasTimeChanged(changedSaveModel.timeSettings, initialSaveModel.timeSettings);
   const hasVariableValueChanges = applyVariableChangesV2(changedSaveModel, initialSaveModel, saveVariables);
@@ -81,7 +81,7 @@ export function getRawDashboardV2Changes(
   };
 }
 
-function convertToV2SpecIfNeeded(initial: DashboardV2Spec | Dashboard): DashboardV2Spec {
+async function convertToV2SpecIfNeeded(initial: DashboardV2Spec | Dashboard): Promise<DashboardV2Spec> {
   if (isDashboardV2Spec(initial)) {
     return initial;
   }
@@ -90,7 +90,7 @@ function convertToV2SpecIfNeeded(initial: DashboardV2Spec | Dashboard): Dashboar
     dashboard: initial as DashboardDataDTO,
     meta: {},
   };
-  return ResponseTransformers.ensureV2Response(dto).spec;
+  return (await ResponseTransformers.ensureV2Response(dto)).spec;
 }
 
 export function getRawDashboardChanges(

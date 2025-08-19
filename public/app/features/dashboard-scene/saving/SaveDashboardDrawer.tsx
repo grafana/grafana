@@ -10,6 +10,7 @@ import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { SaveProvisionedDashboard } from './provisioned/SaveProvisionedDashboard';
+import { DashboardChangeInfo } from './shared';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -18,13 +19,32 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveVariables?: boolean;
   saveRefresh?: boolean;
   saveAsCopy?: boolean;
+  changeInfo?: DashboardChangeInfo;
   onSaveSuccess?: () => void;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
-  public onClose = () => {
+  onActivate = () => {
+    this.subscribeToState((state) => {
+      if (
+        state.saveTimeRange !== this.state.saveTimeRange ||
+        state.saveVariables !== this.state.saveVariables ||
+        state.saveRefresh !== this.state.saveRefresh ||
+        state.dashboardRef !== this.state.dashboardRef
+      ) {
+        this.state.dashboardRef
+          .resolve()
+          .getDashboardChanges(state.saveTimeRange, state.saveVariables, state.saveRefresh)
+          .then((changeInfo) => {
+            this.setState({ changeInfo });
+          });
+      }
+    });
+  };
+
+  public onClose = async () => {
     const dashboard = this.state.dashboardRef.resolve();
-    const changeInfo = dashboard.getDashboardChanges();
+    const changeInfo = await dashboard.getDashboardChanges();
     dashboard.setState({
       overlay: undefined,
       // Reset meta to initial state if it's a new dashboard to remove provisioned fields
@@ -45,11 +65,10 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
-
-    const changeInfo = model.state.dashboardRef
-      .resolve()
-      .getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
+    const { showDiff, saveAsCopy, changeInfo } = model.useState();
+    if (!changeInfo) {
+      return null;
+    }
 
     const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges, hasMigratedToV2 } = changeInfo;
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);

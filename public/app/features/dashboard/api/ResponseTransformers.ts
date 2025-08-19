@@ -41,6 +41,7 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
+  RepeatOptions,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -75,14 +76,15 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardWithAccessInfo } from './types';
 import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource } from './utils';
 
-export function ensureV2Response(
+export async function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
-): DashboardWithAccessInfo<DashboardV2Spec> {
+): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
   if (isDashboardV2Resource(dto)) {
     return dto;
   }
@@ -96,7 +98,7 @@ export function ensureV2Response(
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
-  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+  const [elements, layout] = await getElementsFromPanels(dashboard.panels || []);
   // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
   // that would allow accessing unique properties for each variable type that the API returns
   const variables = getVariables(dashboard.templating?.list || []);
@@ -248,9 +250,9 @@ export const ResponseTransformers = {
   ensureV1Response,
 };
 
-function getElementsFromPanels(
+async function getElementsFromPanels(
   panels: Array<Panel | RowPanel>
-): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
+): Promise<[DashboardV2Spec['elements'], DashboardV2Spec['layout']]> {
   const elements: DashboardV2Spec['elements'] = {};
   const layout: DashboardV2Spec['layout'] = {
     kind: 'GridLayout',
@@ -273,15 +275,15 @@ function getElementsFromPanels(
 
     elements[elementName] = element;
 
-    layout.spec.items.push(buildGridItemKind(p, elementName));
+    layout.spec.items.push(await buildGridItemKind(p, elementName));
   }
 
   return [elements, layout];
 }
 
-function convertToRowsLayout(
+async function convertToRowsLayout(
   panels: Array<Panel | RowPanel>
-): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
+): Promise<[DashboardV2Spec['elements'], DashboardV2Spec['layout']]> {
   let currentRow: RowsLayoutRowKind | null = null;
   let legacyRowY = 0;
   const elements: DashboardV2Spec['elements'] = {};
@@ -305,7 +307,7 @@ function convertToRowsLayout(
       for (const panel of p.panels || []) {
         const [element, name] = buildElement(panel);
         elements[name] = element;
-        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, legacyRowY)));
+        rowElements.push(await buildGridItemKind(panel, name, yOffsetInRows(panel, legacyRowY)));
       }
 
       currentRow = buildRowKind(p, rowElements);
@@ -317,7 +319,7 @@ function convertToRowsLayout(
       if (currentRow) {
         // Collect panels to current layout row
         if (currentRow.spec.layout.kind === 'GridLayout') {
-          currentRow.spec.layout.spec.items.push(buildGridItemKind(p, elementName, yOffsetInRows(p, legacyRowY)));
+          currentRow.spec.layout.spec.items.push(await buildGridItemKind(p, elementName, yOffsetInRows(p, legacyRowY)));
         } else {
           throw new Error('RowsLayoutRow from legacy row must have a GridLayout');
         }
@@ -326,7 +328,7 @@ function convertToRowsLayout(
         const grid: GridLayoutKind = {
           kind: 'GridLayout',
           spec: {
-            items: [buildGridItemKind(p, elementName)],
+            items: [await buildGridItemKind(p, elementName)],
           },
         };
 
@@ -382,23 +384,34 @@ function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): RowsLayoutRo
   };
 }
 
-function buildGridItemKind(p: Panel, elementName: string, yOverride?: number): GridLayoutItemKind {
-  return {
-    kind: 'GridLayoutItem',
-    spec: {
-      x: p.gridPos!.x,
-      y: yOverride ?? p.gridPos!.y,
-      width: p.gridPos!.w,
-      height: p.gridPos!.h,
-      repeat: p.repeat
-        ? { value: p.repeat, mode: 'variable', direction: p.repeatDirection, maxPerRow: p.maxPerRow }
-        : undefined,
-      element: {
-        kind: 'ElementReference',
-        name: elementName!,
-      },
+async function buildGridItemKind(p: Panel, elementName: string, yOverride?: number): Promise<GridLayoutItemKind> {
+  const spec: GridLayoutItemKind['spec'] = {
+    x: p.gridPos!.x,
+    y: yOverride ?? p.gridPos!.y,
+    width: p.gridPos!.w,
+    height: p.gridPos!.h,
+    repeat: getRepeat(p),
+    element: {
+      kind: 'ElementReference',
+      name: elementName!,
     },
   };
+
+  if (p.libraryPanel) {
+    const libPanel = await getLibraryPanel(p.libraryPanel.uid);
+    spec.repeat = getRepeat(libPanel.model);
+  }
+  return {
+    kind: 'GridLayoutItem',
+    spec,
+  };
+}
+
+function getRepeat(panel: Panel): RepeatOptions | undefined {
+  if (panel.repeat) {
+    return { value: panel.repeat, mode: 'variable', direction: panel.repeatDirection, maxPerRow: panel.maxPerRow };
+  }
+  return undefined;
 }
 
 function yOffsetInRows(p: Panel, rowY: number): number {

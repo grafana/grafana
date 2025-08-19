@@ -768,8 +768,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this.serializer.getSaveAsModel(this, options);
   }
 
-  getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
-    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+  async getDashboardChanges(
+    saveTimeRange?: boolean,
+    saveVariables?: boolean,
+    saveRefresh?: boolean
+  ): Promise<DashboardChangeInfo> {
+    return await this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 
   getManagerKind(): ManagerKind | undefined {
