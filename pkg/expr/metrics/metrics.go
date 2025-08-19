@@ -65,8 +65,8 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Namespace: "grafana",
 			Subsystem: subsystem,
 			Name:      "sql_command_input_count",
-			Help:      "Total number of inputs to the SQL command. Errors here are also counted in the sql_command_count metric but without the datasource_type. The converted label indicates if the input was converted from another format (e.g. from labeled time series) or passed through as a table. Since a single SQL expression can have multiple inputs, this can count higher than sql_command_count.",
-		}, []string{"status", "converted", "datasource_type"}),
+			Help:      "Total number of inputs to the SQL command. Errors here are also counted in the sql_command_count metric but without the datasource_type and input_frame_type. The attempted_conversion label indicates if the input was converted from another format (e.g. from labeled time series) or passed through as a table. Since a single SQL expression can have multiple inputs, this can count higher than sql_command_count.",
+		}, []string{"status", "attempted_conversion", "datasource_type", "input_frame_type"}),
 	}
 }
 

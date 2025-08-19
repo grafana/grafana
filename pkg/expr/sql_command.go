@@ -324,11 +324,7 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		if result.Error != nil {
 			statusLabel = "error"
 		}
-		dataType := "unknown"
-		if metaType.IsKnownType() {
-			dataType = string(metaType)
-		}
-
+		dataType := categorizeFrameInputType(dataFrames)
 		span.SetAttributes(
 			attribute.String("status", statusLabel),
 			attribute.Float64("duration", duration),
@@ -419,4 +415,19 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 		mathexp.TableData{Frame: first},
 	}
 	return result, false
+}
+
+func categorizeFrameInputType(dataFrames data.Frames) string {
+	switch {
+		case len(dataFrames) == 0:
+			return "missing"
+		case dataFrames[0].Meta == nil:
+			return "missing"
+		case dataFrames[0].Meta.Type == "":
+			return "missing"
+		case dataFrames[0].Meta.Type.IsKnownType():
+			return string(dataFrames[0].Meta.Type)
+		default:
+			return "unknown"
+	}
 }
