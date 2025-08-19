@@ -4,44 +4,44 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
   AbstractQuery,
+  AdHocVariableFilter,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
+  CustomVariableModel,
   DataFrame,
   DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
-  DataSourceWithSupplementaryQueriesSupport,
-  SupplementaryQueryType,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
+  DataSourceWithQueryModificationSupport,
+  DataSourceWithSupplementaryQueriesSupport,
+  DataSourceWithToggleableQueryFiltersSupport,
   Labels,
+  LegacyMetricFindQueryOptions,
   LoadingState,
+  LogRowContextOptions,
   LogRowModel,
+  LogsSampleOptions,
+  LogsVolumeOption,
+  MetricFindValue,
+  QueryFilterOptions,
   QueryFixAction,
   QueryHint,
+  QueryVariableModel,
   rangeUtil,
+  renderLegendFormat,
   ScopedVars,
   SupplementaryQueryOptions,
+  SupplementaryQueryType,
   TimeRange,
-  LogRowContextOptions,
-  DataSourceWithToggleableQueryFiltersSupport,
   ToggleFilterAction,
-  QueryFilterOptions,
-  renderLegendFormat,
-  LegacyMetricFindQueryOptions,
-  AdHocVariableFilter,
   urlUtil,
-  MetricFindValue,
-  DataSourceGetTagValuesOptions,
-  DataSourceGetTagKeysOptions,
-  DataSourceWithQueryModificationSupport,
-  LogsVolumeOption,
-  LogsSampleOptions,
-  QueryVariableModel,
-  CustomVariableModel,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -54,22 +54,22 @@ import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
+import { escapeLabelValueInSelector, getLabelTypeFromFrame, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
+  addFilterAsLabelFilter,
   addLabelFormatToQuery,
   addLabelToQuery,
+  addLineFilter,
   addNoPipelineErrorToQuery,
   addParserToQuery,
-  removeCommentsFromQuery,
-  addFilterAsLabelFilter,
-  getParserPositions,
-  toLabelFilter,
-  addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
+  getParserPositions,
   queryHasFilter,
+  removeCommentsFromQuery,
   removeLabelFromQuery,
+  toLabelFilter,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
@@ -498,6 +498,16 @@ export class LokiDatasource
    */
   async exportToAbstractQueries(queries: LokiQuery[]): Promise<AbstractQuery[]> {
     return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
+  }
+
+  async configRequest(url = 'config', params?: Record<string, string | number>, options?: Partial<BackendSrvRequest>) {
+    // url must not start with a `/`, otherwise the AJAX-request
+    // going from the browser will contain `//`, which can cause problems.
+    if (url?.startsWith('/')) {
+      throw new Error(`invalid metadata request url: ${url}`);
+    }
+
+    return await this.getResource(url, params, options);
   }
 
   /**
