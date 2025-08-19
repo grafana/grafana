@@ -93,6 +93,7 @@ aliases:
   - release-notes/release-notes-8-4-3/
   - release-notes/release-notes-8-4-2/
   - release-notes/release-notes-8-4-1/
+  - release-notes/release-notes-8-4-0/
   - release-notes/release-notes-8-4-0-beta1/
   - release-notes/release-notes-8-3-11/
   - release-notes/release-notes-8-3-7/
@@ -101,6 +102,7 @@ aliases:
   - release-notes/release-notes-8-3-4/
   - release-notes/release-notes-8-3-2/
   - release-notes/release-notes-8-3-1/
+  - release-notes/release-notes-8-3-0/
   - release-notes/release-notes-8-3-0-beta2/
   - release-notes/release-notes-8-3-0-beta1/
   - release-notes/release-notes-8-2-7/
@@ -109,6 +111,7 @@ aliases:
   - release-notes/release-notes-8-2-4/
   - release-notes/release-notes-8-2-3/
   - release-notes/release-notes-8-2-1/
+  - release-notes/release-notes-8-2-0/
   - release-notes/release-notes-8-2-0-beta2/
   - release-notes/release-notes-8-2-0-beta1/
   - release-notes/release-notes-8-1-8/
