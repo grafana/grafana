@@ -3632,11 +3632,11 @@
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
+      "error-invalid-characters": "",
       "error-required": "Ordnername erforderlich",
       "folder-name-input-placeholder-enter-folder-name": "Ordnernamen eingeben",
       "label-folder-name": "Ordnername",
       "text-pull-request-created": "Ein Pull-Request wurde erstellt, mit Änderungen an diesem Ordner:",
-      "text-your-folder-will-be-created-as": "Ihr Ordner wird erstellt als {{folderName}}",
       "title-pull-request-created": "Pull-Request erstellt",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
@@ -7526,11 +7526,6 @@
     "select-aria-label": "Ordnerfilter",
     "select-placeholder": "Nach Ordner filtern"
   },
-  "folder-picker": {
-    "create-instructions": "Drücken Sie die Eingabetaste, um den neuen Ordner zu erstellen.",
-    "input-placeholder": "Drücken Sie zur Bestätigung des neuen Ordners die Eingabetaste",
-    "loading": "Ordner werden geladen …"
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8749,7 +8744,6 @@
       "filter-popup-input-placeholder": "Filterwerte",
       "filter-popup-match-case": "Groß-/Kleinschreibung beachten",
       "inspect-drawer-title": "Wert prüfen",
-      "inspect-menu-label": "Wert prüfen",
       "nested-table": {
         "no-data": "Keine Daten"
       },
@@ -12795,6 +12789,7 @@
     "description-fields": "Wählen Sie die Felder aus, die berechnet werden sollen",
     "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
+    "description-tooltip-from-field": "",
     "name-calculation": "Berechnung",
     "name-cell-height": "Zellenhöhe",
     "name-cell-type": "Zellentyp",
@@ -12810,8 +12805,17 @@
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-show-table-footer": "Tabellenfußzeile anzeigen",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alle numerischen Felder"
+    "placeholder-fields": "Alle numerischen Felder",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Tags löschen",
