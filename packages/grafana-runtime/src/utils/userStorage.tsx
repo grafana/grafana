@@ -156,3 +156,26 @@ export function usePluginUserStorage(): PluginUserStorage {
   }
   return new UserStorage(context?.meta.id);
 }
+
+/**
+ * A function for interacting with the backend user storage (or local storage if not enabled).
+ * @returns An scoped object for a plugin and a user with getItem and setItem functions.
+ * @alpha Experimental
+ */
+export function getPluginUserStorage(): UserStorage {
+  const pluginId = getPluginIdFromUrl();
+  if (!pluginId) {
+    throw new Error(
+      'getUserStorage() could not determine the current plugin ID from URL. ' +
+        'This function must be called from within an app plugin context (URL pattern: /a/plugin-id). ' +
+        'For React components, use usePluginUserStorage() hook instead.'
+    );
+  }
+  return new UserStorage(pluginId);
+}
+
+function getPluginIdFromUrl(): string | null {
+  // App plugin URL pattern: /a/{pluginId}/... or /a/{pluginId}
+  const [, appPluginId] = window.location.pathname.match(/\/a\/([^\/\?]+)/) || [];
+  return appPluginId || null;
+}
