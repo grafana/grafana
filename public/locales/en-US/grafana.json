@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "External Alertmanagers",
+      "extra-config-warning": {
+        "content": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.",
+        "title": "Imported configuration"
+      },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -788,7 +793,7 @@
       },
       "filterBy": "Filter by:",
       "too-many-events": {
-        "text": "The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.",
+        "text": "The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.",
         "title": "Unable to display all events"
       }
     },
@@ -1243,20 +1248,6 @@
     "file-export-preview": {
       "copy-code": "Copy code",
       "download": "Download"
-    },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Alert rule",
-        "all": "All",
-        "error": "Error",
-        "firing": "Firing",
-        "no-data": "No data",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Pending",
-        "recording-rule": "Recording rule",
-        "recovering": "Recovering"
-      }
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
@@ -2481,6 +2472,7 @@
       },
       "empty-data-source": "No rules found",
       "error-button": "Error",
+      "export-all-grafana-rules": "Export all Grafana rules",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -2588,11 +2580,27 @@
       "delete-rule": {
         "success": "Rule successfully deleted"
       },
+      "health": {
+        "error": "Error",
+        "no-data": "No data",
+        "ok": "OK"
+      },
       "pause-rule": {
         "success": "Rule evaluation paused"
       },
       "resume-rule": {
         "success": "Rule evaluation resumed"
+      },
+      "state": {
+        "firing": "Firing",
+        "normal": "Normal",
+        "pending": "Pending",
+        "recovering": "Recovering",
+        "unknown": "Unknown"
+      },
+      "type": {
+        "alert": "Alert rule",
+        "recording": "Recording rule"
       },
       "update-rule": {
         "success": "Rule updated successfully"
@@ -2601,20 +2609,29 @@
     "rules-filter": {
       "clear-filters": "Clear filters",
       "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
+      "contact-point-tooltip": "Filters alert rules which route directly to the selected contact point. Alert rules routed to notification policies will not be displayed.",
+      "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label-show-filters": "Show filters",
-        "label-custom-filter": "Custom filter",
-        "label-saved-searches": "Saved searches"
+        "aria-label": "Filter options",
+        "aria-label-show-filters": "Filter",
+        "placeholder-namespace": "Select namespace",
+        "placeholder-search-input": "Search by name or enter filter query..."
       },
+      "grafana-folder": "Grafana folder",
       "health": "Health",
       "label": {
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
+      "no-groups": "No groups available",
+      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
+      "placeholder-contact-point": "Select contact point",
+      "placeholder-data-sources": "Select data sources",
+      "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
@@ -2629,9 +2646,6 @@
       "text-federated": "Federated",
       "text-provisioned": "Provisioned"
     },
-    "saved-searches": {
-      "text-default": "Default"
-    },
     "search": {
       "property": {
         "data-source": "Data source",
@@ -2639,11 +2653,10 @@
         "labels": "Labels",
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
-        "rule-name": "Alerting rule name",
+        "rule-name": "Rule name",
         "rule-type": "Type",
         "state": "State"
-      },
-      "save-query": "Save current search"
+      }
     },
     "search-field-input": {
       "clear": "Clear",
@@ -3519,33 +3532,28 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "All resources have been deleted successfully",
-      "all-moved": "All resources have been moved successfully",
-      "button-done": "Done",
-      "failed-alert_one": "{{count}} items failed",
-      "failed-alert_other": "{{count}} items failed",
-      "progress-title": "Success"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-path-not-found": "Path not found"
+      "error-deleting-resources": "Error deleting resources"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
-      "deleting": "Deleting",
-      "error-file-content-not-found": "File content not found",
-      "error-path-not-found": "Path not found",
-      "error-target-folder-path-missing": "Target folder path is missing",
-      "error-title": "Target Folder Error",
+      "button-tooltip": "Please select a target folder",
+      "error": {
+        "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
+        "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
+        "read-only-title": "This repository is read only",
+        "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
+        "repository-not-found-title": "Repository not found"
+      },
+      "error-moving-resources": "Error moving resources",
+      "error-no-target-folder-path": "Target folder path in repository is invalid, please select another folder.",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
-      "moving": "Moving",
-      "progress": "Progress: {{current}} of {{total}}",
       "target-folder": "Target Folder"
     },
     "counts": {
@@ -3561,12 +3569,18 @@
       "total_other": "{{count}} item"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
+      },
       "collapse-folder-button": "Collapse folder {{title}}",
       "expand-folder-button": "Expand folder {{title}}",
       "name-column": "Name",
       "select-all-header-checkbox": "Select all",
       "select-checkbox": "Select",
       "tags-column": "Tags"
+    },
+    "delete-folder": {
+      "read-only-message": "To delete this folder, please remove the folder from your repository."
     },
     "delete-provisioned-folder-form": {
       "api-error": "Failed to delete folder",
@@ -3611,6 +3625,9 @@
     "name-cell": {
       "no-items": "No items"
     },
+    "new-folder": {
+      "read-only-message": "To create this folder, please add the resource in your repository directly."
+    },
     "new-folder-form": {
       "cancel-label": "Cancel",
       "create-label": "Create",
@@ -3621,11 +3638,11 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
+      "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
       "error-required": "Folder name is required",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
-      "text-your-folder-will-be-created-as": "Your folder will be created as {{folderName}}",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -4092,10 +4109,10 @@
     }
   },
   "common": {
+    "all": "All",
     "apply": "Apply",
     "cancel": "Cancel",
     "clear": "Clear",
-    "close": "Close",
     "collapse": "Collapse",
     "edit": "Edit",
     "help": "Help",
@@ -4496,15 +4513,24 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": "Invalid regex"
+          },
           "info": "Show or hide the {{type}} dynamically based on the variable value.",
           "label": "Template variable",
           "name": "Name",
           "operator": {
             "equals": "Equals",
-            "not-equals": "Not equals"
+            "matches": "Matches",
+            "not-equals": "Not equals",
+            "not-matches": "Not matches"
           },
           "value": "Value"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "unsupported-item-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
@@ -5220,6 +5246,7 @@
         "new": "New tab",
         "repeat": {
           "learn-more": "Learn more",
+          "loading": "Loading tab repeats",
           "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
         }
       },
@@ -5333,6 +5360,7 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-dashboard": {
@@ -5385,6 +5413,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
+      "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
+      "sql-expressions-message-link": "Learn more",
+      "sql-expressions-title": "SQL Expressions",
       "title-add-another-transformation": "Add another transformation",
       "view-all": "View all"
     },
@@ -5691,11 +5722,9 @@
       "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
-      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "success-message": "Dashboard deleted successfully",
-      "title-this-repository-is-read-only": "This repository is read only"
+      "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
       "description": "Description"
@@ -6067,7 +6096,6 @@
       "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
-      "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<0>File path:</0> {{filePath}}",
       "label-description": "Description",
@@ -6079,7 +6107,6 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
-      "title-this-repository-is-read-only": "This repository is read only",
       "title-validation-failed": "Dashboard title validation failed."
     },
     "scenes-new-rule-from-panel-button": {
@@ -6385,7 +6412,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>.",
+    "success-more-details-links-extensions": "You can also explore data with the following extensions:"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6524,7 +6552,8 @@
     },
     "edit-data-source-actions": {
       "build-a-dashboard": "Build a dashboard",
-      "explore-data": "Explore data"
+      "explore-data": "Explore data",
+      "open-in-explore": "Open in Explore View"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
@@ -6570,6 +6599,9 @@
       "description": {
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus, and Loki"
       }
+    },
+    "list": {
+      "starred": "Starred"
     },
     "new-data-source-view": {
       "cancel": "Cancel",
@@ -6794,6 +6826,7 @@
       }
     }
   },
+  "exemplar-tooltip-header": "Exemplar",
   "explore": {
     "accordian-logs": {
       "events": "Events",
@@ -7462,6 +7495,13 @@
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "Collapse editor",
+      "tooltip-copy-query": "Copy query",
+      "tooltip-expand-editor": "Expand editor",
+      "tooltip-format-query": "Format query",
+      "tooltip-run-query": "Hit ctrl/cmd+enter to run query"
+    },
     "reduce": {
       "label-function": "Function",
       "label-input": "Input",
@@ -7477,6 +7517,11 @@
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
+    "sql-expr": {
+      "button-run-query": "Run query",
+      "modal-title": "SQL Editor",
+      "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
+    },
     "threshold": {
       "label-input": "Input"
     }
@@ -7487,13 +7532,9 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-picker": {
-    "create-instructions": "Press enter to create the new folder.",
-    "input-placeholder": "Press enter to confirm new folder",
-    "loading": "Loading folders..."
-  },
   "folder-repo": {
-    "badge-tooltip": "Provisioned"
+    "provisioned-badge": "Provisioned",
+    "read-only-badge": "Read only"
   },
   "folders": {
     "api": {
@@ -7845,7 +7886,8 @@
       "edit-pane": {
         "go-back": "Go back"
       }
-    }
+    },
+    "select-group": "Select group"
   },
   "grafana-data": {
     "valueFormats": {
@@ -8708,7 +8750,6 @@
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
-      "inspect-menu-label": "Inspect value",
       "nested-table": {
         "no-data": "No data"
       },
@@ -9034,6 +9075,7 @@
       "sign-up": "Sign up"
     }
   },
+  "label-dropdown-info": "Can't find your label? Enter it manually",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Drag and drop to reorder",
@@ -9531,6 +9573,12 @@
         "total-bytes-processed": "Total bytes processed"
       }
     },
+    "logs": {
+      "timestamp-resolution": {
+        "label-milliseconds": "Milliseconds",
+        "label-nanoseconds": "Nanoseconds"
+      }
+    },
     "logs-controls": {
       "deduplication": "Deduplication",
       "disable-highlighting": "Disable highlighting",
@@ -9554,8 +9602,12 @@
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
       "prettify-json": "Expand JSON logs",
       "remove-escaping": "Remove escaping",
+      "resolution-ms": "ms",
+      "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
+      "show-ms-timestamps": "Show millisecond timestamps",
+      "show-ns-timestamps": "Show nanosecond timestamps",
       "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
@@ -9588,7 +9640,7 @@
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
-    "name-time": "Time",
+    "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
     "name-wrap-lines": "Wrap lines",
     "order-options": {
@@ -9604,6 +9656,7 @@
       "line-contains": "Add as line contains filter",
       "line-contains-not": "Add as line does not contain filter"
     },
+    "timestamp-format": "Timestamp resolution",
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
       "aria-label-fields": "Fields",
@@ -10315,7 +10368,7 @@
     },
     "invite-user": {
       "invite-button": "Invite",
-      "invite-new-member-button": "Invite new member",
+      "invite-new-user-button": "Invite new user",
       "invite-tooltip": "Invite user"
     },
     "item": {
@@ -10837,7 +10890,6 @@
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed Version",
-        "lastCommitDate": "Last commit date:",
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
@@ -10917,6 +10969,9 @@
       "label-extension": "Extension",
       "label-plugin-id": "Plugin Id",
       "label-severity": "Severity"
+    },
+    "no-updates-available": {
+      "message": "All plugins are up to date"
     },
     "not-found-plugin": {
       "body-plugin-not-found": "That plugin cannot be found. Please check the url is correct or <1></1>go to the <3>plugin catalog</3>.",
@@ -11221,7 +11276,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
-      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+      "history-not-supported": "File history is not supported for this repository",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "repository-not-found": "Repository not found"
     },
     "file-status-page": {
       "save": "Save",
@@ -11387,6 +11444,8 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "read-only-local-tooltip": "This folder is read-only and provisioned through file provisioning. To make any changes in the folder, update the connected file repository. To modify the folder settings go to Administration > Provisioning > Repositories.",
+    "read-only-remote-tooltip": "This folder is read-only and provisioned through Git. To make any changes in the folder, update the connected repository. To modify the folder settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
       "active-jobs": "active jobs",
       "column-action": "Action",
@@ -11405,6 +11464,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },
@@ -11415,8 +11475,16 @@
       "title-repository-is-unhealthy": "Repository is unhealthy"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "compare-branch": "Compare branch",
+        "open-pull-request": "Open pull request",
+        "view-branch": "View branch",
+        "view-repository": "View repository"
+      },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
-      "view-repository": "View repository"
+      "sync-job": {
+        "view-repository": "View repository"
+      }
     },
     "repository-overview": {
       "checked": "Checked:",
@@ -11815,6 +11883,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "Discard changes",
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
@@ -11825,7 +11894,11 @@
       "replace-query-from-library": "Replace with query from library",
       "show-response": "Show response"
     },
-    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component",
+    "query-library": {
+      "editing-tooltip": "Updating query from library\nUID: {{queryLibraryRef}}",
+      "from-library": "Updating query from library"
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12061,7 +12134,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
-      "message": "No services accounts found",
+      "message": "No service accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
     }
@@ -12455,6 +12528,21 @@
   "sort-picker": {
     "select-aria-label": "Sort"
   },
+  "sql-expressions": {
+    "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
+    "ai-explain-title": "AI-powered SQL expression explanation",
+    "ai-suggestions-title": "AI-powered SQL expression suggestions",
+    "apply": "Apply",
+    "code-label": "{{ language }}",
+    "copy": "Copy",
+    "explain-empty-query-tooltip": "Enter a SQL expression to get an explanation",
+    "explain-query": "Explain query",
+    "explanation-modal-title": "SQL Query Explanation",
+    "sql-ai-interaction": "{{text}}",
+    "sql-suggestion-history": "SQL Suggestion History",
+    "suggestions": "Suggestions",
+    "view-explanation": "View explanation"
+  },
   "stat": {
     "add-orientation-option": {
       "description-orientation": "Layout orientation",
@@ -12705,7 +12793,9 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
+    "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12716,12 +12806,22 @@
     "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
     "name-fields": "Fields",
+    "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-tooltip-from-field": "Tooltip from field",
+    "name-tooltip-placement": "Tooltip placement",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "tooltip-placement-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom",
+      "label-left": "Left",
+      "label-right": "Right",
+      "label-top": "Top"
+    }
   },
   "tag-filter": {
     "clear-button": "Clear tags",
@@ -13614,9 +13714,14 @@
     "regression-transformer-editor": {
       "label": {
         "cubic": "Cubic",
+        "decic": "Decic",
+        "nonic": "Nonic",
+        "octic": "Octic",
         "quadratic": "Quadratic",
         "quartic": "Quartic",
-        "quintic": "Quintic"
+        "quintic": "Quintic",
+        "septic": "Septic",
+        "sextic": "Sextic"
       },
       "label-degree": "Degree",
       "label-model-type": "Model type",
@@ -13633,6 +13738,7 @@
       "tags": {
         "regression-analysis": "Regression analysis"
       },
+      "tooltip-high-degree-polynomial": "Higher-degree polynomials (e.g., degree 4 or higher) can result in misleading trends and unstable fits. Proceed with caution.",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

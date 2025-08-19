@@ -161,10 +161,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables previous SQL data source dataset dropdown behavior
-  */
-  sqlDatasourceDatabaseSelection?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
@@ -447,7 +443,7 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   /**
   * Enables the compressed protobuf-based alert state storage
-  * @default false
+  * @default true
   */
   alertingSaveStateCompressed?: boolean;
   /**
@@ -815,11 +811,6 @@ export interface FeatureToggles {
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
-  * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
-  * @default true
-  */
-  teamHttpHeadersMimir?: boolean;
-  /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
   teamHttpHeadersTempo?: boolean;
@@ -959,6 +950,11 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables integration with Grafana Assistant in Profiles Drilldown
+  * @default true
+  */
+  grafanaAssistantInProfilesDrilldown?: boolean;
+  /**
   * Enables using PGX instead of libpq for PostgreSQL datasource
   */
   postgresDSUsePGX?: boolean;
@@ -993,6 +989,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Registers AuthZ resource permission /apis endpoints
+  */
+  kubernetesAuthzResourcePermissionApis?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
@@ -1016,6 +1016,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables the UI to see imported Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   */
@@ -1086,6 +1091,10 @@ export interface FeatureToggles {
   */
   adhocFiltersInTooltips?: boolean;
   /**
+  * Enable favorite datasources
+  */
+  favoriteDatasources?: boolean;
+  /**
   * New Log Context component
   */
   newLogContext?: boolean;
@@ -1094,4 +1103,14 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
+  /**
+  * Enable experimental search-after-write guarantees to unified-storage search endpoints
+  * @default false
+  */
+  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
 }

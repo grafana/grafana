@@ -4,8 +4,10 @@ import { byLabelText, byTestId } from 'testing-library-selector';
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { setupMswServer } from '../../../mockApi';
+import { captureRequests } from '../../../mocks/server/events';
 
 import { StateFilterValues } from './CentralAlertHistoryScene';
+import { getHistory } from './CentralHistoryRuntimeDataSource';
 import { HistoryEventsList } from './EventListSceneObject';
 
 setupMswServer();
@@ -147,5 +149,55 @@ describe('HistoryEventsList', () => {
       expect(ui.loadingBar.query()).not.toBeInTheDocument();
     });
     expect(ui.rowHeader.query()).not.toBeInTheDocument();
+  });
+
+  describe('backend filtering', () => {
+    it('should send only exact match filters to the backend', async () => {
+      const capture = captureRequests((req) => req.url.includes('/api/v1/rules/history'));
+
+      render(
+        <HistoryEventsList
+          valueInLabelFilter={'alertname=alert1, grafana_folder=~".*folder.*", severity!=high, team="alerting"'}
+          valueInStateToFilter={StateFilterValues.all}
+          valueInStateFromFilter={StateFilterValues.all}
+          addFilter={jest.fn()}
+          timeRange={getDefaultTimeRange()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(ui.loadingBar.query()).not.toBeInTheDocument();
+      });
+
+      const requests = await capture;
+      expect(requests).toHaveLength(1);
+
+      const url = new URL(requests[0].url);
+
+      expect(url.searchParams.get('labels_alertname')).toBe('alert1');
+      expect(url.searchParams.get('labels_team')).toBe('alerting');
+      expect(url.searchParams.get('labels_grafana_folder')).toBeNull();
+      expect(url.searchParams.get('labels_severity')).toBeNull();
+    });
+
+    it('should apply same backend filtering to chart data via getHistory function', async () => {
+      const capture = captureRequests((req) => req.url.includes('/api/v1/rules/history'));
+
+      const from = 123;
+      const to = 456;
+      const labels = { alertname: 'alert_1', team: 'alerting' };
+
+      await getHistory(from, to, labels);
+
+      const requests = await capture;
+      expect(requests).toHaveLength(1);
+
+      const url = new URL(requests[0].url);
+
+      expect(url.searchParams.get('labels_alertname')).toBe(labels.alertname);
+      expect(url.searchParams.get('labels_team')).toBe(labels.team);
+      expect(url.searchParams.get('from')).toBe(from.toString());
+      expect(url.searchParams.get('to')).toBe(to.toString());
+    });
   });
 });

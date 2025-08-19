@@ -391,7 +391,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 		verifyTimestamps(parsedReq2, int64(0), int64(0), int64(0), int64(0))
 	})
 
-	t.Run("Test a datasource query with malformed local time range", func(t *testing.T) {
+	t.Run("Test a datasource query with local time range, malformed to-value", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
@@ -401,31 +401,69 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			},
 			"timeRange": {
 				"from": "1753944618000",
-				"not_to": "1753944619000"
+				"to": 1753944619000
 			}
-		}`, `{
-			"refId": "B",
+		}`)
+		mr.From = ""
+		mr.To = ""
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'to'")
+	})
+	t.Run("Test a datasource query with local time range, missing to-value", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
 			"datasource": {
 				"uid": "gIEkMvIVz",
 				"type": "postgres"
 			},
-			"timeRange": 42
+			"timeRange": {
+				"from": "1753944618000"
+			}
 		}`)
 		mr.From = ""
 		mr.To = ""
-		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
-		require.NoError(t, err)
-		require.NotNil(t, parsedReq)
-		assert.Len(t, parsedReq.parsedQueries, 1)
-		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
-		queries := parsedReq.getFlattenedQueries()
-		assert.Len(t, queries, 2)
-
-		assert.Equal(t, int64(1753944618000), queries[0].query.TimeRange.From.UnixMilli())
-		assert.Equal(t, int64(0), queries[0].query.TimeRange.To.UnixMilli())
-
-		assert.Equal(t, int64(0), queries[1].query.TimeRange.From.UnixMilli())
-		assert.Equal(t, int64(0), queries[1].query.TimeRange.To.UnixMilli())
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'to'")
+	})
+	t.Run("Test a datasource query with local time range, malformed from-value", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			},
+			"timeRange": {
+				"from": 1753944618000,
+				"to": "1753944619000"
+			}
+		}`)
+		mr.From = ""
+		mr.To = ""
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'from'")
+	})
+	t.Run("Test a datasource query with local time range, missing from-value", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			},
+			"timeRange": {
+				"to": "1753944619000"
+			}
+		}`)
+		mr.From = ""
+		mr.To = ""
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'from'")
 	})
 }
 

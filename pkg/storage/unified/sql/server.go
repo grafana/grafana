@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,6 +38,7 @@ type ServerOptions struct {
 	IndexMetrics   *resource.BleveIndexMetrics
 	Features       featuremgmt.FeatureToggles
 	QOSQueue       QOSEnqueueDequeuer
+	SecureValues   secrets.InlineSecureValueSupport
 	Ring           *ring.Ring
 	RingLifecycler *ring.BasicLifecycler
 }
@@ -52,7 +53,8 @@ func NewResourceServer(
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg: opts.Reg,
+		Reg:          opts.Reg,
+		SecureValues: opts.SecureValues,
 	}
 	if opts.AccessClient != nil {
 		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Tracer: opts.Tracer, Registry: opts.Reg})
@@ -101,6 +103,7 @@ func NewResourceServer(
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.Ring = opts.Ring
 	serverOptions.RingLifecycler = opts.RingLifecycler
+	serverOptions.SearchAfterWrite = opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchAfterWriteExperimentalAPI)
 
 	return resource.NewResourceServer(serverOptions)
 }
