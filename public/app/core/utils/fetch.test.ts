@@ -27,20 +27,29 @@ describe('parseUrlFromOptions', () => {
     ${{ id: [] }}                                               | ${'api/dashboard'} | ${'api/dashboard'}
   `(
     "when called with params: '$params' and url: '$url' then result should be '$expected'",
-    ({ params, url, expected }) => {
-      expect(parseUrlFromOptions({ params, url })).toEqual(expected);
+    async ({ params, url, expected }) => {
+      await expect(parseUrlFromOptions({ params, url })).toEmitValuesWith((received) => {
+        expect(received).toHaveLength(1);
+        expect(received[0]).toEqual(expected);
+      });
     }
   );
 
-  it('should validate the path if validatePath is true', () => {
-    expect(() => parseUrlFromOptions({ url: '/api/users/%2e%2e/admin', validatePath: true })).toThrow(
-      PathValidationError
+  it('should validate the path if validatePath is true', async () => {
+    await expect(parseUrlFromOptions({ url: '/api/users/%2e%2e/admin', validatePath: true })).toEmitValuesWith(
+      (received) => {
+        expect(received).toHaveLength(1);
+        expect(received[0]).toBeInstanceOf(PathValidationError);
+      }
     );
   });
 
-  it('should not validate the path if validatePath is false', () => {
-    expect(parseUrlFromOptions({ url: '/api/users/%2e%2e/admin', validatePath: false })).toEqual(
-      '/api/users/%2e%2e/admin'
+  it('should not validate the path if validatePath is false', async () => {
+    await expect(parseUrlFromOptions({ url: '/api/users/%2e%2e/admin', validatePath: false })).toEmitValuesWith(
+      (received) => {
+        expect(received).toHaveLength(1);
+        expect(received[0]).toEqual('/api/users/%2e%2e/admin');
+      }
     );
   });
 });
