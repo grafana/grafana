@@ -59,7 +59,7 @@ jobs:
         uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
-          cache: true 
+          cache: false 
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -73,9 +73,12 @@ jobs:
     strategy:
       matrix:
         shard: [
-          1/12,  2/12,  3/12,  4/12,
-          5/12,  6/12,  7/12,  8/12,
-          9/12, 10/12, 11/12, 12/12,
+           1/24,  2/24,  3/24,  4/24,
+           5/24,  6/24,  7/24,  8/24,
+           9/24, 10/24, 11/24, 12/24,
+          13/24, 14/24, 15/24, 16/24,
+          17/24, 18/24, 19/24, 20/24,
+          21/24, 22/24, 23/24, 24/24,
         ]
       fail-fast: false
 
@@ -106,7 +109,7 @@ jobs:
         uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -122,9 +125,12 @@ jobs:
     strategy:
       matrix:
         shard: [
-          1/12,  2/12,  3/12,  4/12,
-          5/12,  6/12,  7/12,  8/12,
-          9/12, 10/12, 11/12, 12/12,
+           1/24,  2/24,  3/24,  4/24,
+           5/24,  6/24,  7/24,  8/24,
+           9/24, 10/24, 11/24, 12/24,
+          13/24, 14/24, 15/24, 16/24,
+          17/24, 18/24, 19/24, 20/24,
+          21/24, 22/24, 23/24, 24/24,
         ]
       fail-fast: false
 
@@ -154,7 +160,7 @@ jobs:
         uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
