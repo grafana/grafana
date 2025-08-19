@@ -289,7 +289,7 @@ describe('Explore', () => {
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
       const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
-      const addFromLibraryButton = screen.getByRole('button', { name: /Add query from library/i });
+      const addFromLibraryButton = screen.getByRole('button', { name: /Add saved query/i });
 
       expect(addQueryButton).toBeDisabled();
       expect(addFromLibraryButton).toBeDisabled();

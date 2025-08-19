@@ -77,7 +77,7 @@ describe('SecondaryActions', () => {
     );
 
     expect(screen.getByRole('button', { name: /Add query$/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Add query from library/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Add saved query/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
   });
 
