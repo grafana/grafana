@@ -497,6 +497,22 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
+	// Eventually it should become healthy
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoStatus, err := h.Repositories.Resource.Get(t.Context(), repo.Name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository status") {
+			return
+		}
+		t.Logf("repository %s status: %+v", repo.Name, repoStatus.Object["status"])
+
+		errType := mustNestedString(repoStatus.Object, "status", "health", "error")
+		assert.Empty(collect, errType, "repository %s has health error: %s", repo.Name, errType)
+		msgs := mustNestedStringSlice(repoStatus.Object, "status", "health", "message")
+		assert.Empty(collect, msgs, "repository %s has health messages: %v", repo.Name, msgs)
+		status, found := mustNestedBool(repoStatus.Object, "status", "state", "healthy")
+		assert.True(collect, found, "repository %s does not have health status", repo.Name)
+		assert.True(collect, status, "repository %s is not healthy yet", repo.Name)
+	}, time.Second*10, time.Millisecond*50, "repository %s should become healthy", repo.Name)
 
 	for from, to := range repo.Copies {
 		if repo.Path != "" {
@@ -653,6 +669,15 @@ func mustNestedString(obj map[string]interface{}, fields ...string) string {
 		panic(err)
 	}
 	return v
+}
+
+func mustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
+	v, found, err := unstructured.NestedBool(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+
+	return v, found
 }
 
 func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {
