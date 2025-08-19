@@ -10,10 +10,10 @@ import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/
 import { grantUserPermissions } from '../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { GrafanaAlertmanagerDeliveryWarning } from './GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from './GrafanaAlertmanagerWarning';
 setupMswServer();
 
-describe('GrafanaAlertmanagerDeliveryWarning', () => {
+describe('GrafanaAlertmanagerWarning', () => {
   beforeEach(() => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
   });
@@ -21,9 +21,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   it('Should not render when the datasource is not Grafana', () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 0);
 
-    const { container } = renderWithStore(
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager="custom-alertmanager" />
-    );
+    const { container } = renderWithStore(<GrafanaAlertmanagerWarning currentAlertmanager="custom-alertmanager" />);
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -31,7 +29,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   it('Should render warning when the datasource is Grafana and using external AM', async () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
 
-    renderWithStore(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
+    renderWithStore(<GrafanaAlertmanagerWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
 
     expect(await screen.findByText('Grafana alerts are not delivered to Grafana Alertmanager')).toBeVisible();
   });
@@ -39,7 +37,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   it('Should render warning when the datasource is Grafana and using All AM', async () => {
     setAlertmanagerChoices(AlertmanagerChoice.All, 1);
 
-    renderWithStore(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
+    renderWithStore(<GrafanaAlertmanagerWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
 
     expect(await screen.findByText('You have additional Alertmanagers to configure')).toBeVisible();
   });
@@ -48,7 +46,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
     setAlertmanagerChoices(AlertmanagerChoice.Internal, 1);
 
     const { container } = renderWithStore(
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
     );
 
     await waitFor(() => {
@@ -60,7 +58,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
     setAlertmanagerChoices(AlertmanagerChoice.All, 0);
 
     const { container } = renderWithStore(
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
     );
 
     await waitFor(() => {

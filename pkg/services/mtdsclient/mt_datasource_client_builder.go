@@ -9,13 +9,13 @@ import (
 )
 
 type MTDatasourceClientBuilder interface {
-	BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool)
+	BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool, error)
 }
 
 type nullBuilder struct{}
 
-func (m *nullBuilder) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool) {
-	return nil, false
+func (m *nullBuilder) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool, error) {
+	return nil, false, nil
 }
 
 // we use this noop for st flows
@@ -29,7 +29,7 @@ type MtDatasourceClientBuilderWithInstance struct {
 	logger   log.Logger
 }
 
-func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool) {
+func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool, error) {
 	dsClient, err := b.instance.GetDataSourceClient(
 		b.ctx,
 		v0alpha1.DataSourceRef{
@@ -38,10 +38,9 @@ func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid
 		},
 	)
 	if err != nil {
-		b.logger.Debug("failed to get mt ds client", "error", err)
-		return nil, false
+		return nil, true, err
 	}
-	return dsClient, true
+	return dsClient, true, nil
 }
 
 // TODO: I think we might be able to refactor this to just use the instance
@@ -69,10 +68,10 @@ type testBuilder struct {
 	isMultitenant bool
 }
 
-func (b *testBuilder) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool) {
+func (b *testBuilder) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool, error) {
 	if !b.isMultitenant {
-		return nil, false
+		return nil, false, nil
 	}
 
-	return b.mockClient, true
+	return b.mockClient, true, nil
 }
