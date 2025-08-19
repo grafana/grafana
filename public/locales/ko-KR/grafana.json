@@ -3614,11 +3614,11 @@
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
+      "error-invalid-characters": "",
       "error-required": "폴더 이름은 필수 입력 항목입니다",
       "folder-name-input-placeholder-enter-folder-name": "폴더 이름 입력",
       "label-folder-name": "폴더 이름",
       "text-pull-request-created": "이 폴더에 대한 변경 사항을 포함하는 풀 요청이 생성되었습니다.",
-      "text-your-folder-will-be-created-as": "{{folderName}}(이)라는 이름으로 폴더가 생성됩니다",
       "title-pull-request-created": "풀 요청 생성됨",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다."
     },
@@ -7505,11 +7505,6 @@
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
   },
-  "folder-picker": {
-    "create-instructions": "새 폴더를 만들려면 엔터 키를 누르세요.",
-    "input-placeholder": "새 폴더를 확인하려면 엔터 키를 누르세요",
-    "loading": "폴더 로딩 중..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8728,7 +8723,6 @@
       "filter-popup-input-placeholder": "값 필터링",
       "filter-popup-match-case": "대소문자 일치",
       "inspect-drawer-title": "값 검사",
-      "inspect-menu-label": "값 검사",
       "nested-table": {
         "no-data": "데이터 없음"
       },
@@ -12754,6 +12748,7 @@
     "description-fields": "계산해야 하는 필드 선택",
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
+    "description-tooltip-from-field": "",
     "name-calculation": "계산",
     "name-cell-height": "셀 높이",
     "name-cell-type": "셀 유형",
@@ -12769,8 +12764,17 @@
     "name-min-column-width": "열 최소 너비",
     "name-show-table-footer": "테이블 바닥글 표시",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "자동",
-    "placeholder-fields": "모든 숫자 필드"
+    "placeholder-fields": "모든 숫자 필드",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "태그 지우기",

@@ -3632,11 +3632,11 @@
       "button-create": "Crear",
       "button-creating": "Creando...",
       "cancel": "Cancelar",
+      "error-invalid-characters": "",
       "error-required": "Nombre de la carpeta obligatorio",
       "folder-name-input-placeholder-enter-folder-name": "Introducir el nombre de la carpeta",
       "label-folder-name": "Nombre de la carpeta",
       "text-pull-request-created": "Se ha creado una solicitud de extracción con cambios en esta carpeta:",
-      "text-your-folder-will-be-created-as": "Tu carpeta se creará con el nombre {{folderName}}",
       "title-pull-request-created": "Solicitud de extracción creada",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
     },
@@ -7526,11 +7526,6 @@
     "select-aria-label": "Filtro de carpeta",
     "select-placeholder": "Filtrar por carpeta"
   },
-  "folder-picker": {
-    "create-instructions": "Pulsa Intro para crear la nueva carpeta.",
-    "input-placeholder": "Pulsa Intro para confirmar la nueva carpeta",
-    "loading": "Cargando carpetas..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8749,7 +8744,6 @@
       "filter-popup-input-placeholder": "Filtrar valores",
       "filter-popup-match-case": "Coincidir mayúsculas/minúsculas",
       "inspect-drawer-title": "Inspeccionar valor",
-      "inspect-menu-label": "Inspeccionar valor",
       "nested-table": {
         "no-data": "Sin datos"
       },
@@ -12795,6 +12789,7 @@
     "description-fields": "Seleccione los campos que deben calcularse",
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-tooltip-from-field": "",
     "name-calculation": "Cálculo",
     "name-cell-height": "Altura de celda",
     "name-cell-type": "Tipo de celda",
@@ -12810,8 +12805,17 @@
     "name-min-column-width": "Ancho mínimo de columna",
     "name-show-table-footer": "Mostrar pie de tabla",
     "name-show-table-header": "Mostrar encabezado de tabla",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Todos los campos numéricos"
+    "placeholder-fields": "Todos los campos numéricos",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Borrar etiquetas",

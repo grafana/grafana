@@ -3614,11 +3614,11 @@
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
+      "error-invalid-characters": "",
       "error-required": "Nama folder wajib diisi",
       "folder-name-input-placeholder-enter-folder-name": "Masukkan nama folder",
       "label-folder-name": "Nama folder",
       "text-pull-request-created": "Permintaan pull telah dibuat dengan perubahan pada folder ini:",
-      "text-your-folder-will-be-created-as": "Folder Anda akan dibuat sebagai {{folderName}}",
       "title-pull-request-created": "Permintaan pull dibuat",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
@@ -7505,11 +7505,6 @@
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
   },
-  "folder-picker": {
-    "create-instructions": "Tekan enter untuk membuat folder baru.",
-    "input-placeholder": "Tekan enter untuk mengonfirmasi folder baru",
-    "loading": "Memuat folder..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8728,7 +8723,6 @@
       "filter-popup-input-placeholder": "Filter nilai",
       "filter-popup-match-case": "Cocok huruf besar kecil",
       "inspect-drawer-title": "Periksa nilai",
-      "inspect-menu-label": "Periksa nilai",
       "nested-table": {
         "no-data": "Tidak ada data"
       },
@@ -12754,6 +12748,7 @@
     "description-fields": "Pilih bidang yang harus dihitung",
     "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
+    "description-tooltip-from-field": "",
     "name-calculation": "Perhitungan",
     "name-cell-height": "Tinggi sel",
     "name-cell-type": "Jenis sel",
@@ -12769,8 +12764,17 @@
     "name-min-column-width": "Lebar kolom minimum",
     "name-show-table-footer": "Tampilkan footer tabel",
     "name-show-table-header": "Tampilkan header tabel",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "otomatis",
-    "placeholder-fields": "Semua Bidang Numerik"
+    "placeholder-fields": "Semua Bidang Numerik",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Hapus tag",

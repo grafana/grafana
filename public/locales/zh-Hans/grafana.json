@@ -3614,11 +3614,11 @@
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
+      "error-invalid-characters": "",
       "error-required": "文件夹名称为必填项",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
       "label-folder-name": "文件夹名称",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
-      "text-your-folder-will-be-created-as": "您的文件夹将创建为 {{folderName}}",
       "title-pull-request-created": "拉取请求已创建",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
@@ -7505,11 +7505,6 @@
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
-  "folder-picker": {
-    "create-instructions": "按 Enter 键以创建新文件夹。",
-    "input-placeholder": "按 Enter 键以确认新文件夹",
-    "loading": "正在加载文件夹..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8728,7 +8723,6 @@
       "filter-popup-input-placeholder": "筛选值",
       "filter-popup-match-case": "区分大小写",
       "inspect-drawer-title": "检查值",
-      "inspect-menu-label": "检查值",
       "nested-table": {
         "no-data": "无数据"
       },
@@ -12754,6 +12748,7 @@
     "description-fields": "选择应计算的字段",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
+    "description-tooltip-from-field": "",
     "name-calculation": "计算",
     "name-cell-height": "单元格高度",
     "name-cell-type": "单元格类型",
@@ -12769,8 +12764,17 @@
     "name-min-column-width": "最小列宽",
     "name-show-table-footer": "显示表格页脚",
     "name-show-table-header": "显示表格表头",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段"
+    "placeholder-fields": "所有数字字段",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "清除标记",

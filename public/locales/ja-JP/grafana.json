@@ -3614,11 +3614,11 @@
       "button-create": "作成",
       "button-creating": "作成中...",
       "cancel": "キャンセル",
+      "error-invalid-characters": "",
       "error-required": "フォルダ名は必須です",
       "folder-name-input-placeholder-enter-folder-name": "フォルダ名を入力してください",
       "label-folder-name": "フォルダ名",
       "text-pull-request-created": "このフォルダへの変更を含むプルリクエストが作成されました。",
-      "text-your-folder-will-be-created-as": "フォルダは{{folderName}}として作成されます",
       "title-pull-request-created": "プルリクエストが作成されました",
       "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
     },
@@ -7505,11 +7505,6 @@
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
-  "folder-picker": {
-    "create-instructions": "Enterキーを押して新しいフォルダを作成します。",
-    "input-placeholder": "Enterキーを押して新しいフォルダを確定",
-    "loading": "フォルダを読み込んでいます..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8728,7 +8723,6 @@
       "filter-popup-input-placeholder": "値をフィルタリング",
       "filter-popup-match-case": "大文字/小文字を区別",
       "inspect-drawer-title": "値を検査",
-      "inspect-menu-label": "値を検査",
       "nested-table": {
         "no-data": "データなし"
       },
@@ -12754,6 +12748,7 @@
     "description-fields": "計算するフィールドを選択",
     "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
+    "description-tooltip-from-field": "",
     "name-calculation": "計算",
     "name-cell-height": "セルの高さ",
     "name-cell-type": "セルの種類",
@@ -12769,8 +12764,17 @@
     "name-min-column-width": "最小列幅",
     "name-show-table-footer": "テーブルフッターを表示",
     "name-show-table-header": "テーブルヘッダーを表示",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "すべての数値フィールド"
+    "placeholder-fields": "すべての数値フィールド",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "タグをクリア",
