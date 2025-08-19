@@ -1,4 +1,4 @@
-package mtdsclient
+package dsquerierclient
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 )
 
-type MTDatasourceClientBuilder interface {
+type QSDatasourceClientBuilder interface {
 	BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool, error)
 }
 
@@ -18,18 +18,18 @@ func (m *nullBuilder) BuildClient(pluginId string, uid string) (clientapi.QueryD
 	return nil, false, nil
 }
 
-// we use this noop for st flows
-func NewNullMTDatasourceClientBuilder() MTDatasourceClientBuilder {
+// we use this noop for non-query-service flows
+func NewNullQSDatasourceClientBuilder() QSDatasourceClientBuilder {
 	return &nullBuilder{}
 }
 
-type MtDatasourceClientBuilderWithInstance struct {
+type QsDatasourceClientBuilderWithInstance struct {
 	instance clientapi.Instance
 	ctx      context.Context
 	logger   log.Logger
 }
 
-func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool, error) {
+func (b *QsDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool, error) {
 	dsClient, err := b.instance.GetDataSourceClient(
 		b.ctx,
 		v0alpha1.DataSourceRef{
@@ -44,19 +44,19 @@ func (b *MtDatasourceClientBuilderWithInstance) BuildClient(pluginId string, uid
 }
 
 // TODO: I think we might be able to refactor this to just use the instance
-func NewMtDatasourceClientBuilderWithInstance(
+func NewQsDatasourceClientBuilderWithInstance(
 	instance clientapi.Instance,
 	ctx context.Context,
 	logger log.Logger,
-) MTDatasourceClientBuilder {
-	return &MtDatasourceClientBuilderWithInstance{
+) QSDatasourceClientBuilder {
+	return &QsDatasourceClientBuilderWithInstance{
 		instance: instance,
 		ctx:      ctx,
 		logger:   logger,
 	}
 }
 
-func NewTestMTDSClientBuilder(isMultiTenant bool, mockClient clientapi.QueryDataClient) MTDatasourceClientBuilder {
+func NewTestQSDSClientBuilder(isMultiTenant bool, mockClient clientapi.QueryDataClient) QSDatasourceClientBuilder {
 	return &testBuilder{
 		mockClient:    mockClient,
 		isMultitenant: isMultiTenant,

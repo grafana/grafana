@@ -1,5 +1,5 @@
 import ansicolor from 'ansicolor';
-import { parse, stringify } from 'lossless-json';
+import { LosslessNumber, parse, stringify } from 'lossless-json';
 import Prism, { Grammar } from 'prismjs';
 
 import {
@@ -63,6 +63,7 @@ export class LogListModel implements LogRowModel {
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _virtualization?: LogLineVirtualization;
   private _wrapLogMessage: boolean;
+  private _json = false;
 
   constructor(
     log: LogRowModel,
@@ -124,9 +125,13 @@ export class LogListModel implements LogRowModel {
   get body(): string {
     if (this._body === undefined) {
       try {
-        const parsed = stringify(parse(this.raw), undefined, this._wrapLogMessage ? 2 : 1);
-        if (parsed) {
-          this.raw = parsed;
+        const parsed = parse(this.raw);
+        if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
+          this._json = true;
+        }
+        const reStringified = this._wrapLogMessage ? stringify(parsed, undefined, 2) : this.raw;
+        if (reStringified) {
+          this.raw = reStringified;
         }
       } catch (error) {}
       const raw = config.featureToggles.otelLogsFormatting && this.otelLanguage ? getOtelFormattedBody(this) : this.raw;
@@ -153,15 +158,17 @@ export class LogListModel implements LogRowModel {
 
   get highlightedBody() {
     if (this._highlightedBody === undefined) {
+      // Body is accessed first to trigger the getter code before generateLogGrammar()
+      const sanitizedBody = textUtil.sanitize(this.body);
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedBody = Prism.highlight(
-        textUtil.sanitize(this.body),
-        { ...extraGrammar, ...this._grammar },
-        'lokiql'
-      );
+      this._highlightedBody = Prism.highlight(sanitizedBody, { ...extraGrammar, ...this._grammar }, 'lokiql');
     }
     return this._highlightedBody;
+  }
+
+  get isJSON() {
+    return this._json;
   }
 
   get sampledMessage(): string | undefined {
@@ -216,7 +223,6 @@ export class LogListModel implements LogRowModel {
       this._body = undefined;
       this._highlightedBody = undefined;
     }
-    return this.collapsed;
   }
 
   setCollapsedState(collapsed: boolean) {
