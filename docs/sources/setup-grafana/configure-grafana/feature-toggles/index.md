@@ -83,7 +83,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
-| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    | Yes                |
+| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 
 ## Public preview feature toggles
 

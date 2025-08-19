@@ -1715,7 +1715,7 @@ var (
 			Description: "Use fixed-width numbers globally in the UI",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
+			Expression:  "false",
 		},
 		{
 			Name:         "newInfluxDSConfigPageDesign",
