@@ -3632,11 +3632,11 @@
       "button-create": "Criar",
       "button-creating": "Criando…",
       "cancel": "Cancelar",
+      "error-invalid-characters": "",
       "error-required": "O nome da pasta é obrigatório",
       "folder-name-input-placeholder-enter-folder-name": "Digitar o nome da pasta",
       "label-folder-name": "Nome da pasta",
       "text-pull-request-created": "Uma solicitação de extração foi criada com alterações nesta pasta:",
-      "text-your-folder-will-be-created-as": "Sua pasta será criada como {{folderName}}",
       "title-pull-request-created": "Solicitação de extração criada",
       "title-this-repository-is-read-only": "Este repositório é somente leitura"
     },
@@ -7526,11 +7526,6 @@
     "select-aria-label": "Filtro de pasta",
     "select-placeholder": "Filtrar por pasta"
   },
-  "folder-picker": {
-    "create-instructions": "Pressione Enter para criar a nova pasta.",
-    "input-placeholder": "Pressione Enter para confirmar a nova pasta",
-    "loading": "Carregando pastas..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8749,7 +8744,6 @@
       "filter-popup-input-placeholder": "Filtrar valores",
       "filter-popup-match-case": "Diferenciar maiúsculas/minúsculas",
       "inspect-drawer-title": "Inspecionar valor",
-      "inspect-menu-label": "Inspecionar valor",
       "nested-table": {
         "no-data": "Sem dados"
       },
@@ -12795,6 +12789,7 @@
     "description-fields": "Selecione os campos que devem ser calculados",
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
+    "description-tooltip-from-field": "",
     "name-calculation": "Cálculo",
     "name-cell-height": "Altura da célula",
     "name-cell-type": "Tipo de célula",
@@ -12810,8 +12805,17 @@
     "name-min-column-width": "Largura mínima da coluna",
     "name-show-table-footer": "Mostrar rodapé da tabela",
     "name-show-table-header": "Mostrar cabeçalho da tabela",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automático",
-    "placeholder-fields": "Todos os campos numéricos"
+    "placeholder-fields": "Todos os campos numéricos",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Limpar etiquetas",
