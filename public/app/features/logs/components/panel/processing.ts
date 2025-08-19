@@ -1,5 +1,5 @@
 import ansicolor from 'ansicolor';
-import { parse, stringify } from 'lossless-json';
+import { LosslessNumber, parse, stringify } from 'lossless-json';
 import Prism, { Grammar } from 'prismjs';
 
 import {
@@ -126,8 +126,8 @@ export class LogListModel implements LogRowModel {
     if (this._body === undefined) {
       try {
         const parsed = parse(this.raw);
-        if (typeof parsed === 'object') {
-          this._json = true; 
+        if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
+          this._json = true;
         }
         const reStringified = this._wrapLogMessage ? stringify(parsed, undefined, 2) : this.raw;
         if (reStringified) {
@@ -158,15 +158,21 @@ export class LogListModel implements LogRowModel {
 
   get highlightedBody() {
     if (this._highlightedBody === undefined) {
+      // Body is accessed first to trigger the getter code before generateLogGrammar()
+      const sanitizedBody = textUtil.sanitize(this.body);
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
       this._highlightedBody = Prism.highlight(
-        textUtil.sanitize(this.body),
+        sanitizedBody,
         { ...extraGrammar, ...this._grammar },
         'lokiql'
       );
     }
     return this._highlightedBody;
+  }
+
+  get isJSON() {
+    return this._json;
   }
 
   get sampledMessage(): string | undefined {
