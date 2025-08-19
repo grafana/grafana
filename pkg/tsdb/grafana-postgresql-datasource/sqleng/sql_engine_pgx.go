@@ -303,7 +303,7 @@ func (e *DataSourceHandler) newProcessCfgPGX(queryContext context.Context, query
 				case 790:
 					columnTypesPGX = append(columnTypesPGX, "money")
 				default:
-					return nil, fmt.Errorf("unknown data type oid: %d", field.DataTypeOID)
+					columnTypesPGX = append(columnTypesPGX, "unknown")
 				}
 			} else {
 				columnTypesPGX = append(columnTypesPGX, pqtype.Name)
@@ -425,7 +425,7 @@ func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Fram
 				})
 				break
 			}
-			row := make([]interface{}, len(fieldDescriptions))
+			row := make([]any, len(fieldDescriptions))
 			for colIdx, fd := range fieldDescriptions {
 				rawValue := result.Rows[rowIdx][colIdx]
 				dataTypeOID := fd.DataTypeOID
@@ -523,12 +523,7 @@ func getFieldTypesFromDescriptions(fieldDescriptions []pgconn.FieldDescription, 
 	for i, v := range fieldDescriptions {
 		typeName, ok := m.TypeForOID(v.DataTypeOID)
 		if !ok {
-			// Handle special cases for field types
-			if v.DataTypeOID == pgtype.TimetzOID || v.DataTypeOID == 790 {
-				fieldTypes[i] = data.FieldTypeNullableString
-			} else {
-				return nil, fmt.Errorf("unknown data type oid: %d", v.DataTypeOID)
-			}
+			fieldTypes[i] = data.FieldTypeNullableString
 		} else {
 			switch typeName.Name {
 			case "int2":
