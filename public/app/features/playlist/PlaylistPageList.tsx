@@ -19,7 +19,7 @@ const PlaylistPageListComponent = ({ playlists, setStartPlaylist, setPlaylistToD
   return (
     <ul className={styles.list}>
       {playlists.map((playlist) => (
-        <li className={styles.listItem} key={playlist.metadata.name}>
+        <li className={styles.listItem} key={playlist.metadata?.name}>
           <PlaylistCard
             playlist={playlist}
             setStartPlaylist={setStartPlaylist}
