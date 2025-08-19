@@ -324,7 +324,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     test('When the collapsed state changes, the log line contents re-render', async () => {
       log.collapsed = true;
       log.raw = 'The full contents of the log line';
-      
+
       render(
         <LogListContextProvider {...contextProps}>
           <LogLine {...defaultProps} log={log} />
@@ -334,7 +334,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.queryByText(log.raw)).not.toBeInTheDocument();
 
       await userEvent.click(await screen.findByText('show more'));
-      
+
       expect(screen.getByText(log.raw)).toBeInTheDocument();
     });
 
