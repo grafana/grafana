@@ -88,6 +88,9 @@ func ToInlineSecureValues(dsType string, dsUID string, keys iter.Seq[string]) co
 			Name: "ds-" + n[0:10], // predictable name for dual writing
 		}
 	}
+	if len(values) == 0 {
+		return nil
+	}
 	return values
 }
 
