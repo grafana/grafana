@@ -8,6 +8,7 @@ export type BulkActionFormData = {
   comment: string;
   ref: string;
   workflow?: WorkflowOption;
+  targetFolderUID?: string;
 };
 
 export interface BulkActionProvisionResourceProps {

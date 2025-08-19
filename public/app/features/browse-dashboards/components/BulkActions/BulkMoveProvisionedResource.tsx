@@ -40,7 +40,13 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
-  const { handleSubmit, watch } = methods;
+  const {
+    handleSubmit,
+    watch,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = methods;
   const workflow = watch('workflow');
 
   // Get target folder data
@@ -64,12 +70,15 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     const { targetFolderPathInRepo, resources } = setupMoveOperation();
 
     if (!targetFolderPathInRepo) {
-      throw new Error(
-        t(
+      setError('targetFolderUID', {
+        type: 'manual',
+        message: t(
           'browse-dashboards.bulk-move-resources-form.error-no-target-folder-path',
-          'Target folder path in repository is invalid, please select another folder.'
-        )
-      );
+          'Target folder path is invalid or empty, please select again.'
+        ),
+      });
+      setHasSubmitted(false); // Reset submit state so user can try again
+      return;
     }
 
     // Create the move job spec
@@ -114,8 +123,19 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           ) : (
             <>
               {/* Target folder selection */}
-              <Field noMargin label={t('browse-dashboards.bulk-move-resources-form.target-folder', 'Target Folder')}>
-                <FolderPicker value={targetFolderUID} onChange={(uid) => setTargetFolderUID(uid || '')} />
+              <Field
+                noMargin
+                label={t('browse-dashboards.bulk-move-resources-form.target-folder', 'Target Folder')}
+                error={errors.targetFolderUID?.message}
+                invalid={!!errors.targetFolderUID}
+              >
+                <FolderPicker
+                  value={targetFolderUID}
+                  onChange={(uid) => {
+                    setTargetFolderUID(uid || '');
+                    clearErrors('targetFolderUID');
+                  }}
+                />
               </Field>
               <ResourceEditFormSharedFields
                 resourceType="folder"
