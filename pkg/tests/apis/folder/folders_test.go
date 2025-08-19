@@ -1168,3 +1168,84 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 		}
 	}
 }
+
+// Reproduces a bug where folder deletion does not check for attached library panels.
+func TestFolderDeletionBlockedByLibraryElements(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// test on all dualwriter modes
+	for mode := 0; mode <= 4; mode++ {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesLibraryPanels,
+				},
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create a folder via legacy API (/api/folders) so it is visible to both paths
+			folderUID := fmt.Sprintf("libpanel-del-%d", mode)
+			legacyPayload := fmt.Sprintf(`{
+                "title": "Folder With Library Panel %d",
+                "uid": "%s"
+            }`, mode, folderUID)
+
+			legacyCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(legacyPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, legacyCreate.Result)
+			require.Equal(t, folderUID, legacyCreate.Result.UID)
+
+			// Create a library element inside the folder via /api to simulate an attached library panel
+			libElementPayload := fmt.Sprintf(`{
+                "kind": 1,
+                "name": "LP in %s",
+                "folderUid": "%s",
+                "model": {
+                    "type": "text",
+                    "title": "LP in %s"
+                }
+            }`, folderUID, folderUID, folderUID)
+
+			libCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/library-elements",
+				Body:   []byte(libElementPayload),
+			}, &struct{}{})
+			require.NotNil(t, libCreate.Response)
+			require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
+
+			// Attempt to delete the folder via K8s API. This should be blocked (ErrFolderNotEmpty)
+			err := client.Resource.Delete(context.Background(), folderUID, metav1.DeleteOptions{})
+			require.Error(t, err, "expected folder deletion to be blocked when library panels exist")
+
+			// Verify the folder still exists
+			_, getErr := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+			require.NoError(t, getErr, "folder should still exist after failed deletion")
+		})
+	}
+}
