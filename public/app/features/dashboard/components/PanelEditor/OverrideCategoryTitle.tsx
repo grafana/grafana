@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Stack, Icon, useStyles2 } from '@grafana/ui';
 import { FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
 
 interface Props {
@@ -29,7 +29,7 @@ export const OverrideCategoryTitle = ({
 
   return (
     <div>
-      <HorizontalGroup justify="space-between">
+      <Stack justifyContent="space-between">
         <div>{overrideName}</div>
         <Button
           variant="secondary"
@@ -39,7 +39,7 @@ export const OverrideCategoryTitle = ({
           tooltip={t('dashboard.override-category-title.tooltip-remove-override', 'Remove override')}
           aria-label={t('dashboard.override-category-title.aria-label-remove-override', 'Remove override')}
         />
-      </HorizontalGroup>
+      </Stack>
       {!isExpanded && (
         <div className={styles.overrideDetails}>
           <div className={styles.options} title={matcherOptions}>
