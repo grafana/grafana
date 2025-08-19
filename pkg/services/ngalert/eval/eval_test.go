@@ -1596,3 +1596,11 @@ func (f fakeNode) String() string {
 func (f fakeNode) NeedsVars() []string {
 	return nil
 }
+
+func (f fakeNode) IsInputTo() map[string]struct{} {
+	return nil
+}
+
+func (f fakeNode) SetInputTo(a string) {
+	return
+}
