@@ -152,7 +152,7 @@ describe.skip('Loki Query Editor', () => {
       .find('.view-overlays[role="presentation"]')
       .get('.cdr')
       .then(($el) => {
-        const win = $el[0].ownerDocument.defaultView;
+        const win = $el[0].ownerDocument.defaultView!;
         const after = win.getComputedStyle($el[0], '::after');
         const content = after.getPropertyValue('content');
         expect(content).to.eq('"Enter a Loki query (run with Shift+Enter)"');
@@ -173,7 +173,7 @@ describe.skip('Loki Query Editor', () => {
     cy.contains('Table').click({ force: true });
 
     // One row with two cells
-    cy.get('[role="cell"]').should('have.length', 2);
+    cy.get('[role="gridcell"]').should('have.length', 2);
 
     cy.contains('label', 'targetLabelName').scrollIntoView();
     cy.contains('label', 'targetLabelName').should('be.visible');
@@ -186,7 +186,7 @@ describe.skip('Loki Query Editor', () => {
       cy.get('input[type="checkbox"]').should('be.checked');
     });
 
-    const exploreCells = cy.get('[role="cell"]');
+    const exploreCells = cy.get('[role="gridcell"]');
 
     // Now we should have a row with 3 columns
     exploreCells.should('have.length', 3);
@@ -213,13 +213,13 @@ describe.skip('Loki Query Editor', () => {
     const panel = cy.get('[data-viz-panel-key="panel-1"]');
     panel.should('be.visible');
 
-    const cells = panel.find('[role="table"] [role="cell"]');
+    const cells = panel.find('[role="grid"] [role="gridcell"]');
     // Should have 3 columns
     cells.should('have.length', 3);
     // Cells contain strings found in log line
     cells.contains('"wave":-0.5877852522916832');
 
     // column has correct value of "targetLabelValue", need to requery the DOM because of the .contains call above
-    cy.get('[data-viz-panel-key="panel-1"]').find('[role="table"] [role="cell"]').contains('targetLabelValue');
+    cy.get('[data-viz-panel-key="panel-1"]').find('[role="grid"] [role="gridcell"]').contains('targetLabelValue');
   });
 });
