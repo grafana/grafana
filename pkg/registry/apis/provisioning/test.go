@@ -21,17 +21,19 @@ type StatusPatcherProvider interface {
 	GetStatusPatcher() *controller.RepositoryStatusPatcher
 }
 
-type testConnector struct {
-	getter        RepoGetter
-	tester        controller.RepositoryTester
-	healthChecker *controller.HealthChecker
+type HealthCheckerProvider interface {
+	GetHealthChecker() *controller.HealthChecker
 }
 
-func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, healthChecker *controller.HealthChecker) *testConnector {
+type testConnector struct {
+	getter RepoGetter
+	tester controller.RepositoryTester
+}
+
+func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, _ *controller.HealthChecker) *testConnector {
 	return &testConnector{
-		getter:        getter,
-		tester:        tester,
-		healthChecker: healthChecker,
+		getter: getter,
+		tester: tester,
 	}
 }
 
@@ -135,7 +137,19 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 
 			// Use health checker to test and update repository health
-			rsp, _, err = s.healthChecker.RefreshHealth(ctx, repo)
+			healthProvider, ok := s.getter.(HealthCheckerProvider)
+			if !ok {
+				responder.Error(fmt.Errorf("health checker provider not available"))
+				return
+			}
+			
+			healthChecker := healthProvider.GetHealthChecker()
+			if healthChecker == nil {
+				responder.Error(fmt.Errorf("health checker not initialized yet, please try again"))
+				return
+			}
+			
+			rsp, _, err = healthChecker.RefreshHealth(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return

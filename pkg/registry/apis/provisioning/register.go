@@ -406,6 +406,10 @@ func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
+func (b *APIBuilder) GetHealthChecker() *controller.HealthChecker {
+	return b.healthChecker
+}
+
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := provisioning.AddToScheme(scheme)
 	if err != nil {
@@ -472,12 +476,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
-	// Initialize health checker before using it in testConnector
-	b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
-	b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
-
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{}, b.healthChecker)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{}, b.GetHealthChecker())
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -660,6 +660,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 			b.repositoryLister = repoInformer.Lister()
 
+			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
+			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
+
 			// if running solely CRUD, skip the rest of the setup
 			if b.localFileResolver == nil {
 				return nil
@@ -685,7 +688,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAll,
 				stageIfPossible,
 			)
-
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
@@ -777,7 +779,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				&repository.Tester{},
 				b.jobs,
 				b.storageStatus,
-				b.healthChecker,
+				b.GetHealthChecker(),
 				b.statusPatcher,
 			)
 			if err != nil {
