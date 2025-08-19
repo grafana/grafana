@@ -11,7 +11,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const svcName = provisioning.GROUP
@@ -30,16 +29,16 @@ var _ Service = (*secretsService)(nil)
 
 //go:generate mockery --name DecryptService --structname MockDecryptService --srcpkg=github.com/grafana/grafana/pkg/registry/apis/secret --filename decrypt_service_mock.go --with-expecter
 type secretsService struct {
-	secureValues SecureValueClient
-	decryptSvc   secret.DecryptService
-	cfg          *setting.Cfg
+	secureValues         SecureValueClient
+	decryptSvc           secret.DecryptService
+	decrypterServiceName string
 }
 
-func NewSecretsService(secretsSvc SecureValueClient, decryptSvc secret.DecryptService, cfg *setting.Cfg) Service {
+func NewSecretsService(secretsSvc SecureValueClient, decryptSvc secret.DecryptService, grpcGrafanaServiceName string) Service {
 	return &secretsService{
-		secureValues: secretsSvc,
-		decryptSvc:   decryptSvc,
-		cfg:          cfg,
+		secureValues:         secretsSvc,
+		decryptSvc:           decryptSvc,
+		decrypterServiceName: grpcGrafanaServiceName,
 	}
 }
 
@@ -78,8 +77,8 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 	}
 
 	decrypters := []string{svcName}
-	if s.cfg.SecretsManagement.GrpcGrafanaServiceName != "" {
-		decrypters = append(decrypters, s.cfg.SecretsManagement.GrpcGrafanaServiceName)
+	if s.decrypterServiceName != "" {
+		decrypters = append(decrypters, s.decrypterServiceName)
 	}
 
 	// Create the secret directly as unstructured
