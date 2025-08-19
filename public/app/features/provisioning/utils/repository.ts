@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
-import { RepositoryView, RepoWorkflows } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { RepoWorkflows } from '../types';
 
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
   // Repository is consider read-only if it has no workflows defined (workflows are required for write operations)
