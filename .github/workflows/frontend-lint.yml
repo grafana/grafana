@@ -163,7 +163,7 @@ jobs:
         yarn generate-apis || (echo "${extract_error_message}" && false)
     - run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
-        file_diff="$(git diff)"
+        file_diff="$(git diff ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -196,7 +196,7 @@ jobs:
         yarn generate-apis || (echo "${extract_error_message}" && false)
     - run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
-        file_diff="$(git diff)"
+        file_diff="$(git diff ':!conf')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
