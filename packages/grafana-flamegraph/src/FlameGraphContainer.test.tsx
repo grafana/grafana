@@ -9,6 +9,11 @@ import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(() => [false, null]), // [isAvailable, openAssistant]
+  createContext: jest.fn(),
+}));
+
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
   useMeasure: () => {
