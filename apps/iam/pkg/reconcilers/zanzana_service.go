@@ -20,7 +20,7 @@ func NewZanzanaPermissionStore(zanzanaClient zanzana.Client) PermissionStore {
 }
 
 func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace, folderUID, parentUID string) error {
-	err := c.DeleteFolder(ctx, namespace, folderUID)
+	err := c.DeleteFolderParents(ctx, namespace, folderUID)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace,
 }
 
 func (c *ZanzanaPermissionStore) GetFolderParents(ctx context.Context, namespace, folderUID string) ([]string, error) {
-	tuples, err := c.listFolderRelations(ctx, namespace, folderUID)
+	tuples, err := c.listFolderParentRelations(ctx, namespace, folderUID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +78,8 @@ func (c *ZanzanaPermissionStore) GetFolderParents(ctx context.Context, namespace
 	return parents, nil
 }
 
-func (c *ZanzanaPermissionStore) DeleteFolder(ctx context.Context, namespace, folderUID string) error {
-	tuples, err := c.listFolderRelations(ctx, namespace, folderUID)
+func (c *ZanzanaPermissionStore) DeleteFolderParents(ctx context.Context, namespace, folderUID string) error {
+	tuples, err := c.listFolderParentRelations(ctx, namespace, folderUID)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,9 @@ func (c *ZanzanaPermissionStore) DeleteFolder(ctx context.Context, namespace, fo
 	return nil
 }
 
-func (c *ZanzanaPermissionStore) listFolderRelations(ctx context.Context, namespace, folderUID string) ([]*authzextv1.Tuple, error) {
+// listFolderParentRelations lists parent relations where the given folder is the object.
+// It returns tuples where other folders are parents of this folder, not children.
+func (c *ZanzanaPermissionStore) listFolderParentRelations(ctx context.Context, namespace, folderUID string) ([]*authzextv1.Tuple, error) {
 	object, err := toFolderTuple(folderUID)
 	if err != nil {
 		return nil, err

@@ -26,7 +26,7 @@ type FolderStore interface {
 type PermissionStore interface {
 	GetFolderParents(ctx context.Context, namespace, folderUID string) ([]string, error)
 	SetFolderParent(ctx context.Context, namespace, folderUID, parentUID string) error
-	DeleteFolder(ctx context.Context, namespace, folderUID string) error
+	DeleteFolderParents(ctx context.Context, namespace, folderUID string) error
 }
 
 // AppConfig represents the app-specific configuration
@@ -168,7 +168,7 @@ func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *folde
 	namespace := folder.Namespace
 	folderUID := folder.Name
 
-	err := r.permissionStore.DeleteFolder(ctx, namespace, folderUID)
+	err := r.permissionStore.DeleteFolderParents(ctx, namespace, folderUID)
 	if err != nil {
 		return errorWithRetryDefault(ctx, err, "Error deleting folder from permission store")
 	}
