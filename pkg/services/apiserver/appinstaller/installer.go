@@ -2,6 +2,7 @@ package appinstaller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -58,27 +60,31 @@ func AddToScheme(
 	return additionalGroupVersions, nil
 }
 
-// RegisterAdmissionPlugins registers admission plugins for app installers
-func RegisterAdmissionPlugins(
-	ctx context.Context,
+// RegisterAdmission combines the existing admission control from builders.
+func RegisterAdmission(
+	existingAdmission admission.Interface,
 	appInstallers []appsdkapiserver.AppInstaller,
-	options *grafanaapiserveroptions.Options,
-) error {
-	logger := logging.FromContext(ctx)
+) (admission.Interface, error) {
+	controllers := []admission.Interface{}
 
 	for _, installer := range appInstallers {
-		plugin := installer.AdmissionPlugin()
-		if plugin != nil {
-			md := installer.ManifestData()
-			if md == nil {
-				return fmt.Errorf("manifest is not initialized for installer for GroupVersions %v", installer.GroupVersions())
-			}
-			pluginName := md.AppName + " admission"
-			options.RecommendedOptions.Admission.Plugins.Register(pluginName, plugin)
-			logger.Info("Registered admission plugin", "app", md.AppName)
+		factory := installer.AdmissionPlugin()
+		if factory == nil {
+			continue
 		}
+
+		admissionInterface, err := factory(nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create admission plugin: %w", err)
+		}
+		controllers = append(controllers, admissionInterface)
 	}
-	return nil
+
+	if existingAdmission != nil {
+		controllers = append(controllers, existingAdmission)
+	}
+
+	return admission.NewChainHandler(controllers...), nil
 }
 
 type AuthorizerRegistrar interface {
@@ -179,7 +185,7 @@ func createPostStartHook(
 		logger := logging.FromContext(hookContext.Context)
 		logger.Debug("Initializing app", "app", installer.ManifestData().AppName)
 
-		if err := installer.InitializeApp(*hookContext.LoopbackClientConfig); err != nil {
+		if err := installer.InitializeApp(*hookContext.LoopbackClientConfig); err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
 			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
 			return fmt.Errorf("failed to initialize app %s: %w", installer.ManifestData().AppName, err)
 		}
