@@ -73,7 +73,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
       const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
       newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
@@ -84,7 +84,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         dashboard: jsonModel,
         meta: dashboard.state.meta,
       });
-      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
@@ -92,6 +92,9 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     }
 
     this.setState({ jsonText: this.getJsonText() });
+
+    // We also need to resume tracking changes since the change handler won't see any later edit
+    dashboard.resumeTrackingChanges();
   };
 
   static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
