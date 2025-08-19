@@ -52,7 +52,7 @@
       "button-use-query": "Usar esta consulta",
       "label-categories": "Categorias",
       "label-query-results": "Resultados da consulta: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Não é possível listar todas as categorias",
       "placeholder-all-categories": "Todas as categorias",
       "placeholder-search-logs": "Fazer buscas nas consultas de logs",
       "text-loading": "Carregando..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Ativar logs básicos"
     },
     "config-editor": {
-      "description-additional-settings": "As configurações adicionais são opcionais, e você pode defini-las para ter mais controle sobre sua fonte de dados. Isso inclui o proxy SOCKS seguro.",
-      "description-request-timeout": "Defina o tempo limite de solicitação em segundos. O tempo limite padrão é de 30 segundos.",
-      "title-additional-settings": "Configurações adicionais",
-      "title-request-timeout": "Tempo limite de solicitação"
+      "description-additional-settings": "",
+      "title-additional-settings": "Configurações adicionais"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "As credenciais de fallback foram desativadas. Como a autenticação baseada no usuário é compatível apenas com solicitações que apresentem um usuário no escopo, recursos como alertas, consultas gravadas ou relatórios não funcionarão como esperado. Consulte a <2>documentação</2> para saber mais.",
@@ -168,8 +166,8 @@
       "tooltip-limit": "Restrinja a quantidade de linhas retornadas (o valor padrão é 1.000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Tem certeza de que deseja mudar para os registros básicos?",
+      "confirmText-confirm": "Confirmar",
       "description-basic-logs-queries": "As consultas de logs básicos incorrem em custos com base na quantidade de dados verificados.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Consultas de logs básicos",
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Botão de iniciar consulta de logs do Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Mudar para o construtor descartará sua consulta KQL atual e limpará o editor KQL. Tem certeza de que deseja continuar?",
+      "body-switching-to-kql": "Mudar para o KQL descartará suas configurações atuais do construtor. Tem certeza de que deseja continuar?",
       "button-kick-start-your-query": "Iniciar sua consulta",
       "button-run-query": "Executar consulta",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Alternar para {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Construtor",
+        "label-kql": "KQL"
       },
       "label-service": "Serviço",
       "placeholder-service": "Serviço...",
@@ -241,7 +239,7 @@
       "title-error-occurred": "Ocorreu um erro ao solicitar recursos do Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Escopo"
     },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",

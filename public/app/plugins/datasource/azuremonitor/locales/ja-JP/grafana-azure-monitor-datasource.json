@@ -52,7 +52,7 @@
       "button-use-query": "このクエリを使用",
       "label-categories": "カテゴリ－",
       "label-query-results": "クエリ結果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "すべてのカテゴリを一覧表示できません",
       "placeholder-all-categories": "すべてのカテゴリー",
       "placeholder-search-logs": "ログクエリを検索",
       "text-loading": "読み込み中..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "基本ログを有効にする"
     },
     "config-editor": {
-      "description-additional-settings": "追加設定は、データソースをよりきめ細かく制御するために設定できるオプション設定です。これには、Socket Secureプロキシ（SOCKS）が含まれます。",
-      "description-request-timeout": "リクエストタイムアウトを秒単位で設定します。デフォルトは30秒です。",
-      "title-additional-settings": "追加設定",
-      "title-request-timeout": "リクエストタイムアウト"
+      "description-additional-settings": "",
+      "title-additional-settings": "追加設定"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "フォールバック認証情報が無効になっています。ユーザーベース認証は、本質的にスコープ内のユーザーのリクエストのみをサポートするため、アラート、記録クエリ、レポートなどの機能は想定どおりに機能しません。詳細については、<2>ドキュメント</2>をご覧ください。",
@@ -168,8 +166,8 @@
       "tooltip-limit": "返される行数を制限します（デフォルトは1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "基本ログに切り替えてもよろしいですか？",
+      "confirmText-confirm": "確認",
       "description-basic-logs-queries": "基本ログクエリを使用すると、スキャンされたデータ量に基づいてコストが発生します。",
       "label-logs": "ログ",
       "title-basic-logs-queries": "基本ログクエリ",
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azureログのクエリ開始ボタン",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "ビルダーに切り替えると、現在のKQLクエリが破棄され、KQLエディターがクリアされます。よろしいですか？",
+      "body-switching-to-kql": "KQLに切り替えると、現在のビルダー設定が破棄されます。よろしいですか？",
       "button-kick-start-your-query": "クエリを開始",
       "button-run-query": "クエリの実行",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "{{newMode}}に切り替える",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "ビルダー",
+        "label-kql": "KQL"
       },
       "label-service": "サービス",
       "placeholder-service": "サービス...",

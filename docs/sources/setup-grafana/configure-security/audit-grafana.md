@@ -420,9 +420,11 @@ tenant_id =
 
 If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:
 
-- **host** - OS hostname on which the Grafana instance is running.
-- **grafana_instance** - Application URL.
-- **kind** - `auditing`
+| Label            | Value                                                |
+| ---------------- | ---------------------------------------------------- |
+| host             | OS hostname on which the Grafana instance is running |
+| grafana_instance | Application URL                                      |
+| kind             | `auditing`                                           |
 
 When basic authentication is needed to ingest logs in your Loki instance, you can specify credentials in the URL field. For example:
 

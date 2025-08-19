@@ -52,7 +52,7 @@
       "button-use-query": "Použít tento dotaz",
       "label-categories": "Kategorie",
       "label-query-results": "Výsledky dotazu: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Nelze vypsat všechny kategorie",
       "placeholder-all-categories": "Všechny kategorie",
       "placeholder-search-logs": "Hledat dotazy protokolů",
       "text-loading": "Načítání…"
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "config-editor": {
-      "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. To zahrnuje zabezpečený proxy server Socks.",
-      "description-request-timeout": "Nastavte časový limit požadavku v sekundách. Výchozí hodnota je 30 sekund.",
-      "title-additional-settings": "Další nastavení",
-      "title-request-timeout": "Vypršení časového limitu požadavku"
+      "description-additional-settings": "",
+      "title-additional-settings": "Další nastavení"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Záložní přihlašovací údaje byly zakázány. Vzhledem k tomu, že ověření uživatele samo o sobě podporuje pouze požadavky s uživatelem v rozsahu, funkce, jako je upozorňování, zaznamenané dotazy nebo vykazování, nebudou fungovat podle očekávání. Další podrobnosti najdete v <2>dokumentaci</2>.",
@@ -168,8 +166,8 @@
       "tooltip-limit": "Omezte počet vrácených řádků (výchozí hodnota je 1 000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Opravdu chcete přepnout na Základní protokoly?",
+      "confirmText-confirm": "Potvrdit",
       "description-basic-logs-queries": "Dotazy na základní protokoly jsou zpoplatněny na základě množství naskenovaných dat.",
       "label-logs": "Protokoly",
       "title-basic-logs-queries": "Dotazy na základní protokoly",
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Tlačítko Spustit dotaz protokolů Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Přepnutím na nástroj pro tvorbu zahodíte aktuální dotaz KQL a vymažete editor KQL. Opravdu chcete pokračovat?",
+      "body-switching-to-kql": "Přepnutím na KQL zahodíte aktuální nastavení nástroje pro tvorbu. Opravdu chcete pokračovat?",
       "button-kick-start-your-query": "Spustit dotaz",
       "button-run-query": "Spustit dotaz",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Přepnout na {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Nástroj pro tvorbu",
+        "label-kql": "KQL"
       },
       "label-service": "Služba",
       "placeholder-service": "Služba…",

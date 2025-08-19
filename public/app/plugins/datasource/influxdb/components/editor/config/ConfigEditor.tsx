@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet, TextLink } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
 import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
@@ -130,9 +130,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <Alert severity="info" title={this.versionNotice[options.jsonData.version!]}>
             <p>
               Please report any issues to: <br />
-              <a href="https://github.com/grafana/grafana/issues/new/choose">
+              <TextLink href="https://github.com/grafana/grafana/issues/new/choose" external>
                 https://github.com/grafana/grafana/issues
-              </a>
+              </TextLink>
             </p>
           </Alert>
         )}

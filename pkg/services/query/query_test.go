@@ -31,8 +31,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -391,7 +391,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 		verifyTimestamps(parsedReq2, int64(0), int64(0), int64(0), int64(0))
 	})
 
-	t.Run("Test a datasource query with malformed local time range", func(t *testing.T) {
+	t.Run("Test a datasource query with local time range, malformed to-value", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
@@ -401,31 +401,69 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 			},
 			"timeRange": {
 				"from": "1753944618000",
-				"not_to": "1753944619000"
+				"to": 1753944619000
 			}
-		}`, `{
-			"refId": "B",
+		}`)
+		mr.From = ""
+		mr.To = ""
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'to'")
+	})
+	t.Run("Test a datasource query with local time range, missing to-value", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
 			"datasource": {
 				"uid": "gIEkMvIVz",
 				"type": "postgres"
 			},
-			"timeRange": 42
+			"timeRange": {
+				"from": "1753944618000"
+			}
 		}`)
 		mr.From = ""
 		mr.To = ""
-		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
-		require.NoError(t, err)
-		require.NotNil(t, parsedReq)
-		assert.Len(t, parsedReq.parsedQueries, 1)
-		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
-		queries := parsedReq.getFlattenedQueries()
-		assert.Len(t, queries, 2)
-
-		assert.Equal(t, int64(1753944618000), queries[0].query.TimeRange.From.UnixMilli())
-		assert.Equal(t, int64(0), queries[0].query.TimeRange.To.UnixMilli())
-
-		assert.Equal(t, int64(0), queries[1].query.TimeRange.From.UnixMilli())
-		assert.Equal(t, int64(0), queries[1].query.TimeRange.To.UnixMilli())
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'to'")
+	})
+	t.Run("Test a datasource query with local time range, malformed from-value", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			},
+			"timeRange": {
+				"from": 1753944618000,
+				"to": "1753944619000"
+			}
+		}`)
+		mr.From = ""
+		mr.To = ""
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'from'")
+	})
+	t.Run("Test a datasource query with local time range, missing from-value", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			},
+			"timeRange": {
+				"to": "1753944619000"
+			}
+		}`)
+		mr.From = ""
+		mr.To = ""
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr, true)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "'from'")
 	})
 }
 
@@ -615,7 +653,7 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 }
 
-func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
+func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
@@ -720,11 +758,11 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 
-	var mtdsClientBuilder mtdsclient.MTDatasourceClientBuilder
+	var qsdsClientBuilder dsquerierclient.QSDatasourceClientBuilder
 	if isMultiTenant {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(isMultiTenant, mockClient)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(isMultiTenant, mockClient)
 	} else {
-		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(false, nil)
+		qsdsClientBuilder = dsquerierclient.NewTestQSDSClientBuilder(false, nil)
 	}
 
 	exprService := expr.ProvideService(
@@ -734,7 +772,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		featuremgmt.WithFeatures(),
 		nil,
 		tracing.InitializeTracerForTest(),
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	queryService := ProvideService(
@@ -744,7 +782,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		rv,
 		pc,
 		pCtxProvider,
-		mtdsClientBuilder,
+		qsdsClientBuilder,
 	)
 
 	return &testContext{

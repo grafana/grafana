@@ -946,7 +946,7 @@ ConditionalRenderingVariableKind: {
 
 ConditionalRenderingVariableSpec: {
 	variable: string
-	operator: "equals" | "notEquals"
+	operator: "equals" | "notEquals" | "matches" | "notMatches"
 	value:    string
 }
 

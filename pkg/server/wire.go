@@ -7,6 +7,8 @@
 package server
 
 import (
+	"context"
+
 	"github.com/google/wire"
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
@@ -45,6 +47,7 @@ import (
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	secretinline "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	secretmutator "github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
@@ -81,6 +84,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
@@ -102,7 +106,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -154,7 +157,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
-	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
@@ -325,7 +327,7 @@ var wireBasicSet = wire.NewSet(
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	serviceaccountsproxy.ProvideServiceAccountsProxy,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsproxy.ServiceAccountsProxy)),
-	mtdsclient.NewNullMTDatasourceClientBuilder,
+	dsquerierclient.NewNullQSDatasourceClientBuilder,
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
@@ -346,7 +348,6 @@ var wireBasicSet = wire.NewSet(
 	plugindashboardsservice.ProvideService,
 	wire.Bind(new(plugindashboards.Service), new(*plugindashboardsservice.Service)),
 	plugindashboardsservice.ProvideDashboardUpdater,
-	sanitizer.ProvideService,
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	statscollector.ProvideService,
@@ -437,6 +438,8 @@ var wireBasicSet = wire.NewSet(
 	secretsecurevalueservice.ProvideSecureValueService,
 	secretvalidator.ProvideKeeperValidator,
 	secretvalidator.ProvideSecureValueValidator,
+	secretmutator.ProvideKeeperMutator,
+	secretmutator.ProvideSecureValueMutator,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
@@ -499,12 +502,12 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
 )
 
-func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
+func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
 	wire.Build(wireExtsSet)
 	return &Server{}, nil
 }
 
-func InitializeForTest(t sqlutil.ITestDB, testingT interface {
+func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interface {
 	mock.TestingT
 	Cleanup(func())
 }, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions,
@@ -513,14 +516,14 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	return &TestEnv{Server: &Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
-func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
+func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	wire.Build(wireExtsCLISet)
 	return Runner{}, nil
 }
 
 // InitializeForCLITarget is a simplified set of dependencies for the CLI, used
 // by the server target subcommand to launch specific dskit modules.
-func InitializeForCLITarget(cfg *setting.Cfg) (ModuleRunner, error) {
+func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (ModuleRunner, error) {
 	wire.Build(wireExtsBaseCLISet)
 	return ModuleRunner{}, nil
 }

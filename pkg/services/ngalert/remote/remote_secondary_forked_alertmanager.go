@@ -97,10 +97,11 @@ func NewRemoteSecondaryFactory(
 
 			// Use both implementations in the forked Alertmanager.
 			rsCfg := RemoteSecondaryConfig{
-				Logger:       l,
-				OrgID:        orgID,
-				Store:        cfgStore,
-				SyncInterval: syncInterval,
+				Logger:          l,
+				OrgID:           orgID,
+				Store:           cfgStore,
+				SyncInterval:    syncInterval,
+				WithRemoteState: withRemoteState,
 			}
 			return newRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
 		}

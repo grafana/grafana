@@ -1,5 +1,4 @@
-import { Property } from 'csstype';
-import { SyntheticEvent } from 'react';
+import { ReactNode, SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -18,6 +17,8 @@ import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
+
+import { TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -128,6 +129,7 @@ export interface BaseTableProps {
   onCellFilterAdded?: TableFilterActionCallback;
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
+  frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;
@@ -148,6 +150,8 @@ export interface BaseTableProps {
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
+export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
+
 export interface TableCellRendererProps {
   rowIdx: number;
   frame: DataFrame;
@@ -161,17 +165,14 @@ export interface TableCellRendererProps {
   theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
-  justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
   disableSanitizeHtml?: boolean;
 }
 
-export type ContextMenuProps = {
+export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
-  top?: number;
-  left?: number;
 };
 
 export interface TableCellActionsProps {
@@ -181,8 +182,7 @@ export interface TableCellActionsProps {
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
-  setIsInspecting: React.Dispatch<React.SetStateAction<boolean>>;
-  setContextMenuProps: React.Dispatch<React.SetStateAction<ContextMenuProps | null>>;
+  setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
@@ -195,7 +195,6 @@ export interface RowExpanderNGProps {
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -215,8 +214,6 @@ export interface BarGaugeCellProps {
 export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
   rowIdx: number;
 }
@@ -228,14 +225,7 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
-}
-
-export interface CellColors {
-  textColor?: string;
-  bgColor?: string;
-  bgHoverColor?: string;
 }
 
 export interface AutoCellProps {
@@ -261,6 +251,14 @@ export interface PillCellProps {
   field: Field;
   rowIdx: number;
 }
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
