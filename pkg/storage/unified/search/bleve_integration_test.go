@@ -25,6 +25,8 @@ func TestBleveSearchBackend(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, backend)
 
+		t.Cleanup(backend.CloseAllIndexes)
+
 		return backend
 	}, &unitest.TestOptions{
 		NSPrefix: "bleve-test",
@@ -47,6 +49,8 @@ func TestSearchBackendBenchmark(t *testing.T) {
 	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
+
+	t.Cleanup(backend.CloseAllIndexes)
 
 	unitest.BenchmarkSearchBackend(t, backend, opts)
 }
