@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -53,6 +53,7 @@ type jobProgressRecorder struct {
 	resultCount         int
 	errorCount          int
 	errors              []string
+	refURLs             *provisioning.RepositoryURLs
 	notifyImmediatelyFn ProgressFn
 	maybeNotifyFn       ProgressFn
 	summaries           map[string]*provisioning.JobResourceSummary
@@ -117,6 +118,18 @@ func (r *jobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
 	logging.FromContext(ctx).Info("job final message", "message", msg)
 }
 
+func (r *jobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs) {
+	r.mu.Lock()
+	r.refURLs = refURLs
+	r.mu.Unlock()
+
+	if refURLs != nil {
+		logging.FromContext(ctx).Debug("job ref URLs set", "sourceURL", refURLs.SourceURL, "compareURL", refURLs.CompareURL, "newPullRequestURL", refURLs.NewPullRequestURL)
+	} else {
+		logging.FromContext(ctx).Debug("job ref URLs cleared")
+	}
+}
+
 func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.mu.Lock()
 	r.total = total
@@ -171,7 +184,8 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	}
 
 	if result.Error != nil {
-		summary.Errors = append(summary.Errors, result.Error.Error())
+		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error.Error(), result.Path, result.Name, result.Action)
+		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
 	} else {
 		switch result.Action {
@@ -252,6 +266,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 
 	jobStatus.Summary = r.summary()
 	jobStatus.Errors = r.errors
+	jobStatus.URLs = r.refURLs
 
 	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -198,7 +198,7 @@ func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem
 }
 
 // ResourceURLs implements RepositoryWithURLs.
-func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.ResourceURLs, error) {
+func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
 	cfg := r.config.Spec.GitHub
 	if file.Path == "" || cfg == nil {
 		return nil, nil
@@ -209,7 +209,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 		ref = cfg.Branch
 	}
 
-	urls := &provisioning.ResourceURLs{
+	urls := &provisioning.RepositoryURLs{
 		RepositoryURL: cfg.URL,
 		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
 	}
@@ -218,6 +218,25 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
 
 		// Create a new pull request
+		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
+	}
+
+	return urls, nil
+}
+
+// RefURLs implements RepositoryWithURLs.
+func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error) {
+	cfg := r.config.Spec.GitHub
+	if cfg == nil || ref == "" {
+		return nil, nil
+	}
+
+	urls := &provisioning.RepositoryURLs{
+		SourceURL: fmt.Sprintf("%s/tree/%s", cfg.URL, ref),
+	}
+
+	if ref != cfg.Branch {
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
 		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
 	}
 

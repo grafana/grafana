@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -50,7 +50,10 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 			Resource: resources.FolderResource.Resource,
 			Group:    resources.FolderResource.Group,
 			Path:     folder.Path,
-			Error:    err,
+		}
+
+		if err != nil {
+			result.Error = fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err)
 		}
 
 		if !created {

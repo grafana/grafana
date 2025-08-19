@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -246,20 +246,20 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
+	instance, err := b.instanceProvider.GetInstance(ctx, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
 		return nil, err
 	}
 
-	dsQuerierLoggerWithSlug := connectLogger.New("slug", instanceConfig.Options["slug"], "ruleuid", headers["X-Rule-Uid"])
+	instanceConfig := instance.GetSettings()
 
-	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
-		b.clientSupplier,
+	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger).New("ruleuid", headers["X-Rule-Uid"])
+
+	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
+		instance,
 		ctx,
-		headers,
-		instanceConfig,
 		dsQuerierLoggerWithSlug,
 	)
 
@@ -275,10 +275,14 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		instanceConfig.FeatureToggles,
 		nil,
 		b.tracer,
-		mtDsClientBuilder,
+		qsDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
+
+	// tell the `instance` structure that it can now report
+	// metrics that are only reported once during a request
+	instance.ReportMetrics()
 
 	if err != nil {
 		return qdr, err

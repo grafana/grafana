@@ -63,10 +63,6 @@ const (
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
-	// FlagNestedFolders
-	// Enable folder nesting
-	FlagNestedFolders = "nestedFolders"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
@@ -142,10 +138,6 @@ const (
 	// FlagPluginsFrontendSandbox
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
-
-	// FlagSqlDatasourceDatabaseSelection
-	// Enables previous SQL data source dataset dropdown behavior
-	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
@@ -254,6 +246,10 @@ const (
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
+
+	// FlagKubernetesShortURLs
+	// Routes short url requests from /api to the /apis endpoint
+	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
@@ -619,10 +615,6 @@ const (
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
 
-	// FlagUnifiedStorageSearchPermissionFiltering
-	// Enable permission filtering on unified storage search
-	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
-
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"
@@ -742,10 +734,6 @@ const (
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
 	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
-
-	// FlagTeamHttpHeadersMimir
-	// Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
-	FlagTeamHttpHeadersMimir = "teamHttpHeadersMimir"
 
 	// FlagTeamHttpHeadersTempo
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
@@ -875,6 +863,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagGrafanaAssistantInProfilesDrilldown
+	// Enables integration with Grafana Assistant in Profiles Drilldown
+	FlagGrafanaAssistantInProfilesDrilldown = "grafanaAssistantInProfilesDrilldown"
+
 	// FlagPostgresDSUsePGX
 	// Enables using PGX instead of libpq for PostgreSQL datasource
 	FlagPostgresDSUsePGX = "postgresDSUsePGX"
@@ -907,6 +899,10 @@ const (
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
+	// FlagKubernetesAuthzResourcePermissionApis
+	// Registers AuthZ resource permission /apis endpoints
+	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
+
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
@@ -926,6 +922,10 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagAlertingImportAlertmanagerUI
+	// Enables the UI to see imported Alertmanager configuration
+	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
 
 	// FlagSharingDashboardImage
 	// Enables image sharing functionality for dashboards
@@ -987,7 +987,23 @@ const (
 	// Enable adhoc filter buttons in visualization tooltips
 	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
 
+	// FlagFavoriteDatasources
+	// Enable favorite datasources
+	FlagFavoriteDatasources = "favoriteDatasources"
+
 	// FlagNewLogContext
 	// New Log Context component
 	FlagNewLogContext = "newLogContext"
+
+	// FlagNewClickhouseConfigPageDesign
+	// Enables new design for the Clickhouse data source configuration page
+	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
+
+	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
+	// Enable experimental search-after-write guarantees to unified-storage search endpoints
+	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
+
+	// FlagTeamFolders
+	// Enables team folders functionality
+	FlagTeamFolders = "teamFolders"
 )

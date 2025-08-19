@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { GrafanaConfig } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
@@ -23,7 +22,7 @@ const wrapper = ({ children }: { children: ReactNode }) => {
 };
 
 describe('useFoldersQuery', () => {
-  let configBackup: GrafanaConfig;
+  let configBackup: runtime.GrafanaBootConfig;
 
   beforeAll(() => {
     configBackup = { ...runtime.config };
