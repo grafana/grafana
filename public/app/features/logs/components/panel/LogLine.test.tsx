@@ -324,10 +324,10 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     test('When the collapsed state changes, the log line contents re-render', async () => {
       log.collapsed = true;
       log.raw = 'The full contents of the log line';
-      const onOverflow = jest.fn();
+      
       render(
         <LogListContextProvider {...contextProps}>
-          <LogLine {...defaultProps} onOverflow={onOverflow} log={log} />
+          <LogLine {...defaultProps} log={log} />
         </LogListContextProvider>
       );
 
