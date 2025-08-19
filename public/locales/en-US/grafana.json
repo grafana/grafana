@@ -7241,7 +7241,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Add query from library",
+      "add-from-query-library": "Add saved query",
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
       "query-history-button": "Query history",
@@ -11892,7 +11892,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "replace-query-from-library": "Replace with query from library",
+      "replace-query-from-library": "Replace with saved query",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component",

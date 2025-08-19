@@ -634,7 +634,7 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
 
   return queryLibraryEnabled ? (
     <QueryOperationAction
-      title={t('query-operation.header.replace-query-from-library', 'Replace with query from library')}
+      title={t('query-operation.header.replace-query-from-library', 'Replace with saved query')}
       icon="book"
       onClick={onReplaceQueryFromLibrary}
       isGroupEnd
