@@ -197,6 +197,8 @@ To add a query, follow these steps:
    - Write or construct a query in the query language of your data source.
    - Click **+ Add saved query**, search or filter for the query you want to use, and click **Select query** (Grafana Enterprise and Cloud only).
 
+   Even if you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
+
 1. (Optional) To save the query for reuse, click the **Save query** icon (Grafana Enterprise and Cloud only).
 1. Click **Run queries**.
 

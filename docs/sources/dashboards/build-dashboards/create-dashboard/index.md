@@ -119,6 +119,8 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. Write or construct a query in the query language of your data source or click **+ Add saved query** to add a previously [saved query](ref:saved-queries) (Grafana Enterprise and Cloud only).
 
+   Even if you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
+
    If you've created a query that you want to use again in other dashboards, save it by clicking the save icon on the query editor. Saved queries is in [public preview](https://grafana.com/docs/release-life-cycle/).
 
 1. Click **Refresh** to query the data source.
