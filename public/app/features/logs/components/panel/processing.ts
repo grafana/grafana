@@ -216,7 +216,6 @@ export class LogListModel implements LogRowModel {
       this._body = undefined;
       this._highlightedBody = undefined;
     }
-    return this.collapsed;
   }
 
   setCollapsedState(collapsed: boolean) {
