@@ -122,7 +122,7 @@ query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 This feature is only available on Grafana Enterprise and Grafana Cloud.
 {{< /admonition >}}
 
-{{< docs/private-preview product="Saved queries" >}}
+{{< docs/public-preview product="Saved queries" >}}
 
 The saved queries feature lets you save queries that you've created so you can reuse them later:
 
@@ -202,7 +202,7 @@ To add a query, follow these steps:
 
 Grafana queries the data source and visualizes the data.
 
-{{< docs/private-preview product="Query library" >}}
+{{< docs/public-preview product="Saved queries" >}}
 
 ## Manage queries
 
