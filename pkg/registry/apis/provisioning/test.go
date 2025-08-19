@@ -119,6 +119,24 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				return
 			}
 
+			// If the last error was not a health check error or empty, return precondition failed
+			health := repo.Config().Status.Health
+			if health.Error != provisioning.HealthFailureHealth && health.Error != "" {
+				rsp = &provisioning.TestResults{
+					Success: false,
+					Code:    http.StatusPreconditionFailed,
+					Errors: func() []provisioning.ErrorDetails {
+						var errs []provisioning.ErrorDetails
+						for _, msg := range health.Message {
+							errs = append(errs, provisioning.ErrorDetails{Detail: msg})
+						}
+						return errs
+					}(),
+				}
+				responder.Object(rsp.Code, rsp)
+				return
+			}
+
 			// Use health checker to test and update repository health
 			rsp, _, err = s.healthChecker.RefreshHealth(ctx, repo)
 			if err != nil {

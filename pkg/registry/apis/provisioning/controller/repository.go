@@ -444,7 +444,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle hooks - may return early if hooks fail
-	hookOps, shouldContinue, err := rc.processHooksWithFailureHandling(ctx, repo, obj)
+	hookOps, shouldContinue, err := rc.processHooks(ctx, repo, obj)
 	if err != nil {
 		return fmt.Errorf("process hooks: %w", err)
 	}
@@ -486,13 +486,13 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	return nil
 }
 
-// processHooksWithFailureHandling handles hook execution with intelligent retry logic
+// processHooks handles hook execution with intelligent retry logic
 // Returns hook operations, whether processing should continue, and any error
-func (rc *RepositoryController) processHooksWithFailureHandling(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
 	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
 
 	// Skip hooks if status already indicates recent hook failure to avoid infinite retry
-	if shouldRunHooks && rc.healthChecker.HasRecentFailure(obj.Status.Health, FailureTypeHook) {
+	if shouldRunHooks && rc.healthChecker.HasRecentFailure(obj.Status.Health, provisioning.HealthFailureHook) {
 		shouldRunHooks = false
 	}
 
@@ -502,7 +502,7 @@ func (rc *RepositoryController) processHooksWithFailureHandling(ctx context.Cont
 
 	hookOps, err := rc.runHooks(ctx, repo, obj)
 	if err != nil {
-		if err := rc.healthChecker.RecordFailure(ctx, FailureTypeHook, err, obj); err != nil {
+		if err := rc.healthChecker.RecordFailure(ctx, provisioning.HealthFailureHook, err, obj); err != nil {
 			return nil, false, fmt.Errorf("update status after hook failure: %w", err)
 		}
 
