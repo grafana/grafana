@@ -48,6 +48,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			IsDefault:       ds.IsDefault,
 			ReadOnly:        ds.ReadOnly,
 		},
+		Secure: ToInlineSecureValues(ds.Type, ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
 	cfg.UID = gapiutil.CalculateClusterWideUID(cfg)
 
@@ -63,10 +64,6 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			return nil, fmt.Errorf("expected map[string]any jsondata")
 		}
 		cfg.Spec.JsonData.Object = val
-	}
-
-	if ds.SecureJsonData != nil {
-		cfg.Secure = ToInlineSecureValues(ds.Type, ds.UID, maps.Keys(ds.SecureJsonData))
 	}
 
 	return cfg, nil
