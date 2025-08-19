@@ -157,7 +157,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
-	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
@@ -349,7 +348,6 @@ var wireBasicSet = wire.NewSet(
 	plugindashboardsservice.ProvideService,
 	wire.Bind(new(plugindashboards.Service), new(*plugindashboardsservice.Service)),
 	plugindashboardsservice.ProvideDashboardUpdater,
-	sanitizer.ProvideService,
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	statscollector.ProvideService,
