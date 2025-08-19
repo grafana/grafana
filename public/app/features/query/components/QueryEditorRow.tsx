@@ -388,13 +388,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
-        <MaybeQueryLibrarySaveButton
-          query={query}
-          queryLibraryRef={queryLibraryRef}
-          app={this.props.app}
-          onSelectQuery={this.onSelectQueryFromLibrary}
-          onUpdateSuccess={this.onExitQueryLibraryEditingMode}
-        />
+        {!isEditingQueryLibrary && (
+          <MaybeQueryLibrarySaveButton
+            query={query}
+            app={this.props.app}
+            onSelectQuery={this.onSelectQueryFromLibrary}
+            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+          />
+        )}
 
         {!isEditingQueryLibrary && (
           <ReplaceQueryFromLibrary
@@ -496,7 +497,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const queryOperationRow = (
       <QueryOperationRow
         id={this.id}
-        draggable={!hideActionButtons}
+        draggable={!hideActionButtons && !queryLibraryRef}
         collapsable={collapsable}
         index={index}
         headerElement={this.renderHeader}
@@ -590,18 +591,11 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function MaybeQueryLibrarySaveButton(props: {
   query: DataQuery;
   app?: CoreApp;
-  queryLibraryRef?: string;
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
 }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(
-    props.query,
-    props.app,
-    props.queryLibraryRef,
-    props.onUpdateSuccess,
-    props.onSelectQuery
-  );
+  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
 }
 
 // Will render editing header only if query library is enabled

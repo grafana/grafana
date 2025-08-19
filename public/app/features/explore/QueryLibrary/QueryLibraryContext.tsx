@@ -40,7 +40,6 @@ export type QueryLibraryContextType = {
   renderSaveQueryButton: (
     query: DataQuery,
     app?: CoreApp,
-    queryLibraryRef?: string,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void
   ) => ReactNode;
