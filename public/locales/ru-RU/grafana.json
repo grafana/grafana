@@ -3668,11 +3668,11 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
+      "error-invalid-characters": "",
       "error-required": "Требуется имя папки",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
       "label-folder-name": "Имя папки",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
-      "text-your-folder-will-be-created-as": "Ваша папка будет создана как {{folderName}}",
       "title-pull-request-created": "Создан запрос на включение изменений",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
@@ -7568,11 +7568,6 @@
     "select-aria-label": "Фильтр папок",
     "select-placeholder": "Фильтровать по папкам"
   },
-  "folder-picker": {
-    "create-instructions": "Чтобы создать новую папку, нажмите Enter.",
-    "input-placeholder": "Нажмите Enter, чтобы подтвердить новую папку",
-    "loading": "Загрузка папок..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -8791,7 +8786,6 @@
       "filter-popup-input-placeholder": "Значения фильтра",
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
-      "inspect-menu-label": "Проверить значение",
       "nested-table": {
         "no-data": "Нет данных"
       },
@@ -12877,6 +12871,7 @@
     "description-fields": "Выбрать поля, которые необходимо рассчитать",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
+    "description-tooltip-from-field": "",
     "name-calculation": "Расчет",
     "name-cell-height": "Высота ячеек",
     "name-cell-type": "Тип ячеек",
@@ -12892,8 +12887,17 @@
     "name-min-column-width": "Минимальная ширина столбца",
     "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "авто",
-    "placeholder-fields": "Все числовые поля"
+    "placeholder-fields": "Все числовые поля",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Очистить теги",
