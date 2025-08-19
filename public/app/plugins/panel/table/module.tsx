@@ -138,6 +138,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           settings: {
             options: [
               {
+                label: t('table-new.tooltip-placement-options.label-auto', 'Auto'),
+                value: TableCellTooltipPlacement.Auto,
+              },
+              {
                 label: t('table-new.tooltip-placement-options.label-top', 'Top'),
                 value: TableCellTooltipPlacement.Top,
               },
