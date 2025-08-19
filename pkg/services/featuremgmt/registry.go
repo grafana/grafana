@@ -1639,6 +1639,14 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "grafanaAssistantInProfilesDrilldown",
+			Description:  "Enables integration with Grafana Assistant in Profiles Drilldown",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "true",
+		},
+		{
 			Name:        "postgresDSUsePGX",
 			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
 			Stage:       FeatureStageExperimental,
@@ -1742,6 +1750,15 @@ var (
 		{
 			Name:              "alertingImportAlertmanagerAPI",
 			Description:       "Enables the API to import Alertmanager configuration",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingImportAlertmanagerUI",
+			Description:       "Enables the UI to see imported Alertmanager configuration",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1903,6 +1920,14 @@ var (
 			HideFromDocs:      true,
 			RequiresRestart:   true,
 			Expression:        "false",
+		},
+		{
+			Name:         "teamFolders",
+			Description:  "Enables team folders functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			Expression:   "false",
 		},
 	}
 )

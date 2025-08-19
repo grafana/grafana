@@ -213,6 +213,7 @@ localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,fals
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
+grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
 postgresDSUsePGX,experimental,@grafana/oss-big-tent,false,false,false
 tempoAlerting,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -227,6 +228,7 @@ restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,fa
 skipTokenRotationIfRecent,GA,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
+alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
 sharingDashboardImage,experimental,@grafana/sharing-squad,false,false,true
 preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
@@ -246,3 +248,4 @@ favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,t
 newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
+teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false

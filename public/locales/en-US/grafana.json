@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "External Alertmanagers",
+      "extra-config-warning": {
+        "content": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.",
+        "title": "Imported configuration"
+      },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -1243,20 +1248,6 @@
     "file-export-preview": {
       "copy-code": "Copy code",
       "download": "Download"
-    },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Alert rule",
-        "all": "All",
-        "error": "Error",
-        "firing": "Firing",
-        "no-data": "No data",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Pending",
-        "recording-rule": "Recording rule",
-        "recovering": "Recovering"
-      }
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
@@ -2481,6 +2472,7 @@
       },
       "empty-data-source": "No rules found",
       "error-button": "Error",
+      "export-all-grafana-rules": "Export all Grafana rules",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -2588,11 +2580,27 @@
       "delete-rule": {
         "success": "Rule successfully deleted"
       },
+      "health": {
+        "error": "Error",
+        "no-data": "No data",
+        "ok": "OK"
+      },
       "pause-rule": {
         "success": "Rule evaluation paused"
       },
       "resume-rule": {
         "success": "Rule evaluation resumed"
+      },
+      "state": {
+        "firing": "Firing",
+        "normal": "Normal",
+        "pending": "Pending",
+        "recovering": "Recovering",
+        "unknown": "Unknown"
+      },
+      "type": {
+        "alert": "Alert rule",
+        "recording": "Recording rule"
       },
       "update-rule": {
         "success": "Rule updated successfully"
@@ -2601,20 +2609,29 @@
     "rules-filter": {
       "clear-filters": "Clear filters",
       "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
+      "contact-point-tooltip": "Filters alert rules which route directly to the selected contact point. Alert rules routed to notification policies will not be displayed.",
+      "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label-show-filters": "Show filters",
-        "label-custom-filter": "Custom filter",
-        "label-saved-searches": "Saved searches"
+        "aria-label": "Filter options",
+        "aria-label-show-filters": "Filter",
+        "placeholder-namespace": "Select namespace",
+        "placeholder-search-input": "Search by name or enter filter query..."
       },
+      "grafana-folder": "Grafana folder",
       "health": "Health",
       "label": {
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
+      "no-groups": "No groups available",
+      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
+      "placeholder-contact-point": "Select contact point",
+      "placeholder-data-sources": "Select data sources",
+      "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
@@ -2629,9 +2646,6 @@
       "text-federated": "Federated",
       "text-provisioned": "Provisioned"
     },
-    "saved-searches": {
-      "text-default": "Default"
-    },
     "search": {
       "property": {
         "data-source": "Data source",
@@ -2639,11 +2653,10 @@
         "labels": "Labels",
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
-        "rule-name": "Alerting rule name",
+        "rule-name": "Rule name",
         "rule-type": "Type",
         "state": "State"
-      },
-      "save-query": "Save current search"
+      }
     },
     "search-field-input": {
       "clear": "Clear",
@@ -3625,11 +3638,11 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
+      "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
       "error-required": "Folder name is required",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
-      "text-your-folder-will-be-created-as": "Your folder will be created as {{folderName}}",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -4096,10 +4109,10 @@
     }
   },
   "common": {
+    "all": "All",
     "apply": "Apply",
     "cancel": "Cancel",
     "clear": "Clear",
-    "close": "Close",
     "collapse": "Collapse",
     "edit": "Edit",
     "help": "Help",
@@ -4164,7 +4177,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Data sources",
+      "apps-header": "Apps",
+      "datasources-header": "Data Sources",
       "empty-message": "No results matching your query were found",
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
@@ -4514,6 +4528,10 @@
           },
           "value": "Value"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "unsupported-item-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
@@ -6534,9 +6552,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "Add to favorites",
       "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
-      "open-in-explore": "Open in Explore View"
+      "open-in-explore": "Open in Explore View",
+      "remove-favorite": "Remove from favorites"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
@@ -6582,6 +6602,9 @@
       "description": {
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus, and Loki"
       }
+    },
+    "list": {
+      "starred": "Starred"
     },
     "new-data-source-view": {
       "cancel": "Cancel",
@@ -7475,6 +7498,13 @@
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "Collapse editor",
+      "tooltip-copy-query": "Copy query",
+      "tooltip-expand-editor": "Expand editor",
+      "tooltip-format-query": "Format query",
+      "tooltip-run-query": "Hit ctrl/cmd+enter to run query"
+    },
     "reduce": {
       "label-function": "Function",
       "label-input": "Input",
@@ -7490,6 +7520,11 @@
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
+    "sql-expr": {
+      "button-run-query": "Run query",
+      "modal-title": "SQL Editor",
+      "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
+    },
     "threshold": {
       "label-input": "Input"
     }
@@ -7499,11 +7534,6 @@
     "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
-  },
-  "folder-picker": {
-    "create-instructions": "Press enter to create the new folder.",
-    "input-placeholder": "Press enter to confirm new folder",
-    "loading": "Loading folders..."
   },
   "folder-repo": {
     "provisioned-badge": "Provisioned",
@@ -7859,7 +7889,8 @@
       "edit-pane": {
         "go-back": "Go back"
       }
-    }
+    },
+    "select-group": "Select group"
   },
   "grafana-data": {
     "valueFormats": {
@@ -8722,7 +8753,6 @@
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
-      "inspect-menu-label": "Inspect value",
       "nested-table": {
         "no-data": "No data"
       },
@@ -9048,6 +9078,7 @@
       "sign-up": "Sign up"
     }
   },
+  "label-dropdown-info": "Can't find your label? Enter it manually",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Drag and drop to reorder",
@@ -11248,7 +11279,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
-      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+      "history-not-supported": "File history is not supported for this repository",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "repository-not-found": "Repository not found"
     },
     "file-status-page": {
       "save": "Save",
@@ -11446,6 +11479,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "Compare branch",
+        "open-pull-request": "Open pull request",
+        "view-branch": "View branch",
         "view-repository": "View repository"
       },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
@@ -12101,7 +12137,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
-      "message": "No services accounts found",
+      "message": "No service accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
     }
@@ -12495,6 +12531,21 @@
   "sort-picker": {
     "select-aria-label": "Sort"
   },
+  "sql-expressions": {
+    "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
+    "ai-explain-title": "AI-powered SQL expression explanation",
+    "ai-suggestions-title": "AI-powered SQL expression suggestions",
+    "apply": "Apply",
+    "code-label": "{{ language }}",
+    "copy": "Copy",
+    "explain-empty-query-tooltip": "Enter a SQL expression to get an explanation",
+    "explain-query": "Explain query",
+    "explanation-modal-title": "SQL Query Explanation",
+    "sql-ai-interaction": "{{text}}",
+    "sql-suggestion-history": "SQL Suggestion History",
+    "suggestions": "Suggestions",
+    "view-explanation": "View explanation"
+  },
   "stat": {
     "add-orientation-option": {
       "description-orientation": "Layout orientation",
@@ -12747,6 +12798,7 @@
     "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12762,8 +12814,17 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-tooltip-from-field": "Tooltip from field",
+    "name-tooltip-placement": "Tooltip placement",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "tooltip-placement-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom",
+      "label-left": "Left",
+      "label-right": "Right",
+      "label-top": "Top"
+    }
   },
   "tag-filter": {
     "clear-button": "Clear tags",

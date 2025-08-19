@@ -13,7 +13,7 @@ import { AutoGridItem } from './AutoGridItem';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
-  const { body, repeatedPanels, key } = model.useState();
+  const { body, repeatedPanels = [], key } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
   const { isEditing, preload } = useDashboardState(model);
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
@@ -30,11 +30,13 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           addDndContainer,
           isDragged,
           isDragging,
+          isRepeat = false,
         }: {
           item: VizPanel;
           addDndContainer: boolean;
           isDragged: boolean;
           isDragging: boolean;
+          isRepeat?: boolean;
         }) => (
           <div
             {...(addDndContainer
@@ -45,13 +47,25 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
             {isLazy ? (
               <LazyLoader
                 key={item.state.key!}
-                className={cx(conditionalRenderingClass, styles.wrapper, isDragged && styles.draggedWrapper)}
+                className={cx(
+                  conditionalRenderingClass,
+                  styles.wrapper,
+                  isDragged && !isRepeat && styles.draggedWrapper,
+                  isDragged && isRepeat && styles.draggedRepeatWrapper
+                )}
               >
                 <item.Component model={item} />
                 {conditionalRenderingOverlay}
               </LazyLoader>
             ) : (
-              <div className={cx(conditionalRenderingClass, styles.wrapper, isDragged && styles.draggedWrapper)}>
+              <div
+                className={cx(
+                  conditionalRenderingClass,
+                  styles.wrapper,
+                  isDragged && !isRepeat && styles.draggedWrapper,
+                  isDragged && isRepeat && styles.draggedRepeatWrapper
+                )}
+              >
                 <item.Component model={item} />
                 {conditionalRenderingOverlay}
               </div>
@@ -69,20 +83,20 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const isDragging = !!draggingKey;
   const isDragged = draggingKey === key;
 
-  return repeatedPanels ? (
+  return (
     <>
-      {repeatedPanels.map((item, index) => (
+      <Wrapper item={body} addDndContainer={true} key={body.state.key!} isDragged={isDragged} isDragging={isDragging} />
+      {repeatedPanels.map((item) => (
         <Wrapper
           item={item}
-          addDndContainer={index === 0}
+          addDndContainer={false}
           key={item.state.key!}
           isDragged={isDragged}
           isDragging={isDragging}
+          isRepeat={true}
         />
       ))}
     </>
-  ) : (
-    <Wrapper item={body} addDndContainer key={body.state.key!} isDragged={isDragged} isDragging={isDragging} />
   );
 }
 
@@ -96,6 +110,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: `var(${DRAGGED_ITEM_WIDTH})`,
     height: `var(${DRAGGED_ITEM_HEIGHT})`,
     opacity: 0.8,
+  }),
+  draggedRepeatWrapper: css({
+    visibility: 'hidden',
   }),
   draggedPlaceholder: css({
     width: '100%',

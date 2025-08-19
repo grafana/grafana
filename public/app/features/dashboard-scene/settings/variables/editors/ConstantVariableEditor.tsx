@@ -1,5 +1,6 @@
 import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { t } from '@grafana/i18n';
 import { ConstantVariable, SceneVariable } from '@grafana/scenes';
@@ -31,12 +32,13 @@ export function getConstantVariableOptions(variable: SceneVariable): OptionsPane
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard-scene.constant-variable-form.label-value', 'Value'),
-      render: () => <ConstantValueInput variable={variable} />,
+      id: uuidv4(),
+      render: (descriptor) => <ConstantValueInput id={descriptor.props.id} variable={variable} />,
     }),
   ];
 }
 
-function ConstantValueInput({ variable }: { variable: ConstantVariable }) {
+function ConstantValueInput({ variable, id }: { variable: ConstantVariable; id?: string }) {
   const { value } = variable.useState();
 
   const onBlur = async (event: FormEvent<HTMLInputElement>) => {
@@ -46,6 +48,7 @@ function ConstantValueInput({ variable }: { variable: ConstantVariable }) {
 
   return (
     <Input
+      id={id}
       defaultValue={value.toString()}
       onBlur={onBlur}
       placeholder={t('dashboard-scene.constant-variable-form.placeholder-your-metric-prefix', 'Your metric prefix')}

@@ -1244,20 +1244,6 @@
       "copy-code": "Copier le code",
       "download": "Télécharger"
     },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Règle d'alerte",
-        "all": "Tout",
-        "error": "Erreur",
-        "firing": "Déclenchement",
-        "no-data": "Aucune donnée",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "En attente",
-        "recording-rule": "Règle d'enregistrement",
-        "recovering": "En récupération"
-      }
-    },
     "filter-view-results": {
       "aria-label-filteredrulelist": "liste-de-règles-filtrées"
     },
@@ -2588,11 +2574,27 @@
       "delete-rule": {
         "success": "Règle supprimée avec succès"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Évaluation de la règle suspendue"
       },
       "resume-rule": {
         "success": "Évaluation de la règle reprise"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Règle mise à jour avec succès"
@@ -2601,20 +2603,29 @@
     "rules-filter": {
       "clear-filters": "Supprimer les filtres",
       "configured-alert-rules": "Les sources de données contenant des règles d’alerte configurées sont des sources de données Mimir ou Loki où les règles d’alerte sont stockées et évaluées dans la source de données elle-même.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Tableau de bord",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Aide à la recherche par sources de données",
       "filter-options": {
-        "aria-label-show-filters": "Afficher les filtres",
-        "label-custom-filter": "Filtre personnalisé",
-        "label-saved-searches": "Recherches enregistrées"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Santé",
       "label": {
         "hide": "Masquer",
         "show": "Afficher"
       },
       "manage-alerts": "Dans ces sources de données, vous pouvez sélectionner Gérer les alertes via l’interface utilisateur d’alerte pour pouvoir gérer ces règles d’alerte dans l’interface utilisateur Grafana, ainsi que dans la source de données où elles ont été configurées.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Toutes les sources de données",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Règles de plugin",
       "rule-type": "Type de règle",
       "rulesSearchInput-placeholder-search": "Rechercher",
@@ -2629,9 +2640,6 @@
       "text-federated": "Fédéré",
       "text-provisioned": "Mis en service"
     },
-    "saved-searches": {
-      "text-default": "Par défaut"
-    },
     "search": {
       "property": {
         "data-source": "Source de données",
@@ -2639,11 +2647,10 @@
         "labels": "Étiquettes",
         "namespace": "Dossier/Espace de noms",
         "rule-health": "Santé",
-        "rule-name": "Nom de la règle d'alerte",
+        "rule-name": "",
         "rule-type": "Type",
         "state": "État"
-      },
-      "save-query": "Enregistrer la recherche courante"
+      }
     },
     "search-field-input": {
       "clear": "Effacer",
@@ -3625,11 +3632,11 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
+      "error-invalid-characters": "",
       "error-required": "Un nom de dossier est obligatoire",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
       "label-folder-name": "Nom du dossier",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
-      "text-your-folder-will-be-created-as": "Votre dossier sera créé sous le nom {{folderName}}",
       "title-pull-request-created": "Demande de fusion créée",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
@@ -4096,10 +4103,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Appliquer",
     "cancel": "Annuler",
     "clear": "Effacer",
-    "close": "Fermer",
     "collapse": "Réduire",
     "edit": "Modifier",
     "help": "Aide",
@@ -4514,6 +4521,10 @@
           },
           "value": "Valeur"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "L’élément est masqué en raison du rendu conditionnel."
@@ -5343,6 +5354,7 @@
       "playlist-next": "Accéder au tableau de bord suivant",
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
+      "read-only": "",
       "refresh": "Actualiser le tableau de bord",
       "save": "Enregistrer le tableau de bord",
       "save-dashboard": {
@@ -6582,6 +6594,9 @@
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus et Loki hébergés"
       }
     },
+    "list": {
+      "starred": ""
+    },
     "new-data-source-view": {
       "cancel": "Annuler",
       "placeholder-filter-by-name-or-type": "Filtrer par nom ou par type"
@@ -7474,6 +7489,13 @@
       "tooltip-title": "Opérateur mathématique",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Fonction",
       "label-input": "Entrée",
@@ -7489,6 +7511,11 @@
       "label-upsample": "Sur-échantillonner",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
+    },
     "threshold": {
       "label-input": "Entrée"
     }
@@ -7499,13 +7526,9 @@
     "select-aria-label": "Filtre de dossier",
     "select-placeholder": "Filtrer par dossier"
   },
-  "folder-picker": {
-    "create-instructions": "Appuyez sur Entrée pour créer le nouveau dossier.",
-    "input-placeholder": "Appuyer sur Entrée pour confirmer le nouveau dossier",
-    "loading": "Chargement des dossiers..."
-  },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7857,7 +7880,8 @@
       "edit-pane": {
         "go-back": "Retour"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -8720,7 +8744,6 @@
       "filter-popup-input-placeholder": "Filtrer les valeurs",
       "filter-popup-match-case": "Respecter la casse",
       "inspect-drawer-title": "Inspecter la valeur",
-      "inspect-menu-label": "Inspecter la valeur",
       "nested-table": {
         "no-data": "Aucune donnée disponible"
       },
@@ -9046,6 +9069,7 @@
       "sign-up": "Inscription"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Glisser et déposer pour réorganiser",
@@ -10860,7 +10884,6 @@
         "downloads": "Téléchargements",
         "from": "",
         "installedVersion": "Version installée",
-        "lastCommitDate": "Date de la dernière propagation :",
         "latestReleaseDate": "Dernière date de sortie :",
         "latestVersion": "Dernière version",
         "license": "Licence",
@@ -11247,7 +11270,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Retour aux référentiels",
-      "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Enregistrer",
@@ -11413,6 +11438,8 @@
         "subtitle": "Utilisez cette option si vous souhaitez synchroniser et gérer l’ensemble de votre instance Grafana via un stockage externe."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "missions actives",
       "column-action": "Action",
@@ -11431,6 +11458,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Paramètres",
       "view": "Afficher"
     },
@@ -11442,6 +11470,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "Vos ressources sont maintenant dans votre stockage externe et mises en service dans votre instance. À partir de maintenant, votre instance et le stockage externe seront synchronisés.",
@@ -11846,6 +11877,7 @@
   },
   "query-operation": {
     "header": {
+      "cancel-query-library-edit": "",
       "collapse-row": "Réduire la ligne de requête",
       "datasource-help": "Afficher l'aide de la source de données",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
@@ -11856,7 +11888,11 @@
       "replace-query-from-library": "Remplacer par une requête à partir de la bibliothèque",
       "show-response": "Afficher la réponse"
     },
-    "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
+    "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête",
+    "query-library": {
+      "editing-tooltip": "",
+      "from-library": ""
+    }
   },
   "recently-deleted": {
     "buttons": {
@@ -12092,7 +12128,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Ajouter un compte de service",
-      "message": "Aucun compte de service trouvé",
+      "message": "",
       "more-info": "N'oubliez pas que vous pouvez fournir des autorisations spécifiques pour l'accès à l'API à d'autres applications",
       "title": "Vous n'avez pas encore créé de comptes de service"
     }
@@ -12486,6 +12522,21 @@
   "sort-picker": {
     "select-aria-label": "Trier"
   },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
+  },
   "stat": {
     "add-orientation-option": {
       "description-orientation": "Orientation de la mise en page",
@@ -12738,6 +12789,7 @@
     "description-fields": "Sélectionner les champs à utiliser pour le calcul",
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
+    "description-tooltip-from-field": "",
     "name-calculation": "Calcul",
     "name-cell-height": "Hauteur de cellule",
     "name-cell-type": "Type de cellule",
@@ -12753,8 +12805,17 @@
     "name-min-column-width": "Largeur minimale de colonne",
     "name-show-table-footer": "Afficher le pied de tableau",
     "name-show-table-header": "Afficher l’en-tête du tableau",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Tous les champs numériques"
+    "placeholder-fields": "Tous les champs numériques",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Effacer les balises",
