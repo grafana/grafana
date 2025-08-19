@@ -921,6 +921,19 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 		}
 		folders = append(folders, descendants...)
 
+		libraryPanelSrv, ok := s.registry[entity.StandardKindLibraryPanel]
+		if !ok {
+			return folder.ErrInternal.Errorf("no library panel service found in registry")
+		}
+		libraryPanelsInFolder, err := libraryPanelSrv.CountInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser)
+		if err != nil {
+			s.log.Error("failed to count library panels in folder", "error", err)
+			return err
+		}
+		if libraryPanelsInFolder > 0 {
+			return folder.ErrFolderNotEmpty.Errorf("folder contains %d library panels", libraryPanelsInFolder)
+		}
+
 		if cmd.ForceDeleteRules {
 			if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
 				return err
