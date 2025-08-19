@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -1166,5 +1167,178 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// Reproduces a bug where folder deletion does not check for attached library panels.
+func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
+	tests.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// test on all dualwriter modes
+	for mode := 0; mode <= 2; mode++ {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesLibraryPanels,
+				},
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create a folder via legacy API (/api/folders) so it is visible to both paths
+			folderUID := fmt.Sprintf("libpanel-del-%d", mode)
+			legacyPayload := fmt.Sprintf(`{
+                "title": "Folder With Library Panel %d",
+                "uid": "%s"
+            }`, mode, folderUID)
+
+			legacyCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(legacyPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, legacyCreate.Result)
+			require.Equal(t, folderUID, legacyCreate.Result.UID)
+
+			// Create a library element inside the folder via /api to simulate an attached library panel
+			libElementPayload := fmt.Sprintf(`{
+                "kind": 1,
+                "name": "LP in %s",
+                "folderUid": "%s",
+                "model": {
+                    "type": "text",
+                    "title": "LP in %s"
+                }
+            }`, folderUID, folderUID, folderUID)
+
+			libCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/library-elements",
+				Body:   []byte(libElementPayload),
+			}, &struct{}{})
+			require.NotNil(t, libCreate.Response)
+			require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
+
+			// Attempt to delete the folder via K8s API. This should be blocked (ErrFolderNotEmpty)
+			err := client.Resource.Delete(context.Background(), folderUID, metav1.DeleteOptions{})
+			require.Error(t, err, "expected folder deletion to be blocked when library panels exist")
+
+			// Verify the folder still exists
+			_, getErr := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+			require.NoError(t, getErr, "folder should still exist after failed deletion")
+		})
+	}
+}
+
+func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *testing.T) {
+	tests.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 2; mode++ {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesLibraryPanels,
+				},
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			parentUID := fmt.Sprintf("libpanel-parent-%d", mode)
+			parentPayload := fmt.Sprintf(`{
+				"title": "Parent Folder %d",
+				"uid": "%s"
+			}`, mode, parentUID)
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			require.Equal(t, parentUID, parentCreate.Result.UID)
+
+			childUID := fmt.Sprintf("libpanel-child-%d", mode)
+			childPayload := fmt.Sprintf(`{
+				"title": "Child Folder %d",
+				"uid": "%s",
+				"parentUid": "%s"
+			}`, mode, childUID, parentUID)
+			childCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(childPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, childCreate.Result)
+			require.Equal(t, childUID, childCreate.Result.UID)
+			require.Equal(t, parentUID, childCreate.Result.ParentUID)
+
+			libElementPayload := fmt.Sprintf(`{
+				"kind": 1,
+				"name": "LP in %s",
+				"folderUid": "%s",
+				"model": {
+					"type": "text",
+					"title": "LP in %s"
+				}
+			}`, childUID, childUID, childUID)
+
+			libCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/library-elements",
+				Body:   []byte(libElementPayload),
+			}, &struct{}{})
+			require.NotNil(t, libCreate.Response)
+			require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
+
+			// Attempt to delete the parent folder; should be blocked because child folder contains a library panel
+			err := client.Resource.Delete(context.Background(), parentUID, metav1.DeleteOptions{})
+			require.Error(t, err, "expected parent folder deletion to be blocked when child contains library panels")
+
+			// Verify both folders still exist
+			_, getParentErr := client.Resource.Get(context.Background(), parentUID, metav1.GetOptions{})
+			require.NoError(t, getParentErr, "parent folder should still exist after failed deletion")
+			_, getChildErr := client.Resource.Get(context.Background(), childUID, metav1.GetOptions{})
+			require.NoError(t, getChildErr, "child folder should still exist after failed deletion")
+		})
 	}
 }
