@@ -235,7 +235,7 @@ func (ng *AlertNG) init() error {
 			override = remote.NewRemoteSecondaryFactory(cfg,
 				store,
 				ng.store,
-				ng.store.Cfg.RemoteAlertmanager.SyncInterval,
+				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 				crypto,
 				autogenFn,
 				m,
