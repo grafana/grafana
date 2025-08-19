@@ -127,15 +127,10 @@ type StorageBackend interface {
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
 }
 
-type ModifiedResourceKey struct {
-	NamespacedResource
-	Name string
-}
-
 type ModifiedResource struct {
 	Action          int64
-	Key             ModifiedResourceKey
-	Value           []byte // Only when IsDeleted false
+	Key             resourcepb.ResourceKey
+	Value           []byte
 	ResourceVersion int64
 }
 
