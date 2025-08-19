@@ -234,6 +234,11 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
       right: 0,
       background: theme.colors.background.primary,
       flexDirection: 'column',
+
+      // @ts-expect-error this should only be applied to dashboard edit pages. also no magic numbers
+      '@media (max-height: 500px)': {
+        position: 'absolute',
+      },
     }),
     topNavMenuDocked: css({
       left: MENU_WIDTH,

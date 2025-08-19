@@ -1,5 +1,7 @@
 import { css, cx } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import { useEffect } from 'react';
+import { useMedia } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -36,6 +38,15 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
 
+  // @ts-expect-error not an efficient approach, extract and conditionally replace styles and pass that separately
+  const modifiedSecondaryProps = cloneDeep(secondaryProps);
+
+  const noScroll = useMedia('(max-height: 500px)');
+  if (noScroll) {
+    modifiedSecondaryProps.style.overflowY = 'visible';
+    modifiedSecondaryProps.style.minHeight = 'max-content';
+  }
+
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
@@ -48,7 +59,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           <VizAndDataPane model={model} />
         </div>
         <div {...splitterProps} />
-        <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
+        <div {...modifiedSecondaryProps} className={cx(modifiedSecondaryProps.className, styles.optionsPane)}>
           {splitterState.collapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
@@ -162,6 +173,8 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
   );
 }
 
+const MIN_HEIGHT_MEDIA_QUERY = '@media (max-height: 500px)';
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
@@ -196,6 +209,9 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '100%',
       overflow: 'unset',
+      [MIN_HEIGHT_MEDIA_QUERY]: {
+        height: 'auto',
+      },
     }),
     body: css({
       label: 'body',
@@ -203,6 +219,9 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
+      [MIN_HEIGHT_MEDIA_QUERY]: {
+        height: '200vh',
+      },
     }),
     optionsPane: css({
       flexDirection: 'column',

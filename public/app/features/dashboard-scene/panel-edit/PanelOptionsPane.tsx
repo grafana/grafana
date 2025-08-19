@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
-import { useToggle } from 'react-use';
+import { useMedia, useToggle } from 'react-use';
 
 import {
   FieldConfigSource,
@@ -130,6 +130,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
     const onlyOverrides = listMode === OptionFilter.Overrides;
 
+    // @ts-expect-error no magic numbers!
+    const noScroll = useMedia('(max-height: 500px)');
+
     return (
       <>
         {!isVizPickerOpen && (
@@ -175,7 +178,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 />
               )}
             </div>
-            <ScrollContainer>
+            <ScrollContainer minHeight={noScroll ? 'max-content' : 0}>
               <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
             </ScrollContainer>
           </>
