@@ -21,8 +21,8 @@ export const defaultMaplibreConfig: MaplibreConfig = {
 
 export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
   id: 'maplibre',
-  name: 'MapLibre Style layer',
-  description: 'Add a map using Mapbox / MapLibre style.json URL',
+  name: 'MapLibre layer',
+  description: 'Add layer using MapLibre style.json URL',
   isBaseMap: true,
 
   create: async (map: Map, options: MapLayerOptions<MaplibreConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
