@@ -4,6 +4,10 @@ import { apply } from 'ol-mapbox-style';
 
 import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
 
+// MapLibre Style Specification constants
+const LAYER_TYPE_BACKGROUND = 'background';
+const PAINT_BACKGROUND_OPACITY = 'background-opacity';
+
 export interface MaplibreConfig {
   url: string;
   accessToken?: string;
@@ -27,9 +31,26 @@ export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
       if (!cfg.url) {
         cfg.url = defaultMaplibreConfig.url;
       }
+      const layerOpacity = options.opacity ?? 1;
+      const layer = new LayerGroup({
+        opacity: layerOpacity,
+      });
 
-      const layer = new LayerGroup();
-      apply(layer, cfg.url, { accessToken: cfg.accessToken });
+      fetch(cfg.url)
+        .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to load style'))))
+        .then((style) => {
+          // Adjust background opacity - let LayerGroup opacity handle everything else
+          if (Array.isArray(style?.layers)) {
+            for (const l of style.layers) {
+              if (l && l.type === LAYER_TYPE_BACKGROUND) {
+                l.paint = l.paint || {};
+                l.paint[PAINT_BACKGROUND_OPACITY] = layerOpacity;
+              }
+            }
+          }
+          return apply(layer, style, { styleUrl: cfg.url, accessToken: cfg.accessToken });
+        })
+        .catch(() => apply(layer, cfg.url, { accessToken: cfg.accessToken }));
 
       return layer;
     },
