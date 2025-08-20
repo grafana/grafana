@@ -568,11 +568,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   });
 
   if (shouldShowValues) {
-    builder.addHook('draw', (u: uPlot) => {
-      const baseFontSize = 12;
-      const font = `${baseFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
+    const baseFontSize = 12;
+    const font = `${baseFontSize * uPlot.pxRatio}px ${theme.typography.fontFamily}`;
 
+    builder.addHook('draw', (u: uPlot) => {
       const { ctx } = u;
+
       ctx.save();
       ctx.fillStyle = theme.colors.text.primary;
       ctx.font = font;
@@ -585,25 +586,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           continue;
         }
 
-        const seriesData = u.data[seriesIdx];
         const xData = u.data[0];
+        const yData = u.data[seriesIdx];
+        const yScale = u.series[seriesIdx].scale!;
 
-        for (let dataIdx = 0; dataIdx < seriesData.length; dataIdx++) {
-          const value = seriesData[dataIdx];
-          const xValue = xData[dataIdx];
+        for (let dataIdx = 0; dataIdx < yData.length; dataIdx++) {
+          const yVal = yData[dataIdx];
 
-          if (value != null && xValue != null) {
-            const x = u.valToPos(xValue, 'x', true);
-            const y = u.valToPos(value, u.series[seriesIdx].scale!, true);
+          if (yVal != null) {
+            const text = formattedValueToString(field.display!(yVal));
 
-            const displayValue = field.display?.(value);
-            const text = displayValue?.text ?? String(value);
-
-            const isNegative = value < 0;
+            const isNegative = yVal < 0;
             const textOffset = isNegative ? 15 : -5;
-            const textBaseline = isNegative ? 'top' : 'bottom';
+            ctx.textBaseline = isNegative ? 'top' : 'bottom';
 
-            ctx.textBaseline = textBaseline;
+            const xVal = xData[dataIdx];
+            const x = u.valToPos(xVal, 'x', true);
+            const y = u.valToPos(yVal, yScale, true);
+
             ctx.fillText(text, x, y + textOffset);
           }
         }
