@@ -142,6 +142,7 @@ export const ComboboxList = <T extends string | number>({
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
+                        data-testid={`${itemId}-checkbox`}
                       />
                     )}
                   </div>
