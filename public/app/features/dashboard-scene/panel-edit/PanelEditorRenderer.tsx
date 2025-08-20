@@ -91,7 +91,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
+  let { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'column',
       dragPosition: 'start',
@@ -103,6 +103,15 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 
   if (!dataPane) {
     primaryProps.style.flexGrow = 1;
+  }
+
+  const noScroll = useMedia('(max-height: 500px)');
+
+  if (noScroll) {
+    containerProps.className = styles.container;
+    primaryProps.className = styles.fixedSizePanel;
+    secondaryProps.className = styles.fixedSizePanel;
+    splitterProps.style.display = 'none';
   }
 
   return (
@@ -219,9 +228,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      [MIN_HEIGHT_MEDIA_QUERY]: {
-        height: '200vh',
-      },
     }),
     optionsPane: css({
       flexDirection: 'column',
@@ -266,6 +272,9 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
       paddingLeft: theme.spacing(2),
+    }),
+    fixedSizePanel: css({
+      height: '100vh',
     }),
   };
 }
