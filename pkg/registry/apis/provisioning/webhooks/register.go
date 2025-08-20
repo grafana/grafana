@@ -59,18 +59,14 @@ func ProvideWebhooks(
 				return cfg.AppURL
 			}
 
-			// If URL is not public, return a no-op extra that doesn't set up webhooks
-			if !isPublicURL(urlProvider("")) {
-				return provisioningapis.NewNoopExtra()
-			}
-
+			isPublic := isPublicURL(urlProvider(""))
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients)
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
 			webhook := NewWebhookConnector(
-				isPublicURL(urlProvider("")),
+				isPublic,
 				b,
 				screenshotRenderer,
 			)
@@ -88,6 +84,7 @@ func ProvideWebhooks(
 				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
 				[]jobs.Worker{pullRequestWorker},
+				isPublic, // Pass the public URL flag
 			)
 		},
 	}
@@ -104,6 +101,7 @@ type WebhookExtra struct {
 	clonedir    string
 	parsers     resources.ParserFactory
 	workers     []jobs.Worker
+	isPublic    bool // Flag to determine if webhook-enhanced repositories should be created
 }
 
 func NewWebhookExtra(
@@ -115,6 +113,7 @@ func NewWebhookExtra(
 	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
+	isPublic bool,
 ) *WebhookExtra {
 	return &WebhookExtra{
 		render:      render,
@@ -125,6 +124,7 @@ func NewWebhookExtra(
 		clonedir:    clonedir,
 		parsers:     parsers,
 		workers:     workers,
+		isPublic:    isPublic,
 	}
 }
 
@@ -169,7 +169,8 @@ func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
 
 // AsRepository delegates repository creation to the webhook connector
 func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	if r.Spec.Type == provisioning.GitHubRepositoryType {
+	// Only handle GitHub repositories with webhooks if URL is public
+	if r.Spec.Type == provisioning.GitHubRepositoryType && e.isPublic {
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 		webhookURL := fmt.Sprintf(
 			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
@@ -223,7 +224,11 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 }
 
 func (e *WebhookExtra) RepositoryTypes() []provisioning.RepositoryType {
-	return []provisioning.RepositoryType{
-		provisioning.GitHubRepositoryType,
+	// Only claim to handle GitHub repositories if URL is public
+	if e.isPublic {
+		return []provisioning.RepositoryType{
+			provisioning.GitHubRepositoryType,
+		}
 	}
+	return []provisioning.RepositoryType{}
 }
