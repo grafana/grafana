@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "name": "library-panel-repeat-test",
+    "creationTimestamp": null
+  },
+  "spec": {
+    "annotations": {
+      "list": []
+    },
+    "links": [],
+    "panels": [
+      {
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "libraryPanel": {
+          "name": "Shared stat",
+          "uid": "lib-uid-snap"
+        },
+        "title": "Library ref",
+        "type": "stat"
+      }
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "title": "Library Panel Repeat Test"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1",
+      "error": ""
+    }
+  }
+}

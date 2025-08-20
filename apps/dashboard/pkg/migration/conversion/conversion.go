@@ -12,6 +12,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 )
 
 var (
@@ -23,14 +24,16 @@ var (
 )
 
 type converter struct {
-	dsProvider schemaversion.DataSourceInfoProvider
-	ready      chan struct{}
+	dsProvider  schemaversion.DataSourceInfoProvider
+	libPanelSvc librarypanels.Service
+	ready       chan struct{}
 }
 
 // Initialize provides the converter singleton with required dependencies
-func Initialize(dsProvider schemaversion.DataSourceInfoProvider) {
+func Initialize(dsProvider schemaversion.DataSourceInfoProvider, libPanelSvc librarypanels.Service) {
 	converterOnce.Do(func() {
 		converterInstance.dsProvider = dsProvider
+		converterInstance.libPanelSvc = libPanelSvc
 		close(converterInstance.ready)
 	})
 }
@@ -39,6 +42,12 @@ func Initialize(dsProvider schemaversion.DataSourceInfoProvider) {
 func GetDataSourceProvider() schemaversion.DataSourceInfoProvider {
 	<-converterInstance.ready
 	return converterInstance.dsProvider
+}
+
+// GetLibraryPanelService returns the library panel service from the converter instance
+func GetLibraryPanelService() librarypanels.Service {
+	<-converterInstance.ready
+	return converterInstance.libPanelSvc
 }
 
 var logger = log.New("dashboard.conversion")

@@ -23,9 +23,24 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// newFakeLibraryPanelService returns a test library panel service that
+// provides a single library panel model used by snapshot fixtures.
+func newFakeLibraryPanelService() *testutil.FakeLibraryPanelService {
+	return &testutil.FakeLibraryPanelService{UIDToModel: map[string]map[string]any{
+		"lib-uid-snap": {
+			"id":              99,
+			"title":           "Shared stat",
+			"type":            "stat",
+			"repeat":          "server",
+			"repeatDirection": "h",
+			"maxPerRow":       3,
+		},
+	}}
+}
+
 func TestConversionMatrixExist(t *testing.T) {
-	// Initialize the converter with a test data source provider
-	Initialize(testutil.GetTestDataSourceProvider())
+	// Initialize the converter with a test data source provider and a non-nil lib panel service
+	Initialize(testutil.GetTestDataSourceProvider(), newFakeLibraryPanelService())
 
 	// Initialize the migrator with a test data source provider
 	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
@@ -78,8 +93,8 @@ func TestDeepCopyValid(t *testing.T) {
 }
 
 func TestDashboardConversionToAllVersions(t *testing.T) {
-	// Initialize the converter with a test data source provider
-	Initialize(testutil.GetTestDataSourceProvider())
+	// Initialize the converter with a test data source provider and a non-nil lib panel service
+	Initialize(testutil.GetTestDataSourceProvider(), newFakeLibraryPanelService())
 
 	// Initialize the migrator with a test data source provider
 	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())

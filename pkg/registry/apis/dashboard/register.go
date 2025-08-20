@@ -155,8 +155,8 @@ func RegisterAPIService(
 		datasourceService: datasourceService,
 	}
 
-	// Initialize the converter with the datasource provider
-	conversion.Initialize(dsInfoProvider)
+	// Initialize the converter with the datasource provider and library panel service
+	conversion.Initialize(dsInfoProvider, libraryPanelSvc)
 
 	migration.Initialize(dsInfoProvider, &PluginStorePanelProvider{
 		pluginStore:  pluginStore,

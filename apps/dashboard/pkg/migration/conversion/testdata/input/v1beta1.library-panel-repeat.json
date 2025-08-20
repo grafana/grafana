@@ -1,0 +1,24 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "library-panel-repeat-test"
+  },
+  "spec": {
+    "title": "Library Panel Repeat Test",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Library ref",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 8, "h": 6 },
+        "libraryPanel": { "uid": "lib-uid-snap", "name": "Shared stat" }
+      }
+    ],
+    "time": { "from": "now-6h", "to": "now" },
+    "templating": { "list": [] },
+    "annotations": { "list": [] },
+    "links": []
+  }
+}
+
