@@ -91,11 +91,11 @@ const ResourcePicker = ({
 
     if (queryType === 'metrics') {
       setIsLoadingNamespaces(true);
-      const namespaces = await datasource.getMetricNamespaces(
+      const initialNamespaces = await datasource.getMetricNamespaces(
         subscriptions[0]?.value || datasource.getDefaultSubscriptionId()
       );
       setNamespaces(
-        namespaces?.map((ns) => ({
+        initialNamespaces?.map((ns) => ({
           label: resourceTypeDisplayNames[ns.value.toLowerCase()] || ns.value,
           value: ns.value,
         }))
