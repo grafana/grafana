@@ -53,7 +53,7 @@ datasources:
       password: $PASSWORD
 ```
 
-### Expansion of environment values
+### Use of the special character "$"
 
 Grafana's expansion feature considers any value after an `$` a variable, and converts `$$` into a single `$`.
 
