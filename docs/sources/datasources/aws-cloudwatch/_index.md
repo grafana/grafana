@@ -132,17 +132,16 @@ The CloudWatch data source includes curated, pre-configured dashboards for five 
 
 To import curated dashboards:
 
-1. Navigate to the data source's [configuration page](#configure-the-data-source).
+1. Navigate to the data source's configuration page.
 1. Click the **Dashboards** tab.
 
    This displays the curated selection of importable dashboards.
 
-1. Click **Import** for the each dashboard you want to import.
+1. Click **Import** for each dashboard you want to import.
 
-![Cloudwatch pre-configured dashboards Grafana v12.1](/media//docs/cloudwatch/preconfigured-dashbaords-cloudwatch-v12.1.png) CloudWatch pre-configured dashboards
+![CloudWatch pre-configured dashboards Grafana v12.1](/media//docs/cloudwatch/preconfigured-dashboards-cloudwatch-v12.1.png) CloudWatch pre-configured dashboards
 
-To customize one of these dashboards, Grafana recommends saving it under a different name.
-Otherwise, Grafana upgrades will overwrite your customizations with the new version.
+To customize one of these dashboards, Grafana recommends saving it under a different name; otherwise, Grafana upgrades will overwrite your customizations with the new version.
 
 ## Get the most out of the data source
 
@@ -176,7 +175,7 @@ AWS defines quotas, or limits, for resources, actions, and items in your AWS acc
 Depending on the number of queries in your dashboard and the number of users accessing the dashboard, you might reach the usage limits for various CloudWatch and CloudWatch Logs resources.
 Quotas are defined per account and per region.
 
-If you use multiple regions or configured more than one CloudWatch data source to query against multiple accounts, you must request a quota increase for each account and region in which you reach the limit.
+If you use multiple regions or have configured more than one CloudWatch data source to query against multiple accounts, you must request a quota increase for each account and region in which you reach the limit.
 
 To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
 For more information, refer to the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html).
@@ -185,6 +184,6 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
-To use this feature, configure in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
+To use this feature, configure a monitoring and source account in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), and then add the necessary IAM permissions as described above.
 
 

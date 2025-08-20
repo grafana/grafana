@@ -81,7 +81,7 @@ This document provides instructions for configuring the Amazon CloudWatch data s
 
 - You must have the `Organization administrator` role to configure the CloudWatch data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-- Grafana comes with a built-in CloudWatch data source plugin, eliminating the need to install a plugin.
+- Grafana comes with a built-in CloudWatch data source plugin, so you do not need to install a plugin.
 
 - Familiarize yourself with your CloudWatch security configuration and gather any necessary security certificates, client certificates, and client keys.
 
@@ -118,7 +118,7 @@ For authentication options and configuration details, refer to [AWS authenticati
 
 **Access & secret key:**
 
-You must use both an access key ID AND secret access key to authenticate.
+You must use both an access key ID and a secret access key to authenticate.
 
 | Setting               | Description                  |
 | --------------------- | ---------------------------- |
@@ -323,7 +323,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 ```
 
 {{< admonition type="note" >}}
-Cross-account observability lets you to retrieve metrics and logs across different accounts in a single region but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
+Cross-account observability lets you retrieve metrics and logs across different accounts in a single region, but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
 {{< /admonition >}}
 
 For more information on configuring authentication, refer to [Configure AWS authentication](ref:cloudwatch-aws-authentication).
@@ -341,7 +341,7 @@ The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` se
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
+For more information about provisioning and available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
 **Using AWS SDK (default)**:
 
