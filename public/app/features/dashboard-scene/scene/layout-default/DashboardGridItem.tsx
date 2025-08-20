@@ -173,7 +173,10 @@ export class DashboardGridItem
       const isSource = index === 0;
       const clone = isSource
         ? panelToRepeat
-        : panelToRepeat.clone({ key: getCloneKey(panelToRepeat.state.key!, index) });
+        : panelToRepeat.clone({
+            key: getCloneKey(panelToRepeat.state.key!, index),
+            repeatSourceKey: panelToRepeat.state.key,
+          });
 
       clone.setState({ $variables: getLocalVariableValueSet(variable, variableValues[index], variableTexts[index]) });
 
