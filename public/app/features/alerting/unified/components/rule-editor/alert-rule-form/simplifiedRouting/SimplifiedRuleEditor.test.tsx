@@ -5,6 +5,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -17,7 +18,7 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/alerting/unified/utils/rule-form';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { grafanaRulerGroup } from '../../../../mocks/grafanaRulerApi';
 
@@ -80,6 +81,9 @@ beforeEach(() => {
 
 setupMswServer();
 setupDataSources(dataSources.default, dataSources.am);
+
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 describe('Can create a new grafana managed alert using simplified routing', () => {
   beforeEach(() => {

@@ -700,7 +700,7 @@ export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingV
 
 export interface ConditionalRenderingVariableSpec {
 	variable: string;
-	operator: "equals" | "notEquals";
+	operator: "equals" | "notEquals" | "matches" | "notMatches";
 	value: string;
 }
 
@@ -1005,6 +1005,8 @@ export interface QueryVariableSpec {
 	allValue?: string;
 	placeholder?: string;
 	allowCustomValue: boolean;
+	staticOptions?: VariableOption[];
+	staticOptionsOrder?: "before" | "after" | "sorted";
 }
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({

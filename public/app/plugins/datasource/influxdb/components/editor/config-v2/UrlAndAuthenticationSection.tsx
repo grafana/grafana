@@ -17,7 +17,7 @@ import { InfluxVersion } from '../../../types';
 
 import { AdvancedHttpSettings } from './AdvancedHttpSettings';
 import { AuthSettings } from './AuthSettings';
-import { CONFIG_SECTION_HEADERS } from './constants';
+import { CONFIG_SECTION_HEADERS, CONTAINER_MIN_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2ProductSelected,
   trackInfluxDBConfigV2QueryLanguageSelected,
@@ -38,16 +38,25 @@ export const UrlAndAuthenticationSection = (props: Props) => {
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
 
   // Database + Retention Policy (DBRP) mapping is required for InfluxDB OSS 1.x and 2.x when using InfluxQL
-  const requiresDrbpMapping =
+  const requiresDbrpMapping =
     options.jsonData.product &&
     options.jsonData.version === InfluxVersion.InfluxQL &&
-    ['InfluxDB OSS 1.x', 'InfluxDB OSS 2.x'].includes(options.jsonData.product);
+    [
+      'InfluxDB OSS 1.x',
+      'InfluxDB OSS 2.x',
+      'InfluxDB Enterprise 1.x',
+      'InfluxDB Cloud (TSM)',
+      'InfluxDB Cloud Serverless',
+    ].includes(options.jsonData.product);
 
-  const onProductChange = ({ value }: ComboboxOption) =>
+  const onProductChange = ({ value }: ComboboxOption) => {
+    trackInfluxDBConfigV2ProductSelected({ product: value });
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value, version: undefined } });
+  };
 
   const onQueryLanguageChange = (option: ComboboxOption) => {
     const { value } = option;
+    trackInfluxDBConfigV2QueryLanguageSelected({ version: value });
 
     if (isInfluxVersion(value)) {
       onUpdateDatasourceJsonDataOptionSelect(props, 'version')(option);
@@ -57,7 +66,14 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => onUpdateDatasourceOption(props, 'url')(event);
 
   return (
-    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[0].id}`}>
+    <Box
+      borderStyle="solid"
+      borderColor="weak"
+      padding={2}
+      marginBottom={4}
+      id={`${CONFIG_SECTION_HEADERS[0].id}`}
+      minWidth={CONTAINER_MIN_WIDTH}
+    >
       <CollapsableSection
         label={<Text element="h3">1. {CONFIG_SECTION_HEADERS[0].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[0].isOpen}
@@ -67,7 +83,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           available settings and authentication methods in the next steps. If you are unsure what product you are using,
           view the{' '}
           <TextLink href="https://docs.influxdata.com/" external>
-            InfluxDB Docs.
+            InfluxDB Docs
           </TextLink>
           .
         </Text>
@@ -76,7 +92,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           <Field label={<div style={{ marginBottom: '5px' }}>URL</div>} noMargin>
             <Input
               data-testid="influxdb-v2-config-url-input"
-              placeholder="http://localhost:3000/"
+              placeholder="http://localhost:8086/"
               onChange={onUrlChange}
               value={options.url || ''}
               onBlur={trackInfluxDBConfigV2URLInputField}
@@ -92,7 +108,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     value={options.jsonData.product}
                     options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
                     onChange={onProductChange}
-                    onBlur={() => trackInfluxDBConfigV2ProductSelected({ product: options.jsonData.product! })}
                   />
                 </Field>
               </Box>
@@ -103,7 +118,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     value={options.jsonData.product !== '' ? options.jsonData.version : ''}
                     options={getQueryLanguageOptions(options.jsonData.product || '')}
                     onChange={onQueryLanguageChange}
-                    onBlur={() => trackInfluxDBConfigV2QueryLanguageSelected({ version: options.url })}
                   />
                 </Field>
               </Box>
@@ -112,10 +126,10 @@ export const UrlAndAuthenticationSection = (props: Props) => {
 
           <Space v={2} />
 
-          {requiresDrbpMapping && (
-            <Alert severity="warning" title="InfluxQL requires DRBP mapping">
-              InfluxDB OSS 1.x and 2.x users must configure a Database + Retention Policy (DBRP) mapping via the CLI or
-              API before data can be queried.{' '}
+          {requiresDbrpMapping && (
+            <Alert severity="warning" title="InfluxQL requires DBRP mapping">
+              {`${options.jsonData.product} requires a Database + Retention Policy (DBRP) mapping via the CLI or
+              API before data can be queried.`}{' '}
               <TextLink href="https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/" external>
                 Learn how to set this up
               </TextLink>

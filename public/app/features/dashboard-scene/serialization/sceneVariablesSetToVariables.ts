@@ -24,12 +24,15 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
+  defaultDataQueryKind,
   AdHocFilterWithLabels,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { getDataSourceForQuery } from './layoutSerializers/utils';
 import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
@@ -86,6 +89,11 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allowCustomValue: variable.state.allowCustomValue,
         skipUrlSync: variable.state.skipUrlSync,
+        staticOptions: variable.state.staticOptions?.map((option) => ({
+          text: option.label,
+          value: String(option.value),
+        })),
+        staticOptionsOrder: variable.state.staticOptionsOrder,
       });
     } else if (sceneUtils.isCustomVariable(variable)) {
       variables.push({
@@ -294,14 +302,30 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
+      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: getDataQuerySpec(query),
         };
       } else {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: {
             [LEGACY_STRING_VALUE_KEY]: query,
           },
@@ -315,7 +339,6 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,
@@ -324,6 +347,11 @@ export function sceneVariablesSetToSchemaV2Variables(
           multi: variable.state.isMulti || false,
           skipUrlSync: variable.state.skipUrlSync || false,
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          staticOptions: variable.state.staticOptions?.map((option) => ({
+            text: option.label,
+            value: String(option.value),
+          })),
+          staticOptionsOrder: variable.state.staticOptionsOrder,
         },
       };
       variables.push(queryVariable);
@@ -430,11 +458,19 @@ export function sceneVariablesSetToSchemaV2Variables(
           }
         : undefined;
 
+      const ds = getDataSourceForQuery(
+        variable.state.datasource,
+        variable.state.datasource?.type || getDefaultDatasource().type!
+      );
+
       const groupVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
+        group: ds.type!,
+        datasource: {
+          name: ds.uid,
+        },
         spec: {
           ...commonProperties,
-          datasource: variable.state.datasource || {}, // FIXME what is the default value?,
           // Only persist the statically defined options
           options:
             variable.state.defaultOptions?.map((option) => ({
@@ -448,12 +484,20 @@ export function sceneVariablesSetToSchemaV2Variables(
       };
       variables.push(groupVariable);
     } else if (sceneUtils.isAdHocVariable(variable)) {
+      const ds = getDataSourceForQuery(
+        variable.state.datasource,
+        variable.state.datasource?.type || getDefaultDatasource().type!
+      );
       const adhocVariable: AdhocVariableKind = {
         kind: 'AdhocVariable',
+        group: ds.type!,
+        datasource: {
+          name: ds.uid,
+        },
         spec: {
           ...commonProperties,
           name: variable.state.name,
-          datasource: variable.state.datasource || {}, //FIXME what is the default value?
+
           baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
           filters: [
             ...validateFiltersOrigin(variable.state.originFilters),

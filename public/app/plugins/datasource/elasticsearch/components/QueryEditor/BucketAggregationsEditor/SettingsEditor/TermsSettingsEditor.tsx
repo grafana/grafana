@@ -3,9 +3,15 @@ import { useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Select, Input } from '@grafana/ui';
+import {
+  Terms,
+  ExtendedStats,
+  ExtendedStatMetaType,
+  Percentiles,
+  MetricAggregation,
+} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { MetricAggregation, Percentiles, ExtendedStatMetaType, ExtendedStats, Terms } from '../../../../types';
 import { describeMetric } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
 import { isPipelineAggregation } from '../../MetricAggregationsEditor/aggregations';

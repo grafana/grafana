@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -20,8 +21,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
-
+	"github.com/grafana/dskit/ring"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -113,12 +115,23 @@ type StorageBackend interface {
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
+	// ListModifiedSince will return all resources that have changed since the given resource version.
+	// If a resource has changes, only the latest change will be returned.
+	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
+
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+}
+
+type ModifiedResource struct {
+	Action          resourcepb.WatchEvent_Type
+	Key             resourcepb.ResourceKey
+	Value           []byte
+	ResourceVersion int64
 }
 
 type ResourceStats struct {
@@ -146,7 +159,7 @@ type BlobSupport interface {
 }
 
 type QOSEnqueuer interface {
-	Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error
+	Enqueue(ctx context.Context, tenantID string, runnable func()) error
 }
 
 type BlobConfig struct {
@@ -180,6 +193,8 @@ type SearchOptions struct {
 
 	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
 	RebuildInterval time.Duration
+
+	Ring *ring.Ring
 }
 
 type ResourceServerOptions struct {
@@ -205,6 +220,9 @@ type ResourceServerOptions struct {
 	// Link RBAC
 	AccessClient claims.AccessClient
 
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
 
@@ -223,9 +241,15 @@ type ResourceServerOptions struct {
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue QOSEnqueuer
+
+	Ring           *ring.Ring
+	RingLifecycler *ring.BasicLifecycler
+
+	// Enable strong consistency for searches. When enabled, index is always updated with latest changes before search.
+	SearchAfterWrite bool
 }
 
-func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
@@ -291,6 +315,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		blob:             blobstore,
 		diagnostics:      opts.Diagnostics,
 		access:           opts.AccessClient,
+		secure:           opts.SecureValues,
 		writeHooks:       opts.WriteHooks,
 		lifecycle:        opts.Lifecycle,
 		now:              opts.Now,
@@ -305,7 +330,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler, opts.SearchAfterWrite)
 		if err != nil {
 			return nil, err
 		}
@@ -327,6 +352,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -404,6 +430,8 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
+//
+//nolint:gocyclo
 func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
@@ -457,6 +485,11 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
+	}
+
+	// Verify that this resource can reference secure values
+	if err := canReferenceSecureValues(ctx, obj, event.ObjectOld, s.secure); err != nil {
+		return nil, err
 	}
 
 	if key.Namespace != obj.GetNamespace() {
@@ -602,7 +635,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		res *resourcepb.CreateResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.create(ctx, user, req)
 	})
 	if runErr != nil {
@@ -656,7 +689,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		res *resourcepb.UpdateResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.update(ctx, user, req)
 	})
 	if runErr != nil {
@@ -724,7 +757,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		err error
 	)
 
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.delete(ctx, user, req)
 	})
 	if runErr != nil {
@@ -776,16 +809,17 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		PreviousRV: latest.ResourceVersion,
 		GUID:       uuid.New().String(),
 	}
-	requester, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewBadRequest("unable to get user")
-	}
 	marker := &unstructured.Unstructured{}
 	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))
 	}
+	oldObj, err := utils.MetaAccessor(marker)
+	if err != nil {
+		return nil, err
+	}
+
 	obj, err := utils.MetaAccessor(marker)
 	if err != nil {
 		return nil, err
@@ -794,9 +828,11 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(requester.GetUID())
+	obj.SetUpdatedBy(user.GetUID())
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
+	event.ObjectOld = oldObj
+	event.Object = obj
 	event.Value, err = marker.MarshalJSON()
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
@@ -832,7 +868,7 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		res *resourcepb.ReadResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.read(ctx, user, req)
 	})
 	if runErr != nil {
@@ -1339,7 +1375,7 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	return rsp, nil
 }
 
-func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func()) error {
 	boff := backoff.New(ctx, backoff.Config{
 		MinBackoff: DefaultMinBackoff,
 		MaxBackoff: DefaultMaxBackoff,
@@ -1351,9 +1387,9 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		err error
 	)
 	wg.Add(1)
-	wrapped := func(ctx context.Context) {
-		runnable(ctx)
-		wg.Done()
+	wrapped := func() {
+		defer wg.Done()
+		runnable()
 	}
 	for boff.Ongoing() {
 		err = s.queue.Enqueue(ctx, tenantID, wrapped)

@@ -61,7 +61,7 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
-jest.mock('./plugin_loader', () => ({
+jest.mock('./pluginLoader', () => ({
   importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
     return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
   },

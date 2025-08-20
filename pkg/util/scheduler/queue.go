@@ -23,9 +23,17 @@ var ErrTenantQueueFull = errors.New("tenant queue full")
 var ErrNilRunnable = errors.New("cannot enqueue nil runnable")
 var ErrMissingTenantID = errors.New("item requires TenantID")
 
+// queuedItem represents a runnable task annotated with its enqueue timestamp.
+// The timestamp allows us to compute how long the task spent waiting in the queue
+// before being picked up by a worker.
+type queuedItem struct {
+	runnable   func()
+	enqueuedAt time.Time
+}
+
 type tenantQueue struct {
 	id       string
-	items    []func(ctx context.Context)
+	items    []queuedItem
 	isActive bool
 }
 
@@ -42,13 +50,13 @@ func (tq *tenantQueue) isEmpty() bool {
 func (tq *tenantQueue) isFull(maxSize int) bool {
 	return maxSize > 0 && len(tq.items) >= maxSize
 }
-func (tq *tenantQueue) addItem(runnable func(ctx context.Context)) {
-	tq.items = append(tq.items, runnable)
+func (tq *tenantQueue) addItem(runnable func()) {
+	tq.items = append(tq.items, queuedItem{runnable: runnable, enqueuedAt: time.Now()})
 }
 
 type enqueueRequest struct {
 	tenantID string
-	runnable func(ctx context.Context)
+	runnable func()
 	respChan chan error
 }
 
@@ -57,7 +65,7 @@ type dequeueRequest struct {
 }
 
 type dequeueResponse struct {
-	runnable func(ctx context.Context)
+	runnable func()
 	err      error
 }
 
@@ -71,8 +79,8 @@ type activeTenantsLenRequest struct {
 
 type NoopQueue struct{}
 
-func (*NoopQueue) Enqueue(ctx context.Context, _ string, runnable func(ctx context.Context)) error {
-	runnable(ctx)
+func (*NoopQueue) Enqueue(ctx context.Context, _ string, runnable func()) error {
+	runnable()
 	return nil
 }
 
@@ -106,7 +114,7 @@ type Queue struct {
 	// Metrics
 	queueLength       *prometheus.GaugeVec
 	discardedRequests *prometheus.CounterVec
-	enqueueDuration   prometheus.Histogram
+	queueWaitDuration *prometheus.HistogramVec
 }
 
 type QueueOptions struct {
@@ -143,16 +151,18 @@ func NewQueue(opts *QueueOptions) *Queue {
 	q.queueLength = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
 		Name: "queue_length",
 		Help: "Number of items in the queue",
-	}, []string{"namespace"})
+	}, []string{"tenant"})
 	q.discardedRequests = promauto.With(opts.Registerer).NewCounterVec(prometheus.CounterOpts{
 		Name: "discarded_requests_total",
 		Help: "Total number of discarded requests",
-	}, []string{"namespace", "reason"})
-	q.enqueueDuration = promauto.With(opts.Registerer).NewHistogram(prometheus.HistogramOpts{
-		Name:    "enqueue_duration_seconds",
-		Help:    "Duration of enqueue operation in seconds",
-		Buckets: prometheus.DefBuckets,
-	})
+	}, []string{"tenant", "reason"})
+	q.queueWaitDuration = promauto.With(opts.Registerer).NewHistogramVec(prometheus.HistogramOpts{
+		Name:                            "queue_wait_duration_seconds",
+		Help:                            "Time items spend waiting in the queue before being dequeued, in seconds",
+		NativeHistogramBucketFactor:     1.1,
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+	}, []string{"tenant"})
 
 	q.Service = services.NewBasicService(nil, q.dispatcherLoop, q.stopping)
 
@@ -175,8 +185,11 @@ func (q *Queue) scheduleRoundRobin() {
 		tq := tenantElem.Value.(*tenantQueue)
 
 		// Get and deliver the runnable item
-		item := tq.items[0]
-		req.respChan <- dequeueResponse{runnable: item, err: nil}
+		qi := tq.items[0]
+		req.respChan <- dequeueResponse{runnable: qi.runnable, err: nil}
+
+		// Observe how long the item spent waiting in the queue.
+		q.queueWaitDuration.WithLabelValues(tq.id).Observe(time.Since(qi.enqueuedAt).Seconds())
 
 		// Update bookkeeping
 		q.pendingDequeueRequests.Remove(reqElem)
@@ -200,7 +213,7 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	if !exists {
 		tq = &tenantQueue{
 			id:    req.tenantID,
-			items: make([]func(ctx context.Context), 0, 8),
+			items: make([]queuedItem, 0, 8),
 		}
 		q.tenantQueues[req.tenantID] = tq
 	}
@@ -263,7 +276,7 @@ func (q *Queue) dispatcherLoop(ctx context.Context) error {
 
 // Enqueue adds a work item to the appropriate tenant's qos.
 // It blocks only if the dispatcher is busy or the tenant queue is full.
-func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) error {
 	if runnable == nil {
 		return ErrNilRunnable
 	}
@@ -274,8 +287,6 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 	if q.State() != services.Running {
 		return ErrQueueClosed
 	}
-
-	start := time.Now()
 
 	respChan := make(chan error, 1)
 	req := enqueueRequest{
@@ -295,7 +306,6 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 		q.discardedRequests.WithLabelValues(tenantID, "context_canceled").Inc()
 		err = ctx.Err()
 	}
-	q.enqueueDuration.Observe(time.Since(start).Seconds())
 
 	return err
 }
@@ -303,7 +313,7 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 // Dequeue removes and returns a work item from the qos using linked-list round-robin.
 // It blocks until an item is available for any tenant, the queue is closed,
 // or the context is cancelled.
-func (q *Queue) Dequeue(ctx context.Context) (func(ctx context.Context), error) {
+func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
 	if q.State() != services.Running {
 		return nil, ErrQueueClosed
 	}

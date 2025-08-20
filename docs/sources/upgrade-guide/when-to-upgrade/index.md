@@ -46,7 +46,7 @@ We provide release documentation in multiple places to address different needs:
 
 ## When to expect releases
 
-Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled releases for 2025:
+Grafana currently follows a monthly release schedule. Below are the planned releases for 2025, though these dates may be subject to change:
 
 | **Release date** | **Grafana versions**      | **Release type** |
 | ---------------- | ------------------------- | ---------------- |
@@ -96,45 +96,40 @@ For self-managed Grafana (both Enterprise and OSS), the support for versions fol
 - Each minor release is supported for 9 months after its release date
 - The last minor release of a major version receives extended support for 15 months after its release date
 - Support levels change as new versions are released:
-  - **Full Support**: The most recently released major/minor (and the last minor of the previous major) version receive full support including new features, bug fixes, and security patches
-  - **Security & Critical Bugs Only**: Versions that are not the most recently released major/minor (or the last minor of the previous major) version, but still within their support period, receive only security patches and critical bug fixes
+  - **Full Support**: The most recently released major/minor version receive full support including new features, bug fixes, and security patches
+  - **Security & Critical Bugs Only**: Versions that are outside of the most recently released major/minor version, but still within their support period, receive only security patches and critical bug fixes
   - **Not Supported**: Versions beyond their support period receive no updates
 
 Here is an overview of version support through 2026:
 
 | **Version**               | **Release date**   | **Support end date** | **Support level**             |
 | ------------------------- | ------------------ | -------------------- | ----------------------------- |
-| 9.5.x (Last minor of 9)   | April 26, 2023     | July 26, 2024        | Supported for Azure Only      |
-| 10.0.x                    | June 13, 2023      | March 13, 2024       | Not Supported                 |
-| 10.1.x                    | August 22, 2023    | May 22, 2024         | Not Supported                 |
 | 10.2.x                    | October 24, 2023   | July 24, 2024        | Not Supported                 |
 | 10.3.x                    | January 23, 2024   | October 23, 2024     | Not Supported                 |
-| 10.4.x (Last minor of 10) | March 5, 2024      | June 5, 2025         | Security & Critical Bugs Only |
-| 11.0.x                    | May 14, 2024       | February 14, 2025    | Security & Critical Bugs Only |
-| 11.1.x                    | June 25, 2024      | April 23, 2025       | Security & Critical Bugs Only |
-| 11.2.x                    | August 27, 2024    | May 27, 2025         | Security & Critical Bugs Only |
-| 11.3.x                    | October 22, 2024   | July 22, 2025        | Security & Critical Bugs Only |
+| 10.4.x (Last minor of 10) | March 5, 2024      | June 5, 2025         | Not Supported                 |
+| 11.0.x                    | May 14, 2024       | February 14, 2025    | Not Supported                 |
+| 11.1.x                    | June 25, 2024      | April 23, 2025       | Not Supported                 |
+| 11.2.x                    | August 27, 2024    | May 27, 2025         | Not Supported                 |
+| 11.3.x                    | October 22, 2024   | July 22, 2025        | Not Supported                 |
 | 11.4.x                    | December 5, 2024   | September 5, 2025    | Security & Critical Bugs Only |
 | 11.5.x                    | January 28, 2025   | October 28, 2025     | Security & Critical Bugs Only |
-| 11.6.x (Last minor of 11) | March 25, 2025     | May 25, 2026         | Full Support                  |
-| 12.0.x                    | May 5, 2025        | February 5, 2026     | Full Support until next minor |
+| 11.6.x (Last minor of 11) | March 25, 2025     | June 25, 2026        | Security & Critical Bugs Only |
+| 12.0.x                    | May 5, 2025        | February 5, 2026     | Security & Critical Bugs Only |
 | 12.1.x                    | July 22, 2025      | April 22, 2026       | Full Support until next minor |
-| 12.2.x                    | September 23, 2025 | June 23, 2026        | Full Support until next minor |
-| 12.3.x                    | November 18, 2025  | August 18, 2026      | Full Support until next minor |
+| 12.2.x                    | September 23, 2025 | June 23, 2026        | Yet to be released            |
+| 12.3.x                    | November 18, 2025  | August 18, 2026      | Yet to be released            |
 
 ## How are these versions supported?
 
 The level of support changes as new versions of Grafana are released. Here are the key details:
 
 - **Full Support**:
-
   - All new features
   - All bug fixes
   - Security patches
   - Regular updates
 
 - **Security & Critical Bugs Only**:
-
   - Security vulnerability patches
   - Critical bug fixes that cause feature degradation
   - No new features

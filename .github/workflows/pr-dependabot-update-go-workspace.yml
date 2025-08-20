@@ -17,7 +17,7 @@ permissions:
 jobs:
   update:
     runs-on: "ubuntu-latest"
-    if: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:
     - name: Retrieve GitHub App secrets
@@ -45,7 +45,7 @@ jobs:
         persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
+      uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
       with:
         go-version-file: go.mod
 

@@ -68,11 +68,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
-
-		if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsSAML) {
-			providersList = append(providersList, social.SAMLProviderName)
-			configurableProviders[social.SAMLProviderName] = true
-		}
+		providersList = append(providersList, social.SAMLProviderName)
+		configurableProviders[social.SAMLProviderName] = true
 	}
 
 	store := database.ProvideStore(sqlStore)
@@ -93,10 +90,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
-		ssoSettingsApi.RegisterAPIEndpoints()
-	}
+	ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
+	ssoSettingsApi.RegisterAPIEndpoints()
 
 	return svc
 }

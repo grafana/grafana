@@ -33,9 +33,9 @@ import {
 } from '@grafana/runtime';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
-import { createLokiDatasource } from './__mocks__/datasource';
-import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
+import { createLokiDatasource } from './mocks/datasource';
+import { createMetadataRequest } from './mocks/metadataRequest';
 import { runSplitQuery } from './querySplitting';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 
@@ -1772,6 +1772,20 @@ describe('LokiDatasource', () => {
         })
       );
     });
+    it('calls query if convertMetricQueryToLogQuery is true for a metric query', async () => {
+      const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
+      await ds.getDataSamples({ expr: 'rate({a="b"}[1m])', refId: 'A' }, mockTimeRange, {
+        convertMetricQueryToLogQuery: true,
+      });
+      expect(spy).toHaveBeenCalled();
+    });
+    it('does not call query if convertMetricQueryToLogQuery is false for a metric query', async () => {
+      const spy = jest.spyOn(ds, 'query');
+      await ds.getDataSamples({ expr: 'rate({a="b"}[1m])', refId: 'A' }, mockTimeRange, {
+        convertMetricQueryToLogQuery: false,
+      });
+      expect(spy).not.toHaveBeenCalled();
+    });
   });
 
   describe('Query splitting', () => {
@@ -1806,6 +1820,162 @@ describe('LokiDatasource', () => {
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(runSplitQuery).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('scopes application', () => {
+    let ds: LokiDatasource;
+    let origBackendSrv: BackendSrv;
+
+    beforeEach(() => {
+      origBackendSrv = getBackendSrv();
+      ds = createLokiDatasource(templateSrvStub);
+      // Enable the required feature toggles
+      config.featureToggles.scopeFilters = true;
+      config.featureToggles.logQLScope = true;
+    });
+
+    afterEach(() => {
+      setBackendSrv(origBackendSrv);
+      // Reset feature toggles to false
+      config.featureToggles.scopeFilters = false;
+      config.featureToggles.logQLScope = false;
+    });
+
+    it('should apply scopes to queries when feature toggles are enabled', async () => {
+      const mockScopes = [
+        {
+          metadata: { name: 'test-scope' },
+          spec: {
+            title: 'Test Scope',
+            type: 'test',
+            description: 'Test scope description',
+            category: 'test-category',
+            filters: [
+              { key: 'environment', value: 'production', operator: 'equals' as const },
+              { key: 'service', value: 'api', operator: 'equals' as const },
+            ],
+          },
+        },
+      ];
+
+      const query: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{job="grafana"}', refId: 'A' }],
+        scopes: mockScopes,
+      };
+
+      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
+      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
+
+      await ds.query(query).pipe(take(1)).toPromise();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                scopes: [
+                  { key: 'environment', value: 'production', operator: 'equals' },
+                  { key: 'service', value: 'api', operator: 'equals' },
+                ],
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
+    it('should not apply scopes when feature toggles are disabled', async () => {
+      // Disable the required feature toggles
+      config.featureToggles.scopeFilters = false;
+      config.featureToggles.logQLScope = false;
+
+      const mockScopes = [
+        {
+          metadata: { name: 'test-scope' },
+          spec: {
+            title: 'Test Scope',
+            type: 'test',
+            description: 'Test scope description',
+            category: 'test-category',
+            filters: [{ key: 'environment', value: 'production', operator: 'equals' as const }],
+          },
+        },
+      ];
+
+      const query: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{job="grafana"}', refId: 'A' }],
+        scopes: mockScopes,
+      };
+
+      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
+      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
+
+      await ds.query(query).pipe(take(1)).toPromise();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                scopes: undefined,
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
+    it('should handle empty scopes array', async () => {
+      const query: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{job="grafana"}', refId: 'A' }],
+        scopes: [],
+      };
+
+      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
+      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
+
+      await ds.query(query).pipe(take(1)).toPromise();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                scopes: [],
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
+    it('should handle undefined scopes', async () => {
+      const query: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{job="grafana"}', refId: 'A' }],
+        scopes: undefined,
+      };
+
+      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
+      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
+
+      await ds.query(query).pipe(take(1)).toPromise();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                scopes: undefined,
+              }),
+            ]),
+          }),
+        })
+      );
     });
   });
 

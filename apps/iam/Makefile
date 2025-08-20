@@ -1,22 +1,6 @@
-APP_SDK_VERSION := v0.39.0
-APP_SDK_DIR     := $(shell go env GOPATH)/bin/app-sdk-$(APP_SDK_VERSION)
-APP_SDK_BIN     := $(APP_SDK_DIR)/grafana-app-sdk
+include ../sdk.mk
 
-.PHONY: install-app-sdk
-install-app-sdk: $(APP_SDK_BIN) ## Install the Grafana App SDK
-
-$(APP_SDK_BIN):
-	@echo "Installing Grafana App SDK version $(APP_SDK_VERSION)"
-	@mkdir -p $(APP_SDK_DIR)
-	# The only way to install specific versions of binaries using `go install`
-	# is by setting GOBIN to the directory you want to install the binary to.
-	GOBIN=$(APP_SDK_DIR) go install github.com/grafana/grafana-app-sdk/cmd/grafana-app-sdk@$(APP_SDK_VERSION)
-	@touch $@
-
-.PHONY: update-app-sdk
-update-app-sdk: ## Update the Grafana App SDK dependency in go.mod
-	go get github.com/grafana/grafana-app-sdk@$(APP_SDK_VERSION)
-	go mod tidy
+OPERATOR_DOCKERIMAGE := "github.com/grafana/grafana/apps/iam/operator"
 
 .PHONY: generate
 generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
@@ -27,3 +11,44 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--defencoding=none \
 		--noschemasinmanifest \
 		--postprocess
+
+.PHONY: deps
+deps:
+	@go mod tidy
+	@GOWORK=off go mod vendor
+
+.PHONY: build
+build: build/operator
+
+.PHONY: build/operator
+build/operator:
+	docker build -t $(OPERATOR_DOCKERIMAGE) -f cmd/operator/Dockerfile .
+
+.PHONY: local/up
+local/up:
+	@./local/scripts/cluster.sh create "local/k3d-config.json"
+	@cd local && tilt up
+
+.PHONY: local/generate
+local/generate:
+	@grafana-app-sdk project local generate
+
+.PHONY: local/down
+local/down:
+	@cd local && tilt down
+
+.PHONY: local/deploy_plugin
+local/deploy_plugin:
+	-tilt disable grafana
+	cp -R plugin/dist local/mounted-files/plugin/dist
+	-tilt enable grafana
+
+.PHONY: local/push_operator
+local/push_operator: build/operator
+	# Tag the docker image as part of localhost, which is what the generated k8s uses to avoid confusion with the real operator image
+	@docker tag "$(OPERATOR_DOCKERIMAGE):latest" "localhost/$(OPERATOR_DOCKERIMAGE):latest"
+	@./local/scripts/push_image.sh "localhost/$(OPERATOR_DOCKERIMAGE):latest"
+
+.PHONY: local/clean
+local/clean: local/down
+	@./local/scripts/cluster.sh delete

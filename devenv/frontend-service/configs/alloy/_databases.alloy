@@ -1,0 +1,45 @@
+//
+// Logs
+loki.relabel "publish_logs" {
+	rule {
+		action       = "replace"
+		target_label = "instance"
+		replacement  = constants.hostname
+	}
+
+	forward_to = [loki.write.tilt_loki.receiver]
+}
+
+loki.write "tilt_loki" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
+
+//
+// Traces
+otelcol.processor.transform "publish_traces" {
+	error_mode = "ignore"
+
+	trace_statements {
+		context    = "resource"
+		statements = [
+			string.format(`set(attributes["instance"], "%s")`, constants.hostname),
+		]
+	}
+
+	output {
+		traces = [otelcol.exporter.otlp.tilt_tempo.input]
+	}
+}
+
+otelcol.exporter.otlp "tilt_tempo" {
+	client {
+		endpoint = "tempo:4317"
+
+		tls {
+			insecure             = true
+			insecure_skip_verify = true
+		}
+	}
+}

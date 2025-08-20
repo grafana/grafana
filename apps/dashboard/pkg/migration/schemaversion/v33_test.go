@@ -9,7 +9,7 @@ import (
 
 func TestV33(t *testing.T) {
 	// Pass the mock provider to V33
-	migration := schemaversion.V33(testutil.GetTestProvider())
+	migration := schemaversion.V33(testutil.GetTestDataSourceProvider())
 
 	tests := []migrationTestCase{
 		{
@@ -126,10 +126,10 @@ func TestV33(t *testing.T) {
 				"schemaVersion": 32,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"datasource": "Elasticsearch",
+						"datasource": "Existing Target Name",
 						"targets": []interface{}{
 							map[string]interface{}{
-								"datasource": "Elasticsearch",
+								"datasource": "Existing Target Name",
 							},
 						},
 					},
@@ -141,14 +141,14 @@ func TestV33(t *testing.T) {
 					map[string]interface{}{
 						"datasource": map[string]interface{}{
 							"type":       "elasticsearch",
-							"uid":        "other-ds",
+							"uid":        "existing-target-uid",
 							"apiVersion": "v2",
 						},
 						"targets": []interface{}{
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
 									"type":       "elasticsearch",
-									"uid":        "other-ds",
+									"uid":        "existing-target-uid",
 									"apiVersion": "v2",
 								},
 							},
@@ -163,10 +163,10 @@ func TestV33(t *testing.T) {
 				"schemaVersion": 32,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"datasource": "other-ds",
+						"datasource": "existing-target-uid",
 						"targets": []interface{}{
 							map[string]interface{}{
-								"datasource": "other-ds",
+								"datasource": "existing-target-uid",
 							},
 						},
 					},
@@ -178,14 +178,14 @@ func TestV33(t *testing.T) {
 					map[string]interface{}{
 						"datasource": map[string]interface{}{
 							"type":       "elasticsearch",
-							"uid":        "other-ds",
+							"uid":        "existing-target-uid",
 							"apiVersion": "v2",
 						},
 						"targets": []interface{}{
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
 									"type":       "elasticsearch",
-									"uid":        "other-ds",
+									"uid":        "existing-target-uid",
 									"apiVersion": "v2",
 								},
 							},
@@ -195,7 +195,7 @@ func TestV33(t *testing.T) {
 			},
 		},
 		{
-			name: "panel with unknown datasource should return default reference",
+			name: "panel with unknown datasource should preserve as UID",
 			input: map[string]interface{}{
 				"schemaVersion": 32,
 				"panels": []interface{}{
@@ -214,16 +214,12 @@ func TestV33(t *testing.T) {
 				"panels": []interface{}{
 					map[string]interface{}{
 						"datasource": map[string]interface{}{
-							"uid":        "default-ds",
-							"type":       "prometheus",
-							"apiVersion": "v1",
+							"uid": "unknown-datasource",
 						},
 						"targets": []interface{}{
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
-									"uid":        "default-ds",
-									"type":       "prometheus",
-									"apiVersion": "v1",
+									"uid": "unknown-datasource",
 								},
 							},
 						},
@@ -237,13 +233,13 @@ func TestV33(t *testing.T) {
 				"schemaVersion": 32,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"datasource": "Elasticsearch",
+						"datasource": "Existing Target Name",
 						"targets": []interface{}{
 							map[string]interface{}{
 								"datasource": "default",
 							},
 							map[string]interface{}{
-								"datasource": "other-ds",
+								"datasource": "existing-target-uid",
 							},
 							map[string]interface{}{
 								"datasource": "unknown-ds",
@@ -258,7 +254,7 @@ func TestV33(t *testing.T) {
 					map[string]interface{}{
 						"datasource": map[string]interface{}{
 							"type":       "elasticsearch",
-							"uid":        "other-ds",
+							"uid":        "existing-target-uid",
 							"apiVersion": "v2",
 						},
 						"targets": []interface{}{
@@ -268,15 +264,13 @@ func TestV33(t *testing.T) {
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
 									"type":       "elasticsearch",
-									"uid":        "other-ds",
+									"uid":        "existing-target-uid",
 									"apiVersion": "v2",
 								},
 							},
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
-									"uid":        "default-ds",
-									"type":       "prometheus",
-									"apiVersion": "v1",
+									"uid": "unknown-ds",
 								},
 							},
 						},
@@ -290,7 +284,7 @@ func TestV33(t *testing.T) {
 				"schemaVersion": 32,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"datasource": "Elasticsearch",
+						"datasource": "Existing Target Name",
 					},
 				},
 			},
@@ -300,7 +294,7 @@ func TestV33(t *testing.T) {
 					map[string]interface{}{
 						"datasource": map[string]interface{}{
 							"type":       "elasticsearch",
-							"uid":        "other-ds",
+							"uid":        "existing-target-uid",
 							"apiVersion": "v2",
 						},
 					},
@@ -315,13 +309,13 @@ func TestV33(t *testing.T) {
 					map[string]interface{}{
 						"type":       "row",
 						"collapsed":  true,
-						"datasource": "Elasticsearch",
+						"datasource": "Existing Target Name",
 						"panels": []interface{}{
 							map[string]interface{}{
 								"datasource": "default",
 								"targets": []interface{}{
 									map[string]interface{}{
-										"datasource": "other-ds",
+										"datasource": "existing-target-uid",
 									},
 								},
 							},
@@ -329,7 +323,7 @@ func TestV33(t *testing.T) {
 								"datasource": "unknown-ds",
 								"targets": []interface{}{
 									map[string]interface{}{
-										"datasource": "Elasticsearch",
+										"datasource": "Existing Target Name",
 									},
 								},
 							},
@@ -345,7 +339,7 @@ func TestV33(t *testing.T) {
 						"collapsed": true,
 						"datasource": map[string]interface{}{
 							"type":       "elasticsearch",
-							"uid":        "other-ds",
+							"uid":        "existing-target-uid",
 							"apiVersion": "v2",
 						},
 						"panels": []interface{}{
@@ -355,7 +349,7 @@ func TestV33(t *testing.T) {
 									map[string]interface{}{
 										"datasource": map[string]interface{}{
 											"type":       "elasticsearch",
-											"uid":        "other-ds",
+											"uid":        "existing-target-uid",
 											"apiVersion": "v2",
 										},
 									},
@@ -363,15 +357,13 @@ func TestV33(t *testing.T) {
 							},
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
-									"uid":        "default-ds",
-									"type":       "prometheus",
-									"apiVersion": "v1",
+									"uid": "unknown-ds",
 								},
 								"targets": []interface{}{
 									map[string]interface{}{
 										"datasource": map[string]interface{}{
 											"type":       "elasticsearch",
-											"uid":        "other-ds",
+											"uid":        "existing-target-uid",
 											"apiVersion": "v2",
 										},
 									},
@@ -389,7 +381,7 @@ func TestV33(t *testing.T) {
 				"schemaVersion": 32,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"datasource": "Elasticsearch",
+						"datasource": "Existing Target Name",
 						"targets": []interface{}{
 							map[string]interface{}{
 								"datasource": "default",
@@ -407,7 +399,7 @@ func TestV33(t *testing.T) {
 					map[string]interface{}{
 						"datasource": map[string]interface{}{
 							"type":       "elasticsearch",
-							"uid":        "other-ds",
+							"uid":        "existing-target-uid",
 							"apiVersion": "v2",
 						},
 						"targets": []interface{}{

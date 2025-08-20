@@ -12,11 +12,10 @@ import (
 )
 
 const (
-	TableNameKeeper            = "secret_keeper"
-	TableNameSecureValue       = "secret_secure_value"
-	TableNameSecureValueOutbox = "secret_secure_value_outbox"
-	TableNameDataKey           = "secret_data_key"
-	TableNameEncryptedValue    = "secret_encrypted_value"
+	TableNameKeeper         = "secret_keeper"
+	TableNameSecureValue    = "secret_secure_value"
+	TableNameDataKey        = "secret_data_key"
+	TableNameEncryptedValue = "secret_encrypted_value"
 )
 
 type SecretDB struct {
@@ -46,7 +45,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 
 	tables := []migrator.Table{}
 
-	tables = append(tables, migrator.Table{
+	secureValueTable := migrator.Table{
 		Name: TableNameSecureValue,
 		Columns: []*migrator.Column{
 			// Kubernetes Metadata
@@ -61,20 +60,22 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
 
 			// Kubernetes Status
-			{Name: "status_phase", Type: migrator.DB_Text, Nullable: false},
-			{Name: "status_message", Type: migrator.DB_Text, Nullable: true},
+			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
+			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 
 			// Spec
 			{Name: "description", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough.
 			{Name: "keeper", Type: migrator.DB_NVarchar, Length: 253, Nullable: true},       // Keeper name, if not set, use default keeper.
 			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
 			{Name: "ref", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // Reference to third-party storage secret path.Chosen arbitrarily, but should be enough.
-			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "name", "version", "active"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
 		},
-	})
+	}
+	tables = append(tables, secureValueTable)
 
 	tables = append(tables, migrator.Table{
 		Name: TableNameKeeper,
@@ -101,57 +102,37 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		},
 	})
 
-	// TODO -- document how the seemingly arbitrary column lengths were chosen
-	// The answer for now is that they come from the legacy secrets service, but it would be good to know that they will still work in the new service
-	tables = append(tables, migrator.Table{
+	dataKeyTable := migrator.Table{
 		Name: TableNameDataKey,
 		Columns: []*migrator.Column{
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},    // Arbitrarily chosen.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false},
+			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false}, // Arbitrarily chosen.
 			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false}, // Arbitrarily chosen.
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
-		Indices: []*migrator.Index{}, // TODO: add indexes based on the queries we make.
-	})
+		Indices: []*migrator.Index{},
+	}
+	tables = append(tables, dataKeyTable)
 
-	tables = append(tables, migrator.Table{
+	encryptedValueTable := migrator.Table{
 		Name: TableNameEncryptedValue,
 		Columns: []*migrator.Column{
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},     // Fixed size of a UUID.
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
 		},
-		Indices: []*migrator.Index{}, // TODO: add indexes based on the queries we make.
-	})
-
-	tables = append(tables, migrator.Table{
-		Name: TableNameSecureValueOutbox,
-		Columns: []*migrator.Column{
-			{Name: "request_id", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
-			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: true},
-			{Name: "keeper_name", Type: migrator.DB_NVarchar, Length: 253, Nullable: true}, // Keeper name, if not set, use default keeper.
-			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true},  // Fixed size of a UUID.
-			{Name: "receive_count", Type: migrator.DB_SmallInt, Nullable: false},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-		},
 		Indices: []*migrator.Index{
-			// There's only one operation per secret in the queue at all times,
-			// meaning the namespace + name combination should be unique
-			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
-			// Used for sorting
-			{Cols: []string{"created"}, Type: migrator.IndexType},
+			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
 		},
-	})
+	}
+	tables = append(tables, encryptedValueTable)
 
 	// Initialize all tables
 	for t := range tables {
@@ -161,4 +142,43 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
+
+	mg.AddMigration("create index for list on "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Cols: []string{"namespace", "active", "updated"},
+		Type: migrator.IndexType,
+	}))
+
+	mg.AddMigration("create index for list and read current on "+TableNameDataKey, migrator.NewAddIndexMigration(dataKeyTable, &migrator.Index{
+		Cols: []string{"namespace", "label", "active"},
+		Type: migrator.IndexType,
+	}))
+
+	// Owner Reference columns
+	mg.AddMigration("add owner_reference_api_group column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_api_group",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_api_version column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_api_version",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_kind column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_kind",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_name column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_name",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
 }

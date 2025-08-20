@@ -5,14 +5,24 @@ import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from
 import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
-import { createLogRow } from '../__mocks__/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
 import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
 
-jest.mock('../../utils');
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  downloadLogs: jest.fn(),
+}));
+
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
 
 const fontSize: LogListFontSize = 'default';
 const contextProps = {
@@ -28,6 +38,8 @@ const contextProps = {
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 describe('LogListControls', () => {
@@ -294,14 +306,15 @@ describe('LogListControls', () => {
   });
 
   test('Controls new lines', async () => {
+    const log = createLogLine({ entry: 'the\\r\\nentry', hasUnescapedContent: true });
     const { rerender } = render(
-      <LogListContextProvider {...contextProps} hasUnescapedContent>
+      <LogListContextProvider {...contextProps} logs={[log]}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Fix incorrectly escaped newline and tab sequences in log lines'));
     rerender(
-      <LogListContextProvider {...contextProps} hasUnescapedContent>
+      <LogListContextProvider {...contextProps} logs={[log]}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );

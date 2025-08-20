@@ -10,7 +10,8 @@ import {
   BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { GroupByItem } from './GroupByItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -105,6 +106,7 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
               />
             ) : (
               <Button
+                aria-label={t('components.group-by-section.aria-label-add-group-by', 'Add group by')}
                 variant="secondary"
                 icon="plus"
                 onClick={() =>

@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -134,12 +133,17 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		return fmt.Errorf("invalid event key: %w", err)
 	}
 
-	var buf bytes.Buffer
-	encoder := json.NewEncoder(&buf)
-	if err := encoder.Encode(event); err != nil {
+	writer, err := n.kv.Save(ctx, eventsSection, eventKey.String())
+	if err != nil {
 		return err
 	}
-	return n.kv.Save(ctx, eventsSection, eventKey.String(), &buf)
+	encoder := json.NewEncoder(writer)
+	if err := encoder.Encode(event); err != nil {
+		_ = writer.Close()
+		return err
+	}
+
+	return writer.Close()
 }
 
 func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
@@ -147,16 +151,15 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 		return Event{}, fmt.Errorf("invalid event key: %w", err)
 	}
 
-	obj, err := n.kv.Get(ctx, eventsSection, key.String())
+	reader, err := n.kv.Get(ctx, eventsSection, key.String())
 	if err != nil {
 		return Event{}, err
 	}
+	defer func() { _ = reader.Close() }()
 	var event Event
-	if err = json.NewDecoder(obj.Value).Decode(&event); err != nil {
-		_ = obj.Value.Close()
+	if err = json.NewDecoder(reader).Decode(&event); err != nil {
 		return Event{}, err
 	}
-	defer func() { _ = obj.Value.Close() }()
 	return event, nil
 }
 
@@ -173,14 +176,16 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Eve
 			if err != nil {
 				return
 			}
-			obj, err := n.kv.Get(ctx, eventsSection, key)
+			reader, err := n.kv.Get(ctx, eventsSection, key)
 			if err != nil {
 				return
 			}
 			var event Event
-			if err := json.NewDecoder(obj.Value).Decode(&event); err != nil {
+			if err := json.NewDecoder(reader).Decode(&event); err != nil {
+				_ = reader.Close()
 				return
 			}
+			_ = reader.Close()
 			if !yield(event, nil) {
 				return
 			}

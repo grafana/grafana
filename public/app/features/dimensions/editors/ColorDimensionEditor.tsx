@@ -21,7 +21,7 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
     }),
     []
   );
-  const { value, context, onChange, item } = props;
+  const { value, context, onChange, item, id } = props;
 
   const defaultColor = 'dark-green';
 
@@ -71,10 +71,11 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
     <>
       <div className={styles.container}>
         <Select
+          inputId={id}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
-          noOptionsMessage="No fields found"
+          noOptionsMessage={t('dimensions.color-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
           isClearable={item.settings?.isClearable}
           placeholder={item.settings?.placeholder}
         />

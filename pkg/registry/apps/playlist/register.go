@@ -6,50 +6,64 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/playlist/pkg/apis"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type PlaylistAppProvider struct {
-	app.Provider
+var (
+	_ appsdkapiserver.AppInstaller       = (*PlaylistAppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*PlaylistAppInstaller)(nil)
+)
+
+type PlaylistAppInstaller struct {
+	appsdkapiserver.AppInstaller
 	cfg     *setting.Cfg
 	service playlistsvc.Service
 }
 
-func RegisterApp(
+func RegisterAppInstaller(
 	p playlistsvc.Service,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) *PlaylistAppProvider {
-	provider := &PlaylistAppProvider{
+) (*PlaylistAppInstaller, error) {
+	installer := &PlaylistAppInstaller{
 		cfg:     cfg,
 		service: p,
 	}
-	appCfg := &runner.AppBuilderConfig{
-		OpenAPIDefGetter:    playlistv0alpha1.GetOpenAPIDefinitions,
-		LegacyStorageGetter: provider.legacyStorageGetter,
-		ManagedKinds:        playlistapp.GetKinds(),
-		CustomConfig: any(&playlistapp.PlaylistConfig{
-			EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
-		}),
-		AllowedV0Alpha1Resources: []string{playlistv0alpha1.PlaylistKind().Plural()},
+	specificConfig := any(&playlistapp.PlaylistConfig{
+		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
+	})
+	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, playlistapp.New)
+
+	appConfig := app.Config{
+		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData:   *apis.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
 	}
-	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)
-	return provider
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	if err != nil {
+		return nil, err
+	}
+	installer.AppInstaller = i
+
+	return installer, nil
 }
 
-func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.Storage {
+// GetLegacyStorage returns the legacy storage for the playlist app.
+func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := schema.GroupVersionResource{
 		Group:    playlistv0alpha1.PlaylistKind().Group(),
 		Version:  playlistv0alpha1.PlaylistKind().Version(),

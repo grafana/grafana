@@ -10,7 +10,6 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
-  HorizontalGroup,
   InlineSwitch,
   ModalsController,
   RadioButtonGroup,
@@ -30,8 +29,8 @@ import { SaveLibraryPanelModal } from 'app/features/library-panels/components/Sa
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { StoreState } from 'app/types';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import { notifyApp } from '../../../../core/actions';
 import { UnlinkModal } from '../../../dashboard-scene/scene/UnlinkModal';
@@ -302,7 +301,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.panelToolbar}>
-        <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
+        <Stack justifyContent={variables.length > 0 ? 'space-between' : 'flex-end'} alignItems="flex-start">
           {this.renderTemplateVariables(styles)}
           <Stack gap={1}>
             <InlineSwitch
@@ -317,7 +316,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
           </Stack>
-        </HorizontalGroup>
+        </Stack>
       </div>
     );
   }

@@ -440,6 +440,12 @@ func replaceMuteTiming(route *definitions.Route, oldName, newName string) int {
 			updated++
 		}
 	}
+	for idx := range route.ActiveTimeIntervals {
+		if route.ActiveTimeIntervals[idx] == oldName {
+			route.ActiveTimeIntervals[idx] = newName
+			updated++
+		}
+	}
 	for _, route := range route.Routes {
 		updated += replaceMuteTiming(route, oldName, newName)
 	}

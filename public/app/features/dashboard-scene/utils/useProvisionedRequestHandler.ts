@@ -3,20 +3,35 @@ import { useEffect } from 'react';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
 import {
   DeleteRepositoryFilesWithPathApiResponse,
   GetRepositoryFilesWithPathApiResponse,
+  RepositoryView,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { Resource } from 'app/features/apiserver/types';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
+import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { useDispatch } from 'app/types/store';
 
-import { DashboardScene } from '../scene/DashboardScene';
+type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
 
-interface RequestHandlers {
-  onBranchSuccess?: (data: { ref: string; path: string; urls?: Record<string, string> }) => void;
-  onWriteSuccess?: () => void;
-  onNewDashboardSuccess?: (resource: Resource<Dashboard>) => void;
-  onError?: (error: unknown) => void;
+// Information object that gets passed to all handlers
+interface ProvisionedOperationInfo {
+  repoType: RepoType;
+  resourceType?: ResourceType;
+  workflow?: string;
+}
+
+interface RequestHandlers<T> {
+  onBranchSuccess?: (
+    data: { ref: string; path: string; urls?: Record<string, string> },
+    info: ProvisionedOperationInfo,
+    resource: Resource<T>
+  ) => void;
+  onWriteSuccess?: (info: ProvisionedOperationInfo, resource: Resource<T>) => void;
+  onError?: (error: unknown, info: ProvisionedOperationInfo) => void;
+  onDismiss?: () => void;
 }
 
 interface ProvisionedRequest {
@@ -27,51 +42,94 @@ interface ProvisionedRequest {
   data?: DeleteRepositoryFilesWithPathApiResponse | GetRepositoryFilesWithPathApiResponse;
 }
 
-// This hook handles save new dashboard, edit existing dashboard, and delete dashboard response logic for provisioned dashboards.
-export function useProvisionedRequestHandler({
-  dashboard,
+// Resource-specific configuration for different resource types
+interface ResourceConfig {
+  defaultSuccessMessage: string;
+  supportedWorkflows: string[];
+}
+
+interface Props<T> {
+  request: ProvisionedRequest;
+  folderUID?: string | undefined; // this is used to refetch folder items
+  workflow?: string;
+  handlers: RequestHandlers<T>;
+  successMessage?: string;
+  repository?: RepositoryView;
+  resourceType?: ResourceType;
+}
+
+/**
+ * Generic hook for handling provisioned resource operations across any resource type and repository provider.
+ *
+ * This hook is intentionally decoupled from specific components (like DashboardScene) to promote reusability.
+ * Components are responsible for their own state management through specific workflow handlers.
+ */
+export function useProvisionedRequestHandler<T>({
+  folderUID,
   request,
   workflow,
   handlers,
-  isNew,
-}: {
-  dashboard: DashboardScene;
-  request: ProvisionedRequest;
-  workflow?: string;
-  handlers: RequestHandlers;
-  isNew?: boolean;
-}) {
+  successMessage,
+  repository,
+  resourceType,
+}: Props<T>) {
+  const dispatch = useDispatch();
   useEffect(() => {
+    const repoType = repository?.type || 'git';
+    const info: ProvisionedOperationInfo = {
+      repoType,
+      resourceType,
+      workflow,
+    };
+
     if (request.isError) {
-      handlers.onError?.(request.error);
+      handlers.onError?.(request.error, info);
       return;
     }
 
     if (request.isSuccess && request.data) {
-      dashboard.setState({ isDirty: false });
       const { ref, path, urls, resource } = request.data;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const resourceData = resource.upsert as Resource<T>;
 
-      // Branch workflow
-      if (workflow === 'branch' && ref && path) {
-        handlers.onBranchSuccess?.({ ref, path, urls });
-        return;
-      }
-
-      // Success message (could be configurable)
+      // Success message
+      const message = successMessage || getContextualSuccessMessage(info);
       getAppEvents().publish({
         type: AppEvents.alertSuccess.name,
-        payload: [t('dashboard-scene.edit-provisioned-dashboard-form.success', 'Dashboard changes saved successfully')],
+        payload: [message],
       });
 
-      // New dashboard flow
-      if (isNew && resource?.upsert && handlers.onNewDashboardSuccess) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        handlers.onNewDashboardSuccess(resource.upsert as Resource<Dashboard>);
-        return;
+      // Branch workflow
+      if (workflow === 'branch' && handlers.onBranchSuccess && ref && path) {
+        const branchData = { ref, path, urls };
+        handlers.onBranchSuccess?.(branchData, info, resourceData);
       }
 
       // Write workflow
-      handlers.onWriteSuccess?.();
+      if (workflow === 'write' && handlers.onWriteSuccess) {
+        if (folderUID) {
+          // refetch folder items after success if folderUID is passed in
+          dispatch(refetchChildren({ parentUID: folderUID || repository?.name, pageSize: PAGE_SIZE }));
+        }
+        handlers.onWriteSuccess(info, resourceData);
+      }
+
+      handlers.onDismiss?.();
     }
-  }, [request, workflow, handlers, isNew, dashboard]);
+  }, [request, workflow, handlers, successMessage, repository, resourceType, folderUID, dispatch]);
 }
+
+function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
+  const { resourceType } = info;
+
+  switch (resourceType) {
+    case 'dashboard':
+      return t('provisioned-resource-request-handler-dashboard', 'Dashboard saved successfully');
+    case 'folder':
+      return t('provisioned-resource-request-handler-folder', 'Folder created successfully');
+    default:
+      return t('provisioned-resource-request-handler', 'Resource saved successfully');
+  }
+}
+
+export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };

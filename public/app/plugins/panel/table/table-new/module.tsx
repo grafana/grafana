@@ -9,7 +9,13 @@ import {
   FieldConfigProperty,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
+import {
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+  TableCellTooltipPlacement,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -103,11 +109,58 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
+          path: 'wrapHeaderText',
+          name: t('table.name-wrap-header-text', 'Wrap header text'),
+          description: t('table.description-wrap-header-text', 'Enables text wrapping for column headers'),
+          category,
+          defaultValue: defaultTableFieldOptions.wrapHeaderText,
+        })
+        .addBooleanSwitch({
           path: 'hidden',
           name: t('table-new.name-hide-in-table', 'Hide in table'),
           category,
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addFieldNamePicker({
+          path: 'tooltip.field',
+          name: t('table-new.name-tooltip-from-field', 'Tooltip from field'),
+          description: t(
+            'table-new.description-tooltip-from-field',
+            'Render a cell from a field (hidden or visible) in a tooltip'
+          ),
+          category: cellCategory,
+        })
+        .addSelect({
+          path: 'tooltip.placement',
+          name: t('table-new.name-tooltip-placement', 'Tooltip placement'),
+          category: cellCategory,
+          settings: {
+            options: [
+              {
+                label: t('table-new.tooltip-placement-options.label-auto', 'Auto'),
+                value: TableCellTooltipPlacement.Auto,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-top', 'Top'),
+                value: TableCellTooltipPlacement.Top,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-right', 'Right'),
+                value: TableCellTooltipPlacement.Right,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-bottom', 'Bottom'),
+                value: TableCellTooltipPlacement.Bottom,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-left', 'Left'),
+                value: TableCellTooltipPlacement.Left,
+              },
+            ],
+          },
+          defaultValue: 'auto',
+          showIf: (cfg) => cfg.tooltip?.field !== undefined,
         });
     },
   })
@@ -120,6 +173,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         name: t('table-new.name-show-table-header', 'Show table header'),
         category,
         defaultValue: defaultOptions.showHeader,
+      })
+      .addNumberInput({
+        path: 'frozenColumns.left',
+        name: t('table-new.name-frozen-columns', 'Frozen columns'),
+        description: t('table-new.description-frozen-columns', 'Columns are frozen from the left side of the table'),
+        settings: {
+          placeholder: 'none',
+        },
+        category,
       })
       .addRadio({
         path: 'cellHeight',

@@ -4,23 +4,27 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Drawer, Stack } from '@grafana/ui';
-import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { Button, Drawer, Stack } from '@grafana/ui';
+import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepoInvalidStateBanner } from 'app/features/browse-dashboards/components/BulkActions/RepoInvalidStateBanner';
+import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, ProvisionedOperationInfo } from '../utils/useProvisionedRequestHandler';
+
+import { buildResourceBranchRedirectUrl } from './utils';
 
 export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitHub: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
+  repository?: RepositoryView;
   onDismiss: () => void;
 }
 
@@ -33,9 +37,9 @@ export function DeleteProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitHub,
   isNew,
   workflowOptions,
+  repository,
   onDismiss,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
@@ -65,7 +69,7 @@ export function DeleteProvisionedDashboardForm({
 
   const navigate = useNavigate();
 
-  const onRequestError = (error: unknown) => {
+  const onError = (error: unknown) => {
     getAppEvents().publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'), error],
@@ -73,28 +77,35 @@ export function DeleteProvisionedDashboardForm({
   };
 
   const onWriteSuccess = () => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
-    onDismiss();
-    // TODO reset search state instead
-    window.location.href = '/dashboards';
+    navigate(getFolderURL(defaultValues.folder.uid || ''));
   };
 
-  const onBranchSuccess = (path: string, urls?: Record<string, string>) => {
+  const onBranchSuccess = (path: string, info: ProvisionedOperationInfo, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
-    onDismiss();
-    navigate(
-      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
-    );
+    const url = buildResourceBranchRedirectUrl({
+      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+      paramName: 'pull_request_url',
+      paramValue: urls?.newPullRequestURL,
+      repoType: info.repoType,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({
-    dashboard,
     request,
     workflow,
+    resourceType: 'dashboard',
+    successMessage: t(
+      'dashboard-scene.delete-provisioned-dashboard-form.success-message',
+      'Dashboard deleted successfully'
+    ),
     handlers: {
-      onBranchSuccess: ({ path, urls }) => onBranchSuccess(path, urls),
+      onDismiss,
+      onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
       onWriteSuccess,
-      onError: onRequestError,
+      onError,
     },
   });
 
@@ -108,17 +119,11 @@ export function DeleteProvisionedDashboardForm({
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>
             {readOnly && (
-              <Alert
-                title={t(
-                  'dashboard-scene.delete-provisioned-dashboard-form.title-this-repository-is-read-only',
-                  'This repository is read only'
-                )}
-              >
-                <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.delete-read-only-file-message">
-                  This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete
-                  this dashboard, please remove the file from your Git repository.
-                </Trans>
-              </Alert>
+              <RepoInvalidStateBanner
+                noRepository={false}
+                isReadOnlyRepo={true}
+                readOnlyMessage="To delete this dashboard, please remove the file from your repository."
+              />
             )}
 
             <ResourceEditFormSharedFields
@@ -127,7 +132,7 @@ export function DeleteProvisionedDashboardForm({
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitHub={isGitHub}
+              repository={repository}
             />
 
             {/* Save / Cancel button */}

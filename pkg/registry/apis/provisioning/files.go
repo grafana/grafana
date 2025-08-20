@@ -12,8 +12,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -93,9 +93,10 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
-			Ref:        query.Get("ref"),
-			Message:    query.Get("message"),
-			SkipDryRun: query.Get("skipDryRun") == "true",
+			Ref:          query.Get("ref"),
+			Message:      query.Get("message"),
+			SkipDryRun:   query.Get("skipDryRun") == "true",
+			OriginalPath: query.Get("originalPath"),
 		}
 		logger := logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
 		ctx := logging.Context(r.Context(), logger)
@@ -128,24 +129,35 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		// TODO: Implement folder delete
-		if r.Method == http.MethodDelete && isDir {
-			responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
-			return
-		}
-
 		var obj *provisioning.ResourceWrapper
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
 			resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
 			if err != nil {
-				responder.Error(err)
+				respondWithError(responder, err)
 				return
 			}
 			obj = resource.AsResourceWrapper()
 		case http.MethodPost:
-			if isDir {
+			// Check if this is a move operation first (originalPath query parameter is present)
+			if opts.OriginalPath != "" {
+				// For move operations, only read body for file moves (not directory moves)
+				if !isDir {
+					opts.Data, err = readBody(r, filesMaxBodySize)
+					if err != nil {
+						responder.Error(err)
+						return
+					}
+				}
+
+				resource, err := dualReadWriter.MoveResource(ctx, opts)
+				if err != nil {
+					respondWithError(responder, err)
+					return
+				}
+				obj = resource.AsResourceWrapper()
+			} else if isDir {
 				obj, err = dualReadWriter.CreateFolder(ctx, opts)
 			} else {
 				opts.Data, err = readBody(r, filesMaxBodySize)
@@ -154,9 +166,10 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 					return
 				}
 
-				resource, err := dualReadWriter.CreateResource(ctx, opts)
+				var resource *resources.ParsedResource
+				resource, err = dualReadWriter.CreateResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -174,7 +187,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 				resource, err := dualReadWriter.UpdateResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -182,7 +195,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodDelete:
 			resource, err := dualReadWriter.Delete(ctx, opts)
 			if err != nil {
-				responder.Error(err)
+				respondWithError(responder, err)
 				return
 			}
 			obj = resource.AsResourceWrapper()

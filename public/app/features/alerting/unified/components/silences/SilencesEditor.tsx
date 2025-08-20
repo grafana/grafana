@@ -14,7 +14,7 @@ import {
   parseDuration,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, isFetchError, locationService } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -32,6 +32,7 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
+import { contextSrv } from '../../../../../core/services/context_srv';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SilenceFormFields } from '../../types/silence-form';
@@ -39,7 +40,7 @@ import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
@@ -118,7 +119,7 @@ const ExistingSilenceEditor = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={alertManagerSourceName} />
       <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
     </>
   );
@@ -216,7 +217,7 @@ export const SilencesEditor = ({
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
 
-  const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
+  const userLogged = Boolean(contextSrv.user.isSignedIn && contextSrv.user.name);
 
   return (
     <FormProvider {...formAPI}>

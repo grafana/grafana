@@ -99,7 +99,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		pluginsCDNService:     pluginsCDN,
 		pluginAssets:          pluginsAssets,
 		namespacer:            request.GetNamespaceMapper(cfg),
-		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
+		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
 		managedPluginsService: managedplugins.NewNoop(),
 		tracer:                tracing.InitializeTracerForTest(),
 		DataSourcesService:    &datafakes.FakeDataSourceService{},
@@ -114,6 +114,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`
@@ -183,6 +186,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testi
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type settings struct {
 		PluginsCDNBaseURL string `json:"pluginsCDNBaseURL"`
 	}
@@ -233,6 +239,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type settings struct {
 		Apps map[string]*plugins.AppDTO `json:"apps"`
 	}
@@ -463,6 +472,9 @@ func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type settings struct {
 		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
 		Panels      map[string]*plugins.PanelDTO     `json:"panels"`

@@ -52,6 +52,7 @@
       "button-use-query": "このクエリを使用",
       "label-categories": "カテゴリ－",
       "label-query-results": "クエリ結果：{{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "すべてのカテゴリを一覧表示できません",
       "placeholder-all-categories": "すべてのカテゴリー",
       "placeholder-search-logs": "ログクエリを検索",
       "text-loading": "読み込み中..."
@@ -71,10 +72,8 @@
       "label-enable-basic-logs": "基本ログを有効にする"
     },
     "config-editor": {
-      "description-additional-settings": "追加設定は、データソースをよりきめ細かく制御するために設定できるオプション設定です。これには、Socket Secureプロキシ（SOCKS）が含まれます。",
-      "description-request-timeout": "リクエストタイムアウトを秒単位で設定します。デフォルトは30秒です。",
-      "title-additional-settings": "追加設定",
-      "title-request-timeout": "リクエストタイムアウト"
+      "description-additional-settings": "",
+      "title-additional-settings": "追加設定"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "フォールバック認証情報が無効になっています。ユーザーベース認証は、本質的にスコープ内のユーザーのリクエストのみをサポートするため、アラート、記録クエリ、レポートなどの機能は想定どおりに機能しません。詳細については、<2>ドキュメント</2>をご覧ください。",
@@ -114,9 +113,12 @@
       "aria-label-column": "列",
       "aria-label-column-value": "列の値",
       "aria-label-operator": "オペレーター",
+      "aria-label-remove-filter": "",
       "label-or": "または"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "グループを追加",
       "label-and": "AND",
       "label-filters": "フィルター",
@@ -129,6 +131,8 @@
       "label-format-as": "フォーマット"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "列を選択",
       "label-fuzzy-search": "あいまい検索",
       "placeholder-search-team": "検索語を入力",
@@ -143,6 +147,7 @@
       "aria-label-remove": "削除"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "グループ化",
       "tooltip-group-by": "指定された列に基づいて結果をカテゴリに整理します。グループ化は、選択した列の一意の値を一覧表示するために単独で使用できるほか、各グループの要約統計を生成するために集計関数と組み合わせて使用することもできます。単独で使用した場合、指定された列の異なる組み合わせが返されます。"
     },
@@ -161,6 +166,8 @@
       "tooltip-limit": "返される行数を制限します（デフォルトは1000）。"
     },
     "logs-management": {
+      "body-basic-logs-queries": "基本ログに切り替えてもよろしいですか？",
+      "confirmText-confirm": "確認",
       "description-basic-logs-queries": "基本ログクエリを使用すると、スキャンされたデータ量に基づいてコストが発生します。",
       "label-logs": "ログ",
       "title-basic-logs-queries": "基本ログクエリ",
@@ -183,8 +190,10 @@
       "text-loading": "読み込み中..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "列で並べ替え",
       "aria-label-order-direction": "並び順",
+      "aria-label-remove-order-by": "",
       "label-by": "基準",
       "label-order-by": "並べ替え",
       "tooltip-order-by": "1つ以上の列に基づいて結果を昇順または降順で並び替えます。"
@@ -194,8 +203,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azureログのクエリ開始ボタン",
+      "body-switching-to-builder": "ビルダーに切り替えると、現在のKQLクエリが破棄され、KQLエディターがクリアされます。よろしいですか？",
+      "body-switching-to-kql": "KQLに切り替えると、現在のビルダー設定が破棄されます。よろしいですか？",
       "button-kick-start-your-query": "クエリを開始",
       "button-run-query": "クエリの実行",
+      "confirmText-switch-to": "{{newMode}}に切り替える",
+      "editor-modes": {
+        "label-builder": "ビルダー",
+        "label-kql": "KQL"
+      },
       "label-service": "サービス",
       "placeholder-service": "サービス...",
       "title-switch-mode": "エディターモードを切り替えますか？"
@@ -223,7 +239,7 @@
       "title-error-occurred": "Azure Monitorからリソースをリクエスト中にエラーが発生しました"
     },
     "scope-selector": {
-      "label": ""
+      "label": "スコープ"
     },
     "search": {
       "aria-label-resource-search": "リソース検索",
@@ -239,7 +255,8 @@
       "label-columns": "列",
       "label-table": "テーブル",
       "placeholder-select-columns": "列を選択",
-      "placeholder-select-table": "テーブルを選択"
+      "placeholder-select-table": "テーブルを選択",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "時間粒度"

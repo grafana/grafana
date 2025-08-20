@@ -4,7 +4,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMonitorResource, AzureMonitorQuery } from '../../types';
+import { AzureMonitorQuery, AzureMonitorResource } from '../../types/query';
 
 import { ResourceRow, ResourceRowGroup } from './types';
 

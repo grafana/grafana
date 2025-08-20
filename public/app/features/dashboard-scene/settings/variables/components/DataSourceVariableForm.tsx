@@ -2,7 +2,7 @@ import { FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 
 import { SelectionOptionsForm } from './SelectionOptionsForm';
 import { VariableLegend } from './VariableLegend';
@@ -50,7 +50,7 @@ export function DataSourceVariableForm({
         <Trans i18nKey="dashboard-scene.data-source-variable-form.data-source-options">Data source options</Trans>
       </VariableLegend>
       <VariableSelectField
-        name="Type"
+        name={t('dashboard-scene.data-source-variable-form.name-type', 'Type')}
         value={typeValue}
         options={optionTypes}
         onChange={onChange}
@@ -59,7 +59,7 @@ export function DataSourceVariableForm({
 
       <VariableTextField
         defaultValue={regex}
-        name="Instance name filter"
+        name={t('dashboard-scene.data-source-variable-form.name-instance-name-filter', 'Instance name filter')}
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(.*)-.*/"
         onBlur={onRegExBlur}

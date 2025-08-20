@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderOptions.test.tsx
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { select } from 'react-select-event';
 
 import { CoreApp } from '@grafana/data';
 
-import { selectOptionInTest } from '../../test/helpers/selectOptionInTest';
 import { PromQuery } from '../../types';
 import { getQueryWithDefaults } from '../state';
 
@@ -56,7 +56,7 @@ describe('PromQueryBuilderOptions', () => {
     let legendModeSelect = screen.getByText('Auto').parentElement!;
     await userEvent.click(legendModeSelect);
 
-    await selectOptionInTest(legendModeSelect, 'Verbose');
+    await waitFor(() => select(legendModeSelect, 'Verbose', { container: document.body }));
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
@@ -72,7 +72,7 @@ describe('PromQueryBuilderOptions', () => {
     let legendModeSelect = screen.getByText('Auto').parentElement!;
     await userEvent.click(legendModeSelect);
 
-    await selectOptionInTest(legendModeSelect, 'Custom');
+    await waitFor(() => select(legendModeSelect, 'Custom', { container: document.body }));
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,

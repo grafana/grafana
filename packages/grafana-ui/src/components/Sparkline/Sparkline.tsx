@@ -26,7 +26,7 @@ import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { preparePlotData2, getStackingGroups } from '../uPlot/utils';
 
-import { preparePlotFrame } from './utils';
+import { getYRange, preparePlotFrame } from './utils';
 
 export interface SparklineProps extends Themeable2 {
   width: number;
@@ -102,26 +102,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
   }
 
   getYRange(field: Field): Range.MinMax {
-    let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
-    const noValue = +this.state.alignedDataFrame.fields[1].config?.noValue!;
-
-    if (!Number.isNaN(noValue)) {
-      min = Math.min(min!, +noValue);
-      max = Math.max(max!, +noValue);
-    }
-
-    if (min === max) {
-      if (min === 0) {
-        max = 100;
-      } else {
-        min = 0;
-        max! *= 2;
-      }
-
-      return [min, max!];
-    }
-
-    return [Math.max(min!, field.config.min ?? -Infinity), Math.min(max!, field.config.max ?? Infinity)];
+    return getYRange(field, this.state.alignedDataFrame);
   }
 
   prepareConfig(data: DataFrame) {

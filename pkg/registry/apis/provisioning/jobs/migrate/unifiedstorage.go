@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-//go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
-type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
+//go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
+type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
 
 type UnifiedStorageMigrator struct {
 	namespaceCleaner NamespaceCleaner
@@ -32,10 +32,32 @@ func NewUnifiedStorageMigrator(
 
 func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := repo.Config().GetNamespace()
+
+	// For folder-type repositories, only run sync (skip export and cleaner)
+	if repo.Config().Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
+		progress.SetMessage(ctx, "pull resources")
+		syncJob := provisioning.Job{
+			Spec: provisioning.JobSpec{
+				Pull: &provisioning.SyncJobOptions{
+					Incremental: false,
+				},
+			},
+		}
+		if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
+			return fmt.Errorf("pull resources: %w", err)
+		}
+		return nil
+	}
+
+	// For instance-type repositories, run the full workflow: export -> sync -> clean
 	progress.SetMessage(ctx, "export resources")
+	progress.StrictMaxErrors(1) // strict as we want the entire instance to be managed
+
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{},
+			Push: &provisioning.ExportJobOptions{
+				Message: options.Message,
+			},
 		},
 	}
 	if err := m.exportWorker.Process(ctx, repo, exportJob, progress); err != nil {
@@ -44,8 +66,8 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	// Reset the results after the export as pull will operate on the same resources
 	progress.ResetResults()
-	progress.SetMessage(ctx, "pull resources")
 
+	progress.SetMessage(ctx, "pull resources")
 	syncJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Pull: &provisioning.SyncJobOptions{
@@ -53,7 +75,6 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 			},
 		},
 	}
-
 	if err := m.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
 		return fmt.Errorf("pull resources: %w", err)
 	}

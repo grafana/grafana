@@ -2,18 +2,18 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useMount } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toOption, TraceSearchProps, TraceSearchTag } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
-import { randomId, SearchProps, Tag } from '../../../useSearch';
+import { randomId } from '../../../../state/constants';
 import { getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 
 interface Props {
-  search: SearchProps;
-  setSearch: (search: SearchProps) => void;
+  search: TraceSearchProps;
+  setSearch: (search: TraceSearchProps) => void;
   trace: Trace;
   tagKeys?: Array<SelectableValue<string>>;
   setTagKeys: React.Dispatch<React.SetStateAction<Array<SelectableValue<string>> | undefined>>;
@@ -47,7 +47,7 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
     }
   });
 
-  const onTagChange = (tag: Tag, v: SelectableValue<string>) => {
+  const onTagChange = (tag: TraceSearchTag, v: SelectableValue<string>) => {
     setSearch({
       ...search,
       tags: search.tags?.map((x) => {

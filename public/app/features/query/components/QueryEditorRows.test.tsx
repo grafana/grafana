@@ -3,7 +3,7 @@ import { fireEvent, queryByLabelText, render, screen } from '@testing-library/re
 import { DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
-import createMockPanelData from 'app/plugins/datasource/azuremonitor/__mocks__/panelData';
+import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 
 import { QueryEditorRows, Props } from './QueryEditorRows';
 
@@ -70,6 +70,34 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('QueryEditorRows', () => {
+  it('Should call onQueriesChange with skipAutoImport when replacing query', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacementQuery = {
+      refId: 'A',
+      datasource: { uid: 'new-datasource', type: 'prometheus' },
+      expr: 'new query content',
+    };
+
+    component.onReplaceQuery(replacementQuery, 0);
+
+    expect(onQueriesChangeMock).toHaveBeenCalledWith(
+      [
+        { ...replacementQuery, refId: 'A' }, // preserves original refId
+        props.queries[1], // second query unchanged
+      ],
+      { skipAutoImport: true }
+    );
+  });
+
   it('Should render queries', async () => {
     const {
       renderResult: { rerender },

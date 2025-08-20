@@ -124,6 +124,14 @@ export const DashboardInteractions = {
   showMoreVersionsClicked: () => {
     reportDashboardInteraction('show_more_versions_clicked');
   },
+
+  // Image export interactions
+  generateDashboardImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('dashboard_image_generated', properties);
+  },
+  downloadDashboardImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('dashboard_image_downloaded', properties);
+  },
 };
 
 const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {

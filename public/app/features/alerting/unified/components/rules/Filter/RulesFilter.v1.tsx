@@ -8,7 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
@@ -24,7 +24,8 @@ import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesViewModeSelector, SupportedView } from './RulesViewModeSelector';
+import { RulesFilterProps } from './RulesFilter';
+import { RulesViewModeSelector } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [
   { label: 'Alert ', value: PromRuleType.Alerting },
@@ -37,14 +38,7 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'Error', value: RuleHealth.Error },
 ];
 
-// Contact point selector is not supported in Alerting ListView V2 yet
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-
-interface RulesFilerProps {
-  onClear?: () => void;
-  viewMode?: SupportedView;
-  onViewModeChange?: (viewMode: SupportedView) => void;
-}
 
 const RuleStateOptions = Object.entries(PromAlertingRuleState)
   .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
@@ -53,7 +47,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState)
     value,
   }));
 
-const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilerProps) => {
+const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilterProps) => {
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();

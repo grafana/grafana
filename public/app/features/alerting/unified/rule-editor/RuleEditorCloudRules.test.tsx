@@ -3,7 +3,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
 import { setupMswServer } from '../mockApi';
@@ -12,6 +12,7 @@ import { GROUP_3, GROUP_4, NAMESPACE_2 } from '../mocks/mimirRulerApi';
 import { mimirDataSource } from '../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
+import { setupPluginsExtensionsHook } from '../testSetup/plugins';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -26,6 +27,9 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 setupMswServer();
 mimirDataSource();
+
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setupPluginsExtensionsHook();
 
 describe('RuleEditor cloud', () => {
   beforeEach(() => {

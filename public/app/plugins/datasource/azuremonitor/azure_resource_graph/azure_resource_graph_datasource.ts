@@ -3,20 +3,19 @@ import { filter, find, includes, startsWith } from 'lodash';
 import { ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { resourceTypes } from '../azureMetadata';
+import { resourceTypes } from '../azureMetadata/resourceTypes';
 import { ARGScope } from '../dataquery.gen';
+import { AzureMonitorQuery, AzureQueryType } from '../types/query';
 import {
   AzureGetResourceNamesQuery,
   AzureGraphResponse,
   AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,
-  AzureMonitorQuery,
-  AzureQueryType,
   AzureResourceGraphOptions,
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
   RawAzureSubscriptionItem,
-} from '../types';
+} from '../types/types';
 import { interpolateVariable, replaceTemplateVariables, routeNames } from '../utils/common';
 
 export default class AzureResourceGraphDatasource extends DataSourceWithBackend<

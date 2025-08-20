@@ -734,6 +734,8 @@ QueryVariableSpec: {
 	allValue?:    string
 	placeholder?: string
 	allowCustomValue: bool | *true
+	staticOptions?: [...VariableOption]
+	staticOptionsOrder?: "before" | "after" | "sorted"
 }
 
 // Query variable kind
@@ -939,7 +941,7 @@ ConditionalRenderingVariableKind: {
 
 ConditionalRenderingVariableSpec: {
 	variable: string
-	operator: "equals" | "notEquals"
+	operator: "equals" | "notEquals" | "matches" | "notMatches"
 	value:    string
 }
 

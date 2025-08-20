@@ -26,7 +26,7 @@ const (
 type WorkQueue interface {
 	services.Service
 
-	Dequeue(ctx context.Context) (runnable func(ctx context.Context), err error)
+	Dequeue(ctx context.Context) (runnable func(), err error)
 }
 
 // Worker processes items from the QoS request queue
@@ -62,7 +62,7 @@ func (w *Worker) dequeueWithRetries(ctx context.Context) error {
 	for boff.Ongoing() {
 		runnable, err := w.queue.Dequeue(ctx)
 		if err == nil {
-			runnable(ctx)
+			runnable()
 			break
 		}
 

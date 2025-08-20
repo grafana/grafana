@@ -3,7 +3,7 @@ import { noop } from 'lodash';
 
 import { CoreApp } from '@grafana/data';
 
-import { createLokiDatasource } from '../__mocks__/datasource';
+import { createLokiDatasource } from '../mocks/datasource';
 
 import { testIds as regularTestIds } from './LokiQueryEditor';
 import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';

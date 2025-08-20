@@ -107,9 +107,11 @@ func SetupConfig(
 	buildCommit string,
 	buildBranch string,
 	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
+	gvs []schema.GroupVersion,
+	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
-	defsGetter := GetOpenAPIDefinitions(builders)
+	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
@@ -119,7 +121,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""
@@ -226,6 +228,7 @@ func SetupConfig(
 	// Set the swagger build versions
 	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIConfig.Info.Version = buildVersion
+	serverConfig.OpenAPIV3Config.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
@@ -278,13 +281,13 @@ func InstallAPIs(
 	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 	features featuremgmt.FeatureToggles,
+	dualWriterMetrics *grafanarest.DualWriterMetrics,
+	builderMetrics *BuilderMetrics,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
-	metrics := newBuilderMetrics(reg)
-	dualWriterMetrics := grafanarest.NewDualWriterMetrics(reg)
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
@@ -346,7 +349,7 @@ func InstallAPIs(
 				return nil, err
 			}
 
-			metrics.recordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
+			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
 
 			switch currentMode {
 			case grafanarest.Mode0:

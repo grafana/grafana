@@ -13,6 +13,7 @@ package dataquery
 
 import (
 	json "encoding/json"
+	fmt "fmt"
 )
 
 type AzureMonitorQuery struct {
@@ -52,13 +53,14 @@ type AzureMonitorQuery struct {
 	CustomNamespace *string `json:"customNamespace,omitempty"`
 	// Used only for exemplar queries from Prometheus
 	Query *string `json:"query,omitempty"`
+	// Used to configure the HTTP request timeout
+	Timeout *float64 `json:"timeout,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource any `json:"datasource,omitempty"`
-	// Used to configure the HTTP request timeout
-	Timeout *float64 `json:"timeout,omitempty"`
+	Datasource  any      `json:"datasource,omitempty"`
+	KeepCookies []string `json:"keepCookies,omitempty"`
 }
 
 // NewAzureMonitorQuery creates a new AzureMonitorQuery object.
@@ -834,4 +836,59 @@ type StringOrBoolOrFloat64OrSelectableValue struct {
 // NewStringOrBoolOrFloat64OrSelectableValue creates a new StringOrBoolOrFloat64OrSelectableValue object.
 func NewStringOrBoolOrFloat64OrSelectableValue() *StringOrBoolOrFloat64OrSelectableValue {
 	return &StringOrBoolOrFloat64OrSelectableValue{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrFloat64OrSelectableValue` as JSON.
+func (resource StringOrBoolOrFloat64OrSelectableValue) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+	if resource.SelectableValue != nil {
+		return json.Marshal(resource.SelectableValue)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode StringOrBoolOrFloat64OrSelectableValue from JSON.
+func (resource *StringOrBoolOrFloat64OrSelectableValue) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+	fields := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+
+	if fields["String"] != nil {
+		if err := json.Unmarshal(fields["String"], &resource.String); err != nil {
+			return fmt.Errorf("error decoding field 'String': %w", err)
+		}
+	}
+
+	if fields["Bool"] != nil {
+		if err := json.Unmarshal(fields["Bool"], &resource.Bool); err != nil {
+			return fmt.Errorf("error decoding field 'Bool': %w", err)
+		}
+	}
+
+	if fields["Float64"] != nil {
+		if err := json.Unmarshal(fields["Float64"], &resource.Float64); err != nil {
+			return fmt.Errorf("error decoding field 'Float64': %w", err)
+		}
+	}
+
+	if fields["SelectableValue"] != nil {
+		if err := json.Unmarshal(fields["SelectableValue"], &resource.SelectableValue); err != nil {
+			return fmt.Errorf("error decoding field 'SelectableValue': %w", err)
+		}
+	}
+
+	return nil
 }
