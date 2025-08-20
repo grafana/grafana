@@ -79,7 +79,7 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
    [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
    {{< /admonition >}}
 
-- **Query history** - Query history contains the list of queries that you created in Explore. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
+- **Query history** - Query history contains the list of queries that you created in Explore. You can also add queries from the history to your saved queries. Refer to [Query history](/docs/grafana/<GRAFANA_VERSION>/explore/query-management/#query-history) for detailed information on working with your query history.
 - **Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**. Refer to [Query inspector in Explore](/docs/grafana/latest/explore/explore-inspector/) for additional information.
 
 ## Access Explore

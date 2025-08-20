@@ -138,6 +138,7 @@ In the **Saved queries** drawer, you can:
 - Search for queries by data source name, query content, title, and description.
 - Filter by data source name, author name, and tags (filters use the `OR` operator).
 - Sort queries alphabetically or by creation date.
+- Set saved queries as favorites.
 - Edit a query title, description, or tags, or the availability of the query to other users in your organization.
 - Duplicate, lock, or delete a saved query.
 
