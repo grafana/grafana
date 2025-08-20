@@ -27,11 +27,26 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   suffix?: NavModelItem['tabSuffix'];
   truncate?: boolean;
   tooltip?: string;
+  /** When true, the tab will be disabled and not clickable */
+  disabled?: boolean;
 }
 
 export const Tab = React.forwardRef<HTMLElement, TabProps>(
   (
-    { label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, truncate, tooltip, ...otherProps },
+    {
+      label,
+      active,
+      icon,
+      onChangeTab,
+      counter,
+      suffix: Suffix,
+      className,
+      href,
+      truncate,
+      tooltip,
+      disabled,
+      ...otherProps
+    },
     ref
   ) => {
     const tabsStyles = useStyles2(getStyles);
@@ -50,16 +65,18 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       clearStyles,
       tabsStyles.link,
       active ? tabsStyles.activeStyle : tabsStyles.notActive,
-      truncate && tabsStyles.linkTruncate
+      truncate && tabsStyles.linkTruncate,
+      disabled && tabsStyles.disabled
     );
 
     const commonProps = {
       className: linkClass,
       'data-testid': selectors.components.Tab.title(label),
       ...otherProps,
-      onClick: onChangeTab,
+      onClick: disabled ? undefined : onChangeTab,
       role: 'tab',
       'aria-selected': active,
+      'aria-disabled': disabled,
       title: !!tooltip ? undefined : otherProps.title, // If tooltip is provided, don't set the title on the link or button, it looks weird
     };
 
@@ -168,6 +185,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     suffix: css({
       marginLeft: theme.spacing(1),
+    }),
+    disabled: css({
+      color: theme.colors.text.disabled,
+      cursor: 'not-allowed',
+      boxShadow: 'none',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'none',
+      },
+
+      '&:hover, &:focus': {
+        color: theme.colors.text.disabled,
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+
+        '&::before': {
+          backgroundColor: 'transparent',
+        },
+      },
     }),
   };
 };
