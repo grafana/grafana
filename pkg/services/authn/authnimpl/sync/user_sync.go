@@ -139,6 +139,12 @@ func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
 	} else {
 		stats["stats.features.scim.has_successful_login.count"] = 0
 	}
+
+	if s.samlCatalogSuccessfulLogin.Load() {
+		stats["stats.features.saml.catalog_successful_login.count"] = 1
+	} else {
+		stats["stats.features.saml.catalog_successful_login.count"] = 0
+	}
 	return stats
 }
 
