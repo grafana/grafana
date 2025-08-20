@@ -362,9 +362,6 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("single instance sync is allowed", func(t *testing.T) {
-		// Ensure clean state
-		helper.CleanupAllRepos(t)
-
 		repoName := "instance-repo-single"
 		testRepo := TestRepo{
 			Name:               repoName,
@@ -376,6 +373,33 @@ func TestIntegrationProvisioning_InstanceSyncValidation(t *testing.T) {
 
 		// Create instance sync repository - should succeed
 		helper.CreateRepo(t, testRepo)
+
+		// Clean up at end of test
+		helper.CleanupAllRepos(t)
+	})
+
+	t.Run("change between folder and instance sync for the same repository if no previous sync happened", func(t *testing.T) {
+		// Ensure clean state
+		helper.CleanupAllRepos(t)
+
+		repoName := "instance-repo-change"
+		testRepo := TestRepo{
+			Name:               repoName,
+			Target:             "instance",
+			Copies:             map[string]string{}, // No files needed for this test
+			ExpectedDashboards: 0,
+			ExpectedFolders:    0,
+			SkipSync:           true, // To avoid initial sync and stats
+		}
+		helper.CreateRepo(t, testRepo)
+
+		// Change from instance to folder sync
+		repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get repository")
+		err = unstructured.SetNestedField(repo.Object, "folder", "spec", "sync", "target")
+		require.NoError(t, err, "failed to set syncTarget to folder")
+		_, err = helper.Repositories.Resource.Update(ctx, repo, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to update repository to folder sync")
 
 		// Clean up at end of test
 		helper.CleanupAllRepos(t)

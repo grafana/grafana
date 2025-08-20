@@ -286,7 +286,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
 				})
-
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
 				}
@@ -622,7 +621,7 @@ func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Reposit
 	} else {
 		// Folder sync cannot be created if an instance repository exists
 		for _, v := range all {
-			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance && v.Name != cfg.Name {
 				return field.Forbidden(field.NewPath("spec", "sync", "target"),
 					"Cannot create folder repository when instance repository exists: "+v.Name)
 			}
