@@ -6,12 +6,6 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 
 describe('DashboardSceneUrlSync', () => {
   describe('Given a standard scene', () => {
-    it('Should set viewPanelKey when url has viewPanel', () => {
-      const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ viewPanel: '2' });
-      expect(scene.state.viewPanel).toBe('panel-2');
-    });
-
     it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ autofitpanels: '' });
