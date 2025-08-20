@@ -16,7 +16,7 @@ import { isAdmin } from '../utils/misc';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
-import RulesFilter from './filters/RulesFilter';
+import RulesFilter from './filter/RulesFilter';
 
 function RuleList() {
   const { filterState } = useRulesFilter();

@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import RulesFilterV1 from '../../components/rules/Filter/RulesFilter.v1';
 import { SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 
-const RulesFilterV2 = lazy(() => import('../filter/RulesFilter.v2'));
+const RulesFilterV2 = lazy(() => import('./RulesFilter.v2'));
 
 export interface RulesFilterProps {
   onClear?: () => void;

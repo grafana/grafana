@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 
 import { useAlertingHomePageExtensions } from '../../plugins/useAlertingHomePageExtensions';
 import { RulesFilter } from '../../search/rulesSearchParser';
-import { AdvancedFilters } from '../filter/types';
+
+import { AdvancedFilters } from './types';
 
 export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesFilter {
   return {

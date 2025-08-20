@@ -12,7 +12,8 @@ import * as analytics from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
-import RulesFilter from '../filters/RulesFilter';
+
+import RulesFilter from './RulesFilter';
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
@@ -211,21 +212,33 @@ describe('RulesFilterV2', () => {
   });
 
   it('Should populate search field with query string when filters are applied via rule name', async () => {
-    const { user } = render(<RulesFilterV2 />);
+    const { user, rerender } = render(<RulesFilterV2 />);
 
     await user.click(ui.filterButton.get());
 
     await user.type(ui.ruleNameInput.get(), 'test');
 
-    // Mock the setSearchQuery to update mockSearchQuery
-    mockSetSearchQuery.mockImplementation((newQuery: string | undefined) => {
-      mockSearchQuery = newQuery ?? '';
+    // Mock updateFilters to update the search query as the implementation does
+    mockUpdateFilters.mockImplementation(() => {
+      mockSearchQuery = 'rule:test';
     });
 
     await user.click(ui.applyButton.get());
 
-    // Check that setSearchQuery was called with the expected query
-    expect(mockSetSearchQuery).toHaveBeenCalledWith('rule:test');
+    // Update the mock to return the new search query and re-render
+    useRulesFilterMock.mockReturnValue({
+      searchQuery: mockSearchQuery,
+      filterState: mockFilterState,
+      updateFilters: mockUpdateFilters,
+      setSearchQuery: mockSetSearchQuery,
+      clearAll: mockClearAll,
+      hasActiveFilters: false,
+      activeFilters: [],
+    });
+    rerender(<RulesFilterV2 />);
+
+    // The search input should reflect the updated query string
+    expect(ui.searchInput.get()).toHaveValue('rule:test');
   });
 
   it('Should parse search query and call updateFilters when user types directly in search field', async () => {

@@ -41,14 +41,15 @@ import {
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
-import { RulesFilterProps } from '../filters/RulesFilter';
+
+import { RulesFilterProps } from './RulesFilter';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
   searchQueryToDefaultValues,
   usePluginsFilterStatus,
   usePortalContainer,
-} from '../filters/utils';
+} from './utils';
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
