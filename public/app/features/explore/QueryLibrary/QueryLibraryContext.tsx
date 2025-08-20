@@ -40,10 +40,28 @@ export type QueryLibraryContextType = {
   renderSaveQueryButton: (
     query: DataQuery,
     app?: CoreApp,
-    queryLibraryRef?: string,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void
   ) => ReactNode;
+
+  /**
+   * Returns a header component for editing queries from the library.
+   * used in places like Explore
+   * @param query
+   * @param app
+   * @param queryLibraryRef
+   * @param onCancelEdit
+   * @param onUpdateSuccess
+   */
+  renderQueryLibraryEditingHeader: (
+    query: DataQuery,
+    app?: CoreApp,
+    queryLibraryRef?: string,
+    onCancelEdit?: () => void,
+    onUpdateSuccess?: () => void,
+    onSelectQuery?: (query: DataQuery) => void
+  ) => ReactNode;
+
   queryLibraryEnabled: boolean;
   context: string;
   triggerAnalyticsEvent: (
@@ -63,6 +81,10 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   onSave: () => {},
 
   renderSaveQueryButton: () => {
+    return null;
+  },
+
+  renderQueryLibraryEditingHeader: () => {
     return null;
   },
 

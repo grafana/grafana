@@ -110,7 +110,7 @@ const LogLineComponent = memo(
     const permalinked = useLogIsPermalinked(log);
 
     useEffect(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization || !height) {
+      if (!onOverflow || !logLineRef.current || !virtualization || !height || !wrapLogMessage) {
         return;
       }
       const calculatedHeight = typeof height === 'number' ? height : undefined;
@@ -134,8 +134,8 @@ const LogLineComponent = memo(
 
     const handleExpandCollapse = useCallback(() => {
       const newState = !collapsed;
-      setCollapsed(newState);
       log.setCollapsedState(newState);
+      setCollapsed(newState);
       onOverflow?.(index, log.uid);
     }, [collapsed, index, log, onOverflow]);
 
@@ -208,6 +208,7 @@ const LogLineComponent = memo(
             onClick={handleClick}
           >
             <Log
+              collapsed={collapsed}
               displayedFields={displayedFields}
               log={log}
               showTime={showTime}
@@ -253,6 +254,7 @@ LogLineComponent.displayName = 'LogLineComponent';
 export type LogLineTimestampResolution = 'ms' | 'ns';
 
 interface LogProps {
+  collapsed?: boolean;
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;

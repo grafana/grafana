@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Silêncio, agrupamento e tempos"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "Nenhuma regra encontrada",
       "error-button": "Erro",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não existem mais resultados – {{numberOfRules}} regras encontradas",
@@ -3632,11 +3638,11 @@
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
+      "error-invalid-characters": "",
       "error-required": "O nome da pasta é obrigatório",
       "folder-name-input-placeholder-enter-folder-name": "Introduza o nome da pasta",
       "label-folder-name": "Nome da pasta",
       "text-pull-request-created": "Foi criado um pedido de extração com alterações a esta pasta:",
-      "text-your-folder-will-be-created-as": "A sua pasta será criada como {{folderName}}",
       "title-pull-request-created": "Pedido de extração criado",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
@@ -4171,7 +4177,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Origens de dados",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Não foram encontrados resultados que correspondam à sua consulta",
       "request-data-source": "Solicitar uma nova origem de dados",
       "roadmap": "Ver roteiro"
@@ -6545,9 +6552,11 @@
       "explore": "Explorar"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Criar um painel de controlo",
       "explore-data": "Explorar dados",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mais detalhes sobre o erro"
@@ -7525,11 +7534,6 @@
     "noOptionsMessage-no-folders-found": "Nenhuma pasta encontrada",
     "select-aria-label": "Filtro de pastas",
     "select-placeholder": "Filtrar por pasta"
-  },
-  "folder-picker": {
-    "create-instructions": "Pressionar Enter para criar a nova pasta.",
-    "input-placeholder": "Pressionar Enter para confirmar a nova pasta",
-    "loading": "A carregar pastas..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8749,7 +8753,6 @@
       "filter-popup-input-placeholder": "Filtrar valores",
       "filter-popup-match-case": "Diferenciar maiúsculas de minúsculas",
       "inspect-drawer-title": "Inspecionar valor",
-      "inspect-menu-label": "Inspecionar valor",
       "nested-table": {
         "no-data": "Sem dados"
       },
@@ -12795,6 +12798,7 @@
     "description-fields": "Selecionar os campos que devem ser calculados",
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
+    "description-tooltip-from-field": "",
     "name-calculation": "Cálculo",
     "name-cell-height": "Altura da célula",
     "name-cell-type": "Tipo de célula",
@@ -12810,8 +12814,17 @@
     "name-min-column-width": "Largura mínima da coluna",
     "name-show-table-footer": "Mostrar o rodapé da tabela",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Todos os campos numéricos"
+    "placeholder-fields": "Todos os campos numéricos",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Limpar etiquetas",
