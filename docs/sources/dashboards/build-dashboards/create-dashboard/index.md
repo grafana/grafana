@@ -80,6 +80,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#saved-queries
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
+  save-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#save-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
 
 ## Create a dashboard
@@ -95,7 +100,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **To create a dashboard**:
 
-{{< shared id="create-dashboard" >}}
+   {{< shared id="create-dashboard" >}}
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
@@ -103,7 +108,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-{{< /shared >}}
+   {{< /shared >}}
 
 1. In the dialog box that opens, do one of the following:
    - Select one of your existing data sources.
@@ -120,13 +125,13 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. To add a query, do one of the following:
 
    - Write or construct a query in the query language of your data source.
-   - Click **+ Add saved query** to add a previously [saved query](ref:saved-queries).
-   - If you've already written a query, you can click the **Replace with saved query** icon to use a previously [saved query](ref:saved-queries) instead.
+   - Click **+ Add saved query** to add a previously saved query.
+   - If you've already written a query, you can click the **Replace with saved query** icon to use a previously saved query instead.
 
-1. (Optional) To save the query for reuse, click the **Save query** icon.
+1. (Optional) To [save the query](ref:save-query) for reuse, click the **Save query** icon.
 
    {{< admonition type="note" >}}
-   Saved queries is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
+   [Saved queries](ref:saved-queries) is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Cloud only.
    {{< /admonition >}}
 
 1. Click **Refresh** to query the data source.
