@@ -13,6 +13,7 @@ import {
   LogsSortOrder,
   DataFrame,
   ScopedVars,
+  getDefaultTimeRange,
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 
@@ -50,6 +51,8 @@ const setup = (
     focusLogLine: jest.fn(),
     logs,
     onResize: jest.fn(),
+    timeRange: getDefaultTimeRange(),
+    timeZone: 'browser',
     ...(propOverrides || {}),
   };
 
@@ -559,6 +562,8 @@ describe('LogLineDetails', () => {
         containerElement: document.createElement('div'),
         focusLogLine: jest.fn(),
         logs: [logs[0]],
+        timeRange: getDefaultTimeRange(),
+        timeZone: 'browser',
         onResize: jest.fn(),
       };
 
