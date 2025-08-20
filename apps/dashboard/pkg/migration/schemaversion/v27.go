@@ -117,7 +117,7 @@ func removeRepeatedPanels(panels []interface{}) []interface{} {
 		// Filter out repeats in collapsed rows
 		if p["type"] == "row" {
 			if nestedPanels, ok := p["panels"].([]interface{}); ok {
-				var filteredNestedPanels []interface{}
+				filteredNestedPanels := []interface{}{}
 				for _, nestedPanel := range nestedPanels {
 					if np, ok := nestedPanel.(map[string]interface{}); ok {
 						if _, hasRepeatPanelId := np["repeatPanelId"]; !hasRepeatPanelId {
