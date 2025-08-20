@@ -59,6 +59,11 @@ func ProvideWebhooks(
 				return cfg.AppURL
 			}
 
+			// If URL is not public, return a no-op extra that doesn't set up webhooks
+			if !isPublicURL(urlProvider("")) {
+				return provisioningapis.NewNoopExtra()
+			}
+
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients)
 
@@ -222,3 +227,4 @@ func (e *WebhookExtra) RepositoryTypes() []provisioning.RepositoryType {
 		provisioning.GitHubRepositoryType,
 	}
 }
+
