@@ -137,7 +137,7 @@ export interface LogRowContextOptions {
   direction?: LogRowContextQueryDirection;
   limit?: number;
   scopedVars?: ScopedVars;
-  // Size of the time window to get logs before of after the referenced entry. Defaults to 2h.
+  // Optional. Size of the time window to get logs before of after the referenced entry.
   timeWindowMs?: number;
 }
 
