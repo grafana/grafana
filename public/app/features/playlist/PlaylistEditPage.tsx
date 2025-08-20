@@ -20,7 +20,7 @@ export const PlaylistEditPage = () => {
 
   const onSubmit = async (playlist: Playlist) => {
     replacePlaylist({
-      name: playlist.metadata.name ?? '',
+      name: playlist.metadata?.name ?? '',
       playlist,
     });
     locationService.push('/playlists');

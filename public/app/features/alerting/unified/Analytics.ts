@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, pickBy } from 'lodash';
 
 import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -7,6 +7,7 @@ import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
+import { AdvancedFilters } from './components/rules/Filter/RulesFilter.v2';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
@@ -328,6 +329,32 @@ export function trackFolderBulkActionsPauseFail() {
 
 export function trackFolderBulkActionsUnpauseFail() {
   reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
+}
+
+export function trackFilterButtonClick() {
+  reportInteraction('grafana_alerting_filter_button_click');
+}
+
+export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFilterEnabled: boolean) {
+  // Filter out empty/default values before tracking
+  const meaningfulValues = pickBy(payload, (value, key) => {
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return false;
+    }
+    if (key === 'plugins' && !pluginsFilterEnabled) {
+      return false;
+    }
+    return true;
+  });
+
+  reportInteraction('grafana_alerting_filter_button_apply_click', meaningfulValues);
+}
+
+export function trackFilterButtonClearClick() {
+  reportInteraction('grafana_alerting_filter_button_clear_click');
 }
 
 export type AlertRuleTrackingProps = {

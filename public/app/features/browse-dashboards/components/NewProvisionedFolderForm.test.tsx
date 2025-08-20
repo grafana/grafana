@@ -59,6 +59,14 @@ jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => {
   };
 });
 
+jest.mock('react-redux', () => {
+  const actual = jest.requireActual('react-redux');
+  return {
+    ...actual,
+    useDispatch: jest.fn(),
+  };
+});
+
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
@@ -222,25 +230,6 @@ describe('NewProvisionedFolderForm', () => {
     expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
   });
 
-  it('should validate folder name', async () => {
-    (validationSrv.validateNewFolderName as jest.Mock).mockRejectedValue(new Error('Folder name already exists'));
-
-    const { user } = setup();
-
-    const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
-    await user.clear(folderNameInput);
-    await user.type(folderNameInput, 'Existing Folder');
-
-    // Submit the form
-    const submitButton = screen.getByRole('button', { name: /^create$/i });
-    await user.click(submitButton);
-
-    // Wait for validation error to appear
-    await waitFor(() => {
-      expect(screen.getByText('Folder name already exists')).toBeInTheDocument();
-    });
-  });
-
   it('should validate branch name', async () => {
     const { user } = setup();
 
@@ -297,7 +286,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: undefined, // write workflow uses undefined ref
           name: 'test-repo',
-          path: '/dashboards/new-test-folder/',
+          path: '/dashboards/New Test Folder/',
           message: 'Creating a new test folder',
           body: {
             title: 'New Test Folder',
@@ -350,7 +339,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: 'feature/new-folder',
           name: 'test-repo',
-          path: '/dashboards/branch-folder/',
+          path: '/dashboards/Branch Folder/',
           message: 'Create folder: Branch Folder',
           body: {
             title: 'Branch Folder',

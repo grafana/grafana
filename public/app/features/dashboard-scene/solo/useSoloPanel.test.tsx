@@ -46,7 +46,7 @@ describe('useSoloPanel', () => {
 
   it('should return the cloned panel when panel is found', () => {
     const { dashboard } = setup();
-    const { result } = renderHook(() => useSoloPanel(dashboard, 'panel-1-clone-1'));
+    const { result } = renderHook(() => useSoloPanel(dashboard, 'A$panel-1'));
     const panel = findVizPanelByKey(dashboard, 'panel-1');
 
     expect(result.current[0]).not.toBe(panel);
