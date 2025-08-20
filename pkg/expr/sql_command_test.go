@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"github.com/zeebo/assert"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -93,7 +94,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 			},
 			vars:          []string{"foo"},
 			expectError:   true,
-			errorContains: "exceeds limit",
+			errorContains: "exceeded the configured limit",
 		},
 		{
 			name:  "single (wide) frame exceeds cell limit",
@@ -103,7 +104,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 			},
 			vars:          []string{"foo"},
 			expectError:   true,
-			errorContains: "exceeds limit",
+			errorContains: "exceeded the configured limit",
 		},
 		{
 			name:  "multiple frames exceed cell limit",
@@ -114,7 +115,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 			},
 			vars:          []string{"foo", "bar"},
 			expectError:   true,
-			errorContains: "exceeds limit",
+			errorContains: "exceeded the configured limit",
 		},
 		{
 			name:  "limit of 0 means no limit: allow large frame",
@@ -128,7 +129,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "a", "", "select a from foo, bar", tt.limit, 0, 0)
+			cmd, err := NewSQLCommand(t.Context(), log.New(), "a", "", "select a from foo, bar", tt.limit, 0, 0)
 			require.NoError(t, err, "Failed to create SQL command")
 
 			vars := mathexp.Vars{}
@@ -279,3 +280,7 @@ func (ts *testSpan) RecordError(err error, opt ...trace.EventOption) {
 }
 
 func (ts *testSpan) SetStatus(code codes.Code, msg string) {}
+
+func (ts *testSpan) AddEvent(name string, opts ...trace.EventOption) {}
+
+func (ts *testSpan) SetAttributes(kv ...attribute.KeyValue) {}

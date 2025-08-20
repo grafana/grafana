@@ -90,7 +90,7 @@ func TestSQLService(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Error(t, rsp.Responses["B"].Error, "should return invalid sql error")
-		require.ErrorContains(t, rsp.Responses["B"].Error, "blocked function load_file")
+		require.ErrorContains(t, rsp.Responses["B"].Error, "not in the allowed list of")
 	})
 
 	t.Run("parse error should be returned", func(t *testing.T) {
