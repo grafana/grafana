@@ -36,34 +36,27 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
 			Generation:        int64(ds.Version),
 		},
-		Spec: datasourceV0.DataSourceSpec{
-			Title:           ds.Name,
-			Access:          datasourceV0.DsAccess(ds.Access),
-			URL:             ds.URL,
-			User:            ds.User,
-			Database:        ds.Database,
-			BasicAuth:       ds.BasicAuth,
-			BasicAuthUser:   ds.BasicAuthUser,
-			WithCredentials: ds.WithCredentials,
-			IsDefault:       ds.IsDefault,
-			ReadOnly:        ds.ReadOnly,
-		},
+		Spec:   datasourceV0.UnstructuredSpec{},
 		Secure: ToInlineSecureValues(ds.Type, ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
 	cfg.UID = gapiutil.CalculateClusterWideUID(cfg)
+	cfg.Spec.SetTitle(ds.Name).
+		SetAccess(string(ds.Access)).
+		SetURL(ds.URL).
+		SetDatabase(ds.Database).
+		SetUser(ds.User).
+		SetDatabase(ds.Database).
+		SetBasicAuth(ds.BasicAuth).
+		SetBasicAuthUser(ds.BasicAuthUser).
+		SetWithCredentials(ds.WithCredentials).
+		SetIsDefault(ds.IsDefault).
+		SetReadOnly(ds.ReadOnly).
+		SetJSONData(ds.JsonData)
 
 	if ds.ID > 0 {
 		cfg.Labels = map[string]string{
 			utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(ds.ID, 10),
 		}
-	}
-
-	if ds.JsonData != nil {
-		val, ok := ds.JsonData.Interface().(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("expected map[string]any jsondata")
-		}
-		cfg.Spec.JsonData.Object = val
 	}
 
 	return cfg, nil
@@ -101,24 +94,25 @@ func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 	}
 
 	cmd := &datasources.AddDataSourceCommand{
-		Name:  ds.Spec.Title,
+		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
 		OrgID: info.OrgID,
 		Type:  r.dstype,
 
-		Access:          datasources.DsAccess(ds.Spec.Access),
-		URL:             ds.Spec.URL,
-		Database:        ds.Spec.Database,
-		User:            ds.Spec.User,
-		BasicAuth:       ds.Spec.BasicAuth,
-		BasicAuthUser:   ds.Spec.BasicAuthUser,
-		WithCredentials: ds.Spec.WithCredentials,
-		IsDefault:       ds.Spec.IsDefault,
-		ReadOnly:        ds.Spec.ReadOnly,
+		Access:          datasources.DsAccess(ds.Spec.Access()),
+		URL:             ds.Spec.URL(),
+		Database:        ds.Spec.Database(),
+		User:            ds.Spec.User(),
+		BasicAuth:       ds.Spec.BasicAuth(),
+		BasicAuthUser:   ds.Spec.BasicAuthUser(),
+		WithCredentials: ds.Spec.WithCredentials(),
+		IsDefault:       ds.Spec.IsDefault(),
+		ReadOnly:        ds.Spec.ReadOnly(),
 	}
 
-	if len(ds.Spec.JsonData.Object) > 0 {
-		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
+	jsonData := ds.Spec.JSONData()
+	if jsonData != nil {
+		cmd.JsonData = simplejson.NewFromAny(jsonData)
 	}
 
 	cmd.SecureJsonData, err = toSecureJsonData(ds)
@@ -135,27 +129,28 @@ func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 	}
 
 	cmd := &datasources.UpdateDataSourceCommand{
-		Name:  ds.Spec.Title,
+		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
 		OrgID: info.OrgID,
 		Type:  r.dstype,
 
-		Access:          datasources.DsAccess(ds.Spec.Access),
-		URL:             ds.Spec.URL,
-		Database:        ds.Spec.Database,
-		User:            ds.Spec.User,
-		BasicAuth:       ds.Spec.BasicAuth,
-		BasicAuthUser:   ds.Spec.BasicAuthUser,
-		WithCredentials: ds.Spec.WithCredentials,
-		IsDefault:       ds.Spec.IsDefault,
-		ReadOnly:        ds.Spec.ReadOnly,
+		Access:          datasources.DsAccess(ds.Spec.Access()),
+		URL:             ds.Spec.URL(),
+		Database:        ds.Spec.Database(),
+		User:            ds.Spec.User(),
+		BasicAuth:       ds.Spec.BasicAuth(),
+		BasicAuthUser:   ds.Spec.BasicAuthUser(),
+		WithCredentials: ds.Spec.WithCredentials(),
+		IsDefault:       ds.Spec.IsDefault(),
+		ReadOnly:        ds.Spec.ReadOnly(),
 
 		// The only field different than add
 		Version: int(ds.Generation),
 	}
 
-	if len(ds.Spec.JsonData.Object) > 0 {
-		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
+	jsonData := ds.Spec.JSONData()
+	if jsonData != nil {
+		cmd.JsonData = simplejson.NewFromAny(jsonData)
 	}
 	cmd.SecureJsonData, err = toSecureJsonData(ds)
 	return cmd, err

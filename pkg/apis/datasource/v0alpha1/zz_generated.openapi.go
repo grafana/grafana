@@ -14,10 +14,11 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource":        schema_pkg_apis_datasource_v0alpha1_DataSource(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceList":    schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceSpec":    schema_pkg_apis_datasource_v0alpha1_DataSourceSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.HealthCheckResult": schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSource":            schema_pkg_apis_datasource_v0alpha1_DataSource(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceList":        schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.GenericDataSourceSpec": schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.HealthCheckResult":     schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec":      UnstructuredSpec{}.OpenAPIDefinition(),
 	}
 }
 
@@ -49,14 +50,13 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "generic config",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceSpec"),
+							Description: "DataSource configuration -- these properties are all visible to anyone able to query the data source from their browser",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec"),
 						},
 					},
 					"secure": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Secure values placeholder (true for fields that exist)",
+							Description: "Secure values allows setting values that are never shown to users The returned properties are only the names of the configured values",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -74,7 +74,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue", "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue", "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.UnstructuredSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -126,7 +126,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceList(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_datasource_v0alpha1_DataSourceSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -134,7 +134,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceSpec(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The diplay name (previously saved as the \"name\" property)",
+							Description: "The display name (previously saved as the \"name\" property)",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",

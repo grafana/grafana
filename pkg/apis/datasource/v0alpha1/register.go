@@ -32,7 +32,7 @@ var DataSourceResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			}
 			return []any{
 				m.Name,
-				m.Spec.Title,
+				m.Spec.Object["title"],
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
