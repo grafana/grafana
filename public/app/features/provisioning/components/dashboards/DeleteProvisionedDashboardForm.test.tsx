@@ -6,11 +6,11 @@ import { getAppEvents } from '@grafana/runtime';
 import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ProvisionedDashboardData, useProvisionedDashboardData } from '../hooks';
+import { ProvisionedDashboardData, useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 
 import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
 
-jest.mock('../hooks', () => ({
+jest.mock('../../hooks/useProvisionedDashboardData', () => ({
   useProvisionedDashboardData: jest.fn(),
 }));
 

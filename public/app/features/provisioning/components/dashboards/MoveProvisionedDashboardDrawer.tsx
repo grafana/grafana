@@ -1,6 +1,6 @@
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { useProvisionedDashboardData } from '../hooks';
+import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 
 import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
 
