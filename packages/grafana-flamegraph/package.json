@@ -83,6 +83,7 @@
     "typescript": "5.9.2"
   },
   "peerDependencies": {
+    "@grafana/assistant": "^0.0.12",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   }

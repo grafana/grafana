@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "靜音、分組和時間"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
     "alert-menu": {
@@ -2457,6 +2462,7 @@
       },
       "empty-data-source": "未找到規則",
       "error-button": "錯誤",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "取消搜尋",
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
@@ -3614,11 +3620,11 @@
       "button-create": "建立",
       "button-creating": "正在建立…",
       "cancel": "取消",
+      "error-invalid-characters": "",
       "error-required": "資料夾名稱為必填",
       "folder-name-input-placeholder-enter-folder-name": "輸入資料夾名稱",
       "label-folder-name": "資料夾名稱",
       "text-pull-request-created": "已建立拉取請求，其中包含對此資料夾的變更：",
-      "text-your-folder-will-be-created-as": "您的資料夾將建立為「{{folderName}}」",
       "title-pull-request-created": "已建立拉取請求",
       "title-this-repository-is-read-only": "此存放庫為唯讀"
     },
@@ -4153,7 +4159,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "資料來源",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "未找到符合您查詢的結果",
       "request-data-source": "請求新的資料來源",
       "roadmap": "檢視藍圖"
@@ -4503,6 +4510,10 @@
           },
           "value": "數值"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "由於條件轉譯，元素已被隱藏。"
@@ -6520,9 +6531,11 @@
       "explore": "探索"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "建立儀表板",
       "explore-data": "探索資料",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有關錯誤的更多詳細資料"
@@ -7500,11 +7513,6 @@
     "noOptionsMessage-no-folders-found": "未找到資料夾",
     "select-aria-label": "資料夾篩選條件",
     "select-placeholder": "按資料夾篩選"
-  },
-  "folder-picker": {
-    "create-instructions": "按 Enter 鍵建立新資料夾。",
-    "input-placeholder": "按 Enter 鍵確認新資料夾",
-    "loading": "正在載入資料夾…"
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8724,7 +8732,6 @@
       "filter-popup-input-placeholder": "篩選值",
       "filter-popup-match-case": "區分大小寫",
       "inspect-drawer-title": "檢查值",
-      "inspect-menu-label": "檢查值",
       "nested-table": {
         "no-data": "無資料"
       },
@@ -12750,6 +12757,7 @@
     "description-fields": "選擇應計算的欄位",
     "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
+    "description-tooltip-from-field": "",
     "name-calculation": "計算",
     "name-cell-height": "儲存格高度",
     "name-cell-type": "儲存格類型",
@@ -12765,8 +12773,17 @@
     "name-min-column-width": "最小欄寬",
     "name-show-table-footer": "顯示表格頁尾",
     "name-show-table-header": "顯示表格頁首",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位"
+    "placeholder-fields": "所有數值欄位",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "清除標籤",
