@@ -12,8 +12,8 @@ import RulesFilter from './RulesFilter';
 setupMswServer();
 jest.spyOn(analytics, 'logInfo');
 
-jest.mock('./MultipleDataSourcePicker', () => {
-  const original = jest.requireActual('./MultipleDataSourcePicker');
+jest.mock('../../components/rules/MultipleDataSourcePicker', () => {
+  const original = jest.requireActual('../../components/rules/MultipleDataSourcePicker');
   return {
     ...original,
     MultipleDataSourcePicker: () => null,

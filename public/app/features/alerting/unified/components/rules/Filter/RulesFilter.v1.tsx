@@ -14,12 +14,12 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
+import { RulesFilterProps } from '../../../rule-list/filter/RulesFilter';
 import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesFilterProps } from './RulesFilter';
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [

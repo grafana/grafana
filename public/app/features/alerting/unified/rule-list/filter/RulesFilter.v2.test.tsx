@@ -122,10 +122,25 @@ beforeEach(() => {
     labels: [],
   };
   mockSearchQuery = '';
-  mockUpdateFilters.mockClear();
-  mockSetSearchQuery.mockClear();
-  mockClearAll.mockClear();
+  // Fully reset mock implementations between tests to avoid leakage across cases
+  mockUpdateFilters.mockReset();
+  mockSetSearchQuery.mockReset();
+  mockClearAll.mockReset();
+  mockUpdateFilters.mockImplementation(() => {});
   mockSetSearchQuery.mockImplementation(() => {});
+  mockClearAll.mockImplementation(() => {});
+
+  // Restore the default implementation of the hook to use current mock variables
+  useRulesFilterMock.mockReset();
+  useRulesFilterMock.mockImplementation(() => ({
+    searchQuery: mockSearchQuery,
+    filterState: mockFilterState,
+    updateFilters: mockUpdateFilters,
+    setSearchQuery: mockSetSearchQuery,
+    clearAll: mockClearAll,
+    hasActiveFilters: false,
+    activeFilters: [],
+  }));
 
   // Reset plugin components hook to default (no plugins)
   setPluginComponentsHook(() => ({
