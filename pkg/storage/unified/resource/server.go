@@ -128,7 +128,7 @@ type StorageBackend interface {
 }
 
 type ModifiedResource struct {
-	Action          int64
+	Action          resourcepb.WatchEvent_Type
 	Key             resourcepb.ResourceKey
 	Value           []byte
 	ResourceVersion int64
