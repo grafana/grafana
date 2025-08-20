@@ -938,20 +938,16 @@ export type InlineSecureValue =
 export type SecureValues = {
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
-  /** Some webhooks (github) require a secret key value */
+  /** Some webhooks (including github) require a secret key value */
   webhookSecret?: InlineSecureValue;
 };
 export type BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
@@ -960,14 +956,10 @@ export type BitbucketRepositoryConfig = {
 export type GitRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test.git`). */
@@ -976,30 +968,22 @@ export type GitRepositoryConfig = {
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
 export type GitLabRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
@@ -1086,10 +1070,8 @@ export type SyncStatus = {
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
 export type WebhookStatus = {
-  encryptedSecret?: string;
   id?: number;
   lastEvent?: number;
-  secret?: string;
   subscribedEvents?: string[];
   url?: string;
 };
