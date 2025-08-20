@@ -328,9 +328,6 @@
 
 
 # Continuous Integration
-.drone.yml @grafana/grafana-developer-enablement-squad
-.drone.star @grafana/grafana-developer-enablement-squad
-/scripts/drone/ @grafana/grafana-developer-enablement-squad
 /pkg/build/ @grafana/grafana-developer-enablement-squad
 /.dockerignore @grafana/grafana-developer-enablement-squad
 /Dockerfile @grafana/grafana-developer-enablement-squad
@@ -502,6 +499,7 @@
 /e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/visualization-suggestions.spec.ts @grafana/dashboards-squad
+/e2e-playwright/various-suite/perf-test.spec.ts @grafana/grafana-frontend-platform
 
 # Packages
 /packages/README.md @grafana/grafana-frontend-platform
@@ -1256,6 +1254,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/skye-add-to-project.yml @grafana/grafana-frontend-platform
+/.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/zizmor.yml @grafana/grafana-developer-enablement-squad
 /.github/license_finder.yaml @bergquist
 /.github/actionlint.yaml @grafana/grafana-developer-enablement-squad
