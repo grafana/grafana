@@ -12,7 +12,6 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -67,16 +66,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.clone({
-      rows: this.state.rows.map((row) => {
-        const key = joinCloneKeys(ancestorKey, row.state.key!);
-
-        return row.clone({
-          key,
-          layout: row.state.layout.cloneLayout(key, isSource),
-        });
-      }),
-    });
+    return this.clone({});
   }
 
   public duplicate(): DashboardLayoutManager {
@@ -188,7 +178,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     if (layout instanceof TabsLayoutManager) {
       for (const tab of layout.state.tabs) {
-        if (isClonedKey(tab.state.key!)) {
+        if (tab.state.repeatSourceKey) {
           continue;
         }
 
@@ -221,21 +211,24 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         }
 
         if (child instanceof SceneGridRow) {
-          if (!isClonedKey(child.state.key!)) {
-            const behaviour = child.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
-
-            config.push({
-              title: child.state.title,
-              isCollapsed: !!child.state.isCollapsed,
-              isDraggable: child.state.isDraggable,
-              isResizable: child.state.isResizable,
-              children: child.state.children,
-              repeat: behaviour?.state.variableName,
-            });
-
-            // Since we encountered a row item, any subsequent panels should be added to a new row
-            children = undefined;
+          // Skip repeated row clones
+          if (child.state.repeatSourceKey) {
+            return;
           }
+
+          const behaviour = child.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+
+          config.push({
+            title: child.state.title,
+            isCollapsed: !!child.state.isCollapsed,
+            isDraggable: child.state.isDraggable,
+            isResizable: child.state.isResizable,
+            children: child.state.children,
+            repeat: behaviour?.state.variableName,
+          });
+
+          // Since we encountered a row item, any subsequent panels should be added to a new row
+          children = undefined;
         } else {
           if (!children) {
             children = [];

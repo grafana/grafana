@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "靜音、分組和時間"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
     "alert-menu": {
@@ -2457,6 +2462,7 @@
       },
       "empty-data-source": "未找到規則",
       "error-button": "錯誤",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "取消搜尋",
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
@@ -4153,7 +4159,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "資料來源",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "未找到符合您查詢的結果",
       "request-data-source": "請求新的資料來源",
       "roadmap": "檢視藍圖"
@@ -6524,9 +6531,11 @@
       "explore": "探索"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "建立儀表板",
       "explore-data": "探索資料",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有關錯誤的更多詳細資料"

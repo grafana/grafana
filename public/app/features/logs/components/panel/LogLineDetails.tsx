@@ -176,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
     height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
-    paddingBottom: theme.spacing(0.5),
+    padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
   container: css({
