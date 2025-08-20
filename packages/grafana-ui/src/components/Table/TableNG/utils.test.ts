@@ -120,7 +120,7 @@ describe('TableNG utils', () => {
       expect(colors).not.toHaveProperty('background');
     });
 
-    it('should handle color background cell type in basic mode', () => {
+    it('should pass thru color background cell type in basic mode', () => {
       const cellOptions = {
         type: TableCellDisplayMode.ColorBackground as const,
         mode: TableCellBackgroundDisplayMode.Basic,
@@ -130,7 +130,7 @@ describe('TableNG utils', () => {
 
       const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
       const colors = getCellColorInlineStyles(cellOptions, displayValue);
-      expect(colors.background).toBe('rgb(255, 0, 0)');
+      expect(colors.background).toBe('#ff0000');
       expect(colors.color).toBe('rgb(247, 248, 250)');
     });
 
