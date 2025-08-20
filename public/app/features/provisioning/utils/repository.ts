@@ -1,12 +1,14 @@
 import { t } from '@grafana/i18n';
-import { RepositoryView, RepoWorkflows } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 
+import { RepoWorkflows } from '../types';
+
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
-  // Repository is consider read-only if it has no workflows defined (workflows are required for write operations)
+  // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)
   return workflows?.length === 0;
 }
 
@@ -18,7 +20,7 @@ export function getIsReadOnlyRepo(repository: RepositoryView | undefined): boole
   return getIsReadOnlyWorkflows(repository.workflows);
 }
 
-// Right now we only support local file provisioning message and git provisioned. This can be extend in the future as needed.
+// Right now we only support local file provisioning message and git provisioned. This can be extended in the future as needed.
 export const getReadOnlyTooltipText = ({ isLocal = false }) => {
   return isLocal
     ? t(

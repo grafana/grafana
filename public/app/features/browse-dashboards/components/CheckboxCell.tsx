@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSelectionRepoValidation } from 'app/features/provisioning/hooks/useSelectionRepoValidation';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
@@ -24,6 +25,7 @@ export default function CheckboxCell({
   // Get current selection state for repository validation
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
   const { selectedItemsRepoUID, isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
+  const isProvisionedInstance = useIsProvisionedInstance();
 
   // Early returns for cases where we should show a spacer instead of checkbox
   if (!isSelected) {
@@ -42,8 +44,8 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  // Disable checkbox for root provisioned folder itself
-  if (item.managedBy === ManagerKind.Repo && !item.parentUID) {
+  // Disable the checkbox for the root provisioned folder (if the entire instance is not provisioned)
+  if (!isProvisionedInstance && item.managedBy === ManagerKind.Repo && !item.parentUID) {
     return <CheckboxSpacer />;
   }
 
