@@ -321,18 +321,16 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				testRepo := TestRepo{
-					Name:               test.name,
-					Template:           "testdata/github-readonly.json.tmpl",
-					Target:             "folder",
-					Values:             map[string]any{"URL": test.input},
-					Copies:             map[string]string{}, // No files needed for URL cleanup test
-					ExpectedDashboards: 0,
-					ExpectedFolders:    0,
-					SkipSync:           true, // Disable sync since we're just testing URL cleanup
-				}
+				// Create repository directly without health checks since we're only testing URL cleanup
+				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+					"Name":        test.name,
+					"URL":         test.input,
+					"SyncTarget":  "folder",
+					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup
+				})
 
-				helper.CreateRepo(t, testRepo)
+				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+				require.NoError(t, err, "failed to create resource")
 
 				obj, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
 				require.NoError(t, err, "failed to read back resource")
