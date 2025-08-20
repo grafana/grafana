@@ -326,7 +326,7 @@ describe('getDashboardChanges', () => {
     expect(result).toEqual(expectedChanges);
   });
 
-  it('should not see any changes when textbox var changes and we do not save variable changes', () => {
+  it('should not see any changes on modified textbox var when we do not update variable values', () => {
     const newDashboard = {
       ...initial,
       templating: {
