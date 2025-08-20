@@ -322,12 +322,13 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
-					"Name":       test.name,
-					"URL":        test.input,
-					"SyncTarget": "instance",
+					"Name":        test.name,
+					"URL":         test.input,
+					"SyncTarget":  "folder",
+					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup
 				})
 
-				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+				_, err = helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
 				require.NoError(t, err, "failed to create resource")
 
 				obj, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
