@@ -714,9 +714,14 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	}
 
 	if s.searchAfterWrite {
+		start := time.Now()
 		err := idx.UpdateIndex(ctx, reason)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err)
+		}
+		elapsed := time.Since(start)
+		if s.indexMetrics != nil {
+			s.indexMetrics.UpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 		}
 	}
 
