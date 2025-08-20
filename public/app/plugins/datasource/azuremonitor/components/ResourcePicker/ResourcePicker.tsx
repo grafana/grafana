@@ -444,6 +444,7 @@ const ResourcePicker = ({
                 enableAllOption
                 loading={isLoadingSubscriptions}
                 data-testid={selectors.components.queryEditor.resourcePicker.filters.subscription.input}
+                placeholder={t('components.resource-picker.subscriptions-filter-placeholder', 'Select a subscription')}
               />
             </Field>
             {queryType === 'metrics' && (
@@ -461,6 +462,7 @@ const ResourcePicker = ({
                   enableAllOption
                   loading={isLoadingNamespaces}
                   data-testid={selectors.components.queryEditor.resourcePicker.filters.type.input}
+                  placeholder={t('components.resource-picker.types-filter-placeholder', 'Select a resource type')}
                 />
               </Field>
             )}
@@ -478,6 +480,7 @@ const ResourcePicker = ({
                 enableAllOption
                 loading={isLoadingLocations}
                 data-testid={selectors.components.queryEditor.resourcePicker.filters.location.input}
+                placeholder={t('components.resource-picker.locations-filter-placeholder', 'Select a location')}
               />
             </Field>
           </Stack>
