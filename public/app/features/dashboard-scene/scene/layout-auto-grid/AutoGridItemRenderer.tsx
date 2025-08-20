@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
 import { AutoGridItem } from './AutoGridItem';
@@ -19,6 +20,15 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
     useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    if (soloPanelContext.matches(body.state.key!)) {
+      return <body.Component model={body} />;
+    } else {
+      return null;
+    }
+  }
 
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 

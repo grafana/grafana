@@ -1,19 +1,15 @@
-import { AppEvents } from '@grafana/data';
-import { LocalValueVariable, SceneQueryRunner, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import appEvents from 'app/core/app_events';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { KioskMode } from 'app/types/dashboard';
 
 import { DashboardScene } from './DashboardScene';
-import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcessedEvent';
 
 describe('DashboardSceneUrlSync', () => {
   describe('Given a standard scene', () => {
     it('Should set viewPanelKey when url has viewPanel', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ viewPanel: '2' });
-      expect(scene.state.viewPanelScene!.getUrlKey()).toBe('panel-2');
+      expect(scene.state.viewPanel).toBe('panel-2');
     });
 
     it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
@@ -58,53 +54,10 @@ describe('DashboardSceneUrlSync', () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: false });
       scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
-      expect(scene.state.viewPanelScene).toBeDefined();
+      expect(scene.state.viewPanel).toBeDefined();
       scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
       expect(scene.state.editPanel).toBeDefined();
     });
-  });
-
-  describe('Given a viewPanelKey with clone that is not found', () => {
-    const scene = buildTestScene();
-
-    let errorNotice = 0;
-    appEvents.on(AppEvents.alertError, (evt) => errorNotice++);
-
-    scene.urlSync?.updateFromUrl({ viewPanel: 'A$panel-1' });
-
-    expect(scene.state.viewPanelScene).toBeUndefined();
-    // Verify no error notice was shown
-    expect(errorNotice).toBe(0);
-
-    // fake adding clone panel
-    const layout = scene.state.body as DefaultGridLayoutManager;
-
-    layout.state.grid.setState({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          body: new VizPanel({
-            $variables: new SceneVariableSet({
-              variables: [
-                new LocalValueVariable({
-                  name: 'server',
-                  value: 'A',
-                  text: 'A',
-                }),
-              ],
-            }),
-            title: 'Clone Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
-        }),
-      ],
-    });
-
-    // Verify it subscribes to DashboardRepeatsProcessedEvent
-    scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
-    expect(scene.state.viewPanelScene?.getUrlKey()).toBe('A$panel-1');
   });
 });
 
