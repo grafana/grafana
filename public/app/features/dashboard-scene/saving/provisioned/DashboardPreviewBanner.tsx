@@ -45,13 +45,13 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 
   // This page was loaded with a `pull_request_url` in the URL
   if (prURL?.length) {
-    return <PreviewBannerViewPR prParam={prURL} />;
+    return <PreviewBannerViewPR prParam={prURL} isNewPr />;
   }
 
   // Check if this is a repo link
   const repoUrl = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
   if (repoUrl) {
-    return <PreviewBannerViewPR prParam={repoUrl} isNewPr />;
+    return <PreviewBannerViewPR prParam={repoUrl} />;
   }
 
   return (
