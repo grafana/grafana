@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { renderMarkdown } from '@grafana/data';
 
-import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { MarkdownCellProps, TableCellStyles } from '../types';
 
 export function MarkdownCell({ field, rowIdx, disableSanitizeHtml }: MarkdownCellProps) {

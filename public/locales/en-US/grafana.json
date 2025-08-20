@@ -12742,6 +12742,9 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
     },
+    "link-wrapper": {
+      "menu": "view data links and actions"
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
       "label": {
