@@ -17,7 +17,7 @@ import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
 
-const AUTO_RENDERER = memo((props: TableCellRendererProps) => (
+const AutoCellRenderer = memo((props: TableCellRendererProps) => (
   <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 ));
 
@@ -40,19 +40,19 @@ interface CellRegistryEntry {
 
 const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
   [TableCellDisplayMode.Auto]: {
-    renderer: AUTO_RENDERER,
+    renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.ColorBackground]: {
-    renderer: AUTO_RENDERER,
+    renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.ColorText]: {
-    renderer: AUTO_RENDERER,
+    renderer: AutoCellRenderer,
     getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.JSONView]: {
-    renderer: AUTO_RENDERER,
+    renderer: AutoCellRenderer,
     getStyles: mixinAutoCellStyles(getJsonCellStyles),
   },
   [TableCellDisplayMode.Actions]: {
@@ -139,11 +139,11 @@ export function getCellRenderer(
 
   // if the field fails the test for a specific renderer, fallback to Auto
   if (CELL_REGISTRY[cellType]?.testField && CELL_REGISTRY[cellType].testField(field) !== true) {
-    return AUTO_RENDERER;
+    return AutoCellRenderer;
   }
 
   // cautious fallback to Auto renderer in case some garbage cell type has been provided.
-  return CELL_REGISTRY[cellType]?.renderer ?? AUTO_RENDERER;
+  return CELL_REGISTRY[cellType]?.renderer ?? AutoCellRenderer;
 }
 
 /** @internal */
