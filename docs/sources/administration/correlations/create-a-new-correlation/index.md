@@ -52,8 +52,8 @@ datasources:
       - targetUID: uid
         label: "test"
         description: "..."
+        type: "query"
         config:
-          type: "query"
           target:
             expr: "..."
           field: "name"
@@ -77,11 +77,11 @@ Description of provisioning properties:
 **description**
 : Optional description
 
+**type**
+: Correlation type. Valid values are "query" for linking to a data source query and "external" for linking to an external URL.
+
 **config**
 : Config object
-
-**config.type**
-: Correlation type. Valid values are "query" for linking to a data source query and "external" for linking to an external URL.
 
 **config.target**
 : [Target query model](#determine-target-query-model-structure)
