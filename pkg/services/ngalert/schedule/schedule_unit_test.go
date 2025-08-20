@@ -25,8 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -77,7 +77,7 @@ func TestProcessTicks(t *testing.T) {
 			featuremgmt.WithFeatures(),
 			nil,
 			tracing.InitializeTracerForTest(),
-			mtdsclient.NewNullMTDatasourceClientBuilder(),
+			dsquerierclient.NewNullQSDatasourceClientBuilder(),
 		),
 	)
 	rrSet := setting.RecordingRuleSettings{
@@ -1215,7 +1215,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 				featuremgmt.WithFeatures(),
 				nil,
 				tracing.InitializeTracerForTest(),
-				mtdsclient.NewNullMTDatasourceClientBuilder(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
 			),
 		)
 	}

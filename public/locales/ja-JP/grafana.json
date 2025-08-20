@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "ミュート、グループ化、タイミング"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
     "alert-menu": {
@@ -1237,20 +1242,6 @@
     "file-export-preview": {
       "copy-code": "コードをコピー",
       "download": "ダウンロード"
-    },
-    "filter-options": {
-      "label": {
-        "alert-rule": "アラートルール",
-        "all": "すべて",
-        "error": "エラー",
-        "firing": "発生中",
-        "no-data": "データなし",
-        "normal": "通常",
-        "ok": "OK",
-        "pending": "保留",
-        "recording-rule": "録画ルール",
-        "recovering": "復元中"
-      }
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "フィルター済みルールリスト"
@@ -2471,6 +2462,7 @@
       },
       "empty-data-source": "ルールが見つかりません",
       "error-button": "エラー",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -2575,11 +2567,27 @@
       "delete-rule": {
         "success": "正常に削除されました"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "ルール評価が一時停止しました"
       },
       "resume-rule": {
         "success": "ルール評価が再開されました"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "ルールの更新に成功しました"
@@ -2588,20 +2596,29 @@
     "rules-filter": {
       "clear-filters": "フィルタをクリア",
       "configured-alert-rules": "アラートルールが設定されているデータソースは、MimirまたはLokiデータソースで、アラートルールはデータソース自体に保存され評価されます。",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "ダッシュボード",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "データソースで検索ヘルプ",
       "filter-options": {
-        "aria-label-show-filters": "フィルターを表示",
-        "label-custom-filter": "カスタムフィルター",
-        "label-saved-searches": "保存済みの検索"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "健康",
       "label": {
         "hide": "非表示",
         "show": "表示"
       },
       "manage-alerts": "これらのデータソースでは、「アラートUI経由で管理」を選択すると、Grafana UIとアラートルールが設定されたデータソースの両方でこれらのアラートルールを管理できます。",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "すべてのデータソース",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "プラグインルール",
       "rule-type": "ルールタイプ",
       "rulesSearchInput-placeholder-search": "検索",
@@ -2616,9 +2633,6 @@
       "text-federated": "フェデレーション",
       "text-provisioned": "プロビジョニング済み"
     },
-    "saved-searches": {
-      "text-default": "初期設定"
-    },
     "search": {
       "property": {
         "data-source": "データソース",
@@ -2626,11 +2640,10 @@
         "labels": "ラベル",
         "namespace": "フォルダ/名前空間",
         "rule-health": "健康",
-        "rule-name": "アラートルール名",
+        "rule-name": "",
         "rule-type": "タイプ",
         "state": "ステート"
-      },
-      "save-query": "現在の検索を保存"
+      }
     },
     "search-field-input": {
       "clear": "消去",
@@ -3607,11 +3620,11 @@
       "button-create": "作成",
       "button-creating": "作成中...",
       "cancel": "キャンセル",
+      "error-invalid-characters": "",
       "error-required": "フォルダ名は必須です",
       "folder-name-input-placeholder-enter-folder-name": "フォルダ名を入力してください",
       "label-folder-name": "フォルダ名",
       "text-pull-request-created": "このフォルダへの変更を含むプルリクエストが作成されました。",
-      "text-your-folder-will-be-created-as": "フォルダは{{folderName}}として作成されます",
       "title-pull-request-created": "プルリクエストが作成されました",
       "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
     },
@@ -4078,10 +4091,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "適用",
     "cancel": "キャンセル",
     "clear": "消去",
-    "close": "閉じる",
     "collapse": "折りたたみ表示",
     "edit": "編集",
     "help": "ヘルプ",
@@ -4146,7 +4159,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "データソース",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "クエリに一致する結果が見つかりませんでした",
       "request-data-source": "新しいデータソースをリクエストする",
       "roadmap": "ロードマップを表示"
@@ -4496,6 +4510,10 @@
           },
           "value": "値"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "条件付きレンダリング設定のため、要素は非表示になっています。"
@@ -6513,9 +6531,11 @@
       "explore": "探検"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "ダッシュボードを作成",
       "explore-data": "データを調査",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "エラーの詳細"
@@ -6561,6 +6581,9 @@
       "description": {
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite、Prometheus、Loki"
       }
+    },
+    "list": {
+      "starred": ""
     },
     "new-data-source-view": {
       "cancel": "キャンセル",
@@ -7491,11 +7514,6 @@
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
-  "folder-picker": {
-    "create-instructions": "Enterキーを押して新しいフォルダを作成します。",
-    "input-placeholder": "Enterキーを押して新しいフォルダを確定",
-    "loading": "フォルダを読み込んでいます..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
@@ -7850,7 +7868,8 @@
       "edit-pane": {
         "go-back": "戻る"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -8713,7 +8732,6 @@
       "filter-popup-input-placeholder": "値をフィルタリング",
       "filter-popup-match-case": "大文字/小文字を区別",
       "inspect-drawer-title": "値を検査",
-      "inspect-menu-label": "値を検査",
       "nested-table": {
         "no-data": "データなし"
       },
@@ -9037,6 +9055,7 @@
       "sign-up": "サインアップ"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "ドラッグアンドドロップで並べ替え",
@@ -11225,7 +11244,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "リポジトリに戻る",
-      "repository-config-exists-configuration": "リポジトリ設定が設定ファイルに含まれていることを確認してください。"
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "リポジトリ設定が設定ファイルに含まれていることを確認してください。",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "保存",
@@ -11423,6 +11444,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "リソースが外部ストレージに保存され、インスタンスにプロビジョニングされました。今後、インスタンスと外部ストレージは同期されます。",
@@ -12733,6 +12757,7 @@
     "description-fields": "計算するフィールドを選択",
     "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
+    "description-tooltip-from-field": "",
     "name-calculation": "計算",
     "name-cell-height": "セルの高さ",
     "name-cell-type": "セルの種類",
@@ -12748,8 +12773,17 @@
     "name-min-column-width": "最小列幅",
     "name-show-table-footer": "テーブルフッターを表示",
     "name-show-table-header": "テーブルヘッダーを表示",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "自動",
-    "placeholder-fields": "すべての数値フィールド"
+    "placeholder-fields": "すべての数値フィールド",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "タグをクリア",
