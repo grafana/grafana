@@ -31,7 +31,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
   folderPath?: string;
 }
 
-function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
@@ -119,7 +119,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           </Box>
 
           {hasSubmitted && job ? (
-            <JobStatus watch={job} jobType="delete" />
+            <JobStatus watch={job} jobType="move" />
           ) : (
             <>
               {/* Target folder selection */}
