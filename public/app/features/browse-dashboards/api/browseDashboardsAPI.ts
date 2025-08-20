@@ -6,6 +6,7 @@ import { config, getBackendSrv, isFetchError, locationService } from '@grafana/r
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
+import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -293,17 +294,9 @@ export const browseDashboardsAPI = createApi({
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of folderUIDs) {
-          if (config.featureToggles.provisioning) {
-            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
-            if (folder.data && isProvisionedFolder(folder.data)) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: [
-                  'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.',
-                ],
-              });
-              continue;
-            }
+          // This also shows warning alert
+          if (await isProvisionedFolderCheck(dispatch, folderUID)) {
+            continue;
           }
           await baseQuery({
             url: `/folders/${folderUID}`,
