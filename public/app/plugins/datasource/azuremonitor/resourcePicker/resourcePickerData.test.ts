@@ -44,6 +44,12 @@ const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?
   return { resourcePickerData, postResource, mockDatasource };
 };
 
+const emptyFilters = {
+  subscriptions: [],
+  types: [],
+  locations: [],
+};
+
 describe('AzureMonitor resourcePickerData', () => {
   describe('getSubscriptions', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
@@ -344,7 +350,7 @@ describe('AzureMonitor resourcePickerData', () => {
         mockSubscriptionsResponse,
         mockResponse,
       ]);
-      const formattedResults = await resourcePickerData.search('vmname', 'metrics');
+      const formattedResults = await resourcePickerData.search('vmname', 'metrics', emptyFilters);
       expect(postResource).toHaveBeenCalledTimes(2);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         {
@@ -401,7 +407,7 @@ describe('AzureMonitor resourcePickerData', () => {
         [mockSubscriptionsResponse, mockResponse],
         true
       );
-      await resourcePickerData.search('vmname', 'metrics');
+      await resourcePickerData.search('vmname', 'metrics', emptyFilters);
       expect(postResource).toHaveBeenCalledTimes(2);
       expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
         {
@@ -443,7 +449,7 @@ describe('AzureMonitor resourcePickerData', () => {
         ],
       };
       const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
-      const formattedResults = await resourcePickerData.search('rgName', 'logs');
+      const formattedResults = await resourcePickerData.search('rgName', 'logs', emptyFilters);
       expect(postResource).toBeCalledTimes(1);
       const firstCall = postResource.mock.calls[0];
       const [_, postBody] = firstCall;
@@ -474,7 +480,7 @@ describe('AzureMonitor resourcePickerData', () => {
       };
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
       try {
-        await resourcePickerData.search('dev', 'logs');
+        await resourcePickerData.search('dev', 'logs', emptyFilters);
         throw Error('expected search test to fail but it succeeded');
       } catch (err) {
         if (err instanceof Error) {

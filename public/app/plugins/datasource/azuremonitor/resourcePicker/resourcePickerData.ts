@@ -19,6 +19,7 @@ import {
   AzureMonitorDataSourceJsonData,
   AzureResourceSummaryItem,
   RawAzureResourceItem,
+  ResourceGraphFilters,
 } from '../types/types';
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
@@ -81,28 +82,84 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return resources;
   }
 
+  async fetchFiltered(
+    type: ResourcePickerQueryType,
+    filters: ResourceGraphFilters,
+    currentSelection?: AzureMonitorResource[]
+  ): Promise<ResourceRowGroup> {
+    try {
+      const subscriptions = await this.getSubscriptions(filters);
+
+      if (!currentSelection) {
+        return subscriptions;
+      }
+
+      let resources = subscriptions;
+      const promises = currentSelection.map((selection) => async () => {
+        if (selection.subscription) {
+          const resourceGroupURI = `/subscriptions/${selection.subscription}/resourceGroups/${selection.resourceGroup}`;
+
+          if (selection.resourceGroup && !findRow(resources, resourceGroupURI)) {
+            const resourceGroups = await this.getResourceGroupsBySubscriptionId(selection.subscription, type);
+            resources = addResources(resources, `/subscriptions/${selection.subscription}`, resourceGroups);
+          }
+
+          const resourceURI = resourceToString(selection);
+          if (selection.resourceName && !findRow(resources, resourceURI)) {
+            const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
+            resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+          }
+        }
+      });
+
+      for (const promise of promises) {
+        // Fetch resources one by one, avoiding re-fetching the same resource
+        // and race conditions updating the resources array
+        await promise();
+      }
+
+      return resources;
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message !== 'No subscriptions were found') {
+          throw err;
+        }
+        return [];
+      }
+      throw err;
+    }
+  }
+
   async fetchAndAppendNestedRow(
     rows: ResourceRowGroup,
     parentRow: ResourceRow,
-    type: ResourcePickerQueryType
+    type: ResourcePickerQueryType,
+    filters?: ResourceGraphFilters
   ): Promise<ResourceRowGroup> {
     const nestedRows =
       parentRow.type === ResourceRowType.Subscription
-        ? await this.getResourceGroupsBySubscriptionId(parentRow.id, type)
-        : await this.getResourcesForResourceGroup(parentRow.uri, type);
+        ? await this.getResourceGroupsBySubscriptionId(parentRow.id, type, filters)
+        : await this.getResourcesForResourceGroup(parentRow.uri, type, filters);
 
     return addResources(rows, parentRow.uri, nestedRows);
   }
 
-  search = async (searchPhrase: string, searchType: ResourcePickerQueryType): Promise<ResourceRowGroup> => {
+  search = async (
+    searchPhrase: string,
+    searchType: ResourcePickerQueryType,
+    filters: ResourceGraphFilters
+  ): Promise<ResourceRowGroup> => {
     let searchQuery = 'resources';
     if (searchType === 'logs') {
       searchQuery += `
       | union resourcecontainers`;
     }
+
+    const filtersQuery = createFilter(filters);
     searchQuery += `
         | where id contains "${searchPhrase}"
         ${await this.filterByType(searchType)}
+        ${filtersQuery}
         | order by tolower(name) asc
         | limit ${this.resultLimit}
       `;
@@ -134,8 +191,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     });
   };
 
-  async getSubscriptions(): Promise<ResourceRowGroup> {
-    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions();
+  async getSubscriptions(filters?: ResourceGraphFilters): Promise<ResourceRowGroup> {
+    const subscriptions = await this.azureResourceGraphDatasource.getSubscriptions(filters);
 
     if (!subscriptions.length) {
       throw new Error('No subscriptions were found');
@@ -153,11 +210,12 @@ export default class ResourcePickerData extends DataSourceWithBackend<
 
   async getResourceGroupsBySubscriptionId(
     subscriptionId: string,
-    type: ResourcePickerQueryType
+    type: ResourcePickerQueryType,
+    filters?: ResourceGraphFilters
   ): Promise<ResourceRowGroup> {
     const filter = await this.filterByType(type);
 
-    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter);
+    const resourceGroups = await this.azureResourceGraphDatasource.getResourceGroups(subscriptionId, filter, filters);
 
     return resourceGroups.map((r) => {
       const parsedUri = parseResourceURI(r.resourceGroupURI);
@@ -176,8 +234,16 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   }
 
   // Refactor this one out at a later date
-  async getResourcesForResourceGroup(uri: string, type: ResourcePickerQueryType): Promise<ResourceRowGroup> {
-    const resources = await this.azureResourceGraphDatasource.getResourceNames({ uri }, await this.filterByType(type));
+  async getResourcesForResourceGroup(
+    uri: string,
+    type: ResourcePickerQueryType,
+    filters?: ResourceGraphFilters
+  ): Promise<ResourceRowGroup> {
+    const resources = await this.azureResourceGraphDatasource.getResourceNames(
+      { uri },
+      await this.filterByType(type),
+      filters
+    );
 
     return resources.map((resource) => {
       return {
@@ -338,3 +404,19 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return newSelectedRows;
   }
 }
+export const createFilter = (filters: ResourceGraphFilters) => {
+  let filtersQuery = '';
+  if (filters) {
+    if (filters.subscriptions && filters.subscriptions.length > 0) {
+      filtersQuery += `| where subscriptionId in (${filters.subscriptions.map((s) => `"${s.toLowerCase()}"`).join(',')})\n`;
+    }
+    if (filters.types && filters.types.length > 0) {
+      filtersQuery += `| where type in (${filters.types.map((t) => `"${t.toLowerCase()}"`).join(',')})\n`;
+    }
+    if (filters.locations && filters.locations.length > 0) {
+      filtersQuery += `| where location in (${filters.locations.map((l) => `"${l.toLowerCase()}"`).join(',')})\n`;
+    }
+  }
+
+  return filtersQuery;
+};
