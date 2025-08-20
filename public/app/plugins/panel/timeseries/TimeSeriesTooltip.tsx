@@ -90,7 +90,7 @@ export const TimeSeriesTooltip = ({
     }
   }
 
-  const headerItem: VizTooltipItem | null = {
+  const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
     value: xVal,
   };
