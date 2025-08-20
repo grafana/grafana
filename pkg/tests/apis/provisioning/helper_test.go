@@ -494,6 +494,10 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if repo.Path != "" {
 		templateVars["Path"] = repoPath
 	}
+	// Add custom values from TestRepo
+	for key, value := range repo.Values {
+		templateVars[key] = value
+	}
 
 	tmpl := "testdata/local-write.json.tmpl"
 	if repo.Template != "" {
