@@ -18,6 +18,7 @@ import {
   Stack,
   Tooltip,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import type { AdvancedFilters } from 'app/features/alerting/unified/rule-list/filter/types';
@@ -47,7 +48,7 @@ import {
   usePortalContainer,
 } from '../../components/rules/Filter/utils';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, applySearchFilterToQuery, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
+import { RuleHealth, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
@@ -64,7 +65,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
-  const { setValue, watch, getValues, handleSubmit } = useForm<SearchQueryForm>({
+  const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({
     defaultValues: {
       query: searchQuery,
     },
@@ -83,9 +84,6 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
     const newFilter = formAdvancedFiltersToRuleFilter(values);
     updateFilters(newFilter);
-
-    const newSearchQuery = applySearchFilterToQuery('', newFilter);
-    setSearchQuery(newSearchQuery);
 
     trackFilterButtonApplyClick(values, pluginsFilterEnabled);
     setIsPopupOpen(false); // Should close popup after applying filters?
@@ -149,32 +147,37 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
         </Label>
         <Stack direction="row" alignItems="center" gap={1}>
           <Box flex={1}>
-            <FilterInput
-              id="rulesSearchInput"
-              data-testid="search-query-input"
-              placeholder={t(
-                'alerting.rules-filter.filter-options.placeholder-search-input',
-                'Search by name or enter filter query...'
+            <Controller
+              name="query"
+              control={control}
+              render={({ field }) => (
+                <FilterInput
+                  id="rulesSearchInput"
+                  data-testid="search-query-input"
+                  placeholder={t(
+                    'alerting.rules-filter.filter-options.placeholder-search-input',
+                    'Search by name or enter filter query...'
+                  )}
+                  name="searchQuery"
+                  onChange={(next) => {
+                    trackRulesSearchInputCleared(field.value, next);
+                    field.onChange(next);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === 'NumpadEnter') {
+                      event.preventDefault();
+                      handleSubmit(submitHandler)();
+                    }
+                  }}
+                  onBlur={() => {
+                    const currentQuery = field.value;
+                    const parsedFilter = getSearchFilterFromQuery(currentQuery);
+                    trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter });
+                    updateFilters(parsedFilter);
+                  }}
+                  value={field.value}
+                />
               )}
-              name="searchQuery"
-              onChange={(next) => {
-                const prev = getValues('query');
-                trackRulesSearchInputCleared(prev, next);
-                setValue('query', next);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === 'NumpadEnter') {
-                  event.preventDefault();
-                  handleSubmit(submitHandler)();
-                }
-              }}
-              onBlur={() => {
-                const currentQuery = getValues('query');
-                const parsedFilter = getSearchFilterFromQuery(currentQuery);
-                trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter });
-                updateFilters(parsedFilter);
-              }}
-              value={watch('query')}
             />
           </Box>
           {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
@@ -227,7 +230,7 @@ interface FilterOptionsProps {
 
 const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOptionsProps) => {
   const styles = useStyles2(getStyles);
-  const theme = useStyles2((theme) => theme);
+  const theme = useTheme2();
   const { filterState } = useRulesFilter();
   const isManualResetRef = useRef(false);
 
