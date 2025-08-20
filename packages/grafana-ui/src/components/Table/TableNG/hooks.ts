@@ -537,25 +537,20 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number
 }
 
 export function useColWidths(visibleFields: Field[], availableWidth: number): [number[], number] {
-  const [widths, setWidths] = useState<number[]>(() => computeColWidths(visibleFields, availableWidth));
-  const widthsJSON = useMemo(() => JSON.stringify(widths), [widths]);
+  const [[widths, widthsStr], setWidthsState] = useState<[number[], string]>(() =>
+    computeColWidths(visibleFields, availableWidth)
+  );
 
   // only replace the widths array if something actually changed
   useEffect(() => {
-    const newWidths = computeColWidths(visibleFields, availableWidth);
-
-    if (newWidths.length !== widths.length) {
-      setWidths(newWidths);
-      return;
+    const [newWidths, newWidthsStr] = computeColWidths(visibleFields, availableWidth);
+    // use widthStr to avoid array comparison
+    if (widthsStr !== newWidthsStr) {
+      setWidthsState([newWidths, newWidthsStr]);
     }
+  }, [availableWidth, widthsStr, visibleFields]);
 
-    const newWidthsJSON = JSON.stringify(newWidths);
-    if (widthsJSON !== newWidthsJSON) {
-      setWidths(newWidths);
-      return;
-    }
-  }, [widths, widthsJSON, setWidths, visibleFields, availableWidth]);
-
+  // this is used when freezing columns to avoid buggy situations where all visible columns are frozen
   const numColsFullyInView = useMemo(
     () =>
       widths.reduce(
