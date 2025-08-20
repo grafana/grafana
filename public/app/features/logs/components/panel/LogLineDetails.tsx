@@ -141,9 +141,11 @@ LogLineDetailsTabs.displayName = 'LogLineDetailsTabs';
 export interface InlineLogLineDetailsProps {
   log: LogListModel;
   logs: LogListModel[];
+  timeRange: TimeRange;
+  timeZone: string;
 }
 
-export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsProps) => {
+export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: InlineLogLineDetailsProps) => {
   const { app, detailsWidth, noInteractions } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -172,7 +174,7 @@ export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsPro
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.container}>
         <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
-          <LogLineDetailsComponent log={log} logs={logs} />
+          <LogLineDetailsComponent log={log} logs={logs} timeRange={timeRange} timeZone={timeZone} />
         </div>
       </div>
     </div>
