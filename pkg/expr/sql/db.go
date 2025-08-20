@@ -93,7 +93,7 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 			return fmt.Errorf("SQL expression for refId %v ended unexpectedly: %w", name, err)
 		}
 	}
-	
+
 	// Execute the query (planning + iterator construction)
 	schema, iter, _, err := engine.Query(mCtx, query)
 	if err != nil {

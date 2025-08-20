@@ -64,10 +64,12 @@ func MakeInputLimitExceededError(refID string, inputLimit int64) CategorizedErro
 	return &ErrorWithCategory{category: ErrCategoryInputLimitExceeded, err: InputLimitExceededError.Build(data)}
 }
 
+var duplicateStringColumnErrorStr = "sql expression [{{ .Public.refId }}] failed because it returned duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination."
+
 var DuplicateStringColumnError = errutil.NewBase(
 	errutil.StatusBadRequest, sseErrBase+ErrCategoryDuplicateStringColumns).MustTemplate(
-	"your sql expression SQL query returned {{ .Public.count }} rows with duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination.",
-	errutil.WithPublic("SQL query returned duplicate combinations of string column values. Use GROUP BY or aggregation to return one row per combination."),
+	inputLimitExceededStr,
+	errutil.WithPublic(duplicateStringColumnErrorStr),
 )
 
 // Error implements the error interface
