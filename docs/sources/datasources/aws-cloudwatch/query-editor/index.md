@@ -39,6 +39,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
 ---
 
 # Amazon CloudWatch query editor
@@ -200,6 +205,25 @@ If you use the expression field to reference another query, such as `queryA * 2`
 ### Period macro
 
 If you're using a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, you may want to use the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
+
+## Create queries for alerting
+
+Alerting requires queries that return numeric data, which CloudWatch Logs support.
+For example, you can enable alerts through the use of the `stats` command.
+
+This is also a valid query for alerting on messages that include the text "Exception":
+
+```
+filter @message like /Exception/
+    | stats count(*) as exceptionCount by bin(1h)
+    | sort exceptionCount desc
+```
+
+{{< admonition type="note" >}}
+If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
+{{< /admonition >}}
+
+For more information on Grafana alerts, refer to [Alerting](ref:alerting).
 
 ### Deep-link Grafana panels to the CloudWatch console
 

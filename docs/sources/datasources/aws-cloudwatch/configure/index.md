@@ -55,6 +55,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  cloudwatch-aws-authentication:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
 ---
 
 # Configure the Amazon CloudWatch data source
@@ -63,7 +68,7 @@ This document provides instructions for configuring the Amazon CloudWatch data s
 
 ## Before you begin
 
-- You must have the `Organization administrator` role to configure the Postgres data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- You must have the `Organization administrator` role to configure the CloudWatch data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
 - Grafana comes with a built-in CloudWatch data source plugin, eliminating the need to install a plugin.
 
@@ -71,7 +76,7 @@ This document provides instructions for configuring the Amazon CloudWatch data s
 
 ## Add the CloudWatch data source
 
-Complete the following steps to set up a new PostgreSQL data source:
+Complete the following steps to set up a new CloudWatch data source:
 
 1. Click **Connections** in the left-side menu.
 1. Click **Add new connection**
@@ -110,7 +115,6 @@ You must use both an access key ID AND secret access key to authenticate.
 | **Secret Access Key** | Enter the secret access key. |
 
 
-<!-- For authentication options and configuration details, refer to [AWS authentication](aws-authentication/). -->
 **Assume Role**:
 
 | Setting             | Description                                                                                                                                          |
@@ -133,30 +137,16 @@ You must use both an access key ID AND secret access key to authenticate.
 | **Query timeout result** | Grafana polls Cloudwatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana config file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
 | **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                       |
 
-**X-Ray trace link:** - Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field
+**X-Ray trace link:** - Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
+
+To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
+
+
+For more information refer to [X-Ray trace link](#x-ray-trace-links). 
 
 | Setting         | Description                                     |
 | --------------- | ----------------------------------------------- |
 | **Data source** | Select the data source from the drop-down menu. |
-
-**X-Ray trace link:**
-
-To automatically create links in your logs when they include the `@xrayTraceId` field, connect an X-Ray data source in the "X-Ray trace link" section of the data source settings.
-
-{{< figure src="/static/img/docs/cloudwatch/xray-trace-link-configuration-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link configuration" >}}
-
-The data source select contains only existing data source instances of type X-Ray.
-To use this feature, you must already have an X-Ray data source configured.
-For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/).
-
-To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
-
-To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html).
-
-To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
-
-{{< figure src="/static/img/docs/cloudwatch/xray-link-log-details-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link in log details" >}}
-
 
 
 ### IAM policy examples
@@ -164,7 +154,7 @@ To provide the field to Grafana, your log queries must also contain the `@xrayTr
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
 You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](aws-authentication/).
 
-#### Metrics-only permissions
+**Metrics-only permissions:**
 
 ```json
 {
@@ -205,7 +195,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-#### Logs-only permissions
+**Logs-only permissions:**
 
 ```json
 {
@@ -240,7 +230,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-#### Metrics and logs permissions
+**Metrics and logs permissions:**
 
 ```json
 {
@@ -313,40 +303,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 Cross-account observability lets you to retrieve metrics and logs across different accounts in a single region but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
 {{< /admonition >}}
 
-### Configure CloudWatch settings
-
-#### Namespaces of Custom Metrics
-
-<!-- Grafana can't load custom namespaces through the CloudWatch [GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html).
-
-To make custom metrics appear in the data source's query editor fields, specify the names of the namespaces containing the custom metrics in the data source configuration's _Namespaces of Custom Metrics_ field.
-The field accepts multiple namespaces separated by commas. -->
-
-<!-- #### Timeout
-
-Configure the timeout specifically for CloudWatch Logs queries.
-
-Log queries don't keep a single request open, and instead periodically poll for results.
-Therefore, they don't recognize the standard Grafana query timeout.
-Because of limits on concurrently running queries in CloudWatch, they can also take longer to finish. -->
-
-#### X-Ray trace links
-
-To automatically add links in your logs when the log contains the `@xrayTraceId` field, link an X-Ray data source in the "X-Ray trace link" section of the data source configuration.
-
-{{< figure src="/static/img/docs/cloudwatch/xray-trace-link-configuration-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link configuration" >}}
-
-The data source select contains only existing data source instances of type X-Ray.
-To use this feature, you must already have an X-Ray data source configured.
-For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/).
-
-To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
-
-To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html).
-
-To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
-
-{{< figure src="/static/img/docs/cloudwatch/xray-link-log-details-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link in log details" >}}
+For more information on configuring authentication, refer to [Configure AWS authentication](ref:cloudwatch-aws-authentication).
 
 ### Configure the data source with grafana.ini
 
@@ -406,7 +363,7 @@ datasources:
       secretKey: '<your secret key>'
 ```
 
-##### Using AWS SDK Default and ARN of IAM Role to Assume
+**Using AWS SDK Default and ARN of IAM Role to Assume:**
 
 ```yaml
 apiVersion: 1

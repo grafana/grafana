@@ -55,14 +55,39 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  configure-cloudwatch:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/
+  cloudwatch-query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/
+  cloudwatch-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/template-variables/
+  cloudwatch-aws-authentication:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+
 ---
 
 # Amazon CloudWatch data source
 
-Grafana ships with built-in support for Amazon CloudWatch.
-This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source.
+Amazon CloudWatch is the AWS native monitoring and observability service. It collects, aggregates, and stores metrics, logs, and events from AWS resources, applications, and services. CloudWatch enables you to visualize performance data, track system health, and set up automated alerts based on defined thresholds.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
+
+The AWS CloudWatch data source in Grafana allows you to query, visualize, and correlate with data from other systems—all in a single dashboard.  transforms AWS monitoring data into rich, interactive visualizations.
+
+Grafana includes native support for the AWS CloudWatch plugin, so no additional installation is required.
+
+For general information on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
 Administrators can also [provision the data source](#provision-the-data-source) with Grafana's provisioning system, and should [control pricing](#control-pricing) and [manage service quotas](#manage-service-quotas) accordingly.
 
@@ -72,25 +97,20 @@ Once you've added the data source, you can [configure it](#configure-the-data-so
 To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
 {{< /admonition >}}
 
-<!-- ## Query the data source
+The following documents will help you get started working with the CloudWatch data source:
 
-The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
+- [Configure the CloudWatch data source](ref:configure-cloudwatch)
+- [CloudWatch query editor](ref:cloudwatch-query-editor)
+- [Templates and variables](ref:cloudwatch-template-variables)
+- [Configure AWS authentication](ref:cloudwatch-aws-authentication)
 
-For details, see the [query editor documentation](query-editor/). -->
+Once you have configured the CloudWatch data source you can
 
-
-
-<!-- ## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation](template-variables/). -->
+- 
 
 ## Import pre-configured dashboards
 
-The CloudWatch data source ships with curated and pre-configured dashboards for five of the most popular AWS services:
+The CloudWatch data source includes curated, pre-configured dashboards for five popular AWS services:
 
 - **Amazon Elastic Compute Cloud:** `Amazon EC2`
 - **Amazon Elastic Block Store:** `Amazon EBS`
@@ -101,35 +121,16 @@ The CloudWatch data source ships with curated and pre-configured dashboards for 
 To import curated dashboards:
 
 1. Navigate to the data source's [configuration page](#configure-the-data-source).
-1. Select the **Dashboards** tab.
+1. Click the **Dashboards** tab.
 
    This displays the curated selection of importable dashboards.
 
-1. Select **Import** for the dashboard to import.
+1. Click **Import** for the each dashboard you want to import.
 
-{{< figure src="/static/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
+![Cloudwatch pre-configured dashboards Grafana v12.1](/media//docs/cloudwatch/preconfigured-dashbaords-cloudwatch-v12.1.png) CloudWatch pre-configured dashboards
 
-To customize one of these dashboards, we recommend that you save it under a different name.
-If you don't, upgrading Grafana can overwrite the customized dashboard with the new version.
-
-## Create queries for alerting
-
-Alerting requires queries that return numeric data, which CloudWatch Logs support.
-For example, you can enable alerts through the use of the `stats` command.
-
-This is also a valid query for alerting on messages that include the text "Exception":
-
-```
-filter @message like /Exception/
-    | stats count(*) as exceptionCount by bin(1h)
-    | sort exceptionCount desc
-```
-
-{{< admonition type="note" >}}
-If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
-{{< /admonition >}}
-
-For more information on Grafana alerts, refer to [Alerting](ref:alerting).
+To customize one of these dashboards, Grafana recommends saving it under a different name.
+Otherwise, Grafana upgrades will overwrite your customizations with the new version.
 
 ## Control pricing
 
@@ -162,6 +163,4 @@ The CloudWatch plugin enables you to monitor and troubleshoot applications acros
 
 To use this feature, configure in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
 
-## CloudWatch Logs data protection
 
-CloudWatch Logs can safeguard data by using log group data protection policies. If you have data protection enabled for a log group, then any sensitive data that matches the data identifiers you've selected will be masked. In order to view masked data you will need to have the `logs:Unmask` IAM permission enabled. See the AWS documentation on how to [help protect sensitive log data with masking](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) to learn more about this.
