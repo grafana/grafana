@@ -328,9 +328,6 @@
 
 
 # Continuous Integration
-.drone.yml @grafana/grafana-developer-enablement-squad
-.drone.star @grafana/grafana-developer-enablement-squad
-/scripts/drone/ @grafana/grafana-developer-enablement-squad
 /pkg/build/ @grafana/grafana-developer-enablement-squad
 /.dockerignore @grafana/grafana-developer-enablement-squad
 /Dockerfile @grafana/grafana-developer-enablement-squad
