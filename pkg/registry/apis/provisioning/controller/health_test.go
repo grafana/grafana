@@ -385,7 +385,22 @@ func TestRefreshHealth(t *testing.T) {
 			expectPatch:    false,
 		},
 		{
-			name: "no status change - no patch needed",
+			name: "no status change - no patch needed (recent check)",
+			testResult: &provisioning.TestResults{
+				Success: true,
+				Code:    200,
+			},
+			testError: nil,
+			existingStatus: provisioning.HealthStatus{
+				Healthy: true,
+				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
+			},
+			expectError:    false,
+			expectedHealth: true,
+			expectPatch:    false,
+		},
+		{
+			name: "status unchanged but timestamp needs update (old check)",
 			testResult: &provisioning.TestResults{
 				Success: true,
 				Code:    200,
@@ -397,7 +412,7 @@ func TestRefreshHealth(t *testing.T) {
 			},
 			expectError:    false,
 			expectedHealth: true,
-			expectPatch:    false,
+			expectPatch:    true,
 		},
 		{
 			name: "patch error",

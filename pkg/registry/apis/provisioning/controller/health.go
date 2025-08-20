@@ -197,9 +197,20 @@ func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repo
 	}
 
 	// Health check succeeded
+	now := time.Now()
 	healthStatus := provisioning.HealthStatus{
 		Healthy: true,
-		Checked: time.Now().UnixMilli(),
+		Checked: now.UnixMilli(),
+	}
+	
+	// If the existing status is already healthy with no error messages and
+	// the last check was recent (within 30 seconds), preserve the existing timestamp
+	// to avoid unnecessary updates
+	if existingStatus.Healthy && existingStatus.Error == "" && len(existingStatus.Message) == 0 {
+		lastCheckedTime := time.UnixMilli(existingStatus.Checked)
+		if now.Sub(lastCheckedTime) < 30*time.Second {
+			healthStatus.Checked = existingStatus.Checked
+		}
 	}
 
 	return res, healthStatus, nil
