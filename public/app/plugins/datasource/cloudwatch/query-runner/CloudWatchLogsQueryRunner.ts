@@ -141,7 +141,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
    */
   public getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = LogRowContextQueryDirection.Backward }: LogRowContextOptions = {},
+    { limit = 10, direction = LogRowContextQueryDirection.Backward, timeWindowMs = 0 }: LogRowContextOptions = {},
     queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>,
     query?: CloudWatchLogsQuery
   ) => {
@@ -172,9 +172,9 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
 
     if (direction === LogRowContextQueryDirection.Backward) {
-      requestParams.endTime = row.timeEpochMs;
+      requestParams.endTime = row.timeEpochMs - timeWindowMs;
     } else {
-      requestParams.startTime = row.timeEpochMs;
+      requestParams.startTime = row.timeEpochMs + timeWindowMs;
     }
 
     return await lastValueFrom(this.makeLogActionRequest('GetLogEvents', [requestParams], queryFn));

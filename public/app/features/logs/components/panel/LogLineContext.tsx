@@ -22,7 +22,7 @@ import {
   formattedValueToString,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -37,6 +37,7 @@ import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogList } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
+import { dataSourcesApi } from '../../../alerting/unified/api/dataSourcesApi';
 
 interface LogLineContextProps {
   log: LogRowModel | LogListModel;
@@ -86,6 +87,7 @@ export const LogLineContext = memo(
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
+    const [datasourceInstance, setDatasourceInstance] = useState<DataSourceWithLogsContextSupport | null>(null);
     const defaultTimeWindow = logOptionsStorageKey
       ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? '7200000')
       : '7200000';
@@ -294,6 +296,18 @@ export const LogLineContext = memo(
       [log, timeZone, wrapLogMessage]
     );
 
+    useEffect(() => {
+      if (log.datasourceUid) {
+        getDataSourceSrv()
+          .get({ uid: log.datasourceUid })
+          .then((ds) => {
+            if ('getLogRowContext' in ds) {
+              setDatasourceInstance(ds as DataSourceWithLogsContextSupport);
+            }
+          });
+      }
+    }, [log.datasourceUid]);
+
     return (
       <Modal
         isOpen={open}
@@ -315,7 +329,7 @@ export const LogLineContext = memo(
           <LogLineDetailsLog log={logListModel} syntaxHighlighting={syntaxHighlighting} />
         </Collapse>
         <div className={styles.controls}>
-          {log.datasourceType === 'loki' && (
+          {datasourceInstance?.hasLogsContextAdjustableWindow && (
             <Stack>
               <InlineLabel
                 htmlFor="time-window-control"
