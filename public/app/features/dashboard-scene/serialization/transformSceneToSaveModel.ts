@@ -37,6 +37,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { djb2Hash } from '../utils/djb2Hash';
 import {
   calculateGridItemDimensions,
   getLibraryPanelBehavior,
@@ -337,7 +338,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
         y = 0;
       if (repeater.state.repeatDirection === 'v') {
         x = repeater.state.x!;
-        y = index * h;
+        y = repeater.state.y! + index * h;
       } else {
         x = (index % columnCount) * w;
         y = repeater.state.y! + Math.floor(index / columnCount) * h;
@@ -348,7 +349,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
       const localVariable = panel.state.$variables!.getByName(repeater.state.variableName!) as LocalValueVariable;
 
       const result: Panel = {
-        id: getPanelIdForVizPanel(panel),
+        id: djb2Hash(panel.state.key!),
         type: panel.state.pluginId,
         title: panel.state.title,
         gridPos,
