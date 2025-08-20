@@ -3,7 +3,7 @@ import { useId, useMemo } from 'react';
 
 import { createFieldConfigRegistry, SetFieldConfigOptionsArgs } from '@grafana/data';
 import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
-import { VerticalGroup, Field, useStyles2 } from '@grafana/ui';
+import { Field, useStyles2, Stack } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
 
 import { getGraphFieldConfig } from '../../../timeseries/config';
@@ -54,7 +54,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
   const htmlIdBase = useId();
 
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
         if (item.showIf && !item.showIf(values)) {
           return null;
@@ -74,7 +74,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
           </Field>
         );
       })}
-    </VerticalGroup>
+    </Stack>
   );
 };
 
