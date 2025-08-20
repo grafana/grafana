@@ -1272,7 +1272,8 @@
       "metadata": {
         "name": "extensionSidebar",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-04-03T10:16:35Z"
+        "creationTimestamp": "2025-04-03T10:16:35Z",
+        "deletionTimestamp": "2025-08-20T11:59:44Z"
       },
       "spec": {
         "description": "Enables the extension sidebar",

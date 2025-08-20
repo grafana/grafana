@@ -914,10 +914,6 @@ export interface FeatureToggles {
   */
   unifiedStorageGrpcConnectionPool?: boolean;
   /**
-  * Enables the extension sidebar
-  */
-  extensionSidebar?: boolean;
-  /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
   */

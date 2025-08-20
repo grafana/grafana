@@ -26,13 +26,6 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      extensionSidebar: true,
-    },
-  },
   usePluginLinks: jest.fn().mockImplementation(() => ({
     links: [
       {
@@ -81,18 +74,11 @@ describe('ExtensionToolbarItem', () => {
     (store.get as jest.Mock).mockClear();
     (store.set as jest.Mock).mockClear();
     (store.delete as jest.Mock).mockClear();
-    jest.replaceProperty(config.featureToggles, 'extensionSidebar', true);
     setAppEvents(new EventBusSrv());
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('should not render when feature toggle is disabled', () => {
-    jest.replaceProperty(config.featureToggles, 'extensionSidebar', false);
-    setup();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('should not render when no components are available', () => {
