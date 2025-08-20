@@ -38,7 +38,7 @@ describe('TabItemRepeater', () => {
         expect(screen.queryByText('Tab C')).toBeInTheDocument();
       });
 
-      expect(tabToRepeat.state.key).toBe('tab-1-clone-0');
+      expect(tabToRepeat.state.key).toBe('tab-1');
       expect(tabToRepeat.state.repeatedTabs!.length).toBe(2);
       expect(tabToRepeat.state.repeatedTabs![0].state.key).toBe('tab-1-clone-1');
     });

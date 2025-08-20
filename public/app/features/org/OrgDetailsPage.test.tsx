@@ -15,6 +15,7 @@ jest.mock('app/core/core', () => {
   return {
     ...jest.requireActual('app/core/core'),
     contextSrv: {
+      ...jest.requireActual('app/core/core').contextSrv,
       hasPermission: () => true,
     },
   };
