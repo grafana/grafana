@@ -282,7 +282,7 @@ The options are:
 - **Enabled** - Show a tooltip when the cursor hovers over an element.
 - **Disabled** - Tooltips are not shown on hover.
 
-The **Disable for one-click elements** setting allows hiding tooltips on elements that have one-click functionality enabled. This prevents tooltips from interfering with the one-click function while still allowing tooltips on other elements.
+The **Disable for one-click elements** setting allows hiding tooltips on elements that have one-click functionality enabled. This prevents tooltips from interfering with one-click interactions while still allowing tooltips on other elements.
 
 {{< admonition type="note" >}}
 
