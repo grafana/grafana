@@ -1,11 +1,14 @@
 package server
 
 import (
+	"github.com/stretchr/testify/mock"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -14,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/mock"
 )
 
 func ProvideTestEnv(
@@ -34,7 +36,8 @@ func ProvideTestEnv(
 	resourceClient resource.ResourceClient,
 	idService auth.IDService,
 	githubFactory *github.Factory,
-	repositorySecrets secrets.RepositorySecrets,
+	decryptService secret.DecryptService,
+	repositorySecrets secrets.RepositorySecrets, // TODO... remove
 ) (*TestEnv, error) {
 	return &TestEnv{
 		TestingT:            testingT,
@@ -50,7 +53,8 @@ func ProvideTestEnv(
 		ResourceClient:      resourceClient,
 		IDService:           idService,
 		GitHubFactory:       githubFactory,
-		RepositorySecrets:   repositorySecrets,
+		DecryptService:      decryptService,
+		RepositorySecrets:   repositorySecrets, // TODO, remove
 	}, nil
 }
 
@@ -72,5 +76,6 @@ type TestEnv struct {
 	ResourceClient      resource.ResourceClient
 	IDService           auth.IDService
 	GitHubFactory       *github.Factory
-	RepositorySecrets   secrets.RepositorySecrets
+	DecryptService      secret.DecryptService
+	RepositorySecrets   secrets.RepositorySecrets // NOTE, this will be removed soon
 }
