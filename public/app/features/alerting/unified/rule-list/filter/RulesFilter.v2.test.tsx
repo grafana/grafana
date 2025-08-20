@@ -9,10 +9,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../Analytics';
-import RulesFilter from '../../components/rules/Filter/RulesFilter';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
+import RulesFilter from '../filters/RulesFilter';
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);

@@ -33,22 +33,22 @@ import {
   trackRulesSearchInputCleared,
 } from '../../Analytics';
 import { PopupCard } from '../../components/HoverCard';
-import { RulesFilterProps } from '../../components/rules/Filter/RulesFilter';
 import { RulesViewModeSelector } from '../../components/rules/Filter/RulesViewModeSelector';
 import {
   useAlertingDataSourceOptions,
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { RuleHealth, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
+import { RulesFilterProps } from '../filters/RulesFilter';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
   searchQueryToDefaultValues,
   usePluginsFilterStatus,
   usePortalContainer,
-} from '../../components/rules/Filter/utils';
-import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
+} from '../filters/utils';
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 

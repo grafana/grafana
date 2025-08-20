@@ -2,10 +2,10 @@ import { Suspense, lazy } from 'react';
 
 import { config } from '@grafana/runtime';
 
-import RulesFilterV1 from './RulesFilter.v1';
-import { SupportedView } from './RulesViewModeSelector';
+import RulesFilterV1 from '../../components/rules/Filter/RulesFilter.v1';
+import { SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 
-const RulesFilterV2 = lazy(() => import('../../../rule-list/filter/RulesFilter.v2'));
+const RulesFilterV2 = lazy(() => import('../filter/RulesFilter.v2'));
 
 export interface RulesFilterProps {
   onClear?: () => void;
