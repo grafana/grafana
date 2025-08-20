@@ -704,7 +704,7 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 				continue
 			}
 
-			// Deduplicate by name
+			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
 			if mr.Key.Name == lastSeen {
 				continue
 			}
