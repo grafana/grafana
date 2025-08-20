@@ -10,7 +10,7 @@ import {
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 
 import { MoveProvisionedDashboardForm, Props } from './MoveProvisionedDashboardForm';
 

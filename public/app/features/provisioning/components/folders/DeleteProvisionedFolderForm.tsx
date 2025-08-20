@@ -12,13 +12,12 @@ import { DescendantCount } from 'app/features/browse-dashboards/components/Brows
 import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { FolderDTO } from 'app/types/folders';
 
-import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
-import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
-import { BaseProvisionedFormData } from '../types/form';
-import { buildResourceBranchRedirectUrl } from '../utils/redirect';
-
-import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
-import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
+import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { BaseProvisionedFormData } from '../../types/form';
+import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { RepoInvalidStateBanner } from '../bulk-actions/RepoInvalidStateBanner';
+import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;

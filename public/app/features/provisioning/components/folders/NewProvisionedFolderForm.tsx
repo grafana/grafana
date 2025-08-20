@@ -12,13 +12,12 @@ import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
 
-import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
-import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
-import { BaseProvisionedFormData } from '../types/form';
-import { buildResourceBranchRedirectUrl } from '../utils/redirect';
-
-import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
-import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
+import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { BaseProvisionedFormData } from '../../types/form';
+import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { RepoInvalidStateBanner } from '../bulk-actions/RepoInvalidStateBanner';
+import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;

@@ -16,12 +16,11 @@ import {
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
-import { ProvisionedDashboardFormData } from '../types/form';
-import { buildResourceBranchRedirectUrl } from '../utils/redirect';
-
-import { getTargetFolderPathInRepo } from './BulkActions/utils';
-import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { ProvisionedDashboardFormData } from '../../types/form';
+import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { getTargetFolderPathInRepo } from '../bulk-actions/utils';
+import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 
 export interface Props {
   dashboard: DashboardScene;

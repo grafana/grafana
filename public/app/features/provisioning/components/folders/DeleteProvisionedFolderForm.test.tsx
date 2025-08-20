@@ -4,9 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderDTO } from 'app/types/folders';
 
-import { ProvisionedFolderFormDataResult, useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
-
-import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
+import {
+  ProvisionedFolderFormDataResult,
+  useProvisionedFolderFormData,
+} from '../../hooks/useProvisionedFolderFormData';
+import { DeleteProvisionedFolderForm } from '../DeleteProvisionedFolderForm';
 
 // Mock dependencies
 jest.mock('@grafana/runtime', () => ({

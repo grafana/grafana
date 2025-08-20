@@ -13,8 +13,8 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import { ResourceEditFormSharedFields } from '../ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
+import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 import { generateTimestamp } from '../utils/timestamp';
 
 import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
