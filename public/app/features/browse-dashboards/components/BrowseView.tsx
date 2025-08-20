@@ -7,7 +7,7 @@ import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui'
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
 import { fetchNextChildrenPage } from '../state/actions';
@@ -17,6 +17,7 @@ import {
   useChildrenByParentUIDState,
   useBrowseLoadingStatus,
   useLoadNextChildrenPage,
+  rootItemsSelector,
 } from '../state/hooks';
 import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
@@ -41,19 +42,24 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
   const isProvisionedInstance = useIsProvisionedInstance();
   const provisioningEnabled = config.featureToggles.provisioning;
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
+  const rootItems = useSelector(rootItemsSelector);
 
   const excludeUIDs = useMemo(() => {
     if (isProvisionedInstance || !provisioningEnabled) {
       return [];
     }
     if (provisioningEnabled) {
+      // if only one repo folder and no local folders, then don't exclude it from selection
+      if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
+        return [];
+      }
       // loop through settingsData to find all available repo name, and exclude them from select all action
       // repo root folder is not actionable on browse dashboards page
       return settingsData?.items.map((repo) => repo.name);
     }
 
     return [];
-  }, [isProvisionedInstance, settingsData, provisioningEnabled]);
+  }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
