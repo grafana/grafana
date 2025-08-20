@@ -38,7 +38,7 @@ describe('RowItemRepeater', () => {
         expect(screen.queryByText('Row C')).toBeInTheDocument();
       });
 
-      expect(rowToRepeat.state.key).toBe('row-1-clone-0');
+      expect(rowToRepeat.state.key).toBe('row-1');
       expect(rowToRepeat.state.repeatedRows!.length).toBe(2);
       expect(rowToRepeat.state.repeatedRows![0].state.key).toBe('row-1-clone-1');
     });

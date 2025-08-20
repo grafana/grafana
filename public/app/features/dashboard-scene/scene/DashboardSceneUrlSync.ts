@@ -11,8 +11,8 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { containsCloneKey } from '../utils/clone';
-import { findEditPanel, findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
+import { containsPathIdSeparator, findVizPanelByPathId } from '../utils/pathId';
+import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -74,13 +74,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle view panel state
     if (typeof values.viewPanel === 'string') {
-      const panel = findVizPanelByKey(this._scene, values.viewPanel);
+      const panel = findVizPanelByPathId(this._scene, values.viewPanel);
 
       if (!panel) {
         // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
         // Here we check if the key contains the clone key so we force the repeat processing
         // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
-        if (containsCloneKey(values.viewPanel)) {
+        if (containsPathIdSeparator(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
         }
@@ -162,7 +162,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _handleViewRepeatClone(viewPanel: string) {
     if (!this._viewEventSub) {
       this._viewEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
-        const panel = findVizPanelByKey(this._scene, viewPanel);
+        const panel = findVizPanelByPathId(this._scene, viewPanel);
         if (panel) {
           this._viewEventSub?.unsubscribe();
           this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });

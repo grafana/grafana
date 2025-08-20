@@ -13,7 +13,7 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { getCloneKey, isInCloneChain, joinCloneKeys } from '../../utils/clone';
+import { getCloneKey, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -54,14 +54,13 @@ describe('RowRepeaterBehavior', () => {
 
       // Verify that first row still has repeat behavior
       const row1 = grid.state.children[1] as SceneGridRow;
-      expect(row1.state.key).toBe(getCloneKey('row-1', 0));
+      expect(row1.state.key).toBe('row-1');
       expect(row1.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
       expect(row1.state.$variables!.state.variables[0].getValue()).toBe('A1');
       expect(row1.state.actions).toBeDefined();
 
       const gridItemRow1 = row1.state.children[0] as SceneGridItem;
-      expect(gridItemRow1.state.key!).toBe(joinCloneKeys(row1.state.key!, 'grid-item-1'));
-      expect(gridItemRow1.state.body?.state.key).toBe('canvas-1');
+      expect(gridItemRow1.state.key!).toBe('grid-item-1');
 
       const row2 = grid.state.children[2] as SceneGridRow;
       expect(row2.state.key).toBe(getCloneKey('row-1', 1));
@@ -70,51 +69,14 @@ describe('RowRepeaterBehavior', () => {
       expect(row2.state.actions).toBeUndefined();
 
       const gridItemRow2 = row2.state.children[0] as SceneGridItem;
-      expect(gridItemRow2.state.key!).toBe(joinCloneKeys(row2.state.key!, 'grid-item-1'));
-      expect(gridItemRow2.state.body?.state.key).toBe(joinCloneKeys(gridItemRow2.state.key!, 'canvas-1'));
+      expect(gridItemRow2.state.key!).toBe(row2.state.key! + 'grid-item-1');
     });
 
     it('Repeated rows should be read only', () => {
       const row1 = grid.state.children[1] as SceneGridRow;
       const row2 = grid.state.children[2] as SceneGridRow;
-      expect(isInCloneChain(row1.state.key!)).toBe(false);
-      expect(isInCloneChain(row2.state.key!)).toBe(true);
-    });
-
-    it('Should update all rows when a panel is added to a clone', async () => {
-      const originalRow = grid.state.children[1] as SceneGridRow;
-      const clone1 = grid.state.children[2] as SceneGridRow;
-      const clone2 = grid.state.children[3] as SceneGridRow;
-
-      expect(originalRow.state.children.length).toBe(1);
-      expect(clone1.state.children.length).toBe(1);
-      expect(clone2.state.children.length).toBe(1);
-
-      clone1.setState({
-        children: [
-          ...clone1.state.children,
-          new SceneGridItem({
-            x: 0,
-            y: 16,
-            width: 24,
-            height: 5,
-            key: 'grid-item-4',
-            body: new SceneCanvasText({
-              text: 'new panel',
-            }),
-          }),
-        ],
-      });
-
-      grid.forceRender();
-
-      // repeater has run so there are new clone row objects
-      const newClone1 = grid.state.children[2] as SceneGridRow;
-      const newClone2 = grid.state.children[3] as SceneGridRow;
-
-      expect(originalRow.state.children.length).toBe(2);
-      expect(newClone1.state.children.length).toBe(2);
-      expect(newClone2.state.children.length).toBe(2);
+      expect(isRepeatCloneOrChildOf(row1)).toBe(false);
+      expect(isRepeatCloneOrChildOf(row2)).toBe(true);
     });
 
     it('Should push row at the bottom down', () => {

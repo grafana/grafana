@@ -7,13 +7,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
-import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
   getGridItemKeyForPanelId,
-  getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -90,8 +88,13 @@ export class AutoGridLayoutManager
   }
 
   public getOutlineChildren(): SceneObject[] {
-    const outlineChildren = this.state.layout.state.children.map((gridItem) => gridItem.state.body);
-    return outlineChildren;
+    const children: SceneObject[] = [];
+
+    for (const child of this.state.layout.state.children) {
+      children.push(child.state.body, ...(child.state.repeatedPanels || []));
+    }
+
+    return children;
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -245,26 +248,7 @@ export class AutoGridLayoutManager
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.clone({
-      layout: this.state.layout.clone({
-        isDraggable: isSource && this.state.layout.state.isDraggable,
-        children: this.state.layout.state.children.map((gridItem) => {
-          if (gridItem instanceof AutoGridItem) {
-            // Get the original panel ID from the gridItem's key
-            const panelId = getPanelIdForVizPanel(gridItem.state.body);
-            const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(panelId));
-
-            return gridItem.clone({
-              key: gridItemKey,
-              body: gridItem.state.body.clone({
-                key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(panelId)),
-              }),
-            });
-          }
-          throw new Error('Unexpected child type');
-        }),
-      }),
-    });
+    return this.clone({});
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {

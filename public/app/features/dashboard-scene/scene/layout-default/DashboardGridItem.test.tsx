@@ -3,7 +3,6 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { isInCloneChain } from '../../utils/clone';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -42,8 +41,8 @@ describe('PanelRepeaterGridItem', () => {
     expect(panel1.state.$variables?.state.variables[0].getValueText?.()).toBe('A');
     expect(panel2.state.$variables?.state.variables[0].getValue()).toBe('2');
 
-    expect(panel1.state.key).toBe('panel-1');
-    expect(isInCloneChain(panel2.state.key!)).toBe(true);
+    expect(panel1.state.repeatSourceKey).toBe(undefined);
+    expect(panel2.state.repeatSourceKey).toBe(repeater.state.body.state.key);
   });
 
   it('Should wait for variable to load', async () => {

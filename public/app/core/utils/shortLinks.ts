@@ -99,7 +99,7 @@ export const getShareUrlParams = (
   const urlParamsUpdate: UrlQueryMap = {};
 
   if (panel) {
-    urlParamsUpdate.viewPanel = panel.state.key;
+    urlParamsUpdate.viewPanel = panel.getPathId();
   }
 
   if (opts.useAbsoluteTimeRange) {

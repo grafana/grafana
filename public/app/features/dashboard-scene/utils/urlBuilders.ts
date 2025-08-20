@@ -8,7 +8,7 @@ import { getQueryRunnerFor } from './utils';
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), {
-    viewPanel: vizPanel.state.key,
+    viewPanel: vizPanel.getPathId(),
     editPanel: undefined,
   });
 }

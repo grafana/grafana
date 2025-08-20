@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { isInCloneChain } from '../utils/clone';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
@@ -39,7 +39,7 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
   const { key } = sceneObject.useState();
   const [isCollapsed, setIsCollapsed] = useState(depth > 0);
   const { isSelected, onSelect } = useElementSelection(key);
-  const isCloned = useMemo(() => isInCloneChain(key!), [key]);
+  const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');

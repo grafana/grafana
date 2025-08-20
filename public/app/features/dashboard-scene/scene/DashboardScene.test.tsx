@@ -19,6 +19,7 @@ import {
   SceneGridRow,
   behaviors,
   SceneDataTransformer,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -36,7 +37,6 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { djb2Hash } from '../utils/djb2Hash';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
@@ -662,8 +662,7 @@ describe('DashboardScene', () => {
 
     it('Should hash the key of the cloned panels and set it as panelId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
-      const expectedPanelId = djb2Hash(getCloneKey('panel-2', 1));
-      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(expectedPanelId);
+      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
     });
   });
 
@@ -974,6 +973,10 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             body: new VizPanel({
               title: 'Panel B',
               key: getCloneKey('panel-2', 1),
+              repeatSourceKey: 'panel-2',
+              $variables: new SceneVariableSet({
+                variables: [new LocalValueVariable({ name: 'a', value: 'A' })],
+              }),
               pluginId: 'table',
               $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
             }),

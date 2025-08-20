@@ -1,9 +1,7 @@
 import { AppEvents } from '@grafana/data';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { LocalValueVariable, SceneQueryRunner, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types/dashboard';
-
-import { getCloneKey } from '../utils/clone';
 
 import { DashboardScene } from './DashboardScene';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -72,7 +70,7 @@ describe('DashboardSceneUrlSync', () => {
     let errorNotice = 0;
     appEvents.on(AppEvents.alertError, (evt) => errorNotice++);
 
-    scene.urlSync?.updateFromUrl({ viewPanel: getCloneKey('panel-1', 1) });
+    scene.urlSync?.updateFromUrl({ viewPanel: 'A$panel-1' });
 
     expect(scene.state.viewPanelScene).toBeUndefined();
     // Verify no error notice was shown
@@ -87,8 +85,17 @@ describe('DashboardSceneUrlSync', () => {
           key: 'griditem-1',
           x: 0,
           body: new VizPanel({
+            $variables: new SceneVariableSet({
+              variables: [
+                new LocalValueVariable({
+                  name: 'server',
+                  value: 'A',
+                  text: 'A',
+                }),
+              ],
+            }),
             title: 'Clone Panel A',
-            key: getCloneKey('panel-1', 1),
+            key: 'panel-1',
             pluginId: 'table',
           }),
         }),
@@ -97,7 +104,7 @@ describe('DashboardSceneUrlSync', () => {
 
     // Verify it subscribes to DashboardRepeatsProcessedEvent
     scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
-    expect(scene.state.viewPanelScene?.getUrlKey()).toBe(getCloneKey('panel-1', 1));
+    expect(scene.state.viewPanelScene?.getUrlKey()).toBe('A$panel-1');
   });
 });
 

@@ -4,7 +4,6 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
-import { isClonedKey } from './clone';
 import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
@@ -37,12 +36,11 @@ export function getNextPanelId(scene: SceneObject): number {
   let max = 0;
 
   sceneGraph
-    .findAllObjects(scene.getRoot(), (obj) => obj instanceof VizPanel || obj instanceof SceneGridRow)
+    .findAllObjects(
+      scene.getRoot(),
+      (obj) => (obj instanceof VizPanel || obj instanceof SceneGridRow) && !obj.state.repeatSourceKey
+    )
     .forEach((panel) => {
-      if (isClonedKey(panel.state.key!)) {
-        return;
-      }
-
       const panelId = getPanelIdForVizPanel(panel);
       if (panelId > max) {
         max = panelId;

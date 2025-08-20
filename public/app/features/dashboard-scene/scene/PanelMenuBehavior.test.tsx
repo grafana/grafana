@@ -76,7 +76,7 @@ describe('panelMenuBehavior', () => {
 
     expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
-    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=panel-12');
+    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=a$panel-12');
     // verify edit url keeps url time range
     expect(menu.state.items?.[1].href).toBe('/d/dash-1?from=now-5m&to=now&editPanel=12');
     // verify share

@@ -8,7 +8,7 @@ import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Box, Icon, Tab, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
-import { useIsClone } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 
 import { TabItem } from './TabItem';
@@ -29,7 +29,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
   const [isConditionallyHidden] = useIsConditionallyHidden(model);
-  const isClone = useIsClone(model);
+  const isClone = isRepeatCloneOrChildOf(model);
 
   const isDraggable = !isClone && isEditing;
 
