@@ -34,6 +34,36 @@ interface GetStandardEditorContextProps {
   instanceState: OptionPaneRenderProps['instanceState'];
 }
 
+const idMap: Map<string, string> = new Map();
+const getUniqueId = (id: string): string => {
+  const stored = idMap.get(id);
+  if (stored) {
+    return stored;
+  }
+
+  const value = uuiv4();
+  idMap.set(id, value);
+  return value;
+};
+
+const getIdValue = ({
+  id,
+  name,
+  path,
+  category,
+  aliasIds,
+  description,
+}: {
+  id: string;
+  name: string;
+  path: string;
+  category: string;
+  aliasIds?: string[];
+  description?: string;
+}) => {
+  return `${aliasIds?.join('|') ?? ''}${description ?? ''}${id}|${name}|${path}|${category}`;
+};
+
 export function getStandardEditorContext({
   data,
   replaceVariables,
@@ -131,7 +161,16 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
+    const id = getIdValue({
+      aliasIds: fieldOption.aliasIds,
+      id: fieldOption.id,
+      name: fieldOption.name,
+      path: fieldOption.path,
+      description: fieldOption.description,
+      category: category.categories.join('|'),
+    });
+
+    const htmlId = getUniqueId(id);
 
     category.addItem(
       new OptionsPaneItemDescriptor({
@@ -269,7 +308,16 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
+    const id = getIdValue({
+      aliasIds: fieldOption.aliasIds,
+      id: fieldOption.id,
+      name: fieldOption.name,
+      path: fieldOption.path,
+      description: fieldOption.description,
+      category: category.categories.join('|'),
+    });
+
+    const htmlId = getUniqueId(id);
 
     category.addItem(
       new OptionsPaneItemDescriptor({
@@ -338,7 +386,16 @@ export function fillOptionsPaneItems(
       continue;
     }
 
-    const htmlId = uuiv4();
+    const id = getIdValue({
+      aliasIds: pluginOption.aliasIds,
+      id: pluginOption.id,
+      name: pluginOption.name,
+      path: pluginOption.path,
+      description: pluginOption.description,
+      category: category.categories.join('|'),
+    });
+
+    const htmlId = getUniqueId(id);
 
     const Editor = pluginOption.editor;
     category.addItem(
