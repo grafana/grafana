@@ -164,9 +164,9 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						EncryptedSecret: []byte("encrypted-secret"),
+				Secure: provisioning.SecureValues{
+					WebhookSecret: common.InlineSecureValue{
+						Name: "valid-secret",
 					},
 				},
 			},
