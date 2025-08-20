@@ -58,21 +58,23 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // true adds the {path} component
 }
 
+// For GET operations, allow even unhealthy repositories
+// For write operations (POST, PUT, DELETE), require healthy repository
+func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repository.Repository, error) {
+	if method == http.MethodGet {
+		return c.getter.GetRepository(ctx, name)
+	} else {
+		return c.getter.GetHealthyRepository(ctx, name)
+	}
+}
+
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	
+
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// For GET operations, allow even unhealthy repositories
-		// For write operations (POST, PUT, DELETE), require healthy repository
-		var repo repository.Repository
-		var err error
-		if r.Method == http.MethodGet {
-			repo, err = c.getter.GetRepository(ctx, name)
-		} else {
-			repo, err = c.getter.GetHealthyRepository(ctx, name)
-		}
+		repo, err := c.getRepo(ctx, r.Method, name)
 		if err != nil {
 			logger.Debug("failed to find repository", "error", err)
 			responder.Error(err)

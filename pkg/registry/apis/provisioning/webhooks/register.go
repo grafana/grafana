@@ -36,17 +36,12 @@ type WebhookExtraBuilder struct {
 
 // HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
 func isPublicURL(url string) bool {
-	if strings.HasPrefix(url, "https://") &&
+	return strings.HasPrefix(url, "https://") &&
 		!strings.Contains(url, "localhost") &&
 		!strings.HasPrefix(url, "https://127.") &&
 		!strings.HasPrefix(url, "https://192.") &&
 		!strings.HasPrefix(url, "https://10.") &&
-		!strings.HasPrefix(url, "https://172.16.") {
-
-		return true
-	}
-
-	return false
+		!strings.HasPrefix(url, "https://172.16.")
 }
 
 func ProvideWebhooks(
