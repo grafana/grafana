@@ -1,6 +1,7 @@
 ---
 aliases:
   - administration/cli/
+  - cli/
 description: Guide to using grafana server cli
 keywords:
   - grafana
@@ -12,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: Grafana server CLI
-weight: 400
+weight: 1100
 ---
 
 # Grafana server CLI
