@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 
 import { store, EventBusSrv, EventBus } from '@grafana/data';
-import { config, getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent } from 'app/types/events';
 
@@ -118,7 +118,6 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
     expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
-    expect(screen.getByTestId('is-enabled')).toHaveTextContent('true');
   });
 
   it('should load docked component from storage if available', () => {
