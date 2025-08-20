@@ -975,6 +975,100 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 	}
 }
 
+func TestUserSync_CatalogLoginHook(t *testing.T) {
+	type testCase struct {
+		name          string
+		identity      *authn.Identity
+		setRequest    func() *authn.Request
+		expectFlagSet bool
+	}
+
+	tests := []testCase{
+		{
+			name: "should skip hook when SyncUser flag is not enabled",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: false,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should skip hook when request is nil",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+		},
+		{
+			name: "should skip hook when catalog version is not set",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should not set loginflag when catalog version is set incorrectly",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			setRequest: func() *authn.Request {
+				r := authn.Request{}
+				r.SetMeta("catalog_version", "v0aplha1")
+				return &r
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should not set loginflag when catalog version is empty",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			setRequest: func() *authn.Request {
+				r := authn.Request{}
+				return &r
+			},
+			expectFlagSet: false,
+		},
+		{
+			name: "should set successful loginflag when catalog version is set correctly",
+			identity: &authn.Identity{
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+			},
+			setRequest: func() *authn.Request {
+				r := authn.Request{}
+				r.SetMeta("catalog_version", "1.0.0")
+				return &r
+			},
+			expectFlagSet: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := UserSync{
+				tracer: tracing.InitializeTracerForTest(),
+				log:    log.New("test"),
+			}
+			var req *authn.Request
+			if tt.setRequest != nil {
+				req = tt.setRequest()
+			}
+			assert.NoError(t, s.CatalogLoginHook(context.Background(), tt.identity, req))
+			assert.Equal(t, tt.expectFlagSet, s.samlCatalogSuccessfulLogin.Load())
+		})
+	}
+}
+
 func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 	type testCase struct {
 		desc       string
