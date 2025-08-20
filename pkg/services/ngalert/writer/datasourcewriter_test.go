@@ -2,7 +2,9 @@ package writer
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -127,7 +130,7 @@ func TestDatasourceWriter(t *testing.T) {
 	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
 	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
 
-	datasources := setupDataSources(t)
+	testDS := setupDataSources(t)
 
 	cfg := DatasourceWriterConfig{
 		Timeout:              time.Second * 5,
@@ -136,26 +139,26 @@ func TestDatasourceWriter(t *testing.T) {
 
 	met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
 	pluginContextProvider := &mockPluginContextProvider{}
-	writer := NewDatasourceWriter(cfg, datasources, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
+	writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
 
 	t.Run("when writing a prometheus datasource then the request is made to the expected endpoint", func(t *testing.T) {
-		datasources.Reset()
+		testDS.Reset()
 
 		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, datasources.prom1.RequestsCount)
-		assert.Equal(t, 0, datasources.prom2.RequestsCount)
+		assert.Equal(t, 1, testDS.prom1.RequestsCount)
+		assert.Equal(t, 0, testDS.prom2.RequestsCount)
 
 		err = writer.WriteDatasource(context.Background(), "prom-2", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, datasources.prom1.RequestsCount)
-		assert.Equal(t, 1, datasources.prom2.RequestsCount)
+		assert.Equal(t, 1, testDS.prom1.RequestsCount)
+		assert.Equal(t, 1, testDS.prom2.RequestsCount)
 	})
 
 	t.Run("when writing an unknown datasource then an error is returned", func(t *testing.T) {
-		datasources.Reset()
+		testDS.Reset()
 
 		err := writer.WriteDatasource(context.Background(), "prom-unknown", "metric", time.Now(), frames, 1, map[string]string{})
 		require.Error(t, err)
@@ -163,7 +166,7 @@ func TestDatasourceWriter(t *testing.T) {
 	})
 
 	t.Run("when writing a non-prometheus datasource then an error is returned", func(t *testing.T) {
-		datasources.Reset()
+		testDS.Reset()
 
 		err := writer.WriteDatasource(context.Background(), "loki-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.Error(t, err)
@@ -171,14 +174,14 @@ func TestDatasourceWriter(t *testing.T) {
 	})
 
 	t.Run("when writing with an empty datasource uid then the default is written", func(t *testing.T) {
-		datasources.Reset()
+		testDS.Reset()
 
 		err := writer.WriteDatasource(context.Background(), "", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 	})
 
 	t.Run("when custom headers are configured, they are passed to the request", func(t *testing.T) {
-		datasources.Reset()
+		testDS.Reset()
 
 		header1 := "X-Custom-Header"
 		header2 := "X-Another-Header"
@@ -192,17 +195,17 @@ func TestDatasourceWriter(t *testing.T) {
 			DefaultDatasourceUID: "prom-2",
 			CustomHeaders:        headers,
 		}
-		writer = NewDatasourceWriter(cfg, datasources, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
+		writer = NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
 
 		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 
-		assert.Equal(t, headers[header1], datasources.prom1.LastHeaders.Get(header1))
-		assert.Equal(t, headers[header2], datasources.prom1.LastHeaders.Get(header2))
+		assert.Equal(t, headers[header1], testDS.prom1.LastHeaders.Get(header1))
+		assert.Equal(t, headers[header2], testDS.prom1.LastHeaders.Get(header2))
 	})
 
 	t.Run("when PDC is enabled proxy options are passed to HTTP client provider", func(t *testing.T) {
-		datasources.Reset()
+		testDS.Reset()
 
 		mockProvider := newMockHTTPClientProvider()
 
@@ -212,7 +215,7 @@ func TestDatasourceWriter(t *testing.T) {
 		}
 
 		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
-		writer := NewDatasourceWriter(cfg, datasources, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
+		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
 
 		err := writer.WriteDatasource(context.Background(), "prom-3", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
@@ -228,7 +231,7 @@ func TestDatasourceWriter(t *testing.T) {
 	})
 
 	t.Run("when PDC is disabled proxy options are not set", func(t *testing.T) {
-		datasources.Reset()
+		testDS.Reset()
 
 		mockProvider := newMockHTTPClientProvider()
 
@@ -238,7 +241,7 @@ func TestDatasourceWriter(t *testing.T) {
 		}
 
 		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
-		writer := NewDatasourceWriter(cfg, datasources, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
+		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
 
 		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
@@ -246,6 +249,62 @@ func TestDatasourceWriter(t *testing.T) {
 		require.Equal(t, 1, mockProvider.callCount)
 		require.NotNil(t, mockProvider.lastOptions)
 		require.Nil(t, mockProvider.lastOptions.ProxyOptions)
+	})
+
+	t.Run("datasource uses correct backend type in metrics", func(t *testing.T) {
+		testCases := []struct {
+			name                string
+			datasourceUID       string
+			expectedBackendType string
+		}{
+			{
+				name:                "grafanacloud-prom uses special backend type",
+				datasourceUID:       string(grafanaCloudPromType),
+				expectedBackendType: string(grafanaCloudPromType),
+			},
+			{
+				name:                "prometheus uses default backend type",
+				datasourceUID:       "prom-1",
+				expectedBackendType: "prometheus",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				testDS.Reset()
+
+				if tc.datasourceUID == string(grafanaCloudPromType) {
+					gcProm, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+						Name:     string(grafanaCloudPromType),
+						UID:      string(grafanaCloudPromType),
+						Type:     datasources.DS_PROMETHEUS,
+						JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
+					})
+					gcProm.URL = testDS.prom1.srv.URL
+				}
+
+				cfg := DatasourceWriterConfig{
+					Timeout:              time.Second * 5,
+					DefaultDatasourceUID: "prom-2",
+				}
+
+				reg := prometheus.NewRegistry()
+				met := metrics.NewRemoteWriterMetrics(reg)
+				writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
+
+				err := writer.WriteDatasource(context.Background(), tc.datasourceUID, "metric", time.Now(), frames, 1, map[string]string{})
+				require.NoError(t, err)
+
+				expectedMetric := fmt.Sprintf(`
+					# HELP grafana_alerting_remote_writer_writes_total The total number of remote writes attempted.
+					# TYPE grafana_alerting_remote_writer_writes_total counter
+					grafana_alerting_remote_writer_writes_total{backend="%s",org="1",status_code="200"} 1
+				`, tc.expectedBackendType)
+				require.NoError(t, testutil.CollectAndCompare(met.WritesTotal,
+					strings.NewReader(expectedMetric),
+					"grafana_alerting_remote_writer_writes_total"))
+			})
+		}
 	})
 }
 
