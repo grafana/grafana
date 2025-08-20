@@ -3543,7 +3543,6 @@
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
-      "button-tooltip": "Please select a target folder",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -3552,7 +3551,7 @@
         "repository-not-found-title": "Repository not found"
       },
       "error-moving-resources": "Error moving resources",
-      "error-no-target-folder-path": "Target folder path in repository is invalid, please select another folder.",
+      "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
       "target-folder": "Target Folder"
     },
@@ -11886,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "Discard changes",
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
@@ -11897,11 +11895,7 @@
       "replace-query-from-library": "Replace with query from library",
       "show-response": "Show response"
     },
-    "query-editor-not-exported": "Data source plugin does not export any Query Editor component",
-    "query-library": {
-      "editing-tooltip": "Updating query from library\nUID: {{queryLibraryRef}}",
-      "from-library": "Updating query from library"
-    }
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "recently-deleted": {
     "buttons": {

@@ -501,6 +501,11 @@
       "title-muting-grouping-and-timings": "Отключение звука, группировка и определение времени"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Источники данных не найдены"
     },
     "alert-menu": {
@@ -2487,6 +2492,7 @@
       },
       "empty-data-source": "Правила не найдены",
       "error-button": "Ошибка",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Отменить поиск",
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
@@ -4207,7 +4213,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Источники данных",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "По вашему запросу ничего не найдено",
       "request-data-source": "Запросить новый источник данных",
       "roadmap": "Просмотр дорожной карты"
@@ -6587,9 +6594,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Создать дашборд",
       "explore-data": "Просмотреть данные",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Подробнее об ошибке"
