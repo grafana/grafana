@@ -71,6 +71,8 @@ export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
+/** @deprecated NOT A REAL annotation -- this is just a shim */
+export const AnnoKeyEmbedded = 'grafana.app/embedded';
 
 /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
 /** Not intended to be used in production, we will be removing this in short-term future */
@@ -108,6 +110,8 @@ type GrafanaClientAnnotations = {
   [AnnoKeySavedFromUI]?: string;
   [AnnoKeyDashboardIsSnapshot]?: string;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
+  [AnnoKeyEmbedded]?: string;
+
   [AnnoKeyGrantPermissions]?: string;
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.

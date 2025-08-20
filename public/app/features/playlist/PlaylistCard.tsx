@@ -22,7 +22,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
   return (
     <Card>
       <Card.Heading>
-        {playlist.spec.title}
+        {playlist.spec?.title}
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
@@ -31,7 +31,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
               iconSize="lg"
               onClick={() => {
                 showModal(ShareModal, {
-                  playlistUid: playlist.metadata.name ?? '',
+                  playlistUid: playlist.metadata?.name ?? '',
                   onDismiss: hideModal,
                 });
               }}
@@ -45,7 +45,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Button>
         {contextSrv.isEditor && (
           <>
-            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata.name}`} icon="cog">
+            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
             </LinkButton>
             <Button
