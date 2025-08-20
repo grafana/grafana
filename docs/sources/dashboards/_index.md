@@ -1,7 +1,7 @@
 ---
 aliases:
   - features/dashboard/dashboards/ # /docs/grafana/latest/features/dashboard/dashboards/
-  - dashboards/previews/ # /docs/grafana/latest/dashboards/previews/
+  - ./dashboards/previews/ # /docs/grafana/latest/dashboards/previews/
 labels:
   products:
     - cloud
