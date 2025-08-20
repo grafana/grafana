@@ -11,11 +11,7 @@ import {
   useState,
 } from 'react';
 
-import { 
-  createAssistantContextItem, 
-  OpenAssistantProps, 
-  useAssistant 
-} from '@grafana/assistant';
+import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
   DataFrame,
@@ -744,7 +740,7 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
         data: {
           labels: log.labels,
           value: log.entry,
-          timestamp: log.timestamp
+          timestamp: log.timestamp,
         },
       }),
     ],
