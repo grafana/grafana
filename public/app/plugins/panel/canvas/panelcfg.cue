@@ -90,6 +90,7 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 				CanvasTooltip: {
 				  mode: ui.TooltipDisplayMode
+				  disableForOneClick?: bool
 			  } @cuetsy(kind="interface")
 
 				Options: {
