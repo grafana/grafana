@@ -43,16 +43,16 @@ export function getTargetFolderPathInRepo({
   hidePrependSlash = false,
 }: GetTargetFolderPathInRepoParams): string | undefined {
   const ROOT_PATH = '/';
-  const EMPTY_PATH = '';
+  const EMPTY_ROOT_PATH = ''; // this is used to prevent duplicate "/" in url
 
   // Case 1: Whole instance is provisioned and no folder uid passed in (empty UID indicates root)
   if (targetFolderUID === '') {
-    return hidePrependSlash ? EMPTY_PATH : ROOT_PATH;
+    return hidePrependSlash ? EMPTY_ROOT_PATH : ROOT_PATH;
   }
 
   // Case 2: Target folder is the repository root folder
   if (isRepositoryRootFolder(targetFolder, repoName)) {
-    return hidePrependSlash ? EMPTY_PATH : ROOT_PATH;
+    return hidePrependSlash ? EMPTY_ROOT_PATH : ROOT_PATH;
   }
 
   // Case 3: Regular folder with source path annotation
