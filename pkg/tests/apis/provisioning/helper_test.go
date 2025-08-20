@@ -316,11 +316,11 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
 	fullPath := path.Join(h.ProvisioningPath, to)
 	t.Logf("Copying file from '%s' to provisioning path '%s'", from, fullPath)
-	err := os.MkdirAll(path.Dir(fullPath), 0750)
+	err := os.MkdirAll(path.Dir(fullPath), 0o750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
 	file := h.LoadFile(from)
-	err = os.WriteFile(fullPath, file, 0600)
+	err = os.WriteFile(fullPath, file, 0o600)
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
@@ -482,7 +482,7 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if repo.Path != "" {
 		repoPath = repo.Path
 		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0750)
+		err := os.MkdirAll(repoPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
 
@@ -513,10 +513,10 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		if repo.Path != "" {
 			// Copy to custom path
 			fullPath := path.Join(repoPath, to)
-			err := os.MkdirAll(path.Dir(fullPath), 0750)
+			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
 			file := h.LoadFile(from)
-			err = os.WriteFile(fullPath, file, 0600)
+			err = os.WriteFile(fullPath, file, 0o600)
 			require.NoError(t, err, "failed to write file to custom path")
 		} else {
 			h.CopyToProvisioningPath(t, from, to)
