@@ -45,6 +45,7 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	logger := slog.New(handler)
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
 		string(genericfeatures.APIServerTracing): false,
+		string(genericfeatures.WatchList):        true,
 	}); err != nil {
 		return err
 	}
