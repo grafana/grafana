@@ -357,35 +357,7 @@ describe('Grouping to Matrix', () => {
     await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
       const processed = received[0];
 
-      expect(processed[0].fields).toMatchInlineSnapshot(`[
-    {
-      "config": {},
-      "name": "Row\\Column",
-      "type": "string",
-      "values": [
-        "R1",
-        "R2",
-      ],
-    },
-    {
-      "config": {},
-      "name": "C1",
-      "type": "frame",
-      "values": [
-        {},
-        undefined,
-      ],
-    },
-    {
-      "config": {},
-      "name": "C2",
-      "type": "frame",
-      "values": [
-        {},
-        undefined,
-      ],
-    },
-  ]`);
+      expect(processed[0].fields).toMatchSnapshot();
     });
   });
 });
