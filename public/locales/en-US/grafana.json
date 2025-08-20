@@ -6552,9 +6552,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "Add to favorites",
       "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
-      "open-in-explore": "Open in Explore View"
+      "open-in-explore": "Open in Explore View",
+      "remove-favorite": "Remove from favorites"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
