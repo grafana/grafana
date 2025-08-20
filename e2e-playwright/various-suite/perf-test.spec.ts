@@ -11,13 +11,13 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
   const promRegistry = new prom.Registry();
 
   const testRunTimeGauge = new prom.Gauge({
-    name: 'pw_test_run_time_seconds',
+    name: 'fe_perf_test_run_time_seconds',
     help: 'The time it took for the performance test to run',
     registers: [promRegistry],
   });
 
   const usedJSHeapSizeGauge = new prom.Gauge({
-    name: 'pw_used_js_heap_size_bytes',
+    name: 'fe_perf_used_js_heap_size_bytes',
     help: 'The amount of memory used by the JavaScript heap',
     registers: [promRegistry],
   });

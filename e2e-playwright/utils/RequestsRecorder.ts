@@ -25,21 +25,21 @@ export class RequestsRecorder {
     this.#page = page;
 
     this.#inflatedSizeBytesCounter = new prom.Counter({
-      name: 'pw_inflated_size_bytes',
+      name: 'fe_perf_inflated_size_bytes',
       help: 'The size of the inflated response body in bytes',
       labelNames: ['type', 'host_type'],
       registers: [],
     });
 
     this.#transferSizeBytesCounter = new prom.Counter({
-      name: 'pw_transfer_size_bytes',
+      name: 'fe_perf_transfer_size_bytes',
       help: 'The size of the transfered response body in bytes',
       labelNames: ['type', 'host_type'],
       registers: [],
     });
 
     this.#requestCountCounter = new prom.Counter({
-      name: 'pw_request_count',
+      name: 'fe_perf_request_count',
       help: 'The number of requests made',
       labelNames: ['type', 'host_type'],
       registers: [],
