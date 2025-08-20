@@ -60,6 +60,17 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+  private-data-source-connect:
+    - pattern: /docs/grafana/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+    - pattern: /docs/grafana-cloud/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+  configure-pdc:
+    - pattern: /docs/grafana/
+      destination:  /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+
 ---
 
 # Configure the Amazon CloudWatch data source
@@ -137,17 +148,29 @@ You must use both an access key ID AND secret access key to authenticate.
 | **Query timeout result** | Grafana polls Cloudwatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana config file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
 | **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                       |
 
-**X-Ray trace link:** - Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
-
-To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
-
-
-For more information refer to [X-Ray trace link](#x-ray-trace-links). 
+**X-Ray trace link:** 
 
 | Setting         | Description                                     |
 | --------------- | ----------------------------------------------- |
-| **Data source** | Select the data source from the drop-down menu. |
+| **Data source** | Select the X-ray data source from the drop-down menu. |
 
+Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
+
+To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
+
+**Private data source connect** - _Only for Grafana Cloud users._
+
+| Setting                  | Description |
+|---------------------------|-------------|
+| **Private data source connect** | Establishes a private, secured connection between a Grafana Cloud stack and data sources within a private network. Use the drop-down to locate the PDC URL. For setup instructions, refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure PDC](ref:configure-pdc). Click **Manage private data source connect** to open your PDC connection page and view your configuration details. |
+
+After configuring your Amazon CloudWatch data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
+
+
+
+{{< admonition type="note" >}}
+To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
+{{< /admonition >}}
 
 ### IAM policy examples
 

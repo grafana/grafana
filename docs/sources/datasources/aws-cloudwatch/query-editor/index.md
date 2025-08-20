@@ -57,9 +57,7 @@ The CloudWatch data source can query data from both CloudWatch metrics and Cloud
 - [CloudWatch Metrics](#query-cloudwatch-metrics)
 - [CloudWatch Logs](#query-cloudwatch-logs)
 
-<!-- {{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}} -->
-
-Select which API to query using the query mode drop-down to the right of the **Region** setting.
+Select the API to query using the drop-down to the right of the **Region** setting.
 
 ## CloudWatch Metrics query editor components
 
@@ -144,26 +142,9 @@ The data source returns up to 100 metrics matching your filter criteria.
 
 Enhance metric queries using template variables to create dynamic, reusable dashboards.
 
-<!-- You can also use [template variables](ref:) to enhance metric queries and create dynamic, reusable dashboards. -->
-
-
-
-
-<!-- When using the `Match Exact`option, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. With `Match Exact` enabled the query only returns metrics that have the specified dimensions and no others, so dimensions that are on the metric but that are not being filtered on must be added as a wildcard (`*`) filter.
-
-When Match Exact is enabled, your query will only return metrics whose dimensions precisely match the specified criteria. For any dimensions present on the metric that you do not wish to filter by, you must explicitly specify them using a wildcard (`*`) filter. -->
-
-
-<!-- If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. With `Match Exact` disabled the query returns any metrics that match the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
-The data source returns up to 100 metrics matching your filter criteria.
-
-You can also augment queries by using [template variables](../template-variables/). -->
-
 ### Create dynamic queries with dimension wildcards
 
 Use the asterisk (`*`) wildcard for dimension values to create dynamic queries that automatically monitor changing sets of AWS resources. 
-
-<!-- {{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}} -->
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" caption="CloudWatch dimension wildcard" >}}
 
@@ -296,7 +277,7 @@ It supports querying CloudWatch logs with 3 query language options:
 1. Select **CloudWatch Logs** from the query type drop-down.
 1. Select the query language you would like to use in the **Query Language** drop-down. 
 1. Click **Select log groups** and choose up to 20 log groups to query.
-1. Use the main input area to write your logs query. AWS CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
+1. Use the main input area to write your logs query. Amazon CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
 
    {{< admonition type="note" >}}
    You must specify the region and log groups when querying with **Logs Insights QL** and **OpenSearch PPL**. **OpenSearch SQL** doesn't require log group selection. However, selecting log groups simplifies query writing by populating syntax suggestions with discovered log group fields.
@@ -344,12 +325,3 @@ After you have it configured, you'll see a **Monitoring account** badge in the q
 
 When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.
 
-
-<!-- ### Deep-link Grafana panels to the CloudWatch console
-
-{{< figure src="/static/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch Logs deep linking" >}}
-
-To view your query in the CloudWatch Logs Insights console, click the `CloudWatch Logs Insights` button next to the query editor.
-If you're not logged in to the CloudWatch console, the link forwards you to the login page.
-
-The provided link is valid for any account, but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana. -->

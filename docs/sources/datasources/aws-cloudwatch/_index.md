@@ -75,27 +75,43 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
-
+  query-caching:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+  variables:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  annotate-visualizations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  set-up-grafana-monitoring:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+  transformations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  visualizations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
 ---
 
 # Amazon CloudWatch data source
 
-Amazon CloudWatch is the AWS native monitoring and observability service. It collects, aggregates, and stores metrics, logs, and events from AWS resources, applications, and services. CloudWatch enables you to visualize performance data, track system health, and set up automated alerts based on defined thresholds.
+Amazon CloudWatch is the AWS native monitoring and observability service that collects, aggregates, and stores metrics, logs, and events from AWS resources, applications, and services. CloudWatch enables you to visualize performance data, track system health, and set up automated alerts based on defined thresholds. The Amazon CloudWatch data source in Grafana extends these capabilities by allowing you to query CloudWatch data and create rich, interactive visualizations that can be correlated with data from other systems within unified dashboards.
 
-
-The AWS CloudWatch data source in Grafana allows you to query, visualize, and correlate with data from other systems—all in a single dashboard.  transforms AWS monitoring data into rich, interactive visualizations.
-
-Grafana includes native support for the AWS CloudWatch plugin, so no additional installation is required.
-
-For general information on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
-Only users with the organization administrator role can add data sources.
-Administrators can also [provision the data source](#provision-the-data-source) with Grafana's provisioning system, and should [control pricing](#control-pricing) and [manage service quotas](#manage-service-quotas) accordingly.
-
-Once you've added the data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
-
-{{< admonition type="note" >}}
-To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
-{{< /admonition >}}
+Grafana includes native support for the Amazon CloudWatch plugin, so there's no need to install a plugin.
 
 The following documents will help you get started working with the CloudWatch data source:
 
@@ -103,10 +119,6 @@ The following documents will help you get started working with the CloudWatch da
 - [CloudWatch query editor](ref:cloudwatch-query-editor)
 - [Templates and variables](ref:cloudwatch-template-variables)
 - [Configure AWS authentication](ref:cloudwatch-aws-authentication)
-
-Once you have configured the CloudWatch data source you can
-
-- 
 
 ## Import pre-configured dashboards
 
@@ -132,6 +144,17 @@ To import curated dashboards:
 To customize one of these dashboards, Grafana recommends saving it under a different name.
 Otherwise, Grafana upgrades will overwrite your customizations with the new version.
 
+## Get the most out of the data source
+
+After installing and configuring the Amazon CloudWatch data source, you can:
+
+- Create a wide variety of [visualizations](ref:visualizations)
+- Configure and use [templates and variables](ref:variables)
+- Add [transformations](ref:transformations)
+- Add [annotations](ref:annotate-visualizations)
+- Set up [alerting](ref:alerting)
+- Optimize performance with [query caching](ref:query-caching)
+
 ## Control pricing
 
 The Amazon CloudWatch data source for Grafana uses [`ListMetrics`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) and [`GetMetricData`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) CloudWatch API calls to list and retrieve metrics.
@@ -140,8 +163,9 @@ Each time you select a dimension in the query editor, Grafana issues a `ListMetr
 Each time you change queries in the query editor, Grafana issues a new request to the `GetMetricData` API.
 
 {{< admonition type="note" >}}
-Grafana replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
-The `GetMetricStatistics` API qualified for the CloudWatch API free tier, but `GetMetricData` calls don't.
+Grafana now uses the `GetMetricData` API instead of `GetMetricStatistics` for CloudWatch queries. This change improves support for CloudWatch metric math and allows Grafana to automatically generate search expressions when you use wildcards or disable the `Match Exact` option.
+
+Unlike `GetMetricStatistics` requests, `GetMetricData` requests do not qualify for the CloudWatch API free tier.
 {{< /admonition >}}
 
 For more information, refer to the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/).
