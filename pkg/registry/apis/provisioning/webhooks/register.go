@@ -34,6 +34,21 @@ type WebhookExtraBuilder struct {
 	provisioningapis.ExtraBuilder
 }
 
+// HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
+func isPublicURL(url string) bool {
+	if strings.HasPrefix(url, "https://") &&
+		!strings.Contains(url, "localhost") &&
+		!strings.HasPrefix(url, "https://127.") &&
+		!strings.HasPrefix(url, "https://192.") &&
+		!strings.HasPrefix(url, "https://10.") &&
+		!strings.HasPrefix(url, "https://172.16.") {
+
+		return true
+	}
+
+	return false
+}
+
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -48,15 +63,14 @@ func ProvideWebhooks(
 			urlProvider := func(_ string) string {
 				return cfg.AppURL
 			}
-			// HACK: Assume is only public if it is HTTPS
-			isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients)
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
 			webhook := NewWebhookConnector(
-				isPublic,
+				isPublicURL(urlProvider("")),
 				b,
 				screenshotRenderer,
 			)

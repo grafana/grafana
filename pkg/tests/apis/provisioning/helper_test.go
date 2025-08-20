@@ -469,6 +469,7 @@ type TestRepo struct {
 	ExpectedDashboards int
 	ExpectedFolders    int
 	SkipSync           bool
+	Template           string
 }
 
 func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
@@ -494,7 +495,11 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		templateVars["Path"] = repoPath
 	}
 
-	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", templateVars)
+	tmpl := "testdata/local-write.json.tmpl"
+	if repo.Template != "" {
+		tmpl = repo.Template
+	}
+	localTmp := h.RenderObject(t, tmpl, templateVars)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)

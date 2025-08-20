@@ -257,18 +257,15 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	// )
 
 	const repo = "github-create-test"
-	_, err := helper.Repositories.Resource.Create(ctx,
-		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
-			"Name":        repo,
-			"SyncEnabled": true,
-			"SyncTarget":  "instance",
-			"Path":        "grafana/",
-		}),
-		metav1.CreateOptions{},
-	)
-	require.NoError(t, err)
+	testRepo := TestRepo{
+		Name:               repo,
+		Template:           "testdata/github-readonly.json.tmpl",
+		Target:             "instance",
+		ExpectedDashboards: 3,
+		ExpectedFolders:    2,
+	}
 
-	helper.SyncAndWait(t, repo, nil)
+	helper.CreateRepo(t, testRepo)
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
@@ -593,11 +590,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	const targetPath = "all-panels.json"
 
 	// Set up the repository.
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{"Name": repo})
-	obj, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
-	name, _, _ := unstructured.NestedString(obj.Object, "metadata", "name")
-	require.Equal(t, repo, name, "wrote the expected name")
+	helper.CreateRepo(t, TestRepo{Name: repo})
 
 	// Write a file -- this will create it *both* in the local file system, and in grafana
 	t.Run("write all panels", func(t *testing.T) {
@@ -702,7 +695,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.Error(t, result.Error(), "invalid path should return error")
 
 		// Read a file with a bad path
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
 		require.Error(t, err, "invalid path should error")
 	})
 
@@ -742,7 +735,7 @@ spec:
 		err = json.Unmarshal(raw, obj)
 		require.NoError(t, err)
 
-		name, _, _ = unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
+		name, _, _ := unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
 		require.True(t, strings.HasPrefix(name, "prefix-"), "should generate name")
 	})
 }
@@ -763,15 +756,15 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	const repo = "local-tmp"
 	// Set up the repository and the file to import.
-	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-	})
-
+	testRepo := TestRepo{
+		Name:               repo,
+		Target:             "instance",
+		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    0,
+	}
 	// We create the repository
-	_, err = helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
+	helper.CreateRepo(t, testRepo)
 
 	// Now, we import it, such that it may exist
 	// The sync may not be necessary as the sync may have happened automatically at this point
