@@ -115,19 +115,20 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 }
 
 type UserSync struct {
-	isUserProvisioningEnabled bool
-	rejectNonProvisionedUsers bool
-	userService               user.Service
-	authInfoService           login.AuthInfoService
-	userProtectionService     login.UserProtectionService
-	quotaService              quota.Service
-	log                       log.Logger
-	tracer                    tracing.Tracer
-	features                  featuremgmt.FeatureToggles
-	lastSeenSF                *singleflight.Group
-	scimUtil                  *scimutil.SCIMUtil
-	staticConfig              *StaticSCIMConfig
-	scimSuccessfulLogin       atomic.Bool
+	isUserProvisioningEnabled  bool
+	rejectNonProvisionedUsers  bool
+	userService                user.Service
+	authInfoService            login.AuthInfoService
+	userProtectionService      login.UserProtectionService
+	quotaService               quota.Service
+	log                        log.Logger
+	tracer                     tracing.Tracer
+	features                   featuremgmt.FeatureToggles
+	lastSeenSF                 *singleflight.Group
+	scimUtil                   *scimutil.SCIMUtil
+	staticConfig               *StaticSCIMConfig
+	scimSuccessfulLogin        atomic.Bool
+	samlCatalogSuccessfulLogin atomic.Bool
 }
 
 // GetUsageStats implements registry.ProvidesUsageStats
