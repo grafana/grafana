@@ -283,13 +283,9 @@ run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.b
 frontend-service-check:
 	./devenv/frontend-service/local-init.sh
 
-.PHONY: frontend-service-up
-frontend-service-up: frontend-service-check
-	tilt up -f devenv/frontend-service/Tiltfile
-
-.PHONY: frontend-service-down
-frontend-service-down: frontend-service-check
-	tilt down -f devenv/frontend-service/Tiltfile
+.PHONY: frontend-service
+frontend-service: frontend-service-check
+	bash ./devenv/frontend-service/run.sh
 
 ##@ Testing
 
