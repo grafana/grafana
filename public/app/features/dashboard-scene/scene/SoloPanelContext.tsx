@@ -10,6 +10,11 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
   public constructor(public keyPath: string) {}
 
   public matches(panel: VizPanel): boolean {
+    // Check if keyPath is just an old legacy panel id
+    if (/^\d+$/.test(this.keyPath)) {
+      return `panel-${this.keyPath}` === panel.state.key!;
+    }
+
     return this.keyPath === panel.getPathId();
   }
 }
