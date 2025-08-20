@@ -85,7 +85,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				}
 
 				// Create a temporary repository
-				tmp, err := s.getter.AsRepository(ctx, &cfg)
+				tmp, err := s.getter.RepositoryFromConfig(ctx, &cfg)
 				if err != nil {
 					responder.Error(err)
 					return

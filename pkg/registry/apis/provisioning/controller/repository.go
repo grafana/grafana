@@ -32,7 +32,7 @@ type RepoGetter interface {
 	// Given a repository configuration, return it as a repository instance
 	// This will only error for un-recoverable system errors
 	// the repository instance may or may not be valid/healthy
-	AsRepository(ctx context.Context, cfg *provisioning.Repository) (repository.Repository, error)
+	RepositoryFromConfig(ctx context.Context, r *provisioning.Repository) (repository.Repository, error)
 }
 
 type RepositoryTester interface {
@@ -224,7 +224,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		repo, err := rc.repoGetter.AsRepository(ctx, obj)
+		repo, err := rc.repoGetter.RepositoryFromConfig(ctx, obj)
 		if err != nil {
 			logger.Warn("unable to get repository for cleanup")
 		} else {
@@ -498,7 +498,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
-	repo, err := rc.repoGetter.AsRepository(ctx, obj)
+	repo, err := rc.repoGetter.RepositoryFromConfig(ctx, obj)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}

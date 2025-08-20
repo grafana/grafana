@@ -7,14 +7,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 //nolint:gosec // This is a constant for a secret suffix
@@ -23,9 +22,8 @@ const githubTokenSecretSuffix = "-github-token"
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	git.GitRepository
-	config  *provisioning.Repository
-	gh      Client // assumes github.com base URL
-	secrets secrets.RepositorySecrets
+	config *provisioning.Repository
+	gh     Client // assumes github.com base URL
 
 	owner string
 	repo  string
@@ -53,8 +51,7 @@ func NewGitHub(
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
 	factory *Factory,
-	token string,
-	secrets secrets.RepositorySecrets,
+	token common.RawSecureValue,
 ) (GithubRepository, error) {
 	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
 	if err != nil {
@@ -67,7 +64,6 @@ func NewGitHub(
 		gh:            factory.New(ctx, token), // TODO, baseURL from config
 		owner:         owner,
 		repo:          repo,
-		secrets:       secrets,
 	}, nil
 }
 
@@ -252,13 +248,5 @@ func (r *githubRepository) OnUpdate(_ context.Context) ([]map[string]interface{}
 }
 
 func (r *githubRepository) OnDelete(ctx context.Context) error {
-	logger := logging.FromContext(ctx)
-	secretName := r.config.Name + githubTokenSecretSuffix
-	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
-		return fmt.Errorf("delete github token secret: %w", err)
-	}
-
-	logger.Info("Deleted github token secret", "secretName", secretName)
-
 	return nil
 }
