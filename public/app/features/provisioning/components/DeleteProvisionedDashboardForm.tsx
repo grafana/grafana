@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
@@ -78,8 +79,7 @@ export function DeleteProvisionedDashboardForm({
   const onWriteSuccess = () => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
-    // TODO reset search state instead
-    window.location.href = '/dashboards';
+    navigate(getFolderURL(defaultValues.folder.uid || ''));
   };
 
   const onBranchSuccess = (path: string, info: ProvisionedOperationInfo, urls?: Record<string, string>) => {
