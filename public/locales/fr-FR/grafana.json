@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Mise en sourdine, regroupement et horaires"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "Aucune règle trouvée",
       "error-button": "Erreur",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Annuler la recherche",
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
@@ -4171,7 +4177,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Sources de données",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Aucun résultat correspondant à votre requête n'a été trouvé",
       "request-data-source": "Demander une nouvelle source de données",
       "roadmap": "Voir la feuille de route"
@@ -6545,9 +6552,11 @@
       "explore": "Explorer"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Créer un tableau de bord",
       "explore-data": "Explorer les données",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Plus de détails sur l’erreur"

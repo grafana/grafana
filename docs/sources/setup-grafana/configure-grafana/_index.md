@@ -796,7 +796,7 @@ The following example limits access to the backend of a single plugin:
 
 #### `angular_support_enabled`
 
-This is set to false by default, meaning that the angular framework and support components aren't be loaded.
+This is set to false by default, meaning that the angular framework and support components aren't loaded.
 This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
 
 The core features that depend on angular are:
