@@ -204,6 +204,9 @@ type JobStatus struct {
 
 	// Summary of processed actions
 	Summary []*JobResourceSummary `json:"summary,omitempty"`
+
+	// URLs contains URLs for the reference branch or commit if applicable.
+	URLs *RepositoryURLs `json:"url,omitempty"`
 }
 
 // Convert a JOB to a

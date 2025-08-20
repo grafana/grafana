@@ -760,10 +760,12 @@ func (c ExtraConfiguration) Validate() error {
 func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
 	config := PostableApiAlertingConfig{
 		Config: Config{
-			Global:       prometheusConfig.Global,
-			Route:        AsGrafanaRoute(prometheusConfig.Route),
-			InhibitRules: prometheusConfig.InhibitRules,
-			Templates:    prometheusConfig.Templates,
+			Global:            prometheusConfig.Global,
+			Route:             AsGrafanaRoute(prometheusConfig.Route),
+			InhibitRules:      prometheusConfig.InhibitRules,
+			TimeIntervals:     prometheusConfig.TimeIntervals,
+			MuteTimeIntervals: prometheusConfig.MuteTimeIntervals,
+			Templates:         prometheusConfig.Templates,
 		},
 	}
 

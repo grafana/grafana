@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -599,7 +599,7 @@ func TestValidate(t *testing.T) {
 				featuremgmt.WithFeatures(),
 				nil,
 				tracing.InitializeTracerForTest(),
-				mtdsclient.NewNullMTDatasourceClientBuilder(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
 			)
 			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
@@ -729,7 +729,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 					featuremgmt.WithFeatures(),
 					nil,
 					tracing.InitializeTracerForTest(),
-					mtdsclient.NewNullMTDatasourceClientBuilder(),
+					dsquerierclient.NewNullQSDatasourceClientBuilder(),
 				),
 			)
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
@@ -1539,7 +1539,7 @@ func TestCreate(t *testing.T) {
 
 		factory := evaluatorImpl{
 			expressionService: fakeExpressionService{
-				buildHook: func(req *expr.Request) (expr.DataPipeline, error) {
+				buildHook: func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
 					if request != nil {
 						assert.Fail(t, "BuildPipeline was called twice but should be only once")
 					}
@@ -1562,15 +1562,15 @@ func TestCreate(t *testing.T) {
 
 type fakeExpressionService struct {
 	hook      func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
-	buildHook func(req *expr.Request) (expr.DataPipeline, error)
+	buildHook func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error)
 }
 
 func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 	return f.hook(ctx, now, pipeline)
 }
 
-func (f fakeExpressionService) BuildPipeline(req *expr.Request) (expr.DataPipeline, error) {
-	return f.buildHook(req)
+func (f fakeExpressionService) BuildPipeline(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
+	return f.buildHook(ctx, req)
 }
 
 type fakeNode struct {

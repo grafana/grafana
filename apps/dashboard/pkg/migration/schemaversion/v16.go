@@ -15,6 +15,7 @@ const (
 )
 
 // V16 migrates dashboard layout from the old row-based system to the modern grid-based layout.
+// This migration follows the exact logic from DashboardMigrator.ts to ensure consistency between frontend and backend.
 func V16(dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 16
 
@@ -24,8 +25,8 @@ func V16(dashboard map[string]interface{}) error {
 }
 
 func upgradeToGridLayout(dashboard map[string]interface{}) {
-	rowsInterface, hasRows := dashboard["rows"]
-	if !hasRows {
+	rowsInterface, ok := dashboard["rows"]
+	if !ok {
 		return
 	}
 
@@ -65,7 +66,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		}
 
 		// Skip repeated rows (line 1031-1033 in TS)
-		if GetBoolValue(row, "repeatIteration") {
+		if _, hasRepeatIteration := row["repeatIteration"]; hasRepeatIteration {
 			continue
 		}
 
@@ -74,6 +75,24 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		isCollapsed := GetBoolValue(row, "collapse")
 
 		var rowPanel map[string]interface{}
+
+		// First pass: assign IDs to panels that don't have them
+		panelsInRow, ok := row["panels"].([]interface{})
+		if !ok {
+			panelsInRow = []interface{}{}
+		}
+
+		for _, panelInterface := range panelsInRow {
+			panel, ok := panelInterface.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			// Assign ID if missing
+			if _, hasID := panel["id"]; !hasID {
+				panel["id"] = nextRowID
+				nextRowID++
+			}
+		}
 
 		if showRows {
 			// add special row panel (lines 1041-1058 in TS)
@@ -96,12 +115,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		}
 
 		rowArea := newRowArea(rowGridHeight, gridColumnCount, yPos)
-
-		panelsInRow, ok := row["panels"].([]interface{})
-		if !ok {
-			panelsInRow = []interface{}{}
-		}
-
+      
 		// Process all panels in this row (lines 1062-1087 in TS)
 		for _, panelInterface := range panelsInRow {
 			panel, ok := panelInterface.(map[string]interface{})
@@ -160,7 +174,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		}
 
 		// Update yPos (lines 1093-1095 in TS)
-		if !(rowPanel != nil && isCollapsed) {
+		if rowPanel == nil || !isCollapsed {
 			yPos += rowGridHeight
 		}
 	}

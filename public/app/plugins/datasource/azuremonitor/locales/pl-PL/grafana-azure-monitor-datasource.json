@@ -52,7 +52,7 @@
       "button-use-query": "Użyj tego zapytania",
       "label-categories": "Kategorie",
       "label-query-results": "Wyniki zapytania: {{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "Nie można wyświetlić wszystkich kategorii",
       "placeholder-all-categories": "Wszystkie kategorie",
       "placeholder-search-logs": "Wyszukaj zapytania dotyczące dzienników",
       "text-loading": "Ładowanie…"
@@ -166,8 +166,8 @@
       "tooltip-limit": "Ogranicz liczbę zwracanych wierszy (domyślnie 1000)."
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "Czy na pewno chcesz przełączyć się na logi podstawowe?",
+      "confirmText-confirm": "Potwierdź",
       "description-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników wiążą się z kosztami w zależności od ilości przeskanowanych danych.",
       "label-logs": "Logi",
       "title-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników",
@@ -203,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Przycisk Uruchom zapytanie dotyczący dzienników Azure",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "Przełączenie na tryb konstruktora spowoduje odrzucenie bieżącego zapytania KQL i usunięcie danych z edytora KQL. Czy na pewno?",
+      "body-switching-to-kql": "Przełączenie na KQL spowoduje odrzucenie bieżących ustawień konstruktora. Czy na pewno?",
       "button-kick-start-your-query": "Uruchom zapytanie",
       "button-run-query": "Uruchom zapytanie",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "Przełącz na {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "Konstruktor",
+        "label-kql": "KQL"
       },
       "label-service": "Usługa",
       "placeholder-service": "Usługa…",
@@ -239,7 +239,7 @@
       "title-error-occurred": "Podczas wysyłania żądania zasobów do narzędzia Azure Monitor wystąpił błąd"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Zakres"
     },
     "search": {
       "aria-label-resource-search": "Wyszukiwanie zasobów",

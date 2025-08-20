@@ -139,10 +139,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagSqlDatasourceDatabaseSelection
-	// Enables previous SQL data source dataset dropdown behavior
-	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -867,6 +863,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagGrafanaAssistantInProfilesDrilldown
+	// Enables integration with Grafana Assistant in Profiles Drilldown
+	FlagGrafanaAssistantInProfilesDrilldown = "grafanaAssistantInProfilesDrilldown"
+
 	// FlagPostgresDSUsePGX
 	// Enables using PGX instead of libpq for PostgreSQL datasource
 	FlagPostgresDSUsePGX = "postgresDSUsePGX"
@@ -922,6 +922,10 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagAlertingImportAlertmanagerUI
+	// Enables the UI to see imported Alertmanager configuration
+	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
 
 	// FlagSharingDashboardImage
 	// Enables image sharing functionality for dashboards
@@ -994,4 +998,12 @@ const (
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
+
+	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
+	// Enable experimental search-after-write guarantees to unified-storage search endpoints
+	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
+
+	// FlagTeamFolders
+	// Enables team folders functionality
+	FlagTeamFolders = "teamFolders"
 )
