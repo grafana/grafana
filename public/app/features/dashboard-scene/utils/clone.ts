@@ -1,12 +1,13 @@
-import { SceneObject } from '@grafana/scenes';
-
-import { DashboardScene } from '../scene/DashboardScene';
+import {
+  LocalValueVariable,
+  MultiValueVariableState,
+  SceneObject,
+  SceneVariable,
+  SceneVariableSet,
+  VariableValueSingle,
+} from '@grafana/scenes';
 
 const CLONE_KEY = '-clone-';
-const CLONE_SEPARATOR = '/';
-
-const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}[1-9][0-9]*$`);
-const ORIGINAL_REGEX = new RegExp(`${CLONE_KEY}\\d+$`);
 
 /**
  * Create or alter the last key for a key
@@ -14,89 +15,37 @@ const ORIGINAL_REGEX = new RegExp(`${CLONE_KEY}\\d+$`);
  * @param index
  */
 export function getCloneKey(key: string, index: number): string {
-  const parts = key.split(CLONE_SEPARATOR).slice(0, -1);
-  const lastKey = getOriginalKey(getLastKeyFromClone(key));
-  return [...parts, `${lastKey}${CLONE_KEY}${index}`].join(CLONE_SEPARATOR);
+  return `${key}${CLONE_KEY}${index}`;
 }
 
-/**
- * Get the original key from a clone key
- * @param key
- */
-export function getOriginalKey(key: string): string {
-  return getLastKeyFromClone(key).replace(ORIGINAL_REGEX, '');
+export function isRepeatCloneOrChildOf(scene: SceneObject): boolean {
+  let obj: SceneObject | undefined = scene;
+
+  do {
+    if ('repeatSourceKey' in obj.state && obj.state.repeatSourceKey) {
+      return true;
+    }
+
+    obj = obj.parent;
+  } while (obj);
+
+  return false;
 }
 
-/**
- * Checks if the last key is a clone key
- * @param key
- */
-export function isClonedKey(key: string): boolean {
-  return CLONED_KEY_REGEX.test(getLastKeyFromClone(key));
-}
-
-/**
- * Checks if key1 is a clone of key2
- * @param key1
- * @param key2
- */
-export function isClonedKeyOf(key1: string, key2: string): boolean {
-  return isClonedKey(key1) && getOriginalKey(key1) === getOriginalKey(key2);
-}
-
-/**
- * Checks if the key or any of its ancestors are cloned
- * @param key
- */
-export function isInCloneChain(key: string): boolean {
-  return key.split(CLONE_SEPARATOR).some(isClonedKey);
-}
-
-/**
- * Get the last key from a clone key
- * @param key
- */
-export function getLastKeyFromClone(key: string): string {
-  return key.split(CLONE_SEPARATOR).pop() ?? '';
-}
-
-/**
- * Join clone keys
- * @param keys
- */
-export function joinCloneKeys(...keys: string[]): string {
-  return keys.filter(Boolean).join(CLONE_SEPARATOR);
-}
-
-/**
- * Checks if a key contains the '-clone-' string
- * @param key
- */
-export function containsCloneKey(key: string): boolean {
-  return key.includes(CLONE_KEY);
-}
-
-/**
- * Useful hook for checking of a scene is a clone
- * @param scene
- */
-export function useIsClone(scene: SceneObject): boolean {
-  const { key } = scene.useState();
-  return isClonedKey(key!);
-}
-
-/**
- * Useful hook for checking if a scene is in a clone chain
- * @param scene
- */
-export function useHasClonedParents(scene: SceneObject): boolean {
-  if (isClonedKey(scene.state.key!)) {
-    return true;
-  }
-
-  if (!scene.parent || scene.parent instanceof DashboardScene) {
-    return false;
-  }
-
-  return useHasClonedParents(scene.parent);
+export function getLocalVariableValueSet(
+  variable: SceneVariable<MultiValueVariableState>,
+  value: VariableValueSingle,
+  text: VariableValueSingle
+): SceneVariableSet {
+  return new SceneVariableSet({
+    variables: [
+      new LocalValueVariable({
+        name: variable.state.name,
+        value,
+        text,
+        isMulti: variable.state.isMulti,
+        includeAll: variable.state.includeAll,
+      }),
+    ],
+  });
 }

@@ -3,7 +3,7 @@ import { createContext, ReactNode, useContext } from 'react';
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { OnSelectQueryType, QueryTemplate } from './types';
+import { OnSelectQueryType, QueryTemplate, QueryLibraryEventsPropertyMap } from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
@@ -40,12 +40,35 @@ export type QueryLibraryContextType = {
   renderSaveQueryButton: (
     query: DataQuery,
     app?: CoreApp,
-    queryLibraryRef?: string,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void
   ) => ReactNode;
+
+  /**
+   * Returns a header component for editing queries from the library.
+   * used in places like Explore
+   * @param query
+   * @param app
+   * @param queryLibraryRef
+   * @param onCancelEdit
+   * @param onUpdateSuccess
+   */
+  renderQueryLibraryEditingHeader: (
+    query: DataQuery,
+    app?: CoreApp,
+    queryLibraryRef?: string,
+    onCancelEdit?: () => void,
+    onUpdateSuccess?: () => void,
+    onSelectQuery?: (query: DataQuery) => void
+  ) => ReactNode;
+
   queryLibraryEnabled: boolean;
   context: string;
+  triggerAnalyticsEvent: (
+    handleAnalyticEvent: (properties?: QueryLibraryEventsPropertyMap) => void,
+    properties?: QueryLibraryEventsPropertyMap,
+    contextOverride?: string
+  ) => void;
   setNewQuery: (query?: QueryTemplate) => void;
 };
 
@@ -61,8 +84,13 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
     return null;
   },
 
+  renderQueryLibraryEditingHeader: () => {
+    return null;
+  },
+
   queryLibraryEnabled: false,
   context: 'unknown',
+  triggerAnalyticsEvent: () => {},
 });
 
 export function useQueryLibraryContext() {

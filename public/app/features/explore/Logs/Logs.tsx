@@ -1125,9 +1125,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 />
               </>
             )}
-          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && hasData && (
+          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
             <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
-              {logsContainerRef.current && (
+              {logsContainerRef.current && hasData && (
                 <LogList
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}
