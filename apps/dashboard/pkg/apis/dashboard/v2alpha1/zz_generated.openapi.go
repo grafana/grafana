@@ -1213,7 +1213,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConversionStatus(ref common.Ref
 					"error": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The error message from the conversion. Empty if the conversion has not failed.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1221,7 +1220,6 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConversionStatus(ref common.Ref
 					"storedVersion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1234,7 +1232,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConversionStatus(ref common.Ref
 						},
 					},
 				},
-				Required: []string{"failed", "error", "storedVersion"},
+				Required: []string{"failed"},
 			},
 		},
 	}

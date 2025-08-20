@@ -1063,15 +1063,12 @@
         "description": "ConversionStatus is the status of the conversion of the dashboard.",
         "type": "object",
         "required": [
-          "failed",
-          "error",
-          "storedVersion"
+          "failed"
         ],
         "properties": {
           "error": {
             "description": "The error message from the conversion. Empty if the conversion has not failed.",
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
           "failed": {
             "description": "Whether from another version has failed. If true, means that the dashboard is not valid, and the caller should instead fetch the stored version.",
@@ -1084,8 +1081,7 @@
           },
           "storedVersion": {
             "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         }
       },

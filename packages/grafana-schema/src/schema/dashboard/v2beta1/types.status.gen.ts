@@ -8,18 +8,16 @@ export interface ConversionStatus {
 	failed: boolean;
 	// The error message from the conversion.
 	// Empty if the conversion has not failed.
-	error: string;
+	error?: string;
 	// The version which was stored when the dashboard was created / updated.
 	// Fetching this version should always succeed.
-	storedVersion: string;
+	storedVersion?: string;
 	// The original value map[string]any
 	source?: any;
 }
 
 export const defaultConversionStatus = (): ConversionStatus => ({
 	failed: false,
-	error: "",
-	storedVersion: "",
 });
 
 export interface Status {

@@ -1,4 +1,6 @@
 {
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
     "name": "test-v2alpha1-groupby-adhoc-vars",
     "creationTimestamp": null
@@ -7,8 +9,102 @@
   "status": {
     "conversion": {
       "failed": true,
+      "error": "backend conversion not yet implemented",
       "storedVersion": "v2alpha1",
-      "error": "backend conversion not yet implemented"
+      "source": {
+        "kind": "Dashboard",
+        "apiVersion": "dashboard.grafana.app/v2alpha1",
+        "metadata": {
+          "name": "test-v2alpha1-groupby-adhoc-vars",
+          "creationTimestamp": null
+        },
+        "spec": {
+          "annotations": null,
+          "cursorSync": "",
+          "elements": null,
+          "layout": null,
+          "links": null,
+          "preload": false,
+          "tags": null,
+          "timeSettings": {
+            "from": "",
+            "to": "",
+            "autoRefresh": "",
+            "autoRefreshIntervals": null,
+            "hideTimepicker": false,
+            "fiscalYearStartMonth": 0
+          },
+          "title": "Test: V2alpha1 dashboard with group by and adhoc variables",
+          "variables": [
+            {
+              "kind": "GroupByVariable",
+              "spec": {
+                "name": "",
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "gdev-prometheus"
+                },
+                "current": {
+                  "text": "text7",
+                  "value": "value7"
+                },
+                "options": null,
+                "multi": false,
+                "label": "Group By Variable",
+                "hide": "dontHide",
+                "skipUrlSync": false,
+                "description": "A group by variable"
+              }
+            },
+            {
+              "kind": "AdhocVariable",
+              "spec": {
+                "name": "adhocVar",
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "datasource-3"
+                },
+                "baseFilters": [
+                  {
+                    "key": "key1",
+                    "operator": "=",
+                    "value": "value1",
+                    "condition": "AND"
+                  },
+                  {
+                    "key": "key2",
+                    "operator": "=",
+                    "value": "value2",
+                    "condition": "OR"
+                  }
+                ],
+                "filters": [
+                  {
+                    "key": "key3",
+                    "operator": "=",
+                    "value": "value3",
+                    "condition": "AND"
+                  }
+                ],
+                "defaultKeys": [
+                  {
+                    "text": "defaultKey1",
+                    "value": "defaultKey1",
+                    "group": "defaultGroup1",
+                    "expandable": true
+                  }
+                ],
+                "label": "Adhoc Variable",
+                "hide": "dontHide",
+                "skipUrlSync": false,
+                "description": "An adhoc variable",
+                "allowCustomValue": true
+              }
+            }
+          ]
+        },
+        "status": {}
+      }
     }
   }
 }
