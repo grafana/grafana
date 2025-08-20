@@ -144,6 +144,8 @@ func ProvideRegistration(
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
+	authnSvc.RegisterPostAuthHook(userSync.CatalogLoginHook, 40)
+
 	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
 		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
