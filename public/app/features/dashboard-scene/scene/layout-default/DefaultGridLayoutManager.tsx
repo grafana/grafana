@@ -19,7 +19,6 @@ import {
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { useStyles2 } from '@grafana/ui';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
@@ -570,7 +569,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const soloPanelContext = useSoloPanelContext();
 
   if (soloPanelContext) {
-    return renderSoloPanel(children, soloPanelContext);
+    return children.map((child) => <child.Component model={child} key={child.state.key!} />);
   }
 
   // If we are top level layout and we have no children, show empty state
@@ -592,22 +591,18 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   );
 }
 
-function renderSoloPanel(children: SceneGridItemLike[], soloPanelContext: SoloPanelContextValue) {
-  for (const child of children) {
-    if (child instanceof DashboardGridItem && soloPanelContext.matches(child.state.body.getPathId())) {
-      return <child.state.body.Component model={child.state.body} />;
-    }
+const OriginalSceneGridRowRenderer = SceneGridRow.Component;
+// @ts-expect-error
+SceneGridRow.Component = SceneGridRowRenderer;
 
-    if (child instanceof SceneGridRow) {
-      for (const rowChild of child.state.children) {
-        if (rowChild instanceof DashboardGridItem && soloPanelContext.matches(rowChild.state.body.getPathId())) {
-          return <rowChild.state.body.Component model={rowChild.state.body} />;
-        }
-      }
-    }
+function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);
   }
 
-  return null;
+  return <OriginalSceneGridRowRenderer model={model} />;
 }
 
 function getStyles(theme: GrafanaTheme2) {
