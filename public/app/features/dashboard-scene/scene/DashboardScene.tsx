@@ -61,7 +61,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { isInCloneChain } from '../utils/clone';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
@@ -129,8 +129,6 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
   /** Panel to view in fullscreen */
   viewPanelScene?: ViewPanelScene;
   /** Edit view */
@@ -662,9 +660,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (isInCloneChain(panel.state.key)) {
+      if (isRepeatCloneOrChildOf(panel)) {
         // We check if any of the panel ancestors are clones because we can't use the original panel ID in this case
-        panelId = djb2Hash(panel?.state.key);
+        panelId = djb2Hash(panel.getPathId());
       } else {
         // Otherwise, it's the absolute original panel, and we can use the key directly
         // getPanelIdForVizPanel extracts the panel ID from the key so we don't need to do it manually

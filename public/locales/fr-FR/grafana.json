@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Mise en sourdine, regroupement et horaires"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "Aucune règle trouvée",
       "error-button": "Erreur",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Annuler la recherche",
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
@@ -3632,11 +3638,11 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
+      "error-invalid-characters": "",
       "error-required": "Un nom de dossier est obligatoire",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
       "label-folder-name": "Nom du dossier",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
-      "text-your-folder-will-be-created-as": "Votre dossier sera créé sous le nom {{folderName}}",
       "title-pull-request-created": "Demande de fusion créée",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
@@ -4171,7 +4177,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Sources de données",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Aucun résultat correspondant à votre requête n'a été trouvé",
       "request-data-source": "Demander une nouvelle source de données",
       "roadmap": "Voir la feuille de route"
@@ -4521,6 +4528,10 @@
           },
           "value": "Valeur"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "L’élément est masqué en raison du rendu conditionnel."
@@ -6541,9 +6552,11 @@
       "explore": "Explorer"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Créer un tableau de bord",
       "explore-data": "Explorer les données",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Plus de détails sur l’erreur"
@@ -7521,11 +7534,6 @@
     "noOptionsMessage-no-folders-found": "Aucun dossier trouvé",
     "select-aria-label": "Filtre de dossier",
     "select-placeholder": "Filtrer par dossier"
-  },
-  "folder-picker": {
-    "create-instructions": "Appuyez sur Entrée pour créer le nouveau dossier.",
-    "input-placeholder": "Appuyer sur Entrée pour confirmer le nouveau dossier",
-    "loading": "Chargement des dossiers..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8745,7 +8753,6 @@
       "filter-popup-input-placeholder": "Filtrer les valeurs",
       "filter-popup-match-case": "Respecter la casse",
       "inspect-drawer-title": "Inspecter la valeur",
-      "inspect-menu-label": "Inspecter la valeur",
       "nested-table": {
         "no-data": "Aucune donnée disponible"
       },
@@ -12791,6 +12798,7 @@
     "description-fields": "Sélectionner les champs à utiliser pour le calcul",
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
+    "description-tooltip-from-field": "",
     "name-calculation": "Calcul",
     "name-cell-height": "Hauteur de cellule",
     "name-cell-type": "Type de cellule",
@@ -12806,8 +12814,17 @@
     "name-min-column-width": "Largeur minimale de colonne",
     "name-show-table-footer": "Afficher le pied de tableau",
     "name-show-table-header": "Afficher l’en-tête du tableau",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Tous les champs numériques"
+    "placeholder-fields": "Tous les champs numériques",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Effacer les balises",
