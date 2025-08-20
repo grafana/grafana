@@ -77,7 +77,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           'Target folder path is invalid or empty, please select again.'
         ),
       });
-      setHasSubmitted(false); // Reset submit state so user can try again
+      setHasSubmitted(false);
       return;
     }
 
@@ -103,7 +103,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           result.error,
         ],
       });
-      setHasSubmitted(false); // Reset submit state so user can try again
+      setHasSubmitted(false);
     }
   };
 
@@ -148,11 +148,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
               <Stack gap={2}>
                 <Button
-                  tooltip={
-                    !targetFolder
-                      ? t('browse-dashboards.bulk-move-resources-form.button-tooltip', 'Please select a target folder')
-                      : undefined
-                  }
                   type="submit"
                   disabled={!!job || isCreatingJob || hasSubmitted || targetFolderUID === undefined}
                 >
