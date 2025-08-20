@@ -79,7 +79,7 @@ export function DeleteProvisionedDashboardForm({
   const onWriteSuccess = () => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
-    window.location.href = getFolderURL(defaultValues.folder.uid || '');
+    navigate(getFolderURL(defaultValues.folder.uid || ''));
   };
 
   const onBranchSuccess = (path: string, info: ProvisionedOperationInfo, urls?: Record<string, string>) => {
