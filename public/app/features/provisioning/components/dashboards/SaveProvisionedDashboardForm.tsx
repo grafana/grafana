@@ -21,13 +21,13 @@ import {
   useProvisionedRequestHandler,
 } from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
 
-import { ProvisionedDashboardFormData } from '../types/form';
-import { buildResourceBranchRedirectUrl } from '../utils/redirect';
+import { ProvisionedDashboardFormData } from '../../types/form';
+import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { RepoInvalidStateBanner } from '../shared/RepoInvalidStateBanner';
+import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
+import { getProvisionedMeta } from '../utils/getProvisionedMeta';
 
-import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
-import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
-import { getProvisionedMeta } from './utils/getProvisionedMeta';
 
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;

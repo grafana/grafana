@@ -30,7 +30,7 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-jest.mock('app/features/dashboard-scene/utils/useProvisionedRequestHandler', () => {
+jest.mock('../../hooks/useProvisionedRequestHandler', () => {
   return {
     useProvisionedRequestHandler: jest.fn(),
   };
@@ -76,8 +76,8 @@ jest.mock('react-router-dom-v5-compat', () => {
   };
 });
 
-jest.mock('../SaveDashboardForm', () => {
-  const actual = jest.requireActual('../SaveDashboardForm');
+jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
+  const actual = jest.requireActual('app/features/dashboard-scene/saving/SaveDashboardForm');
   return {
     ...actual,
     SaveDashboardFormCommonOptions: () => <div data-testid="common-options">Common Options</div>,

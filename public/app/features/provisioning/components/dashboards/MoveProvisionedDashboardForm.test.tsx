@@ -38,7 +38,7 @@ jest.mock('app/api/clients/folder/v1beta1', () => ({
   useGetFolderQuery: jest.fn(),
 }));
 
-jest.mock('../utils/useProvisionedRequestHandler', () => ({
+jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
   useProvisionedRequestHandler: jest.fn(),
 }));
 
@@ -46,7 +46,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => jest.fn(),
 }));
 
-jest.mock('../components/Provisioned/ResourceEditFormSharedFields', () => ({
+jest.mock('../shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="resource-edit-form" />,
 }));
 

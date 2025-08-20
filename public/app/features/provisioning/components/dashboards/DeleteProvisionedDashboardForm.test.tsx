@@ -6,10 +6,14 @@ import { getAppEvents } from '@grafana/runtime';
 import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
-import { ProvisionedDashboardData, useProvisionedDashboardData } from './hooks';
+import { ProvisionedDashboardData, useProvisionedDashboardData } from '../hooks';
 
-// Mock the hooks and dependencies
+import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
+
+jest.mock('../hooks', () => ({
+  useProvisionedDashboardData: jest.fn(),
+}));
+
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
   provisioningAPIv0alpha1: {
@@ -27,7 +31,13 @@ jest.mock('react-redux', () => {
     useDispatch: jest.fn(),
   };
 });
-jest.mock('../saving/provisioned/hooks');
+jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
+  useProvisionedRequestHandler: jest.fn(({ request, handlers }) => {
+    if (request.isError && handlers.onError) {
+      handlers.onError(request.error, { repoType: 'github', resourceType: 'dashboard', workflow: 'branch' });
+    }
+  }),
+}));
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: jest.fn(),
@@ -40,7 +50,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 const mockNavigate = jest.fn();
 
 // Mock shared form components
-jest.mock('../components/Provisioned/ResourceEditFormSharedFields', () => ({
+jest.mock('../shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: ({ disabled }: { disabled: boolean }) => (
     <textarea data-testid="shared-fields" disabled={disabled} />
   ),

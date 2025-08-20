@@ -10,12 +10,11 @@ import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
-import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../hooks/useProvisionedRequestHandler';
-import { ProvisionedDashboardFormData } from '../types/form';
-import { buildResourceBranchRedirectUrl } from '../utils/redirect';
-
-import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
-import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { ProvisionedDashboardFormData } from '../../types/form';
+import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { RepoInvalidStateBanner } from '../shared/RepoInvalidStateBanner';
+import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 
 export interface Props {
   dashboard: DashboardScene;
