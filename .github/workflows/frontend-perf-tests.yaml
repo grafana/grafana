@@ -1,13 +1,9 @@
-name: Scheduled Performance Tests
+name: Frontend performance tests
 
 on:
   schedule:
     - cron: "0 * * * *" # Run hourly
   workflow_dispatch: # Allow manual triggering
-  pull_request: # todo remove before merging
-  push:
-    branches:
-      - jh/scheduled-perf-tests
 
 jobs:
   performance-tests:

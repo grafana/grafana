@@ -502,6 +502,7 @@
 /e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/visualization-suggestions.spec.ts @grafana/dashboards-squad
+/e2e-playwright/various-suite/perf-test.spec.ts @grafana/frontend-platform
 
 # Packages
 /packages/README.md @grafana/grafana-frontend-platform
