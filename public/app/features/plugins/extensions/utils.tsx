@@ -98,7 +98,9 @@ export const wrapWithPluginContext = <T,>({
     return (
       <PluginContextProvider meta={pluginMeta}>
         <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
-          <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+          <Component
+            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
+          />
         </ExtensionErrorBoundary>
       </PluginContextProvider>
     );

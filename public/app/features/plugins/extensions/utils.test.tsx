@@ -903,7 +903,7 @@ describe('Plugin Extensions / Utils', () => {
       // Logs a warning
       expect(log.error).toHaveBeenCalledTimes(1);
       expect(log.error).toHaveBeenCalledWith(
-        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version unknown`,
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version 1.0.0`,
         {
           stack: expect.any(String),
         }
@@ -931,7 +931,7 @@ describe('Plugin Extensions / Utils', () => {
       // Logs a warning
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(log.warning).toHaveBeenCalledWith(
-        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version unknown`,
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel and version 1.0.0`,
         {
           stack: expect.any(String),
         }
