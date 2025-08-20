@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -100,13 +101,17 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	status := checks.GetStatusAnnotation(obj)
 	if status == "" || status == checks.StatusAnnotationError {
 		// Check not processed yet or errored
+		log.Debug("Check not processed yet or errored, skipping retry", "check", obj.GetName(), "status", status)
 		return nil
 	}
 	// Get the item to retry from the annotation
 	itemToRetry := checks.GetRetryAnnotation(obj)
 	if itemToRetry == "" {
 		// No item to retry, nothing to do
+		log.Debug("No item to retry, skipping retry", "check", obj.GetName())
 		return nil
+	} else {
+		log.Debug("Item to retry found", "check", obj.GetName(), "item", itemToRetry)
 	}
 	c, ok := obj.(*advisorv0alpha1.Check)
 	if !ok {
@@ -166,13 +171,16 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		return false
 	})
 	err = checks.SetStatus(ctx, client, obj, c.Status)
+	log.Debug("Set status", "check", obj.GetName(), "status.count", c.Status.Report.Count)
 	if err != nil {
 		return err
 	}
 	// Delete the retry annotation to mark the check as processed
 	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
+	err = checks.SetAnnotations(ctx, client, obj, annotations)
+	log.Debug("Set annotations", "check", obj.GetName(), "annotations", annotations)
 
-	return checks.SetAnnotations(ctx, client, obj, annotations)
+	return err
 }
 
 func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
@@ -233,4 +241,16 @@ func filterSteps(checkType resource.Object, steps []checks.Step) ([]checks.Step,
 		return filteredSteps, nil
 	}
 	return steps, nil
+}
+
+// hasAnnotationsOrStatusChanged compares annotations and status between old and new objects
+func annotationsChanged(oldObj, newObj resource.Object) bool {
+	if oldObj == nil || newObj == nil {
+		return true // If either is nil, consider it changed
+	}
+
+	// Compare annotations
+	oldAnnotations := oldObj.GetAnnotations()
+	newAnnotations := newObj.GetAnnotations()
+	return !reflect.DeepEqual(oldAnnotations, newAnnotations)
 }
