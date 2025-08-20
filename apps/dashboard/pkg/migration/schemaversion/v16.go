@@ -115,7 +115,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		}
 
 		rowArea := newRowArea(rowGridHeight, gridColumnCount, yPos)
-      
+		
 		// Process all panels in this row (lines 1062-1087 in TS)
 		for _, panelInterface := range panelsInRow {
 			panel, ok := panelInterface.(map[string]interface{})
