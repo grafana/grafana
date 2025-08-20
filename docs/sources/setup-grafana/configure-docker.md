@@ -20,6 +20,11 @@ weight: 1800
 
 # Configure a Grafana Docker image
 
+{{< admonition type="caution" >}}
+Starting with Grafana v12.2, the `grafana/grafana-oss` docker image is deprecated.
+It will lose support in a future release. You can use the `grafana/grafana` docker image instead.
+{{< /admonition >}}
+
 This topic explains how to run Grafana on Docker in complex environments that require you to:
 
 - Use different images

@@ -22,6 +22,11 @@ Grafana Docker images come in two editions:
 - **Grafana Enterprise**: `grafana/grafana-enterprise`
 - **Grafana Open Source**: `grafana/grafana-oss`
 
+{{< admonition type="caution" >}}
+Starting with Grafana v12.2, the `grafana/grafana-oss` docker image is deprecated.
+It will lose support in a future release. You can use the `grafana/grafana` docker image instead.
+{{< /admonition >}}
+
 > **Note:** The recommended and default edition of Grafana is Grafana Enterprise. It is free and includes all the features of the OSS edition. Additionally, you have the option to upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which includes support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
 The default images for Grafana are created using the Alpine Linux project and can be found in the Alpine official image. For instructions on configuring a Docker image for Grafana, refer to [Configure a Grafana Docker image](../../configure-docker/).
