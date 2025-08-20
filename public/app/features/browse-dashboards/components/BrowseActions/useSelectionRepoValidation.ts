@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
 
@@ -15,6 +16,7 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
   const provisioningEnabled = config.featureToggles.provisioning;
   const childrenByParentUID = useChildrenByParentUIDState();
   const rootItems = useSelector(rootItemsSelector)?.items ?? [];
+  const isProvisionedInstance = useIsProvisionedInstance();
 
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   // Function to grab repository configuration by UID
@@ -40,7 +42,13 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
   const selectedItemsRepoUID = repoUIDs.length > 0 ? repoUIDs[0] : undefined;
   const isCrossRepo = new Set(repoUIDs).size > 1;
 
-  const isInLockedRepo = (uid: string) => !selectedItemsRepoUID || getRepoUid(uid) === selectedItemsRepoUID;
+  const isInLockedRepo = (uid: string) => {
+    // if whole instance is provisioned, all items are considered in the locked (same) repo
+    if (isProvisionedInstance) {
+      return true;
+    }
+    return !selectedItemsRepoUID || getRepoUid(uid) === selectedItemsRepoUID;
+  };
   const isUidInReadOnlyRepo = (uid: string) => {
     const repo = getRepositoryByUid(getRepoUid(uid));
     return repo ? getIsReadOnlyRepo(repo) : false;
