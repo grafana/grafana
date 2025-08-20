@@ -40,7 +40,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragging: boolean;
           isRepeat?: boolean;
         }) =>
-          !renderHidden ? null : (
+          isConditionallyHidden && (!isEditing || !renderHidden) ? null : (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: isDragging ? key : undefined }

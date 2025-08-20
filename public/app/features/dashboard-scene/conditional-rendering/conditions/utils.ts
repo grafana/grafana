@@ -1,7 +1,7 @@
 import { sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { ConditionalRenderingGroup } from '../group/ConditionalRenderingGroup';
-import { getObjectType as getObjectTypeGlobal, ObjectsWithConditionalRendering } from '../object';
+import { extractObjectType, ObjectsWithConditionalRendering } from '../object';
 
 import { ConditionalRenderingConditions } from './types';
 
@@ -18,7 +18,7 @@ export function getObject(condition: ConditionalRenderingConditions): SceneObjec
 }
 
 export function getObjectType(condition: ConditionalRenderingConditions): ObjectsWithConditionalRendering {
-  return getObjectTypeGlobal(getObject(condition));
+  return extractObjectType(getObject(condition));
 }
 
 export function removeCondition(condition: ConditionalRenderingConditions) {

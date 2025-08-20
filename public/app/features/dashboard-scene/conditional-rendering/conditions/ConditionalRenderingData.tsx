@@ -14,11 +14,11 @@ import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/da
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getLowerTranslatedObjectType, getObjectType } from '../object';
+import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
 import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
-import { checkGroup, getObject } from './utils';
+import { checkGroup, getObject, getObjectType } from './utils';
 
 interface ConditionalRenderingDataState extends SceneObjectState {
   value: boolean;

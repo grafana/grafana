@@ -4,7 +4,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { ConditionalRenderingGroup } from '../group/ConditionalRenderingGroup';
-import { getLowerTranslatedObjectType, getObjectType } from '../object';
+import { extractObjectType, getLowerTranslatedObjectType } from '../object';
 
 let placeholderConditionalRendering: ConditionalRenderingGroup | undefined;
 
@@ -44,7 +44,7 @@ export function useConditionalRenderingEditor(
               content={t(
                 'dashboard.conditional-rendering.editor.info',
                 'Set rules to control {{type}} visibility by matching any or all rules.',
-                { type: getLowerTranslatedObjectType(getObjectType(conditionalRenderingToRender.parent)) }
+                { type: getLowerTranslatedObjectType(extractObjectType(conditionalRenderingToRender.parent)) }
               )}
             >
               <Icon name={!result ? 'eye-slash' : 'eye'} />

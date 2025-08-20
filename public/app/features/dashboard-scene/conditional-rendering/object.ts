@@ -47,7 +47,7 @@ export function getLowerTranslatedObjectType(type: ObjectsWithConditionalRenderi
   return translatedObjectTypesLower[type] ?? type;
 }
 
-export function getObjectType(object: SceneObject | undefined): ObjectsWithConditionalRendering {
+export function extractObjectType(object: SceneObject | undefined): ObjectsWithConditionalRendering {
   if (!object) {
     return 'element';
   } else if (object instanceof AutoGridItem) {

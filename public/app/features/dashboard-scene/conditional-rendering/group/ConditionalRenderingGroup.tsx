@@ -12,7 +12,7 @@ import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRend
 import { ConditionalRenderingVariable } from '../conditions/ConditionalRenderingVariable';
 import { conditionalRenderingSerializerRegistry } from '../conditions/serializers';
 import { ConditionalRenderingConditions } from '../conditions/types';
-import { getObjectType, getTranslatedObjectType } from '../object';
+import { extractObjectType, getTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
@@ -186,7 +186,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
   const { condition, visibility, conditions } = model.useState();
   const { variables } = sceneGraph.getVariables(model).useState();
-  const objectType = useMemo(() => getObjectType(model.parent), [model]);
+  const objectType = useMemo(() => extractObjectType(model.parent), [model]);
 
   return (
     <Stack direction="column" gap={2}>
