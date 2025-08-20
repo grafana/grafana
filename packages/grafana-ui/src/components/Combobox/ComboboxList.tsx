@@ -67,7 +67,7 @@ export const ComboboxList = <T extends string | number>({
     [selectedItems]
   );
 
-  const allItemsSelected = enableAllOption && selectedItems.length === options.length - 1;
+  const allItemsSelected = enableAllOption && options.length > 1 && selectedItems.length === options.length - 1;
 
   return (
     <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
