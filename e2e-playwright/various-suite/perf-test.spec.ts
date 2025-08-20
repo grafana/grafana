@@ -10,9 +10,9 @@ const DASH_PATH = '/d/bds35fot3cv7kb/mostly-blank-dashboard';
 test('payload-size', { tag: '@performance' }, async ({ page }) => {
   const promRegistry = new prom.Registry();
 
-  const bootTimeSecondsGauge = new prom.Gauge({
-    name: 'pw_boot_time_seconds',
-    help: 'The time it took for the application to boot',
+  const testRunTimeGauge = new prom.Gauge({
+    name: 'pw_test_run_time_seconds',
+    help: 'The time it took for the performance test to run',
     registers: [promRegistry],
   });
 
@@ -44,7 +44,7 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
     promRegistry.registerMetric(metric);
   }
 
-  bootTimeSecondsGauge.set(Math.round(end - start) / 1000);
+  testRunTimeGauge.set(Math.round(end - start) / 1000);
   usedJSHeapSizeGauge.set(+usedJSHeapSize.toFixed(1));
 
   const instance = new URL(process.env.GRAFANA_URL || 'http://undefined').host;
