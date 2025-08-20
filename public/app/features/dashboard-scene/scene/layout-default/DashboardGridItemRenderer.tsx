@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-import { SoloPanelContextValue, useSoloPanelContext } from '../SoloPanelContext';
+import { renderMatchingSoloPanels, SoloPanelContextValue, useSoloPanelContext } from '../SoloPanelContext';
 
 import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
 
@@ -20,7 +20,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   );
 
   if (soloPanelContext) {
-    return renderSoloPanel(soloPanelContext, [body, ...repeatedPanels]);
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
   }
 
   if (!variableName) {
@@ -43,16 +43,6 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
       ))}
     </div>
   );
-}
-
-function renderSoloPanel(soloPanelContext: SoloPanelContextValue, panels: VizPanel[]) {
-  for (const panel of panels) {
-    if (soloPanelContext.matches(panel.getPathId())) {
-      return <panel.Component model={panel} key={panel.state.key} />;
-    }
-  }
-
-  return null;
 }
 
 function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow: number, itemHeight: number) {

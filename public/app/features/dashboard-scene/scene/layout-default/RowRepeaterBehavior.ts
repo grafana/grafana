@@ -14,7 +14,6 @@ import {
 
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
@@ -172,9 +171,6 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     }
 
     updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat.state.key!);
-
-    // Used from dashboard url sync
-    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   public removeBehavior() {

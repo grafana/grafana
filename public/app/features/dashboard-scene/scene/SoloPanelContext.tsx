@@ -1,10 +1,16 @@
 import React, { useContext } from 'react';
 
-export class SoloPanelContextValue {
+import { VizPanel } from '@grafana/scenes';
+
+export interface SoloPanelContextValue {
+  matches: (VizPanel: VizPanel) => boolean;
+}
+
+export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
   public constructor(public keyPath: string) {}
 
-  public matches(keyPath: string): boolean {
-    return this.keyPath.startsWith(keyPath);
+  public matches(panel: VizPanel): boolean {
+    return this.keyPath === panel.getPathId();
   }
 }
 
@@ -15,10 +21,21 @@ export function useDefineSoloPanelContext(keyPath?: string): SoloPanelContextVal
     if (!keyPath) {
       return null;
     }
-    return new SoloPanelContextValue(keyPath);
+    return new SoloPanelContextWithPathIdFilter(keyPath);
   }, [keyPath]);
 }
 
 export function useSoloPanelContext() {
   return useContext(SoloPanelContext);
+}
+
+export function renderMatchingSoloPanels(soloPanelContext: SoloPanelContextValue, panels: VizPanel[]) {
+  const matches: React.ReactNode[] = [];
+  for (const panel of panels) {
+    if (soloPanelContext.matches(panel)) {
+      matches.push(<panel.Component model={panel} key={panel.state.key} />);
+    }
+  }
+
+  return <>{matches}</>;
 }
