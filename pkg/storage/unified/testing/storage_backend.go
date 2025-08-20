@@ -524,7 +524,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		counter := 0
-		for range seq {
+		for _, _ = range seq {
 			counter++
 		}
 		require.Equal(t, 0, counter) // no events should be returned
