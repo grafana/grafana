@@ -872,7 +872,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				var statusErr *apierrors.StatusError
 				if errors.As(tt.expectedError, &statusErr) {
 					var actualStatusErr *apierrors.StatusError
-					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
+					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type: %T", err)
 					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
 					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
 				} else {
@@ -1416,9 +1416,13 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.WebhookStatus{
-						ID:     123,
-						URL:    "https://example.com/webhook",
-						Secret: "secret",
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					WebhookSecret: common.InlineSecureValue{
+						Name: "valid-secret",
 					},
 				},
 			},
@@ -1427,7 +1431,6 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 				ID:               123,
 				URL:              "https://example.com/webhook",
 				SubscribedEvents: subscribedEvents,
-				Secret:           "secret",
 			},
 			expectedError: nil,
 		},
