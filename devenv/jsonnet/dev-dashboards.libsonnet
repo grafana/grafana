@@ -69,6 +69,7 @@
     "loki_fakedata": (import '../dev-dashboards/datasource-loki/loki_fakedata.json'),
     "loki_query_splitting": (import '../dev-dashboards/datasource-loki/loki_query_splitting.json'),
     "migrations": (import '../dev-dashboards/migrations/migrations.json'),
+    "mostly-blank-dashboard": (import '../dev-dashboards/scenarios/mostly-blank-dashboard.json'),
     "mssql_fakedata": (import '../dev-dashboards/datasource-mssql/mssql_fakedata.json'),
     "mssql_unittest": (import '../dev-dashboards/datasource-mssql/mssql_unittest.json'),
     "mysql_fakedata": (import '../dev-dashboards/datasource-mysql/mysql_fakedata.json'),
