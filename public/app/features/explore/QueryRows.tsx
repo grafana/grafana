@@ -62,8 +62,8 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
-    (newQueries: DataQuery[]) => {
-      dispatch(changeQueries({ exploreId, queries: newQueries }));
+    (newQueries: DataQuery[], options?: { skipAutoImport?: boolean }) => {
+      dispatch(changeQueries({ exploreId, queries: newQueries, options }));
     },
     [dispatch, exploreId]
   );
@@ -107,9 +107,12 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
 
     // Open drawer with the original query highlighted
     if (originalQueryRef) {
-      openDrawer([], () => {}, {
-        context: 'explore',
-        highlightQuery: originalQueryRef,
+      openDrawer({
+        datasourceFilters: [],
+        options: {
+          context: 'explore',
+          highlightQuery: originalQueryRef,
+        },
       });
     }
   };

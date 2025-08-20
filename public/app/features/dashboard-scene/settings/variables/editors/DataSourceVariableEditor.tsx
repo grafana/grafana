@@ -1,5 +1,6 @@
 import React, { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -80,20 +81,27 @@ export function getDataSourceVariableOptions(variable: SceneVariable): OptionsPa
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.datasource-options.type', 'Type'),
-      render: () => <DataSourceTypeSelect variable={variable} />,
+      id: uuidv4(),
+      render: ({ props }) => <DataSourceTypeSelect id={props.id} variable={variable} />,
     }),
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.datasource-options.name-filter', 'Name filter'),
+      id: uuidv4(),
       description: t(
         'dashboard.edit-pane.variable.datasource-options.name-filter-description',
         'Regex filter for which data source instances to include. Leave empty for all.'
       ),
-      render: () => <DataSourceNameFilter variable={variable} />,
+      render: ({ props }) => <DataSourceNameFilter id={props.id} variable={variable} />,
     }),
   ];
 }
 
-function DataSourceTypeSelect({ variable }: { variable: DataSourceVariable }) {
+interface InputProps {
+  variable: DataSourceVariable;
+  id?: string;
+}
+
+function DataSourceTypeSelect({ variable, id }: InputProps) {
   const { pluginId } = variable.useState();
   const options = getOptionDataSourceTypes();
 
@@ -104,6 +112,7 @@ function DataSourceTypeSelect({ variable }: { variable: DataSourceVariable }) {
 
   return (
     <Combobox
+      id={id}
       options={options}
       value={pluginId}
       onChange={onChange}
@@ -113,7 +122,7 @@ function DataSourceTypeSelect({ variable }: { variable: DataSourceVariable }) {
   );
 }
 
-function DataSourceNameFilter({ variable }: { variable: DataSourceVariable }) {
+function DataSourceNameFilter({ variable, id }: InputProps) {
   const { regex } = variable.useState();
 
   const onBlur = async (evt: React.FormEvent<HTMLInputElement>) => {
@@ -123,6 +132,7 @@ function DataSourceNameFilter({ variable }: { variable: DataSourceVariable }) {
 
   return (
     <Input
+      id={id}
       defaultValue={regex}
       onBlur={onBlur}
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter}

@@ -286,7 +286,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					Namespace:   a.GetNamespace(),
 					Subresource: a.GetSubresource(),
 				})
-
 				if err != nil {
 					return authorizer.DecisionDeny, "failed to perform authorization", err
 				}
@@ -612,15 +611,31 @@ func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Reposit
 	}
 
 	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+		// Instance sync can only be created if NO other repositories exist
 		for _, v := range all {
-			if v.Name != cfg.Name && v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+			if v.Name != cfg.Name {
 				return field.Forbidden(field.NewPath("spec", "sync", "target"),
-					"Another repository is already targeting root: "+v.Name)
+					"Instance repository can only be created when no other repositories exist. Found: "+v.Name)
+			}
+		}
+	} else {
+		// Folder sync cannot be created if an instance repository exists
+		for _, v := range all {
+			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance && v.Name != cfg.Name {
+				return field.Forbidden(field.NewPath("spec", "sync", "target"),
+					"Cannot create folder repository when instance repository exists: "+v.Name)
 			}
 		}
 	}
 
-	if len(all) >= 10 {
+	// Count repositories excluding the current one being created/updated
+	count := 0
+	for _, v := range all {
+		if v.Name != cfg.Name {
+			count++
+		}
+	}
+	if count >= 10 {
 		return field.Forbidden(field.NewPath("spec"),
 			"Maximum number of 10 repositories reached")
 	}

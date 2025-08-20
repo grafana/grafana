@@ -22,7 +22,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Badge, Divider, ErrorBoundaryAlert, List } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -38,6 +38,7 @@ import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryC
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
+import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
 
 export interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -290,6 +291,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.onToggleHelp();
   };
 
+  onSelectQueryFromLibrary = (query: DataQuery) => {
+    this.props.onQueryReplacedFromLibrary?.();
+    this.props.onReplace?.(query);
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -341,11 +347,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
   };
 
-  renderQueryLibraryEditingBadge = () => {
-    const { queryLibraryRef } = this.props;
-    return <QueryLibraryEditingBadge key="query-library-editing-badge" queryLibraryRef={queryLibraryRef} />;
-  };
-
   renderExtraActions = () => {
     const { query, queries, data, onAddQuery, dataSource, app } = this.props;
 
@@ -378,13 +379,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const {
-      query,
-      hideHideQueryButton: hideHideQueryButton = false,
-      onReplace,
-      onQueryReplacedFromLibrary,
-      queryLibraryRef,
-    } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -393,34 +388,21 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
-        {isEditingQueryLibrary && this.renderQueryLibraryEditingBadge()}
-        <MaybeQueryLibrarySaveButton
-          query={query}
-          queryLibraryRef={queryLibraryRef}
-          app={this.props.app}
-          onUpdateSuccess={this.onExitQueryLibraryEditingMode}
-        />
+        {!isEditingQueryLibrary && (
+          <MaybeQueryLibrarySaveButton
+            query={query}
+            app={this.props.app}
+            onSelectQuery={this.onSelectQueryFromLibrary}
+            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+          />
+        )}
 
         {!isEditingQueryLibrary && (
           <ReplaceQueryFromLibrary
             datasourceFilters={datasource?.name ? [datasource.name] : []}
-            onSelectQuery={(query) => {
-              onQueryReplacedFromLibrary?.();
-              onReplace?.(query);
-            }}
+            onSelectQuery={this.onSelectQueryFromLibrary}
             app={this.props.app}
           />
-        )}
-
-        {isEditingQueryLibrary && (
-          <>
-            <QueryOperationAction
-              title={t('query-operation.header.cancel-query-library-edit', 'Discard changes')}
-              icon="times"
-              onClick={this.onCancelQueryLibraryEdit}
-            />
-            <Divider direction="vertical" spacing={0} />
-          </>
         )}
 
         {hasEditorHelp && (
@@ -484,7 +466,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization, collapsable, hideActionButtons, isOpen, onQueryOpenChanged } = this.props;
+    const {
+      query,
+      index,
+      visualization,
+      collapsable,
+      hideActionButtons,
+      isOpen,
+      onQueryOpenChanged,
+      app,
+      queryLibraryRef,
+      onCancelQueryLibraryEdit,
+    } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
@@ -501,62 +494,56 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const editor = this.renderPluginEditor();
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
+    const queryOperationRow = (
+      <QueryOperationRow
+        id={this.id}
+        draggable={!hideActionButtons && !queryLibraryRef}
+        collapsable={collapsable}
+        index={index}
+        headerElement={this.renderHeader}
+        actions={hideActionButtons ? undefined : this.renderActions}
+        isOpen={isOpen}
+        onOpen={onQueryOpenChanged}
+      >
+        <div className={rowClasses} id={this.id}>
+          <ErrorBoundaryAlert>
+            {showingHelp && DatasourceCheatsheet && (
+              <OperationRowHelp>
+                <DatasourceCheatsheet
+                  onClickExample={(query) => this.onClickExample(query)}
+                  query={this.props.query}
+                  datasource={datasource}
+                />
+              </OperationRowHelp>
+            )}
+            {editor}
+          </ErrorBoundaryAlert>
+          {error && <QueryErrorAlert error={error} />}
+          {visualization}
+        </div>
+      </QueryOperationRow>
+    );
+
     return (
       <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
-        <QueryOperationRow
-          id={this.id}
-          draggable={!hideActionButtons}
-          collapsable={collapsable}
-          index={index}
-          headerElement={this.renderHeader}
-          actions={hideActionButtons ? undefined : this.renderActions}
-          isOpen={isOpen}
-          onOpen={onQueryOpenChanged}
-        >
-          <div className={rowClasses} id={this.id}>
-            <ErrorBoundaryAlert>
-              {showingHelp && DatasourceCheatsheet && (
-                <OperationRowHelp>
-                  <DatasourceCheatsheet
-                    onClickExample={(query) => this.onClickExample(query)}
-                    query={this.props.query}
-                    datasource={datasource}
-                  />
-                </OperationRowHelp>
-              )}
-              {editor}
-            </ErrorBoundaryAlert>
-            {error && <QueryErrorAlert error={error} />}
-            {visualization}
-          </div>
-        </QueryOperationRow>
+        {queryLibraryRef && (
+          <MaybeQueryLibraryEditingHeader
+            query={query}
+            app={app}
+            queryLibraryRef={queryLibraryRef}
+            onCancelEdit={onCancelQueryLibraryEdit}
+            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+            onSelectQuery={this.onSelectQueryFromLibrary}
+          />
+        )}
+        {queryLibraryRef ? (
+          <QueryLibraryEditingContainer>{queryOperationRow}</QueryLibraryEditingContainer>
+        ) : (
+          queryOperationRow
+        )}
       </div>
     );
   }
-}
-
-export function QueryLibraryEditingBadge(props: { queryLibraryRef?: string }) {
-  const { queryLibraryEnabled } = useQueryLibraryContext();
-  const { queryLibraryRef } = props;
-
-  if (!queryLibraryEnabled || !queryLibraryRef) {
-    return null;
-  }
-
-  return (
-    <Badge
-      color="blue"
-      icon="book"
-      text={t('query-operation.query-library.from-library', 'Updating query from library')}
-      tooltip={t(
-        'query-operation.query-library.editing-tooltip',
-        'Updating query from library\nUID: {{queryLibraryRef}}',
-        {
-          queryLibraryRef,
-        }
-      )}
-    />
-  );
 }
 
 /**
@@ -604,11 +591,31 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function MaybeQueryLibrarySaveButton(props: {
   query: DataQuery;
   app?: CoreApp;
-  queryLibraryRef?: string;
   onUpdateSuccess?: () => void;
+  onSelectQuery: (query: DataQuery) => void;
 }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.app, props.queryLibraryRef, props.onUpdateSuccess);
+  return renderSaveQueryButton(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
+}
+
+// Will render editing header only if query library is enabled
+function MaybeQueryLibraryEditingHeader(props: {
+  query: DataQuery;
+  app?: CoreApp;
+  queryLibraryRef?: string;
+  onCancelEdit?: () => void;
+  onUpdateSuccess?: () => void;
+  onSelectQuery?: (query: DataQuery) => void;
+}) {
+  const { renderQueryLibraryEditingHeader } = useQueryLibraryContext();
+  return renderQueryLibraryEditingHeader(
+    props.query,
+    props.app,
+    props.queryLibraryRef,
+    props.onCancelEdit,
+    props.onUpdateSuccess,
+    props.onSelectQuery
+  );
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
@@ -625,7 +632,7 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onReplaceQueryFromLibrary = () => {
-    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true, context: app });
+    openDrawer({ datasourceFilters, onSelectQuery, options: { isReplacingQuery: true, context: app } });
   };
 
   return queryLibraryEnabled ? (

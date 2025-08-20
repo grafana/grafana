@@ -14,7 +14,7 @@ import {
   ValueLinkConfig,
   ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { Portal, useStyles2, useTheme2, VizTooltipContainer } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -33,6 +33,7 @@ interface Props {
 }
 
 export const CanvasTooltip = ({ scene }: Props) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
@@ -139,7 +140,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   return (
     <>
       {scene.tooltipPayload?.element && scene.tooltipPayload.anchorPoint && (
-        <Portal>
+        <Portal zIndex={theme.zIndex.tooltip}>
           <VizTooltipContainer
             className={cx(styles.tooltipWrapper, scene.tooltipPayload.isOpen && styles.pinned)}
             position={{ x: scene.tooltipPayload.anchorPoint.x, y: scene.tooltipPayload.anchorPoint.y }}
@@ -167,7 +168,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: theme.zIndex.portal,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',
