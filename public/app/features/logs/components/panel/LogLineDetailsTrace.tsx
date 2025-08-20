@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
-import { DataFrame, DataSourceApi, TimeRange } from '@grafana/data';
+import { DataFrame, DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Icon, Spinner, Tooltip } from '@grafana/ui';
+import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 import { SearchTableType } from 'app/plugins/datasource/tempo/dataquery.gen';
@@ -23,6 +23,7 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
   const [dataSource, setDataSource] = useState<DataSourceApi | null>(null);
   const [dataFrames, setDataFrames] = useState<DataFrame[] | null | undefined>(undefined);
   const { app } = useLogListContext();
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     getDataSourceSrv()
@@ -101,10 +102,10 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
   );
 };
 
-const styles = {
+const getStyles = (theme: GrafanaTheme2) => ({
   message: css({
     display: 'flex',
-    gap: 4,
+    gap: theme.spacing(1),
     alignItems: 'center',
   }),
-};
+});
