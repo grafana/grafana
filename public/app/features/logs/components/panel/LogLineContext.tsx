@@ -102,7 +102,7 @@ export const LogLineContext = memo(
         sortOrder === LogsSortOrder.Ascending ? allLogs[0].timeEpochMs : allLogs[allLogs.length - 1].timeEpochMs;
       let toMs =
         sortOrder === LogsSortOrder.Ascending ? allLogs[allLogs.length - 1].timeEpochMs : allLogs[0].timeEpochMs;
-      // Add one second to get a range when from and to are equal.
+      // Add one millisecond to get a range when from and to are equal.
       if (fromMs === toMs) {
         toMs += 1;
       }
