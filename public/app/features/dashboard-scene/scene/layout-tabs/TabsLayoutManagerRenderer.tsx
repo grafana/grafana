@@ -8,6 +8,7 @@ import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
+import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';

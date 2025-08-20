@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data/';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
@@ -77,7 +77,16 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           </div>
         )
       ),
-    [conditionalRenderingClass, conditionalRenderingOverlay, isLazy, key, model.containerRef, styles]
+    [
+      conditionalRenderingClass,
+      conditionalRenderingOverlay,
+      isLazy,
+      key,
+      model.containerRef,
+      styles,
+      isConditionallyHidden,
+      isEditing,
+    ]
   );
 
   if (soloPanelContext) {
