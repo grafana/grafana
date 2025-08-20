@@ -17,7 +17,7 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	helper := runGrafana(t, useAppPlatformSecrets)
+	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
