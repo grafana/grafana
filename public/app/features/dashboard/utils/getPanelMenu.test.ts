@@ -15,6 +15,7 @@ import { getPanelMenu } from './getPanelMenu';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasAccessToExplore: () => true,
     hasPermission: jest.fn(),
   },
