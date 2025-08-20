@@ -1521,12 +1521,15 @@
     {
       "metadata": {
         "name": "grafanaPathfinder",
-        "resourceVersion": "1755693029194",
-        "creationTimestamp": "2025-08-20T12:30:29Z"
+        "resourceVersion": "1755694423549",
+        "creationTimestamp": "2025-08-20T12:30:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-20 12:53:43.549996 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Pathfinder app",
-        "stage": "privatePreview",
+        "stage": "experimental",
         "codeowner": "@grafana/wg-docs-in-product"
       }
     },

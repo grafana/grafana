@@ -249,4 +249,4 @@ newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
-grafanaPathfinder,privatePreview,@grafana/wg-docs-in-product,false,false,false
+grafanaPathfinder,experimental,@grafana/wg-docs-in-product,false,false,false
