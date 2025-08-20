@@ -1,0 +1,39 @@
+{
+  "apiVersion": "testdata.grafana.datasource.app/v2alpha1",
+  "metadata": {
+    "name": "unique-identifier",
+    "namespace": "org-0",
+    "uid": "YpaSG5GQAdxtLZtF6BqQWCeYXOhbVi5C4Cg4oILnJC0X",
+    "resourceVersion": "1083805200000",
+    "generation": 2,
+    "creationTimestamp": "2002-03-04T01:00:00Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "1234"
+    },
+    "annotations": {
+      "grafana.app/updatedTimestamp": "2004-05-06T01:00:00Z"
+    }
+  },
+  "spec": {
+    "access": "proxy",
+    "basicAuth": true,
+    "basicAuthUser": "xxx",
+    "database": "db",
+    "isDefault": true,
+    "jsonData": {
+      "aaa": "bbb",
+      "bbb": true,
+      "ccc": 1.234
+    },
+    "readOnly": true,
+    "title": "Hello",
+    "url": "http://something/",
+    "user": "A",
+    "withCredentials": true
+  },
+  "secure": {
+    "password": {
+      "name": "ds-c429ac622e"
+    }
+  }
+}

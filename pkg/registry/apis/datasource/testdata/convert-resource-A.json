@@ -5,14 +5,21 @@
     "uid": "IGIUtEQS21DtLpBG2rSGfuDoUX8cwsGrtb5aXauYeA4X",
     "resourceVersion": "1745320815000",
     "generation": 2,
-    "creationTimestamp": "2025-04-22T11:20:11Z"
+    "creationTimestamp": "2025-04-22T11:20:11Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "12345"
+    }
   },
   "spec": {
-    "title": "grafana-testdata-datasource",
+    "title": "Hello testdata",
     "access": "proxy",
     "isDefault": true,
+    "readOnly": true,
     "url": "http://something/",
     "database": "db",
+    "basicAuth": true,
+    "basicAuthUser": "xxx",
+    "withCredentials": true,
     "jsonData": {
       "aaa": "bbb",
       "bbb": true,
@@ -20,6 +27,6 @@
     }
   },
   "secure": {
-    "password": { "input": "XXXX" }
+    "password": { "create": "XXXX" }
   }
 }

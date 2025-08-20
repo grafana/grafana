@@ -29,7 +29,7 @@ func (u *UnstructuredSpec) Set(key string, val any) *UnstructuredSpec {
 	if u.Object == nil {
 		u.Object = make(map[string]any)
 	}
-	if val == nil || val == "" {
+	if val == nil || val == "" || val == false {
 		delete(u.Object, key)
 	} else {
 		u.Object[key] = val

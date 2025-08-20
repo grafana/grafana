@@ -1,19 +1,22 @@
 {
-  "name": "grafana-testdata-datasource",
+  "name": "Hello testdata",
   "type": "test-datasource",
   "access": "proxy",
   "url": "http://something/",
   "user": "",
   "database": "db",
-  "basicAuth": false,
-  "basicAuthUser": "",
-  "withCredentials": false,
+  "basicAuth": true,
+  "basicAuthUser": "xxx",
+  "withCredentials": true,
   "isDefault": true,
   "jsonData": {
     "aaa": "bbb",
     "bbb": true,
     "ccc": 1.234
   },
-  "secureJsonData": {},
-  "uid": "cejobd88i85j4d"
+  "secureJsonData": {
+    "password": "XXXX"
+  },
+  "uid": "cejobd88i85j4d",
+  "version": 2
 }

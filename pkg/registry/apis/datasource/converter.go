@@ -8,6 +8,7 @@ import (
 	"maps"
 	"strconv"
 	"strings"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -28,19 +29,17 @@ type converter struct {
 }
 
 func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.DataSource, error) {
-	cfg := &datasourceV0.DataSource{
+	obj := &datasourceV0.DataSource{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
-			Namespace:         r.mapper(ds.OrgID),
-			CreationTimestamp: metav1.NewTime(ds.Created),
-			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
-			Generation:        int64(ds.Version),
+			Name:       ds.UID,
+			Namespace:  r.mapper(ds.OrgID),
+			Generation: int64(ds.Version),
 		},
 		Spec:   datasourceV0.UnstructuredSpec{},
 		Secure: ToInlineSecureValues(ds.Type, ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
-	cfg.UID = gapiutil.CalculateClusterWideUID(cfg)
-	cfg.Spec.SetTitle(ds.Name).
+	obj.UID = gapiutil.CalculateClusterWideUID(obj)
+	obj.Spec.SetTitle(ds.Name).
 		SetAccess(string(ds.Access)).
 		SetURL(ds.URL).
 		SetDatabase(ds.Database).
@@ -53,13 +52,26 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		SetReadOnly(ds.ReadOnly).
 		SetJSONData(ds.JsonData)
 
-	if ds.ID > 0 {
-		cfg.Labels = map[string]string{
-			utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(ds.ID, 10),
+	if !ds.Created.IsZero() {
+		obj.CreationTimestamp = metav1.NewTime(ds.Created)
+	}
+	if !ds.Updated.IsZero() {
+		obj.ResourceVersion = fmt.Sprintf("%d", ds.Updated.UnixMilli())
+		obj.Annotations = map[string]string{
+			utils.AnnoKeyUpdatedTimestamp: ds.Updated.Format(time.RFC3339),
 		}
 	}
 
-	return cfg, nil
+	if ds.APIVersion != "" {
+		obj.APIVersion = fmt.Sprintf("%s/%s", r.group, ds.APIVersion)
+	}
+
+	if ds.ID > 0 {
+		obj.Labels = map[string]string{
+			utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(ds.ID, 10),
+		}
+	}
+	return obj, nil
 }
 
 // ToInlineSecureValues converts secure json into InlineSecureValues with reference names
@@ -85,7 +97,7 @@ func ToInlineSecureValues(dsType string, dsUID string, keys iter.Seq[string]) co
 }
 
 func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddDataSourceCommand, error) {
-	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
+	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
 	info, err := types.ParseNamespace(ds.Namespace)
@@ -120,7 +132,7 @@ func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 }
 
 func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
-	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
+	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
 	info, err := types.ParseNamespace(ds.Namespace)
