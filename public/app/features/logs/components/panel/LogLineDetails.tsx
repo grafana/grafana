@@ -65,7 +65,7 @@ export const LogLineDetails = memo(({ containerElement, focusLogLine, logs, onRe
 LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(({ focusLogLine, logs }: Pick<Props, 'focusLogLine' | 'logs'>) => {
-  const { closeDetails, noInteractions, showDetails, toggleDetails } = useLogListContext();
+  const { app, closeDetails, noInteractions, showDetails, toggleDetails } = useLogListContext();
   const [currentLog, setCurrentLog] = useState(showDetails[0]);
   const previousShowDetails = usePrevious(showDetails);
   const styles = useStyles2(getStyles, 'sidebar');
@@ -75,6 +75,7 @@ const LogLineDetailsTabs = memo(({ focusLogLine, logs }: Pick<Props, 'focusLogLi
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_displayed', {
         mode: 'sidebar',
+        app,
       });
     }
     // Once
@@ -133,7 +134,7 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsProps) => {
-  const { noInteractions } = useLogListContext();
+  const { app, detailsWidth, noInteractions } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -141,9 +142,10 @@ export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsPro
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_displayed', {
         mode: 'inline',
+        app,
       });
     }
-  }, [noInteractions]);
+  }, [app, noInteractions]);
 
   const saveScroll = useCallback(() => {
     saveDetailsScrollPosition(log, scrollRef.current?.scrollTop ?? 0);
@@ -157,7 +159,7 @@ export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsPro
   }, [log]);
 
   return (
-    <div className={`${styles.inlineWrapper} log-line-inline-details`}>
+    <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.container}>
         <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
           <LogLineDetailsComponent log={log} logs={logs} />
@@ -174,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
     height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
-    paddingBottom: theme.spacing(0.5),
+    padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
   container: css({

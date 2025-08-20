@@ -1,3 +1,4 @@
+import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType, Fragment, ReactNode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
@@ -5,7 +6,7 @@ import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { ErrorBoundaryAlert, getPortalContainer, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -122,12 +123,14 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                     <ScopesContextProvider>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
                         <MaybeExtensionSidebarProvider>
-                          <GlobalStylesWrapper />
-                          <div className="grafana-app">
-                            <RouterWrapper {...routerWrapperProps} />
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
+                          <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                            <GlobalStylesWrapper />
+                            <div className="grafana-app">
+                              <RouterWrapper {...routerWrapperProps} />
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </UNSAFE_PortalProvider>
                         </MaybeExtensionSidebarProvider>
                       </ExtensionRegistriesProvider>
                     </ScopesContextProvider>

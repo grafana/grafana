@@ -119,13 +119,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
-			Name:        "nestedFolders",
-			Description: "Enable folder nesting",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -260,14 +253,6 @@ var (
 			Description: "Enables the plugins frontend sandbox",
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:              "sqlDatasourceDatabaseSelection",
-			Description:       "Enables previous SQL data source dataset dropdown behavior",
-			FrontendOnly:      true,
-			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaOSSBigTent,
-			HideFromAdminPage: true,
 		},
 		{
 			Name:           "recordedQueriesMulti",
@@ -766,7 +751,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:              "scopeApi",
@@ -1177,15 +1162,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "unifiedStorageSearchPermissionFiltering",
-			Description:       "Enable permission filtering on unified storage search",
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaSearchAndStorageSquad,
-			Expression:        "true",
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
@@ -1410,15 +1386,6 @@ var (
 			Expression:     "true", // enabled by default
 			Owner:          identityAccessTeam,
 			AllowSelfServe: true,
-		},
-		{
-			Name:           "teamHttpHeadersMimir",
-			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   false,
-			AllowSelfServe: true,
-			Owner:          identityAccessTeam,
-			Expression:     "true",
 		},
 		{
 			Name:         "teamHttpHeadersTempo",
@@ -1672,6 +1639,14 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "grafanaAssistantInProfilesDrilldown",
+			Description:  "Enables integration with Grafana Assistant in Profiles Drilldown",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "true",
+		},
+		{
 			Name:        "postgresDSUsePGX",
 			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
 			Stage:       FeatureStageExperimental,
@@ -1731,6 +1706,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthzResourcePermissionApis",
+			Description:       "Registers AuthZ resource permission /apis endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "kubernetesAuthnMutation",
 			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
@@ -1767,6 +1750,15 @@ var (
 		{
 			Name:              "alertingImportAlertmanagerAPI",
 			Description:       "Enables the API to import Alertmanager configuration",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingImportAlertmanagerUI",
+			Description:       "Enables the UI to see imported Alertmanager configuration",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
@@ -1898,11 +1890,44 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "favoriteDatasources",
+			Description:  "Enable favorite datasources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "newLogContext",
 			Description:  "New Log Context component",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "newClickhouseConfigPageDesign",
+			Description:  "Enables new design for the Clickhouse data source configuration page",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:              "unifiedStorageSearchAfterWriteExperimentalAPI",
+			Description:       "Enable experimental search-after-write guarantees to unified-storage search endpoints",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+			Expression:        "false",
+		},
+		{
+			Name:         "teamFolders",
+			Description:  "Enables team folders functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			Expression:   "false",
 		},
 	}
 )

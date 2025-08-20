@@ -2,496 +2,496 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "Fel vid laddning av kommentarsdata!",
+        "aria-label-lower-limit-parameter": "Ställ in nedre gräns för stegparametern",
+        "label-min-step": "Minsta steg",
+        "label-series-value-as-timestamp": "Serievärde som tidsstämpel",
         "label-tags": "Taggar",
-        "label-text": "",
+        "label-text": "Text",
         "label-title": "Titel",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "auto",
+        "tooltip-either-pattern-example-instance-replaced-label": "Använd antingen namnet eller ett mönster. Till exempel ersätts {{labelTemplate}} med etikettvärdet för etiketten {{labelName}}.",
+        "tooltip-min-step": "En ytterligare nedre gräns för stegparametern för Prometheus-frågan och för variablerna <2>{{intervalVar}}</2> och <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Tidsstämpelns enhet är millisekunder. Om enheten för serievärdet är sekunder, multiplicera dess intervallvektor med 1 000."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "Kör en direktfråga och en intervallfråga"
         },
         "label": {
-          "both": ""
+          "both": "Båda"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "Kör fråga över ett tidsintervall"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "Direkt",
+            "range": "Räckvidd"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "Filtrera uttryck för etikett",
+        "description-select-labels": "När etikettvärden väljs visas endast möjliga etikettkombinationer.",
+        "select-labels-to-search-in": "2. Välj etiketter att söka i"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "Filtrera uttryck för mätvärde",
+        "aria-label-limit-results-from-series-endpoint": "Begränsa resultat från serieändpunkt",
+        "description-series-limit": "Gränsen gäller för alla mätvärden, etiketter och värden. Lämna fältet tomt för att använda standardgränsen. Ställ in på 0 för att inaktivera gränsen och hämta allt – detta kan orsaka prestandaproblem.",
+        "label-select-metric": "När ett mätvärde väljs visas endast möjliga etiketter. Etiketter begränsas av seriegränsen nedan.",
+        "select-a-metric": "1. Välj ett mått",
+        "series-limit": "Seriegräns"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "PromQL-fusklapp"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "Exemplar",
+        "tooltip-disable-query": "Inaktivera fråga med exempel",
+        "tooltip-enable-query": "Aktivera fråga med exempel"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Prometheus extrafält",
+        "aria-label-query-type-field": "Fält för typ av fråga",
+        "aria-label-step-field": "Stegfält",
+        "min-step": "Minsta steg",
+        "query-type": "Typ av fråga",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Tidsenheter och inbyggda variabler kan användas här, till exempel: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Standard om ingen enhet anges: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "Ange en PromQL-fråga …"
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "Klassisk fråga",
+        "aria-label-metric-regex": "Måttregex",
+        "aria-label-metric-selector": "Måttväljare",
+        "aria-label-prometheus-query": "Prometheus-fråga",
+        "aria-label-query-type": "Typ av fråga",
+        "aria-label-series-query": "Seriefråga",
+        "label-classic-query": "Klassisk fråga",
         "label-label": "Etikett",
-        "label-metric-regex": "",
+        "label-metric-regex": "Måttregex",
         "label-query": "Fråga",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "Typ av fråga",
+        "label-series-query": "Seriefråga",
+        "placeholder-classic-query": "Klassisk fråga",
+        "placeholder-metric-regex": "Måttregex",
+        "placeholder-prometheus-query": "Prometheus-fråga",
         "placeholder-select-query-type": "Välj typ av fråga",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "Seriefråga",
+        "returns-metrics-matching-specified-metric-regex": "Returnerar en lista över mätvärden som matchar angiven måttregex.",
+        "tooltip-classic-query": "Den ursprungliga implementeringen av Prometheus variabla frågeredigerare. Ange en sträng med rätt frågetyp och parametrar enligt beskrivningen i dessa dokument. Till exempel, {{exampleQuery}}.",
+        "tooltip-label": "Returnerar en lista över etikettvärden för etikettnamnet för alla mätvärden om inte mätvärdet är angivet.",
+        "tooltip-metric-regex": "Returnerar en lista över etikettnamn, eventuellt filtrering efter angiven måttregex.",
+        "tooltip-query": "Returnerar en lista över Prometheus frågeresultat för frågan. Detta kan inkludera Prometheus-funktioner, d.v.s. {{exampleQuery}}.",
+        "tooltip-query-type": "Prometheus-datakällans tillägg tillhandahåller följande frågetyper för mallvariabler.",
+        "tooltip-series-query": "Ange ett mätvärde med etiketter, endast ett mätvärde eller endast etiketter d.v.s. {{example1}}, {{example2}} eller {{example3}}. Returnerar en lista över tidsserier som är associerade med angivna data."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "väljare",
+        "aria-label-selector-clear-button": "Knapp för att rensa väljare",
+        "aria-label-use-selector-as-metrics-button": "Knapp för att använda väljare som mätvärde",
+        "aria-label-use-selector-for-query-button": "Använd väljare för frågeknapp",
+        "aria-label-validate-submit-button": "Validera skicka-knappen",
         "clear": "Rensa",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. Resulterande väljare",
+        "use-as-rate-query": "Använd som ”rate”-fråga",
+        "use-query": "Använd fråga",
+        "validate-selector": "Validera väljare"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "Filtrera uttryck för etikettvärden",
+        "aria-label-values-for": "Värden för {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Använd sökfältet för att hitta värden över valda etiketter.",
+        "select-multiple-values-for-your-labels": "3. Välj (flera) värden för dina etiketter"
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "Tillåt som mål för inspelningsregler",
+        "label-manage-alerts-via-alerting-ui": "Hantera varningar via larmgränssnittet",
         "title-alerting": "Varnar",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "Tillåt att denna datakälla väljs som mål för att skriva inspelningsregler.",
         "tooltip-manage-alerts-via-alerting-ui": "Hantera varningsregler för den här datakällan. Om du vill hantera andra varningsresurser ska du lägga till en Alertmanager-datakälla."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "Webbläsaråtkomstläge i Prometheus-datakällan är inte längre tillgängligt. Byt till serveråtkomstläge.",
+        "description-advanced-settings": "Ytterligare inställningar är valfria inställningar som kan konfigureras för ökad kontroll över din datakälla.",
         "title-advanced-settings": "Avancerade inställningar",
         "title-error": "Fel"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "Din åtkomstmetod är <1>Webbläsare</1>, vilket innebär att webbadressen måste vara tillgänglig från webbläsaren.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "Ange en fullständig HTTP-URL (till exempel {{exampleURL}})",
         "tooltip-server-access-mode": "Din åtkomstmetod är <1>Server</1>, vilket innebär att webbadressen måste vara tillgänglig från Grafana-gränssnittet/servern."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "Besök dokumentationen för mer information här."
       },
       "exemplar-setting": {
         "label-data-source": "Datakälla",
-        "label-internal-link": "",
+        "label-internal-link": "Intern länk",
         "label-label-name": "Etikettnamn",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "Ta bort exempel på länk",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "URL-etikett",
+        "placeholder-go-to-examplecom": "Gå till example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "Ta bort exempel på länk",
+        "tooltip-data-source": "Datakällan som exemplet kommer att navigera till.",
+        "tooltip-internal-link": "Aktivera det här alternativet om du har en intern länk. När det är aktiverat visar detta datakällans väljare. Välj backend-spårningsdatalagret för dina exempeldata.",
+        "tooltip-label-name": "Namnet på fältet i etikettobjektet som ska användas för att hämta spårnings-ID.",
+        "tooltip-url": "URL till spårningssystemet som användaren går till för att se sin spårning",
+        "tooltip-url-label": "Används för att åsidosätta knappetiketten för fältet för exemplartrace-ID."
       },
       "exemplars-settings": {
         "add": "Lägg till",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "Inga exemplar-konfigurationer",
+        "title-exemplars": "Exemplar"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
+        "aria-label-default-editor": "Standardredigerare (kod eller byggare)",
+        "aria-label-prom-type-type": "{{promType}} typ",
+        "aria-label-prometheus-type": "Prometheus-typ",
+        "aria-label-select-http-method": "Välj HTTP-metod",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Kod"
         },
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "label-cache-level": "Cache-nivå",
+        "label-custom-query-parameters": "Anpassade frågeparametrar",
+        "label-default-editor": "Standardredigerare",
+        "label-disable-metrics-lookup": "Inaktivera sökning av mätvärden",
+        "label-disable-recording-rules-beta": "Inaktivera inspelningsregler (beta)",
+        "label-http-method": "HTTP-metod",
+        "label-incremental-querying-beta": "Inkrementell fråga (beta)",
+        "label-metric-names-suggestion-limit": "Begränsning för mätvärdesnamnförslag",
+        "label-prom-type-version": "{{promType}} version",
+        "label-prometheus-type": "Prometheus-typ",
+        "label-query-overlap-window": "Fönster för frågeöverlappning",
+        "label-query-timeout": "Timeout för fråga",
+        "label-scrape-interval": "Skrapningsintervall",
+        "label-series-limit": "Seriegräns",
+        "label-use-series-endpoint": "Använd serieändpunkt",
+        "more-info": "För mer information om hur du konfigurerar prometheustyp och -version i datakällor, se <2>provisioneringsdokumentationen</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Exempel: {{example}}",
+        "title-interval-behaviour": "Intervallbeteende",
+        "title-other": "Annat",
         "title-performance": "Performance",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "Frågeredigerare",
+        "tooltip-cache-level": "Anger webbläsarens cachelagringsnivå för redigeringsfrågor. Högre cacheinställningar rekommenderas för datakällor med hög kardinalitet.",
+        "tooltip-custom-query-parameters": "Lägg till anpassade parametrar i Prometheus fråge-URL. Till exempel {{example1}}, {{example2}}, {{example3}} eller {{example4}}. Flera parametrar ska sammanfogas med {{concatenationChar}}.",
+        "tooltip-default-editor": "Ange standardalternativ för redigerare för alla användare av den här datakällan.",
+        "tooltip-disable-metrics-lookup": "Om du markerar det här alternativet inaktiveras metrikväljaren och stödet för automatisk komplettering av metrik/etikett i sökfältet. Detta hjälper om du har prestandaproblem med större Prometheus-instanser. ",
+        "tooltip-disable-recording-rules-beta": "Denna funktion kommer att inaktivera inspelningsregler. Aktivera detta för att förbättra instrumentpanelens prestanda",
+        "tooltip-http-method": "Du kan använda antingen HTTP-metoden POST eller GET för att fråga din Prometheus-datakälla. POST är den rekommenderade metoden eftersom den tillåter större frågor. Ändra detta till GET om du har en Prometheus-version som är äldre än 2.1 eller om POST-förfrågningar är begränsade i ditt nätverk.",
+        "tooltip-incremental-querying-beta": "Denna funktion kommer att ändra standardbeteendet för relativa frågor till att alltid begära nya data från prometheus-instansen, istället kommer frågeresultat att cachelagras och endast nya poster begärs. Aktivera detta för att minska databas- och nätverksbelastningen.",
+        "tooltip-metric-names-suggestion-limit": "Maximalt antal metriknamn som kan visas som autofyllningsförslag i frågeredigerarens kodläge.",
+        "tooltip-prom-type-version": "Använd detta för att ställa in versionen av din {{promType}}-instans om den inte konfigureras automatiskt.",
+        "tooltip-prometheus-type": "Ställ in detta till typen av din prometheus-databas, t.ex. Prometheus, Cortex, Mimir eller Thanos. Om du ändrar det här fältet sparas dina nuvarande inställningar. Vissa typer av Prometheus stöder eller stöder inte olika API:er. Till exempel stöder vissa typer regex-matchning för etikettfrågor för att förbättra prestandan. Vissa typer har ett API för metadata. Om du ställer in detta felaktigt kan du uppleva konstigt beteende när du frågar efter mätvärden och etiketter. Kontrollera din Prometheus-dokumentation för att säkerställa att du anger rätt typ.",
+        "tooltip-query-overlap-window": "Ange en varaktighet som {{example1}} eller {{example2}} eller {{example3}}. Standard för {{default}}. Denna varaktighet kommer att läggas till varaktigheten för varje inkrementell begäran.",
+        "tooltip-query-timeout": "Ställ in timeout för Prometheus-fråga.",
+        "tooltip-scrape-interval": "Detta intervall anger hur ofta Prometheus skrapar målen. Ställ in detta till det typiska skrapnings- och utvärderingsintervallet som konfigurerats i din Prometheus-konfigurationsfil. Om du anger ett värde som är större än Prometheus-konfigurationsfilens intervall, kommer Grafana att bearbeta datan utifrån detta nya intervall, vilket resulterar i färre datapunkter. Standardvärdet är {{default}}.",
+        "tooltip-series-limit": "Gränsen gäller för alla resurser (mätvärden, etiketter och värden) för båda slutpunkterna (serier och etiketter). Lämna fältet tomt för att använda standardgränsen (40 000). Ställ in på 0 för att inaktivera gränsen och hämta allt – detta kan orsaka prestandaproblem. Standardgränsen är 40 000.",
+        "tooltip-use-series-endpoint": "Om du markerar det här alternativet kommer serieslutpunkten med parametern {{exampleParameter}} att prioriteras framför etikettvärdeslutpunkten med parametern {{exampleParameter}}. Även om slutpunkten för etikettvärden anses ha bättre prestanda, kan vissa användare föredra series-slutpunkten eftersom den stöder POST-metoden, medan slutpunkten för etikettvärden endast stöder GET-metoden."
       }
     },
     "metrics-browser": {
-      "disabled-label": "",
-      "enabled-label": ""
+      "disabled-label": "(Inaktiverad)",
+      "enabled-label": "Mätvärdesbläddrare"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Inkluderar endast unika etiketter",
+        "description-custom": "Tillhandahåll en namnmall",
+        "description-verbose": "Alla etikettnamn och värden",
+        "label-auto": "Auto",
+        "label-custom": "Anpassad",
+        "label-verbose": "Detaljerad"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Beräkna genomsnittet över dimensioner",
+        "documentation-bottomk": "Minsta k-element baserat på provvärde",
+        "documentation-count": "Räkna antalet element i vektorn",
+        "documentation-count-values": "Räkna antalet element med samma värde",
+        "documentation-group": "Alla värden i den resulterande vektorn är 1",
+        "documentation-max": "Välj maximalt över dimensioner",
+        "documentation-min": "Välj minimum över dimensioner",
+        "documentation-quantile": "Beräkna φ-kvantil (0 ≤ φ ≤ 1) över dimensioner",
+        "documentation-stddev": "Beräkna populationsstandardavvikelse över dimensioner",
+        "documentation-stdvar": "Beräkna populationsstandardvarians över dimensioner",
+        "documentation-sum": "Beräkna summan över dimensioner",
+        "documentation-topk": "Största k-element baserat på provvärde"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Returnerar indata-vektorn med alla provvärden konverterade till deras absoluta värde.",
+        "documentation-absent": "Returnerar en tom vektor om den vektor som skickas till den har några element och en 1-element vektor med värdet 1 om den vektor som skickas till den inte har några element. Det är användbart för att kunna varna när det inte finns några tidsserier för en given kombination av måttnamn och etikett.",
+        "documentation-absent-over-time": "Returnerar en tom vektor om intervallvektorn som skickas till den har några element och en 1-elementvektor med värdet 1 om intervallvektorn som skickas till den inte har några element.",
+        "documentation-avg-over-time": "Medelvärdet av alla punkter i det angivna intervallet.",
+        "documentation-ceil": "Avrundar provvärdena för alla element i ”v” uppåt till närmaste heltal.",
+        "documentation-changes": "För varje indatatidsserie returnerar ”changes(v range-vector)” antalet gånger dess värde har ändrats inom det angivna tidsintervallet, som en ögonblicksvektor.",
+        "documentation-clamp": "Begränsar provvärdena för alla element i ”v” till att ha en undre gräns på min och en övre gräns på max.",
+        "documentation-clamp-max": "Begränsar provvärdena för alla element i ”v” till att ha en övre gräns på ”max”.",
+        "documentation-clamp-min": "Begränsar provvärdena för alla element i ”v” till att ha en undre gräns på min.",
+        "documentation-count-over-time": "Antalet av alla värden i det angivna intervallet.",
+        "documentation-count-scalar": "Returnerar antalet element i en tidsserie-vektor som en skalär. Detta står i kontrast till aggregeringsoperatorn ”count()”, som alltid returnerar en vektor (en tom sådan om indatavektorn är tom) och tillåter gruppering efter etiketter via en by-sats.",
+        "documentation-day-of-month": "Returnerar dagen i månaden för var och en av de angivna tiderna i UTC. Returnerade värden är från 1 till 31.",
+        "documentation-day-of-week": "Returnerar veckodagen för var och en av de angivna tiderna i UTC. Returnerade värden är från 0 till 6, där 0 betyder söndag etc.",
+        "documentation-day-of-year": "Returnerar dagen på året för varje given tid i UTC. Värdena som returneras är från 1 till 365 för icke-skottår och från 1 till 366 för skottår.",
+        "documentation-days-in-month": "Returnerar antalet dagar i månaden för var och en av de angivna tiderna i UTC. Returnerade värden är från 28 till 31.",
+        "documentation-deg": "Konverterar radianer till grader för alla element i v",
+        "documentation-delta": "Beräknar skillnaden mellan det första och sista värdet för varje tidsserieelement i en intervallvektor ”v” och returnerar en omedelbar vektor med givna deltor och motsvarande etiketter. Deltan extrapoleras för att omfatta hela tidsintervallet som anges i intervallvektorväljaren så att det går att få ett icke-heltalresultat även om alla provvärden är heltal.",
+        "documentation-deriv": "Beräknar derivatan per sekund av tidsserien i en intervallvektor ”v” med hjälp av enkel linjär regression.",
+        "documentation-double-exponential-smoothing": "Skapar ett utjämnat värde för tidsserier baserat på intervallet i ”v”. Ju lägre utjämningsfaktorn ”sf” är, desto mer vikt ges till äldre data. Ju högre trendfaktorn ”tf” är, desto mer beaktas trender inom data. Både sf och tf måste vara mellan 0 och 1.",
+        "documentation-drop-common-labels": "Släpper alla etiketter som har samma namn och värde över alla serier i indata-vektorn.",
+        "documentation-exp": "Beräknar den exponentiella funktionen för alla element i ”v”.\nSpecialfall är:\n* ”Exp(+Inf) = +Inf” \n* ”Exp(NaN) = NaN”",
+        "documentation-floor": "Avrundar provvärdena för alla element i ”v” nedåt till närmaste heltal.",
+        "documentation-histogram-avg": "Returnerar det aritmetiska medelvärdet av observerade värden lagrade i ett internt histogram. Värden som inte är interna histogram ignoreras och visas inte i den returnerade vektorn.",
+        "documentation-histogram-count": "Returnerar antalet observationer som lagras i ett internt histogram.",
+        "documentation-histogram-fraction": "Returnerar den uppskattade andelen observationer mellan de angivna undre och övre värdena.",
+        "documentation-histogram-quantile": "Beräknar φ-kvantilen (0 ≤ φ ≤ 1) från ett histograms behållare ”b”. Värdena i ”b” är antalet observationer i varje behållare. Varje värde måste ha en etikett ”le”, där etikettvärdet anger behållarens inkluderande övre gräns. (Värden utan sådan etikett ignoreras utan att generera något felmeddelande.) Metriktypen histogram tillhandahåller automatiskt tidsserier med suffixet ”_bucket” och lämpliga etiketter.",
+        "documentation-histogram-stddev": "Returnerar den uppskattade standardavvikelsen för observationer i ett internt histogram, baserat på det geometriska medelvärdet av de behållare där observationerna finns.",
+        "documentation-histogram-stdvar": "Returnerar den uppskattade standardvariansen för observationer i ett internt histogram.",
+        "documentation-histogram-sum": "Returnerar summan för observationer som lagras i ett internt histogram.",
+        "documentation-holt-winters": "Omdöpt till double_exponential_smoothing i Prometheus v3.x. För Prometheus-versioner lika med eller större än v3.0 ska double_exponential_smoothing användas. \n\nFunktionen producerar ett utjämnat värde för tidsserier baserat på intervallet i ”v”. Ju lägre utjämningsfaktor ”sf” är, desto större vikt ges åt äldre data. Ju högre trendfaktor ”tf” är, desto mer beaktas trender i datan. Både sf och tf måste ligga mellan 0 och 1.",
+        "documentation-hour": "Returnerar timmen på dygnet i UTC för var och en av de angivna tidpunkterna. Värdena som returneras är mellan 0 och 23.",
+        "documentation-idelta": "Beräknar skillnaden mellan de två senaste värdena i intervallvektorn ”v” och returnerar en ögonblicksvektor med de givna deltavärdena och motsvarande etiketter.",
+        "documentation-increase": "Beräknar ökningen i tidsserien inom intervallvektorn. Brott i monotonin (som exempelvis räknaråterställningar på grund av målomstarter) justeras automatiskt. Ökningen extrapoleras för att täcka hela tidsintervallet som specificerats i intervallvektorsväljaren så att det är möjligt att få ett icke-heltalsresultat även om en räknare endast ökar med heltalsteg.",
+        "documentation-info": "Returnerar senaste detaljer och metadata om en grupp mätvärden, som till exempel deras etiketter och aktuella värden, utan att utföra några beräkningar",
+        "documentation-irate": "Beräknar den momentana ökningstakten per sekund för tidsserien i intervallvektorn. Denna beräkning baseras på de två senaste datapunkterna. Brott i monotonin (som exempelvis räknaråterställningar på grund av målomstarter) justeras automatiskt.",
+        "documentation-label-join": "För varje tidsserie i ”v” sammanfogas alla värden från samtliga ”src_labels” med hjälp av separator, och tidsserien returneras med etiketten ”dst_label” som innehåller det sammanfogade värdet. Denna funktion kan hantera valfritt antal ”src_labels”.",
+        "documentation-label-replace": "För varje tidsserie i ”v” matchar ”label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)” det reguljära uttrycket ”regex” mot etiketten ”src_label”. Om det finns en matchning, returneras tidsserien med etiketten ”dst_label” ersatt av expansionen av ”replacement”. ”$1” ersätts med den första matchande undergruppen, ”$2” med den andra och så vidare. Om det reguljära uttrycket inte matchar returneras tidsserien oförändrad.",
+        "documentation-last-over-time": "Det senaste punktvärdet i angivet intervall.",
+        "documentation-ln": "Beräknar den naturliga logaritmen för alla element i ”v”.\nSpecialfall är:\n * ”ln(+Inf) = +Inf”\n * ”ln(0) = -Inf”\n * ”ln(x < 0) = NaN”\n * ”ln(NaN) = NaN”",
+        "documentation-log10": "Beräknar den decimala logaritmen för alla element i ”v”. Specialfallen är ekvivalenta med dem i ”ln”.",
+        "documentation-log2": "Beräknar den binära logaritmen för alla element i ”v”. Specialfallen är ekvivalenta med dem i ”ln”.",
+        "documentation-max-over-time": "Maximivärdet av alla punkter i det angivna intervallet.",
+        "documentation-min-over-time": "Minimivärdet av alla punkter i det angivna intervallet.",
+        "documentation-minute": "Returnerar minuten i timmen för var och en av de angivna tiderna i UTC. Värdena som returneras är från 0 till 59.",
+        "documentation-month": "Returnerar månaden på året för var och en av de angivna tiderna i UTC. Värdena som returneras är från 1 till 12, där 1 betyder januari etc.",
+        "documentation-pi": "Returnerar pi",
+        "documentation-predict-linear": "Förutspår värdet på tidsserien ”t” sekunder från och med nu, baserat på intervallvektorn ”v”, med hjälp av enkel linjär regression.",
+        "documentation-present-over-time": "Värdet 1 för alla serier i det angivna intervallet.",
+        "documentation-quantile-over-time": "φ-kvantilen (0 ≤ φ ≤ 1) av värdena i det angivna intervallet.",
+        "documentation-rad": "Konverterar grader till radianer för alla element i v",
+        "documentation-rate": "Beräknar den genomsnittliga ökningstakten per sekund för tidsserien i intervallvektorn. Brott i monotonin (som exempelvis räknaråterställningar på grund av målomstarter) justeras automatiskt. Dessutom extrapolerar beräkningen till tidsintervallets ändar, vilket kompenserar för missade insamlingar eller bristfällig synkronisering mellan insamlingscykler och intervallets tidsperiod.",
+        "documentation-resets": "För varje inmatad tidsserie returnerar ”resets(v range-vector)” antalet räknaråterställningar inom det angivna tidsintervallet som en ögonblicksvektor. Varje minskning av värdet mellan två på varandra följande mätvärden tolkas som en räknaråterställning.",
+        "documentation-round": "Rundar av mätvärdena för alla element i ”v” till närmaste heltal. Lika avstånd rundas uppåt. Det valfria argumentet ”to_nearest” låter dig ange närmaste multipel som mätvärdena ska rundas till. Denna multipel kan även vara en fraktion.",
+        "documentation-scalar": "Om en indatavektor endast innehåller ett element, returnerar ”scalar(v instant-vector)” elementets värde som en skalär. Om indatavektorn inte har exakt ett element, returnerar ”scalar” värdet ”NaN”.",
+        "documentation-sgn": "Returnerar en vektor där alla mätvärden har konverterats till deras tecken, definierat på följande vis: 1 om ”v” är positivt, -1 om ”v” är negativt och 0 om ”v” är noll.",
+        "documentation-sort": "Returnerar vektorelement sorterade efter deras mätvärden, i stigande ordning.",
+        "documentation-sort-desc": "Returnerar vektorelement sorterade efter deras mätvärden, i fallande ordning.",
+        "documentation-sqrt": "Beräknar kvadratroten av alla element i ”v”.",
+        "documentation-stddev-over-time": "Populationens standardavvikelse för värdena inom det angivna intervallet.",
+        "documentation-stdvar-over-time": "Populationens standardvarians för värdena inom det angivna intervallet.",
+        "documentation-sum-over-time": "Summan av alla värden inom det angivna intervallet.",
+        "documentation-time": "Returnerar antalet sekunder sedan den 1 januari 1970 UTC. Observera att detta faktiskt inte returnerar aktuell tid, utan motsvarar den tidpunkt i förhållande till vilken uttrycket ska utvärderas.",
+        "documentation-timestamp": "Returnerar tidsstämpeln för varje mätvärde i den angivna vektorn som antalet sekunder sedan den 1 januari 1970 UTC.",
+        "documentation-vector": "Returnerar skalaren ”s” som en vektor utan etiketter.",
+        "documentation-year": "Returnerar året för var och en av de angivna tiderna i UTC."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "beräknar arccos för alla element i {{argument}}",
+        "documentation-acosh": "beräknar inversa hyperboliska cosinus för alla element i {{argument}}",
+        "documentation-asin": "beräknar arcsin för alla element i {{argument}}",
+        "documentation-asinh": "beräknar inversa hyperboliska sinus för alla element i {{argument}}",
+        "documentation-atan": "beräknar arctan för alla element i {{argument}}",
+        "documentation-atanh": "beräknar inversa hyperboliska tangens för alla element i {{argument}}",
+        "documentation-cos": "beräknar cos för alla element i {{argument}}",
+        "documentation-cosh": "beräknar hyperboliska cosinus för alla element i {{argument}}",
+        "documentation-sin": "beräknar sin för alla element i {{argument}}",
+        "documentation-sinh": "beräknar hyperboliska sinus för alla element i {{argument}}",
+        "documentation-tan": "beräknar tan för alla element i {{argument}}",
+        "documentation-tanh": "beräknar hyperboliska tangens för alla element i {{argument}}"
       }
     },
     "querybuilder": {
       "feedback-link": {
         "give-feedback": "Ge feedback",
-        "title-give-feedback": ""
+        "title-give-feedback": "Metrics Explorer är ny – berätta gärna hur vi kan förbättra den"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Exempel: {{value}}",
+        "format": "Format: {{value}}",
+        "legend": "Förklaring: {{value}}",
+        "step": "Steg: {{value}}",
+        "type": "Typ: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "type": ""
+        "browse": "Sök mätvärden efter namn",
+        "type": "Filtrera efter typ"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Ett kumulativt mätvärde som representerar ett enda monotont ökande räknare vars värde endast kan ökas eller återställas till noll vid omstart.",
+        "description-gauge": "Ett mätvärde som representerar ett enda numeriskt värde som godtyckligt kan gå upp och ner.",
+        "description-histogram": "Ett histogram samplar observationer (vanligtvis sådant som förfrågningstider eller svarstorlekar) och räknar dem i konfigurerbara fack.",
+        "description-native-histogram": "Inbyggda histogram skiljer sig från klassiska Prometheus-histogram på flera sätt: Gränserna för inbyggda histogramfack beräknas med en formel som beror på det inbyggda histogrammets skala (upplösning) och är inte användardefinierade.",
+        "description-no-type": "Dessa mätvärden har ingen definierad typ i metadata.",
+        "description-summary": "En sammanställning samplar observationer (vanligtvis sådant som förfrågningstider och svarstorlekar) och kan beräkna konfigurerbara kvantiler över ett glidande tidsfönster.",
+        "description-unknown": "Dessa mätvärden har fått typen okänd i metadata.",
+        "label-counter": "Räknare",
+        "label-gauge": "Mätare",
+        "label-histogram": "Histogram",
+        "label-native-histogram": "Inbyggt histogram",
+        "label-no-type": "Ingen typ",
+        "label-summary": "Sammanfattning",
+        "label-unknown": "Okänt"
       },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Tolkningen av frågan är tvetydig."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "Ta bort {{name}}",
+        "placeholder-select-label": "Välj etikett",
         "placeholder-select-value": "Välj värde"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "Etikettfilter",
+        "label-label-filters": "Etikettfilter",
+        "tooltip-label-filters": "Valfritt: används för att filtrera det metriska valet för denna frågetyp."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Läser in etiketter",
+        "noOptionsMessage-no-labels-found": "Inga etiketter hittades"
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "Öppna Metrics Explorer",
+          "placeholder-select-metric": "Välj mätvärde",
+          "tooltip-open-metrics-explorer": "Öppna Metrics Explorer"
         },
         "label-metric": "Mått",
-        "tooltip-metric": ""
+        "tooltip-metric": "Valfritt: returnerar en lista över etikettvärden för etikettnamnet i det angivna mätvärdet."
       },
       "metrics-modal": {
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "title-metrics-explorer": ""
+        "aria-label-browse-metrics": "Bläddra bland mätvärden",
+        "currently-selected": "För närvarande valt: {{selected}}",
+        "metrics-pre-filtered": "Mätvärdena har filtrerats i förväg med hjälp av de etiketter som valts i etikettfiltren.",
+        "title-metrics-explorer": "Metrics Explorer"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "Ignorerar",
           "on": "På"
         },
         "operator": "Operatör",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "Ta bort matchning",
+        "vector-matches": "Vektormatchningar"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "Operationen {{id}} hittades inte",
+        "title-remove": "Ta bort {{name}}"
       },
       "operation-header": {
         "placeholder-replace-with": "Ersätt med",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "Klicka för att visa alternativa åtgärder",
+        "title-remove-operation": "Ta bort operation"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "Klicka för att visa beskrivning",
+        "title-remove-operation": "Ta bort operation"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "Operationer",
         "placeholder-search": "Sök",
-        "title-add-operation": ""
+        "title-add-operation": "Lägg till operation"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "Lägg till {{name}}",
+        "title-remove": "Ta bort {{name}}"
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "Beräknar {{aggregationName}} över dimensioner och bevarar samtidigt {{labelWord}} {{labels}}.",
+          "label-default": "Beräknar {{aggregationName}} över dimensionerna.",
+          "label-without": "Beräknar {{aggregationName}} över dimensionerna {{labels}}. Alla andra etiketter bevaras."
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
+        "aria-label-lower-limit-parameter": "Ställ in nedre gräns för stegparametern",
+        "aria-label-select-resolution": "Välj upplösning",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Värmekarta",
+          "label-table": "Tabell",
+          "label-time-series": "Tidsserier"
         },
-        "label-exemplars": "",
+        "label-exemplars": "Exemplar",
         "label-format": "Format",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "Minsta steg",
+        "label-resolution": "Lösning ",
         "label-type": "Typ",
-        "placeholder-auto": "",
+        "placeholder-auto": "auto",
         "title-options": "Alternativ",
-        "tooltip-min-step": ""
+        "tooltip-min-step": "En ytterligare nedre gräns för stegparametern för Prometheus-frågan och för variablerna <2>{{interval}}</2> och <4>{{rateInterval}}</4>."
       },
       "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "autocomplete-suggestions-limited": "Antalet förslag vid autofyllning är begränsat",
+        "tooltip-autocomplete-suggestions-limited": "Antalet metriknamn är fler än vad som kan visas med autofyllning. De {{autocompleteLimit}} mest relevanta mätvärdena visas. Du kan justera tröskelvärdet i datakällans inställningar."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Det finns ett syntaxfel, eller så kan frågestrukturen inte visualiseras när du byter till byggläget. Delar av frågan kan gå förlorade.",
+        "confirmText-continue": "Fortsätt",
         "kick-start-your-query": "Kickstarta din fråga",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "Förklara",
+        "run-queries": "Kör frågor",
+        "title-parsing-error-switch-builder": "Tolkningsfel: Vill du byta till byggläget?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "Förklaringar",
+        "placeholder-select-legend-mode": "Välj förklaringsläge",
+        "tooltip-legend": "Åsidosätt serienamn eller mall. Ex. {{templateExample}} kommer att ersättas med etikettvärdet för {{labelName}}."
       },
       "query-builder-hints": {
-        "hint-details": ""
+        "hint-details": "tips: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Builder",
+          "label-code": "Kod"
         }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "Tillämpa fråga",
+        "aria-label-apply-query-starter-button": "knapp för att tillämpa förvald fråga",
+        "aria-label-back-button": "bakåtknapp",
+        "aria-label-create-new-query-button": "knapp för att skapa ny fråga",
+        "aria-label-raw-query": "{{patternName}} rå fråga",
+        "aria-label-use-this-query-button": "använd denna frågeknapp",
         "back": "Tillbaka",
-        "create-new-query": "",
+        "create-new-query": "Skapa ny fråga",
         "use-this-query": "Använd denna fråga"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "stäng dialogrutan för snabbstart för frågor",
         "aria-label-kick-start-your-query-modal": "Kickstarta din frågemodal",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "öppna och stäng {{patternType}}-frågestartarkortet",
         "close": "Stäng",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "Snabbstarta din fråga genom att välja en av dessa frågor. Du kan sedan fortsätta att färdigställa din fråga.",
+        "label-toggle-query-starter": "{{patternType}}-frågestartare",
         "title-kick-start-your-query": "Kickstarta din fråga"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "väljare"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "När du skapar en {{descriptiveType}} visar Prometheus flera dataserier av typen räknare. ",
         "description": "Beskrivning",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Inga mätvärden hittades. Försök att utöka dina etikettfilter.",
+        "message-expand-search": "Inga mätvärden hittades. Försök att utöka din sökning och dina filter.",
+        "message-no-metrics-found": "Inga mätvärden hittades i datakällan.",
         "name": "Namn",
         "type": "Typ"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Tolkningen av frågan är tvetydig."
         }
       }
     }

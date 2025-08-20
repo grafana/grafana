@@ -246,7 +246,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
         return { url: path, params };
       },
-      providesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
+      providesTags: (_result, _error, { namespace, rulerConfig }) => [
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+      ],
     }),
 
     // TODO This should be probably a separate ruler API file

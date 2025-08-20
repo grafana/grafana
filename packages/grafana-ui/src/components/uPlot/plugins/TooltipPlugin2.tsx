@@ -749,7 +749,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: theme.zIndex.portal,
+    zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',

@@ -16,11 +16,13 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.24.5-alpine AS go-builder-base
+FROM golang:1.24.6-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
-
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+ARG JS_NODE_ENV=production
+ARG JS_YARN_INSTALL_FLAG=--immutable
+ARG JS_YARN_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -35,15 +37,23 @@ COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
 RUN apk add --no-cache make build-base python3
-
-RUN yarn install --immutable
+#
+# Set the node env according to defaults or argument passed
+#
+ENV NODE_ENV=${JS_NODE_ENV}
+#
+RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
+    yarn install; \
+  else \
+    yarn install --immutable; \
+  fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV=production
-RUN yarn build
+# Set the build argument according to default or argument passed
+RUN yarn ${JS_YARN_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
@@ -83,6 +93,7 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
+COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
 COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret

@@ -7,7 +7,7 @@
     "@emotion/css": "11.13.5",
     "@grafana/data": "12.2.0-pre",
     "@grafana/google-sdk": "0.3.4",
-    "@grafana/plugin-ui": "0.10.7",
+    "@grafana/plugin-ui": "0.10.9",
     "@grafana/runtime": "12.2.0-pre",
     "@grafana/schema": "12.2.0-pre",
     "@grafana/ui": "12.2.0-pre",

@@ -105,7 +105,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} auto 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} minmax(auto, 40%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -432,7 +432,7 @@ const ClipboardButtonWrapper = ({ value }: { value: string }) => {
     <div className={styles.button}>
       <ClipboardButton
         getText={() => value}
-        title={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
+        aria-label={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
         fill="text"
         variant="secondary"
         icon="copy"

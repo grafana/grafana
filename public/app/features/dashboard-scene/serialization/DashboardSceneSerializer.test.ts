@@ -46,22 +46,20 @@ jest.mock('@grafana/runtime', () => ({
       user: {
         timezone: 'UTC',
       },
-      settings: {
-        defaultDatasource: '-- Grafana --',
-        datasources: {
-          '-- Grafana --': {
-            name: 'Grafana',
-            meta: { id: 'grafana' },
-            type: 'datasource',
-            uid: 'grafana',
-          },
-          prometheus: {
-            name: 'prometheus',
-            meta: { id: 'prometheus' },
-            type: 'datasource',
-            uid: 'prometheus-uid',
-          },
-        },
+    },
+    defaultDatasource: '-- Grafana --',
+    datasources: {
+      '-- Grafana --': {
+        name: 'Grafana',
+        meta: { id: 'grafana' },
+        type: 'datasource',
+        uid: 'grafana',
+      },
+      prometheus: {
+        name: 'prometheus',
+        meta: { id: 'prometheus' },
+        type: 'datasource',
+        uid: 'prometheus-uid',
       },
     },
   },

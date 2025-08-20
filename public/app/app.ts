@@ -42,6 +42,7 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
+  setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
   setGetObservablePluginComponents,
@@ -63,7 +64,11 @@ import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChr
 import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
-import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
+import {
+  GrafanaContextType,
+  useMegaMenuOpenInternal,
+  useReturnToPreviousInternal,
+} from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
@@ -216,7 +221,7 @@ export class GrafanaApp {
 
       // Login redirect requires locationUtil to be initialized
       locationUtil.initialize({
-        config,
+        config: window.grafanaBootData.settings,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
@@ -279,6 +284,7 @@ export class GrafanaApp {
       };
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
+      setMegaMenuOpenHook(useMegaMenuOpenInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
 
       if (config.featureToggles.crashDetection) {

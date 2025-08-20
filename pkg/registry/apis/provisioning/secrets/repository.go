@@ -21,7 +21,7 @@ func ProvideRepositorySecrets(
 	decryptSvc secret.DecryptService,
 	cfg *setting.Cfg,
 ) RepositorySecrets {
-	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc, cfg), NewSingleTenant(legacySecretsSvc))
+	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc, cfg.SecretsManagement.GrpcGrafanaServiceName), NewSingleTenant(legacySecretsSvc))
 }
 
 //go:generate mockery --name RepositorySecrets --structname MockRepositorySecrets --inpackage --filename repository_secrets_mock.go --with-expecter
