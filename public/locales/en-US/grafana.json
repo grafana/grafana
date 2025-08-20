@@ -4005,6 +4005,7 @@
       }
     },
     "tooltip-options": {
+      "label-disable-one-click": "Disable for one-click elements",
       "name-tooltip-mode": "Tooltip mode",
       "tooltip-mode-options": {
         "label-disabled": "Disabled",
