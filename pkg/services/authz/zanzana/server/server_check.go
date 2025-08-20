@@ -17,9 +17,8 @@ import (
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.Check")
 	defer span.End()
-	span.SetAttributes(
-		attribute.String("namespace", r.GetNamespace()),
-	)
+	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
+
 	defer func(t time.Time) {
 		s.metrics.requestDurationSeconds.WithLabelValues("server.Check", r.GetNamespace()).Observe(time.Since(t).Seconds())
 	}(time.Now())
