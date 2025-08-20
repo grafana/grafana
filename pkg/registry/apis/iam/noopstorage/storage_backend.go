@@ -3,6 +3,7 @@ package noopstorage
 import (
 	"context"
 	"errors"
+	"iter"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -34,6 +35,12 @@ func (c *StorageBackendImpl) ListHistory(context.Context, *resourcepb.ListReques
 // ListIterator implements resource.StorageBackend.
 func (c *StorageBackendImpl) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	return 0, errNoopStorage
+}
+
+func (c *StorageBackendImpl) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
 }
 
 // ReadResource implements resource.StorageBackend.

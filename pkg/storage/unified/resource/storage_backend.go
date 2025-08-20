@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math/rand/v2"
 	"net/http"
 	"sort"
@@ -448,6 +449,12 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 		}
 	}
 	return pagedKeys
+}
+
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
