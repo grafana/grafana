@@ -23,7 +23,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const soloPanelContext = useSoloPanelContext();
 
   if (soloPanelContext) {
-    if (soloPanelContext.matches(body.state.key!)) {
+    if (soloPanelContext.matches(body.getPathId())) {
       return <body.Component model={body} />;
     } else {
       return null;

@@ -19,6 +19,7 @@ import {
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { useStyles2 } from '@grafana/ui';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
@@ -42,6 +43,7 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { SoloPanelContextValue, useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
@@ -565,6 +567,11 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
   const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return renderSoloPanel(children, soloPanelContext);
+  }
 
   // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {
@@ -583,6 +590,24 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
       )}
     </div>
   );
+}
+
+function renderSoloPanel(children: SceneGridItemLike[], soloPanelContext: SoloPanelContextValue) {
+  for (const child of children) {
+    if (child instanceof DashboardGridItem && soloPanelContext.matches(child.state.body.getPathId())) {
+      return <child.state.body.Component model={child.state.body} />;
+    }
+
+    if (child instanceof SceneGridRow) {
+      for (const rowChild of child.state.children) {
+        if (rowChild instanceof DashboardGridItem && soloPanelContext.matches(rowChild.state.body.getPathId())) {
+          return <rowChild.state.body.Component model={rowChild.state.body} />;
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 function getStyles(theme: GrafanaTheme2) {
