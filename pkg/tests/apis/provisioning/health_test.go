@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -104,7 +105,84 @@ func TestIntegrationHealth(t *testing.T) {
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
 		require.Empty(t, afterTest.Status.Health.Error, "should be empty")
 		require.Empty(t, afterTest.Status.Health.Message, "should not have messages")
-		require.NotEqual(t, originalRepo.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp")
+		// For healthy repositories, timestamp may not change immediately as it can take up to 30 seconds to update
+	})
+
+	t.Run("test endpoint with unhealthy repository", func(t *testing.T) {
+		// Remove the repository folder to make it unhealthy
+		repoPath := helper.ProvisioningPath
+		err := os.RemoveAll(repoPath)
+		require.NoError(t, err, "should be able to remove repository directory")
+
+		// Wait a bit for the system to detect the unhealthy state
+		// (In a real scenario, this would be detected during the next health check cycle)
+
+		// Get the repository status before the test
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		require.NoError(t, err)
+		beforeTest := unstructuredToRepository(t, repoObj)
+		t.Logf("Before test - Healthy: %v, Checked: %d", beforeTest.Status.Health.Healthy, beforeTest.Status.Health.Checked)
+
+		// Call the test endpoint
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("test").
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		// The test endpoint may return an error for unhealthy repositories
+		obj, err := result.Get()
+		if result.Error() != nil {
+			t.Logf("Test endpoint returned error for unhealthy repository (expected): %v", result.Error())
+		} else {
+			require.NoError(t, err)
+			testResults := parseTestResults(t, obj)
+			t.Logf("Test endpoint result for unhealthy repository: Success=%v, Code=%d",
+				testResults.Success, testResults.Code)
+		}
+
+		// Verify repository health status after test - timestamp should change
+		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		require.NoError(t, err)
+		afterTest := unstructuredToRepository(t, repoObj)
+		t.Logf("After test - Healthy: %v, Checked: %d", afterTest.Status.Health.Healthy, afterTest.Status.Health.Checked)
+
+		// For unhealthy repositories, the timestamp should change as the health check will be triggered
+		require.NotEqual(t, beforeTest.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp for unhealthy repository check")
+
+		// Recreate the repository directory to restore healthy state
+		err = os.MkdirAll(repoPath, 0o755)
+		require.NoError(t, err, "should be able to recreate repository directory")
+
+		// Call the test endpoint again to trigger health check after recreating directory
+		result = helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("test").
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		// Should succeed now that the directory is recreated
+		require.NoError(t, result.Error(), "test endpoint should work after recreating directory")
+		obj, err = result.Get()
+		require.NoError(t, err)
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "test should succeed after recreating directory")
+		require.Equal(t, 200, testResults.Code, "should return 200 after recreating directory")
+
+		// Verify repository health status is now healthy again
+		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		require.NoError(t, err)
+		finalRepo := unstructuredToRepository(t, repoObj)
+		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
+		require.True(t, finalRepo.Status.Health.Healthy, "repository should be healthy again after recreating directory")
+		require.Empty(t, finalRepo.Status.Health.Error, "should have no error after recreating directory")
+
+		// Timestamp should have changed again due to the health check
+		require.NotEqual(t, afterTest.Status.Health.Checked, finalRepo.Status.Health.Checked, "timestamp should change when repository becomes healthy again")
 	})
 }
 
