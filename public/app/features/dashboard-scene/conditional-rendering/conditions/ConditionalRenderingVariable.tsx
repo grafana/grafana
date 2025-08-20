@@ -39,8 +39,6 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
     deserialize: this.deserialize,
   };
 
-  public readonly renderHidden: boolean = false;
-
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: (v) => {
       if (v.state.name === this.state.variable) {

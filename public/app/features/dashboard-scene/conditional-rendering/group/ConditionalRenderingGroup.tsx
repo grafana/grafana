@@ -96,7 +96,10 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
   public addCondition(condition: ConditionalRenderingConditions) {
     const conditions = [...this.state.conditions, condition];
-    this.setState({ conditions, renderHidden: conditions.some((condition) => condition.renderHidden) });
+    this.setState({
+      conditions,
+      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
+    });
 
     if (this.isActive && !condition.isActive) {
       condition.activate();
@@ -108,7 +111,10 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
   public removeCondition(condition: ConditionalRenderingConditions) {
     const conditions = this.state.conditions.filter((currentCondition) => currentCondition !== condition);
 
-    this.setState({ conditions, renderHidden: conditions.some((condition) => condition.renderHidden) });
+    this.setState({
+      conditions,
+      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
+    });
     this.check();
   }
 
@@ -172,7 +178,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
       visibility: model.spec.visibility,
       conditions,
       result: true,
-      renderHidden: conditions.some((condition) => condition.renderHidden),
+      renderHidden: conditions.some((condition) => condition instanceof ConditionalRenderingData),
     });
   }
 }

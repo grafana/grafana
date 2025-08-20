@@ -27,8 +27,6 @@ export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<Condition
     deserialize: this.deserialize,
   };
 
-  public readonly renderHidden = false;
-
   public readonly validateIntervalRegex = /^(\d+(?:\.\d+)?)[Mwdhmsy]$/;
 
   public constructor(state: ConditionalRenderingTimeRangeSizeState) {

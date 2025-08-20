@@ -34,8 +34,6 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
     deserialize: this.deserialize,
   };
 
-  public readonly renderHidden: boolean = true;
-
   private _dataProvider: SceneDataProvider | undefined = undefined;
 
   public constructor(state: ConditionalRenderingDataState) {
