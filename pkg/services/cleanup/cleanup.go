@@ -11,15 +11,22 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -36,6 +43,7 @@ type CleanUpService struct {
 	tracer                    tracing.Tracer
 	store                     db.DB
 	Cfg                       *setting.Cfg
+	Features                  featuremgmt.FeatureToggles
 	ServerLockService         *serverlock.ServerLockService
 	ShortURLService           shorturls.Service
 	QueryHistoryService       queryhistory.Service
@@ -44,16 +52,17 @@ type CleanUpService struct {
 	deleteExpiredImageService *image.DeleteExpiredService
 	tempUserService           tempuser.Service
 	annotationCleaner         annotations.Cleaner
-	dashboardService          dashboards.DashboardService
 	alertRuleService          AlertRuleService
+	clientConfigProvider      grafanaapiserver.RestConfigProvider
 }
 
-func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
+func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, dashboardService dashboards.DashboardService, service AlertRuleService) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider grafanaapiserver.RestConfigProvider) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
+		Features:                  Features,
 		ServerLockService:         serverLockService,
 		ShortURLService:           shortURLService,
 		QueryHistoryService:       queryHistoryService,
@@ -65,8 +74,8 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		tempUserService:           tempUserService,
 		tracer:                    tracer,
 		annotationCleaner:         annotationCleaner,
-		dashboardService:          dashboardService,
 		alertRuleService:          service,
+		clientConfigProvider:      clientConfigProvider,
 	}
 	return s
 }
@@ -272,14 +281,88 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	cmd := shorturls.DeleteShortUrlCommand{
-		OlderThan: time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour),
-	}
-	if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
-		logger.Error("Problem deleting stale short urls", "error", err.Error())
+	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
+		srv.deleteStaleKubernetesShortURLs(ctx)
 	} else {
-		logger.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
+		cmd := shorturls.DeleteShortUrlCommand{
+			OlderThan: time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour),
+		}
+		if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
+			logger.Error("Problem deleting stale short urls", "error", err.Error())
+		} else {
+			logger.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
+		}
 	}
+}
+
+func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
+	logger.Debug("Starting deleting expired Kubernetes shortURLs")
+
+	// Create the dynamic client for Kubernetes API
+	restConfig, err := srv.clientConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		logger.Error("Failed to get REST config for Kubernetes client", "error", err.Error())
+		return
+	}
+
+	client, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		logger.Error("Failed to create Kubernetes client", "error", err.Error())
+		return
+	}
+
+	// Set up the GroupVersionResource for shortURLs
+	gvr := schema.GroupVersionResource{
+		Group:    v1alpha1.ShortURLKind().Group(),
+		Version:  v1alpha1.ShortURLKind().Version(),
+		Resource: v1alpha1.ShortURLKind().Plural(),
+	}
+
+	// Calculate the expiration time
+	expirationTime := time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour)
+	expirationTimestamp := expirationTime.Unix()
+	deletedCount := 0
+
+	// List all shortURLs across all namespaces
+	// TODO: how to target only this instance namespace in a background process?
+	shortURLs, err := client.Resource(gvr).Namespace("default").List(ctx, v1.ListOptions{Limit: 100})
+	if err != nil {
+		logger.Error("Failed to list shortURLs", "error", err.Error())
+		return
+	}
+
+	// Check each shortURL for expiration
+	for _, item := range shortURLs.Items {
+		// Convert unstructured object to ShortURL struct
+		var shortURL v1alpha1.ShortURL
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &shortURL)
+		if err != nil {
+			logger.Error("Failed to convert unstructured object to ShortURL", "name", item.GetName(), "namespace", item.GetNamespace(), "error", err.Error())
+			continue
+		}
+
+		// Only delete if lastSeenAt is 0 (meaning it has not been accessed) and the creation time is older than the expiration time
+		if shortURL.Status.LastSeenAt == 0 && shortURL.CreationTimestamp.Unix() < expirationTimestamp {
+			namespace := shortURL.Namespace
+			name := shortURL.Name
+
+			err := client.Resource(gvr).Namespace(namespace).Delete(ctx, name, v1.DeleteOptions{})
+			if err != nil {
+				// Check if it's a "not found" error, which is expected if the resource was already deleted
+				if k8serrors.IsNotFound(err) {
+					logger.Debug("ShortURL already deleted", "name", name, "namespace", namespace)
+				} else {
+					logger.Error("Failed to delete expired shortURL", "name", name, "namespace", namespace, "error", err.Error())
+				}
+			} else {
+				deletedCount++
+				logger.Debug("Successfully deleted expired shortURL", "name", name, "namespace", namespace, "creationTime", shortURL.CreationTimestamp.Unix(), "expirationTime", expirationTimestamp)
+			}
+		}
+	}
+
+	logger.Debug("Deleted expired Kubernetes shortURLs", "count", deletedCount)
 }
 
 func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -61,7 +62,25 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("List for shorturl not implemented")
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	shortURLs, err := s.service.List(ctx, orgID)
+	if err != nil {
+		if errors.Is(err, shorturls.ErrShortURLNotFound) {
+			return shorturl.ShortURLKind().ZeroListValue(), nil // return empty list if no short URLs found
+		}
+		return nil, err
+	}
+
+	list := &shorturl.ShortURLList{}
+	for idx := range shortURLs {
+		list.Items = append(list.Items, *convertToK8sResource(shortURLs[idx], s.namespacer))
+	}
+
+	return list, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -70,14 +89,10 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	// Convert identity.Requester to *user.SignedInUser
-	var signedInUser *user.SignedInUser
-	if authnIdentity, ok := requester.(*authn.Identity); ok {
-		signedInUser = authnIdentity.SignedInUser()
-	} else if userIdentity, ok := requester.(*user.SignedInUser); ok {
-		signedInUser = userIdentity
-	} else {
-		return nil, fmt.Errorf("unsupported identity type")
+	// Convert any identity.Requester to *user.SignedInUser
+	signedInUser, err := convertRequesterToSignedInUser(requester)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert requester: %w", err)
 	}
 
 	dto, err := s.service.GetShortURLByUID(ctx, signedInUser, name)
@@ -103,14 +118,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	// Convert identity.Requester to *user.SignedInUser
-	var signedInUser *user.SignedInUser
-	if authnIdentity, ok := requester.(*authn.Identity); ok {
-		signedInUser = authnIdentity.SignedInUser()
-	} else if userIdentity, ok := requester.(*user.SignedInUser); ok {
-		signedInUser = userIdentity
-	} else {
-		return nil, fmt.Errorf("unsupported identity type")
+
+	// Convert any identity.Requester to *user.SignedInUser
+	signedInUser, err := convertRequesterToSignedInUser(requester)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert requester: %w", err)
 	}
 
 	if createValidation != nil {
@@ -147,14 +159,10 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	// Convert identity.Requester to *user.SignedInUser
-	var signedInUser *user.SignedInUser
-	if authnIdentity, ok := requester.(*authn.Identity); ok {
-		signedInUser = authnIdentity.SignedInUser()
-	} else if userIdentity, ok := requester.(*user.SignedInUser); ok {
-		signedInUser = userIdentity
-	} else {
-		return nil, false, fmt.Errorf("unsupported identity type")
+	// Convert any identity.Requester to *user.SignedInUser
+	signedInUser, err := convertRequesterToSignedInUser(requester)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to convert requester: %w", err)
 	}
 
 	shortURL, err := s.service.GetShortURLByUID(ctx, signedInUser, name)
@@ -198,4 +206,30 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for shorturl not implemented")
+}
+
+// convertRequesterToSignedInUser converts any identity.Requester to *user.SignedInUser
+// This is needed because some legacy shorturls service methods still expect SignedInUser
+func convertRequesterToSignedInUser(requester identity.Requester) (*user.SignedInUser, error) {
+	// If it's already a SignedInUser, return it directly
+	if signedInUser, ok := requester.(*user.SignedInUser); ok {
+		return signedInUser, nil
+	}
+
+	// If it's an authn.Identity, use its SignedInUser method
+	if authnIdentity, ok := requester.(*authn.Identity); ok {
+		return authnIdentity.SignedInUser(), nil
+	}
+
+	// For all other identity types (background services, etc.), create a simple background user
+	orgID := requester.GetOrgID()
+	if orgID <= 0 {
+		orgID = 1 // Default to org 1 for system operations
+	}
+
+	return &user.SignedInUser{
+		OrgID:   orgID,
+		OrgRole: org.RoleAdmin, // Background services need admin access for cleanup operations
+		Login:   "grafana_background_service",
+	}, nil
 }
