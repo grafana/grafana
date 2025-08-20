@@ -3,25 +3,26 @@ import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  AbsoluteTimeRange,
+  CoreApp,
   DataQueryResponse,
+  DataSourceApi,
   DataSourceWithLogsContextSupport,
+  dateTime,
+  EventBusSrv,
+  formattedValueToString,
+  getValueFormat,
   GrafanaTheme2,
+  LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
+  LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
-  dateTime,
-  TimeRange,
-  LoadingState,
-  CoreApp,
-  LogRowModel,
-  AbsoluteTimeRange,
-  EventBusSrv,
   store,
-  getValueFormat,
-  formattedValueToString,
+  TimeRange,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
@@ -37,7 +38,6 @@ import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogList } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
-import { dataSourcesApi } from '../../../alerting/unified/api/dataSourcesApi';
 
 interface LogLineContextProps {
   log: LogRowModel | LogListModel;
@@ -87,7 +87,9 @@ export const LogLineContext = memo(
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
-    const [datasourceInstance, setDatasourceInstance] = useState<DataSourceWithLogsContextSupport | null>(null);
+    const [datasourceInstance, setDatasourceInstance] = useState<
+      (DataSourceApi & { hasLogsContextAdjustableWindow?: boolean }) | null
+    >(null);
     const defaultTimeWindow = logOptionsStorageKey
       ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? '7200000')
       : '7200000';
@@ -302,7 +304,7 @@ export const LogLineContext = memo(
           .get({ uid: log.datasourceUid })
           .then((ds) => {
             if ('getLogRowContext' in ds) {
-              setDatasourceInstance(ds as DataSourceWithLogsContextSupport);
+              setDatasourceInstance(ds);
             }
           });
       }
