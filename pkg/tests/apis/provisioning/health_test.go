@@ -153,7 +153,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.NotEqual(t, beforeTest.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp for unhealthy repository check")
 
 		// Recreate the repository directory to restore healthy state
-		err = os.MkdirAll(repoPath, 0o755)
+		err = os.MkdirAll(repoPath, 0o750)
 		require.NoError(t, err, "should be able to recreate repository directory")
 
 		// Call the test endpoint again to trigger health check after recreating directory
