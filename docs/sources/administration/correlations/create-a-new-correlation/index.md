@@ -52,7 +52,7 @@ datasources:
       - targetUID: uid
         label: "test"
         description: "..."
-        type: "query"
+        type: query
         config:
           target:
             expr: "..."
@@ -64,6 +64,14 @@ datasources:
               mapValue: "other"
             - type: logfmt
               field: "test"
+      - targetUID: uid2
+        label: "test 2"
+        description: "..."
+        type: external
+        config:
+          target:
+            url: "http://${example}"
+          field: "name"
 ```
 
 Description of provisioning properties:
