@@ -146,10 +146,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
-        <Stack justifyContent={'flex-end'}>
+        <div className={styles.timeControlStack}>
           <timePicker.Component model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
-        </Stack>
+        </div>
       )}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -177,7 +177,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       flexDirection: 'row',
-      flexWrap: 'nowrap',
+      flexWrap: 'wrap-reverse',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
@@ -193,6 +193,12 @@ function getStyles(theme: GrafanaTheme2) {
     embedded: css({
       background: 'unset',
       position: 'unset',
+    }),
+    timeControlStack: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
+      marginLeft: 'auto',
     }),
   };
 }
