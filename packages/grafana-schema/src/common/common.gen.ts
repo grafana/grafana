@@ -615,9 +615,9 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
   drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
   insertNulls?: (boolean | number);
+  showValues?: boolean;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   transform?: GraphTransform;
-  showValues?: boolean;
 }
 
 /**
@@ -687,7 +687,7 @@ export interface VizTooltipOptions {
   sort: SortOrder;
 }
 
-export interface Labels { }
+export interface Labels {}
 
 /**
  * Internally, this is the "type" of cell that's being displayed
