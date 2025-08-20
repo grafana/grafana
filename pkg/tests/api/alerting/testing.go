@@ -1487,6 +1487,14 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	return u.ID
 }
 
+func (a apiClient) GetProvisioningAlertRule(t *testing.T, ruleUID string) (apimodels.ProvisionedAlertRule, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.ProvisionedAlertRule](t, req, http.StatusOK)
+}
+
 func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, params *apimodels.ExportQueryParams) (int, string) {
 	t.Helper()
 	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s/export", a.url, ruleUID))
