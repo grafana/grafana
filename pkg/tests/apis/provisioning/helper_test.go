@@ -485,14 +485,9 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		require.NoError(t, err, "should be able to create repository path")
 	}
 
-	syncEnabled := true
-	if repo.SkipSync {
-		syncEnabled = false
-	}
-
 	templateVars := map[string]any{
 		"Name":        repo.Name,
-		"SyncEnabled": syncEnabled,
+		"SyncEnabled": !repo.SkipSync,
 		"SyncTarget":  repo.Target,
 	}
 	if repo.Path != "" {
