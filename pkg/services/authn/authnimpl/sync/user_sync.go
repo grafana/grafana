@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync/atomic"
 
+	"github.com/Masterminds/semver/v3"
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
@@ -146,6 +147,20 @@ func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
 		stats["stats.features.saml.catalog_successful_login.count"] = 0
 	}
 	return stats
+}
+
+func (s *UserSync) CatalogLoginHook(_ context.Context, identity *authn.Identity, r *authn.Request) error {
+	if !identity.ClientParams.SyncUser || r == nil {
+		return nil
+	}
+	catalogVersion := r.GetMeta("catalog_version")
+	if _, err := semver.NewVersion(catalogVersion); err != nil {
+		s.log.Warn("The SAML catalog used for this login has an incorrect version format", "catalogVersion", catalogVersion)
+		return nil
+	}
+
+	s.samlCatalogSuccessfulLogin.Store(true)
+	return nil
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
