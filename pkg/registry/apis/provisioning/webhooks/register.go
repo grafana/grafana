@@ -227,4 +227,3 @@ func (e *WebhookExtra) RepositoryTypes() []provisioning.RepositoryType {
 		provisioning.GitHubRepositoryType,
 	}
 }
-
