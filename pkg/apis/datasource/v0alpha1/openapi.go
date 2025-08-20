@@ -6,20 +6,26 @@ import (
 )
 
 // Optional extensions for an explicit datasource type
+// NOTE: the properties from this structure will be populated by reading an app-sdk manifest.json
 type DataSourceOpenAPIExtension struct {
 	// When specified, this will replace the default spec
 	DataSourceSpec *spec.Schema `json:"spec,omitempty"`
 
-	// The raw value is never returned in an API response
+	// Define which secure values are required
 	SecureValues []SecureValueInfo `json:"secureValues"`
 
 	// Additional Schemas added to the response
 	Schemas map[string]*spec.Schema `json:"schemas,omitempty"`
 
-	// Resource routes
+	// TODO: define query types dynamically here (currently hardcoded)
+	// Queries *queryV0.QueryTypeDefinitionList `json:"queries,omitempty"`
+
+	// Resource routes -- the paths exposed under:
+	// {group}/{version}/namespaces/{ns}/datasource/{name}/resource/{route}
 	Routes map[string]*spec3.Path `json:"routes,omitempty"`
 
-	// Proxy routes
+	// Proxy routes -- the paths exposed under:
+	// {group}/{version}/namespaces/{ns}/datasource/{name}/proxy/{proxy}
 	Proxy map[string]*spec3.Path `json:"proxy,omitempty"`
 }
 
