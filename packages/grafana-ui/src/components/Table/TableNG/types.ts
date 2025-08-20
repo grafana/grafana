@@ -1,5 +1,5 @@
 import { ReactNode, SyntheticEvent } from 'react';
-import { Column } from 'react-data-grid';
+import { CellRendererProps, Column } from 'react-data-grid';
 
 import {
   DataFrame,
@@ -299,4 +299,12 @@ export interface LineCounterEntry {
    * indicates which field indexes of the visible fields this line counter applies to.
    */
   fieldIdxs: number[];
+}
+
+export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+
+export interface FromFieldsResult {
+  columns: TableColumn[];
+  cellRootRenderers: Record<string, CellRootRenderer>;
+  colsWithTooltip: Record<string, boolean>;
 }
