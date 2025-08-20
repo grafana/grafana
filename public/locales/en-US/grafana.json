@@ -7241,7 +7241,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Add saved query",
+      "add-from-query-library": "Add from saved queries",
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
       "query-history-button": "Query history",

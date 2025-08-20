@@ -74,7 +74,7 @@ export function SecondaryActions({
           {queryLibraryEnabled && (
             <ToolbarButton
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
-              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add saved query')}
+              aria-label={t('explore.secondary-actions.add-from-query-library', 'Add from saved queries')}
               variant="canvas"
               onClick={() =>
                 openQueryLibraryDrawer({
@@ -86,7 +86,7 @@ export function SecondaryActions({
               icon="plus"
               disabled={addQueryRowButtonDisabled}
             >
-              <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add saved query</Trans>
+              <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add from saved queries</Trans>
             </ToolbarButton>
           )}
         </>

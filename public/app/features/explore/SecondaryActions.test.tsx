@@ -64,7 +64,7 @@ describe('SecondaryActions', () => {
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
   });
 
-  it('should disable both add query buttons when addQueryRowButtonDisabled=true and query library is enabled', () => {
+  it('should disable both add query buttons when addQueryRowButtonDisabled=true and saved queries is enabled', () => {
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
         <SecondaryActions
@@ -77,7 +77,7 @@ describe('SecondaryActions', () => {
     );
 
     expect(screen.getByRole('button', { name: /Add query$/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Add saved query/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Add from saved queries/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
   });
 
