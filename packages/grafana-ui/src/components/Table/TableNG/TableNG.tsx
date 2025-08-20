@@ -344,19 +344,7 @@ export function TableNG(props: TableNGProps) {
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
     }),
-    [
-      commonDataGridProps,
-      data.fields.length,
-      expandedRows,
-      sortColumns,
-      // we need to split out the individual classes we access on `styles` because the object itself changes on re-render.
-      styles.cellNested,
-      styles.displayNone,
-      styles.grid,
-      styles.gridNested,
-      styles.headerRow,
-      styles.noDataNested,
-    ]
+    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles]
   );
 
   const fromFields = useCallback(
@@ -651,6 +639,8 @@ export function TableNG(props: TableNGProps) {
   );
 
   const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
+    console.log('building columns');
+
     const result = fromFields(visibleFields, widths);
 
     // handle nested frames rendering from here.
