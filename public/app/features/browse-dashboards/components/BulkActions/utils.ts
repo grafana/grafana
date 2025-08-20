@@ -14,6 +14,7 @@ export type BulkActionFormData = {
 export interface BulkActionProvisionResourceProps {
   folderUid?: string;
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
+  onActionComplete?: () => void;
   onDismiss?: () => void;
 }
 

@@ -9,8 +9,8 @@ import { JobContent } from './JobContent';
 
 export interface JobStatusProps {
   watch: Job;
-  onStatusChange?: (statusInfo: StepStatusInfo) => void;
   jobType: 'sync' | 'delete' | 'move';
+  onStatusChange?: (statusInfo: StepStatusInfo) => void;
 }
 
 export function JobStatus({ jobType, watch, onStatusChange }: JobStatusProps) {

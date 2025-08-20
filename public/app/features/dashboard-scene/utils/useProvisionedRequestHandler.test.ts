@@ -17,6 +17,18 @@ jest.mock('@grafana/i18n', () => ({
 
 const mockGetAppEvents = jest.mocked(getAppEvents);
 
+jest.mock('react-redux', () => {
+  const actual = jest.requireActual('react-redux');
+  return {
+    ...actual,
+    useDispatch: jest.fn(),
+  };
+});
+
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  PAGE_SIZE: 50,
+}));
+
 describe('useProvisionedRequestHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();

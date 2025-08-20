@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+import { clearFolders } from 'app/features/browse-dashboards/state/slice';
+import { getState } from 'app/store/store';
 
 import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
@@ -207,6 +209,24 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         }
         // Refetch dashboards and folders after creating/updating a provisioned repository
         dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+      },
+    },
+    getRepositoryJobsWithPath: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          const result = await queryFulfilled;
+          const job = result.data;
+
+          // Clear folder cache after successful move/delete jobs
+          // We use clearFolders here to clear cached data and closes folders (immediate visual feedback)
+          // Force a refetch of subfolders if user has opened them, so user see latest data
+          if (job.status?.state === 'success' && (job.spec?.action === 'delete' || job.spec?.action === 'move')) {
+            const state = getState().browseDashboards;
+            dispatch(clearFolders(Object.keys(state.childrenByParentUID)));
+          }
+        } catch (e) {
+          console.error('Error in getRepositoryJobsWithPath:', e);
+        }
       },
     },
   },
