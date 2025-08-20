@@ -8,7 +8,7 @@ import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidati
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 import { ResponseType } from './useBulkActionJob';
 
-jest.mock('../BrowseActions/DescendantCount', () => ({
+jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
   DescendantCount: jest.fn(({ selectedItems }) => (
     <div data-testid="descendant-count">
       Mocked descendant count for {Object.keys(selectedItems.folder).length} folders and{' '}
@@ -21,7 +21,7 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
   useGetResourceRepositoryView: jest.fn(),
 }));
 
-jest.mock('../BrowseActions/useSelectionRepoValidation', () => ({
+jest.mock('../../hooks/useSelectionRepoValidation', () => ({
   useSelectionRepoValidation: jest.fn(),
 }));
 

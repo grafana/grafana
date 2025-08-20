@@ -12,7 +12,8 @@ import {
   ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
-import { NewProvisionedFolderForm } from '../NewProvisionedFolderForm';
+
+import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -49,7 +50,7 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   };
 });
 
-jest.mock('../hooks/useProvisionedFolderFormData', () => {
+jest.mock('../../hooks/useProvisionedFolderFormData', () => {
   return {
     useProvisionedFolderFormData: jest.fn(),
   };
@@ -74,17 +75,6 @@ jest.mock('react-router-dom-v5-compat', () => {
   return {
     ...actual,
     useNavigate: () => jest.fn(),
-  };
-});
-
-// Mock the defaults
-jest.mock('../../dashboard-scene/saving/provisioned/defaults', () => {
-  return {
-    getDefaultWorkflow: jest.fn().mockReturnValue('write'),
-    getWorkflowOptions: jest.fn().mockReturnValue([
-      { label: 'Commit directly', value: 'write' },
-      { label: 'Create a branch', value: 'branch' },
-    ]),
   };
 });
 

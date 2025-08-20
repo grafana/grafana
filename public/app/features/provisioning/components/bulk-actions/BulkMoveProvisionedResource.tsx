@@ -17,10 +17,10 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { RepoInvalidStateBanner } from '../shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 import { generateTimestamp } from '../utils/timestamp';
 
-import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
 

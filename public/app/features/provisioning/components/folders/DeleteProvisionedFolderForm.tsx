@@ -16,7 +16,7 @@ import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFo
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { BaseProvisionedFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { RepoInvalidStateBanner } from '../bulk-actions/RepoInvalidStateBanner';
+import { RepoInvalidStateBanner } from '../shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {

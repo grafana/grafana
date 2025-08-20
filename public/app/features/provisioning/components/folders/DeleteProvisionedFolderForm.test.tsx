@@ -8,7 +8,8 @@ import {
   ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
-import { DeleteProvisionedFolderForm } from '../DeleteProvisionedFolderForm';
+
+import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 // Mock dependencies
 jest.mock('@grafana/runtime', () => ({
@@ -49,13 +50,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   },
 }));
 
-jest.mock('../hooks/useProvisionedFolderFormData');
+jest.mock('../../hooks/useProvisionedFolderFormData');
 
-jest.mock('./BrowseActions/DescendantCount', () => ({
+jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
   DescendantCount: () => <div data-testid="descendant-count">2 folders, 5 dashboards</div>,
 }));
 
-jest.mock('app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields', () => ({
+jest.mock('../shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="shared-fields" />,
 }));
 

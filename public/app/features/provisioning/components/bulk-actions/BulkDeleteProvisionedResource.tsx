@@ -14,10 +14,10 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
+import { RepoInvalidStateBanner } from '../shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 import { generateTimestamp } from '../utils/timestamp';
 
-import { RepoInvalidStateBanner } from './RepoInvalidStateBanner';
 import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
 
