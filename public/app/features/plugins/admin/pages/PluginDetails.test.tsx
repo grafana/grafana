@@ -40,6 +40,7 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({ usePluginConfig: jest.fn(() =
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/core').contextSrv,
     hasPermission: (action: string) => true,
     hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },

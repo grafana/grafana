@@ -9,6 +9,7 @@ import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsList
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/core').contextSrv,
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,

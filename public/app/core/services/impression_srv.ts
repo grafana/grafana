@@ -1,8 +1,9 @@
 import { filter, isArray, isNumber, isString } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
-import config from 'app/core/config';
 import store from 'app/core/store';
+
+import { contextSrv } from './context_srv';
 
 export class ImpressionSrv {
   constructor() {}
@@ -58,7 +59,7 @@ export class ImpressionSrv {
   }
 
   impressionKey() {
-    return 'dashboard_impressions-' + config.bootData.user.orgId;
+    return 'dashboard_impressions-' + contextSrv.user.orgId;
   }
 }
 

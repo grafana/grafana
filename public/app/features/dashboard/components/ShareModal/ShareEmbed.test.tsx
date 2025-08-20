@@ -4,6 +4,7 @@ import { BootData } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
+import { contextSrv, User } from '../../../../core/services/context_srv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
@@ -19,8 +20,8 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     sidemenu: true,
-    user: {},
     isSignedIn: false,
     isGrafanaAdmin: false,
     isEditor: false,
@@ -56,11 +57,9 @@ describe('ShareEmbed', () => {
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 
-    config.bootData = {
-      user: {
-        orgId: 1,
-      },
-    } as BootData;
+    contextSrv.user = {
+      orgId: 1,
+    } as User;
   });
 
   afterAll(() => {

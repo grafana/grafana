@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { LocalValueVariable, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { contextSrv } from '../../../core/services/context_srv';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -36,7 +37,7 @@ describe('ShareLinkTab', () => {
 
     config.appUrl = 'http://dashboards.grafana.com/grafana/';
     config.rendererAvailable = true;
-    config.bootData.user.orgId = 1;
+    contextSrv.user.orgId = 1;
     config.featureToggles.dashboardSceneForViewers = true;
     locationService.push('/d/dash-1?from=now-6h&to=now');
   });

@@ -9,7 +9,6 @@ import {
   PluginExtensionTypes,
   ReducerID,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
@@ -338,7 +337,7 @@ export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
     startsAt: new Date().toISOString(),
     endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     updatedAt: new Date().toISOString(),
-    createdBy: config.bootData.user.name || 'admin',
+    createdBy: contextSrv.user.name || 'admin',
     comment: 'Silence noisy alerts',
     status: {
       state: SilenceState.Active,
