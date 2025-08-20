@@ -18,6 +18,7 @@ export type FavoriteDatasources = {
   isFavoriteDatasource: (dsUid: string) => boolean;
 };
 
+// Initialize user storage as a singleton
 const userStorage = new UserStorage('grafana-runtime');
 
 /**

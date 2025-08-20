@@ -74,9 +74,9 @@ export function DataSourceList(props: DataSourceListProps) {
     },
     props.dataSources
   );
-  const favoriteDataSources = useFavoriteDatasources();
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+  const favoriteDataSources = useFavoriteDatasources();
 
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
