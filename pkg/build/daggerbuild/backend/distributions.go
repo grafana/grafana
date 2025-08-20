@@ -264,6 +264,22 @@ func BuildOptsStaticS390X(distro Distribution, experiments []string, tags []stri
 	}
 }
 
+// BuildOptsStaticS390X builds Grafana statically for the s390x arch
+func BuildOptsStaticRiscv64(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
+	var (
+		os, _ = OSAndArch(distro)
+	)
+
+	return &GoBuildOpts{
+		CC:                "/toolchain/riscv64-linux-musl-cross/bin/riscv64-linux-musl-gcc",
+		CXX:               "/toolchain/riscv64-linux-musl-cross/bin/riscv64-linux-musl-cpp",
+		ExperimentalFlags: experiments,
+		OS:                os,
+		Arch:              "riscv64",
+		CGOEnabled:        true,
+	}
+}
+
 func StdZigBuildOpts(distro Distribution, experiments []string, tags []string) *GoBuildOpts {
 	var (
 		os, arch = OSAndArch(distro)
@@ -331,7 +347,7 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 	DistLinuxAMD64:        StdZigBuildOpts,
 	DistLinuxAMD64Dynamic: StdZigBuildOpts,
 	DistPlan9AMD64:        StdZigBuildOpts,
-	DistLinuxRISCV64:      StdZigBuildOpts,
+	DistLinuxRISCV64:      BuildOptsStaticRiscv64,
 
 	// Non-Linux distros can have whatever they want in CC and CXX; it'll get overridden
 	// but it's probably not best to rely on that.
