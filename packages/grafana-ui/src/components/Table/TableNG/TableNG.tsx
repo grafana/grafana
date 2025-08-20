@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
-import { CSSProperties, Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -23,12 +23,10 @@ import {
   getDisplayProcessor,
   ReducerID,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { FieldColorModeId, TableCellTooltipPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { ContextMenu } from '../../ContextMenu/ContextMenu';
-import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
@@ -60,7 +58,7 @@ import {
   getLinkStyles,
   getTooltipStyles,
 } from './styles';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps, TableCellStyleOptions } from './types';
+import { TableNGProps, TableRow, TableSummaryRow, TableColumn, InspectCellProps, TableCellStyleOptions } from './types';
 import {
   applySort,
   canFieldBeColorized,
@@ -133,26 +131,7 @@ export function TableNG(props: TableNGProps) {
       footerOptions.reducer[0] === ReducerID.count
   );
 
-  const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps | null>(null);
-  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
-
   const resizeHandler = useColumnResize(onColumnResize);
-
-  useLayoutEffect(() => {
-    if (!isContextMenuOpen) {
-      return;
-    }
-
-    function onClick(_event: MouseEvent) {
-      setIsContextMenuOpen(false);
-    }
-
-    window.addEventListener('click', onClick);
-
-    return () => {
-      window.removeEventListener('click', onClick);
-    };
-  }, [isContextMenuOpen]);
 
   const rows = useMemo(() => frameToRecords(data), [data]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
@@ -171,7 +150,7 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const [isInspecting, setIsInspecting] = useState(false);
+  const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
@@ -276,27 +255,6 @@ export function TableNG(props: TableNGProps) {
           resizable: true,
           sortable: true,
           // draggable: true,
-        },
-        onCellContextMenu: ({ row, column }, event) => {
-          // in nested tables, it's possible for this event to trigger in a column header
-          // when holding Ctrl for multi-row sort.
-          if (column.key === 'expanded') {
-            return;
-          }
-
-          event.preventGridDefault();
-          // Do not show the default context menu
-          event.preventDefault();
-
-          const cellValue = row[column.key];
-          setContextMenuProps({
-            // rowIdx: rows.indexOf(row),
-            value: String(cellValue ?? ''),
-            top: event.clientY,
-            left: event.clientX,
-          });
-
-          setIsContextMenuOpen(true);
         },
         onColumnResize: resizeHandler,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
@@ -475,8 +433,7 @@ export function TableNG(props: TableNGProps) {
                   cellInspect={cellInspect}
                   showFilters={showFilters}
                   className={cellActionClassName}
-                  setIsInspecting={setIsInspecting}
-                  setContextMenuProps={setContextMenuProps}
+                  setInspectCell={setInspectCell}
                   onCellFilterAdded={onCellFilterAdded}
                 />
               )}
@@ -817,29 +774,11 @@ export function TableNG(props: TableNGProps) {
         />
       )}
 
-      {isContextMenuOpen && (
-        <ContextMenu
-          x={contextMenuProps?.left || 0}
-          y={contextMenuProps?.top || 0}
-          renderMenuItems={() => (
-            <MenuItem
-              label={t('grafana-ui.table.inspect-menu-label', 'Inspect value')}
-              onClick={() => setIsInspecting(true)}
-              className={styles.menuItem}
-            />
-          )}
-          focusOnOpen={false}
-        />
-      )}
-
-      {isInspecting && (
+      {inspectCell && (
         <TableCellInspector
-          mode={contextMenuProps?.mode ?? TableCellInspectorMode.text}
-          value={contextMenuProps?.value}
-          onDismiss={() => {
-            setIsInspecting(false);
-            setContextMenuProps(null);
-          }}
+          mode={inspectCell.mode ?? TableCellInspectorMode.text}
+          value={inspectCell.value}
+          onDismiss={() => setInspectCell(null)}
         />
       )}
     </>

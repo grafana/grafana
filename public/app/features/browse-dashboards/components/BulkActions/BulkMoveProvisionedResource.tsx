@@ -31,7 +31,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
   folderPath?: string;
 }
 
-function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
@@ -40,14 +40,24 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
-  const { handleSubmit, watch } = methods;
+  const {
+    handleSubmit,
+    watch,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = methods;
   const workflow = watch('workflow');
 
   // Get target folder data
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
 
   const setupMoveOperation = () => {
-    const targetFolderPathInRepo = getTargetFolderPathInRepo({ targetFolder });
+    const targetFolderPathInRepo = getTargetFolderPathInRepo({
+      targetFolderUID,
+      targetFolder,
+      repoName: repository.name,
+    });
     const resources = collectSelectedItems(selectedItems);
 
     return { targetFolderPathInRepo, resources };
@@ -60,12 +70,15 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     const { targetFolderPathInRepo, resources } = setupMoveOperation();
 
     if (!targetFolderPathInRepo) {
-      throw new Error(
-        t(
+      setError('targetFolderUID', {
+        type: 'manual',
+        message: t(
           'browse-dashboards.bulk-move-resources-form.error-no-target-folder-path',
-          'Target folder path in repository is invalid, please select another folder.'
-        )
-      );
+          'Target folder path is invalid or empty, please select again.'
+        ),
+      });
+      setHasSubmitted(false);
+      return;
     }
 
     // Create the move job spec
@@ -73,7 +86,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       action: 'move',
       move: {
         ref: data.workflow === 'write' ? undefined : data.ref,
-        targetPath: `${targetFolderPathInRepo}/`,
+        targetPath: targetFolderPathInRepo,
         resources,
       },
     };
@@ -90,7 +103,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           result.error,
         ],
       });
-      setHasSubmitted(false); // Reset submit state so user can try again
+      setHasSubmitted(false);
     }
   };
 
@@ -106,12 +119,23 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           </Box>
 
           {hasSubmitted && job ? (
-            <JobStatus watch={job} jobType="delete" />
+            <JobStatus watch={job} jobType="move" />
           ) : (
             <>
               {/* Target folder selection */}
-              <Field noMargin label={t('browse-dashboards.bulk-move-resources-form.target-folder', 'Target Folder')}>
-                <FolderPicker value={targetFolderUID} onChange={setTargetFolderUID} />
+              <Field
+                noMargin
+                label={t('browse-dashboards.bulk-move-resources-form.target-folder', 'Target Folder')}
+                error={errors.targetFolderUID?.message}
+                invalid={!!errors.targetFolderUID}
+              >
+                <FolderPicker
+                  value={targetFolderUID}
+                  onChange={(uid) => {
+                    setTargetFolderUID(uid || '');
+                    clearErrors('targetFolderUID');
+                  }}
+                />
               </Field>
               <ResourceEditFormSharedFields
                 resourceType="folder"
@@ -124,13 +148,8 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
               <Stack gap={2}>
                 <Button
-                  tooltip={
-                    !targetFolder
-                      ? t('browse-dashboards.bulk-move-resources-form.button-tooltip', 'Please select a target folder')
-                      : undefined
-                  }
                   type="submit"
-                  disabled={!!job || isCreatingJob || hasSubmitted || !targetFolder}
+                  disabled={!!job || isCreatingJob || hasSubmitted || targetFolderUID === undefined}
                 >
                   {isCreatingJob
                     ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')

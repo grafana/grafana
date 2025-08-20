@@ -21,6 +21,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
     },
   },
 }));
+jest.mock('react-redux', () => {
+  const actual = jest.requireActual('react-redux');
+  return {
+    ...actual,
+    useDispatch: jest.fn(),
+  };
+});
 jest.mock('../saving/provisioned/hooks');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

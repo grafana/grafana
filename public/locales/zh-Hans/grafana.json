@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "静音、分组和时间设定"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "未找到数据源"
     },
     "alert-menu": {
@@ -2457,6 +2462,7 @@
       },
       "empty-data-source": "未找到规则",
       "error-button": "错误",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "取消搜索",
         "no-more-results": "没有更多结果 – 找到 {{numberOfRules}} 个规则",
@@ -3614,11 +3620,11 @@
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
+      "error-invalid-characters": "",
       "error-required": "文件夹名称为必填项",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
       "label-folder-name": "文件夹名称",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
-      "text-your-folder-will-be-created-as": "您的文件夹将创建为 {{folderName}}",
       "title-pull-request-created": "拉取请求已创建",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
@@ -4153,7 +4159,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "数据源",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "未找到与您的查询匹配的结果",
       "request-data-source": "请求新的数据源",
       "roadmap": "查看路线图"
@@ -6524,9 +6531,11 @@
       "explore": "探索"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "构建数据面板",
       "explore-data": "浏览数据",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有关错误的更多详情"
@@ -7504,11 +7513,6 @@
     "noOptionsMessage-no-folders-found": "未找到文件夹",
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
-  },
-  "folder-picker": {
-    "create-instructions": "按 Enter 键以创建新文件夹。",
-    "input-placeholder": "按 Enter 键以确认新文件夹",
-    "loading": "正在加载文件夹..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8728,7 +8732,6 @@
       "filter-popup-input-placeholder": "筛选值",
       "filter-popup-match-case": "区分大小写",
       "inspect-drawer-title": "检查值",
-      "inspect-menu-label": "检查值",
       "nested-table": {
         "no-data": "无数据"
       },
@@ -12754,6 +12757,7 @@
     "description-fields": "选择应计算的字段",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
+    "description-tooltip-from-field": "",
     "name-calculation": "计算",
     "name-cell-height": "单元格高度",
     "name-cell-type": "单元格类型",
@@ -12769,8 +12773,17 @@
     "name-min-column-width": "最小列宽",
     "name-show-table-footer": "显示表格页脚",
     "name-show-table-header": "显示表格表头",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段"
+    "placeholder-fields": "所有数字字段",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "清除标记",
