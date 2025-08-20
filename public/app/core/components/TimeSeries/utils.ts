@@ -555,23 +555,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
   builder.setStackingGroups(stackingGroups);
 
-  const shouldShowValues = frame.fields.some((field, i) => {
+  const mightShowValues = frame.fields.some((field, i) => {
     if (i === 0) {
       return false;
     }
 
     const customConfig = field.config.custom;
-    const showPoints =
-      customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
 
-    return showPoints !== VisibilityMode.Never && customConfig.showValues;
+    return (
+      customConfig.showValues &&
+      (customConfig.drawStyle === GraphDrawStyle.Points || customConfig.showPoints !== VisibilityMode.Never)
+    );
   });
 
-  if (shouldShowValues) {
-    const baseFontSize = 12;
-    const font = `${baseFontSize * uPlot.pxRatio}px ${theme.typography.fontFamily}`;
-
+  if (mightShowValues) {
     builder.addHook('draw', (u: uPlot) => {
+      const baseFontSize = 12;
+      const font = `${baseFontSize * uPlot.pxRatio}px ${theme.typography.fontFamily}`;
+
       const { ctx } = u;
 
       ctx.save();
@@ -580,15 +581,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       ctx.textAlign = 'center';
 
       for (let seriesIdx = 1; seriesIdx < u.data.length; seriesIdx++) {
+        const series = u.series[seriesIdx];
         const field = frame.fields[seriesIdx];
 
-        if (!field.config.custom.showValues) {
+        // TODO: auto showValues for bars
+        if (
+          !field.config.custom.showValues ||
+          // @ts-ignore points.show() is always callable on the instance (but may be boolean when passed to uPlot as init option)
+          !series.points?.show?.(u, seriesIdx)
+        ) {
           continue;
         }
 
         const xData = u.data[0];
         const yData = u.data[seriesIdx];
-        const yScale = u.series[seriesIdx].scale!;
+        const yScale = series.scale!;
 
         for (let dataIdx = 0; dataIdx < yData.length; dataIdx++) {
           const yVal = yData[dataIdx];
