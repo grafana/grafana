@@ -1,13 +1,6 @@
 import { Page, Response, Request } from '@playwright/test';
 import * as prom from 'prom-client';
 
-interface RequestMetrics {
-  type: string;
-  inflatedSizeBytes: number;
-  transferSizeBytes: number;
-  requestCount: number;
-}
-
 /**
  * Records and tracks network request body sizes.
  *
@@ -17,17 +10,15 @@ interface RequestMetrics {
 export class RequestsRecorder {
   #page: Page;
 
-  // #metricsForRequestType: Record<string, RequestMetrics> = {};
-
-  #documentHasLoaded = false;
+  #documentUrl: string | undefined;
 
   #requestsInFlight = 0;
 
   #currentRequests: Set<Request> = new Set<Request>();
 
-  #inflatedSizeBytesCounter: prom.Counter<'type'>;
-  #transferSizeBytesCounter: prom.Counter<'type'>;
-  #requestCountCounter: prom.Counter<'type'>;
+  #inflatedSizeBytesCounter: prom.Counter<'type' | 'host_type'>;
+  #transferSizeBytesCounter: prom.Counter<'type' | 'host_type'>;
+  #requestCountCounter: prom.Counter<'type' | 'host_type'>;
   #resolve?: () => void;
 
   constructor(page: Page) {
@@ -36,21 +27,21 @@ export class RequestsRecorder {
     this.#inflatedSizeBytesCounter = new prom.Counter({
       name: 'pw_inflated_size_bytes',
       help: 'The size of the inflated response body in bytes',
-      labelNames: ['type'],
+      labelNames: ['type', 'host_type'],
       registers: [],
     });
 
     this.#transferSizeBytesCounter = new prom.Counter({
       name: 'pw_transfer_size_bytes',
       help: 'The size of the transfered response body in bytes',
-      labelNames: ['type'],
+      labelNames: ['type', 'host_type'],
       registers: [],
     });
 
     this.#requestCountCounter = new prom.Counter({
       name: 'pw_request_count',
       help: 'The number of requests made',
-      labelNames: ['type'],
+      labelNames: ['type', 'host_type'],
       registers: [],
     });
   }
@@ -82,7 +73,7 @@ export class RequestsRecorder {
 
     // Once we've recieved a document response, create a list of requests that we'll count the responses of.
     // We also want to count the document request itself.
-    if (this.#documentHasLoaded || type === 'document') {
+    if (this.#documentUrl || type === 'document') {
       this.#currentRequests.add(request);
     }
   }
@@ -103,11 +94,11 @@ export class RequestsRecorder {
 
     // Record when a document response comes in so we can keep track of future requests
     if (type === 'document') {
-      if (this.#documentHasLoaded) {
+      if (this.#documentUrl) {
         console.warn('recieved additional document response', url);
       }
 
-      this.#documentHasLoaded = true;
+      this.#documentUrl = url;
     }
 
     // Disregard responses that for requests that were initiated before the current page
@@ -116,6 +107,7 @@ export class RequestsRecorder {
     }
 
     this.#requestsInFlight += 1;
+    const hostType = getHostType(response.url(), this.#documentUrl ?? '');
 
     // Attempting to get the body of an empty response results in an error, so guess if the response will be empty or not
     const statusCode = response.status();
@@ -123,13 +115,16 @@ export class RequestsRecorder {
 
     if (!noBodyStatusCode) {
       const body = await response.body();
-      this.#inflatedSizeBytesCounter.inc({ type }, body.length);
+      this.#inflatedSizeBytesCounter.inc({ type, host_type: hostType }, body.length);
     }
 
     const sizes = await response.request().sizes();
 
-    this.#transferSizeBytesCounter.inc({ type }, sizes.responseBodySize + sizes.responseHeadersSize);
-    this.#requestCountCounter.inc({ type });
+    this.#transferSizeBytesCounter.inc(
+      { type, host_type: hostType },
+      sizes.responseBodySize + sizes.responseHeadersSize
+    );
+    this.#requestCountCounter.inc({ type, host_type: hostType });
 
     this.#requestsInFlight -= 1;
 
@@ -141,4 +136,29 @@ export class RequestsRecorder {
   getMetrics() {
     return [this.#inflatedSizeBytesCounter, this.#transferSizeBytesCounter, this.#requestCountCounter];
   }
+}
+
+/**
+ * Instead of setting the request host as a label, which may have too high cardinality, we categorise
+ * the host into a limited set of types.
+ */
+function getHostType(requestUrl: string, documentUrl: string) {
+  const url = new URL(requestUrl);
+  const hostname = url.hostname; // FYI `hostname` doesn't include port, `host` does
+
+  const documentHost = new URL(documentUrl).hostname;
+
+  if (hostname.match(/^grafana-assets\.grafana(-\w+)?\.net$/)) {
+    return 'assets_cdn';
+  }
+
+  if (hostname.match(/^plugins-cdn\.grafana(-\w+)?\.net$/)) {
+    return 'plugin_cdn';
+  }
+
+  if (hostname === documentHost) {
+    return 'self';
+  }
+
+  return 'other';
 }
