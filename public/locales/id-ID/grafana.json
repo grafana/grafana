@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "Pembisuan, pengelompokan, dan pengaturan waktu"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Tidak ada sumber data yang ditemukan"
     },
     "alert-menu": {
@@ -2457,6 +2462,7 @@
       },
       "empty-data-source": "Tidak ada aturan yang ditemukan",
       "error-button": "Kesalahan",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Batalkan pencarian",
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
@@ -3614,11 +3620,11 @@
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
+      "error-invalid-characters": "",
       "error-required": "Nama folder wajib diisi",
       "folder-name-input-placeholder-enter-folder-name": "Masukkan nama folder",
       "label-folder-name": "Nama folder",
       "text-pull-request-created": "Permintaan pull telah dibuat dengan perubahan pada folder ini:",
-      "text-your-folder-will-be-created-as": "Folder Anda akan dibuat sebagai {{folderName}}",
       "title-pull-request-created": "Permintaan pull dibuat",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
@@ -4153,7 +4159,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Sumber data",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Hasil yang cocok dengan kueri Anda tidak ditemukan",
       "request-data-source": "Minta sumber data baru",
       "roadmap": "Lihat peta jalan"
@@ -6524,9 +6531,11 @@
       "explore": "Jelajahi"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Buat dasbor",
       "explore-data": "Jelajahi data",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Detail lebih lanjut tentang kesalahan"
@@ -7504,11 +7513,6 @@
     "noOptionsMessage-no-folders-found": "Folder tidak ditemukan",
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
-  },
-  "folder-picker": {
-    "create-instructions": "Tekan enter untuk membuat folder baru.",
-    "input-placeholder": "Tekan enter untuk mengonfirmasi folder baru",
-    "loading": "Memuat folder..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8728,7 +8732,6 @@
       "filter-popup-input-placeholder": "Filter nilai",
       "filter-popup-match-case": "Cocok huruf besar kecil",
       "inspect-drawer-title": "Periksa nilai",
-      "inspect-menu-label": "Periksa nilai",
       "nested-table": {
         "no-data": "Tidak ada data"
       },
@@ -12754,6 +12757,7 @@
     "description-fields": "Pilih bidang yang harus dihitung",
     "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
+    "description-tooltip-from-field": "",
     "name-calculation": "Perhitungan",
     "name-cell-height": "Tinggi sel",
     "name-cell-type": "Jenis sel",
@@ -12769,8 +12773,17 @@
     "name-min-column-width": "Lebar kolom minimum",
     "name-show-table-footer": "Tampilkan footer tabel",
     "name-show-table-header": "Tampilkan header tabel",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "otomatis",
-    "placeholder-fields": "Semua Bidang Numerik"
+    "placeholder-fields": "Semua Bidang Numerik",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Hapus tag",

@@ -73,6 +73,7 @@ export const InfiniteScroll = ({
   const styles = useStyles2(getStyles, virtualization);
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
+  const noScrollRef = useRef(false);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -237,10 +238,13 @@ export const InfiniteScroll = ({
 
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
-      if (!scrollElement || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+      if (!scrollElement) {
         return;
       }
-      if (scrollElement.scrollHeight <= scrollElement.clientHeight) {
+      if (props.visibleStartIndex === 0) {
+        noScrollRef.current = scrollElement.scrollHeight <= scrollElement.clientHeight;
+      }
+      if (noScrollRef.current || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
         return;
       }
       const lastLogIndex = logs.length - 1;

@@ -58,7 +58,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         .getStream<ResourceEvent<T, S, K>>({
           scope: LiveChannelScope.Watch,
           namespace: this.gvr.group,
-          path: `${this.gvr.version}/${this.gvr.resource}${query}/${config.bootData.user.uid}`,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid}`,
         })
         .pipe(
           filter((event) => isLiveChannelMessageEvent(event)),

@@ -103,14 +103,14 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
     const urls: string[] = [];
 
-    if (!playlist.spec.items?.length) {
+    if (!playlist.spec?.items?.length) {
       // alert
       return;
     }
 
-    this.interval = rangeUtil.intervalToMs(playlist.spec.interval);
+    this.interval = rangeUtil.intervalToMs(playlist.spec?.interval);
 
-    const items = await loadDashboards(playlist.spec.items);
+    const items = await loadDashboards(playlist.spec?.items);
     for (const item of items) {
       if (item.dashboards) {
         for (const dash of item.dashboards) {
