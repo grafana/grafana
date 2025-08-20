@@ -1,6 +1,6 @@
-import { LinkModel } from "@grafana/data";
+import { LinkModel } from '@grafana/data';
 
-import { FieldDef } from "../logParser";
+import { FieldDef } from '../logParser';
 
 export function getTraceFromLinks(fields: FieldDef[]) {
   for (const field of fields) {
@@ -50,8 +50,8 @@ function getDataSourceAndQueryFromLink(link: LinkModel): EmbeddedInternalLink | 
       typeof parsed.queries[0].query === 'string'
         ? parsed.queries[0].query
         : '';
-    const queryType = 'queryType' in parsed.queries[0] &&
-      typeof parsed.queries[0].queryType === 'string'
+    const queryType =
+      'queryType' in parsed.queries[0] && typeof parsed.queries[0].queryType === 'string'
         ? parsed.queries[0].queryType
         : '';
     return dsUID && query && queryType
