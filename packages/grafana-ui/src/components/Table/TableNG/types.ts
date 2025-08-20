@@ -1,4 +1,4 @@
-import { ReactNode, SyntheticEvent } from 'react';
+import { FC, SyntheticEvent } from 'react';
 import { CellRendererProps, Column } from 'react-data-grid';
 
 import {
@@ -150,7 +150,7 @@ export interface BaseTableProps {
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
-export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
+export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
   rowIdx: number;
@@ -279,24 +279,30 @@ export interface TypographyCtx {
   fontFamily: string;
   letterSpacing: number;
   avgCharWidth: number;
-  estimateLines: LineCounter;
-  wrappedCount: LineCounter;
+  estimateHeight: MeasureCellHeight;
+  measureHeight: MeasureCellHeight;
 }
 
-export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
-export interface LineCounterEntry {
+export type MeasureCellHeight = (
+  value: unknown,
+  width: number,
+  field: Field,
+  rowIdx: number,
+  lineHeight: number
+) => number;
+export interface MeasureCellHeightEntry {
   /**
    * given a values and the available width, returns the line count for that value
    */
-  counter: LineCounter;
+  measure: MeasureCellHeight;
   /**
    * if getting an accurate line count is expensive, you can provide an estimate method
-   * which will be used when looping over the row. the counter method will only be invoked
+   * which will be used when looping over the row. the method will only be invoked
    * for the cell which is the maximum line count for the row.
    */
-  estimate?: LineCounter;
+  estimate?: MeasureCellHeight;
   /**
-   * indicates which field indexes of the visible fields this line counter applies to.
+   * indicates which field indexes of the visible fields this measurer applies to.
    */
   fieldIdxs: number[];
 }

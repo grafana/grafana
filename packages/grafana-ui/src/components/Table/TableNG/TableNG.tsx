@@ -74,7 +74,6 @@ import {
 import {
   applySort,
   canFieldBeColorized,
-  computeColWidths,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -95,6 +94,8 @@ import {
   shouldTextWrap,
   withDataLinksActionsTooltip,
 } from './utils';
+
+const EXPANDED_COLUMN_KEY = 'expanded';
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -121,10 +122,7 @@ export function TableNG(props: TableNGProps) {
   } = props;
 
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, {
-    enablePagination,
-    transparent,
-  });
+  const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
 
   const getCellActions = useCallback(
@@ -161,6 +159,7 @@ export function TableNG(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
+  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
@@ -278,7 +277,7 @@ export function TableNG(props: TableNGProps) {
       hasNestedHeaders: boolean,
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
-      key: 'expanded',
+      key: EXPANDED_COLUMN_KEY,
       name: '',
       field: {
         name: '',
@@ -396,7 +395,7 @@ export function TableNG(props: TableNGProps) {
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
-        const renderFieldCell = getCellRenderer(field, cellOptions);
+        const CellType = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
@@ -473,21 +472,21 @@ export function TableNG(props: TableNGProps) {
 
           return (
             <>
-              {renderFieldCell({
-                cellOptions,
-                frame,
-                field,
-                height,
-                rowIdx,
-                theme,
-                value,
-                width,
-                timeRange,
-                cellInspect,
-                showFilters,
-                getActions: getCellActions,
-                disableSanitizeHtml,
-              })}
+              <CellType
+                cellOptions={cellOptions}
+                frame={frame}
+                field={field}
+                height={height}
+                rowIdx={rowIdx}
+                theme={theme}
+                value={value}
+                width={width}
+                timeRange={timeRange}
+                cellInspect={cellInspect}
+                showFilters={showFilters}
+                getActions={getCellActions}
+                disableSanitizeHtml={disableSanitizeHtml}
+              />
               {showActions && (
                 <TableCellActions
                   field={field}
@@ -560,7 +559,7 @@ export function TableNG(props: TableNGProps) {
 
             renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
               // cached so we don't care about multiple calls.
-              const height = rowHeightFn(props.row);
+              const tooltipHeight = rowHeightFn(props.row);
               let tooltipStyle: CSSProperties | undefined;
               if (tooltipCanBeColorized) {
                 const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
@@ -568,7 +567,7 @@ export function TableNG(props: TableNGProps) {
               }
 
               return (
-                <TableCellTooltip {...tooltipProps} height={height} rowIdx={props.rowIdx} style={tooltipStyle}>
+                <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.rowIdx} style={tooltipStyle}>
                   {renderBasicCellContent(props)}
                 </TableCellTooltip>
               );
@@ -638,30 +637,31 @@ export function TableNG(props: TableNGProps) {
     ]
   );
 
-  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
-    console.log('building columns');
+  // set up the first row's nested data and the nest field widths using useColWidths to avoid
+  // unnecessary re-renders on re-size.
+  const firstRowNestedData = useMemo(
+    () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
+    [hasNestedFrames, rows]
+  );
+  const [nestedFieldWidths] = useColWidths(firstRowNestedData?.fields ?? [], availableWidth);
 
+  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
     const result = fromFields(visibleFields, widths);
 
-    // handle nested frames rendering from here.
-    if (!hasNestedFrames) {
+    // if nested frames are present, augment the columns to include the nested table expander column.
+    if (!firstRowNestedData) {
       return result;
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const firstNestedData = rows.find((r) => r.data)?.data;
-    if (!firstNestedData) {
-      return result;
-    }
-
-    const hasNestedHeaders = firstNestedData.meta?.custom?.noHeader !== true;
-    const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
+    const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
+    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
-      firstNestedData.fields,
-      computeColWidths(firstNestedData.fields, availableWidth)
+      firstRowNestedData.fields,
+      nestedFieldWidths
     );
 
-    result.cellRootRenderers.expanded = (key, props) => <Cell key={key} {...props} />;
+    result.cellRootRenderers[EXPANDED_COLUMN_KEY] = (key, props) => <Cell key={key} {...props} />;
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift(
@@ -673,14 +673,13 @@ export function TableNG(props: TableNGProps) {
 
     return result;
   }, [
-    availableWidth,
     buildNestedTableExpanderColumn,
     enableSharedCrosshair,
     expandedRows,
+    firstRowNestedData,
     fromFields,
-    hasNestedFrames,
+    nestedFieldWidths,
     panelContext,
-    rows,
     visibleFields,
     widths,
   ]);
@@ -688,17 +687,15 @@ export function TableNG(props: TableNGProps) {
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const structureRevColumns = useMemo(() => columns, [columns, structureRev]);
+  const renderCellRoot: CellRootRenderer = useCallback(
+    (key, props) => cellRootRenderers[props.column.key](key, props),
+    [cellRootRenderers]
+  );
 
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
-
-  const renderCellRoot: CellRootRenderer = (key, props) => {
-    return cellRootRenderers[props.column.key](key, props);
-  };
-
-  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
 
   return (
     <>
