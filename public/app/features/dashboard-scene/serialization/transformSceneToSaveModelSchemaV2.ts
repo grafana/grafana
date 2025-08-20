@@ -41,8 +41,8 @@ import {
   LibraryPanelKind,
   Element,
   DashboardCursorSync,
-  FieldConfig,
   FieldColor,
+  defaultFieldConfig,
   defaultDataQueryKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -175,40 +175,7 @@ export function vizPanelToSchemaV2(
     return elementSpec;
   }
 
-  // Handle type conversion for color mode
-  const rawColor = vizPanel.state.fieldConfig.defaults.color;
-  let color: FieldColor | undefined;
-
-  if (rawColor) {
-    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
-
-    if (convertedMode) {
-      color = {
-        ...rawColor,
-        mode: convertedMode,
-      };
-    }
-  }
-
-  // Remove null from the defaults because schema V2 doesn't support null for these fields
-  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
-  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
-  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
-
-  const defaults: FieldConfig = Object.fromEntries(
-    Object.entries({
-      ...vizPanel.state.fieldConfig.defaults,
-      decimals,
-      min,
-      max,
-      color,
-    }).filter(([_, value]) => {
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-      return value !== undefined;
-    })
-  );
+  const defaults = handleFieldConfigDefaultsConversion(vizPanel);
 
   const vizFieldConfig: FieldConfigSource = {
     ...vizPanel.state.fieldConfig,
@@ -243,6 +210,49 @@ export function vizPanelToSchemaV2(
     },
   };
   return elementSpec;
+}
+
+function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
+  if (!vizPanel.state.fieldConfig || !vizPanel.state.fieldConfig.defaults) {
+    return defaultFieldConfig();
+  }
+
+  // Handle type conversion for color mode
+  const rawColor = vizPanel.state.fieldConfig.defaults.color;
+  let color: FieldColor | undefined;
+
+  if (rawColor) {
+    const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+
+    if (convertedMode) {
+      color = {
+        ...rawColor,
+        mode: convertedMode,
+      };
+    }
+  }
+
+  // Remove null from the defaults because schema V2 doesn't support null for these fields
+  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+  const defaults = Object.fromEntries(
+    Object.entries({
+      ...vizPanel.state.fieldConfig.defaults,
+      decimals,
+      min,
+      max,
+      color,
+    }).filter(([_, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== undefined;
+    })
+  );
+
+  return defaults;
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
