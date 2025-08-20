@@ -202,7 +202,7 @@ func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repo
 		Healthy: true,
 		Checked: now.UnixMilli(),
 	}
-	
+
 	// If the existing status is already healthy with no error messages and
 	// the last check was recent (within 30 seconds), preserve the existing timestamp
 	// to avoid unnecessary updates
