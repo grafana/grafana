@@ -284,8 +284,6 @@ The options are:
 
 The **Disable for one-click elements** setting allows hiding tooltips on elements that have one-click functionality enabled. This prevents tooltips from interfering with one-click interactions while still allowing tooltips on other elements.
 
-{{< admonition type="note" >}}
-
 ### Layer options
 
 The **Layer** options let you add elements to the canvas and control its appearance:
