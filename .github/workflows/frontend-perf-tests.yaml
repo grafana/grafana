@@ -39,16 +39,8 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v4
-        id: nm-cache
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node_modules-${{ hashFiles('yarn.lock') }}
-
       - name: Yarn install
         run: yarn install --immutable
-        if: ${{ !steps.nm-cache.outputs.cache-hit }}
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
           CYPRESS_INSTALL_BINARY: 0
