@@ -18,6 +18,8 @@ export type FavoriteDatasources = {
   isFavoriteDatasource: (dsUid: string) => boolean;
 };
 
+const userStorage = new UserStorage('grafana-runtime');
+
 /**
  * A hook for managing favorite data sources using user storage.
  * This hook provides functionality to store and retrieve a list of favorite data source UIDs
@@ -45,7 +47,6 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     };
   }
 
-  const [userStorage] = useState(() => new UserStorage('grafana-runtime'));
   const [favoriteDatasources, setFavoriteDatasources] = useState<string[]>([]);
   const [initialFavoriteDataSources, setInitialFavoriteDataSources] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,18 +65,15 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     };
 
     loadFavorites();
-  }, [userStorage]);
+  }, []);
 
   // Helper function to save favorites to storage
-  const saveFavorites = useCallback(
-    async (newFavorites: string[]) => {
-      setIsLoading(true);
-      await userStorage.setItem(FAVORITE_DATASOURCES_KEY, JSON.stringify(newFavorites));
-      setFavoriteDatasources(newFavorites);
-      setIsLoading(false);
-    },
-    [userStorage]
-  );
+  const saveFavorites = useCallback(async (newFavorites: string[]) => {
+    setIsLoading(true);
+    await userStorage.setItem(FAVORITE_DATASOURCES_KEY, JSON.stringify(newFavorites));
+    setFavoriteDatasources(newFavorites);
+    setIsLoading(false);
+  }, []);
 
   const addFavoriteDatasource = useCallback(
     (ds: DataSourceInstanceSettings) => {
