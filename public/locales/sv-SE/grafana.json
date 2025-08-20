@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Tystnad, gruppering och tidsinställningar"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Inga datakällor hittades"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "Inga regler hittades",
       "error-button": "Fel",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Avbryt sökning",
         "no-more-results": "Inga fler resultat – hittade {{numberOfRules}} regler",
@@ -4171,7 +4177,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Datakällor",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Inga resultat som matchar din fråga hittades",
       "request-data-source": "Begär en ny datakälla",
       "roadmap": "Visa planering"
@@ -6545,9 +6552,11 @@
       "explore": "Utforska"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Bygg en instrumentpanel",
       "explore-data": "Utforska data",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mer information om felet"

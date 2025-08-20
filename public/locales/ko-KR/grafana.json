@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "알림 비활성화, 그룹화 및 타이밍"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
     "alert-menu": {
@@ -2457,6 +2462,7 @@
       },
       "empty-data-source": "규칙을 찾을 수 없습니다",
       "error-button": "오류",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -4153,7 +4159,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "데이터 소스",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "쿼리와 일치하는 결과를 찾을 수 없음",
       "request-data-source": "새 데이터 소스 요청",
       "roadmap": "로드맵 보기"
@@ -6524,9 +6531,11 @@
       "explore": "탐색"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "대시보드 구축",
       "explore-data": "데이터 탐색",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "오류에 대한 자세한 정보"

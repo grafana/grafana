@@ -501,6 +501,11 @@
       "title-muting-grouping-and-timings": "Ztlumení, seskupení a časování"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nebyly nalezeny žádné zdroje dat"
     },
     "alert-menu": {
@@ -2487,6 +2492,7 @@
       },
       "empty-data-source": "Nebyla nalezena žádná pravidla",
       "error-button": "Chyba",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
@@ -4207,7 +4213,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Zdroje dat",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nebyly nalezeny žádné výsledky odpovídající vašemu dotazu",
       "request-data-source": "Požádat o nový zdroj dat",
       "roadmap": "Zobrazit plán"
@@ -6587,9 +6594,11 @@
       "explore": "Prozkoumat"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Vytvořit nástěnku",
       "explore-data": "Prozkoumat data",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Další podrobnosti o chybě"
