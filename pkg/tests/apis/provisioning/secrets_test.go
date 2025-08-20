@@ -102,7 +102,7 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 			results, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", obj.GetNamespace(), created...)
 			require.NoError(t, err, "failed to execute decrypt with removed secrets")
 			for k, v := range results {
-				require.Error(t, v.Error(), "expecting error for all secrets: %s", k)
+				require.ErrorContains(t, v.Error(), "not found", "expecting not found error for all secrets: %s", k)
 			}
 		})
 	}
