@@ -110,3 +110,82 @@ func TestSQLService(t *testing.T) {
 		require.ErrorContains(t, rsp.Responses["B"].Error, "limit expression expected to be numeric")
 	})
 }
+
+func TestSQLServiceErrors(t *testing.T) {
+	tsMulti := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{fp(2)}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+
+	tsMultiNoType := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"testLabelKey": "testLabelValue"}, []*float64{fp(2)}),
+	)
+
+	resp := map[string]backend.DataResponse{
+		"tsMulti":       {Frames: data.Frames{tsMulti}},
+		"tsMultiNoType": {Frames: data.Frames{tsMultiNoType}},
+	}
+
+	newABSQLQueries := func(q string) []Query {
+		escaped, err := json.Marshal(q)
+		require.NoError(t, err)
+		return []Query{
+			{
+				RefID: "tsMulti",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			},
+			{
+				RefID: "tsMultiNoType",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			},
+			{
+				RefID:      "sqlExpression",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": %s }`, escaped)),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			},
+		}
+	}
+
+	t.Run("conversion failure", func(t *testing.T) {
+		s, req := newMockQueryService(resp,
+			newABSQLQueries(`SELECT * FROM tsMultiNoType`),
+		)
+
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		pl, err := s.BuildPipeline(t.Context(), req)
+		require.NoError(t, err)
+
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+
+		require.Error(t, rsp.Responses["tsMultiNoType"].Error, "should return conversion error on DS response")
+		require.ErrorContains(t, rsp.Responses["tsMultiNoType"].Error, "missing the data type")
+
+		require.Error(t, rsp.Responses["sqlExpression"].Error, "should return dependency error")
+		require.ErrorContains(t, rsp.Responses["sqlExpression"].Error, "dependency")
+	})
+}
