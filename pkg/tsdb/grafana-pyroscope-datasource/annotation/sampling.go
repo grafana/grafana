@@ -33,9 +33,9 @@ func convertSamplingAnnotation(raw string, timestamp int64) (*processedProfileAn
 		return nil, nil
 	}
 
-	droppedPercentage := (1 - samplingInfo.Probability) * 100
-	id := fmt.Sprintf("%s-%.0f", samplingInfo.UsageGroup, droppedPercentage)
-	text := fmt.Sprintf("%.2f%% of profiles for this service have been dropped by sampling rules", droppedPercentage)
+	reductionPercentage := (1 - samplingInfo.Probability) * 100
+	id := fmt.Sprintf("%s-%.0f", samplingInfo.UsageGroup, reductionPercentage)
+	text := fmt.Sprintf("Profile volume reduced by %.2f%% for this service.", reductionPercentage)
 
 	return &processedProfileAnnotation{
 		id:       id,
