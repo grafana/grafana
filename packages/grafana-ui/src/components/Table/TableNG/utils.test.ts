@@ -23,7 +23,7 @@ import {
   extractPixelValue,
   frameToRecords,
   getAlignmentFactor,
-  getCellColorInlineStyles,
+  getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
   getComparator,
@@ -107,27 +107,56 @@ describe('TableNG utils', () => {
       },
     } as unknown as GrafanaTheme2;
 
-    it('should handle color background mode', () => {
-      const field = { type: TableCellDisplayMode.ColorBackground as const, mode: TableCellBackgroundDisplayMode.Basic };
+    it('should handle color text cell type', () => {
+      const cellOptions = {
+        type: TableCellDisplayMode.ColorText as const,
+      };
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColorInlineStyles(theme, field, displayValue);
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue);
+      expect(colors.color).toBe('#ff0000');
+      expect(colors).not.toHaveProperty('background');
+    });
+
+    it('should handle color background cell type in basic mode', () => {
+      const cellOptions = {
+        type: TableCellDisplayMode.ColorBackground as const,
+        mode: TableCellBackgroundDisplayMode.Basic,
+      };
+
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
+
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue);
       expect(colors.background).toBe('rgb(255, 0, 0)');
       expect(colors.color).toBe('rgb(247, 248, 250)');
     });
 
-    it('should handle color background gradient mode', () => {
-      const field = {
+    it('should handle color background cell type in gradient mode', () => {
+      const cellOptions = {
         type: TableCellDisplayMode.ColorBackground as const,
         mode: TableCellBackgroundDisplayMode.Gradient,
       };
 
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
-      const colors = getCellColorInlineStyles(theme, field, displayValue);
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue);
       expect(colors.background).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
       expect(colors.color).toBe('rgb(247, 248, 250)');
+    });
+
+    it('does not set CSSProperties for un-mapped cell types', () => {
+      const cellOptions = { type: TableCellDisplayMode.JSONView as const };
+
+      const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
+
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue);
+
+      expect(colors).toEqual({});
     });
   });
 

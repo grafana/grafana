@@ -69,7 +69,7 @@ import {
   frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
-  getCellColorInlineStyles,
+  getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
   getDefaultRowHeight,
@@ -165,6 +165,11 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
     [width, hasNestedFrames, scrollbarWidth]
   );
+  const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
+  const applyToRowBgFn = useMemo(
+    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
+    [data.fields, getCellColorInlineStyles]
+  );
   const typographyCtx = useMemo(
     () =>
       createTypographyContext(
@@ -228,7 +233,6 @@ export function TableNG(props: TableNGProps) {
     footerOptions,
     isCountRowsSet,
   });
-  const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -375,14 +379,11 @@ export function TableNG(props: TableNGProps) {
             }
           }
 
-          let style: CSSProperties | undefined;
-
-          if (rowCellStyle.color != null || rowCellStyle.background != null) {
-            style = rowCellStyle;
-          } else if (canBeColorized) {
+          let style: CSSProperties = { ...rowCellStyle };
+          if (canBeColorized) {
             const value = props.row[props.column.key];
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            style = getCellColorInlineStyles(theme, cellOptions, displayValue);
+            style = { ...style, ...getCellColorInlineStyles(cellOptions, displayValue) };
           }
 
           return (
@@ -497,10 +498,13 @@ export function TableNG(props: TableNGProps) {
             renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
               // cached so we don't care about multiple calls.
               const height = rowHeightFn(props.row);
-              let tooltipStyle: CSSProperties | undefined;
+              let tooltipStyle: CSSProperties = { ...rowCellStyle };
               if (tooltipCanBeColorized) {
                 const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
-                tooltipStyle = getCellColorInlineStyles(theme, tooltipCellOptions, tooltipDisplayValue);
+                tooltipStyle = {
+                  ...tooltipStyle,
+                  ...getCellColorInlineStyles(tooltipCellOptions, tooltipDisplayValue),
+                };
               }
 
               return (
@@ -662,6 +666,7 @@ export function TableNG(props: TableNGProps) {
     footerCalcs,
     frozenColumns,
     getCellActions,
+    getCellColorInlineStyles,
     hasNestedFrames,
     isCountRowsSet,
     numColsFullyInView,

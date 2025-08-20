@@ -488,36 +488,56 @@ const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
  * @internal
  * Returns the text and background colors for a table cell based on its options and display value.
  */
-export function getCellColorInlineStyles(
-  theme: GrafanaTheme2,
-  cellOptions: TableCellOptions,
-  displayValue: DisplayValue
-): CSSProperties {
-  // How much to darken elements depends upon if we're in dark mode
-  const darkeningFactor = theme.isDark ? 1 : -0.7;
+export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
+  const computedColorCache: Record<'bg-cell-text-color' | 'bg-cell-gradient', Record<string, string>> = {
+    'bg-cell-text-color': {},
+    'bg-cell-gradient': {},
+  } as const;
 
-  // Setup color variables
-  let textColor: string | undefined = undefined;
-  let bgColor: string | undefined = undefined;
+  const cached = (cacheName: keyof typeof computedColorCache, fn: (color: string) => string) => {
+    return (color: string) => {
+      if (computedColorCache[cacheName][color]) {
+        return computedColorCache[cacheName][color];
+      }
+      const computedColor = fn(color);
+      computedColorCache[cacheName][color] = computedColor;
+      return computedColor;
+    };
+  };
 
-  if (cellOptions.type === TableCellDisplayMode.ColorText) {
-    textColor = displayValue.color;
-  } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
-    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+  const bgCellTextColor = cached('bg-cell-text-color', (color: string) =>
+    getTextColorForAlphaBackground(color, theme.isDark)
+  );
+  const gradientBg = cached('bg-cell-gradient', (color: string) => {
+    // How much to darken elements depends upon if we're in dark mode
+    const darkeningFactor = theme.isDark ? 1 : -0.7;
+    return tinycolor(color)
+      .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+      .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES)
+      .toRgbString();
+  });
 
-    if (mode === TableCellBackgroundDisplayMode.Basic) {
-      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
-      bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const bgColor2 = tinycolor(displayValue.color)
-        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-        .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
-      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
-      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+  return (cellOptions: TableCellOptions, displayValue: DisplayValue): CSSProperties => {
+    const result: CSSProperties = {};
+    const displayValueColor = displayValue.color;
+
+    if (!displayValueColor) {
+      return result;
     }
-  }
 
-  return { color: textColor, background: bgColor };
+    if (cellOptions.type === TableCellDisplayMode.ColorText) {
+      result.color = displayValueColor;
+    } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
+      const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+      result.color = bgCellTextColor(displayValueColor);
+      result.background =
+        mode === TableCellBackgroundDisplayMode.Gradient
+          ? `linear-gradient(120deg, ${gradientBg(displayValueColor)}, ${displayValueColor})`
+          : displayValueColor;
+    }
+
+    return result;
+  };
 }
 
 /**
@@ -870,7 +890,10 @@ export function computeColWidths(fields: Field[], availWidth: number) {
  * @internal
  * if applyToRow is true in any field, return a function that gets the row background color
  */
-export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CSSProperties) | void {
+export function getApplyToRowBgFn(
+  fields: Field[],
+  getCellColorInlineStyles: ReturnType<typeof getCellColorInlineStylesFactory>
+): ((rowIndex: number) => CSSProperties) | void {
   for (const field of fields) {
     const cellOptions = getCellOptions(field);
     const fieldDisplay = field.display;
@@ -879,7 +902,7 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
       cellOptions.type === TableCellDisplayMode.ColorBackground &&
       cellOptions.applyToRow === true
     ) {
-      return (rowIndex: number) => getCellColorInlineStyles(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+      return (rowIndex: number) => getCellColorInlineStyles(cellOptions, fieldDisplay(field.values[rowIndex]));
     }
   }
 }
