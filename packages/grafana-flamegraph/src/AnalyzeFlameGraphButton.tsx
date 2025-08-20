@@ -19,6 +19,7 @@ export function AnalyzeFlameGraphButton(props: Props) {
       className={className}
       onClick={() =>
         openAssistant({
+          origin: 'grafana-flamegraph',
           prompt: 'Analyze Flame Graph',
           context: assistantContext,
         })
