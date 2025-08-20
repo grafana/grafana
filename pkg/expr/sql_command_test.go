@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-	"github.com/zeebo/assert"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -251,7 +250,7 @@ func TestHandleSqlInput(t *testing.T) {
 				if tc.expectFrame {
 					require.Len(t, res.Values, 1)
 					require.IsType(t, mathexp.TableData{}, res.Values[0])
-					assert.NotNil(t, res.Values[0].(mathexp.TableData).Frame)
+					require.NotNil(t, res.Values[0].(mathexp.TableData).Frame)
 				}
 			}
 		})
