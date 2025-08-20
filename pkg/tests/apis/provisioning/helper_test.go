@@ -468,6 +468,7 @@ type TestRepo struct {
 	Copies             map[string]string
 	ExpectedDashboards int
 	ExpectedFolders    int
+	SkipSync           bool
 }
 
 func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
@@ -484,9 +485,14 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		require.NoError(t, err, "should be able to create repository path")
 	}
 
+	syncEnabled := true
+	if repo.SkipSync {
+		syncEnabled = false
+	}
+
 	templateVars := map[string]any{
 		"Name":        repo.Name,
-		"SyncEnabled": true,
+		"SyncEnabled": syncEnabled,
 		"SyncTarget":  repo.Target,
 	}
 	if repo.Path != "" {
@@ -512,11 +518,13 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		}
 	}
 
-	// Trigger and wait for initial sync to populate resources
-	h.SyncAndWait(t, repo.Name, nil)
-
-	// Debug state after initial sync
-	h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
+	if !repo.SkipSync {
+		// Trigger and wait for initial sync to populate resources
+		h.SyncAndWait(t, repo.Name, nil)
+		h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
+	} else {
+		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
+	}
 
 	// Verify initial state
 	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
