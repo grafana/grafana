@@ -169,7 +169,7 @@ func TestSQLServiceErrors(t *testing.T) {
 		}
 	}
 
-	t.Run("conversion failure", func(t *testing.T) {
+	t.Run("conversion failure (and therefore dependency error)", func(t *testing.T) {
 		s, req := newMockQueryService(resp,
 			newABSQLQueries(`SELECT * FROM tsMultiNoType`),
 		)
@@ -187,5 +187,16 @@ func TestSQLServiceErrors(t *testing.T) {
 
 		require.Error(t, rsp.Responses["sqlExpression"].Error, "should return dependency error")
 		require.ErrorContains(t, rsp.Responses["sqlExpression"].Error, "dependency")
+	})
+
+	t.Run("pipeline (expressions and DS queries) will fail if the table is not found, before execution of the sql expression", func(t *testing.T) {
+		s, req := newMockQueryService(resp,
+			newABSQLQueries(`SELECT * FROM nonExisting`),
+		)
+
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		_, err := s.BuildPipeline(t.Context(), req)
+		require.Error(t, err, "whole pipeline fails when selecting a dependency that does not exist")
 	})
 }

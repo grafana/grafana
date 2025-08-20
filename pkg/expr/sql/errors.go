@@ -225,7 +225,7 @@ func MakeCancelError(err error, refID string) CategorizedError {
 
 var ErrCategoryTableNotFound = "table_not_found"
 
-var tableNotFoundStr = "failed to run sql expression [{{ .Public.refId }}] because it selects from table (refId/query) [{{ .Public.table }}] and that table not found"
+var tableNotFoundStr = "failed to run sql expression [{{ .Public.refId }}] because it selects from table (refId/query) [{{ .Public.table }}] and that table was not found"
 
 var TableNotFoundError = errutil.NewBase(
 	errutil.StatusBadRequest, sseErrBase+ErrCategoryTableNotFound).MustTemplate(
