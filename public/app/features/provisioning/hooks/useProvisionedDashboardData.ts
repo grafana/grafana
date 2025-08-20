@@ -8,11 +8,10 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
+import { getDefaultWorkflow, getWorkflowOptions } from '../components/defaults';
+import { generatePath } from '../components/utils/path';
+import { generateTimestamp } from '../components/utils/timestamp';
 import { ProvisionedDashboardFormData } from '../types/form';
-
-import { getDefaultWorkflow, getWorkflowOptions } from './defaults';
-import { generatePath } from './utils/path';
-import { generateTimestamp } from './utils/timestamp';
 
 interface UseDefaultValuesParams {
   meta: DashboardMeta;
