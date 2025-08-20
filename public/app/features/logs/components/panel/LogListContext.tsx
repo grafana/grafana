@@ -732,7 +732,7 @@ async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) =>
     ${log.entry.replaceAll('`', '\\`')}
     \`\`\`
     `,
-    origin: 'Logs',
+    origin: 'grafana-logs',
     context: [
       ...context,
       createAssistantContextItem('structured', {
