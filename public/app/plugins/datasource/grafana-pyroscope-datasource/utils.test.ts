@@ -14,11 +14,7 @@ import { enrichDataFrameWithAssistantContentMapper } from './utils';
 
 // Mock the createContext function
 jest.mock('@grafana/assistant', () => ({
-  createContext: jest.fn(),
-  ItemDataType: {
-    Datasource: 'datasource',
-    Structured: 'structured',
-  },
+  createAssistantContextItem: jest.fn(),
 }));
 
 const mockCreateContext = createAssistantContextItem as jest.MockedFunction<typeof createAssistantContextItem>;
@@ -114,9 +110,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
 
       // Verify datasource context
       expect(mockCreateContext).toHaveBeenCalledWith('datasource', {
-        datasourceName: 'PyroscopeDatasource',
         datasourceUid: 'test-uid',
-        datasourceType: 'grafana-pyroscope-datasource',
       });
 
       // Verify structured context
