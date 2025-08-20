@@ -24,6 +24,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
@@ -588,6 +589,9 @@ type bleveIndex struct {
 	updaterEnabled bool               // When set to false, updater is no longer allowed to update index. Toggled on close().
 	updaterQueue   []updateRequest    // Queue of requests for next updater iteration.
 	updaterCancel  context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
+
+	updateLatency    prometheus.Histogram
+	updatedDocuments prometheus.Summary
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -614,6 +618,10 @@ func (b *bleveBackend) newBleveIndex(
 		updaterEnabled: true,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
+	if b.indexMetrics != nil {
+		bi.updateLatency = b.indexMetrics.UpdateLatency
+		bi.updatedDocuments = b.indexMetrics.UpdatedDocuments
+	}
 	return bi
 }
 
@@ -1242,10 +1250,18 @@ func (b *bleveIndex) updateIndexWithLatestModifications(ctx context.Context, req
 		err = b.updateResourceVersion(rv)
 	}
 
+	elapsed := time.Since(startTime)
 	if err == nil {
-		b.logger.Debug("Finished updating index", "listRV", b.resourceVersion, "duration", time.Since(startTime), "docs", docs)
+		b.logger.Debug("Finished updating index", "listRV", b.resourceVersion, "duration", elapsed, "docs", docs)
+
+		if b.updateLatency != nil {
+			b.updateLatency.Observe(elapsed.Seconds())
+		}
+		if b.updatedDocuments != nil {
+			b.updatedDocuments.Observe(float64(docs))
+		}
 	} else {
-		b.logger.Debug("Updating of index finished with error", "duration", time.Since(startTime), "err", err)
+		b.logger.Debug("Updating of index finished with error", "duration", elapsed, "err", err)
 	}
 	return rv, err
 }
