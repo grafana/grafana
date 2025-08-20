@@ -1,4 +1,4 @@
-import { SyntheticEvent } from 'react';
+import { ReactNode, SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -150,6 +150,8 @@ export interface BaseTableProps {
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
+export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
+
 export interface TableCellRendererProps {
   rowIdx: number;
   frame: DataFrame;
@@ -167,12 +169,10 @@ export interface TableCellRendererProps {
   disableSanitizeHtml?: boolean;
 }
 
-export type ContextMenuProps = {
+export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
-  top?: number;
-  left?: number;
 };
 
 export interface TableCellActionsProps {
@@ -182,8 +182,7 @@ export interface TableCellActionsProps {
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
-  setIsInspecting: React.Dispatch<React.SetStateAction<boolean>>;
-  setContextMenuProps: React.Dispatch<React.SetStateAction<ContextMenuProps | null>>;
+  setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
@@ -227,12 +226,6 @@ export interface DataLinksCellProps {
 export interface GeoCellProps {
   value: TableCellValue;
   height: number;
-}
-
-export interface CellColors {
-  textColor?: string;
-  bgColor?: string;
-  bgHoverColor?: string;
 }
 
 export interface AutoCellProps {

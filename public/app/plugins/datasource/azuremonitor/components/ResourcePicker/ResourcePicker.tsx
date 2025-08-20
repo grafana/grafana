@@ -93,11 +93,11 @@ const ResourcePicker = ({
 
     if (queryType === 'metrics') {
       setIsLoadingNamespaces(true);
-      const namespaces = await datasource.getMetricNamespaces(
+      const initialNamespaces = await datasource.getMetricNamespaces(
         subscriptions[0]?.value || datasource.getDefaultSubscriptionId()
       );
       setNamespaces(
-        namespaces?.map((ns) => ({
+        initialNamespaces?.map((ns) => ({
           label: resourceTypeDisplayNames[ns.value.toLowerCase()] || ns.value,
           value: ns.value,
         }))
@@ -106,9 +106,9 @@ const ResourcePicker = ({
     }
 
     setIsLoadingLocations(true);
-    const locations = await datasource.getLocations(subscriptions.map((s) => s.value));
+    const initialLocations = await datasource.getLocations(subscriptions.map((s) => s.value));
     setLocations(
-      Array.from(locations.values()).map((location) => ({
+      Array.from(initialLocations.values()).map((location) => ({
         label: location.displayName,
         value: location.name,
       }))
