@@ -84,7 +84,6 @@ type WebhookExtra struct {
 	render      *renderConnector
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
-	decrypter   repository.Decrypter
 	ghFactory   *github.Factory
 	clonedir    string
 	parsers     resources.ParserFactory
