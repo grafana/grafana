@@ -53,14 +53,30 @@ datasources:
       password: $PASSWORD
 ```
 
-### Use of the special character "$"
+### Use of the special character `$`
 
-Grafana's expansion feature considers any value after an `$` a variable, and converts `$$` into a single `$`.
+Grafana's provisioning system considers any set of characters after an `$` a variable name. 
 
-For example, if you want `Pa$sword` as a final value:
+During the replacement process, Grafana:
 
-- Use the `$ENV_VAR_NAME` syntax to avoid double expansion.
-- Use `Pa$$sw0rd` in the environment variable value before the expansion in order to escape a literal `$`.
+1. Replaces the variables that use the syntax `${ENV_VAR_NAME}`.
+1. Next, it replaces the variables that use the syntax `$ENV_VAR_NAME`. 
+
+If your data contains the character `$` and you're using an environment variable, use the `$ENV_VAR_NAME` syntax to avoid double expansion. If you use the `${ENV_VAR_NAME}` syntax, the value will be first replaced as `Pa$sw0rd` and then again as `Pa` since `$sw0rd` will be considered another variable.
+
+If you want to use the literal value `Pa$sw0rd`, you need to escape the character `$` using a double `$$`: `Pa$$sw0rd`.
+
+The following example shows how variables are replaced, assuming `PASSWORD=Pa$sw0rd`:
+
+```yaml
+datasources:
+  - name: Graphite
+    secureJsonData:
+      password1: $PASSWORD   # Resolved as Pa$sw0rd
+      password2: ${PASSWORD} # Resolved as Pa
+      password3: 'Pa$$sw0rd' # Resolved as Pa$sw0rd
+      password4: 'Pa$sw0rd'  # Resolved as Pa
+```
 
 ## Configuration management tools
 
