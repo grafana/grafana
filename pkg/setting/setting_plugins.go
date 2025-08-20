@@ -134,6 +134,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
+		if cfg.IsFeatureToggleEnabled("grafanaPathfinder") { // Use literal string to avoid circular dependency
+			preinstallPluginsAsync["grafana-grafanadocsplugin-app"] = InstallPlugin{"grafana-grafanadocsplugin-app", "", ""}
+		}
 		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
 
 		rawInstallPluginsSync := util.SplitString(pluginsSection.Key("preinstall_sync").MustString(""))

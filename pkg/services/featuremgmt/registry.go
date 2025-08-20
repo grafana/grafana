@@ -1929,6 +1929,12 @@ var (
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
 		},
+		{
+			Name:        "grafanaPathfinder",
+			Description: "Enables Pathfinder app",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaDocsPluginSquad,
+		},
 	}
 )
 
