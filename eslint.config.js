@@ -140,6 +140,11 @@ module.exports = [
               message:
                 'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
             },
+            {
+              group: ['@grafana/ui*', '*/Layout/*'],
+              importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
+              message: 'Use Stack component instead.',
+            },
           ],
           paths: [
             {
