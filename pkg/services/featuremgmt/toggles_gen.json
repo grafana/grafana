@@ -1520,6 +1520,18 @@
     },
     {
       "metadata": {
+        "name": "grafanaPathfinder",
+        "resourceVersion": "1755693029194",
+        "creationTimestamp": "2025-08-20T12:30:29Z"
+      },
+      "spec": {
+        "description": "Enables Pathfinder app",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/wg-docs-in-product"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-02-06T11:08:04Z"
