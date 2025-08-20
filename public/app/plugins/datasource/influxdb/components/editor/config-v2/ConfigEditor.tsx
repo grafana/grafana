@@ -25,7 +25,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
           <Alert
             severity="info"
             title="You are viewing a new design for the InfluxDB configuration settings."
-            style={{ height: '100px' }}
+            className={styles.alertHeight}
           >
             <>
               <TextLink
@@ -60,6 +60,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('sm')]: {
         display: 'none',
       },
+    }),
+    alertHeight: css({
+      width: '100px',
     }),
   };
 };
