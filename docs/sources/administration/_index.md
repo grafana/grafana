@@ -5,6 +5,7 @@ labels:
     - enterprise
     - oss
 title: Administration
+weight: 40
 ---
 
 # Administration
