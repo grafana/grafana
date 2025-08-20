@@ -4,9 +4,9 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
+import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -15,8 +15,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
-
-import { useSoloPanel } from './useSoloPanel';
+import { SoloPanelContext, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {}
 
@@ -61,30 +60,26 @@ export function SoloPanelPage({ queryParams }: Props) {
 export default SoloPanelPage;
 
 export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
-  const [panel, error] = useSoloPanel(dashboard, panelId);
-  const { controls } = dashboard.useState();
+  const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
   const styles = useStyles2(getStyles);
+  const soloPanelContext = useDefineSoloPanelContext(panelId);
 
   useEffect(() => {
-    return refreshPicker?.activate();
-  }, [refreshPicker]);
+    const dashDeactivate = dashboard.activate();
+    const refreshDeactivate = refreshPicker?.activate();
 
-  if (error) {
-    return <Alert title={error} />;
-  }
-
-  if (!panel) {
-    return (
-      <span>
-        <Trans i18nKey="dashboard-scene.solo-panel-page.loading">Loading</Trans> <Spinner />
-      </span>
-    );
-  }
+    return () => {
+      dashDeactivate();
+      refreshDeactivate?.();
+    };
+  }, [dashboard, refreshPicker]);
 
   return (
     <div className={styles.container}>
-      <panel.Component model={panel} />
+      <SoloPanelContext.Provider value={soloPanelContext}>
+        <body.Component model={body} />
+      </SoloPanelContext.Provider>
     </div>
   );
 }
