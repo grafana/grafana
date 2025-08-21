@@ -545,7 +545,11 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number
 
 const numIsEqual = (a: number, b: number) => a === b;
 
-export function useColWidths(visibleFields: Field[], availableWidth: number): [number[], number] {
+export function useColWidths(
+  visibleFields: Field[],
+  availableWidth: number,
+  frozenColumns?: number
+): [number[], number] {
   const [widths, setWidths] = useState<number[]>(computeColWidths(visibleFields, availableWidth));
 
   // only replace the widths array if something actually changed
@@ -556,20 +560,27 @@ export function useColWidths(visibleFields: Field[], availableWidth: number): [n
     }
   }, [availableWidth, widths, visibleFields]);
 
-  // this is used when freezing columns to avoid buggy situations where all visible columns are frozen
-  const numColsFullyInView = useMemo(
-    () =>
-      widths.reduce(
-        ([count, remainingWidth], nextWidth) => {
-          if (remainingWidth - nextWidth >= 0) {
-            return [count + 1, remainingWidth - nextWidth];
-          }
-          return [count, 0];
-        },
-        [0, availableWidth]
-      )[0],
-    [widths, availableWidth]
-  );
+  // this is to avoid buggy situations where all visible columns are frozen
+  const numFrozenColsFullyInView = useMemo(() => {
+    if (!frozenColumns || frozenColumns <= 0) {
+      return -1;
+    }
 
-  return [widths, numColsFullyInView];
+    const fullyVisibleCols = widths.reduce(
+      ([count, remainingWidth], nextWidth) => {
+        if (remainingWidth - nextWidth >= 0) {
+          return [count + 1, remainingWidth - nextWidth];
+        }
+        return [count, 0];
+      },
+      [0, availableWidth]
+    )[0];
+
+    // de-noise memoized changes to the columns array, and only change this
+    // number when the number of frozen columns changes or once there are fewer
+    // visible columns than the number of frozen columns.
+    return Math.min(fullyVisibleCols, frozenColumns);
+  }, [widths, availableWidth, frozenColumns]);
+
+  return [widths, numFrozenColsFullyInView];
 }

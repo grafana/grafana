@@ -184,7 +184,7 @@ export function TableNG(props: TableNGProps) {
     [theme]
   );
 
-  const [widths, numColsFullyInView] = useColWidths(visibleFields, availableWidth);
+  const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -581,7 +581,7 @@ export function TableNG(props: TableNGProps) {
           name: displayName,
           width,
           headerCellClass,
-          frozen: Math.min(frozenColumns, numColsFullyInView) > i,
+          frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
           renderCell: renderCellContent,
           renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
@@ -625,7 +625,7 @@ export function TableNG(props: TableNGProps) {
       frozenColumns,
       getCellActions,
       isCountRowsSet,
-      numColsFullyInView,
+      numFrozenColsFullyInView,
       onCellFilterAdded,
       rowHeight,
       rowHeightFn,
