@@ -3530,7 +3530,6 @@
       "button-cancel": "取消",
       "button-move": "移動",
       "button-moving": "正在移動…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11850,7 +11849,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "收闔查詢列",
       "datasource-help": "顯示資料來源說明",
       "drag-and-drop": "拖放以重新排序",
@@ -11861,11 +11859,7 @@
       "replace-query-from-library": "替換為來自資料庫的查詢",
       "show-response": "顯示回應"
     },
-    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
   },
   "recently-deleted": {
     "buttons": {
