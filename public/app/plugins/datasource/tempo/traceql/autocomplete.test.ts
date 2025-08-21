@@ -248,7 +248,7 @@ describe('CompletionProvider', () => {
       expect.arrayContaining([
         expect.objectContaining({
           label: 'compare',
-          insertText: 'compare({$0})',
+          insertText: 'compare($0)',
           documentation: expect.stringContaining('Splits spans into two groups'),
         }),
       ])
