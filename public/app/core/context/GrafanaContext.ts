@@ -40,3 +40,11 @@ export function useReturnToPreviousInternal() {
     [chrome]
   );
 }
+
+// Implementation of useMegaMenuOpen that's made available through
+// @grafana/runtime
+export function useMegaMenuOpenInternal() {
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
+  return [state.megaMenuOpen, chrome.setMegaMenuOpen] as const;
+}

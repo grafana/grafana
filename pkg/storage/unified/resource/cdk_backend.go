@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/http"
 	"sort"
 	"strconv"
@@ -72,6 +73,12 @@ type cdkBackend struct {
 	// Simple watch stream -- NOTE, this only works for single tenant!
 	broadcaster Broadcaster[*WrittenEvent]
 	stream      chan<- *WrittenEvent
+}
+
+func (s *cdkBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
 }
 
 func (s *cdkBackend) getPath(key *resourcepb.ResourceKey, rv int64) string {

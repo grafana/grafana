@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Silencio, agrupación y temporización"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "No se han encontrado fuentes de datos"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "No se han encontrado reglas",
       "error-button": "Error",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Cancelar búsqueda",
         "no-more-results": "No hay más resultados. Se han encontrado {{numberOfRules}} reglas",
@@ -3537,7 +3543,6 @@
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "Moviendo...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3637,11 @@
       "button-create": "Crear",
       "button-creating": "Creando...",
       "cancel": "Cancelar",
+      "error-invalid-characters": "",
       "error-required": "Nombre de la carpeta obligatorio",
       "folder-name-input-placeholder-enter-folder-name": "Introducir el nombre de la carpeta",
       "label-folder-name": "Nombre de la carpeta",
       "text-pull-request-created": "Se ha creado una solicitud de extracción con cambios en esta carpeta:",
-      "text-your-folder-will-be-created-as": "Tu carpeta se creará con el nombre {{folderName}}",
       "title-pull-request-created": "Solicitud de extracción creada",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
     },
@@ -4171,7 +4176,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Orígenes de datos",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "No se han encontrado resultados que coincidan con tu consulta",
       "request-data-source": "Solicitar una nueva fuente de datos",
       "roadmap": "Ver hoja de ruta"
@@ -6545,9 +6551,11 @@
       "explore": "Explorar"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Crear un dashboard",
       "explore-data": "Explorar datos",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Más detalles sobre el error"
@@ -7525,11 +7533,6 @@
     "noOptionsMessage-no-folders-found": "No se han encontrado carpetas",
     "select-aria-label": "Filtro de carpeta",
     "select-placeholder": "Filtrar por carpeta"
-  },
-  "folder-picker": {
-    "create-instructions": "Pulsa Intro para crear la nueva carpeta.",
-    "input-placeholder": "Pulsa Intro para confirmar la nueva carpeta",
-    "loading": "Cargando carpetas..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8749,7 +8752,6 @@
       "filter-popup-input-placeholder": "Filtrar valores",
       "filter-popup-match-case": "Coincidir mayúsculas/minúsculas",
       "inspect-drawer-title": "Inspeccionar valor",
-      "inspect-menu-label": "Inspeccionar valor",
       "nested-table": {
         "no-data": "Sin datos"
       },
@@ -11883,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Contraer la fila de la consulta",
       "datasource-help": "Mostrar la ayuda de la fuente de datos",
       "drag-and-drop": "Arrastrar y soltar para reordenar",
@@ -11894,11 +11895,7 @@
       "replace-query-from-library": "Reemplazar con consulta de la librería",
       "show-response": "Mostrar respuesta"
     },
-    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
   },
   "recently-deleted": {
     "buttons": {
@@ -12795,6 +12792,7 @@
     "description-fields": "Seleccione los campos que deben calcularse",
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-tooltip-from-field": "",
     "name-calculation": "Cálculo",
     "name-cell-height": "Altura de celda",
     "name-cell-type": "Tipo de celda",
@@ -12810,8 +12808,17 @@
     "name-min-column-width": "Ancho mínimo de columna",
     "name-show-table-footer": "Mostrar pie de tabla",
     "name-show-table-header": "Mostrar encabezado de tabla",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Todos los campos numéricos"
+    "placeholder-fields": "Todos los campos numéricos",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Borrar etiquetas",

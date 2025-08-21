@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Disattivazione audio, raggruppamento e orari"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nessuna fonte dati trovata"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "Nessuna regola trovata",
       "error-button": "Errore",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Annulla ricerca",
         "no-more-results": "Nessun altro risultato: {{numberOfRules}} regole trovate",
@@ -3537,7 +3543,6 @@
       "button-cancel": "Annulla",
       "button-move": "Sposta",
       "button-moving": "Spostamento in corso...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3637,11 @@
       "button-create": "Crea",
       "button-creating": "Creazione in corso...",
       "cancel": "Annulla",
+      "error-invalid-characters": "",
       "error-required": "Il nome della cartella è obbligatorio",
       "folder-name-input-placeholder-enter-folder-name": "Inserisci nome cartella",
       "label-folder-name": "Nome cartella",
       "text-pull-request-created": "È stata creata una richiesta di pull con modifiche a questa cartella:",
-      "text-your-folder-will-be-created-as": "La tua cartella verrà creata come {{folderName}}",
       "title-pull-request-created": "Richiesta di pull creata",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
     },
@@ -4171,7 +4176,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Fonti dei dati",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nessun risultato trovato corrisponde alla tua ricerca",
       "request-data-source": "Richiedi una nuova origine dati",
       "roadmap": "Visualizza roadmap"
@@ -6545,9 +6551,11 @@
       "explore": "Esplora"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Crea una dashboard",
       "explore-data": "Esplora i dati",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Maggiori dettagli sull'errore"
@@ -7525,11 +7533,6 @@
     "noOptionsMessage-no-folders-found": "Nessuna cartella trovata",
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
-  },
-  "folder-picker": {
-    "create-instructions": "Premi Invio per creare la nuova cartella.",
-    "input-placeholder": "Premi Invio per confermare la nuova cartella",
-    "loading": "Caricamento delle cartelle in corso..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8749,7 +8752,6 @@
       "filter-popup-input-placeholder": "Valori filtro",
       "filter-popup-match-case": "Corrispondenza",
       "inspect-drawer-title": "Ispeziona valore",
-      "inspect-menu-label": "Ispeziona valore",
       "nested-table": {
         "no-data": "Nessun dato"
       },
@@ -11883,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Riduci riga della query",
       "datasource-help": "Mostra la guida dell'origine dati",
       "drag-and-drop": "Trascina e rilascia per riordinare",
@@ -11894,11 +11895,7 @@
       "replace-query-from-library": "Sostituisci con query dalla libreria",
       "show-response": "Mostra la risposta"
     },
-    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
   },
   "recently-deleted": {
     "buttons": {
@@ -12795,6 +12792,7 @@
     "description-fields": "Seleziona i campi da calcolare",
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
+    "description-tooltip-from-field": "",
     "name-calculation": "Calcolo",
     "name-cell-height": "Altezza cella",
     "name-cell-type": "Tipo di cella",
@@ -12810,8 +12808,17 @@
     "name-min-column-width": "Larghezza minima colonna",
     "name-show-table-footer": "Mostra piè di pagina tabella",
     "name-show-table-header": "Mostra intestazione tabella",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automatico",
-    "placeholder-fields": "Tutti i campi numerici"
+    "placeholder-fields": "Tutti i campi numerici",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Cancella tag",

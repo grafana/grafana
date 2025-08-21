@@ -172,6 +172,7 @@ export const LogsPanel = ({
     timestampResolution,
     ...options
   },
+  height,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -565,6 +566,7 @@ export const LogsPanel = ({
         <div
           onMouseLeave={onLogContainerMouseLeave}
           className={style.logListContainer}
+          style={height ? { minHeight: height } : undefined}
           ref={(element: HTMLDivElement) => setScrollElement(element)}
         >
           {deduplicatedRows.length > 0 && scrollElement && (
