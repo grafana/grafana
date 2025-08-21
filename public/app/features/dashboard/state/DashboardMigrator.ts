@@ -392,6 +392,8 @@ export class DashboardMigrator {
       });
     }
 
+    // TODO: we should remove this because it never runs
+    // PanelModel runs restoreModel in constructor which will then autoMigrate graph panels to timeseries
     if (oldVersion < 13) {
       // update graph yaxes changes
       panelUpgrades.push((panel: any) => {

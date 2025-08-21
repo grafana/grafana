@@ -7,6 +7,7 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as tablePanelPlugin } from 'app/plugins/panel/table/module';
+import { plugin as timeseriesPanelPlugin } from 'app/plugins/panel/timeseries/module';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
@@ -123,6 +124,34 @@ describe('Backend / Frontend result comparison', () => {
       const frontendModel = new DashboardModel(jsonInput);
       const backendModel = new DashboardModel(backendOutput);
 
+      if (jsonInput.schemaVersion < 13) {
+        // Migration to schema v13 is an auto migration where graph panels are converted to timeseries panels
+        // When PanelModel is initialized, it runs restoreModel() in the constructor which looks up if a panel can be auto migrated
+        // and if it can it sets the autoMigrateFrom property.
+        // The actual migration through PanelModel.pluginLoaded() is triggered trough an redux action
+        // so we are triggering the pluginLoaded logic manually here.
+        for (const panel of frontendModel.panels) {
+          if (panel.type === 'timeseries') {
+            if (!timeseriesPanelPlugin.meta.info) {
+              timeseriesPanelPlugin.meta.info = {
+                author: {
+                  name: 'Grafana Labs',
+                  url: 'url/to/GrafanaLabs',
+                },
+                description: 'timeseries plugin',
+                links: [{ name: 'project', url: 'one link' }],
+                logos: { small: 'small/logo', large: 'large/logo' },
+                screenshots: [],
+                updated: '2024-01-01',
+                version: '1.0.0',
+              };
+            }
+
+            await panel.pluginLoaded(timeseriesPanelPlugin);
+          }
+        }
+      }
+
       /* 
       Migration from schema V27 involves migrating angular singlestat panels to stat panels
       These panels are auto migrated where PanelModel.restoreModel() is called in the constructor,
@@ -137,10 +166,8 @@ describe('Backend / Frontend result comparison', () => {
     
       Furthermore, the PanelModel.pluginLoaded is run in the old architecture through a redux action so it will not run in this test.
       In the scenes architecture the angular migration logic runs through a migration handler inside transformSaveModelToScene.ts
-       _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+       _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel).
       We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly. 
-      which means that the actual migration logic is not run.
-      We need to manually run the pluginLoaded logic to ensure the panels are migrated correctly.
       */
       if (jsonInput.schemaVersion <= 27) {
         for (const panel of frontendModel.panels) {
@@ -199,8 +226,8 @@ describe('Backend / Frontend result comparison', () => {
       // Because Go and TS handle -Infinity differently.
       const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
 
-      // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
       for (const panel of cleanedFrontendResult.panels ?? []) {
+        // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still sets them
         // @ts-expect-error
         delete panel.autoMigrateFrom;
         // @ts-expect-error
@@ -209,6 +236,15 @@ describe('Backend / Frontend result comparison', () => {
         delete panel.transform;
         // @ts-expect-error - Backend removes these deprecated table properties
         delete panel.columns;
+
+        // Remove old grid threshold properties that the backend migration removes in v13
+        // but frontend migration doesn't run because panels are converted to timeseries first
+        // @ts-expect-error
+        if (panel.grid) {
+          // Remove the entire grid property since backend v13 migration removes it
+          // @ts-expect-error
+          delete panel.grid;
+        }
       }
 
       expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
