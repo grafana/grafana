@@ -4,6 +4,8 @@ import { useToggle } from 'react-use';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
@@ -12,7 +14,6 @@ import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelecto
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
-import { isAdmin } from '../utils/misc';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
@@ -44,7 +45,11 @@ export function RuleListActions() {
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
-  const canImportRulesToGMA = isAdmin() && config.featureToggles.alertingMigrationUI;
+  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status
+  const canImportRulesToGMA =
+    config.featureToggles.alertingMigrationUI &&
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
+    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
