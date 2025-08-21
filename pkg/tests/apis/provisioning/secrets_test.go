@@ -22,7 +22,7 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 	ctx := context.Background()
 
 	decryptService := helper.GetEnv().DecryptService
-	require.NotNil(t, decryptService, "decrypt service wired properly")
+	require.NotNil(t, decryptService, "decrypt service not wired properly")
 
 	type expectedField struct {
 		Path           []string
