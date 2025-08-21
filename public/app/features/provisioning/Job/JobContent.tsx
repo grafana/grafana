@@ -76,15 +76,13 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
         {['working', 'pending'].includes(state ?? '') && (
-          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-            <Spinner size={24} />
-            <Text element="h5" color="secondary">
-              {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
-            </Text>
-          </Stack>
-        )}
-        {state && !['success', 'error'].includes(state) && (
-          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+          <Stack direction="column" alignItems="center">
+            <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+              <Spinner size={24} />
+              <Text element="h5" color="secondary">
+                {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
+              </Text>
+            </Stack>
             <ProgressBar progress={progress ?? 0} />
           </Stack>
         )}
