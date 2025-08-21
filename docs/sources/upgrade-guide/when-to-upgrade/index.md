@@ -111,32 +111,48 @@ Here is an overview of version support through 2026:
 | 11.1.x                    | June 25, 2024      | April 23, 2025       | Not Supported                 |
 | 11.2.x                    | August 27, 2024    | May 27, 2025         | Not Supported                 |
 | 11.3.x                    | October 22, 2024   | July 22, 2025        | Not Supported                 |
-| 11.4.x                    | December 5, 2024   | September 5, 2025    | Security & Critical Bugs Only |
-| 11.5.x                    | January 28, 2025   | October 28, 2025     | Security & Critical Bugs Only |
-| 11.6.x (Last minor of 11) | March 25, 2025     | June 25, 2026        | Security & Critical Bugs Only |
-| 12.0.x                    | May 5, 2025        | February 5, 2026     | Security & Critical Bugs Only |
-| 12.1.x                    | July 22, 2025      | April 22, 2026       | Full Support until next minor |
+| 11.4.x                    | December 5, 2024   | September 5, 2025    | Patch Support                 |
+| 11.5.x                    | January 28, 2025   | October 28, 2025     | Patch Support                 |
+| 11.6.x (Last minor of 11) | March 25, 2025     | June 25, 2026        | Patch Support                 |
+| 12.0.x                    | May 5, 2025        | February 5, 2026     | Patch Support                 |
+| 12.1.x                    | July 22, 2025      | April 22, 2026       | Patch Support                 |
 | 12.2.x                    | September 23, 2025 | June 23, 2026        | Yet to be released            |
 | 12.3.x                    | November 18, 2025  | August 18, 2026      | Yet to be released            |
 
 ## How are these versions supported?
 
-The level of support changes as new versions of Grafana are released. Here are the key details:
+On premises Grafana follows semantic-like versioning (MAJOR.MINOR.PATCH). Here's how different types of releases work:
 
-- **Full Support**:
-  - All new features
-  - All bug fixes
-  - Security patches
-  - Regular updates
+- **Major releases** (e.g., 12.5.8, 13.0.0): 
+  - Awesome new features as well as significant architectural improvements and modernizations
+  - May include breaking changes that require migration steps
+  - Released once per year
 
-- **Security & Critical Bugs Only**:
-  - Security vulnerability patches
-  - Critical bug fixes that cause feature degradation
-  - No new features
+- **Minor releases** (e.g., 12.3.0, 12.4.0): 
+  - Contain new features and enhancements
+  - Include bug fixes and security patches
+  - Released every other month
+
+- **Patch releases** (e.g., 12.3.1, 12.3.2):
+  - **Only** contain bug fixes and security patches
+  - **No new features** - these wait until the next minor release
+  - Released monthly
+
+**Support levels by version:**
+
+- **Full Support** (current major version):
+  - Gets new minor releases with new features approximately every other month
+  - All minor versions within the major receive patch releases until end of life
+  - Example: Major 12.x gets new features via 12.1.0, 12.2.0, 12.3.0, etc.
+
+- **Patch Support** (individual minor versions):
+  - Each minor version receives patch releases (bug fixes and security patches) until end of life
+  - No new features - these only come with new minor releases
+  - Example: 12.3.x gets 12.3.1, 12.3.2, etc. with fixes only
 
 - **Not Supported**: Versions beyond their support period receive no updates and should be upgraded.
 
-Keeping all this in mind, users that want to receive the most recent features and all bug fixes should be on the current (most recently released) version of Grafana.
+**Example**: When 12.3.0 is released, it includes new features. Subsequent releases like 12.3.1 and 12.3.2 only include bug fixes and security updates. All new features developed after 12.3.0 wait until 12.4.0 is released.
 
 ### What is a critical feature degradation?
 
