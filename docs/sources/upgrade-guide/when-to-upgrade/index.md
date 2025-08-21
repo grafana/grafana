@@ -123,7 +123,7 @@ Here is an overview of version support through 2026:
 
 Self-managed Grafana follows semantic-like versioning (MAJOR.MINOR.PATCH). Here's how different types of releases work:
 
-- **Major releases** (e.g., 12.5.8, 13.0.0):
+- **Major releases** (e.g., 12.0.0, 13.0.0):
 
   - Awesome new features as well as significant architectural improvements and modernizations
   - May include breaking changes that require migration steps
