@@ -40,18 +40,18 @@ export const openQueryHistory = async () => {
 };
 
 export const openQueryLibrary = async () => {
-  const button = screen.getByRole('button', { name: 'Add query from library' });
+  const button = screen.getByRole('button', { name: 'Add from saved queries' });
   await userEvent.click(button);
   await waitFor(async () => {
     const container = screen.getByRole('dialog', {
       name: /Drawer title/,
     });
-    within(container).getByText('Query library');
+    within(container).getByText('Saved queries');
   });
 };
 
 export const addQueryHistoryToQueryLibrary = async () => {
-  const button = withinQueryHistory().getByRole('button', { name: /add to library/i });
+  const button = withinQueryHistory().getByRole('button', { name: /Save query/i });
   await userEvent.click(button);
 };
 
