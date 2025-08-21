@@ -1,10 +1,10 @@
 import { memo, ReactNode } from 'react';
 
 import { Field } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { renderSingleLink } from '../DataLinksActionsTooltip';
-
-import { getCellLinks } from './utils';
+import { renderSingleLink } from '../../DataLinksActionsTooltip';
+import { getCellLinks } from '../utils';
 
 interface MaybeWrapWithLinkProps {
   field: Field;
@@ -23,8 +23,12 @@ export const MaybeWrapWithLink = memo(({ field, rowIdx, children }: MaybeWrapWit
   }
   // as faux link that acts as hit-area for tooltip activation
   else if (linksCount + actionsCount > 0) {
-    // eslint-disable-next-line jsx-a11y/anchor-is-valid
-    return <a aria-haspopup="menu">{children}</a>;
+    return (
+      // eslint-disable-next-line jsx-a11y/anchor-is-valid
+      <a title={t('table.link-wrapper.menu', 'view data links and actions')} aria-haspopup="menu">
+        {children}
+      </a>
+    );
   }
 
   // raw value

@@ -9492,6 +9492,8 @@
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
+      "time-window-label": "Context time window",
+      "time-window-tooltip": "Amount of time before and after the referenced log",
       "title-log-context": "Log context",
       "title-log-line": "Referenced log line"
     },
@@ -12758,6 +12760,9 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "link-wrapper": {
+      "menu": "view data links and actions"
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
