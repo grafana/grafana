@@ -353,13 +353,19 @@ export function useHeaderHeight({
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {
+        if (idx >= fields.length) {
+          return 0; // no width available for this column yet
+        }
+
         let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
+        const field = fields[idx];
+
         // filtering icon
-        if (fields[idx]?.config?.custom?.filterable) {
+        if (field.config?.custom?.filterable) {
           width -= perIconSpace;
         }
         // sorting icon
-        if (sortColumns.some((col) => col.columnKey === getDisplayName(fields[idx]))) {
+        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
           width -= perIconSpace;
         }
         // type icon
