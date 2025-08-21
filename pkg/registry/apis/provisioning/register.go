@@ -102,7 +102,6 @@ type APIBuilder struct {
 	}
 	jobHistoryConfig  *JobHistoryConfig
 	jobHistory        jobs.History
-	tester            *RepositoryTester
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
 	legacyMigrator    legacy.LegacyMigrator
@@ -114,6 +113,7 @@ type APIBuilder struct {
 	access            authlib.AccessChecker
 	mutators          []controller.Mutator
 	statusPatcher     *controller.RepositoryStatusPatcher
+	healthChecker     *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -406,6 +406,10 @@ func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
+func (b *APIBuilder) GetHealthChecker() *controller.HealthChecker {
+	return b.healthChecker
+}
+
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := provisioning.AddToScheme(scheme)
 	if err != nil {
@@ -473,10 +477,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
-		getter: b,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{}, b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -657,13 +658,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 
 			b.client = c.ProvisioningV0alpha1()
-
-			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
-			b.tester = &RepositoryTester{
-				client: b.GetClient(),
-			}
-
 			b.repositoryLister = repoInformer.Lister()
+
+			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
+			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.localFileResolver == nil {
@@ -691,7 +689,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				stageIfPossible,
 			)
 
-			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
@@ -782,6 +779,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				&repository.Tester{},
 				b.jobs,
 				b.storageStatus,
+				b.GetHealthChecker(),
+				b.statusPatcher,
 			)
 			if err != nil {
 				return err
@@ -1254,49 +1253,20 @@ func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository
 	return b.asRepository(ctx, obj)
 }
 
-func timeSince(when int64) time.Duration {
-	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
-}
-
 func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
 	repo, err := b.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
+
 	status := repo.Config().Status.Health
 	if !status.Healthy {
-		if timeSince(status.Checked) > time.Second*25 {
-			ctx, _, err = identity.WithProvisioningIdentity(ctx, repo.Config().Namespace)
-			if err != nil {
-				return nil, err // The status
-			}
-
-			// Check health again
-			s, err := repository.TestRepository(ctx, repo)
-			if err != nil {
-				return nil, err // The status
-			}
-
-			// Write and return the repo with current status
-			cfg, _ := b.tester.UpdateHealthStatus(ctx, repo.Config(), s)
-			if cfg != nil {
-				status = cfg.Status.Health
-				if cfg.Status.Health.Healthy {
-					status = cfg.Status.Health
-					repo, err = b.AsRepository(ctx, cfg)
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-		if !status.Healthy {
-			return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
-				Code:    http.StatusFailedDependency,
-				Message: "The repository configuration is not healthy",
-			}}
-		}
+		return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+			Code:    http.StatusFailedDependency,
+			Message: "The repository configuration is not healthy",
+		}}
 	}
+
 	return repo, err
 }
 

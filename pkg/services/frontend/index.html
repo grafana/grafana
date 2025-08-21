@@ -3,7 +3,7 @@
   <head>
     [[ if and .CSPEnabled .IsDevelopmentEnv ]]
     <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
-    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
+    <meta http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
     [[ end ]]
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -14,7 +14,9 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="icon" type="image/png" href="[[.Assets.ContentDeliveryURL]]public/build/img/fav32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="[[.Assets.ContentDeliveryURL]]public/build/img/apple-touch-icon.png" />
+    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/build/img/grafana_mask_icon.svg" color="#F05A28" />
 
     [[range $asset := .Assets.CSSFiles]]
       <link rel="stylesheet" href="[[$asset.FilePath]]" />
