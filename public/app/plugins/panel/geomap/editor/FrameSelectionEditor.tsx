@@ -6,7 +6,7 @@ import { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '@grafana/ui/inte
 
 type Props = StandardEditorProps<MatcherConfig>;
 
-export const FrameSelectionEditor = ({ value, context, onChange, id }: Props) => {
+export const FrameSelectionEditor = ({ value, context, onChange }: Props) => {
   const onFilterChange = useCallback(
     (v: string) => {
       onChange(
@@ -23,7 +23,6 @@ export const FrameSelectionEditor = ({ value, context, onChange, id }: Props) =>
 
   return (
     <RefIDPicker
-      id={id}
       value={value?.options}
       onChange={onFilterChange}
       data={context.data}

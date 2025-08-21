@@ -41,11 +41,10 @@ export interface Props {
   data: DataFrame[];
   onChange: (value: string) => void;
   placeholder?: string;
-  id?: string;
 }
 
 // Not exported globally... but used in grafana core
-export function RefIDPicker({ value, data, onChange, placeholder, id }: Props) {
+export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
   const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
 
   const [priorSelectionState, updatePriorSelectionState] = useState<{
@@ -78,7 +77,6 @@ export function RefIDPicker({ value, data, onChange, placeholder, id }: Props) {
   }
   return (
     <Select
-      inputId={id}
       options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}
@@ -116,10 +114,9 @@ export interface MultiProps {
   data: DataFrame[];
   onChange: (value: string[]) => void;
   placeholder?: string;
-  id?: string;
 }
 
-export function RefIDMultiPicker({ value, data, onChange, placeholder, id }: MultiProps) {
+export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiProps) {
   const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
 
   const [priorSelectionState, updatePriorSelectionState] = useState<{
@@ -175,7 +172,6 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder, id }: Mul
   }
   return (
     <MultiSelect
-      inputId={id}
       options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}

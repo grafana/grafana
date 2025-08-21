@@ -1,5 +1,4 @@
-import { FormEvent, useId, useMemo, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { FormEvent, useMemo, useRef, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -64,16 +63,14 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.edit-pane.variable.label', 'Label'),
-            id: uuidv4(),
             description: t('dashboard.edit-pane.variable.label-description', 'Optional display name'),
-            render: (descriptor) => <VariableLabelInput id={descriptor.props.id} variable={variable} />,
+            render: () => <VariableLabelInput variable={variable} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.edit-pane.variable.description', 'Description'),
-            id: uuidv4(),
-            render: (descriptor) => <VariableDescriptionTextArea id={descriptor.props.id} variable={variable} />,
+            render: () => <VariableDescriptionTextArea variable={variable} />,
           })
         )
         .addItem(
@@ -120,7 +117,6 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
 interface VariableInputProps {
   variable: SceneVariable;
-  id?: string;
 }
 
 function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable; isNewElement: boolean }) {
@@ -142,7 +138,6 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   return (
     <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError}>
       <Input
-        id={useId()}
         ref={ref}
         value={name}
         onFocus={() => {
@@ -176,13 +171,12 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   );
 }
 
-function VariableLabelInput({ variable, id }: VariableInputProps) {
+function VariableLabelInput({ variable }: VariableInputProps) {
   const { label } = variable.useState();
   const oldLabel = useRef(label ?? '');
 
   return (
     <Input
-      id={id}
       value={label}
       onFocus={() => {
         oldLabel.current = label ?? '';
@@ -207,13 +201,13 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
   );
 }
 
-function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
+function VariableDescriptionTextArea({ variable }: VariableInputProps) {
   const { description } = variable.useState();
   const oldDescription = useRef(description ?? '');
 
   return (
     <TextArea
-      id={id}
+      id="description-text-area"
       value={description ?? ''}
       placeholder={t('dashboard.edit-pane.variable.description-placeholder', 'Descriptive text')}
       onFocus={() => {

@@ -1,6 +1,5 @@
 import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -81,13 +80,12 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
-      id: uuidv4(),
-      render: (descriptor) => <ValuesTextField id={descriptor.props.id} variable={variable} />,
+      render: () => <ValuesTextField variable={variable} />,
     }),
   ];
 }
 
-function ValuesTextField({ variable, id }: { variable: CustomVariable; id?: string }) {
+function ValuesTextField({ variable }: { variable: CustomVariable }) {
   const { query } = variable.useState();
 
   const onBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
@@ -97,7 +95,6 @@ function ValuesTextField({ variable, id }: { variable: CustomVariable; id?: stri
 
   return (
     <TextArea
-      id={id}
       rows={2}
       defaultValue={query}
       onBlur={onBlur}

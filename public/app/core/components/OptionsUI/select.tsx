@@ -51,7 +51,7 @@ export class SelectValueEditor<T> extends PureComponent<Props<T>, State<T>> {
 
   render() {
     const { options, isLoading } = this.state;
-    const { value, onChange, item, id } = this.props;
+    const { value, onChange, item } = this.props;
 
     const { settings } = item;
     let current = options.find((v) => v.value === value);
@@ -63,7 +63,6 @@ export class SelectValueEditor<T> extends PureComponent<Props<T>, State<T>> {
     }
     return (
       <Select<T>
-        inputId={id}
         isLoading={isLoading}
         value={current}
         defaultValue={value}

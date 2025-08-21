@@ -1,5 +1,4 @@
-import { useId, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -33,15 +32,13 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
-            id: uuidv4(),
-            render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
+            render: () => <FillScreenSwitch row={model} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
-            id: uuidv4(),
-            render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
+            render: () => <RowHeaderSwitch row={model} />,
           })
         ),
     [model, isNewElement]
@@ -56,12 +53,11 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
-          id: uuidv4(),
           description: t(
             'dashboard.rows-layout.row-options.repeat.variable.description',
             'Repeat this row for each value in the selected variable.'
           ),
-          render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={model} />,
+          render: () => <RowRepeatSelect row={model} />,
         })
       ),
     [model]
@@ -98,7 +94,6 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
       }
     >
       <Input
-        id={useId()}
         ref={ref}
         title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
         value={title}
@@ -108,19 +103,19 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   );
 }
 
-function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
+function RowHeaderSwitch({ row }: { row: RowItem }) {
   const { hideHeader: isHeaderHidden = false } = row.useState();
 
-  return <Switch id={id} value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
+  return <Switch value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
 }
 
-function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
+function FillScreenSwitch({ row }: { row: RowItem }) {
   const { fillScreen } = row.useState();
 
-  return <Switch id={id} value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
+  return <Switch value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
 }
 
-function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
+function RowRepeatSelect({ row }: { row: RowItem }) {
   const { layout } = row.useState();
   const dashboard = useDashboard(row);
 
@@ -136,7 +131,6 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
   return (
     <>
       <RepeatRowSelect2
-        id={id}
         sceneContext={dashboard}
         repeat={row.state.repeatByVariable}
         onChange={(repeat) => row.onChangeRepeat(repeat)}

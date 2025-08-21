@@ -21,7 +21,6 @@ export const LocationModeEditor = ({
   onChange,
   context,
   item,
-  id,
 }: StandardEditorProps<string, ModeEditorSettings, unknown, unknown>) => {
   const [info, setInfo] = useState<FrameGeometryField>();
 
@@ -98,7 +97,6 @@ export const LocationModeEditor = ({
   return (
     <>
       <Select
-        inputId={id}
         options={MODE_OPTIONS}
         value={value}
         onChange={(v) => {

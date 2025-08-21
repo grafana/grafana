@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { TableCellOptions, TableWrapTextOptions } from '@grafana/schema';
@@ -17,13 +15,10 @@ export const TextWrapOptionsEditor = ({
     onChange(cellOptions);
   };
 
-  const htmlId = useId();
-
   return (
     <>
       <Field label={t('table.text-wrap-options.label-wrap-text', 'Wrap text')}>
         <Switch
-          id={htmlId}
           label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Wrap text`)}
           value={cellOptions.wrapText}
           onChange={onWrapTextChange}

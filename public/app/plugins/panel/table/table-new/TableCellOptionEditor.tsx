@@ -25,7 +25,6 @@ export interface TableCellEditorProps<T> {
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
-  id?: string;
 }
 
 const TEXT_WRAP_CELL_TYPES = new Set([
@@ -41,7 +40,7 @@ function isTextWrapCellType(value: TableCellOptions): value is TableCellOptions 
   return TEXT_WRAP_CELL_TYPES.has(value.type);
 }
 
-export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
+export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
@@ -93,7 +92,7 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   return (
     <div className={styles.fixBottomMargin}>
       <Field>
-        <Combobox id={id} options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
+        <Combobox options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {isTextWrapCellType(value) && <TextWrapOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />}
       {cellType === TableCellDisplayMode.Gauge && (

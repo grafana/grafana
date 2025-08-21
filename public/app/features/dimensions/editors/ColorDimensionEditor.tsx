@@ -21,7 +21,7 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
     }),
     []
   );
-  const { value, context, onChange, item, id } = props;
+  const { value, context, onChange, item } = props;
 
   const defaultColor = 'dark-green';
 
@@ -71,7 +71,6 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
     <>
       <div className={styles.container}>
         <Select
-          inputId={id}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

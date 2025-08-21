@@ -55,12 +55,11 @@ export class MultiSelectValueEditor<T> extends PureComponent<Props<T>, State<T>>
 
   render() {
     const { options, isLoading } = this.state;
-    const { value, onChange, item, id } = this.props;
+    const { value, onChange, item } = this.props;
 
     const { settings } = item;
     return (
       <MultiSelect<T>
-        inputId={id}
         isLoading={isLoading}
         value={value}
         defaultValue={value}

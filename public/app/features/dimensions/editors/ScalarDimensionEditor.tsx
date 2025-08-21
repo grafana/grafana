@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useId, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -92,8 +92,6 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
     [onChange, value]
   );
 
-  const valueInputId = useId();
-
   const val = value ?? {};
   const mode = value?.mode ?? ScalarDimensionMode.Mod;
   const selectedOption = isFixed ? fixedValueOption : selectOptions.find((v) => v.value === fieldName);
@@ -121,7 +119,6 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
               grow={true}
             >
               <NumberInput
-                id={valueInputId}
                 value={val?.fixed ?? DEFAULT_VALUE}
                 onChange={onValueChange}
                 max={settings?.max}

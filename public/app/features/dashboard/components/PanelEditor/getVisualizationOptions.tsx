@@ -1,5 +1,4 @@
 import { get as lodashGet } from 'lodash';
-import { v4 as uuiv4 } from 'uuid';
 
 import {
   EventBus,
@@ -131,12 +130,9 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
-
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
-        id: htmlId,
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
@@ -146,7 +142,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
         },
       })
     );
@@ -169,13 +165,12 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-library-viz-panel-options-category.title.name', 'Name'),
-        id: uuiv4(),
         value: libraryPanel,
         popularRank: 1,
-        render: function renderName(descriptor) {
+        render: function renderName() {
           return (
             <Input
-              id={descriptor.props.id}
+              id="LibraryPanelFrameName"
               data-testid="library panel name input"
               defaultValue={libraryPanel.state.name}
               onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
@@ -269,12 +264,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
-
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
-        id: htmlId,
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
@@ -285,7 +277,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
         },
       })
     );
@@ -338,13 +330,10 @@ export function fillOptionsPaneItems(
       continue;
     }
 
-    const htmlId = uuiv4();
-
     const Editor = pluginOption.editor;
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: pluginOption.name,
-        id: htmlId,
         description: pluginOption.description,
         render: function renderEditor() {
           return (
@@ -355,7 +344,7 @@ export function fillOptionsPaneItems(
               }}
               item={pluginOption}
               context={context}
-              id={htmlId}
+              id={pluginOption.id}
             />
           );
         },

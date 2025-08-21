@@ -24,7 +24,6 @@ export interface OptionsPaneItemInfo {
   useShowIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
-  /** Must be unique on the page! */
   id?: string;
 }
 
@@ -36,7 +35,10 @@ export class OptionsPaneItemDescriptor {
   props: OptionsPaneItemInfo;
 
   constructor(props: OptionsPaneItemInfo) {
-    this.props = { ...props, id: props.id || uniqueId() };
+    this.props = { ...props, id: props.id ?? props.title };
+    if (this.props.id === '') {
+      this.props.id = uniqueId();
+    }
   }
 
   render(searchQuery?: string) {

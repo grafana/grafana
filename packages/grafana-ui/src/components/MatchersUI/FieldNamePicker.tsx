@@ -10,7 +10,7 @@ import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 type Props = StandardEditorProps<string, FieldNamePickerConfigSettings>;
 
 // Pick a field name out of the fields
-export const FieldNamePicker = ({ value, onChange, context, item, id }: Props) => {
+export const FieldNamePicker = ({ value, onChange, context, item }: Props) => {
   const settings: FieldNamePickerConfigSettings = item.settings ?? {};
   const names = useFieldDisplayNames(context.data, settings?.filter);
   const selectOptions = useSelectOptions(names, value, undefined, undefined, settings.baseNameMode);
@@ -29,7 +29,6 @@ export const FieldNamePicker = ({ value, onChange, context, item, id }: Props) =
   return (
     <>
       <Select
-        inputId={id}
         value={selectedOption}
         placeholder={
           settings.placeholderText ?? t('grafana-ui.matchers-ui.field-name-picker.placeholder', 'Select field')
