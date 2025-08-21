@@ -787,6 +787,7 @@ export function TableNG(props: TableNGProps) {
  */
 const renderRowFactory =
   (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
+  // eslint-disable-next-line react/display-name
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;
