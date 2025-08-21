@@ -3,26 +3,30 @@ import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  AbsoluteTimeRange,
+  CoreApp,
   DataQueryResponse,
+  DataSourceApi,
   DataSourceWithLogsContextSupport,
+  dateTime,
+  EventBusSrv,
+  formattedValueToString,
+  getValueFormat,
   GrafanaTheme2,
+  hasLogsContextSupport,
+  LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
+  LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
-  dateTime,
-  TimeRange,
-  LoadingState,
-  CoreApp,
-  LogRowModel,
-  AbsoluteTimeRange,
-  EventBusSrv,
   store,
+  TimeRange,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { t, Trans } from '@grafana/i18n';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Button, Collapse, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';
 
@@ -56,7 +60,8 @@ interface LogLineContextProps {
   onClickHideField?: (key: string) => void;
 }
 
-const PAGE_SIZE = 100;
+export const PAGE_SIZE = 100;
+export const DEFAULT_TIME_WINDOW = 7200000;
 
 export const LogLineContext = memo(
   ({
@@ -84,6 +89,14 @@ export const LogLineContext = memo(
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
+    const [datasourceInstance, setDatasourceInstance] = useState<
+      (DataSourceApi & DataSourceWithLogsContextSupport) | null
+    >(null);
+    const defaultTimeWindow = logOptionsStorageKey
+      ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? DEFAULT_TIME_WINDOW.toString())
+      : DEFAULT_TIME_WINDOW.toString();
+    const [timeWindow, setTimeWindow] = useState(parseInt(defaultTimeWindow, 10));
+
     const eventBusRef = useRef(new EventBusSrv());
 
     const dispatch = useDispatch();
@@ -95,8 +108,7 @@ export const LogLineContext = memo(
         sortOrder === LogsSortOrder.Ascending ? allLogs[0].timeEpochMs : allLogs[allLogs.length - 1].timeEpochMs;
       let toMs =
         sortOrder === LogsSortOrder.Ascending ? allLogs[allLogs.length - 1].timeEpochMs : allLogs[0].timeEpochMs;
-      // In case we have a lot of logs and from and to have same millisecond
-      // we add 1 millisecond to toMs to make sure we have a range
+      // Add one millisecond to get a range when from and to are equal.
       if (fromMs === toMs) {
         toMs += 1;
       }
@@ -119,24 +131,23 @@ export const LogLineContext = memo(
       setContextQuery(contextQuery);
     }, [log, getRowContextQuery]);
 
-    const updateResults = useCallback(async () => {
-      setAboveLogs([]);
-      setBelowLogs([]);
-      await updateContextQuery();
-      setInitialized(false);
-    }, [updateContextQuery]);
-
     useEffect(() => {
       if (open) {
         updateContextQuery();
+        reportInteraction('logs_log_line_context_open', {
+          datasourceType: log.datasourceType,
+          uid: log.uid,
+        });
       }
-    }, [updateContextQuery, open]);
+    }, [updateContextQuery, open, log]);
 
     const getContextLogs = useCallback(
-      async (place: 'above' | 'below', refLog: LogRowModel): Promise<LogRowModel[]> => {
+      async (place: 'above' | 'below', refLog: LogRowModel, timeWindowMs?: number): Promise<LogRowModel[]> => {
         const result = await getRowContext(normalizeLogRefId(refLog), {
           limit: PAGE_SIZE,
           direction: getLoadMoreDirection(place, sortOrder),
+          // Only on the initial request
+          timeWindowMs,
         });
 
         const newLogs = dataFrameToLogsModel(result.data).rows;
@@ -149,12 +160,12 @@ export const LogLineContext = memo(
     );
 
     const loadMore = useCallback(
-      async (place: 'above' | 'below', refLog: LogRowModel) => {
+      async (place: 'above' | 'below', refLog: LogRowModel, timeWindow?: number) => {
         const setState = place === 'above' ? setAboveState : setBelowState;
         setState(LoadingState.Loading);
 
         try {
-          const newLogs = (await getContextLogs(place, refLog)).map((r) =>
+          const newLogs = (await getContextLogs(place, refLog, timeWindow)).map((r) =>
             // apply the original row's searchWords to all the rows for highlighting
             !r.searchWords || !r.searchWords?.length ? { ...r, searchWords: log.searchWords } : r
           );
@@ -188,10 +199,10 @@ export const LogLineContext = memo(
         return;
       }
       if (!initialized) {
-        Promise.all([loadMore('above', log), loadMore('below', log)]).then(() => {});
+        Promise.all([loadMore('above', log, timeWindow), loadMore('below', log, timeWindow)]);
         setInitialized(true);
       }
-    }, [initialized, loadMore, log, open]);
+    }, [initialized, loadMore, log, open, timeWindow]);
 
     const handleLoadMore = useCallback(
       (_: AbsoluteTimeRange, direction: ScrollDirection) => {
@@ -212,10 +223,70 @@ export const LogLineContext = memo(
       );
     }, [log.uid]);
 
+    const onSplitViewClick = useCallback(() => {
+      if (!contextQuery) {
+        return;
+      }
+      let rowId = log.uid;
+      if (log.dataFrame.refId) {
+        // the orignal row has the refid from the base query and not the refid from the context query, so we need to replace it.
+        rowId = log.uid.replace(log.dataFrame.refId, contextQuery.refId);
+      }
+
+      dispatch(
+        splitOpen({
+          queries: [contextQuery],
+          range: timeRange,
+          datasourceUid: contextQuery.datasource!.uid!,
+          panelsState: {
+            logs: {
+              id: rowId,
+            },
+          },
+        })
+      );
+      onClose();
+      reportInteraction('logs_log_line_context_open_in_split_clicked', {
+        datasourceType: log.datasourceType,
+      });
+    }, [contextQuery, dispatch, log.dataFrame.refId, log.datasourceType, log.uid, onClose, timeRange]);
+
+    const handleTimeWindowChange = useCallback(
+      (option: ComboboxOption<string>) => {
+        if (logOptionsStorageKey) {
+          store.set(`${logOptionsStorageKey}.contextTimeWindow`, option.value);
+        }
+        setTimeWindow(parseInt(option.value, 10));
+        setAboveLogs([]);
+        setBelowLogs([]);
+        setInitialized(false);
+        reportInteraction('logs_log_line_context_time_window_change', {
+          window_size: option.value,
+        });
+      },
+      [logOptionsStorageKey]
+    );
+
+    const handleClose = useCallback(() => {
+      reportInteraction('logs_log_line_context_closed', {
+        datasourceType: log.datasourceType,
+        uid: log.uid,
+      });
+      onClose();
+    }, [log.datasourceType, log.uid, onClose]);
+
+    const updateResults = useCallback(async () => {
+      setAboveLogs([]);
+      setBelowLogs([]);
+      await updateContextQuery();
+      setInitialized(false);
+    }, [updateContextQuery]);
+
     const wrapLogMessage = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true;
     const syntaxHighlighting = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
       : true;
+
     // @todo: Remove when the LogRows are deprecated
     const logListModel = useMemo(
       () =>
@@ -229,16 +300,28 @@ export const LogLineContext = memo(
       [log, timeZone, wrapLogMessage]
     );
 
+    useEffect(() => {
+      if (log.datasourceUid) {
+        getDataSourceSrv()
+          .get({ uid: log.datasourceUid })
+          .then((ds) => {
+            if (hasLogsContextSupport(ds)) {
+              setDatasourceInstance(ds);
+            }
+          });
+      }
+    }, [log.datasourceUid]);
+
     return (
       <Modal
         isOpen={open}
         title={t('logs.log-line-context.title-log-context', 'Log context')}
         contentClassName={styles.flexColumn}
         className={styles.modal}
-        onDismiss={onClose}
+        onDismiss={handleClose}
       >
         {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-          <div className={styles.datasourceUi}>{getLogRowContextUi(log, updateResults)}</div>
+          <div>{getLogRowContextUi(log, updateResults)}</div>
         )}
         <Collapse
           collapsible={true}
@@ -249,6 +332,38 @@ export const LogLineContext = memo(
         >
           <LogLineDetailsLog log={logListModel} syntaxHighlighting={syntaxHighlighting} />
         </Collapse>
+        <div className={styles.controls}>
+          {datasourceInstance?.supportsAdjustableWindow && (
+            <Stack>
+              <InlineLabel
+                htmlFor="time-window-control"
+                tooltip={t(
+                  'logs.log-line-context.time-window-tooltip',
+                  'Amount of time before and after the referenced log'
+                )}
+                width="auto"
+              >
+                {t('logs.log-line-context.time-window-label', 'Context time window')}
+              </InlineLabel>
+              <Combobox
+                id="time-window-control"
+                options={getTimeWindowOptions()}
+                onChange={handleTimeWindowChange}
+                value={timeWindow.toString()}
+                minWidth={5}
+                width="auto"
+              />
+            </Stack>
+          )}
+          <Button variant="secondary" onClick={onScrollCenterClick}>
+            <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
+          </Button>
+          {contextQuery?.datasource?.uid && (
+            <Button variant="secondary" onClick={onSplitViewClick}>
+              <Trans i18nKey="logs.log-line-context.open-in-split-view">Open in split view</Trans>
+            </Button>
+          )}
+        </div>
         <div className={styles.loadingIndicator}>
           {aboveState === LoadingState.Loading && (
             <LoadingIndicator
@@ -306,43 +421,6 @@ export const LogLineContext = memo(
             <Trans i18nKey="logs.log-line-context.no-more-logs-available">No more logs available.</Trans>
           )}
         </div>
-
-        <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onScrollCenterClick}>
-            <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
-          </Button>
-          {contextQuery?.datasource?.uid && (
-            <Button
-              variant="secondary"
-              onClick={async () => {
-                let rowId = log.uid;
-                if (log.dataFrame.refId) {
-                  // the orignal row has the refid from the base query and not the refid from the context query, so we need to replace it.
-                  rowId = log.uid.replace(log.dataFrame.refId, contextQuery.refId);
-                }
-
-                dispatch(
-                  splitOpen({
-                    queries: [contextQuery],
-                    range: timeRange,
-                    datasourceUid: contextQuery.datasource!.uid!,
-                    panelsState: {
-                      logs: {
-                        id: rowId,
-                      },
-                    },
-                  })
-                );
-                onClose();
-                reportInteraction('logs_log_line_context_open_in_split_clicked', {
-                  datasourceType: log.datasourceType,
-                });
-              }}
-            >
-              <Trans i18nKey="logs.log-line-context.open-in-split-view">Open in split view</Trans>
-            </Button>
-          )}
-        </Modal.ButtonRow>
       </Modal>
     );
   }
@@ -362,10 +440,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: '50%',
       transform: 'translate(-50%, -50%)',
     }),
-    datasourceUi: css({
-      display: 'flex',
-      alignItems: 'center',
-    }),
     loadingIndicator: css({
       height: theme.spacing(3),
       minHeight: theme.spacing(3),
@@ -377,8 +451,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       border: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0, 1, 1, 0),
-      flex: 1,
-      height: '100%',
+      flex: '1 1 auto',
+      minHeight: 0,
     }),
     logsContainer: css({
       height: '100%',
@@ -389,6 +463,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       padding: theme.spacing(0, 3, 3, 3),
       height: '100%',
+      gap: theme.spacing(0.5),
     }),
     link: css({
       color: theme.colors.text.secondary,
@@ -403,6 +478,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       width: '75vw',
       whiteSpace: 'nowrap',
+    }),
+    controls: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(2),
     }),
   };
 };
@@ -445,3 +525,11 @@ const normalizeLogRefId = (log: LogRowModel): LogRowModel => {
 const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
   return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
 };
+
+function getTimeWindowOptions() {
+  const intervals = [100, 500, 1000, 5000, 30000, 60000, 300000, 1800000, 3600000, DEFAULT_TIME_WINDOW];
+  return intervals.map((interval) => ({
+    label: formattedValueToString(getValueFormat('ms')(interval)),
+    value: interval.toString(),
+  }));
+}
