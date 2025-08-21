@@ -160,5 +160,5 @@ function expectCorrectRow({ index, type, value }: ExpectCorrectRowArgs) {
   const row = within(rows()[index]);
   const cell = `Playlist item, ${type}, ${value}`;
   const regex = new RegExp(cell, 'i');
-  expect(row.getByRole('gridcell', { name: regex })).toBeInTheDocument();
+  expect(row.getByRole('cell', { name: regex })).toBeInTheDocument();
 }

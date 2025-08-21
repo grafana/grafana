@@ -101,7 +101,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
             >
               <div
                 className={styles.actions}
-                role="gridcell"
+                role="cell"
                 aria-label={t(
                   'playlist.playlist-table-rows.aria-label-playlist-item',
                   'Playlist item, {{itemType}}, {{itemValue}}',
