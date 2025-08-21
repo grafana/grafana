@@ -276,6 +276,12 @@ GRAFANA_URL=http://localhost:3000 yarn e2e:playwright
 
 Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
 
+Playwright can be used through an UI running the following command:
+
+```
+yarn e2e:playwright --ui
+```
+
 ## Configure Grafana for development
 
 The default configuration, `defaults.ini`, is located in the `conf` directory.
