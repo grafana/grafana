@@ -281,6 +281,25 @@ describe('MultiCombobox', () => {
       await user.type(input, 'b');
       expect(screen.getByText('A')).toBeInTheDocument();
     });
+
+    it('should not render All when only one option is available and enableAll is true', async () => {
+      const options = [{ label: 'A', value: 'a' }];
+      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(screen.queryByRole('option', { name: 'All' })).not.toBeInTheDocument();
+    });
+
+    it('should not select option when only one option is available and enableAll is true', async () => {
+      const options = [{ label: 'A', value: 'a' }];
+      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      const checkbox = screen.getByTestId(`combobox-option-${options[0].value}-checkbox`);
+      expect(checkbox).toBeInTheDocument();
+      expect(checkbox).not.toBeChecked();
+    });
   });
 
   describe('async', () => {
