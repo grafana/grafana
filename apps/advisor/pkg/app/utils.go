@@ -270,13 +270,22 @@ func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client reso
 		return err
 	}
 	retries := 0
-	for currentRetryAnnotation := checks.GetRetryAnnotation(currentObj); currentRetryAnnotation != itemToRetry; {
+	currentRetryAnnotation := checks.GetRetryAnnotation(currentObj)
+	for currentRetryAnnotation != itemToRetry {
 		log.Debug("Waiting for retry annotation to be persisted", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", currentRetryAnnotation)
 		time.Sleep(1 * time.Second)
 		retries++
 		if retries > 5 {
 			return fmt.Errorf("timeout waiting for retry annotation to be persisted")
 		}
+		currentObj, err = client.Get(ctx, resource.Identifier{
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
+		})
+		if err != nil {
+			return err
+		}
+		currentRetryAnnotation = checks.GetRetryAnnotation(currentObj)
 	}
 	log.Debug("Retry annotation persisted", "check", obj.GetName(), "item", itemToRetry)
 	return nil
