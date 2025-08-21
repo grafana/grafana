@@ -3,8 +3,11 @@ package webhooks
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
+
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -22,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -32,6 +32,16 @@ import (
 type WebhookExtraBuilder struct {
 	// HACK: We need to wrap the builder to please wire so that it can uniquely identify the dependency
 	provisioningapis.ExtraBuilder
+}
+
+// HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
+func isPublicURL(url string) bool {
+	return strings.HasPrefix(url, "https://") &&
+		!strings.Contains(url, "localhost") &&
+		!strings.HasPrefix(url, "https://127.") &&
+		!strings.HasPrefix(url, "https://192.") &&
+		!strings.HasPrefix(url, "https://10.") &&
+		!strings.HasPrefix(url, "https://172.16.")
 }
 
 func ProvideWebhooks(
@@ -48,8 +58,8 @@ func ProvideWebhooks(
 			urlProvider := func(_ string) string {
 				return cfg.AppURL
 			}
-			// HACK: Assume is only public if it is HTTPS
-			isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
+			isPublic := isPublicURL(urlProvider(""))
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients)
 
@@ -71,9 +81,9 @@ func ProvideWebhooks(
 				urlProvider,
 				repositorySecrets,
 				ghFactory,
-				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
 				[]jobs.Worker{pullRequestWorker},
+				isPublic, // Pass the public URL flag
 			)
 		},
 	}
@@ -87,9 +97,9 @@ type WebhookExtra struct {
 	urlProvider func(namespace string) string
 	secrets     secrets.RepositorySecrets
 	ghFactory   *github.Factory
-	clonedir    string
 	parsers     resources.ParserFactory
 	workers     []jobs.Worker
+	isPublic    bool // Flag to determine if webhook-enhanced repositories should be created
 }
 
 func NewWebhookExtra(
@@ -98,9 +108,9 @@ func NewWebhookExtra(
 	urlProvider func(namespace string) string,
 	secrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
-	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
+	isPublic bool,
 ) *WebhookExtra {
 	return &WebhookExtra{
 		render:      render,
@@ -108,9 +118,9 @@ func NewWebhookExtra(
 		urlProvider: urlProvider,
 		secrets:     secrets,
 		ghFactory:   ghFactory,
-		clonedir:    clonedir,
 		parsers:     parsers,
 		workers:     workers,
+		isPublic:    isPublic,
 	}
 }
 
@@ -155,7 +165,8 @@ func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
 
 // AsRepository delegates repository creation to the webhook connector
 func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	if r.Spec.Type == provisioning.GitHubRepositoryType {
+	// Only handle GitHub repositories with webhooks if URL is public
+	if r.Spec.Type == provisioning.GitHubRepositoryType && e.isPublic {
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 		webhookURL := fmt.Sprintf(
 			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
@@ -209,7 +220,11 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 }
 
 func (e *WebhookExtra) RepositoryTypes() []provisioning.RepositoryType {
-	return []provisioning.RepositoryType{
-		provisioning.GitHubRepositoryType,
+	// Only claim to handle GitHub repositories if URL is public
+	if e.isPublic {
+		return []provisioning.RepositoryType{
+			provisioning.GitHubRepositoryType,
+		}
 	}
+	return []provisioning.RepositoryType{}
 }

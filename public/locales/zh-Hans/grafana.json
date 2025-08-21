@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "静音、分组和时间设定"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "未找到数据源"
     },
     "alert-menu": {
@@ -2457,6 +2462,7 @@
       },
       "empty-data-source": "未找到规则",
       "error-button": "错误",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "取消搜索",
         "no-more-results": "没有更多结果 – 找到 {{numberOfRules}} 个规则",
@@ -3524,7 +3530,6 @@
       "button-cancel": "取消",
       "button-move": "移动",
       "button-moving": "正在移动…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -4153,7 +4158,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "数据源",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "未找到与您的查询匹配的结果",
       "request-data-source": "请求新的数据源",
       "roadmap": "查看路线图"
@@ -6524,9 +6530,11 @@
       "explore": "探索"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "构建数据面板",
       "explore-data": "浏览数据",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有关错误的更多详情"
@@ -11841,7 +11849,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "折叠查询行",
       "datasource-help": "显示数据源帮助",
       "drag-and-drop": "拖放以重新排序",
@@ -11852,11 +11859,7 @@
       "replace-query-from-library": "替换为来自库的查询",
       "show-response": "显示回复"
     },
-    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
   },
   "recently-deleted": {
     "buttons": {
