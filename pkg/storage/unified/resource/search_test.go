@@ -50,9 +50,9 @@ func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourc
 	return args.Get(0).(*resourcepb.ListManagedObjectsResponse), args.Error(1)
 }
 
-func (m *MockResourceIndex) UpdateIndex(ctx context.Context, reason string) error {
+func (m *MockResourceIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
 	args := m.Called(ctx)
-	return args.Error(0)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 var _ DocumentBuilder = &MockDocumentBuilder{}
