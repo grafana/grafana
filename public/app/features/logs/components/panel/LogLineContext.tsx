@@ -3,26 +3,28 @@ import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  AbsoluteTimeRange,
+  CoreApp,
   DataQueryResponse,
+  DataSourceApi,
   DataSourceWithLogsContextSupport,
+  dateTime,
+  EventBusSrv,
+  formattedValueToString,
+  getValueFormat,
   GrafanaTheme2,
+  hasLogsContextSupport,
+  LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
+  LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
-  dateTime,
-  TimeRange,
-  LoadingState,
-  CoreApp,
-  LogRowModel,
-  AbsoluteTimeRange,
-  EventBusSrv,
   store,
-  getValueFormat,
-  formattedValueToString,
+  TimeRange,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { t, Trans } from '@grafana/i18n';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -87,6 +89,9 @@ export const LogLineContext = memo(
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
+    const [datasourceInstance, setDatasourceInstance] = useState<
+      (DataSourceApi & DataSourceWithLogsContextSupport) | null
+    >(null);
     const defaultTimeWindow = logOptionsStorageKey
       ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? DEFAULT_TIME_WINDOW.toString())
       : DEFAULT_TIME_WINDOW.toString();
@@ -295,6 +300,18 @@ export const LogLineContext = memo(
       [log, timeZone, wrapLogMessage]
     );
 
+    useEffect(() => {
+      if (log.datasourceUid) {
+        getDataSourceSrv()
+          .get({ uid: log.datasourceUid })
+          .then((ds) => {
+            if (hasLogsContextSupport(ds)) {
+              setDatasourceInstance(ds);
+            }
+          });
+      }
+    }, [log.datasourceUid]);
+
     return (
       <Modal
         isOpen={open}
@@ -316,7 +333,7 @@ export const LogLineContext = memo(
           <LogLineDetailsLog log={logListModel} syntaxHighlighting={syntaxHighlighting} />
         </Collapse>
         <div className={styles.controls}>
-          {log.datasourceType === 'loki' && (
+          {datasourceInstance?.supportsAdjustableWindow && (
             <Stack>
               <InlineLabel
                 htmlFor="time-window-control"
