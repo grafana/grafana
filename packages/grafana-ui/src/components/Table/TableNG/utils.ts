@@ -28,6 +28,7 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
+import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
   TableRow,
@@ -296,8 +297,11 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (field.type === FieldType.string) {
+      } else if (getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
+      } else {
+        // no measurer was configured for this cell type
+        wrappedFields--;
       }
     }
   }
