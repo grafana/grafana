@@ -71,8 +71,7 @@ func main() {
 func runJobController(c *cli.Context) error {
 	// TODO: Wire notifications into a ConcurrentJobDriver when a client-backed Store and Workers are available.
 	// For now, just log notifications to verify events end-to-end.
-	var logger logging.Logger
-	logger = logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
