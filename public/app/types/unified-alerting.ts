@@ -272,7 +272,7 @@ export interface FilterState {
   alertState?: string;
   groupBy?: string[];
   ruleType?: string;
-  receiver?: string[];
+  receivers?: string[];
 }
 
 export interface SilenceFilterState {
