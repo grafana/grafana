@@ -7,13 +7,13 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import * as analytics from '../../Analytics';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
-import RulesFilter from './Filter/RulesFilter';
+import RulesFilter from './RulesFilter';
 
 setupMswServer();
 jest.spyOn(analytics, 'logInfo');
 
-jest.mock('./MultipleDataSourcePicker', () => {
-  const original = jest.requireActual('./MultipleDataSourcePicker');
+jest.mock('../../components/rules/MultipleDataSourcePicker', () => {
+  const original = jest.requireActual('../../components/rules/MultipleDataSourcePicker');
   return {
     ...original,
     MultipleDataSourcePicker: () => null,

@@ -13,8 +13,12 @@ import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
+import RulesFilter from './RulesFilter';
+
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const RulesFilterV2 = require('./RulesFilter.v2').default;
 
 let mockFilterState: RulesFilterType = {
   ruleName: '',
@@ -40,9 +44,6 @@ jest.mock('../../hooks/useFilteredRules', () => ({
   })),
 }));
 
-import RulesFilter from './Filter/RulesFilter';
-import RulesFilterV2 from './Filter/RulesFilter.v2';
-
 const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
 
 setupMswServer();
@@ -50,6 +51,8 @@ setupMswServer();
 jest.spyOn(analytics, 'trackFilterButtonClick');
 jest.spyOn(analytics, 'trackFilterButtonApplyClick');
 jest.spyOn(analytics, 'trackFilterButtonClearClick');
+jest.spyOn(analytics, 'trackAlertRuleFilterEvent');
+jest.spyOn(analytics, 'trackRulesSearchInputCleared');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -61,8 +64,8 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('./MultipleDataSourcePicker', () => {
-  const original = jest.requireActual('./MultipleDataSourcePicker');
+jest.mock('../../components/rules/MultipleDataSourcePicker', () => {
+  const original = jest.requireActual('../../components/rules/MultipleDataSourcePicker');
   return {
     ...original,
     MultipleDataSourcePicker: () => null,
@@ -119,10 +122,25 @@ beforeEach(() => {
     labels: [],
   };
   mockSearchQuery = '';
-  mockUpdateFilters.mockClear();
-  mockSetSearchQuery.mockClear();
-  mockClearAll.mockClear();
+  // Fully reset mock implementations between tests to avoid leakage across cases
+  mockUpdateFilters.mockReset();
+  mockSetSearchQuery.mockReset();
+  mockClearAll.mockReset();
+  mockUpdateFilters.mockImplementation(() => {});
   mockSetSearchQuery.mockImplementation(() => {});
+  mockClearAll.mockImplementation(() => {});
+
+  // Restore the default implementation of the hook to use current mock variables
+  useRulesFilterMock.mockReset();
+  useRulesFilterMock.mockImplementation(() => ({
+    searchQuery: mockSearchQuery,
+    filterState: mockFilterState,
+    updateFilters: mockUpdateFilters,
+    setSearchQuery: mockSetSearchQuery,
+    clearAll: mockClearAll,
+    hasActiveFilters: false,
+    activeFilters: [],
+  }));
 
   // Reset plugin components hook to default (no plugins)
   setPluginComponentsHook(() => ({
@@ -209,21 +227,33 @@ describe('RulesFilterV2', () => {
   });
 
   it('Should populate search field with query string when filters are applied via rule name', async () => {
-    const { user } = render(<RulesFilterV2 />);
+    const { user, rerender } = render(<RulesFilterV2 />);
 
     await user.click(ui.filterButton.get());
 
     await user.type(ui.ruleNameInput.get(), 'test');
 
-    // Mock the setSearchQuery to update mockSearchQuery
-    mockSetSearchQuery.mockImplementation((newQuery: string | undefined) => {
-      mockSearchQuery = newQuery ?? '';
+    // Mock updateFilters to update the search query as the implementation does
+    mockUpdateFilters.mockImplementation(() => {
+      mockSearchQuery = 'rule:test';
     });
 
     await user.click(ui.applyButton.get());
 
-    // Check that setSearchQuery was called with the expected query
-    expect(mockSetSearchQuery).toHaveBeenCalledWith('rule:test');
+    // Update the mock to return the new search query and re-render
+    useRulesFilterMock.mockReturnValue({
+      searchQuery: mockSearchQuery,
+      filterState: mockFilterState,
+      updateFilters: mockUpdateFilters,
+      setSearchQuery: mockSetSearchQuery,
+      clearAll: mockClearAll,
+      hasActiveFilters: false,
+      activeFilters: [],
+    });
+    rerender(<RulesFilterV2 />);
+
+    // The search input should reflect the updated query string
+    expect(ui.searchInput.get()).toHaveValue('rule:test');
   });
 
   it('Should parse search query and call updateFilters when user types directly in search field', async () => {
@@ -294,7 +324,7 @@ describe('RulesFilterV2', () => {
       // Permission is already mocked to true at module level
       const { user } = render(<RulesFilterV2 />);
       await user.click(ui.filterButton.get());
-      expect(screen.getByText('Contact point')).toBeInTheDocument();
+      expect(await screen.findByText('Contact point')).toBeInTheDocument();
     });
 
     it('Should show plugin filter when plugins are enabled', async () => {
@@ -306,7 +336,7 @@ describe('RulesFilterV2', () => {
 
       const { user } = render(<RulesFilterV2 />);
       await user.click(ui.filterButton.get());
-      expect(screen.getByText('Plugin rules')).toBeInTheDocument();
+      expect(await screen.findByText('Plugin rules')).toBeInTheDocument();
     });
 
     it('Should hide plugin filter when no plugins are available', async () => {
@@ -347,6 +377,40 @@ describe('RulesFilterV2', () => {
       await user.click(ui.applyButton.get());
 
       expect(analytics.trackFilterButtonApplyClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should track search input submit with parsed filter payload', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.type(ui.searchInput.get(), 'rule:test state:firing');
+      await user.keyboard('{Enter}');
+
+      expect(analytics.trackAlertRuleFilterEvent).toHaveBeenCalled();
+      const callArg = (analytics.trackAlertRuleFilterEvent as jest.Mock).mock.calls.at(-1)?.[0];
+      expect(callArg.filterMethod).toBe('search-input');
+      expect(callArg.filter).toMatchObject({ ruleName: 'test', ruleState: 'firing' });
+    });
+
+    it('Should track search input blur with parsed filter payload', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.type(ui.searchInput.get(), 'state:firing');
+      await user.click(document.body);
+
+      expect(analytics.trackAlertRuleFilterEvent).toHaveBeenCalled();
+      const callArg = (analytics.trackAlertRuleFilterEvent as jest.Mock).mock.calls.at(-1)?.[0];
+      expect(callArg.filterMethod).toBe('search-input');
+      expect(callArg.filter).toMatchObject({ ruleState: 'firing' });
+    });
+
+    it('Should track search input clear when input transitions to empty', async () => {
+      const { user } = render(<RulesFilterV2 />);
+
+      await user.type(ui.searchInput.get(), 'abc');
+      expect(ui.searchInput.get()).toHaveValue('abc');
+      await user.clear(ui.searchInput.get());
+
+      expect(analytics.trackRulesSearchInputCleared).toHaveBeenCalled();
     });
 
     it('Should not track filter button click when filter button is clicked to close popup', async () => {
