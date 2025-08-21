@@ -7412,15 +7412,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@simbathesailor/use-what-changed@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@simbathesailor/use-what-changed@npm:2.0.0"
-  peerDependencies:
-    react: ">=16"
-  checksum: 10/2adf634b39b0dcbfbb9439c820322f8f28d60b4390b4c5d8bfbbb8ce0730330a740b4a0e937b98200811bc4571ebb159e98d86a65c99d734765ab1701981f08b
-  languageName: node
-  linkType: hard
-
 "@sinclair/typebox@npm:^0.27.8":
   version: 0.27.8
   resolution: "@sinclair/typebox@npm:0.27.8"
@@ -18367,7 +18358,6 @@ __metadata:
     "@rsdoctor/webpack-plugin": "npm:^1.0.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
-    "@simbathesailor/use-what-changed": "npm:^2.0.0"
     "@stylistic/eslint-plugin-ts": "npm:^4.0.0"
     "@swc/core": "npm:1.13.3"
     "@swc/helpers": "npm:0.5.17"

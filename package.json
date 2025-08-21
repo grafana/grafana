@@ -104,7 +104,6 @@
     "@rsdoctor/webpack-plugin": "^1.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
-    "@simbathesailor/use-what-changed": "^2.0.0",
     "@stylistic/eslint-plugin-ts": "^4.0.0",
     "@swc/core": "1.13.3",
     "@swc/helpers": "0.5.17",
