@@ -49,7 +49,6 @@ func Convert_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, s
 			StoredVersion: ptr.To(dashv1.VERSION),
 			Failed:        true,
 			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
 		},
 	}
 
@@ -66,7 +65,6 @@ func Convert_V1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, sco
 			StoredVersion: ptr.To(dashv1.VERSION),
 			Failed:        true,
 			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
 		},
 	}
 

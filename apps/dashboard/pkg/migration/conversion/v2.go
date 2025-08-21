@@ -20,7 +20,6 @@ func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, s
 			StoredVersion: ptr.To(dashv2alpha1.VERSION),
 			Failed:        true,
 			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
 		},
 	}
 
@@ -37,7 +36,6 @@ func Convert_V2alpha1_to_V1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, s
 			StoredVersion: ptr.To(dashv2alpha1.VERSION),
 			Failed:        true,
 			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
 		},
 	}
 
@@ -54,7 +52,6 @@ func Convert_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Da
 				StoredVersion: ptr.To(dashv2alpha1.VERSION),
 				Failed:        true,
 				Error:         ptr.To(err.Error()),
-				Source:        in,
 			},
 		}
 		return err
@@ -81,7 +78,6 @@ func Convert_V2beta1_to_V0(in *dashv2beta1.Dashboard, out *dashv0.Dashboard, sco
 			StoredVersion: ptr.To(dashv2beta1.VERSION),
 			Failed:        true,
 			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
 		},
 	}
 
@@ -98,7 +94,6 @@ func Convert_V2beta1_to_V1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, sco
 			StoredVersion: ptr.To(dashv2beta1.VERSION),
 			Failed:        true,
 			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
 		},
 	}
 
@@ -115,7 +110,6 @@ func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Da
 			StoredVersion: ptr.To(dashv2beta1.VERSION),
 			Failed:        true,
 			Error:         ptr.To("backend conversion not yet implemented"),
-			Source:        in,
 		},
 	}
 

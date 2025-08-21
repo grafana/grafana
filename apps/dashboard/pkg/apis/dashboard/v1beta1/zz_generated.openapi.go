@@ -243,13 +243,6 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardConversionStatus(ref common.Refe
 							Format:      "",
 						},
 					},
-					"source": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The original value map[string]any",
-							Type:        []string{"object"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{"failed"},
 			},

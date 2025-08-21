@@ -15,8 +15,6 @@ type DashboardConversionStatus struct {
 	// The version which was stored when the dashboard was created / updated.
 	// Fetching this version should always succeed.
 	StoredVersion *string `json:"storedVersion,omitempty"`
-	// The original value map[string]any
-	Source interface{} `json:"source,omitempty"`
 }
 
 // NewDashboardConversionStatus creates a new DashboardConversionStatus object.

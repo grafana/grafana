@@ -1245,10 +1245,6 @@
             "type": "boolean",
             "default": false
           },
-          "source": {
-            "description": "The original value map[string]any",
-            "type": "object"
-          },
           "storedVersion": {
             "description": "The version which was stored when the dashboard was created / updated. Fetching this version should always succeed.",
             "type": "string"

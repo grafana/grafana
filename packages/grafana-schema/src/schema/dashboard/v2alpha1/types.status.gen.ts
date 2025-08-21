@@ -12,8 +12,6 @@ export interface ConversionStatus {
 	// The version which was stored when the dashboard was created / updated.
 	// Fetching this version should always succeed.
 	storedVersion?: string;
-	// The original value map[string]any
-	source?: any;
 }
 
 export const defaultConversionStatus = (): ConversionStatus => ({
