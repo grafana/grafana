@@ -62,7 +62,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs[matrix.language] == 'true'
+      if: needs.detect-changes.outputs[matrix.language] == 'true'
       uses: actions/checkout@v4
       with:
         # We must fetch at least the immediate parents so that if this is
