@@ -584,12 +584,12 @@ type bleveIndex struct {
 
 	updaterFn resource.UpdateFn
 
-	updaterMu      sync.Mutex
-	updaterCond    *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
-	updaterEnabled bool               // When set to false, updater is no longer allowed to update index. Toggled on close().
-	updaterQueue   []updateRequest    // Queue of requests for next updater iteration.
-	updaterCancel  context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
-	updaterWg      sync.WaitGroup
+	updaterMu       sync.Mutex
+	updaterCond     *sync.Cond         // Used to signal the updater goroutine that there is work to do, or updater is no longer enabled and should stop. Also used by updater itself to stop early if there's no work to be done.
+	updaterShutdown bool               // When set to true, index is getting closed and updater is no longer going to update index.
+	updaterQueue    []updateRequest    // Queue of requests for next updater iteration.
+	updaterCancel   context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
+	updaterWg       sync.WaitGroup
 
 	updateLatency    prometheus.Histogram
 	updatedDocuments prometheus.Summary
@@ -606,17 +606,16 @@ func (b *bleveBackend) newBleveIndex(
 	logger *slog.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
-		key:            key,
-		index:          index,
-		indexStorage:   newIndexType,
-		fields:         fields,
-		allFields:      allFields,
-		standard:       standardSearchFields,
-		features:       b.features,
-		tracing:        b.tracer,
-		logger:         logger,
-		updaterFn:      updaterFn,
-		updaterEnabled: true,
+		key:          key,
+		index:        index,
+		indexStorage: newIndexType,
+		fields:       fields,
+		allFields:    allFields,
+		standard:     standardSearchFields,
+		features:     b.features,
+		tracing:      b.tracer,
+		logger:       logger,
+		updaterFn:    updaterFn,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1136,14 +1135,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 }
 
 func (b *bleveIndex) closeAndStopUpdates() error {
-	// Signal updater to stop. We do this by 1) setting updaterEnabled + sending signal, and by 2) calling cancel.
+	// Signal updater to stop. We do this by 1) setting updaterShuttingDown + sending signal, and by 2) calling cancel.
 	b.updaterMu.Lock()
-	b.updaterEnabled = false
+	b.updaterShutdown = true
+	b.updaterCond.Broadcast()
 	// if updater is running, cancel it. (Setting to nil is only done from updater itself in defer.)
 	if b.updaterCancel != nil {
 		b.updaterCancel()
 	}
-	b.updaterCond.Broadcast()
 	b.updaterMu.Unlock()
 
 	b.updaterWg.Wait()
@@ -1162,7 +1161,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
-	if !b.updaterEnabled {
+	if b.updaterShutdown {
 		b.updaterMu.Unlock()
 		return fmt.Errorf("cannot update index: index is closed")
 	}
@@ -1171,10 +1170,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
 
 	// If updater is not running, start it.
 	if b.updaterCancel == nil {
-		c, cf := context.WithCancel(context.Background())
-		b.updaterCancel = cf
-		b.updaterWg.Add(1)
-		go b.updater(c)
+		b.startUpdater()
 	}
 	b.updaterCond.Broadcast() // If updater is waiting for next batch, wake it up.
 	b.updaterMu.Unlock()
@@ -1188,27 +1184,41 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
 	}
 }
 
+// Must be called with b.updaterMu lock held.
+func (b *bleveIndex) startUpdater() {
+	c, cf := context.WithCancel(context.Background())
+	b.updaterCancel = cf
+	b.updaterWg.Add(1)
+
+	go func() {
+		defer func() {
+			cf()
+
+			b.updaterMu.Lock()
+			b.updaterCancel = nil
+			b.updaterMu.Unlock()
+
+			b.updaterWg.Done()
+		}()
+
+		b.runUpdater(c)
+	}()
+}
+
 const maxWait = 5 * time.Second
 
-func (b *bleveIndex) updater(ctx context.Context) {
-	defer func() {
-		b.updaterMu.Lock()
-		b.updaterCancel() // cannot be nil here.
-		b.updaterCancel = nil
-		b.updaterMu.Unlock()
-
-		b.updaterWg.Done()
-	}()
-
+func (b *bleveIndex) runUpdater(ctx context.Context) {
 	for {
 		start := time.Now()
 		t := time.AfterFunc(maxWait, b.updaterCond.Broadcast)
 
 		b.updaterMu.Lock()
-		for b.updaterEnabled && ctx.Err() == nil && len(b.updaterQueue) == 0 && time.Since(start) < maxWait {
+		for !b.updaterShutdown && ctx.Err() == nil && len(b.updaterQueue) == 0 && time.Since(start) < maxWait {
+			// Cond is signalled when updaterShutdown changes, updaterQueue gets new element or when timeout occurs.
 			b.updaterCond.Wait()
 		}
-		enabled := b.updaterEnabled
+
+		shutdown := b.updaterShutdown
 		batch := b.updaterQueue
 		b.updaterQueue = nil // empty the queue for the next batch
 		b.updaterMu.Unlock()
@@ -1220,7 +1230,7 @@ func (b *bleveIndex) updater(ctx context.Context) {
 			return
 		}
 
-		if !enabled {
+		if shutdown {
 			for _, req := range batch {
 				req.callback <- fmt.Errorf("cannot update index: index is closed")
 			}
