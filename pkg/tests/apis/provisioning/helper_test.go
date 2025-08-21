@@ -461,15 +461,16 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 }
 
 type TestRepo struct {
-	Name               string
-	Target             string
-	Path               string
-	Values             map[string]any
-	Copies             map[string]string
-	ExpectedDashboards int
-	ExpectedFolders    int
-	SkipSync           bool
-	Template           string
+	Name                   string
+	Target                 string
+	Path                   string
+	Values                 map[string]any
+	Copies                 map[string]string
+	ExpectedDashboards     int
+	ExpectedFolders        int
+	SkipSync               bool
+	SkipResourceAssertions bool
+	Template               string
 }
 
 func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
@@ -532,13 +533,14 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	}
 
 	// Verify initial state
-	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
-
-	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+	if !repo.SkipResourceAssertions {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+	}
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
