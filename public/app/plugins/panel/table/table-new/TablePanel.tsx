@@ -27,7 +27,19 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables, transparent } = props;
+  const {
+    data,
+    height,
+    width,
+    options,
+    onFieldConfigChange,
+    onOptionsChange,
+    fieldConfig,
+    id,
+    timeRange,
+    replaceVariables,
+    transparent,
+  } = props;
 
   useMemo(() => {
     cacheFieldDisplayNames(data.series);
@@ -46,6 +58,59 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
+
+  const onColumnResize = useCallback(
+    (fieldDisplayName: string, width: number) => {
+      const { overrides } = fieldConfig;
+
+      const matcherId = FieldMatcherID.byName;
+      const propId = 'custom.width';
+
+      // look for existing override
+      const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+
+      if (override) {
+        // look for existing property
+        const property = override.properties.find((prop) => prop.id === propId);
+        if (property) {
+          property.value = width;
+        } else {
+          override.properties.push({ id: propId, value: width });
+        }
+      } else {
+        overrides.push({
+          matcher: { id: matcherId, options: fieldDisplayName },
+          properties: [{ id: propId, value: width }],
+        });
+      }
+
+      onFieldConfigChange({
+        ...fieldConfig,
+        overrides,
+      });
+    },
+    [fieldConfig, onFieldConfigChange]
+  );
+
+  const onSortByChange = useCallback(
+    (sortBy: TableSortByFieldState[]) => {
+      onOptionsChange({
+        ...options,
+        sortBy,
+      });
+    },
+    [options, onOptionsChange]
+  );
+
+  const onChangeTableSelection = useCallback(
+    (val: SelectableValue<number>) => {
+      onOptionsChange({
+        ...options,
+        frameIndex: val.value || 0,
+      });
+    },
+    [options, onOptionsChange]
+  );
 
   let tableHeight = height;
 
@@ -73,8 +138,8 @@ export function TablePanel(props: Props) {
       showTypeIcons={options.showTypeIcons}
       resizable={true}
       initialSortBy={options.sortBy}
-      onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
+      onSortByChange={onSortByChange}
+      onColumnResize={onColumnResize}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       footerOptions={options.footer}
       frozenColumns={options.frozenColumns?.left}
@@ -105,7 +170,7 @@ export function TablePanel(props: Props) {
     <div className={tableStyles.wrapper}>
       {tableElement}
       <div className={tableStyles.selectWrapper}>
-        <Select options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
+        <Select options={names} value={names[currentIndex]} onChange={onChangeTableSelection} />
       </div>
     </div>
   );
@@ -113,51 +178,6 @@ export function TablePanel(props: Props) {
 
 function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
-}
-
-function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
-  const { fieldConfig } = props;
-  const { overrides } = fieldConfig;
-
-  const matcherId = FieldMatcherID.byName;
-  const propId = 'custom.width';
-
-  // look for existing override
-  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
-
-  if (override) {
-    // look for existing property
-    const property = override.properties.find((prop) => prop.id === propId);
-    if (property) {
-      property.value = width;
-    } else {
-      override.properties.push({ id: propId, value: width });
-    }
-  } else {
-    overrides.push({
-      matcher: { id: matcherId, options: fieldDisplayName },
-      properties: [{ id: propId, value: width }],
-    });
-  }
-
-  props.onFieldConfigChange({
-    ...fieldConfig,
-    overrides,
-  });
-}
-
-function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
-  props.onOptionsChange({
-    ...props.options,
-    sortBy,
-  });
-}
-
-function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
-  props.onOptionsChange({
-    ...props.options,
-    frameIndex: val.value || 0,
-  });
 }
 
 // placeholder function; assuming the values are already interpolated
