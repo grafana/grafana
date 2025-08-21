@@ -1163,7 +1163,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) (int64, err
 		return 0, nil
 	}
 
-	// Use chan with buffer size 1 to ensure that we can always send error back, even if there's no reader anymore.
+	// Use chan with buffer size 1 to ensure that we can always send the result back, even if there's no reader anymore.
 	req := updateRequest{reason: reason, callback: make(chan updateResult, 1)}
 
 	// Make sure that the updater goroutine is running.
