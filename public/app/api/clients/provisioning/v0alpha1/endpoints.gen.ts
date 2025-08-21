@@ -658,6 +658,7 @@ export type CreateRepositoryTestApiArg = {
     /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
     kind?: string;
     metadata?: any;
+    secure?: any;
     spec?: any;
     status?: any;
   };
@@ -909,6 +910,37 @@ export type JobList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type InlineSecureValue =
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove: boolean;
+    };
+export type SecureValues = {
+  /** Token used to connect the configured repository */
+  token?: InlineSecureValue;
+  /** Some webhooks (github) require a secret key value */
+  webhookSecret?: InlineSecureValue;
+};
 export type BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
@@ -1018,6 +1050,12 @@ export type RepositorySpec = {
 export type HealthStatus = {
   /** When the health was checked last time */
   checked?: number;
+  /** The type of the error
+    
+    Possible enum values:
+     - `"health"`
+     - `"hook"` */
+  error?: 'health' | 'hook';
   /** When not healthy, requests will not be executed */
   healthy: boolean;
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
@@ -1079,6 +1117,7 @@ export type Repository = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
+  secure?: SecureValues;
   spec?: RepositorySpec;
   status?: RepositoryStatus;
 };

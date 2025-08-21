@@ -7,10 +7,7 @@ import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
 import { getJustifyContent, TextAlign } from './utils';
 
-export const getGridStyles = (
-  theme: GrafanaTheme2,
-  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
-) => {
+export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells

@@ -54,7 +54,7 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "history-subresource")
 	ctx = logging.Context(ctx, logger)
-	repo, err := h.repoGetter.GetHealthyRepository(ctx, name)
+	repo, err := h.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
