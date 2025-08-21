@@ -4,7 +4,7 @@ import { Alert, Icon, Stack } from '@grafana/ui';
 import { RepoTypeDisplay, RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { commonAlertProps } from '../dashboards/DashboardPreviewBanner';
+import { commonAlertProps } from '../Dashboards/DashboardPreviewBanner';
 
 // TODO: We have this https://github.com/grafana/git-ui-sync-project/issues/166 to add more details about the PR.
 

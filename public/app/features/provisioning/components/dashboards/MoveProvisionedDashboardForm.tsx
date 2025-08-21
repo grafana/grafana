@@ -20,7 +20,7 @@ import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../ho
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { getTargetFolderPathInRepo } from '../BulkActions/utils';
-import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
+import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
 export interface Props {
   dashboard: DashboardScene;

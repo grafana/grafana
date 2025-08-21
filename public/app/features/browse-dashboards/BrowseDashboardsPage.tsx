@@ -16,7 +16,7 @@ import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo'
 import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
-import { ProvisionedFolderPreviewBanner } from '../provisioning/components/folders/ProvisionedFolderPreviewBanner';
+import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';

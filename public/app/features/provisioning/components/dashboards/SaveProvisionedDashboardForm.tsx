@@ -23,8 +23,8 @@ import {
 
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { RepoInvalidStateBanner } from '../shared/RepoInvalidStateBanner';
-import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
+import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedMeta } from '../utils/getProvisionedMeta';
 
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';

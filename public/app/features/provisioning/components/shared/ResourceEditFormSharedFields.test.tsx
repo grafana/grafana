@@ -6,7 +6,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ProvisionedDashboardFormData } from '../../types/form';
-import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
+
+import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 const mockRepo: { github: RepositoryView; local: RepositoryView } = {
   github: {

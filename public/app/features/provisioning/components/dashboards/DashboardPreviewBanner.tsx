@@ -6,7 +6,7 @@ import { DashboardPageRouteSearchParams } from 'app/features/dashboard/container
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { PreviewBannerViewPR } from '../shared/PreviewBannerViewPR';
+import { PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
 
 export interface CommonBannerProps {
   queryParams: DashboardPageRouteSearchParams;
