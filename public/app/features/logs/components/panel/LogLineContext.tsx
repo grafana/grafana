@@ -59,6 +59,7 @@ interface LogLineContextProps {
 }
 
 const PAGE_SIZE = 100;
+const DEFAULT_TIME_WINDOW = 7200000;
 
 export const LogLineContext = memo(
   ({
@@ -87,8 +88,8 @@ export const LogLineContext = memo(
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
     const defaultTimeWindow = logOptionsStorageKey
-      ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? '7200000')
-      : '7200000';
+      ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? DEFAULT_TIME_WINDOW.toString())
+      : DEFAULT_TIME_WINDOW.toString();
     const [timeWindow, setTimeWindow] = useState(parseInt(defaultTimeWindow, 10));
 
     const eventBusRef = useRef(new EventBusSrv());
@@ -509,7 +510,7 @@ const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
 };
 
 function getTimeWindowOptions() {
-  const intervals = [100, 500, 1000, 5000, 30000, 60000, 300000, 1800000, 3600000, 7200000];
+  const intervals = [100, 500, 1000, 5000, 30000, 60000, 300000, 1800000, 3600000, DEFAULT_TIME_WINDOW];
   return intervals.map((interval) => ({
     label: formattedValueToString(getValueFormat('ms')(interval)),
     value: interval.toString(),
