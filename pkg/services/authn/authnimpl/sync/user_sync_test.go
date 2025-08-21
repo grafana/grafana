@@ -980,7 +980,6 @@ func TestUserSync_CatalogLoginHook(t *testing.T) {
 	type testCase struct {
 		name           string
 		identity       *authn.Identity
-		setRequest     func(catalogVersion string) *authn.Request
 		expectFlagSet  bool
 		catalogVersion string
 	}
