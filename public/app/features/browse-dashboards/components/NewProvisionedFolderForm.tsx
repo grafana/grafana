@@ -1,11 +1,10 @@
-import { css } from '@emotion/css';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Text, Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
@@ -23,8 +22,6 @@ import { FolderDTO } from 'app/types/folders';
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
 import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
-import { validateFolderName } from './NewFolderForm';
-import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
 
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;
@@ -48,7 +45,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, title] = watch(['workflow', 'title']);
+  const [workflow] = watch(['workflow']);
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
@@ -91,6 +88,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
   // Use the repository-type and resource-type aware provisioned request handler
   useProvisionedRequestHandler<FolderDTO>({
+    folderUID: folder?.metadata.name,
     request,
     workflow,
     repository,
@@ -109,12 +107,8 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
       return;
     }
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
-
-    // Convert folder title to filename format (lowercase, replace spaces with hyphens)
-    const titleInFilenameFormat = formatFolderName(title); // TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
-
     const prefix = basePath ? `${basePath}/` : '';
-    const path = `${prefix}${titleInFilenameFormat}/`;
+    const path = `${prefix}${title}/`;
 
     const folderModel = {
       title,
@@ -154,13 +148,13 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
           <Field
             noMargin
             label={t('browse-dashboards.new-provisioned-folder-form.label-folder-name', 'Folder name')}
-            invalid={!!formState.errors.title}
-            error={formState.errors.title?.message}
+            invalid={!!formState?.errors.title}
+            error={formState?.errors.title?.message}
           >
             <Input
               {...register('title', {
                 required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
-                validate: validateFolderName,
+                validate: validateProvisionedFolderName,
               })}
               placeholder={t(
                 'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',
@@ -169,7 +163,6 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
               id="folder-name-input"
             />
           </Field>
-          <FolderNamePreviewMessage folderName={title} />
 
           <ResourceEditFormSharedFields
             resourceType="folder"
@@ -198,13 +191,13 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
           )}
 
           <Stack gap={2}>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
-            </Button>
-            <Button type="submit" disabled={request.isLoading}>
+            <Button type="submit" disabled={request.isLoading || !!formState?.errors.title}>
               {request.isLoading
                 ? t('browse-dashboards.new-provisioned-folder-form.button-creating', 'Creating...')
                 : t('browse-dashboards.new-provisioned-folder-form.button-create', 'Create')}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -245,38 +238,20 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   );
 }
 
-function FolderNamePreviewMessage({ folderName }: { folderName: string }) {
-  const styles = useStyles2(getStyles);
-  const isValidFolderName =
-    folderName.length && hasFolderNameCharactersToReplace(folderName) && validateFolderName(folderName);
-
-  if (!isValidFolderName) {
-    return null;
+function validateProvisionedFolderName(folderName: string): string | true {
+  if (!folderName || typeof folderName !== 'string') {
+    return t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required');
   }
 
-  return (
-    <div className={styles.folderNameMessage}>
-      <Icon name="check-circle" type="solid" />
-      <Text color="success">
-        {t(
-          'browse-dashboards.new-provisioned-folder-form.text-your-folder-will-be-created-as',
-          'Your folder will be created as {{folderName}}',
-          {
-            folderName: formatFolderName(folderName),
-          }
-        )}
-      </Text>
-    </div>
-  );
-}
+  // Backend allows: a-zA-Z0-9 _- (no dots, no forward slash for folder names)
+  const invalidCharRegex = /[^a-zA-Z0-9 _-]/;
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    folderNameMessage: css({
-      display: 'flex',
-      alignItems: 'center',
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.success.text,
-    }),
-  };
-};
+  if (invalidCharRegex.test(folderName)) {
+    return t(
+      'browse-dashboards.new-provisioned-folder-form.error-invalid-characters',
+      'Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.'
+    );
+  }
+
+  return true; // Valid
+}

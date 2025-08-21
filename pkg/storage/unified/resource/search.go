@@ -722,7 +722,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.Int64("rv", rv), attribute.String("reason", indexBuildReason)))
 
-		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
+		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -790,7 +790,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 			}
 			return iter.Error()
 		})
-		return rv, err
+		return listRV, err
 	})
 
 	if err != nil {
@@ -821,7 +821,7 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 	// Build an empty index by passing a builder function that doesn't add any documents
 	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, "empty", func(index ResourceIndex) (int64, error) {
 		// Return the resource version without adding any documents to the index
-		return rv, nil
+		return 0, nil
 	})
 }
 

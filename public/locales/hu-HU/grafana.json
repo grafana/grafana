@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Némítás, csoportosítás és időzítés"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nem található adatforrás"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "Nem található szabály",
       "error-button": "Hiba",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Keresés visszavonása",
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
@@ -3537,7 +3543,6 @@
       "button-cancel": "Mégse",
       "button-move": "Áthelyezés",
       "button-moving": "Áthelyezés...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3637,11 @@
       "button-create": "Létrehozás",
       "button-creating": "Létrehozás…",
       "cancel": "Mégse",
+      "error-invalid-characters": "",
       "error-required": "A mappa nevének megadása kötelező",
       "folder-name-input-placeholder-enter-folder-name": "Mappanév megadása",
       "label-folder-name": "Mappa neve",
       "text-pull-request-created": "A lekérési kérelem ennek a mappának a módosításával lett létrehozva:",
-      "text-your-folder-will-be-created-as": "A mappa neve {{folderName}} lesz",
       "title-pull-request-created": "Lekérési kérelem létrehozva",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
     },
@@ -4171,7 +4176,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Adatforrások",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nincs találat a lekérdezésre",
       "request-data-source": "Új adatforrás kérése",
       "roadmap": "Ütemterv megtekintése"
@@ -4521,6 +4527,10 @@
           },
           "value": "Érték"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "Az elem rejtve van a feltételes renderelés miatt."
@@ -6541,9 +6551,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Irányítópult létrehozása",
       "explore-data": "Adatok felfedezése",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "További részletek a hibáról"
@@ -7521,11 +7533,6 @@
     "noOptionsMessage-no-folders-found": "Nem található mappa",
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
-  },
-  "folder-picker": {
-    "create-instructions": "Nyomja le az ENTER billentyűt az új mappa létrehozásához.",
-    "input-placeholder": "Nyomja le az Enter billentyűt az új mappa megerősítéséhez",
-    "loading": "Mappák betöltése..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8745,7 +8752,6 @@
       "filter-popup-input-placeholder": "Értékek szűrése",
       "filter-popup-match-case": "Nagybetűérzékeny",
       "inspect-drawer-title": "Érték ellenőrzése",
-      "inspect-menu-label": "Érték ellenőrzése",
       "nested-table": {
         "no-data": "Nincs adat"
       },
@@ -11879,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Lekérdezési sor összecsukása",
       "datasource-help": "Adatforrás súgójának megjelenítése",
       "drag-and-drop": "Húzza át az átrendezéshez",
@@ -11890,11 +11895,7 @@
       "replace-query-from-library": "Lecserélés könyvtárból származó lekérdezésre",
       "show-response": "Válasz megjelenítése"
     },
-    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
   },
   "recently-deleted": {
     "buttons": {
@@ -12791,6 +12792,7 @@
     "description-fields": "Válassza ki a kiszámítandó mezőket",
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
+    "description-tooltip-from-field": "",
     "name-calculation": "Számítás",
     "name-cell-height": "Cellamagasság",
     "name-cell-type": "Cellatípus",
@@ -12806,8 +12808,17 @@
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-show-table-footer": "Táblázatlábléc megjelenítése",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automatikus",
-    "placeholder-fields": "Numerikus mezők"
+    "placeholder-fields": "Numerikus mezők",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Címkék törlése",

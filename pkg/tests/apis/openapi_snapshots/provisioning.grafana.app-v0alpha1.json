@@ -2375,6 +2375,9 @@
                   "metadata": {
                     "default": {}
                   },
+                  "secure": {
+                    "default": {}
+                  },
                   "spec": {
                     "default": {}
                   },
@@ -2858,6 +2861,14 @@
             "description": "When the health was checked last time",
             "type": "integer",
             "format": "int64"
+          },
+          "error": {
+            "description": "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
+            "type": "string",
+            "enum": [
+              "health",
+              "hook"
+            ]
           },
           "healthy": {
             "description": "When not healthy, requests will not be executed",
@@ -3461,6 +3472,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "secure": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SecureValues"
               }
             ]
           },
@@ -4193,6 +4212,30 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SecureValues": {
+        "description": "NOT YET USED FOR REAL -- testing secure value workflow",
+        "type": "object",
+        "properties": {
+          "token": {
+            "description": "Token used to connect the configured repository",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              }
+            ]
+          },
+          "webhookSecret": {
+            "description": "Some webhooks (github) require a secret key value",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SyncJobOptions": {
         "type": "object",
         "required": [
@@ -4405,6 +4448,45 @@
             "type": "string"
           }
         }
+      },
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue": {
+        "description": "Allow access to a secure value inside",
+        "oneOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "create"
+            ]
+          },
+          {
+            "required": [
+              "remove"
+            ]
+          }
+        ],
+        "properties": {
+          "create": {
+            "description": "Create a secure value -- this is only used for POST/PUT",
+            "type": "string",
+            "maxLength": 24576,
+            "minLength": 1
+          },
+          "name": {
+            "description": "Name in the secret service (reference)",
+            "type": "string",
+            "maxLength": 253,
+            "minLength": 1
+          },
+          "remove": {
+            "description": "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",
