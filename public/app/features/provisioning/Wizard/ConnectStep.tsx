@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Field, Input, SecretInput, Stack } from '@grafana/ui';
 
+import { BranchSelector } from '../Shared/BranchSelector';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
@@ -17,14 +18,18 @@ export function ConnectStep() {
     setValue,
     formState: { errors },
     getValues,
+    watch,
   } = useFormContext<WizardFormData>();
 
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
+  // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
+  const repositoryUrl = watch('repository.url') || '';
+  const repositoryToken = watch('repository.token') || '';
   const isGitBased = isGitProvider(type);
 
-  // Get field configurations based on provider type
+  // Get field configurations based on a provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
@@ -102,10 +107,21 @@ export function ConnectStep() {
             invalid={!!errors?.repository?.branch?.message}
             required={gitFields.branchConfig.required}
           >
-            <Input
-              {...register('repository.branch', gitFields.branchConfig.validation)}
-              id="branch"
-              placeholder={gitFields.branchConfig.placeholder}
+            <Controller
+              name="repository.branch"
+              control={control}
+              rules={gitFields.branchConfig.validation}
+              render={({ field: { ref, ...field } }) => (
+                <BranchSelector
+                  placeholder={gitFields.branchConfig.placeholder}
+                  invalid={!!errors?.repository?.branch?.message}
+                  repositoryType={type}
+                  repositoryUrl={repositoryUrl}
+                  repositoryToken={repositoryToken}
+                  createCustomValue={true}
+                  {...field}
+                />
+              )}
             />
           </Field>
 

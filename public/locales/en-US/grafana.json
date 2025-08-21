@@ -11198,6 +11198,10 @@
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information..."
     },
+    "branch-selector": {
+      "default-branch": "Default branch",
+      "fetching": "Fetching branches..."
+    },
     "check-repository": {
       "check": "Check"
     },
