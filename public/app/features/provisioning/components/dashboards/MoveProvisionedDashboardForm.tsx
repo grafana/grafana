@@ -19,7 +19,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { getTargetFolderPathInRepo } from '../bulk-actions/utils';
+import { getTargetFolderPathInRepo } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../shared/ResourceEditFormSharedFields';
 
 export interface Props {
