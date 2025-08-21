@@ -68,7 +68,7 @@ Grafana currently follows a monthly release schedule. Below are the planned rele
 
 - The schedule above outlines how we plan release dates. However, unforeseen events and circumstances may cause dates to change.
 - High severity security and feature degradation incidents will result in ad-hoc releases that are not scheduled ahead of time.
-- Patching releases are for the current (last released) minor version of Grafana. Additional older versions of Grafana may be included if there is a critical bug or security vulnerability that needs to be patched.
+- Patching releases are for all supported minor versions of Grafana. Each supported minor version receives patch releases with bug fixes and security patches until its end of life.
 - Release freezes: Each year Grafana implements two release freezes to accommodate for the holiday season. During these times, no scheduled releases will be executed. However, this does not apply to changes that may be required during the course of an operational or security incident.
 
 ## Grafana security releases: improved version naming convention
@@ -96,8 +96,8 @@ For self-managed Grafana (both Enterprise and OSS), the support for versions fol
 - Each minor release is supported for 9 months after its release date
 - The last minor release of a major version receives extended support for 15 months after its release date
 - Support levels change as new versions are released:
-  - **Full Support**: The most recently released major/minor version receive full support including new features, bug fixes, and security patches
-  - **Security & Critical Bugs Only**: Versions that are outside of the most recently released major/minor version, but still within their support period, receive only security patches and critical bug fixes
+  - **Full Support**: The current major version receives new features through new minor releases
+  - **Patch Support**: Individual minor versions receive patch releases (bug fixes and security patches) until end of life
   - **Not Supported**: Versions beyond their support period receive no updates
 
 Here is an overview of version support through 2026:
