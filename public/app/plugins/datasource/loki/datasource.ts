@@ -162,11 +162,11 @@ export class LokiDatasource
     };
     this.variables = new LokiVariableSupport(this);
     this.logContextProvider = new LogContextProvider(this);
-    this.hasLogsContextAdjustableWindow = true;
+    this.supportsAdjustableWindow = true;
   }
 
   // Flag marking datasource as supporting adjusting the time range window in the logs context window: https://github.com/grafana/grafana/pull/109901
-  public hasLogsContextAdjustableWindow;
+  public supportsAdjustableWindow;
 
   /**
    * Implemented for DataSourceWithSupplementaryQueriesSupport.
