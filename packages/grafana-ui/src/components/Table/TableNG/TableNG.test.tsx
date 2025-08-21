@@ -1258,10 +1258,7 @@ describe('TableNG', () => {
       const frame = createBasicDataFrame();
       frame.fields.forEach((field) => {
         if (field.config?.custom) {
-          field.config.custom.cellOptions = {
-            ...field.config.custom.cellOptions,
-            wrapText: true,
-          };
+          field.config.custom.wrapText = true;
         }
       });
 
@@ -1274,9 +1271,7 @@ describe('TableNG', () => {
           fieldConfig={{
             defaults: {
               custom: {
-                cellOptions: {
-                  wrapText: true,
-                },
+                wrapText: true,
               },
             },
             overrides: [],
