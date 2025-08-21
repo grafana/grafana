@@ -78,6 +78,7 @@ export enum ConnectionPath {
 
 export interface CanvasConnection {
   color?: ui.ColorDimensionConfig;
+  direction?: ui.DirectionDimensionConfig;
   path: ConnectionPath;
   size?: ui.ScaleDimensionConfig;
   source: ConnectionCoordinates;

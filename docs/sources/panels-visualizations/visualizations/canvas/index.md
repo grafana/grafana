@@ -481,11 +481,18 @@ You can style the selected connection using the following options:
 - **Color** - Set the connection color.
 - **Size** - Control the size of the connection by entering a number in the **Value** field.
 - **Radius** - Add curve to the connection by entering a value to represent the degree.
-- **Arrow Direction** - Control the appearance of the arrow head. Choose from:
+- **Direction** - Control the appearance of the arrow head. Choose your source from **Fixed** or **Field**. The default value is **Forward** regardless of the source type.
+
+  If the direction source is **Fixed**, choose from:
   - **Forward** - The arrow head points in the direction in which the connection was drawn.
   - **Reverse** - The arrow head points in the opposite direction of which the connection was drawn.
   - **Both** - Adds arrow heads to both ends of the connection.
   - **None** - Removes the arrow head.
+
+  If the direction source is **Field**, select a field that contains numeric values:
+  - **Positive values** - Display forward arrows.
+  - **Negative values** - Display reverse arrows.
+  - **Zero** - Display no arrow heads.
 
 - **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
 

@@ -73,6 +73,7 @@ composableKinds: PanelCfg: {
 					path:        ConnectionPath
 					color?:      ui.ColorDimensionConfig
 					size?:       ui.ScaleDimensionConfig
+					direction?:  ui.DirectionDimensionConfig
 					vertices?: [...ConnectionCoordinates]
 					sourceOriginal?: ConnectionCoordinates
 					targetOriginal?: ConnectionCoordinates
