@@ -8,6 +8,7 @@ export function useFoldersQuery(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
   permission?: PermissionLevelString,
+  /* Start tree from this folder instead of root */
   rootFolderUID?: string
 ) {
   const resultLegacy = useFoldersQueryLegacy(isBrowsing, openFolders, permission, rootFolderUID);

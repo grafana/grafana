@@ -49,6 +49,7 @@ export function useFoldersQueryLegacy(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
   permission?: PermissionLevelString,
+  /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID?: string
 ) {
   const dispatch = useDispatch();

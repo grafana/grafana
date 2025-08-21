@@ -36,7 +36,7 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
-  /* Only show folders inside this root folder */
+  /* Start tree from this folder instead of root */
   rootFolderUID?: string;
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
@@ -226,10 +226,6 @@ export function NestedFolderPicker({
           },
         })) ?? [];
     }
-
-    // if (rootFolderUID) {
-    //   flatTree = filterByRootFolder(flatTree, rootFolderUID);
-    // }
 
     // It's not super optimal to filter these in an additional iteration, but
     // these options are used infrequently that its not a big deal

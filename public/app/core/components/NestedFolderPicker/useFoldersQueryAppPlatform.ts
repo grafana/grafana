@@ -28,6 +28,7 @@ const collator = new Intl.Collator();
 export function useFoldersQueryAppPlatform(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
+  /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID?: string
 ) {
   const dispatch = useDispatch();
