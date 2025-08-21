@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { alignTimeRangeCompareData } from '@grafana/scenes';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
@@ -44,7 +45,12 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
+  const alignedData = useMemo(() => alignTimeRangeCompareData(data), [data]);
+  console.log(alignedData);
+  const frames = useMemo(
+    () => prepareGraphableFields(alignedData.series, config.theme2, timeRange),
+    [alignedData, timeRange]
+  );
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
