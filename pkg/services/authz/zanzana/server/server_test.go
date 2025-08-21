@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -92,7 +93,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	require.NoError(t, err)
 
-	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService())
+	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
