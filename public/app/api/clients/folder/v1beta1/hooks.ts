@@ -7,6 +7,7 @@ import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
   useGetFolderQuery as useGetFolderQueryLegacy,
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
+  useMoveFoldersMutation as useMoveFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
@@ -29,7 +30,7 @@ import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 import { isProvisionedFolderCheck } from './utils';
 import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
-import { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation } from './index';
+import { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation, useUpdateFolderMutation } from './index';
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
@@ -217,6 +218,51 @@ export function useDeleteMultipleFoldersMutationFacade() {
           type: AppEvents.alertSuccess.name,
           payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
         });
+        dispatch(refreshParents(folderUIDs));
+      }
+    }
+    return { data: undefined };
+  };
+}
+
+export function useMoveMultipleFoldersMutationFacade() {
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    const [moveFolders] = useMoveFoldersMutationLegacy();
+    return moveFolders;
+  }
+
+  const [updateFolder] = useUpdateFolderMutation();
+  const dispatch = useDispatch();
+
+  return async function moveFolders({ folderUIDs, destinationUID }: { folderUIDs: string[]; destinationUID: string }) {
+    // Move all the folders sequentially
+    for (const folderUID of folderUIDs) {
+      // This also shows warning alert
+      if (
+        await isProvisionedFolderCheck(dispatch, folderUID, {
+          warning: t(
+            'folders.api.folder-move-error-provisioned',
+            'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'
+          ),
+        })
+      ) {
+        continue;
+      }
+      const result = await updateFolder({
+        name: folderUID,
+        patch: { metadata: { annotations: { [AnnoKeyFolder]: destinationUID } } },
+      });
+      if (!result.error) {
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [t('folders.api.folder-moved-success', 'Folder moved')],
+        });
+        dispatch(
+          refetchChildren({
+            parentUID: destinationUID,
+            pageSize: PAGE_SIZE,
+          })
+        );
         dispatch(refreshParents(folderUIDs));
       }
     }
