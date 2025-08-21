@@ -50,9 +50,9 @@ export const assertAddToQueryLibraryButtonExists = async (value = true) => {
     expect(withinQueryHistory().getByRole('button', { name: /run query/i })).toBeInTheDocument();
 
     if (value) {
-      expect(withinQueryHistory().queryByRole('button', { name: /add to library/i })).toBeInTheDocument();
+      expect(withinQueryHistory().queryByRole('button', { name: /Save query/i })).toBeInTheDocument();
     } else {
-      expect(withinQueryHistory().queryByRole('button', { name: /add to library/i })).not.toBeInTheDocument();
+      expect(withinQueryHistory().queryByRole('button', { name: /Save query/i })).not.toBeInTheDocument();
     }
   });
 };

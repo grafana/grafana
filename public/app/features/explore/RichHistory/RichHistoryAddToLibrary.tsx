@@ -28,7 +28,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
     }
   };
 
-  const buttonLabel = t('explore.rich-history-card.add-to-library', 'Add to library');
+  const buttonLabel = t('explore.rich-history-card.add-to-library', 'Save query');
 
   return queryLibraryEnabled && !hasBeenSaved ? (
     <>
