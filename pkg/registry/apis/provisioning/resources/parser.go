@@ -192,6 +192,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		dirPath := safepath.Dir(info.Path)
 		if dirPath != "" {
 			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+		} else {
+			parsed.Meta.SetFolder(r.repo.Name)
 		}
 	}
 	obj.SetUID("")             // clear identifiers
