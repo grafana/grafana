@@ -551,8 +551,7 @@ export function useColWidths(visibleFields: Field[], availableWidth: number): [n
   // only replace the widths array if something actually changed
   useEffect(() => {
     const newWidths = computeColWidths(visibleFields, availableWidth);
-    // use widthStr to avoid array comparison
-    if (compareArrayValues(widths, newWidths, numIsEqual)) {
+    if (!compareArrayValues(widths, newWidths, numIsEqual)) {
       setWidths(newWidths);
     }
   }, [availableWidth, widths, visibleFields]);
