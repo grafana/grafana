@@ -19,7 +19,7 @@ export const MaybeWrapWithLink = memo(({ field, rowIdx, children }: MaybeWrapWit
   // as real, single link
   if (linksCount === 1 && actionsCount === 0) {
     let link = (getCellLinks(field, rowIdx) ?? [])[0];
-    return link != null ? renderSingleLink(link, children) : children;
+    return link ? renderSingleLink(link, children) : children;
   }
   // as faux link that acts as hit-area for tooltip activation
   else if (linksCount + actionsCount > 0) {
