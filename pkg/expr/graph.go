@@ -357,7 +357,6 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
 					s.metrics.SqlCommandCount.WithLabelValues("error", e.Category()).Inc()
 					return e
-
 				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}

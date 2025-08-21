@@ -454,7 +454,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			status = "error"
 		}
 		s.metrics.SqlCommandInputCount.WithLabelValues(status, fmt.Sprintf("%t", converted), dn.datasource.Type, dataType).Inc()
-
 	} else {
 		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 		if err != nil {

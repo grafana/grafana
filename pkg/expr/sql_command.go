@@ -419,15 +419,15 @@ func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forR
 
 func categorizeFrameInputType(dataFrames data.Frames) string {
 	switch {
-		case len(dataFrames) == 0:
-			return "missing"
-		case dataFrames[0].Meta == nil:
-			return "missing"
-		case dataFrames[0].Meta.Type == "":
-			return "missing"
-		case dataFrames[0].Meta.Type.IsKnownType():
-			return string(dataFrames[0].Meta.Type)
-		default:
-			return "unknown"
+	case len(dataFrames) == 0:
+		return "missing"
+	case dataFrames[0].Meta == nil:
+		return "missing"
+	case dataFrames[0].Meta.Type == "":
+		return "missing"
+	case dataFrames[0].Meta.Type.IsKnownType():
+		return string(dataFrames[0].Meta.Type)
+	default:
+		return "unknown"
 	}
 }

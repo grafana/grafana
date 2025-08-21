@@ -1602,5 +1602,4 @@ func (f fakeNode) IsInputTo() map[string]struct{} {
 }
 
 func (f fakeNode) SetInputTo(a string) {
-	return
 }
