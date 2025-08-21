@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -68,6 +69,14 @@ func main() {
 }
 
 func runJobController(c *cli.Context) error {
+	// TODO: Wire notifications into a ConcurrentJobDriver when a client-backed Store and Workers are available.
+	// For now, just log notifications to verify events end-to-end.
+	var logger logging.Logger
+	logger = logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})).With("logger", "provisioning-job-controller")
+	logger.Info("Starting provisioning job controller")
+
 	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
 		TokenExchangeURL: *tokenExchangeURL,
 		Token:            *token,
@@ -114,9 +123,6 @@ func runJobController(c *cli.Context) error {
 		return fmt.Errorf("failed to create job controller: %w", err)
 	}
 
-	// TODO: Wire notifications into a ConcurrentJobDriver when a client-backed Store and Workers are available.
-	// For now, just log notifications to verify events end-to-end.
-	logger := logging.DefaultLogger.With("logger", "provisioning-job-controller")
 	logger.Info("jobs controller started")
 	notifications := jobController.InsertNotifications()
 	go func() {

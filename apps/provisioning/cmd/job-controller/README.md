@@ -81,5 +81,15 @@ curl -X POST https://localhost:6446/apis/provisioning.grafana.app/v0alpha1/names
 ```
 
 2. The controller emits a notification on job creation.
+
+```
+➜  job-controller git:(feature/standalone-job-controller) ✗ ./bin/job-controller --token-exchange-url=http://localhost:6481/sign/access-token --token=ProvisioningAdminToken --provisioning-server-url=https://localhost:6446
+{"time":"2025-08-21T14:27:03.789337+02:00","level":"INFO","msg":"job create notification received","logger":"provisioning-job-controller"}
+```
+
+```
+
+```
+
 3. In a full setup with the concurrent driver, workers claim and process jobs, updating status and writing history.
 4. Entries move to `HistoricJobs`; if cleanup is enabled, older entries are pruned based on `--history-expiration`.
