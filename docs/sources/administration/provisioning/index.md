@@ -55,12 +55,12 @@ datasources:
 
 ### Use of the special character `$`
 
-Grafana's provisioning system considers any set of characters after an `$` a variable name. 
+Grafana's provisioning system considers any set of characters after an `$` a variable name.
 
 During the replacement process, Grafana:
 
 1. Replaces the variables that use the syntax `${ENV_VAR_NAME}`.
-1. Next, it replaces the variables that use the syntax `$ENV_VAR_NAME`. 
+1. Next, it replaces the variables that use the syntax `$ENV_VAR_NAME`.
 
 If your data contains the character `$`, for example `Pa$sw0rd`, and you're using an environment variable, use the `$ENV_VAR_NAME` syntax to avoid double expansion. If you use the `${ENV_VAR_NAME}` syntax, the value will be first replaced as `Pa$sw0rd` and then again as `Pa` since `$sw0rd` will be considered another variable.
 
@@ -72,10 +72,10 @@ The following example shows how variables are replaced, assuming `PASSWORD=Pa$sw
 datasources:
   - name: Graphite
     secureJsonData:
-      password1: $PASSWORD   # Resolved as Pa$sw0rd
+      password1: $PASSWORD # Resolved as Pa$sw0rd
       password2: ${PASSWORD} # Resolved as Pa
       password3: 'Pa$$sw0rd' # Resolved as Pa$sw0rd
-      password4: 'Pa$sw0rd'  # Resolved as Pa
+      password4: 'Pa$sw0rd' # Resolved as Pa
 ```
 
 ## Configuration management tools
