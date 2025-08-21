@@ -182,8 +182,8 @@ func TestGetRemoteState(t *testing.T) {
 
 	state := alertingClusterPB.FullState{
 		Parts: []alertingClusterPB.Part{
-			{Key: "nfl:test", Data: []byte("test-nflog")},
-			{Key: "sil:test", Data: []byte("test-silences")},
+			{Key: "nfl:otherID", Data: []byte("test-nflog")},
+			{Key: "sil:otherID", Data: []byte("test-silences")},
 		},
 	}
 	rawState, err := state.Marshal()

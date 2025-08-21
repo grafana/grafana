@@ -1034,6 +1034,12 @@ export type RepositorySpec = {
 export type HealthStatus = {
   /** When the health was checked last time */
   checked?: number;
+  /** The type of the error
+    
+    Possible enum values:
+     - `"health"`
+     - `"hook"` */
+  error?: 'health' | 'hook';
   /** When not healthy, requests will not be executed */
   healthy: boolean;
   /** Summary messages (can be shown to users) Will only be populated when not healthy */

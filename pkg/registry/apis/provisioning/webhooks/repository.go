@@ -20,7 +20,7 @@ import (
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
 
-var subscribedEvents = []string{"push", "pull_request"}
+var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
 
 type WebhookRepository interface {
 	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
@@ -246,6 +246,7 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (pgh.Webhoo
 		hook.URL = r.webhookURL
 	}
 
+	slices.Sort(hook.Events) // consistent order for comparison
 	if !slices.Equal(hook.Events, subscribedEvents) {
 		mustUpdate = true
 		hook.Events = subscribedEvents

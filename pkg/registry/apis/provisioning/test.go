@@ -8,18 +8,37 @@ import (
 	"reflect"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
+type StatusPatcherProvider interface {
+	GetStatusPatcher() *controller.RepositoryStatusPatcher
+}
+
+type HealthCheckerProvider interface {
+	GetHealthChecker() *controller.HealthChecker
+}
+
 type testConnector struct {
-	getter RepoGetter
+	getter         RepoGetter
+	tester         controller.RepositoryTester
+	healthProvider HealthCheckerProvider
+}
+
+func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, healthProvider HealthCheckerProvider) *testConnector {
+	return &testConnector{
+		getter:         getter,
+		tester:         tester,
+		healthProvider: healthProvider,
+	}
 }
 
 func (*testConnector) New() runtime.Object {
@@ -94,55 +113,69 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 		}
 
+		var rsp *provisioning.TestResults
 		if repo == nil {
+			healthChecker := s.healthProvider.GetHealthChecker()
+			if healthChecker == nil {
+				// Use precondition failed for when health checker is not ready yet
+				responder.Error(&errors.StatusError{
+					ErrStatus: metav1.Status{
+						Status:  metav1.StatusFailure,
+						Code:    http.StatusPreconditionFailed,
+						Reason:  metav1.StatusReason("PreconditionFailed"),
+						Message: "health checker not initialized yet, please try again",
+					},
+				})
+				return
+			}
+
+			// Testing existing repository - get it and update health
 			repo, err = s.getter.GetRepository(ctx, name)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			// If the last error was not a health check error or empty, return precondition failed
+			health := repo.Config().Status.Health
+			if health.Error != provisioning.HealthFailureHealth && health.Error != "" {
+				rsp = &provisioning.TestResults{
+					Success: false,
+					Code:    http.StatusPreconditionFailed,
+					Errors: func() []provisioning.ErrorDetails {
+						var errs []provisioning.ErrorDetails
+						for _, msg := range health.Message {
+							errs = append(errs, provisioning.ErrorDetails{Detail: msg})
+						}
+						return errs
+					}(),
+				}
+
+				if err := healthChecker.RefreshTimestamp(ctx, repo.Config()); err != nil {
+					responder.Error(err)
+					return
+				}
+
+				responder.Object(rsp.Code, rsp)
+				return
+			}
+
+			rsp, _, err = healthChecker.RefreshHealth(ctx, repo)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		} else {
+			// Testing temporary repository - just run test without status update
+			rsp, err = s.tester.TestRepository(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 		}
 
-		// Only call test if field validation passes
-		rsp, err := repository.TestRepository(ctx, repo)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
 		responder.Object(rsp.Code, rsp)
 	}), 30*time.Second), nil
-}
-
-// TODO: Move tester to a more suitable location out of the connector.
-type RepositoryTester struct {
-	// Repository+Jobs
-	client client.ProvisioningV0alpha1Interface
-}
-
-// This function will check if the repository is configured and functioning as expected
-func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisioning.Repository, res *provisioning.TestResults) (*provisioning.Repository, error) {
-	if res == nil {
-		res = &provisioning.TestResults{
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Detail: "missing health status",
-			}},
-		}
-	}
-
-	repo := cfg.DeepCopy()
-	repo.Status.Health = provisioning.HealthStatus{
-		Healthy: res.Success,
-		Checked: time.Now().UnixMilli(),
-	}
-	for _, err := range res.Errors {
-		if err.Detail != "" {
-			repo.Status.Health.Message = append(repo.Status.Health.Message, err.Detail)
-		}
-	}
-
-	_, err := t.client.Repositories(repo.GetNamespace()).
-		UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-	return repo, err
 }
 
 var (
