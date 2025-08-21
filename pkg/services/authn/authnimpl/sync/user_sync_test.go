@@ -1054,7 +1054,7 @@ func TestUserSync_CatalogLoginHook(t *testing.T) {
 				req.SetMeta("catalog_version", tt.catalogVersion)
 			}
 
-			assert.NoError(t, s.CatalogLoginHook(context.Background(), tt.identity, &req))
+			s.CatalogLoginHook(context.Background(), tt.identity, &req, nil)
 			usageStats := s.GetUsageStats(context.Background())
 			countIndex := fmt.Sprintf("stats.features.saml.catalog_version_%s.count", tt.catalogVersion)
 			countResult := usageStats[countIndex] != nil && usageStats[countIndex].(int) == 1
