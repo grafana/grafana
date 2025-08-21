@@ -86,11 +86,7 @@ export class CloudWatchDatasource
     this.logsCompletionItemProviderFunc = LogsCompletionItemProviderFunc(this.resources, this.templateSrv);
     this.logsSqlCompletionItemProviderFunc = LogsSQLCompletionItemProviderFunc(this.resources, templateSrv);
     this.pplCompletionItemProviderFunc = PPLCompletionItemProviderFunc(this.resources, this.templateSrv);
-    this.supportsAdjustableWindow = true;
   }
-
-  // Flag marking datasource as supporting adjusting the time range window in the logs context window: https://github.com/grafana/grafana/pull/109901
-  public supportsAdjustableWindow;
 
   filterQuery(query: CloudWatchQuery) {
     return query.hide !== true || (isCloudWatchMetricsQuery(query) && query.id !== '');
