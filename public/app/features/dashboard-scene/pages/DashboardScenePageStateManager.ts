@@ -14,7 +14,7 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
-import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
+import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -402,6 +402,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const rsp = await dashboardLoaderSrv.loadSnapshot(slug);
 
     if (rsp?.dashboard) {
+      isDashboardV2Spec(rsp.dashboard);
+      throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
+    }
+
+    if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
       return scene;
     }
@@ -445,7 +450,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
         case DashboardRoutes.Public: {
-          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          const result = await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          // public dashboards use legacy API but can return V2 dashboards
+          // in this case we need to throw a dashboard version error so that the call can be delegated
+          // to V2 state manager which will run fetchDashboard
+          if (isDashboardV2Spec(result.dashboard)) {
+            throw new DashboardVersionError('v2beta1', 'Using legacy public dashboard API to get a V2 dashboard');
+          }
+          return result;
         }
         default:
           // If reloadDashboardsOnParamsChange is on, we need to process query params for dashboard load
@@ -577,9 +589,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await this.dashboardLoader.loadSnapshot(slug);
+    const v2Response = ensureV2Response(rsp);
 
-    if (rsp?.spec) {
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+    if (v2Response.spec) {
+      const scene = transformSaveModelSchemaV2ToScene(v2Response);
       return scene;
     }
 
