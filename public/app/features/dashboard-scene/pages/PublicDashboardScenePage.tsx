@@ -107,7 +107,6 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
         )}
       </div>
       <div className={styles.body}>
-        {/* TOOD check if public dashboards support view panel */}
         <body.Component model={body} />
       </div>
       <PublicDashboardFooter />

@@ -65,8 +65,6 @@ export class SoloPanelContextValueWithSearchStringFilter {
     const interpolatedSearchString = sceneGraph.interpolate(panel, this.searchQuery).toLowerCase();
     const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
 
-    console.log('interpolatedTitle:', interpolatedTitle);
-    console.log('interpolatedSearchString:', interpolatedSearchString);
     return interpolatedTitle.includes(interpolatedSearchString);
   }
 }
