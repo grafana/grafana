@@ -237,8 +237,6 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (pgh.Webhoo
 		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
-	hook.Secret = string(r.secret) // we always random gen this, so don't use it for mustUpdate below.
-
 	var mustUpdate bool
 
 	if hook.URL != r.webhookURL {
@@ -262,7 +260,6 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (pgh.Webhoo
 		return pgh.WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
 	}
 	hook.Secret = secret.String()
-
 	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
 		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
@@ -321,29 +318,27 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 		return nil, nil
 	}
 	ctx, _ = r.logger(ctx, "")
-	hook, _, err := r.updateWebhook(ctx)
-	if err != nil {
+	hook, changed, err := r.updateWebhook(ctx)
+	if err != nil || !changed {
 		return nil, err
 	}
 
-	return []map[string]interface{}{
-		{
-			"op":   "replace",
-			"path": "/status/webhook",
-			"value": &provisioning.WebhookStatus{
-				ID:               hook.ID,
-				URL:              hook.URL,
-				SubscribedEvents: hook.Events,
-			},
+	// update the webhook and secret
+	return []map[string]any{{
+		"op":   "replace",
+		"path": "/status/webhook",
+		"value": &provisioning.WebhookStatus{
+			ID:               hook.ID,
+			URL:              hook.URL,
+			SubscribedEvents: hook.Events,
 		},
-		{
-			"op":   "replace",
-			"path": "/secure/webhookSecret",
-			"value": map[string]any{
-				"create": hook.Secret,
-			},
+	}, {
+		"op":   "replace",
+		"path": "/secure/webhookSecret",
+		"value": map[string]any{
+			"create": hook.Secret,
 		},
-	}, nil
+	}}, nil
 }
 
 func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {

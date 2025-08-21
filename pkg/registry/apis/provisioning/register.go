@@ -555,7 +555,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
-	repo, err := b.asRepository(ctx, obj)
+	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
 	if err != nil {
 		return err
 	}
@@ -564,7 +564,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
-		oldRepo, err := b.asRepository(ctx, a.GetOldObject())
+		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
 		if err != nil {
 			return fmt.Errorf("get old repository for update: %w", err)
 		}
@@ -1249,7 +1249,7 @@ func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository
 	if err != nil {
 		return nil, err
 	}
-	return b.asRepository(ctx, obj)
+	return b.asRepository(ctx, obj, nil)
 }
 
 func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
@@ -1269,13 +1269,26 @@ func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (rep
 	return repo, err
 }
 
-func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
+func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old runtime.Object) (repository.Repository, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
 	}
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil, fmt.Errorf("expected repository configuration")
+	}
+
+	// Copy previous values if they exist
+	if old != nil {
+		o, ok := old.(*provisioning.Repository)
+		if ok && !o.Secure.IsZero() {
+			if r.Secure.Token.IsZero() {
+				r.Secure.Token = o.Secure.Token
+			}
+			if r.Secure.WebhookSecret.IsZero() {
+				r.Secure.WebhookSecret = o.Secure.WebhookSecret
+			}
+		}
 	}
 
 	return b.RepositoryFromConfig(ctx, r)
