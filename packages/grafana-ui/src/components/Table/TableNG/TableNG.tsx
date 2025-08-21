@@ -661,7 +661,8 @@ export function TableNG(props: TableNGProps) {
       nestedFieldWidths
     );
 
-    result.cellRootRenderers[EXPANDED_COLUMN_KEY] = (key, props) => <Cell key={key} {...props} />;
+    const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
+    result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift(
