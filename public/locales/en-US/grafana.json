@@ -12705,6 +12705,12 @@
     },
     "category-cell-options": "Cell options",
     "category-table": "Table",
+    "category-table-footer": "Table footer",
+    "cell-height-options": {
+      "label-large": "Large",
+      "label-medium": "Medium",
+      "label-small": "Small"
+    },
     "cell-types": {
       "actions": "Actions",
       "auto": "Auto",
@@ -12723,12 +12729,25 @@
       "label-apply-to-entire-row": "Apply to entire row",
       "label-background-display-mode": "Background display mode"
     },
+    "column-alignment-options": {
+      "label-auto": "Auto",
+      "label-center": "Center",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
     "container": {
       "content": "Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.",
       "show-all-series": "Show all columns",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
     },
+    "description-calculation": "Choose a reducer function / calculation",
+    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
+    "description-column-filter": "Enables/disables field filters in table",
+    "description-count-rows": "Display a single count for all data rows",
+    "description-fields": "Select the fields that should be calculated",
+    "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-wrap-header-text": "Enables text wrapping for column headers",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
@@ -12746,34 +12765,6 @@
       },
       "label-dynamic-height": "Dynamic height"
     },
-    "name-enable-pagination": "Enable pagination",
-    "name-min-column-width": "Minimum column width",
-    "name-wrap-header-text": "Wrap header text",
-    "text-wrap-options": {
-      "label-wrap-text": "Wrap text"
-    }
-  },
-  "table-n": {
-    "category-table": "Table",
-    "category-table-footer": "Table footer",
-    "cell-height-options": {
-      "label-large": "Large",
-      "label-medium": "Medium",
-      "label-small": "Small"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Center",
-      "label-left": "Left",
-      "label-right": "Right"
-    },
-    "description-calculation": "Choose a reducer function / calculation",
-    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
-    "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
-    "description-frozen-columns": "Columns are frozen from the left side of the table",
-    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12782,15 +12773,21 @@
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
     "name-count-rows": "Count rows",
+    "name-enable-pagination": "Enable pagination",
     "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
+    "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
+    "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-wrap-text": "Wrap text"
+    },
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",
