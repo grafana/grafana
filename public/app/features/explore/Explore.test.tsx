@@ -244,7 +244,7 @@ describe('Explore', () => {
     });
   });
 
-  describe('Query Library Integration', () => {
+  describe('Saved Queries Integration', () => {
     it('should enable add query buttons when queryLibraryRef is undefined', async () => {
       setup({ queryLibraryRef: undefined });
 
@@ -290,7 +290,7 @@ describe('Explore', () => {
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
       const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
-      const addFromLibraryButton = screen.getByRole('button', { name: /Add query from library/i });
+      const addFromLibraryButton = screen.getByRole('button', { name: /Add from saved queries/i });
 
       expect(addQueryButton).toBeDisabled();
       expect(addFromLibraryButton).toBeDisabled();

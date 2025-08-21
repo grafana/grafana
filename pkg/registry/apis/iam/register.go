@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"strings"
 
@@ -264,10 +265,22 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	userObj, ok := a.GetObject().(*iamv0.User)
 	if !ok {
 		return nil
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewBadRequest("no identity found")
+	}
+
+	// Temporary validation that the user is not trying to create a Grafana Admin without being a Grafana Admin.
+	if userObj.Spec.GrafanaAdmin && !requester.GetIsGrafanaAdmin() {
+		return apierrors.NewForbidden(legacyiamv0.UserResourceInfo.GroupResource(),
+			userObj.Name,
+			fmt.Errorf("only grafana admins can create grafana admins"))
 	}
 
 	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {

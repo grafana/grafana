@@ -88,7 +88,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer)
+		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -127,11 +127,12 @@ type ZanzanaService interface {
 var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Zanzana, error) {
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (*Zanzana, error) {
 	s := &Zanzana{
 		cfg:      cfg,
 		features: features,
 		logger:   log.New("zanzana.server"),
+		reg:      reg,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -147,6 +148,7 @@ type Zanzana struct {
 	logger   log.Logger
 	handle   grpcserver.Provider
 	features featuremgmt.FeatureToggles
+	reg      prometheus.Registerer
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -172,7 +174,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer)
+	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer, z.reg)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
