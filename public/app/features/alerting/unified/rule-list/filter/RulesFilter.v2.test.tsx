@@ -14,6 +14,7 @@ import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
+import RulesFilterV2 from './RulesFilter.v2';
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
@@ -41,8 +42,6 @@ jest.mock('../../hooks/useFilteredRules', () => ({
     activeFilters: [],
   })),
 }));
-
-import RulesFilterV2 from './RulesFilter.v2';
 
 const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
 
