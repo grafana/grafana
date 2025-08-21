@@ -347,7 +347,7 @@ export function stringifyErrorLike(error: unknown): string {
 
       return t('alerting.errors.failedWith', '{{-config}} failed with {{status}}: {{-message}}', {
         config,
-        status: status,
+        status,
         message,
       });
     }
