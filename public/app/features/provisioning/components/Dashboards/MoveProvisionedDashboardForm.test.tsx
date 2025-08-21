@@ -46,7 +46,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => jest.fn(),
 }));
 
-jest.mock('../shared/ResourceEditFormSharedFields', () => ({
+jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="resource-edit-form" />,
 }));
 

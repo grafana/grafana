@@ -56,7 +56,7 @@ jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCou
   DescendantCount: () => <div data-testid="descendant-count">2 folders, 5 dashboards</div>,
 }));
 
-jest.mock('../shared/ResourceEditFormSharedFields', () => ({
+jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="shared-fields" />,
 }));
 

@@ -50,7 +50,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 const mockNavigate = jest.fn();
 
 // Mock shared form components
-jest.mock('../shared/ResourceEditFormSharedFields', () => ({
+jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: ({ disabled }: { disabled: boolean }) => (
     <textarea data-testid="shared-fields" disabled={disabled} />
   ),
