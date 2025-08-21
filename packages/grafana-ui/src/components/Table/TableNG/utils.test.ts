@@ -1220,7 +1220,7 @@ describe('TableNG utils', () => {
           ],
           500
         )
-      ).toEqual([[100, 200], '100|200|']);
+      ).toEqual([100, 200]);
     });
 
     it('fills the available space if a column has no width set', () => {
@@ -1232,7 +1232,7 @@ describe('TableNG utils', () => {
           ],
           500
         )
-      ).toEqual([[300, 200], '300|200|']);
+      ).toEqual([300, 200]);
     });
 
     it('applies minimum width when auto width would dip below it', () => {
@@ -1244,7 +1244,7 @@ describe('TableNG utils', () => {
           ],
           100
         )
-      ).toEqual([[100, 100], '100|100|']);
+      ).toEqual([100, 100]);
     });
 
     it('should use the global column default width when nothing is set', () => {
@@ -1257,7 +1257,7 @@ describe('TableNG utils', () => {
           // we have two columns but have set the table to the width of one default column.
           COLUMN.DEFAULT_WIDTH
         )
-      ).toEqual([[COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH], `${COLUMN.DEFAULT_WIDTH}|${COLUMN.DEFAULT_WIDTH}|`]);
+      ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
     });
   });
 

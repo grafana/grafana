@@ -1,7 +1,14 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import {
+  compareArrayValues,
+  Field,
+  fieldReducers,
+  FieldType,
+  formattedValueToString,
+  reduceField,
+} from '@grafana/data';
 
 import { TableColumnResizeActionCallback } from '../types';
 
@@ -536,19 +543,19 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number
   return scrollbarWidth;
 }
 
+const numIsEqual = (a: number, b: number) => a === b;
+
 export function useColWidths(visibleFields: Field[], availableWidth: number): [number[], number] {
-  const [[widths, widthsStr], setWidthsState] = useState<[number[], string]>(() =>
-    computeColWidths(visibleFields, availableWidth)
-  );
+  const [widths, setWidths] = useState<number[]>(computeColWidths(visibleFields, availableWidth));
 
   // only replace the widths array if something actually changed
   useEffect(() => {
-    const [newWidths, newWidthsStr] = computeColWidths(visibleFields, availableWidth);
+    const newWidths = computeColWidths(visibleFields, availableWidth);
     // use widthStr to avoid array comparison
-    if (widthsStr !== newWidthsStr) {
-      setWidthsState([newWidths, newWidthsStr]);
+    if (compareArrayValues(widths, newWidths, numIsEqual)) {
+      setWidths(newWidths);
     }
-  }, [availableWidth, widthsStr, visibleFields]);
+  }, [availableWidth, widths, visibleFields]);
 
   // this is used when freezing columns to avoid buggy situations where all visible columns are frozen
   const numColsFullyInView = useMemo(

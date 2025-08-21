@@ -850,12 +850,11 @@ export function getColumnTypes(fields: Field[]): ColumnTypes {
  * 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
  * 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
  */
-export function computeColWidths(fields: Field[], availWidth: number): [number[], string] {
+export function computeColWidths(fields: Field[], availWidth: number): number[] {
   let autoCount = 0;
   let definedWidth = 0;
-  let widthStr = '';
 
-  return [
+  return (
     fields
       // first pass to add up how many fields have pre-defined widths and what that width totals to.
       .map((field) => {
@@ -875,13 +874,9 @@ export function computeColWidths(fields: Field[], availWidth: number): [number[]
           width ||
           Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount);
 
-        // update widthStr with the final width for this field
-        widthStr += String(finalWidth) + '|';
-
         return finalWidth;
-      }),
-    widthStr,
-  ];
+      })
+  );
 }
 
 /**
