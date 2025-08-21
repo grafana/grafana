@@ -125,7 +125,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
-		connectLogger := b.log.New("traceId", traceId.String())
+		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
@@ -154,7 +154,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			},
 
 			func(err error) {
-				connectLogger.Error("error caught in handler", "err", err, "X-Rule-Uid", httpreq.Header.Get("X-Rule-Uid"))
+				connectLogger.Error("error caught in handler", "err", err)
 				span.SetStatus(codes.Error, "query error")
 
 				if err == nil {
@@ -255,7 +255,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	instanceConfig := instance.GetSettings()
 
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger).New("ruleuid", headers["X-Rule-Uid"])
+	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
 
 	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
 		instance,
