@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { t, Trans } from '@grafana/i18n';
 import { Button, ConfirmModal, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
 import {
+  Repository,
   useDeleteRepositoryMutation,
-  useGetRepositoryQuery,
   useReplaceRepositoryMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -13,13 +13,13 @@ type DeleteAction = 'remove-resources' | 'keep-resources';
 
 interface Props {
   name: string;
+  repository: Repository;
   redirectTo?: string;
 }
 
-export function DeleteRepositoryButton({ name, redirectTo }: Props) {
+export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) {
   const [deleteRepository, deleteRequest] = useDeleteRepositoryMutation();
   const [replaceRepository, replaceRequest] = useReplaceRepositoryMutation();
-  const { data: repository } = useGetRepositoryQuery({ name });
   const [showModal, setShowModal] = useState(false);
   const [selectedAction, setSelectedAction] = useState<DeleteAction>('remove-resources');
   const navigate = useNavigate();

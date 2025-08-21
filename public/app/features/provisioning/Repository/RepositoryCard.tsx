@@ -110,7 +110,7 @@ export function RepositoryCard({ repository }: Props) {
         </Stack>
       </Card.Actions>
       <Card.SecondaryActions>
-        <DeleteRepositoryButton name={name} />
+        <DeleteRepositoryButton name={name} repository={repository} />
       </Card.SecondaryActions>
     </Card>
   );
