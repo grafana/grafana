@@ -1,26 +1,27 @@
-import { css } from '@emotion/css';
-import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Text, Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
+import {
+  useProvisionedRequestHandler,
+  ProvisionedOperationInfo,
+} from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
-import { validateFolderName } from './NewFolderForm';
-import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
+import { RepoInvalidStateBanner } from './BulkActions/RepoInvalidStateBanner';
 
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;
@@ -44,58 +45,61 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, ref, title] = watch(['workflow', 'ref', 'title']);
+  const [workflow] = watch(['workflow']);
 
-  // TODO: replace with useProvisionedRequestHandler hook
-  useEffect(() => {
-    const appEvents = getAppEvents();
-    if (request.isSuccess && repository) {
-      onDismiss?.();
-
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [
-          t(
-            'browse-dashboards.new-provisioned-folder-form.alert-folder-created-successfully',
-            'Folder created successfully'
-          ),
-        ],
+  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
+    const prUrl = urls?.newPullRequestURL;
+    if (prUrl) {
+      const url = buildResourceBranchRedirectUrl({
+        paramName: 'new_pull_request_url',
+        paramValue: prUrl,
+        repoType: info.repoType,
       });
+      navigate(url);
+    }
+  };
 
-      const prUrl = request.data?.urls?.newPullRequestURL;
-      if (workflow === 'branch' && prUrl) {
-        const url = buildResourceBranchRedirectUrl({
-          paramName: 'new_pull_request_url',
-          paramValue: prUrl,
-          repoType: request.data?.repository?.type,
-        });
-        navigate(url);
-        return;
-      }
+  const onWriteSuccess = (resource: Resource<FolderDTO>) => {
+    // Navigation for new folders (resource-specific concern)
+    if (resource?.metadata?.name) {
+      navigate(`/dashboards/f/${resource.metadata.name}/`);
+      return;
+    }
 
-      // TODO: Update when the upsert type is fixed
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const folder = request.data.resource?.upsert as Resource;
-      if (folder?.metadata?.name) {
-        navigate(`/dashboards/f/${folder?.metadata?.name}/`);
-        return;
-      }
-
+    // Fallback to provisioning URL
+    if (repository?.name && request.data?.path) {
       let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
       if (request.data.ref?.length) {
         url += '?ref=' + request.data.ref;
       }
       navigate(url);
-    } else if (request.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
-          request.error,
-        ],
-      });
     }
-  }, [request.isSuccess, request.isError, request.error, ref, request.data, workflow, navigate, repository, onDismiss]);
+  };
+
+  const onError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [
+        t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
+        error,
+      ],
+    });
+  };
+
+  // Use the repository-type and resource-type aware provisioned request handler
+  useProvisionedRequestHandler<FolderDTO>({
+    folderUID: folder?.metadata.name,
+    request,
+    workflow,
+    repository,
+    resourceType: 'folder',
+    handlers: {
+      onDismiss,
+      onBranchSuccess,
+      onWriteSuccess: (_, resource) => onWriteSuccess(resource),
+      onError,
+    },
+  });
 
   const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
     const repoName = repository?.name;
@@ -103,12 +107,8 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
       return;
     }
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
-
-    // Convert folder title to filename format (lowercase, replace spaces with hyphens)
-    const titleInFilenameFormat = formatFolderName(title); // TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
-
     const prefix = basePath ? `${basePath}/` : '';
-    const path = `${prefix}${titleInFilenameFormat}/`;
+    const path = `${prefix}${title}/`;
 
     const folderModel = {
       title,
@@ -148,13 +148,13 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
           <Field
             noMargin
             label={t('browse-dashboards.new-provisioned-folder-form.label-folder-name', 'Folder name')}
-            invalid={!!formState.errors.title}
-            error={formState.errors.title?.message}
+            invalid={!!formState?.errors.title}
+            error={formState?.errors.title?.message}
           >
             <Input
               {...register('title', {
                 required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
-                validate: validateFolderName,
+                validate: validateProvisionedFolderName,
               })}
               placeholder={t(
                 'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',
@@ -163,7 +163,6 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
               id="folder-name-input"
             />
           </Field>
-          <FolderNamePreviewMessage folderName={title} />
 
           <ResourceEditFormSharedFields
             resourceType="folder"
@@ -192,13 +191,13 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
           )}
 
           <Stack gap={2}>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
-            </Button>
-            <Button type="submit" disabled={request.isLoading}>
+            <Button type="submit" disabled={request.isLoading || !!formState?.errors.title}>
               {request.isLoading
                 ? t('browse-dashboards.new-provisioned-folder-form.button-creating', 'Creating...')
                 : t('browse-dashboards.new-provisioned-folder-form.button-create', 'Create')}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              <Trans i18nKey="browse-dashboards.new-provisioned-folder-form.cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -208,14 +207,23 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'create',
     title: '', // Empty title for new folders
   });
 
-  if (!initialValues) {
-    return null;
+  if (isReadOnlyRepo || !initialValues) {
+    return (
+      <RepoInvalidStateBanner
+        noRepository={!initialValues}
+        isReadOnlyRepo={isReadOnlyRepo}
+        readOnlyMessage={t(
+          'browse-dashboards.new-folder.read-only-message',
+          'To create this folder, please add the resource in your repository directly.'
+        )}
+      />
+    );
   }
 
   return (
@@ -230,38 +238,20 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   );
 }
 
-function FolderNamePreviewMessage({ folderName }: { folderName: string }) {
-  const styles = useStyles2(getStyles);
-  const isValidFolderName =
-    folderName.length && hasFolderNameCharactersToReplace(folderName) && validateFolderName(folderName);
-
-  if (!isValidFolderName) {
-    return null;
+function validateProvisionedFolderName(folderName: string): string | true {
+  if (!folderName || typeof folderName !== 'string') {
+    return t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required');
   }
 
-  return (
-    <div className={styles.folderNameMessage}>
-      <Icon name="check-circle" type="solid" />
-      <Text color="success">
-        {t(
-          'browse-dashboards.new-provisioned-folder-form.text-your-folder-will-be-created-as',
-          'Your folder will be created as {{folderName}}',
-          {
-            folderName: formatFolderName(folderName),
-          }
-        )}
-      </Text>
-    </div>
-  );
-}
+  // Backend allows: a-zA-Z0-9 _- (no dots, no forward slash for folder names)
+  const invalidCharRegex = /[^a-zA-Z0-9 _-]/;
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    folderNameMessage: css({
-      display: 'flex',
-      alignItems: 'center',
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.success.text,
-    }),
-  };
-};
+  if (invalidCharRegex.test(folderName)) {
+    return t(
+      'browse-dashboards.new-provisioned-folder-form.error-invalid-characters',
+      'Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.'
+    );
+  }
+
+  return true; // Valid
+}

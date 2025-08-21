@@ -14,6 +14,7 @@ import {
 
 // Repository type definition - extracted from API client
 export type RepositoryType = RepositorySpec['type'];
+export type RepoWorkflows = RepositorySpec['workflows'];
 
 // Field configuration interface
 export interface RepositoryFieldData {
@@ -90,7 +91,7 @@ export type HistoryListResponse = {
   items?: HistoryItem[];
 };
 
-export interface ProvisioningErrorInfo {
+export interface StatusInfo {
   title?: string;
   message?: string | string[];
 }

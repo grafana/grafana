@@ -3,9 +3,11 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -13,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -108,6 +110,7 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
+// called by mt query service and also when queryServiceFromUI is enabled, can be both mt and st
 func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
@@ -175,7 +178,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder)
+		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
@@ -186,9 +189,25 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				})
 				return
 			} else {
-				// return the error to the client, will send all non k8s errors as a k8 unexpected error
-				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
-				responder.Error(err)
+				var errorDataResponse backend.DataResponse
+				if errors.Is(err, service.ErrInvalidDatasourceID) || errors.Is(err, service.ErrNoQueriesFound) || errors.Is(err, service.ErrMissingDataSourceInfo) || errors.Is(err, service.ErrQueryParamMismatch) || errors.Is(err, service.ErrDuplicateRefId) {
+					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+				} else if strings.Contains(err.Error(), "expression request error") {
+					b.log.Error("Error calling TransformData in an expression", "err", err)
+					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+				} else {
+					b.log.Error("unknown error, treated as a 500", "err", err)
+					responder.Error(err)
+					return
+				}
+				qdr = &backend.QueryDataResponse{
+					Responses: map[string]backend.DataResponse{
+						"A": errorDataResponse,
+					},
+				}
+				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+					QueryDataResponse: *qdr,
+				})
 				return
 			}
 		}
@@ -199,7 +218,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	}), nil
 }
 
-func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper) (*backend.QueryDataResponse, error) {
+func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
 	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
 		jsonBytes, err := json.Marshal(query)
@@ -214,6 +233,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 		jsonQueries = append(jsonQueries, sjQuery)
 	}
+
 	mReq := dtos.MetricRequest{
 		From:    raw.From,
 		To:      raw.To,
@@ -226,19 +246,21 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
+	instance, err := b.instanceProvider.GetInstance(ctx, headers)
 	if err != nil {
-		b.log.Error("failed to get instance configuration settings", "err", err)
+		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
 		return nil, err
 	}
 
-	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
-		b.clientSupplier,
+	instanceConfig := instance.GetSettings()
+
+	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger).New("ruleuid", headers["X-Rule-Uid"])
+
+	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
+		instance,
 		ctx,
-		headers,
-		instanceConfig,
-		b.log,
+		dsQuerierLoggerWithSlug,
 	)
 
 	exprService := expr.ProvideService(
@@ -253,10 +275,14 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		instanceConfig.FeatureToggles,
 		nil,
 		b.tracer,
-		mtDsClientBuilder,
+		qsDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
+
+	// tell the `instance` structure that it can now report
+	// metrics that are only reported once during a request
+	instance.ReportMetrics()
 
 	if err != nil {
 		return qdr, err

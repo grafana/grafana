@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config, logMeasurement, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -17,12 +17,15 @@ import {
   SceneGridItemLike,
   SceneDataLayerProvider,
   UserActionEvent,
-  SceneInteractionProfileEvent,
   SceneObjectState,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
+import {
+  getDashboardInteractionCallback,
+  getDashboardSceneProfiler,
+} from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
@@ -47,6 +50,7 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { getIsLazy } from '../scene/layouts-shared/utils';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -292,15 +296,20 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         }
       : undefined;
 
+  const queryController = new behaviors.SceneQueryController(
+    {
+      enableProfiling:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
     }),
-    new behaviors.SceneQueryController({
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
-    }),
+    queryController,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
@@ -318,7 +327,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   } else {
     body = new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+        isLazy: getIsLazy(dto.preload),
         children: createSceneObjectsForPanels(oldModel.panels),
       }),
     });
@@ -435,6 +444,21 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     });
   }
 
+  if (panel.scopedVars && panel.targets?.[0]?.queryType === 'snapshot') {
+    vizPanelState.$variables = new SceneVariableSet({
+      variables: Object.entries(panel.scopedVars).map(
+        ([key, variable]) =>
+          new LocalValueVariable({
+            name: key,
+            value: variable?.value,
+            text: variable?.text,
+            isMulti: true,
+            includeAll: true,
+          })
+      ),
+    });
+  }
+
   const body = new VizPanel(vizPanelState);
 
   return new DashboardGridItem({
@@ -499,40 +523,3 @@ export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
     panel.snapshotData = [];
   }
 };
-
-function getDashboardInteractionCallback(uid: string, title: string) {
-  return (e: SceneInteractionProfileEvent) => {
-    let interactionType = '';
-
-    if (e.origin === 'SceneTimeRange') {
-      interactionType = 'time-range-change';
-    } else if (e.origin === 'SceneRefreshPicker') {
-      interactionType = 'refresh';
-    } else if (e.origin === 'DashboardScene') {
-      interactionType = 'view';
-    } else if (e.origin.indexOf('Variable') > -1) {
-      interactionType = 'variable-change';
-    }
-    reportInteraction('dashboard-render', {
-      interactionType,
-      duration: e.duration,
-      networkDuration: e.networkDuration,
-      totalJSHeapSize: e.totalJSHeapSize,
-      usedJSHeapSize: e.usedJSHeapSize,
-      jsHeapSizeLimit: e.jsHeapSizeLimit,
-    });
-
-    logMeasurement(
-      `dashboard.${interactionType}`,
-      {
-        duration: e.duration,
-        networkDuration: e.networkDuration,
-        totalJSHeapSize: e.totalJSHeapSize,
-        usedJSHeapSize: e.usedJSHeapSize,
-        jsHeapSizeLimit: e.jsHeapSizeLimit,
-        timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
-      },
-      { dashboard: uid, title: title }
-    );
-  };
-}

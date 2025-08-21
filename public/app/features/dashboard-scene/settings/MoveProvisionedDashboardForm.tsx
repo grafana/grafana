@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -13,11 +14,12 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { getTargetFolderPathInRepo } from 'app/features/browse-dashboards/components/BulkActions/utils';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, ProvisionedOperationInfo } from '../utils/useProvisionedRequestHandler';
 
 import { buildResourceBranchRedirectUrl } from './utils';
 
@@ -61,7 +63,7 @@ export function MoveProvisionedDashboardForm({
     path: defaultValues.path,
   });
 
-  const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
+  const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID! } : skipToken);
 
   const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
@@ -70,18 +72,20 @@ export function MoveProvisionedDashboardForm({
 
   useEffect(() => {
     const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
-    if (!targetFolderUID || !targetFolder || !currentSourcePath) {
+    if (!currentSourcePath || targetFolderUID === undefined) {
       return;
     }
 
-    const folderAnnotations = targetFolder.metadata.annotations || {};
-    const targetFolderPath = folderAnnotations[AnnoKeySourcePath] || targetFolderTitle;
-
     const filename = currentSourcePath.split('/').pop();
-    const newPath = `${targetFolderPath}/${filename}`;
-
+    const targetFolderPath = getTargetFolderPathInRepo({
+      targetFolderUID,
+      targetFolder,
+      repoName: repository?.name,
+      hidePrependSlash: true,
+    });
+    const newPath = `${targetFolderPath}${filename}`;
     setTargetPath(newPath);
-  }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle]);
+  }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle, repository]);
 
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
     if (!currentFileData?.resource?.file) {
@@ -118,6 +122,7 @@ export function MoveProvisionedDashboardForm({
   };
 
   const onWriteSuccess = () => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     if (targetFolderUID && targetFolderTitle) {
       onSuccess(targetFolderUID, targetFolderTitle);
@@ -125,23 +130,40 @@ export function MoveProvisionedDashboardForm({
     navigate('/dashboards');
   };
 
-  const onBranchSuccess = () => {
+  const onBranchSuccess = (info: ProvisionedOperationInfo) => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
       paramName: 'new_pull_request_url',
       paramValue: moveRequest?.data?.urls?.newPullRequestURL,
-      repoType: moveRequest?.data?.repository?.type,
+      repoType: info.repoType,
     });
     navigate(url);
   };
 
+  const onError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [
+        t('dashboard-scene.move-provisioned-dashboard-form.alert-error-moving-dashboard', 'Error moving dashboard'),
+        error,
+      ],
+    });
+  };
+
   useProvisionedRequestHandler({
-    dashboard,
     request: moveRequest,
     workflow,
+    successMessage: t(
+      'dashboard-scene.move-provisioned-dashboard-form.success-message',
+      'Dashboard moved successfully'
+    ),
+    resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess,
+      onBranchSuccess: (_, info) => onBranchSuccess(info),
       onWriteSuccess,
+      onDismiss,
+      onError,
     },
   });
 

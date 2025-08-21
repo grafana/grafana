@@ -1,4 +1,3 @@
-import uFuzzy from '@leeoniya/ufuzzy';
 import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
@@ -13,21 +12,12 @@ import { RulesFilter, applySearchFilterToQuery, getSearchFilterFromQuery } from 
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
+import { fuzzyFilter } from '../utils/fuzzySearch';
 import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
 import { getRuleHealth, isPluginProvidedRule, isPromRuleType, prometheusRuleType, rulerRuleType } from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
-
-// if the search term is longer than MAX_NEEDLE_SIZE we disable Levenshtein distance
-const MAX_NEEDLE_SIZE = 25;
-const INFO_THRESHOLD = Infinity;
-const MAX_FUZZY_TERMS = 5;
-// https://catonmat.net/my-favorite-regex :)
-const REGEXP_NON_ASCII = /[^ -~]/m;
-// https://www.asciitable.com/
-// matches only these: `~!@#$%^&*()_+-=[]\{}|;':",./<>?
-const REGEXP_ONLY_SYMBOLS = /^[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]+$/m;
 
 export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
@@ -90,7 +80,11 @@ export function useRulesFilter() {
     }
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
-  return { filterState, hasActiveFilters, activeFilters, searchQuery, setSearchQuery, updateFilters };
+  const clearAll = useCallback(() => {
+    updateQueryParams({ search: undefined });
+  }, [updateQueryParams]);
+
+  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters, clearAll, activeFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
@@ -309,42 +303,6 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
     // Try to createa a matcher than matches all values for a given key
     return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
   }
-}
-
-function fuzzyFilter<TItem>(items: TItem[], filterBy: (item: TItem) => string, searchTerm: string) {
-  let filteredItems = items;
-
-  // Options details can be found here https://github.com/leeoniya/uFuzzy#options
-  // The following configuration complies with Damerau-Levenshtein distance
-  // https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-  const ufuzzy = new uFuzzy({ intraMode: 1 });
-  const needleTermsCount = ufuzzy.split(searchTerm).length;
-
-  // If the search term is very long or contains non-ascii characters or only special characters we don't use fuzzy search
-  // and need to fallback to simple string search
-  const fuzzySearchNotApplicable =
-    REGEXP_NON_ASCII.test(searchTerm) ||
-    REGEXP_ONLY_SYMBOLS.test(searchTerm) ||
-    searchTerm.length > MAX_NEEDLE_SIZE ||
-    needleTermsCount > MAX_FUZZY_TERMS;
-
-  if (fuzzySearchNotApplicable) {
-    return items.filter((item) => filterBy(item).toLowerCase().includes(searchTerm.toLowerCase()));
-  }
-
-  const haystack = items.map(filterBy);
-  // apply an outOfOrder limit which helps to limit the number of permutations to search for
-  // and prevents the browser from hanging
-  const outOfOrderLimit = needleTermsCount < 5 ? 4 : 0;
-
-  const [idxs, info, order] = ufuzzy.search(haystack, searchTerm, outOfOrderLimit, INFO_THRESHOLD);
-  if (info && order) {
-    filteredItems = order.map((idx) => filteredItems[info.idx[idx]]);
-  } else if (idxs) {
-    filteredItems = idxs.map((idx) => filteredItems[idx]);
-  }
-
-  return filteredItems;
 }
 
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {

@@ -1,4 +1,4 @@
-APP_SDK_VERSION = v0.40.0
+APP_SDK_VERSION = v0.40.3
 APP_SDK_DIR     = $(shell go env GOPATH)/bin/app-sdk-$(APP_SDK_VERSION)
 APP_SDK_BIN     = $(APP_SDK_DIR)/grafana-app-sdk
 
@@ -20,4 +20,4 @@ $(APP_SDK_BIN):
 update-app-sdk: ## Update the Grafana App SDK dependency in go.mod
 	@pwd
 	go get github.com/grafana/grafana-app-sdk@$(APP_SDK_VERSION)
-	go mod tidy || true # TODO: remove this
+	go mod tidy

@@ -658,6 +658,7 @@ export type CreateRepositoryTestApiArg = {
     /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
     kind?: string;
     metadata?: any;
+    secure?: any;
     spec?: any;
     status?: any;
   };
@@ -758,17 +759,37 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type ResourceRef = {
+  /** Group is the group of the resource, such as "dashboard.grafana.app". */
+  group?: string;
+  /** Kind is the type of resource, for example, "Dashboard". */
+  kind?: string;
+  /** Name is the name of the resource, such as a dashboard UID. */
+  name?: string;
+};
 export type DeleteJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
   paths?: string[];
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
+  /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
 };
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
   /** Message to use when committing the changes in a single commit */
   message?: string;
+};
+export type MoveJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash that should move */
+  ref?: string;
+  /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
+  /** Destination path for the move (e.g. "new-location/") */
+  targetPath?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -792,21 +813,23 @@ export type ExportJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
-  /** Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'migrate' | 'pr' | 'pull' | 'push';
+  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
+  /** Move when the action is `move` */
+  move?: MoveJobOptions;
   /** Pull request options */
   pr?: PullRequestJobOptions;
   /** Required when the action is `pull` */
@@ -831,6 +854,16 @@ export type JobResourceSummary = {
   update?: number;
   write?: number;
 };
+export type RepositoryUrLs = {
+  /** Compare this version to the target branch */
+  compareURL?: string;
+  /** A URL that will create a new pull request for this branch */
+  newPullRequestURL?: string;
+  /** A URL pointing to the repository this lives in */
+  repositoryURL?: string;
+  /** A URL pointing to the file or ref in the repository */
+  sourceURL?: string;
+};
 export type JobStatus = {
   errors?: string[];
   finished?: number;
@@ -847,6 +880,8 @@ export type JobStatus = {
   state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
+  /** URLs contains URLs for the reference branch or commit if applicable. */
+  url?: RepositoryUrLs;
 };
 export type Job = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -874,6 +909,37 @@ export type JobList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
+};
+export type InlineSecureValue =
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove: boolean;
+    };
+export type SecureValues = {
+  /** Token used to connect the configured repository */
+  token?: InlineSecureValue;
+  /** Some webhooks (github) require a secret key value */
+  webhookSecret?: InlineSecureValue;
 };
 export type BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
@@ -984,6 +1050,12 @@ export type RepositorySpec = {
 export type HealthStatus = {
   /** When the health was checked last time */
   checked?: number;
+  /** The type of the error
+    
+    Possible enum values:
+     - `"health"`
+     - `"hook"` */
+  error?: 'health' | 'hook';
   /** When not healthy, requests will not be executed */
   healthy: boolean;
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
@@ -1045,6 +1117,7 @@ export type Repository = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
+  secure?: SecureValues;
   spec?: RepositorySpec;
   status?: RepositoryStatus;
 };
@@ -1154,16 +1227,6 @@ export type ResourceObjects = {
   /** For write events, this will return the value that was added or updated */
   upsert?: Unstructured;
 };
-export type ResourceUrLs = {
-  /** Compare this version to the target branch */
-  compareURL?: string;
-  /** A URL that will create a new pull requeset for this branch */
-  newPullRequestURL?: string;
-  /** A URL pointing to the repository this lives in */
-  repositoryURL?: string;
-  /** A URL pointing to the this file in the repository */
-  sourceURL?: string;
-};
 export type ResourceWrapper = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -1184,7 +1247,7 @@ export type ResourceWrapper = {
   /** The modified time in the remote file system */
   timestamp?: Time;
   /** Typed links for this file (only supported by external systems, github etc) */
-  urls?: ResourceUrLs;
+  urls?: RepositoryUrLs;
 };
 export type ResourceListItem = {
   folder?: string;
@@ -1288,6 +1351,8 @@ export type ResourceStats = {
   /** Stats for each manager */
   managed?: ManagerStats[];
   metadata?: any;
+  /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
+  unmanaged?: ResourceCount[];
 };
 export const {
   useListJobQuery,

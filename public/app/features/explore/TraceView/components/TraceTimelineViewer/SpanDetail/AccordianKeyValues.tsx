@@ -17,7 +17,7 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import TNil from '../../types/TNil';
@@ -42,6 +42,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         background: autoColor(theme, '#e8e8e8'),
       },
+    }),
+    headerLabel: css({
+      width: '120px',
+      display: 'inline-block',
     }),
     headerEmpty: css({
       label: 'headerEmpty',
@@ -87,6 +91,9 @@ export type AccordianKeyValuesProps = {
   logName?: string;
   highContrast?: boolean;
   interactive?: boolean;
+  onlyValues?: boolean;
+  showSummary?: boolean;
+  showCountBadge?: boolean;
   isOpen: boolean;
   label: string | React.ReactNode;
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
@@ -127,6 +134,9 @@ export default function AccordianKeyValues({
   isOpen,
   label,
   linksGetter,
+  onlyValues = false,
+  showSummary = true,
+  showCountBadge = false,
   onToggle = null,
 }: AccordianKeyValuesProps) {
   const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
@@ -148,7 +158,7 @@ export default function AccordianKeyValues({
     };
   }
 
-  const showDataSummaryFields = data.length > 0 && !isOpen;
+  const showDataSummaryFields = showSummary && data.length > 0 && !isOpen;
 
   return (
     <div className={cx(className, styles.container)}>
@@ -161,9 +171,9 @@ export default function AccordianKeyValues({
         data-testid="AccordianKeyValues--header"
       >
         {arrow}
-        <strong data-test={markers.LABEL}>
+        <strong data-test={markers.LABEL} className={styles.headerLabel}>
           {label}
-          {showDataSummaryFields && ':'}
+          {showCountBadge ? <Counter value={data.length} variant="secondary" /> : null}
         </strong>
         {showDataSummaryFields && (
           <span className={css({ marginLeft: '0.7em' })}>
@@ -171,7 +181,7 @@ export default function AccordianKeyValues({
           </span>
         )}
       </div>
-      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} />}
+      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} onlyValues={onlyValues} />}
     </div>
   );
 }

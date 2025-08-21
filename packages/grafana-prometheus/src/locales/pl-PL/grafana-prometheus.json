@@ -2,508 +2,496 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "Błąd ładowania danych adnotacji!",
+        "aria-label-lower-limit-parameter": "Ustaw dolną granicę dla parametru kroku",
+        "label-min-step": "Min. krok",
+        "label-series-value-as-timestamp": "Wartość szeregu jako znacznik czasu",
         "label-tags": "Znaczniki",
-        "label-text": "",
+        "label-text": "Tekst",
         "label-title": "Tytuł",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "automatycznie",
+        "tooltip-either-pattern-example-instance-replaced-label": "Użyj nazwy lub wzorca. Na przykład wzorzec {{labelTemplate}} jest zastępowany wartością etykiety {{labelName}}.",
+        "tooltip-min-step": "Dodatkowa dolna granica dla parametru kroku zapytania Prometheus oraz dla zmiennych <2>{{intervalVar}}</2> i <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Jednostką znacznika czasu są milisekundy. Jeśli jednostką wartości szeregu są sekundy, należy pomnożyć wektor zakresu przez 1000."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "Uruchom zapytanie natychmiastowe i zapytanie dotyczące zakresu"
         },
         "label": {
-          "both": ""
+          "both": "Oba"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "Uruchom zapytanie obejmujące określony przedział czasu"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "Natychmiastowe",
+            "range": "Zakres"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "Wyrażenie filtrujące dla etykiety",
+        "description-select-labels": "Po wybraniu wartości etykiet wyświetlane są tylko możliwe kombinacje etykiet.",
+        "select-labels-to-search-in": "2. Wybierz etykiety do wyszukania"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "Wyrażenie filtrujące dla wskaźnika",
+        "aria-label-limit-results-from-series-endpoint": "Ogranicz wyniki z punktu końcowego szeregu",
+        "description-series-limit": "Limit dotyczy wszystkich wskaźników, etykiet i wartości. Pozostaw pole puste, aby użyć domyślnego limitu. Ustaw wartość 0, aby wyłączyć limit i pobrać wszystko. Może to spowodować problemy z wydajnością.",
+        "label-select-metric": "Po wybraniu wskaźnika wyświetlane są tylko możliwe etykiety. Etykiety są ograniczone przez poniższy limit szeregu.",
+        "select-a-metric": "1. Wybierz wskaźnik",
+        "series-limit": "Limit szeregu"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "PromQL – ściągawka"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "Przykłady",
+        "tooltip-disable-query": "Wyłącz zapytanie ze wzorami",
+        "tooltip-enable-query": "Włącz zapytanie ze wzorami"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Dodatkowe pole Prometheus",
+        "aria-label-query-type-field": "Pole typu zapytania",
+        "aria-label-step-field": "Pole kroku",
+        "min-step": "Min. krok",
+        "query-type": "Typ zapytania",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Można użyć jednostek czasu i wbudowanych zmiennych, na przykład: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (jeśli nie określono jednostki, domyślnie {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "Wpisz zapytanie PromQL…"
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "Zapytanie klasyczne",
+        "aria-label-metric-regex": "Wyrażenie regularne wskaźnika",
+        "aria-label-metric-selector": "Selektor wskaźnika",
+        "aria-label-prometheus-query": "Zapytanie Prometheus",
+        "aria-label-query-type": "Typ zapytania",
+        "aria-label-series-query": "Zapytanie szeregowe",
+        "label-classic-query": "Zapytanie klasyczne",
         "label-label": "Etykieta",
-        "label-metric-regex": "",
+        "label-metric-regex": "Wyrażenie regularne wskaźnika",
         "label-query": "Zapytanie",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "Typ zapytania",
+        "label-series-query": "Zapytanie szeregowe",
+        "placeholder-classic-query": "Zapytanie klasyczne",
+        "placeholder-metric-regex": "Wyrażenie regularne wskaźnika",
+        "placeholder-prometheus-query": "Zapytanie Prometheus",
         "placeholder-select-query-type": "Wybierz typ zapytania",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "Zapytanie szeregowe",
+        "returns-metrics-matching-specified-metric-regex": "Zwraca listę wskaźników pasujących do określonego wyrażenia regularnego wskaźnika.",
+        "tooltip-classic-query": "Oryginalna implementacja edytora zapytań zmiennych w systemie Prometheus. Wpisz ciąg z prawidłowym typem zapytania i parametrami zgodnie z opisem w tych dokumentach. Przykład: {{exampleQuery}}.",
+        "tooltip-label": "Zwraca listę wartości etykiet dla nazwy etykiety we wszystkich wskaźnikach, chyba że wskaźnik został określony.",
+        "tooltip-metric-regex": "Zwraca listę nazw etykiet, opcjonalnie filtrując ją według określonego wyrażenia regularnego wskaźnika.",
+        "tooltip-query": "Zwraca listę wyników zapytania Prometheus dla zapytania. Może to obejmować funkcje systemu Prometheus, czyli {{exampleQuery}}.",
+        "tooltip-query-type": "Wtyczka źródła danych Prometheus zapewnia następujące typy zapytań dla zmiennych szablonu.",
+        "tooltip-series-query": "Wprowadź wskaźnik z etykietami, sam wskaźnik lub same etykiety, czyli {{example1}}, {{example2}} lub {{example3}}. Zwraca listę szeregów czasowych powiązanych z wprowadzonymi danymi."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "selektor",
+        "aria-label-selector-clear-button": "Przycisk czyszczenia selektora",
+        "aria-label-use-selector-as-metrics-button": "Użyj selektora jako przycisku wskaźnika",
+        "aria-label-use-selector-for-query-button": "Użyj selektora dla przycisku zapytania",
+        "aria-label-validate-submit-button": "Zatwierdź przycisk przesyłania",
         "clear": "Wyczyść",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. Wynikowy selektor",
+        "use-as-rate-query": "Użyj jako zapytania o częstotliwość",
+        "use-query": "Użyj zapytania",
+        "validate-selector": "Zatwierdź selektor"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "Wyrażenie filtrujące dla wartości etykiety",
+        "aria-label-values-for": "Wartości dla: {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Użyj pola wyszukiwania, aby znaleźć wartości w wybranych etykietach.",
+        "select-multiple-values-for-your-labels": "3. Wybierz (wiele) wartości dla etykiet"
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "Zezwalaj na wybór jako cel reguł rejestracji",
+        "label-manage-alerts-via-alerting-ui": "Zarządzaj alertami za pośrednictwem interfejsu alertów",
         "title-alerting": "Alerty",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "Zezwalaj na wybór tego źródła danych jako celu do zapisywania reguł rejestrowania.",
         "tooltip-manage-alerts-via-alerting-ui": "Zarządzaj regułami alertów dla tego źródła danych. Aby zarządzać innymi zasobami alertów, dodaj źródło danych Alertmanager."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "Tryb dostępu do przeglądarki w źródle danych Prometheus nie jest już dostępny. Przełącz się na tryb dostępu do serwera.",
+        "description-advanced-settings": "Dodatkowe ustawienia to opcje, które można skonfigurować, aby uzyskać większą kontrolę nad źródłem danych.",
         "title-advanced-settings": "Ustawienia zaawansowane",
         "title-error": "Błąd"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "Twoja metoda dostępu to <1>Przeglądarka</1>, co oznacza, że adres URL musi być dostępny z przeglądarki.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "Podaj pełny adres URL HTTP (na przykład {{exampleURL}})",
         "tooltip-server-access-mode": "Twoja metoda dostępu to <1>Serwer</1>, co oznacza, że adres URL musi być dostępny z backendu/serwera usługi Grafana."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "Więcej informacji znajdziesz w dokumentacji tutaj."
       },
       "exemplar-setting": {
         "label-data-source": "Źródło danych",
-        "label-internal-link": "",
+        "label-internal-link": "Link wewnętrzny",
         "label-label-name": "Nazwa etykiety",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "Usuń przykładowy link",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "Etykieta adresu URL",
+        "placeholder-go-to-examplecom": "Przejdź do strony example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "Identyfikator śledzenia",
+        "title-remove-exemplar-link": "Usuń przykładowy link",
+        "tooltip-data-source": "Źródło danych, do którego będzie prowadzić przykład.",
+        "tooltip-internal-link": "Włącz tę opcję, jeśli masz link wewnętrzny. Po włączeniu tej opcji wyświetlany jest selektor źródła danych. Wybierz magazyn danych śledzenia w środowisku zaplecza dla przykładowych danych.",
+        "tooltip-label-name": "Nazwa pola w obiekcie etykiet, które powinno być użyte do uzyskania identyfikatora śledzenia.",
+        "tooltip-url": "Adres URL zaplecza śledzenia, do którego użytkownik może przejść, aby zobaczyć dane śledzenia",
+        "tooltip-url-label": "Użyj, aby zastąpić etykietę przycisku w przykładowym polu identyfikatora śledzenia."
       },
       "exemplars-settings": {
         "add": "Dodaj",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "Brak konfiguracji przykładów",
+        "title-exemplars": "Przykłady"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
+        "aria-label-default-editor": "Domyślny edytor (kod lub konstruktor)",
+        "aria-label-prom-type-type": "Typ: {{promType}}",
+        "aria-label-prometheus-type": "Typ Prometheus",
+        "aria-label-select-http-method": "Wybierz metodę HTTP",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Konstruktor",
+          "label-code": "Kod"
         },
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "label-cache-level": "Poziom pamięci podręcznej",
+        "label-custom-query-parameters": "Niestandardowe parametry zapytania",
+        "label-default-editor": "Edytor domyślny",
+        "label-disable-metrics-lookup": "Wyłącz wyszukiwanie wskaźników",
+        "label-disable-recording-rules-beta": "Wyłącz reguły rejestrowania (beta)",
+        "label-http-method": "Metoda HTTP",
+        "label-incremental-querying-beta": "Zapytania przyrostowe (beta)",
+        "label-metric-names-suggestion-limit": "Limit sugestii nazw wskaźników",
+        "label-prom-type-version": "Wersja: {{promType}}",
+        "label-prometheus-type": "Typ Prometheus",
+        "label-query-overlap-window": "Okno nakładania się zapytań",
+        "label-query-timeout": "Limit czasu zapytania",
+        "label-scrape-interval": "Odstęp czasowy pobierania danych",
+        "label-series-limit": "Limit szeregu",
+        "label-use-series-endpoint": "Użyj punktu końcowego szeregu",
+        "more-info": "Więcej informacji na temat konfigurowania typu i wersji systemu Prometheus w źródłach danych można znaleźć w <2>dokumentach dotyczących aprowizacji</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Przykład: {{example}}",
+        "title-interval-behaviour": "Sposób działania odstępu czasu",
+        "title-other": "Inne",
         "title-performance": "Wydajność",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "Edytor zapytań",
+        "tooltip-cache-level": "Ustawia poziom buforowania przeglądarki dla zapytań edytora. W przypadku źródeł danych o wysokiej kardynalności zaleca się ustawienie pamięci podręcznej na wyższym poziomie.",
+        "tooltip-custom-query-parameters": "Dodaj niestandardowe parametry do adresu URL zapytania Prometheus. Na przykład {{example1}}, {{example2}}, {{example3}} lub {{example4}}. Wiele parametrów należy połączyć razem za pomocą znaków {{concatenationChar}}.",
+        "tooltip-default-editor": "Ustaw domyślną opcję edytora dla wszystkich użytkowników tego źródła danych.",
+        "tooltip-disable-metrics-lookup": "Zaznaczenie tej opcji spowoduje wyłączenie selektora wskaźników i obsługi wskaźników/etykiet w autouzupełnianiu pola zapytania. Pomaga to w przypadku problemów z wydajnością większych instancji systemu Prometheus. ",
+        "tooltip-disable-recording-rules-beta": "Ta funkcja wyłącza reguły rejestrowania. Włącz tę opcję, aby poprawić wydajność pulpitu",
+        "tooltip-http-method": "Możesz użyć metody HTTP POST lub GET, aby wysłać zapytanie do źródła danych Prometheus. POST jest zalecaną metodą, ponieważ obsługuje większe zapytania. Wybierz metodę GET, jeśli wersja systemu Prometheus jest starsza niż 2.1 lub jeśli żądania POST są objęte ograniczeniami w Twojej sieci.",
+        "tooltip-incremental-querying-beta": "Ta funkcja zmienia domyślny sposób działania zapytań względnych, aby zawsze żądały świeżych danych z instancji Prometheus. Zamiast tego wyniki zapytań będą buforowane, a wysyłane żądania będą uwzględniać tylko nowe rekordy. Włącz tę opcję, aby zmniejszyć obciążenie bazy danych i sieci.",
+        "tooltip-metric-names-suggestion-limit": "Maksymalna liczba nazw wskaźników, które mogą pojawiać się jako sugestie autouzupełniania w edytorze zapytań w trybie kodu.",
+        "tooltip-prom-type-version": "Użyj tej opcji, aby ustawić wersję {{promType}} instancji, jeśli nie jest ona automatycznie skonfigurowana.",
+        "tooltip-prometheus-type": "Ustaw w tym polu typ bazy danych systemu Prometheus, np. Prometheus, Cortex, Mimir lub Thanos. Zmiana tego pola spowoduje zapisanie bieżących ustawień. Obsługa interfejsów API zależy od konkretnego typu bazy danych Prometheus. Na przykład niektóre typy obsługują dopasowywanie wyrażeń regularnych do zapytań o etykiety w celu poprawy wydajności. Niektóre typy mają interfejs API metadanych. Jeśli ustawisz tę opcję nieprawidłowo, może to spowodować nietypowe działanie podczas wysyłania zapytań dotyczących wskaźników i etykiet. Sprawdź dokumentację systemu Prometheus, aby upewnić się, że wpisujesz prawidłowy typ.",
+        "tooltip-query-overlap-window": "Ustaw czas trwania, np. {{example1}}, {{example2}} lub {{example3}}. Domyślnie {{default}}. Ten czas trwania zostanie dodany do czasu trwania każdego zapytania przyrostowego.",
+        "tooltip-query-timeout": "Ustaw limit czasu zapytania Prometheus.",
+        "tooltip-scrape-interval": "Ten odstęp czasu określa, jak często Prometheus pobiera dane z obiektów docelowych. Ustaw tę wartość na typowy odstęp czasu pobierania i oceny określony w pliku konfiguracyjnym systemu Prometheus. Jeśli ustawisz tę wartość na większą niż odstęp czasu w tym pliku konfiguracyjnym, Grafana będzie analizować dane zgodnie z tym odstępem czasowym i zobaczysz mniej punktów danych. Wartość domyślna to {{default}}.",
+        "tooltip-series-limit": "Limit dotyczy wszystkich zasobów (wskaźników, etykiet i wartości) dla obu punktów końcowych (serii i etykiet). Pozostaw pole puste, aby użyć domyślnego limitu (40 000). Ustaw wartość 0, aby wyłączyć limit i pobrać wszystko. Może to spowodować problemy z wydajnością. Domyślny limit wynosi 40 000.",
+        "tooltip-use-series-endpoint": "Zaznaczenie tej opcji spowoduje preferowanie punktu końcowego szeregu z parametrem {{exampleParameter}}, a nie punktu końcowego wartości etykiet z parametrem {{exampleParameter}}. Chociaż punkt końcowy wartości etykiet jest uważany za bardziej wydajny, niektórzy użytkownicy mogą preferować szeregi, ponieważ obsługują one metodę POST, podczas gdy punkt końcowy wartości etykiet uwzględnia tylko metodę GET."
       }
+    },
+    "metrics-browser": {
+      "disabled-label": "(wyłączone)",
+      "enabled-label": "Przeglądarka metryk"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Zawiera tylko unikalne etykiety",
+        "description-custom": "Podaj szablon nazewnictwa",
+        "description-verbose": "Wszystkie nazwy i wartości etykiet",
+        "label-auto": "Automatycznie",
+        "label-custom": "Niestandardowy",
+        "label-verbose": "Szczegółowy"
       }
     },
     "promql": {
       "getAggregationOptions": {
-        "documentation-avg": "",
-        "documentation-bottomk": "",
-        "documentation-count": "",
-        "documentation-count-values": "",
-        "documentation-group": "",
-        "documentation-max": "",
-        "documentation-min": "",
-        "documentation-quantile": "",
-        "documentation-stddev": "",
-        "documentation-stdvar": "",
-        "documentation-sum": "",
-        "documentation-topk": ""
+        "documentation-avg": "Oblicz średnią wymiarów",
+        "documentation-bottomk": "Najmniejsza liczba k elementów według wartości próbki",
+        "documentation-count": "Policz liczbę elementów w wektorze",
+        "documentation-count-values": "Policz liczbę elementów o tej samej wartości",
+        "documentation-group": "Wszystkie wartości w wektorze wynikowym wynoszą 1",
+        "documentation-max": "Wybierz wartość maksymalną z wymiarów",
+        "documentation-min": "Wybierz wartość minimalną z wymiarów",
+        "documentation-quantile": "Oblicz φ-kwantyl (0 ≤ φ ≤ 1) z wymiarów",
+        "documentation-stddev": "Oblicz odchylenie standardowe populacji z wymiarów",
+        "documentation-stdvar": "Oblicz wariancję standardową populacji z wymiarów",
+        "documentation-sum": "Oblicz sumę z wymiarów",
+        "documentation-topk": "Największa liczba k elementów według wartości próbki"
       },
       "getFunctions": {
-        "documentation-abs": "",
-        "documentation-absent": "",
-        "documentation-absent-over-time": "",
-        "documentation-avg-over-time": "",
-        "documentation-ceil": "",
-        "documentation-changes": "",
-        "documentation-clamp": "",
-        "documentation-clamp-max": "",
-        "documentation-clamp-min": "",
-        "documentation-count-over-time": "",
-        "documentation-count-scalar": "",
-        "documentation-day-of-month": "",
-        "documentation-day-of-week": "",
-        "documentation-day-of-year": "",
-        "documentation-days-in-month": "",
-        "documentation-deg": "",
-        "documentation-delta": "",
-        "documentation-deriv": "",
-        "documentation-double-exponential-smoothing": "",
-        "documentation-drop-common-labels": "",
-        "documentation-exp": "",
-        "documentation-floor": "",
-        "documentation-histogram-avg": "",
-        "documentation-histogram-count": "",
-        "documentation-histogram-fraction": "",
-        "documentation-histogram-quantile": "",
-        "documentation-histogram-stddev": "",
-        "documentation-histogram-stdvar": "",
-        "documentation-histogram-sum": "",
-        "documentation-holt-winters": "",
-        "documentation-hour": "",
-        "documentation-idelta": "",
-        "documentation-increase": "",
-        "documentation-info": "",
-        "documentation-irate": "",
-        "documentation-label-join": "",
-        "documentation-label-replace": "",
-        "documentation-last-over-time": "",
-        "documentation-ln": "",
-        "documentation-log10": "",
-        "documentation-log2": "",
-        "documentation-max-over-time": "",
-        "documentation-min-over-time": "",
-        "documentation-minute": "",
-        "documentation-month": "",
-        "documentation-pi": "",
-        "documentation-predict-linear": "",
-        "documentation-present-over-time": "",
-        "documentation-quantile-over-time": "",
-        "documentation-rad": "",
-        "documentation-rate": "",
-        "documentation-resets": "",
-        "documentation-round": "",
-        "documentation-scalar": "",
-        "documentation-sgn": "",
-        "documentation-sort": "",
-        "documentation-sort-desc": "",
-        "documentation-sqrt": "",
-        "documentation-stddev-over-time": "",
-        "documentation-stdvar-over-time": "",
-        "documentation-sum-over-time": "",
-        "documentation-time": "",
-        "documentation-timestamp": "",
-        "documentation-vector": "",
-        "documentation-year": ""
+        "documentation-abs": "Zwraca wektor wejściowy ze wszystkimi wartościami próbki przekonwertowanymi na ich wartość bezwzględną.",
+        "documentation-absent": "Zwraca pusty wektor, jeśli przekazany wektor ma jakiekolwiek elementy, i jednoelementowy wektor o wartości 1, jeśli przekazany wektor nie ma żadnych elementów. Jest to przydatne do ostrzegania, gdy nie istnieją szeregi czasowe dla danej kombinacji nazwy metryki i etykiety.",
+        "documentation-absent-over-time": "Zwraca pusty wektor, jeśli przekazany wektor zakresu ma jakiekolwiek elementy, i jednoelementowy wektor o wartości 1, jeśli przekazany wektor zakresu nie ma żadnych elementów.",
+        "documentation-avg-over-time": "Średnia wartość wszystkich punktów w określonym odstępie czasu.",
+        "documentation-ceil": "Zaokrągla wartości próbek wszystkich elementów w „v” w górę do najbliższej liczby całkowitej.",
+        "documentation-changes": "Dla każdego wejściowego szeregu czasowego „changes(v range-vector)” zwraca liczbę zmian jego wartości w podanym zakresie czasu jako wektor chwilowy.",
+        "documentation-clamp": "Ogranicza próbkowane wartości wszystkich elementów w „v”, aby określić dolną granicę „min” i górną granicę „max”.",
+        "documentation-clamp-max": "Ogranicza próbkowane wartości wszystkich elementów w „v”, aby określić górną granicę „max”.",
+        "documentation-clamp-min": "Ogranicza próbkowane wartości wszystkich elementów w „v”, aby określić dolną granicę „min”.",
+        "documentation-count-over-time": "Liczba wszystkich wartości w określonym przedziale.",
+        "documentation-count-scalar": "Zwraca liczbę elementów w wektorze szeregu czasowego jako wartość skalarną. Jest to przeciwieństwo operatora agregacji „count()”, który zawsze zwraca wektor (pusty, jeśli wektor wejściowy jest pusty) i pozwala na grupowanie według etykiet za pomocą klauzuli „by”.",
+        "documentation-day-of-month": "Zwraca dzień miesiąca dla każdego z podanych czasów w czasie UTC. Zwracane wartości wynoszą od 1 do 31.",
+        "documentation-day-of-week": "Zwraca dzień tygodnia dla każdego z podanych czasów w czasie UTC. Zwracane wartości wynoszą od 0 do 6, gdzie 0 oznacza niedzielę itd.",
+        "documentation-day-of-year": "Zwraca dzień roku dla każdego z podanych czasów w czasie UTC. Zwracane wartości wynoszą od 1 do 365 dla lat nieprzestępnych i od 1 do 366 dla lat przestępnych.",
+        "documentation-days-in-month": "Zwraca liczbę dni w miesiącu dla każdego z podanych czasów w czasie UTC. Zwracane wartości wynoszą od 28 do 31.",
+        "documentation-deg": "Konwertuje radiany na stopnie dla wszystkich elementów w „v”",
+        "documentation-delta": "Oblicza różnicę między pierwszą i ostatnią wartością każdego elementu szeregu czasowego w wektorze zakresu „v”, zwracając wektor chwilowy z podanymi deltami i równoważnymi etykietami. Delta jest ekstrapolowana w celu pokrycia pełnego zakresu czasu określonego w selektorze wektora zakresu, tak aby możliwe było uzyskanie wyniku niebędącego liczbą całkowitą, nawet jeśli wszystkie wartości próbek są liczbami całkowitymi.",
+        "documentation-deriv": "Oblicza pochodną na sekundę szeregu czasowego w wektorze zakresu „v”, stosując prostą regresję liniową.",
+        "documentation-double-exponential-smoothing": "Tworzy wygładzoną wartość dla szeregów czasowych na podstawie zakresu w „v”. Im niższy współczynnik wygładzania „sf”, tym większą wagę mają stare dane. Im wyższy współczynnik trendu „tf”, tym więcej trendów w danych jest brane pod uwagę. Zarówno „sf”, jak i „tf” muszą mieścić się w przedziale od 0 do 1.",
+        "documentation-drop-common-labels": "Usuwa wszystkie etykiety, które mają tę samą nazwę i wartość we wszystkich seriach w wektorze wejściowym.",
+        "documentation-exp": "Oblicza funkcję wykładniczą dla wszystkich elementów w „v”.\nPrzypadki szczególne:\n* „Exp(+Inf) = +Inf” \n* „Exp(NaN) = NaN”",
+        "documentation-floor": "Zaokrągla wartości próbek wszystkich elementów w „v” w dół do najbliższej liczby całkowitej.",
+        "documentation-histogram-avg": "Zwraca średnią arytmetyczną zaobserwowanych wartości przechowywanych w histogramie natywnym. Próbki, które nie są histogramami natywnymi, są ignorowane i nie pojawiają się w zwracanym wektorze.",
+        "documentation-histogram-count": "Zwraca liczbę obserwacji przechowywanych w histogramie natywnym.",
+        "documentation-histogram-fraction": "Zwraca szacunkowy ułamek obserwacji między podanymi wartościami dolną i górną.",
+        "documentation-histogram-quantile": "Oblicza φ-kwantyl (0 ≤ φ ≤ 1) z przedziałów „b” histogramu. Próbki w „b” to liczby obserwacji w każdym przedziale. Każda próbka musi mieć etykietę „le”, gdzie wartość etykiety oznacza górną granicę przedziału włącznie. (Próbki bez takiej etykiety są ignorowane bez komunikatu). Typ metryki histogramu automatycznie zapewnia szeregi czasowe z przyrostkiem „_bucket” i odpowiednimi etykietami.",
+        "documentation-histogram-stddev": "Zwraca szacowane odchylenie standardowe obserwacji w histogramie natywnym, na podstawie średniej geometrycznej przedziałów, w których znajdują się obserwacje.",
+        "documentation-histogram-stdvar": "Zwraca oszacowaną wariancję standardową obserwacji w histogramie natywnym.",
+        "documentation-histogram-sum": "Zwraca sumę obserwacji przechowywanych w histogramie natywnym.",
+        "documentation-holt-winters": "W Prometheus 3.x nazwa zmieniła się na double_exponential_smoothing. W przypadku Prometheus w wersji 3.0 lub nowszej należy używać double_exponential_smoothing. \n\nTworzy wygładzoną wartość dla szeregów czasowych na podstawie zakresu w „v”. Im niższy współczynnik wygładzania „sf”, tym większą wagę mają stare dane. Im wyższy współczynnik trendu „tf”, tym więcej trendów w danych jest brane pod uwagę. Zarówno „sf”, jak i „tf” muszą mieścić się w przedziale od 0 do 1.",
+        "documentation-hour": "Zwraca godzinę dla każdego z podanych czasów w UTC. Zwracane wartości wynoszą od 0 do 23.",
+        "documentation-idelta": "Oblicza różnicę między dwiema ostatnimi próbkami w wektorze zakresu „v”, zwracając wektor chwilowy z podanymi deltami i równoważnymi etykietami.",
+        "documentation-increase": "Oblicza przyrost szeregu czasowego w wektorze zakresu. Przerwy w monotoniczności (takie jak resetowanie licznika z powodu ponownego uruchomienia celu) są automatycznie korygowane. Przyrost jest ekstrapolowany w celu pokrycia pełnego zakresu czasu określonego w selektorze wektora zakresu, tak aby możliwe było uzyskanie wyniku niebędącego liczbą całkowitą, nawet jeśli licznik zwiększa się tylko o liczby całkowite.",
+        "documentation-info": "Zwraca najnowsze szczegóły i metadane dotyczące grupy metryk, takie jak ich etykiety i bieżące wartości, bez wykonywania jakichkolwiek obliczeń",
+        "documentation-irate": "Oblicza chwilową szybkość przyrostu szeregu czasowego na sekundę w wektorze zakresu. Jest to oparte na ostatnich dwóch punktach danych. Przerwy w monotoniczności (takie jak zresetowanie licznika z powodu ponownego uruchomienia celu) są automatycznie korygowane.",
+        "documentation-label-join": "Dla każdego szeregu czasowego w „v” łączy wszystkie wartości wszystkich „src_labels” za pomocą elementu „separator” i zwraca szereg czasowy z etykietą „dst_label” zawierającą połączoną wartość. Ta funkcja może zawierać dowolną liczbę „src_labels”.",
+        "documentation-label-replace": "Dla każdego szeregu czasowego w „v” „label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)” dopasowuje wyrażenie regularne „regex” do etykiety „src_label”. Jeśli dane się zgadzają, szereg czasowy jest zwracany z etykietą „dst_label” zastąpioną rozszerzeniem „replacement”. Element „$1” jest zastępowany pierwszą pasującą podgrupą, „$2” drugą itd. Jeśli wyrażenie regularne nie pasuje, to szereg czasowy jest zwracany bez zmian.",
+        "documentation-last-over-time": "Najnowsza wartość punktowa w określonym przedziale.",
+        "documentation-ln": "Oblicza logarytm naturalny dla wszystkich elementów w „v”.\nPrzypadki szczególne:\n * „ln(+Inf) = +Inf”\n * „ln(0) = -Inf”\n * „ln(x < 0) = NaN”\n * „ln(NaN) = NaN”",
+        "documentation-log10": "Oblicza logarytm dziesiętny dla wszystkich elementów w „v”. Przypadki szczególne są równoważne z przypadkami w „ln”.",
+        "documentation-log2": "Oblicza logarytm binarny dla wszystkich elementów w „v”. Przypadki szczególne są równoważne z przypadkami w „ln”.",
+        "documentation-max-over-time": "Maksymalna wartość wszystkich punktów w określonym odstępie czasu.",
+        "documentation-min-over-time": "Minimalna wartość wszystkich punktów w określonym odstępie czasu.",
+        "documentation-minute": "Zwraca minutę dla każdego z podanych czasów w UTC. Zwracane wartości wynoszą od 0 do 59.",
+        "documentation-month": "Zwraca miesiąc dla każdego z podanych czasów w UTC. Zwracane wartości wynoszą od 1 do 12, gdzie 1 oznacza styczeń itd.",
+        "documentation-pi": "Zwraca pi",
+        "documentation-predict-linear": "Przewiduje wartość szeregu czasowego „t” sekund od teraz, na podstawie wektora zakresu „v”, stosując prostą regresję liniową.",
+        "documentation-present-over-time": "Wartość 1 dla dowolnej serii w określonym odstępie czasu.",
+        "documentation-quantile-over-time": "φ-kwantyl (0 ≤ φ ≤ 1) wartości w określonym odstępie czasu.",
+        "documentation-rad": "Konwertuje stopnie na radiany dla wszystkich elementów w „v”",
+        "documentation-rate": "Oblicza średnią szybkość przyrostu szeregu czasowego na sekundę w wektorze zakresu. Przerwy w monotoniczności (takie jak resetowanie licznika z powodu ponownego uruchomienia celu) są automatycznie korygowane. Ponadto obliczenia są ekstrapolowane do końców zakresu czasu, co pozwala na pominięcie pobierania lub niedoskonałe dopasowanie cykli pobierania do przedziału zakresu czasu.",
+        "documentation-resets": "Dla każdego wejściowego szeregu czasowego „resets(v range-vector)” zwraca liczbę resetów licznika w podanym zakresie czasu jako wektor chwilowy. Każdy spadek wartości między dwiema kolejnymi próbkami jest interpretowany jako zresetowanie licznika.",
+        "documentation-round": "Zaokrągla wartości próbek wszystkich elementów w „v” do najbliższej liczby całkowitej. Remisy są rozwiązywane przez zaokrąglenie w górę. Opcjonalny argument „to_nearest” pozwala określić najbliższą wielokrotność, do której należy zaokrąglić wartości próbek. Wielokrotność ta może być również ułamkiem.",
+        "documentation-scalar": "Dla jednoelementowego wektora wejściowego „scalar(v instant-vector)” zwraca wartość próbki tego pojedynczego elementu jako wartość skalarną. Jeśli wektor wejściowy nie ma dokładnie jednego elementu, „scalar” zwróci „NaN”.",
+        "documentation-sgn": "Zwraca wektor ze wszystkimi wartościami próbek przekonwertowanymi na ich znak, zdefiniowany jako: 1, jeśli v jest dodatnie, -1, jeśli v jest ujemne, i 0, jeśli v jest równe zero.",
+        "documentation-sort": "Zwraca elementy wektora posortowane według ich próbkowanych wartości w kolejności rosnącej.",
+        "documentation-sort-desc": "Zwraca elementy wektora posortowane według ich próbkowanych wartości w kolejności malejącej.",
+        "documentation-sqrt": "Oblicza pierwiastek kwadratowy wszystkich elementów w „v”.",
+        "documentation-stddev-over-time": "Odchylenie standardowe populacji wartości w określonym przedziale.",
+        "documentation-stdvar-over-time": "Wariancja standardowa populacji wartości w określonym przedziale.",
+        "documentation-sum-over-time": "Suma wszystkich wartości w określonym przedziale.",
+        "documentation-time": "Zwraca liczbę sekund od 1 stycznia 1970 r. UTC. Zwróć uwagę, że nie zwraca to bieżącego czasu, ale czas, w którym wyrażenie ma zostać ocenione.",
+        "documentation-timestamp": "Zwraca sygnaturę czasową każdej z próbek danego wektora jako liczbę sekund od 1 stycznia 1970 r. UTC.",
+        "documentation-vector": "Zwraca wartość skalarną „s” jako wektor bez etykiet.",
+        "documentation-year": "Zwraca rok dla każdego z podanych czasów w UTC."
       },
       "getTrigonometricFunctions": {
-        "documentation-acos": "",
-        "documentation-acosh": "",
-        "documentation-asin": "",
-        "documentation-asinh": "",
-        "documentation-atan": "",
-        "documentation-atanh": "",
-        "documentation-cos": "",
-        "documentation-cosh": "",
-        "documentation-sin": "",
-        "documentation-sinh": "",
-        "documentation-tan": "",
-        "documentation-tanh": ""
+        "documentation-acos": "oblicza arcus cosinus wszystkich elementów w {{argument}}",
+        "documentation-acosh": "oblicza odwrotny cosinus hiperboliczny wszystkich elementów w {{argument}}",
+        "documentation-asin": "oblicza arcus sinus wszystkich elementów w {{argument}}",
+        "documentation-asinh": "oblicza odwrotny sinus hiperboliczny wszystkich elementów w {{argument}}",
+        "documentation-atan": "oblicza arcus tangens wszystkich elementów w {{argument}}",
+        "documentation-atanh": "oblicza odwrotny tangens hiperboliczny wszystkich elementów w {{argument}}",
+        "documentation-cos": "oblicza cosinus wszystkich elementów w {{argument}}",
+        "documentation-cosh": "oblicza cosinus hiperboliczny wszystkich elementów w {{argument}}",
+        "documentation-sin": "oblicza sinus wszystkich elementów w {{argument}}",
+        "documentation-sinh": "oblicza sinus hiperboliczny wszystkich elementów w {{argument}}",
+        "documentation-tan": "oblicza tangens wszystkich elementów w {{argument}}",
+        "documentation-tanh": "oblicza tangens hiperboliczny wszystkich elementów w {{argument}}"
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
-      },
       "feedback-link": {
         "give-feedback": "Przekaż opinię",
-        "title-give-feedback": ""
+        "title-give-feedback": "Eksplorator wskaźników to nowa funkcja – daj nam znać, jak możemy go ulepszyć"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Przykłady: {{value}}",
+        "format": "Format: {{value}}",
+        "legend": "Legenda: {{value}}",
+        "step": "Krok: {{value}}",
+        "type": "Typ: {{value}}"
       },
       "get-placeholders": {
-        "browse": "",
-        "include-null-metadata": "",
-        "metadata-search-switch": "",
-        "set-use-backend": "",
-        "type": ""
+        "browse": "Wyszukaj metryki według nazwy",
+        "type": "Filtruj wg typu"
       },
       "get-prom-types": {
-        "description-counter": "",
-        "description-gauge": "",
-        "description-histogram": "",
-        "description-native-histogram": "",
-        "description-no-type": "",
-        "description-summary": "",
-        "description-unknown": "",
-        "label-counter": "",
-        "label-gauge": "",
-        "label-histogram": "",
-        "label-native-histogram": "",
-        "label-no-type": "",
-        "label-summary": "",
-        "label-unknown": ""
+        "description-counter": "Metryka skumulowana reprezentująca pojedynczy monotonicznie rosnący licznik, którego wartość może tylko wzrosnąć lub zostać zresetowana do zera po ponownym uruchomieniu.",
+        "description-gauge": "Metryka reprezentująca pojedynczą wartość liczbową, która może dowolnie wzrastać i spadać.",
+        "description-histogram": "Histogram pobiera próbki obserwacji (zwykle takie jak czasy trwania żądań lub rozmiary odpowiedzi) i zlicza je w konfigurowalnych przedziałach.",
+        "description-native-histogram": "Histogramy natywne różnią się od klasycznych histogramów Prometheus na wiele sposobów: granice przedziału histogramu natywnego są obliczane za pomocą wzoru, który zależy od skali (rozdzielczości) histogramu natywnego i nie są definiowane przez użytkownika.",
+        "description-no-type": "Te metryki nie mają zdefiniowanego typu w metadanych.",
+        "description-summary": "Podsumowanie pobiera próbki obserwacji (zwykle takie jak czasy trwania żądań i rozmiary odpowiedzi) i może obliczać konfigurowalne kwantyle w przesuwnym oknie czasowym.",
+        "description-unknown": "Te metryki mają przypisany typ nieznany w metadanych.",
+        "label-counter": "Licznik",
+        "label-gauge": "Wskaźnik",
+        "label-histogram": "Histogram",
+        "label-native-histogram": "Histogram natywny",
+        "label-no-type": "Bez typu",
+        "label-summary": "Podsumowanie",
+        "label-unknown": "Nieznany"
       },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Wynik analizy zapytania jest niejednoznaczny."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "Usuń: {{name}}",
+        "placeholder-select-label": "Wybierz etykietę",
         "placeholder-select-value": "Wybierz wartość"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "Filtry etykiet",
+        "label-label-filters": "Filtry etykiet",
+        "tooltip-label-filters": "Opcjonalnie: służy do filtrowania wskaźników wybranych dla tego typu zapytania."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Ładowanie etykiet",
+        "noOptionsMessage-no-labels-found": "Nie znaleziono etykiet"
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "Otwórz eksplorator wskaźników",
+          "placeholder-select-metric": "Wybierz wskaźnik",
+          "tooltip-open-metrics-explorer": "Otwórz eksplorator wskaźników"
         },
         "label-metric": "Metryka",
-        "tooltip-metric": ""
+        "tooltip-metric": "Opcjonalnie: zwraca listę wartości etykiet dla nazwy etykiety w określonym wskaźniku."
       },
       "metrics-modal": {
-        "additional-settings": "",
-        "aria-label-additional-settings": "Ustawienia dodatkowe",
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_one": "",
-        "results-amount_few": "",
-        "results-amount_many": "",
-        "results-amount_other": ""
+        "aria-label-browse-metrics": "Przeglądaj wskaźniki",
+        "currently-selected": "Obecnie wybrane: {{selected}}",
+        "metrics-pre-filtered": "Te wskaźniki zostały wstępnie przefiltrowane według etykiet wybranych w filtrze etykiet.",
+        "title-metrics-explorer": "Eksplorator wskaźników"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "Ignorowanie",
           "on": "Wł."
         },
         "operator": "Operator",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "Usuń dopasowanie",
+        "vector-matches": "Dopasowania wektorów"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "Nie znaleziono operacji {{id}}",
+        "title-remove": "Usuń: {{name}}"
       },
       "operation-header": {
         "placeholder-replace-with": "Zastąp",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "Kliknij, aby wyświetlić alternatywne operacje",
+        "title-remove-operation": "Usuń operację"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "Kliknij, aby wyświetlić opis",
+        "title-remove-operation": "Usuń operację"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "Operacje",
         "placeholder-search": "Szukaj",
-        "title-add-operation": ""
+        "title-add-operation": "Dodaj operację"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "Dodaj: {{name}}",
+        "title-remove": "Usuń: {{name}}"
       },
       "operation-utils": {
         "getAggregationExplainer": {
-          "label-by": "",
-          "label-default": "",
-          "label-without": ""
+          "label-by": "Oblicza {{aggregationName}} z wymiarów, zachowując {{labelWord}} {{labels}}.",
+          "label-default": "Oblicza {{aggregationName}} z wymiarów.",
+          "label-without": "Oblicza {{aggregationName}} z {{labels}} wymiarów. Wszystkie inne etykiety są zachowywane."
         }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
+        "aria-label-lower-limit-parameter": "Ustaw dolną granicę dla parametru kroku",
+        "aria-label-select-resolution": "Wybierz rozwiązanie",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Mapa intensywności",
+          "label-table": "Tabela",
+          "label-time-series": "Szereg czasowy"
         },
-        "label-exemplars": "",
+        "label-exemplars": "Przykłady",
         "label-format": "Format",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "Min. krok",
+        "label-resolution": "Rozwiązanie",
         "label-type": "Typ",
-        "placeholder-auto": "",
+        "placeholder-auto": "automatycznie",
         "title-options": "Opcje",
-        "tooltip-min-step": ""
+        "tooltip-min-step": "Dodatkowa dolna granica dla parametru kroku zapytania Prometheus oraz dla zmiennych <2>{{interval}}</2> i <4>{{rateInterval}}</4>."
       },
       "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "autocomplete-suggestions-limited": "Ograniczone sugestie autouzupełniania",
+        "tooltip-autocomplete-suggestions-limited": "Liczba nazw wskaźników przekracza limit autouzupełniania. Wyświetlane są tylko najbardziej odpowiednie wskaźniki ({{autocompleteLimit}}). Próg można dostosować w ustawieniach źródła danych."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "Wystąpił błąd składni lub struktura zapytania nie może zostać zwizualizowana podczas przełączania na tryb konstruktora. Części zapytania mogą zostać utracone.",
+        "confirmText-continue": "Kontynuuj",
         "kick-start-your-query": "Uruchom zapytanie",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "Wyjaśnij",
+        "run-queries": "Uruchom zapytania",
+        "title-parsing-error-switch-builder": "Błąd analizy: przełączyć na tryb konstruktora?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "Legenda",
+        "placeholder-select-legend-mode": "Wybierz tryb legendy",
+        "tooltip-legend": "Zastąpienie nazwy szeregu lub szablon. Na przykład wzorzec {{templateExample}} zostanie zastąpiony wartością etykiety {{labelName}}."
       },
       "query-builder-hints": {
-        "hint-details": ""
+        "hint-details": "wskazówka: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Konstruktor",
+          "label-code": "Kod"
         }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "Zastosuj zapytanie",
+        "aria-label-apply-query-starter-button": "przycisk Zastosuj starter zapytania",
+        "aria-label-back-button": "przycisk Wstecz",
+        "aria-label-create-new-query-button": "przycisk Utwórz nowe zapytanie",
+        "aria-label-raw-query": "Nieprzetworzone zapytanie {{patternName}}",
+        "aria-label-use-this-query-button": "użyj tego przycisku zapytania",
         "back": "Wstecz",
-        "create-new-query": "",
+        "create-new-query": "Utwórz nowe zapytanie",
         "use-this-query": "Użyj tego zapytania"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "zamknij okno modalne rozpoczęcia zapytania",
         "aria-label-kick-start-your-query-modal": "Uruchom okno modalne zapytania",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "otwórz i zamknij kartę początkową zapytania {{patternType}}",
         "close": "Zamknij",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "Rozpocznij zapytanie, wybierając jedno z tych zapytań. Następnie możesz kontynuować tworzenie zapytania.",
+        "label-toggle-query-starter": "Startery zapytań {{patternType}}",
         "title-kick-start-your-query": "Uruchom zapytanie"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "selektor"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "Podczas tworzenia zapytania {{descriptiveType}} system Prometheus udostępnia wiele szeregów z licznikiem typu. ",
         "description": "Opis",
-        "message-expand-label-filters": "",
-        "message-expand-search": "",
-        "message-no-metrics-found": "",
+        "message-expand-label-filters": "Nie znaleziono żadnych metryk. Spróbuj rozszerzyć filtry etykiet.",
+        "message-expand-search": "Nie znaleziono żadnych metryk. Spróbuj rozszerzyć wyszukiwanie i filtry.",
+        "message-no-metrics-found": "W źródle danych nie znaleziono żadnych metryk.",
         "name": "Imię",
-        "select": "Wybierz",
         "type": "Typ"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Analiza zapytania jest niejednoznaczna."
         }
       }
     }

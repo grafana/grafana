@@ -147,10 +147,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	// we don't care about the error here, if this fails we get 0 and no
 	// permission assigned to user will be returned, only for org role.
@@ -232,9 +229,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = s.actionResolver.ExpandActionSets(permissions)
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, SharedWithMeFolderPermission)
-	}
+	permissions = append(permissions, SharedWithMeFolderPermission)
 
 	return permissions, nil
 }
@@ -435,6 +430,11 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
 				for _, p := range registration.Role.Permissions {
+					if registration.Role.IsPlugin() && p.Action == pluginaccesscontrol.ActionAppAccess {
+						s.log.Debug("Plugin is attempting to grant access permission, but this permission is already granted by default and will be ignored",
+							"role", registration.Role.Name, "permission", p.Action, "scope", p.Scope)
+						continue
+					}
 					perm := accesscontrol.Permission{
 						Action: p.Action,
 						Scope:  p.Scope,

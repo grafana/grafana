@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
-const svcName = "provisioning"
+const svcName = provisioning.GROUP
 
 //go:generate mockery --name SecureValueClient --structname MockSecureValueClient --inpackage --filename secure_value_client_mock.go --with-expecter
 type SecureValueClient = secret.SecureValueClient
@@ -29,14 +29,16 @@ var _ Service = (*secretsService)(nil)
 
 //go:generate mockery --name DecryptService --structname MockDecryptService --srcpkg=github.com/grafana/grafana/pkg/registry/apis/secret --filename decrypt_service_mock.go --with-expecter
 type secretsService struct {
-	secureValues SecureValueClient
-	decryptSvc   secret.DecryptService
+	secureValues         SecureValueClient
+	decryptSvc           secret.DecryptService
+	decrypterServiceName string
 }
 
-func NewSecretsService(secretsSvc SecureValueClient, decryptSvc secret.DecryptService) Service {
+func NewSecretsService(secretsSvc SecureValueClient, decryptSvc secret.DecryptService, grpcGrafanaServiceName string) Service {
 	return &secretsService{
-		secureValues: secretsSvc,
-		decryptSvc:   decryptSvc,
+		secureValues:         secretsSvc,
+		decryptSvc:           decryptSvc,
+		decrypterServiceName: grpcGrafanaServiceName,
 	}
 }
 
@@ -74,6 +76,11 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 		return result.GetName(), nil
 	}
 
+	decrypters := []string{svcName}
+	if s.decrypterServiceName != "" {
+		decrypters = append(decrypters, s.decrypterServiceName)
+	}
+
 	// Create the secret directly as unstructured
 	secret := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -86,7 +93,7 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 			"spec": map[string]interface{}{
 				"description": "provisioning: " + name,
 				"value":       data,
-				"decrypters":  []string{svcName},
+				"decrypters":  decrypters,
 			},
 		},
 	}
@@ -101,13 +108,7 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 }
 
 func (s *secretsService) Decrypt(ctx context.Context, namespace string, name string) ([]byte, error) {
-	ns, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return nil, err
-	}
-	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID, identity.WithServiceIdentityName(svcName))
-
-	results, err := s.decryptSvc.Decrypt(ctx, namespace, name)
+	results, err := s.decryptSvc.Decrypt(ctx, svcName, namespace, name)
 	if err != nil {
 		return nil, err
 	}
@@ -124,12 +125,6 @@ func (s *secretsService) Decrypt(ctx context.Context, namespace string, name str
 }
 
 func (s *secretsService) Delete(ctx context.Context, namespace string, name string) error {
-	ns, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return err
-	}
-
-	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID, identity.WithServiceIdentityName(svcName))
 	client, err := s.secureValues.Client(ctx, namespace)
 	if err != nil {
 		return err

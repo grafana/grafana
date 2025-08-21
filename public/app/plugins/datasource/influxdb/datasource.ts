@@ -221,7 +221,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.templateSrv.containsTemplate(queryText);
   }
 
-  interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
+  interpolateVariablesInQueries(
+    queries: InfluxQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): InfluxQuery[] {
     if (!queries || queries.length === 0) {
       return [];
     }
@@ -240,10 +244,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         };
       }
 
+      const queryWithVariables = this.applyVariables(query, scopedVars, filters);
+      if (queryWithVariables.adhocFilters?.length) {
+        queryWithVariables.adhocFilters = (queryWithVariables.adhocFilters ?? []).map((af) => {
+          const { condition, ...asTag } = af;
+          asTag.value = this.templateSrv.replace(asTag.value ?? '', scopedVars);
+          return asTag;
+        });
+        queryWithVariables.tags = [...(queryWithVariables.tags ?? []), ...queryWithVariables.adhocFilters];
+      }
+
       return {
-        ...query,
+        ...queryWithVariables,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
       };
     });
   }

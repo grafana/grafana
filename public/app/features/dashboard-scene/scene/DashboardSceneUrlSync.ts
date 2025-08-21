@@ -7,13 +7,12 @@ import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { KioskMode } from 'app/types/dashboard';
 
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { containsCloneKey } from '../utils/clone';
-import { findEditPanel, findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
+import { containsPathIdSeparator, findVizPanelByPathId } from '../utils/pathId';
+import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -23,7 +22,6 @@ import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcesse
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _viewEventSub?: Unsubscribable;
-  private _inspectEventSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
 
@@ -35,7 +33,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const state = this._scene.state;
 
     return {
-      inspect: state.inspectPanelKey,
       autofitpanels: this.getAutoFitPanels(),
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
@@ -55,7 +52,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelScene, isEditing, editPanel, shareView } = this._scene.state;
+    const { viewPanelScene, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && this._scene.canEditDashboard()) {
@@ -75,39 +72,15 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.editview = undefined;
     }
 
-    // Handle inspect object state
-    if (typeof values.inspect === 'string') {
-      let panel = findVizPanelByKey(this._scene, values.inspect);
-      if (!panel) {
-        // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        // Here we check if the key contains the clone key so we force the repeat processing
-        // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
-        if (containsCloneKey(values.inspect)) {
-          this._handleInspectRepeatClone(values.inspect);
-          return;
-        }
-
-        appEvents.emit(AppEvents.alertError, ['Panel not found']);
-        locationService.partial({ inspect: null });
-        return;
-      }
-
-      update.inspectPanelKey = values.inspect;
-      update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
-    } else if (inspectPanelKey) {
-      update.inspectPanelKey = undefined;
-      update.overlay = undefined;
-    }
-
     // Handle view panel state
     if (typeof values.viewPanel === 'string') {
-      const panel = findVizPanelByKey(this._scene, values.viewPanel);
+      const panel = findVizPanelByPathId(this._scene, values.viewPanel);
 
       if (!panel) {
         // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
         // Here we check if the key contains the clone key so we force the repeat processing
         // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
-        if (containsCloneKey(values.viewPanel)) {
+        if (containsPathIdSeparator(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
         }
@@ -186,30 +159,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
   }
 
-  private _handleInspectRepeatClone(inspect: string) {
-    if (!this._inspectEventSub) {
-      this._inspectEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
-        const panel = findVizPanelByKey(this._scene, inspect);
-        if (panel) {
-          this._inspectEventSub?.unsubscribe();
-          this._scene.setState({
-            inspectPanelKey: inspect,
-            overlay: new PanelInspectDrawer({ panelRef: panel.getRef() }),
-          });
-        }
-      });
-    }
-  }
-
   private _handleViewRepeatClone(viewPanel: string) {
     if (!this._viewEventSub) {
       this._viewEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
-        const panel = findVizPanelByKey(this._scene, viewPanel);
+        const panel = findVizPanelByPathId(this._scene, viewPanel);
         if (panel) {
           this._viewEventSub?.unsubscribe();
           this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
+          this._viewEventSub = undefined;
         }
       });
+
+      this._scene.state.body.activateRepeaters?.();
     }
   }
 

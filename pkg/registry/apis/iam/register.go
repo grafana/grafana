@@ -50,6 +50,7 @@ func RegisterAPIService(
 	accessClient types.AccessClient,
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
+	rolesStorage RoleStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	legacyAccessClient := newLegacyAccessClient(ac, store)
@@ -58,6 +59,7 @@ func RegisterAPIService(
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:               store,
 		coreRolesStorage:    coreRolesStorage,
+		rolesStorage:        rolesStorage,
 		sso:                 ssoService,
 		authorizer:          authorizer,
 		legacyAccessClient:  legacyAccessClient,
@@ -157,11 +159,17 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if b.enableAuthZApis {
 		// v0alpha1
-		store, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
 		if err != nil {
 			return err
 		}
-		storage[iamv0.CoreRoleInfo.StoragePath()] = store
+		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
+
+		roleStore, err := NewLocalStore(iamv0.RoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.rolesStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.RoleInfo.StoragePath()] = roleStore
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
@@ -325,7 +333,7 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 	}
 
 	client := resource.NewLocalResourceClient(server)
-	optsGetter := apistore.NewRESTOptionsGetterForClient(client, defaultOpts.StorageConfig.Config, nil)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	return store, err

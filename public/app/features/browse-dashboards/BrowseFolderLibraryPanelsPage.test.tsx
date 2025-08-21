@@ -1,9 +1,9 @@
-import { render as rtlRender, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { SetupServer, setupServer } from 'msw/node';
 import { useParams } from 'react-router-dom-v5-compat';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen } from 'test/test-utils';
 
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -11,10 +11,7 @@ import BrowseFolderLibraryPanelsPage from './BrowseFolderLibraryPanelsPage';
 import { getLibraryElementsResponse } from './fixtures/libraryElements.fixture';
 import * as permissions from './permissions';
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
-
+setupMockServer();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
@@ -28,15 +25,15 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn(),
 }));
 
-const mockFolderName = 'myFolder';
-const mockFolderUid = '12345';
+const [_, { folderA }] = getFolderFixtures();
+const mockFolderName = folderA.item.title;
+const mockFolderUid = folderA.item.uid;
 const mockLibraryElementsResponse = getLibraryElementsResponse(1, {
   folderUid: mockFolderUid,
 });
 
 describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   (useParams as jest.Mock).mockReturnValue({ uid: mockFolderUid });
-  let server: SetupServer;
   const mockPermissions = {
     canCreateDashboards: true,
     canEditDashboards: true,
@@ -48,14 +45,8 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
     canDeleteDashboards: true,
   };
 
-  beforeAll(() => {
-    server = setupServer(
-      http.get('/api/folders/:uid', () => {
-        return HttpResponse.json({
-          title: mockFolderName,
-          uid: mockFolderUid,
-        });
-      }),
+  beforeEach(() => {
+    server.use(
       http.get('/api/library-elements', () => {
         return HttpResponse.json({
           result: mockLibraryElementsResponse,
@@ -65,11 +56,6 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
         return HttpResponse.json({});
       })
     );
-    server.listen();
-  });
-
-  afterAll(() => {
-    server.close();
   });
 
   beforeEach(() => {
@@ -79,7 +65,6 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    server.resetHandlers();
   });
 
   it('displays the folder title', async () => {
