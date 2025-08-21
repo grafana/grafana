@@ -362,7 +362,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // TODO -- saving for another day.
   });
 
-  test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -425,7 +425,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).not.toBeVisible();
   });
 
-  test('Empty Table panel', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '3' }),
