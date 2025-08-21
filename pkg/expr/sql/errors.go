@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
+const sseErrBase = "sse.sql."
+
 // GoMySQLServerError represents an error from the underlying Go MySQL Server
 type GoMySQLServerError struct {
 	err      error
@@ -41,36 +43,6 @@ func (e *ErrorWithCategory) Category() string {
 func (e *ErrorWithCategory) Unwrap() error {
 	return e.err
 }
-
-const sseErrBase = "sse.sql."
-
-const ErrCategoryInputLimitExceeded = "input_limit_exceeded"
-
-var inputLimitExceededStr = "sql expression [{{ .Public.refId }}] was not run because the number of input cells (columns*rows) to the sql expression exceeded the configured limit of {{ .Public.inputLimit }}"
-
-var InputLimitExceededError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryInputLimitExceeded).MustTemplate(
-	inputLimitExceededStr,
-	errutil.WithPublic(inputLimitExceededStr))
-
-func MakeInputLimitExceededError(refID string, inputLimit int64) CategorizedError {
-	data := errutil.TemplateData{
-		Public: map[string]interface{}{
-			"refId":      refID,
-			"inputLimit": inputLimit,
-		},
-	}
-
-	return &ErrorWithCategory{category: ErrCategoryInputLimitExceeded, err: InputLimitExceededError.Build(data)}
-}
-
-var duplicateStringColumnErrorStr = "sql expression [{{ .Public.refId }}] failed because it returned duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination."
-
-var DuplicateStringColumnError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryDuplicateStringColumns).MustTemplate(
-	inputLimitExceededStr,
-	errutil.WithPublic(duplicateStringColumnErrorStr),
-)
 
 // Error implements the error interface
 func (e *GoMySQLServerError) Error() string {
@@ -148,7 +120,35 @@ func MakeGeneralGMSError(err *GoMySQLServerError, refID string) CategorizedError
 	return &ErrorWithCategory{category: err.Category(), err: GeneralGMSError.Build(data)}
 }
 
+const ErrCategoryInputLimitExceeded = "input_limit_exceeded"
+
+var inputLimitExceededStr = "sql expression [{{ .Public.refId }}] was not run because the number of input cells (columns*rows) to the sql expression exceeded the configured limit of {{ .Public.inputLimit }}"
+
+var InputLimitExceededError = errutil.NewBase(
+	errutil.StatusBadRequest, sseErrBase+ErrCategoryInputLimitExceeded).MustTemplate(
+	inputLimitExceededStr,
+	errutil.WithPublic(inputLimitExceededStr))
+
+func MakeInputLimitExceededError(refID string, inputLimit int64) CategorizedError {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":      refID,
+			"inputLimit": inputLimit,
+		},
+	}
+
+	return &ErrorWithCategory{category: ErrCategoryInputLimitExceeded, err: InputLimitExceededError.Build(data)}
+}
+
 const ErrCategoryDuplicateStringColumns = "duplicate_string_columns"
+
+var duplicateStringColumnErrorStr = "sql expression [{{ .Public.refId }}] failed because it returned duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination."
+
+var DuplicateStringColumnError = errutil.NewBase(
+	errutil.StatusBadRequest, sseErrBase+ErrCategoryDuplicateStringColumns).MustTemplate(
+	duplicateStringColumnErrorStr,
+	errutil.WithPublic(duplicateStringColumnErrorStr),
+)
 
 func MakeDuplicateStringColumnError(examples []string) CategorizedError {
 	const limit = 5
