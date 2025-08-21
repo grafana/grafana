@@ -56,6 +56,10 @@ const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGro
   }
 };
 
+const assertNoErrors = async (page: Page) => {
+  await expect(page.getByTestId('data-testid Alert error')).not.toBeVisible();
+};
+
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
   test('Tests word wrap, hover overflow, and cell inspect', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
@@ -105,6 +109,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const loremIpsumText = await loremIpsumCell.textContent();
     expect(loremIpsumText).toBeDefined();
     await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
+
+    await assertNoErrors(page);
   });
 
   test('Tests visibility and display name via overrides', async ({ gotoDashboardPage, selectors, page }) => {
@@ -133,6 +139,13 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await displayNameInput.fill('State (renamed)');
     await displayNameInput.press('Enter');
     expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
+
+    // toggle the "State" column visibility again to hide it again. this confirms that we avoid bugs related to
+    // array lengths between the fields array and the column widths array.
+    await hideStateColumnSwitch.click();
+    expect(page.getByRole('row').nth(0)).not.toContainText('State');
+
+    await assertNoErrors(page);
   });
 
   // we test niche cases for sorting, filtering, pagination, etc. in a unit tests already.
@@ -162,6 +175,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
+
+    await assertNoErrors(page);
   });
 
   test('Tests filtering within a column', async ({ gotoDashboardPage, selectors, page }) => {
@@ -199,6 +214,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // did it actually filter out our value?
     await expect(getCell(page, 1, infoColumnIdx)).resolves.not.toHaveText(firstStateValue);
+
+    await assertNoErrors(page);
   });
 
   test('Tests pagination, row height adjustment', async ({ gotoDashboardPage, selectors, page }) => {
@@ -261,6 +278,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     expect(fourthPageStatus.start).toBe(largeRowStatus.end * 3 + 1);
     expect(fourthPageStatus.end).toBe(largeRowStatus.end * 4);
     expect(fourthPageStatus.total).toBe(largeRowStatus.total);
+
+    await assertNoErrors(page);
   });
 
   test.skip('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
@@ -351,9 +370,11 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // add an Action to the whole table and check that the action button is added to the tooltip.
     // TODO -- saving for another day.
+
+    await assertNoErrors(page);
   });
 
-  test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
+  test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -414,9 +435,11 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).not.toBeVisible();
+
+    await assertNoErrors(page);
   });
 
-  test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
+  test('Empty Table panel', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '3' }),
@@ -428,5 +451,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).not.toBeVisible();
+
+    await assertNoErrors(page);
   });
 });
