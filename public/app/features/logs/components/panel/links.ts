@@ -42,18 +42,13 @@ function getDataSourceAndQueryFromLink(link: LinkModel): EmbeddedInternalLink | 
   const params = Object.values(Object.fromEntries(new URLSearchParams(paramsStrings)));
   try {
     const parsed = JSON.parse(params[0]);
-    const dsUID: string = 'datasource' in parsed && typeof parsed.datasource === 'string' ? parsed.datasource : '';
+    const dsUID: string = 'datasource' in parsed && parsed.datasource ? parsed.datasource.toString() : '';
     const query: string =
-      'queries' in parsed &&
-      Array.isArray(parsed.queries) &&
-      'query' in parsed.queries[0] &&
-      typeof parsed.queries[0].query === 'string'
-        ? parsed.queries[0].query
+      'queries' in parsed && Array.isArray(parsed.queries) && 'query' in parsed.queries[0] && parsed.queries[0].query
+        ? parsed.queries[0].query.toString()
         : '';
     const queryType =
-      'queryType' in parsed.queries[0] && typeof parsed.queries[0].queryType === 'string'
-        ? parsed.queries[0].queryType
-        : '';
+      'queryType' in parsed.queries[0] && parsed.queries[0].queryType ? parsed.queries[0].queryType.toString() : '';
     return dsUID && query && queryType
       ? {
           dsUID,
