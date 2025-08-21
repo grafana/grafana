@@ -131,6 +131,5 @@ spec:
 				require.Equal(t, tc.expectedFolder, annotations["grafana.app/folder"], "folder annotation should match expected")
 			})
 		}
-
 	})
 }
