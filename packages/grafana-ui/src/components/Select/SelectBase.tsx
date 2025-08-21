@@ -183,10 +183,26 @@ export function SelectBase<T, Rest = {}>({
 
   const onChangeWithEmpty = useCallback(
     (value: SelectableValue<T>, action: ActionMeta) => {
-      if (isMulti && (value === undefined || value === null)) {
+      let newValue = value;
+      // Change 3: Exclusive 'All' selection logic for multi-select
+      if (isMulti && Array.isArray(newValue)) {
+        const hasAll = newValue.some(opt => opt.value === '$__all');
+        if (hasAll) {
+          // If 'All' is selected, deselect all others and keep only 'All'
+          newValue = newValue.filter(opt => opt.value === '$__all');
+        } else {
+          // If 'All' is currently selected but another option is picked, remove 'All'
+          newValue = newValue.filter(opt => opt.value !== '$__all');
+        }
+      }
+      // Change 2: Clear filter input after selection
+      if (typeof setHasInputValue === 'function') {
+        setHasInputValue(false); // Reset filter input
+      }
+      if (isMulti && (newValue === undefined || newValue === null)) {
         return onChange([], action);
       }
-      onChange(value, action);
+      onChange(newValue, action);
     },
     [isMulti, onChange]
   );
