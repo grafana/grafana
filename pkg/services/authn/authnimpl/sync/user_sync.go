@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"sync/atomic"
 
 	"github.com/Masterminds/semver/v3"
@@ -116,20 +117,20 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 }
 
 type UserSync struct {
-	isUserProvisioningEnabled  bool
-	rejectNonProvisionedUsers  bool
-	userService                user.Service
-	authInfoService            login.AuthInfoService
-	userProtectionService      login.UserProtectionService
-	quotaService               quota.Service
-	log                        log.Logger
-	tracer                     tracing.Tracer
-	features                   featuremgmt.FeatureToggles
-	lastSeenSF                 *singleflight.Group
-	scimUtil                   *scimutil.SCIMUtil
-	staticConfig               *StaticSCIMConfig
-	scimSuccessfulLogin        atomic.Bool
-	samlCatalogSuccessfulLogin atomic.Bool
+	isUserProvisioningEnabled bool
+	rejectNonProvisionedUsers bool
+	userService               user.Service
+	authInfoService           login.AuthInfoService
+	userProtectionService     login.UserProtectionService
+	quotaService              quota.Service
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	features                  featuremgmt.FeatureToggles
+	lastSeenSF                *singleflight.Group
+	scimUtil                  *scimutil.SCIMUtil
+	staticConfig              *StaticSCIMConfig
+	scimSuccessfulLogin       atomic.Bool
+	samlCatalogStats          sync.Map
 }
 
 // GetUsageStats implements registry.ProvidesUsageStats
@@ -141,12 +142,27 @@ func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
 		stats["stats.features.scim.has_successful_login.count"] = 0
 	}
 
-	if s.samlCatalogSuccessfulLogin.Load() {
-		stats["stats.features.saml.catalog_successful_login.count"] = 1
-	} else {
-		stats["stats.features.saml.catalog_successful_login.count"] = 0
-	}
+	s.samlCatalogStats.Range(func(key, value interface{}) bool {
+		version := key.(string)
+		flag := value.(*atomic.Bool)
+		if flag.Load() {
+			stats[fmt.Sprintf("stats.features.saml.catalog_version_%s.count", version)] = 1
+		} else {
+			stats[fmt.Sprintf("stats.features.saml.catalog_version_%s.count", version)] = 0
+		}
+		return true
+	})
 	return stats
+}
+
+func (s *UserSync) setSamlCatalogVersion(version string) {
+	value, loaded := s.samlCatalogStats.LoadOrStore(version, &atomic.Bool{})
+	flag := value.(*atomic.Bool)
+	flag.Store(true)
+
+	if !loaded {
+		s.log.Info("New SAML catalog version detected", "version", version)
+	}
 }
 
 func (s *UserSync) CatalogLoginHook(_ context.Context, identity *authn.Identity, r *authn.Request) error {
@@ -159,7 +175,7 @@ func (s *UserSync) CatalogLoginHook(_ context.Context, identity *authn.Identity,
 		return nil
 	}
 
-	s.samlCatalogSuccessfulLogin.Store(true)
+	s.setSamlCatalogVersion(catalogVersion)
 	return nil
 }
 
