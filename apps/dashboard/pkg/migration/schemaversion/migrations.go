@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	MIN_VERSION    = 15
+	MIN_VERSION    = 14
 	LATEST_VERSION = 41
 )
 
@@ -38,6 +38,7 @@ type PanelPluginInfoProvider interface {
 
 func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPluginInfoProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
+		15: V15,
 		16: V16,
 		17: V17,
 		18: V18,
