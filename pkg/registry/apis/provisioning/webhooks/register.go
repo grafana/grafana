@@ -3,8 +3,11 @@ package webhooks
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
+
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -22,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -81,7 +81,6 @@ func ProvideWebhooks(
 				urlProvider,
 				repositorySecrets,
 				ghFactory,
-				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
 				[]jobs.Worker{pullRequestWorker},
 				isPublic, // Pass the public URL flag
@@ -98,7 +97,6 @@ type WebhookExtra struct {
 	urlProvider func(namespace string) string
 	secrets     secrets.RepositorySecrets
 	ghFactory   *github.Factory
-	clonedir    string
 	parsers     resources.ParserFactory
 	workers     []jobs.Worker
 	isPublic    bool // Flag to determine if webhook-enhanced repositories should be created
@@ -110,7 +108,6 @@ func NewWebhookExtra(
 	urlProvider func(namespace string) string,
 	secrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
-	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
 	isPublic bool,
@@ -121,7 +118,6 @@ func NewWebhookExtra(
 		urlProvider: urlProvider,
 		secrets:     secrets,
 		ghFactory:   ghFactory,
-		clonedir:    clonedir,
 		parsers:     parsers,
 		workers:     workers,
 		isPublic:    isPublic,
