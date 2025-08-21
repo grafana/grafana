@@ -181,7 +181,8 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
 const registry: KeyValue<Gazetteer> = {};
 
-export const COUNTRIES_GAZETTEER_PATH = 'public/gazetteer/countries.json';
+// TODO what to do when no CDN path?
+export const COUNTRIES_GAZETTEER_PATH = `${window.public_cdn_path}gazetteer/countries.json`;
 
 /**
  * Given a path to a file return a cached lookup function
@@ -196,7 +197,7 @@ export async function getGazetteer(path?: string): Promise<Gazetteer> {
   if (!lookup) {
     try {
       // block the async function
-      const data = await getBackendSrv().get(path!);
+      const data = await fetch(path);
       lookup = loadGazetteer(path, data);
     } catch (err) {
       console.warn('Error loading placename lookup', path, err);

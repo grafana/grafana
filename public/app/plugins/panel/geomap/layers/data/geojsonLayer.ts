@@ -80,6 +80,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     const interpolatedUrl = getTemplateSrv().replace(config.src || '');
 
     const source = new VectorSource({
+      // TODO what to do when no CDN path?
       url: `${window.public_cdn_path}${interpolatedUrl.replace(/^(public\/)/, '')}`,
       format: new GeoJSON(),
     });
