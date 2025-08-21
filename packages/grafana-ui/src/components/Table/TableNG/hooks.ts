@@ -368,7 +368,15 @@ export function useHeaderHeight({
     if (!enabled) {
       return 0;
     }
-    return getRowHeight(fields, -1, columnAvailableWidths, TABLE.HEADER_HEIGHT, measurers, TABLE.CELL_PADDING);
+    return getRowHeight(
+      fields,
+      -1,
+      columnAvailableWidths,
+      TABLE.HEADER_HEIGHT,
+      measurers,
+      TABLE.LINE_HEIGHT,
+      TABLE.CELL_PADDING
+    );
   }, [fields, enabled, columnAvailableWidths, measurers]);
 
   return headerHeight;
