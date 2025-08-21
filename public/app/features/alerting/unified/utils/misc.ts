@@ -134,7 +134,8 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const dataSource = queryParams.dataSource === undefined ? undefined : String(queryParams.dataSource);
   const ruleType = queryParams.ruleType === undefined ? undefined : String(queryParams.ruleType);
   const groupBy = queryParams.groupBy === undefined ? undefined : String(queryParams.groupBy).split(',');
-  return { queryString, alertState, dataSource, groupBy, ruleType };
+  const receivers = queryParams.receivers === undefined ? undefined : String(queryParams.receivers).split(',');
+  return { queryString, alertState, dataSource, groupBy, ruleType, receivers };
 };
 
 export const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => {

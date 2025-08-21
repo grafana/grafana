@@ -2221,6 +2221,13 @@
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "Filter by contact points",
+      "contact-point": "Contact point",
+      "no-grouping": "No grouping",
+      "placeholder-contact-point": "Filter by contact point",
+      "tooltip-contact-point": "Filter notifications by the contact point they are being delivered to."
+    },
     "receiver-form": {
       "add-contact-point-integration": "Add contact point integration",
       "body-attention": "Because there is no default policy configured yet, this contact point will automatically be set as default.",
