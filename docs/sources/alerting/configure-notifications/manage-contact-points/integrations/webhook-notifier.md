@@ -282,7 +282,7 @@ Example using JSON helper functions:
 
 ### OAuth2 configuration
 
-The HTTP client configurations supports OAuth 2.0 authentication using the `client_credentials` grant type. Alertmanager fetches an access token from the specified endpoint with the given client access and secret keys.
+The HTTP client configuration supports OAuth 2.0 authentication using the `client_credentials` grant type. Alertmanager fetches an access token from the specified endpoint with the given client access and secret keys.
 
 | Option              | Description                                                                                             |
 | ------------------- | ------------------------------------------------------------------------------------------------------- |
