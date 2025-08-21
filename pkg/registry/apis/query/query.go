@@ -154,7 +154,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			},
 
 			func(err error) {
-				connectLogger.Error("error caught in handler", "err", err)
+				connectLogger.Error("error caught in handler", "err", err, "X-Rule-Uid", httpreq.Header.Get("X-Rule-Uid"))
 				span.SetStatus(codes.Error, "query error")
 
 				if err == nil {
