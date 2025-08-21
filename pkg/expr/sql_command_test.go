@@ -163,8 +163,8 @@ func TestSQLCommandMetrics(t *testing.T) {
 	_, err = cmd.Execute(context.Background(), time.Now(), mathexp.Vars{}, &testTracer{}, m)
 	require.NoError(t, err)
 
-	// Verify error count was not incremented
-	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCount), "Expected error metric not to be recorded")
+	// Verify count metric was recorded
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCount), "Expected count metric to be recorded")
 
 	// Verify duration was recorded
 	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandDuration), "Expected duration metric to be recorded")
