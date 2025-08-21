@@ -1,4 +1,4 @@
-import { createContext, ItemDataType } from '@grafana/assistant';
+import { createAssistantContextItem } from '@grafana/assistant';
 import {
   DataFrame,
   DataQueryResponse,
@@ -14,14 +14,10 @@ import { enrichDataFrameWithAssistantContentMapper } from './utils';
 
 // Mock the createContext function
 jest.mock('@grafana/assistant', () => ({
-  createContext: jest.fn(),
-  ItemDataType: {
-    Datasource: 'datasource',
-    Structured: 'structured',
-  },
+  createAssistantContextItem: jest.fn(),
 }));
 
-const mockCreateContext = createContext as jest.MockedFunction<typeof createContext>;
+const mockCreateContext = createAssistantContextItem as jest.MockedFunction<typeof createAssistantContextItem>;
 
 describe('enrichDataFrameWithAssistantContentMapper', () => {
   beforeEach(() => {
@@ -113,14 +109,12 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       expect(mockCreateContext).toHaveBeenCalledTimes(2);
 
       // Verify datasource context
-      expect(mockCreateContext).toHaveBeenCalledWith(ItemDataType.Datasource, {
-        datasourceName: 'PyroscopeDatasource',
+      expect(mockCreateContext).toHaveBeenCalledWith('datasource', {
         datasourceUid: 'test-uid',
-        datasourceType: 'grafana-pyroscope-datasource',
       });
 
       // Verify structured context
-      expect(mockCreateContext).toHaveBeenCalledWith(ItemDataType.Structured, {
+      expect(mockCreateContext).toHaveBeenCalledWith('structured', {
         title: 'Analyze Flame Graph',
         data: {
           start: request.range.from.valueOf(),
@@ -327,7 +321,7 @@ describe('enrichDataFrameWithAssistantContentMapper', () => {
       const mapper = enrichDataFrameWithAssistantContentMapper(request, 'TestDatasource');
       mapper(response);
 
-      expect(mockCreateContext).toHaveBeenCalledWith(ItemDataType.Structured, {
+      expect(mockCreateContext).toHaveBeenCalledWith('structured', {
         title: 'Analyze Flame Graph',
         data: {
           start: fromTime.valueOf(),

@@ -3,7 +3,6 @@ package webhooks
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -80,7 +79,6 @@ func ProvideWebhooks(
 				webhook,
 				urlProvider,
 				ghFactory,
-				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
 				[]jobs.Worker{pullRequestWorker},
 				isPublic, // Pass the public URL flag
@@ -96,7 +94,6 @@ type WebhookExtra struct {
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
 	ghFactory   *github.Factory
-	clonedir    string
 	parsers     resources.ParserFactory
 	workers     []jobs.Worker
 	isPublic    bool // Flag to determine if webhook-enhanced repositories should be created
@@ -107,7 +104,6 @@ func NewWebhookExtra(
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
 	ghFactory *github.Factory,
-	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
 	isPublic bool,
@@ -117,7 +113,6 @@ func NewWebhookExtra(
 		webhook:     webhook,
 		urlProvider: urlProvider,
 		ghFactory:   ghFactory,
-		clonedir:    clonedir,
 		parsers:     parsers,
 		workers:     workers,
 		isPublic:    isPublic,

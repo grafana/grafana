@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -95,7 +94,6 @@ type APIBuilder struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
 	ghFactory           *github.Factory
-	clonedir            string // where repo clones are managed
 	jobs                interface {
 		jobs.Queue
 		jobs.Store
@@ -125,7 +123,6 @@ func NewAPIBuilder(
 	local *local.LocalFolderResolver,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
-	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
@@ -156,7 +153,6 @@ func NewAPIBuilder(
 		clients:             clients,
 		parsers:             parsers,
 		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
-		clonedir:            clonedir,
 		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
@@ -251,7 +247,6 @@ func RegisterAPIService(
 	}
 	builder := NewAPIBuilder(folderResolver, features,
 		client,
-		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		usageStats,
