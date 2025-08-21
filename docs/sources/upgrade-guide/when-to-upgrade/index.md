@@ -124,11 +124,13 @@ Here is an overview of version support through 2026:
 Self-managed Grafana follows semantic-like versioning (MAJOR.MINOR.PATCH). Here's how different types of releases work:
 
 - **Major releases** (e.g., 12.5.8, 13.0.0):
+
   - Awesome new features as well as significant architectural improvements and modernizations
   - May include breaking changes that require migration steps
   - Released once per year
 
 - **Minor releases** (e.g., 12.3.0, 12.4.0):
+
   - Contain new features and enhancements
   - Include bug fixes and security patches
   - Released every other month
@@ -141,11 +143,13 @@ Self-managed Grafana follows semantic-like versioning (MAJOR.MINOR.PATCH). Here'
 **Support levels by version:**
 
 - **Full Support** (current major version):
+
   - Gets new minor releases with new features approximately every other month
   - All minor versions within the major receive patch releases until end of life
   - Example: Major 12.x gets new features via 12.1.0, 12.2.0, 12.3.0, etc.
 
 - **Patch Support** (individual minor versions):
+
   - Each minor version receives patch releases (bug fixes and security patches) until end of life
   - No new features - these only come with new minor releases
   - Example: 12.3.x gets 12.3.1, 12.3.2, etc. with fixes only
