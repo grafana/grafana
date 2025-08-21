@@ -571,6 +571,14 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"health", "hook"},
+						},
+					},
 					"checked": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When the health was checked last time",
