@@ -48,9 +48,11 @@ function FolderCreationModal({
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const [title, setTitle] = useState('');
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [createFolder] = useNewFolderMutation();
 
   const onSubmit = async () => {
+    setIsCreatingFolder(true);
     const { data, error } = await createFolder({ title });
 
     if (error) {
@@ -59,6 +61,7 @@ function FolderCreationModal({
       onCreate({ title: data.title, uid: data.uid });
       notifyApp.success('Folder created');
     }
+    setIsCreatingFolder(false);
   };
 
   return (
@@ -93,7 +96,7 @@ function FolderCreationModal({
           </Button>
           <Button
             onClick={onSubmit}
-            disabled={!title}
+            disabled={!title || isCreatingFolder}
             data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
           >
             <Trans i18nKey="alerting.create-new-folder.folder.create">Create</Trans>
