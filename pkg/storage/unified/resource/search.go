@@ -80,13 +80,14 @@ type ResourceIndex interface {
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
 
-	// UpdateIndex updates the index with the latest data to guarantee strong consistency during the search.
-	UpdateIndex(ctx context.Context, reason string) error
+	// UpdateIndex updates the index with the latest data (using update function provided when index was built) to guarantee strong consistency during the search.
+	// Returns RV to which index was updated.
+	UpdateIndex(ctx context.Context, reason string) (int64, error)
 }
 
 type BuildFn func(index ResourceIndex) (int64, error)
 
-// UpdateFn is responsible for updating index with changes since given RV. It should return new RV, number of updated documents and error, if any.
+// UpdateFn is responsible for updating index with changes since given RV. It should return new RV (to be used as next sinceRV), number of updated documents and error, if any.
 type UpdateFn func(context context.Context, index ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error)
 
 // SearchBackend contains the technology specific logic to support search
@@ -715,7 +716,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 
 	if s.searchAfterWrite {
 		start := time.Now()
-		err := idx.UpdateIndex(ctx, reason)
+		_, err := idx.UpdateIndex(ctx, reason)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update index to guarantee strong consistency: %w", err)
 		}
