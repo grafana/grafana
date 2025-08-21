@@ -1186,6 +1186,53 @@ func TestIndexUpdate(t *testing.T) {
 	require.Equal(t, int64(5), searchTitle(t, idx, "gen_2", 10, ns).TotalHits)
 }
 
+func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
+
+	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
+		var items []*resource.BulkIndexItem
+		for i := 0; i < 5; i++ {
+			items = append(items, &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns.Namespace,
+						Group:     ns.Group,
+						Resource:  ns.Resource,
+						Name:      fmt.Sprintf("doc%d", i),
+					},
+					Title: fmt.Sprintf("Document %d (gen_%d)", i, 5),
+				},
+			})
+		}
+
+		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		// Simulate RV increase
+		return sinceRV + int64(5), 5, err
+	}
+
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	_, err = idx.UpdateIndex(ctx, "test")
+	require.NoError(t, err)
+
+	_, err = be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn)
+	require.NoError(t, err)
+
+	_, err = idx.UpdateIndex(ctx, "test")
+	require.Contains(t, err.Error(), bleve.ErrorIndexClosed.Error())
+}
+
+// this is testing concurrent index updates, not concurrent index update + search
 // Verify concurrent updates and searches work as expected.
 func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 	ns := resource.NamespacedResource{
@@ -1256,11 +1303,11 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
 
 	updateErr := fmt.Errorf("failed to update index")
-	fn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
+	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		time.Sleep(100 * time.Millisecond)
 		return 0, 0, updateErr
 	}
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), fn)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), updaterFn)
 	require.NoError(t, err)
 
 	t.Run("update fail", func(t *testing.T) {
