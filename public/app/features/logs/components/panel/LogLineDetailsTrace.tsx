@@ -43,13 +43,13 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
     }
     const query = dataSource.query({
       app,
-      requestId: 'test',
+      requestId: `log-details-trace-${traceRef.query}`,
       targets: [
         {
           // @ts-expect-error
           query: traceRef.query,
           queryType: 'traceql',
-          refId: 'log-line-details-trace',
+          refId: `log-details-trace-${traceRef.query}`,
           tableType: SearchTableType.Traces,
           filters: [],
         },
