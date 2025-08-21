@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 12,
+  "title": "Graph Thresholds Migration Test",
+  "panels": [
+    {
+      "id": 1,
+      "type": "graph",
+      "title": "Graph with Thresholds",
+      "grid": {
+        "threshold1": 80,
+        "threshold1Color": "#d44a3a",
+        "threshold2": 90,
+        "threshold2Color": "#d44a3a",
+        "thresholdLine": true
+      }
+    },
+    {
+      "id": 2,
+      "type": "graph",
+      "title": "Graph with Single Threshold",
+      "grid": {
+        "threshold1": 75,
+        "threshold1Color": "#7EB26D",
+        "thresholdLine": false
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Non-Graph Panel",
+      "grid": {
+        "threshold1": 50,
+        "threshold1Color": "#EAB839"
+      }
+    },
+    {
+      "id": 4,
+      "type": "graph",
+      "title": "Graph with Existing Thresholds",
+      "thresholds": [
+        {
+          "value": 60,
+          "color": "#7EB26D"
+        }
+      ],
+      "grid": {
+        "threshold1": 85,
+        "threshold1Color": "#d44a3a",
+        "thresholdLine": true
+      }
+    }
+  ]
+}

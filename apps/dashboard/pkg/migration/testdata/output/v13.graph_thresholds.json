@@ -1,0 +1,141 @@
+{
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {},
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [
+        {
+          "colorMode": "custom",
+          "line": true,
+          "lineColor": "#d44a3a",
+          "op": "gt",
+          "value": 80
+        },
+        {
+          "colorMode": "custom",
+          "line": true,
+          "lineColor": "#d44a3a",
+          "op": "gt",
+          "value": 90
+        }
+      ],
+      "title": "Graph with Thresholds",
+      "type": "graph"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {},
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [
+        {
+          "colorMode": "custom",
+          "fill": true,
+          "fillColor": "#7EB26D",
+          "op": "gt",
+          "value": 75
+        }
+      ],
+      "title": "Graph with Single Threshold",
+      "type": "graph"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {
+        "threshold1": 50,
+        "threshold1Color": "#EAB839"
+      },
+      "id": 3,
+      "options": {
+        "justifyMode": "auto",
+        "percentChangeColorMode": "standard",
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Non-Graph Panel",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "grid": {},
+      "id": 4,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "thresholds": [
+        {
+          "color": "#7EB26D",
+          "op": "gt",
+          "value": 60
+        },
+        {
+          "colorMode": "custom",
+          "line": true,
+          "lineColor": "#d44a3a",
+          "op": "gt",
+          "value": 85
+        }
+      ],
+      "title": "Graph with Existing Thresholds",
+      "type": "graph"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "title": "Graph Thresholds Migration Test"
+}
