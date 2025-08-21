@@ -3,7 +3,7 @@ import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-gr
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
-import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
+import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
 import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
@@ -13,9 +13,8 @@ import {
   applySort,
   getColumnTypes,
   getRowHeight,
-  buildHeaderLineCounters,
-  buildRowLineCounters,
-  getCellOptions,
+  buildHeaderHeightMeasurers,
+  buildCellHeightMeasurers,
 } from './utils';
 
 // Helper function to get displayed value
@@ -341,7 +340,7 @@ export function useHeaderHeight({
 }: UseHeaderHeightOptions): number {
   const perIconSpace = ICON_WIDTH + ICON_GAP;
 
-  const lineCounters = useMemo(() => buildHeaderLineCounters(fields, typographyCtx), [fields, typographyCtx]);
+  const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -369,16 +368,8 @@ export function useHeaderHeight({
     if (!enabled) {
       return 0;
     }
-    return getRowHeight(
-      fields,
-      -1,
-      columnAvailableWidths,
-      TABLE.HEADER_HEIGHT,
-      lineCounters,
-      TABLE.LINE_HEIGHT,
-      TABLE.CELL_PADDING
-    );
-  }, [fields, enabled, columnAvailableWidths, lineCounters]);
+    return getRowHeight(fields, -1, columnAvailableWidths, TABLE.HEADER_HEIGHT, measurers, TABLE.CELL_PADDING);
+  }, [fields, enabled, columnAvailableWidths, measurers]);
 
   return headerHeight;
 }
@@ -400,8 +391,8 @@ export function useRowHeight({
   expandedRows,
   typographyCtx,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
-  const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
-  const hasWrappedCols = useMemo(() => lineCounters?.length ?? 0 > 0, [lineCounters]);
+  const measurers = useMemo(() => buildCellHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
+  const hasWrappedCols = useMemo(() => measurers?.length ?? 0 > 0, [measurers]);
 
   const colWidths = useMemo(() => {
     const columnWidthAffordance = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
@@ -437,27 +428,11 @@ export function useRowHeight({
       // regular rows
       let result = cache[row.__index];
       if (!result) {
-        result = cache[row.__index] = getRowHeight(
-          fields,
-          row.__index,
-          colWidths,
-          defaultHeight,
-          lineCounters,
-          TABLE.LINE_HEIGHT,
-          (field, numLines) => {
-            // Pill cells have vertical padding between each row
-            if (getCellOptions(field).type === TableCellDisplayMode.Pill) {
-              return TABLE.CELL_PADDING * (numLines - 1) + TABLE.CELL_PADDING * 2;
-            }
-
-            // default vertical padding for cells
-            return TABLE.CELL_PADDING * 2;
-          }
-        );
+        result = cache[row.__index] = getRowHeight(fields, row.__index, colWidths, defaultHeight, measurers);
       }
       return result;
     };
-  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, lineCounters, expandedRows]);
+  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, measurers, expandedRows]);
 
   return rowHeight;
 }
@@ -534,16 +509,28 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
     const el = ref.current?.element;
 
-    if (el) {
-      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    if (!el) {
+      return;
     }
-  }, [ref, height, renderedRows]);
+
+    const updateScrollbarDimensions = () => {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    };
+
+    updateScrollbarDimensions();
+
+    const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
+    resizeObserver.observe(el);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, height]);
 
   return scrollbarWidth;
 }

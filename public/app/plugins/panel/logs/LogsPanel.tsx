@@ -125,6 +125,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Set the mode used by the Log Details panel. Displayed as a sidebar, or inline below the log line. Defaults to "inline".
    * detailsMode?: 'inline' | 'sidebar'
+   *
+   * When showing timestamps, toggle between showing nanoseconds or milliseconds.
+   * timestampResolution?: 'ms' | 'ns'
    */
 }
 interface LogsPermalinkUrlState {
@@ -166,8 +169,10 @@ export const LogsPanel = ({
     syntaxHighlighting,
     detailsMode: detailsModeProp,
     noInteractions,
+    timestampResolution,
     ...options
   },
+  height,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -561,6 +566,7 @@ export const LogsPanel = ({
         <div
           onMouseLeave={onLogContainerMouseLeave}
           className={style.logListContainer}
+          style={height ? { minHeight: height } : undefined}
           ref={(element: HTMLDivElement) => setScrollElement(element)}
         >
           {deduplicatedRows.length > 0 && scrollElement && (
@@ -607,6 +613,7 @@ export const LogsPanel = ({
               logOptionsStorageKey={storageKey}
               syntaxHighlighting={syntaxHighlighting}
               timeRange={data.timeRange}
+              timestampResolution={timestampResolution}
               timeZone={timeZone}
               wrapLogMessage={wrapLogMessage}
             />

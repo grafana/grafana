@@ -62,7 +62,6 @@
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
-    "@grafana/tsconfig": "^2.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",

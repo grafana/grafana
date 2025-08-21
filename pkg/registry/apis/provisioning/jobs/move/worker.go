@@ -81,11 +81,21 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		CommitOnlyOnceMessage: msg,
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
+		Ref:                   opts.Ref,
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
 	if err != nil {
 		return fmt.Errorf("move files in repository: %w", err)
+	}
+
+	// Set RefURLs if the repository supports it and we have a target ref
+	if opts.Ref != "" {
+		if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
+			if refURLs, urlErr := repoWithURLs.RefURLs(ctx, opts.Ref); urlErr == nil && refURLs != nil {
+				progress.SetRefURLs(ctx, refURLs)
+			}
+		}
 	}
 
 	if opts.Ref == "" {
@@ -120,7 +130,9 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		targetPath := w.constructTargetPath(opts.TargetPath, path)
 
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
-		result.Error = rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath)
+		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
+			result.Error = fmt.Errorf("moving file %s to %s: %w", path, targetPath, err)
+		}
 		progress.Record(ctx, result)
 		if err := progress.TooManyErrors(); err != nil {
 			return err

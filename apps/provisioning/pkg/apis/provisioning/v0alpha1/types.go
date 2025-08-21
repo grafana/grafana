@@ -17,7 +17,21 @@ type Repository struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
+	Secure SecureValues     `json:"secure,omitzero,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
+}
+
+// NOT YET USED FOR REAL -- testing secure value workflow
+type SecureValues struct {
+	// Token used to connect the configured repository
+	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
+
+	// Some webhooks (github) require a secret key value
+	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+}
+
+func (v SecureValues) IsZero() bool {
+	return v.Token.IsZero() && v.WebhookSecret.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -228,9 +242,21 @@ type RepositoryStatus struct {
 	Webhook *WebhookStatus `json:"webhook"`
 }
 
+// HealthFailureType represents different types of repository failures
+// +enum
+type HealthFailureType string
+
+const (
+	HealthFailureHook   HealthFailureType = "hook"
+	HealthFailureHealth HealthFailureType = "health"
+)
+
 type HealthStatus struct {
 	// When not healthy, requests will not be executed
 	Healthy bool `json:"healthy"`
+
+	// The type of the error
+	Error HealthFailureType `json:"error,omitempty"`
 
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
@@ -316,7 +342,7 @@ type ResourceWrapper struct {
 	Repository ResourceRepositoryInfo `json:"repository"`
 
 	// Typed links for this file (only supported by external systems, github etc)
-	URLs *ResourceURLs `json:"urls,omitempty"`
+	URLs *RepositoryURLs `json:"urls,omitempty"`
 
 	// The modified time in the remote file system
 	Timestamp *metav1.Time `json:"timestamp,omitempty"`
@@ -374,14 +400,14 @@ type ResourceRepositoryInfo struct {
 	Name string `json:"name"`
 }
 
-type ResourceURLs struct {
-	// A URL pointing to the this file in the repository
-	SourceURL string `json:"sourceURL,omitempty"`
-
+type RepositoryURLs struct {
 	// A URL pointing to the repository this lives in
 	RepositoryURL string `json:"repositoryURL,omitempty"`
 
-	// A URL that will create a new pull requeset for this branch
+	// A URL pointing to the file or ref in the repository
+	SourceURL string `json:"sourceURL,omitempty"`
+
+	// A URL that will create a new pull request for this branch
 	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
 
 	// Compare this version to the target branch
@@ -438,6 +464,11 @@ type ResourceStats struct {
 	// When legacy storage is still used, this will offer a shim
 	// +listType=atomic
 	Instance []ResourceCount `json:"instance,omitempty"`
+
+	// Stats across all unified storage
+	// When legacy storage is still used, this will offer a shim
+	// +listType=atomic
+	Unmanaged []ResourceCount `json:"unmanaged,omitempty"`
 
 	// Stats for each manager
 	// +listType=atomic

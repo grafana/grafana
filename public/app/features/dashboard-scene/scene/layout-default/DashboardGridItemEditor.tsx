@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -8,6 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -21,7 +23,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
-        id: 'repeat-by-variable-select',
+        id: uuidv4(),
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
@@ -42,15 +44,24 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.max', 'Max per row'),
+        id: uuidv4(),
         useShowIf: () => {
           const { variableName, repeatDirection } = gridItem.useState();
           return Boolean(variableName) && repeatDirection === 'h';
         },
-        render: () => <MaxPerRowOption gridItem={gridItem} />,
+        render: (descriptor) => <MaxPerRowOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     );
 
-  return [repeatCategory];
+  const conditionalRenderingCategory = useConditionalRenderingEditor(
+    undefined,
+    t(
+      'dashboard.conditional-rendering.editor.not-supported-for-custom-grid',
+      'Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.'
+    )
+  );
+
+  return [repeatCategory, conditionalRenderingCategory];
 }
 
 interface OptionComponentProps {
@@ -81,7 +92,7 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
   );
 }
 
-function MaxPerRowOption({ gridItem }: OptionComponentProps) {
+function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { maxPerRow } = gridItem.useState();
   const maxPerRowOptions: Array<SelectableValue<number>> = [2, 3, 4, 6, 8, 12].map((value) => ({
     label: value.toString(),
@@ -90,6 +101,7 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
 
   return (
     <Select
+      id={id}
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
       onChange={(value) => {

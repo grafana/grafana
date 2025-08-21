@@ -21,6 +21,14 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+jest.mock('react-redux', () => {
+  const actual = jest.requireActual('react-redux');
+  return {
+    ...actual,
+    useDispatch: jest.fn,
+  };
+});
+
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
   provisioningAPI: {
@@ -134,6 +142,7 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,
+  isReadOnlyRepo: false,
 };
 
 function setup(

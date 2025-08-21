@@ -1,16 +1,14 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { skipToken } from '@reduxjs/toolkit/query';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
-import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
@@ -46,6 +44,9 @@ export interface NestedFolderPickerProps {
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
+
+  /* HTML ID for the button element for form labels */
+  id?: string;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -70,15 +71,14 @@ export function NestedFolderPicker({
   excludeUIDs,
   permission = 'edit',
   onChange,
+  id,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const selectedFolder = useGetFolderQuery(value || skipToken);
+  const selectedFolder = useGetFolderQueryFacade(value);
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
   // but doesn't have access to the folder
   const isForbidden = getStatusFromError(selectedFolder.error) === 403;
-
-  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
 
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
@@ -287,6 +287,7 @@ export function NestedFolderPicker({
   if (!overlayOpen) {
     return (
       <Trigger
+        id={id}
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
@@ -361,7 +362,7 @@ export function NestedFolderPicker({
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
               idPrefix={overlayId}
-              foldersAreOpenable={nestedFoldersEnabled && !(search && searchResults)}
+              foldersAreOpenable={!(search && searchResults)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
             />

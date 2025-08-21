@@ -79,6 +79,38 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
+  test('Renders a log line with millisecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampResolution: 'ms',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504')).toBeInTheDocument();
+  });
+
+  test('Renders a log line with nanosecond timestamps', () => {
+    log.timestamp = '2025-08-06 11:35:19.504';
+    log.timeEpochMs = 1754472919504;
+    log.timeEpochNs = '1754472919504133766';
+    render(
+      <LogListContext.Provider
+        value={{
+          ...defaultValue,
+          timestampResolution: 'ns',
+        }}
+      >
+        <LogLine {...defaultProps} />
+      </LogListContext.Provider>
+    );
+    expect(screen.getByText('2025-08-06 11:35:19.504133766')).toBeInTheDocument();
+  });
+
   test('Renders a log line with displayed fields', () => {
     render(
       <LogListContextProvider {...contextProps}>
@@ -287,6 +319,23 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       await userEvent.click(await screen.findByText('show more'));
       await userEvent.click(await screen.findByText('show less'));
       expect(onOverflow).toHaveBeenCalledTimes(2);
+    });
+
+    test('When the collapsed state changes, the log line contents re-render', async () => {
+      log.collapsed = true;
+      log.raw = 'The full contents of the log line';
+
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+
+      expect(screen.queryByText(log.raw)).not.toBeInTheDocument();
+
+      await userEvent.click(await screen.findByText('show more'));
+
+      expect(screen.getByText(log.raw)).toBeInTheDocument();
     });
 
     test('Syncs the collapsed state with collapsed status changes in the log', async () => {

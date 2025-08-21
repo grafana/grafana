@@ -661,7 +661,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
-					MissingSeriesEvalsToResolve: util.Pointer(3),
+					MissingSeriesEvalsToResolve: util.Pointer[int64](3),
 				},
 			},
 		}
@@ -676,7 +676,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 			for _, rule := range result.Rules {
 				require.NotEmpty(t, rule.UID)
 				if rule.UID == "rule3" {
-					require.Equal(t, 3, *rule.MissingSeriesEvalsToResolve)
+					require.Equal(t, int64(3), *rule.MissingSeriesEvalsToResolve)
 				}
 			}
 		})
@@ -1027,6 +1027,15 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 		data, status, _ := apiClient.GetAllRulesWithStatus(t)
 		require.Equal(t, http.StatusOK, status)
 		require.Greater(t, len(data), 0)
+
+		t.Run("provisioned alert rules should have proper data", func(t *testing.T) {
+			provisionedRule, status, _ := apiClient.GetProvisioningAlertRule(t, "my_id_1")
+			require.Equal(t, http.StatusOK, status)
+
+			require.Equal(t, model.Duration(time.Second*120), provisionedRule.KeepFiringFor)
+			require.NotNil(t, provisionedRule.MissingSeriesEvalsToResolve)
+			require.Equal(t, int64(3), *provisionedRule.MissingSeriesEvalsToResolve)
+		})
 
 		t.Run("exported alert rules should escape $ characters", func(t *testing.T) {
 			// call export endpoint

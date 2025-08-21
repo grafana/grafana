@@ -84,7 +84,6 @@
     "xss": "^1.0.14"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@types/history": "4.7.11",
     "@types/lodash": "4.17.20",

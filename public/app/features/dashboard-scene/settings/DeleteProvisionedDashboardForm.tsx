@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Drawer, Stack } from '@grafana/ui';
+import { Button, Drawer, Stack } from '@grafana/ui';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepoInvalidStateBanner } from 'app/features/browse-dashboards/components/BulkActions/RepoInvalidStateBanner';
+import { getFolderURL } from 'app/features/browse-dashboards/components/utils';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
@@ -77,8 +79,7 @@ export function DeleteProvisionedDashboardForm({
   const onWriteSuccess = () => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
-    // TODO reset search state instead
-    window.location.href = '/dashboards';
+    navigate(getFolderURL(defaultValues.folder.uid || ''));
   };
 
   const onBranchSuccess = (path: string, info: ProvisionedOperationInfo, urls?: Record<string, string>) => {
@@ -118,17 +119,11 @@ export function DeleteProvisionedDashboardForm({
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>
             {readOnly && (
-              <Alert
-                title={t(
-                  'dashboard-scene.delete-provisioned-dashboard-form.title-this-repository-is-read-only',
-                  'This repository is read only'
-                )}
-              >
-                <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.delete-read-only-file-message">
-                  This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete
-                  this dashboard, please remove the file from your Git repository.
-                </Trans>
-              </Alert>
+              <RepoInvalidStateBanner
+                noRepository={false}
+                isReadOnlyRepo={true}
+                readOnlyMessage="To delete this dashboard, please remove the file from your repository."
+              />
             )}
 
             <ResourceEditFormSharedFields
