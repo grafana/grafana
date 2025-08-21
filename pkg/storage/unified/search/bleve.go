@@ -146,7 +146,7 @@ func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource) *bleveInd
 	}
 
 	// Index is no longer in the cache, but we need to close it.
-	err := val.closeAndStopUpdates()
+	err := val.stopUpdaterAndCloseIndex()
 	if err != nil {
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
@@ -378,7 +378,7 @@ func (b *bleveBackend) BuildIndex(
 			b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
 		}
 
-		err := prev.closeAndStopUpdates()
+		err := prev.stopUpdaterAndCloseIndex()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
@@ -546,7 +546,9 @@ func (b *bleveBackend) CloseAllIndexes() {
 	defer b.cacheMx.Unlock()
 
 	for key, idx := range b.cache {
-		_ = idx.closeAndStopUpdates()
+		if err := idx.stopUpdaterAndCloseIndex(); err != nil {
+			b.log.Error("Failed to close index", "err", err)
+		}
 		delete(b.cache, key)
 
 		if b.indexMetrics != nil {
@@ -557,7 +559,12 @@ func (b *bleveBackend) CloseAllIndexes() {
 
 type updateRequest struct {
 	reason   string
-	callback chan error
+	callback chan updateResult
+}
+
+type updateResult struct {
+	rv  int64
+	err error
 }
 
 type bleveIndex struct {
@@ -1134,7 +1141,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	return searchrequest, nil
 }
 
-func (b *bleveIndex) closeAndStopUpdates() error {
+func (b *bleveIndex) stopUpdaterAndCloseIndex() error {
 	// Signal updater to stop. We do this by 1) setting updaterShuttingDown + sending signal, and by 2) calling cancel.
 	b.updaterMu.Lock()
 	b.updaterShutdown = true
@@ -1150,20 +1157,20 @@ func (b *bleveIndex) closeAndStopUpdates() error {
 	return b.index.Close()
 }
 
-func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
+func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) (int64, error) {
 	// We don't have to do anything if the index cannot be updated (typically in tests).
 	if b.updaterFn == nil {
-		return nil
+		return 0, nil
 	}
 
 	// Use chan with buffer size 1 to ensure that we can always send error back, even if there's no reader anymore.
-	req := updateRequest{reason: reason, callback: make(chan error, 1)}
+	req := updateRequest{reason: reason, callback: make(chan updateResult, 1)}
 
 	// Make sure that the updater goroutine is running.
 	b.updaterMu.Lock()
 	if b.updaterShutdown {
 		b.updaterMu.Unlock()
-		return fmt.Errorf("cannot update index: index is closed")
+		return 0, fmt.Errorf("cannot update index: index is closed")
 	}
 
 	b.updaterQueue = append(b.updaterQueue, req)
@@ -1178,21 +1185,21 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
 	// wait for the update to finish
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-req.callback:
-		return err
+		return 0, ctx.Err()
+	case ur := <-req.callback:
+		return ur.rv, ur.err
 	}
 }
 
 // Must be called with b.updaterMu lock held.
 func (b *bleveIndex) startUpdater() {
-	c, cf := context.WithCancel(context.Background())
-	b.updaterCancel = cf
+	c, cancel := context.WithCancel(context.Background())
+	b.updaterCancel = cancel
 	b.updaterWg.Add(1)
 
 	go func() {
 		defer func() {
-			cf()
+			cancel() // Make sure to call this to release resources.
 
 			b.updaterMu.Lock()
 			b.updaterCancel = nil
@@ -1232,7 +1239,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 
 		if shutdown {
 			for _, req := range batch {
-				req.callback <- fmt.Errorf("cannot update index: index is closed")
+				req.callback <- updateResult{err: fmt.Errorf("cannot update index: index is closed")}
 			}
 			return
 		}
@@ -1243,12 +1250,13 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 			reasons[req.reason]++
 		}
 
+		var rv int64
 		var err = ctx.Err()
 		if err == nil {
-			_, err = b.updateIndexWithLatestModifications(ctx, len(batch), reasons)
+			rv, err = b.updateIndexWithLatestModifications(ctx, len(batch), reasons)
 		}
 		for _, req := range batch {
-			req.callback <- err
+			req.callback <- updateResult{rv: rv, err: err}
 		}
 	}
 }
