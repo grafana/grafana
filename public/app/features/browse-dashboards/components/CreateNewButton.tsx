@@ -6,6 +6,7 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import {
@@ -20,7 +21,6 @@ import { ManagerKind } from '../../apiserver/types';
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
 
 import { NewFolderForm } from './NewFolderForm';
-import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
 interface Props {
   parentFolder?: FolderDTO;
