@@ -52,7 +52,34 @@ This binary currently wires informers and emits job-create notifications. In the
 
 ### Expected behavior
 
-1. Create a repository and enqueue a job.
+1. Create a repository and enqueue a job (note that the repository must be marked as healthy):
+
+```curl
+
+export ACCESS_TOKEN=$(curl -X POST http://localhost:6481/sign/access-token \
+  -H "X-Realms: [{\"type\":\"system\",\"identifier\":\"system\"}]" \
+  -H "X-Org-ID: 0" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ProvisioningAdminToken" \
+  -d '{
+    "namespace": "*",
+    "audiences": ["provisioning.grafana.app"]
+  }' | jq -r '.data.token')
+```
+
+```curl
+
+curl -X POST https://localhost:6446/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test6/jobs \
+  -H "Content-Type: application/json" --insecure \
+  -H "X-Access-Token: Bearer $ACCESS_TOKEN" \
+  -d '{
+    "action": "pull",
+    "pull": {
+      "incremental": false
+    }
+  }'
+```
+
 2. The controller emits a notification on job creation.
 3. In a full setup with the concurrent driver, workers claim and process jobs, updating status and writing history.
 4. Entries move to `HistoricJobs`; if cleanup is enabled, older entries are pruned based on `--history-expiration`.

@@ -1,5 +1,5 @@
 .PHONY: build clean test
-BINARY_NAME=repository-controller
+BINARY_NAME=job-controller
 BUILD_DIR=bin
 LDFLAGS=-w -s
 
