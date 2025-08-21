@@ -393,6 +393,28 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 		require.NoError(t, err, "failed to set syncTarget to folder")
 		_, err = helper.Repositories.Resource.Update(ctx, repo, metav1.UpdateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to update repository to folder sync")
+
+		// Verify that the repository is now a folder sync
+		// We verify with the listing APIs because it may take some time for the update to propagate
+		require.Eventually(t, func() bool {
+			repos, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return false
+			}
+
+			for _, repo := range repos.Items {
+				if repo.GetName() == originalName {
+					syncTarget, found, err := unstructured.NestedString(repo.Object, "spec", "sync", "target")
+					if err != nil || !found {
+						return false
+					}
+
+					return syncTarget == "folder"
+				}
+			}
+
+			return false
+		}, time.Second*10, time.Millisecond*100, "failed to verify that sync target is folder")
 	})
 
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
@@ -409,20 +431,8 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 		require.Contains(t, statusError.Message, "Instance repository can only be created when no other repositories exist. Found: "+originalName)
 	})
 
-	t.Run("multiple folder syncs are allowed", func(t *testing.T) {
-		secondFolderName := "folder-repo-multi-2"
-		folderTestRepo2 := TestRepo{
-			Name:               secondFolderName,
-			Target:             "folder",
-			Copies:             map[string]string{}, // No files needed for this test
-			ExpectedDashboards: 0,
-			ExpectedFolders:    2, // Two folders expected after sync (1 + 1)
-		}
-		helper.CreateRepo(t, folderTestRepo2)
-	})
-
-	t.Run("repository limit validation of 10 repositories", func(t *testing.T) {
-		for i := 3; i <= 10; i++ {
+	t.Run("repository limit validation of 10 for folder syncs repositories", func(t *testing.T) {
+		for i := 2; i <= 10; i++ {
 			repoName := fmt.Sprintf("limit-test-repo-%d", i)
 			limitTestRepo := TestRepo{
 				Name:               repoName,
