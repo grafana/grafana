@@ -10,7 +10,7 @@ import {
 
 import { dataFrameToLogsModel } from '../../logsModel';
 
-import { LogLineContext } from './LogLineContext';
+import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -541,5 +541,30 @@ describe('LogLineContext', () => {
     await userEvent.click(splitViewButton);
 
     await waitFor(() => expect(dispatchMock).toHaveBeenCalledWith(splitOpenSym));
+  });
+
+  test('Allows to change the time window surrounding the log', async () => {
+    row.datasourceType = 'loki';
+    
+    render(
+      <LogLineContext
+        log={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+    await waitFor(() => expect(getRowContext).toHaveBeenCalledWith(expect.anything(), {
+      limit: PAGE_SIZE,
+      direction: LogRowContextQueryDirection.Forward,
+      timeWindowMs: DEFAULT_TIME_WINDOW,
+    }));
+    expect(getRowContext).toHaveBeenCalledWith(expect.anything(), {
+      limit: PAGE_SIZE,
+      direction: LogRowContextQueryDirection.Backward,
+      timeWindowMs: DEFAULT_TIME_WINDOW,
+    });
   });
 });

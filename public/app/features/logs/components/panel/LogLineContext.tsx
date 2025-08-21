@@ -58,8 +58,8 @@ interface LogLineContextProps {
   onClickHideField?: (key: string) => void;
 }
 
-const PAGE_SIZE = 100;
-const DEFAULT_TIME_WINDOW = 7200000;
+export const PAGE_SIZE = 100;
+export const DEFAULT_TIME_WINDOW = 7200000;
 
 export const LogLineContext = memo(
   ({
