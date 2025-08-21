@@ -13,6 +13,9 @@ interface FolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
+  /* Only show folders inside this root folder */
+  rootFolderUID?: string;
+
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
 

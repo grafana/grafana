@@ -48,7 +48,8 @@ function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undef
 export function useFoldersQueryLegacy(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
-  permission?: PermissionLevelString
+  permission?: PermissionLevelString,
+  rootFolderUID?: string
 ) {
   const dispatch = useDispatch();
 
@@ -178,11 +179,14 @@ export function useFoldersQueryLegacy(
       return flatList;
     }
 
-    const rootFlatTree = createFlatList(undefined, state.rootPages, 1);
+    const startingParentUid = rootFolderUID ?? undefined;
+    const startingPages = rootFolderUID ? state.pagesByParent[rootFolderUID] : state.rootPages;
+
+    const rootFlatTree = createFlatList(startingParentUid, startingPages ?? [], 1);
     rootFlatTree.unshift(getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID]);
 
   return {
     items: treeList,

@@ -25,7 +25,11 @@ const collator = new Intl.Collator();
  * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
  * does not have pagination at the moment.
  */
-export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Record<string, boolean>) {
+export function useFoldersQueryAppPlatform(
+  isBrowsing: boolean,
+  openFolders: Record<string, boolean>,
+  rootFolderUID?: string
+) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
@@ -150,11 +154,12 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
       return list;
     }
 
-    const rootFlatTree = createFlatList(rootFolderToken, state.responseByParent[rootFolderToken], 1);
+    const startingToken = rootFolderUID ?? rootFolderToken;
+    const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
     rootFlatTree.unshift(getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID]);
 
   return {
     items: treeList,

@@ -7,10 +7,11 @@ import { useFoldersQueryLegacy } from './useFoldersQueryLegacy';
 export function useFoldersQuery(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
-  permission?: PermissionLevelString
+  permission?: PermissionLevelString,
+  rootFolderUID?: string
 ) {
-  const resultLegacy = useFoldersQueryLegacy(isBrowsing, openFolders, permission);
-  const resultAppPlatform = useFoldersQueryAppPlatform(isBrowsing, openFolders);
+  const resultLegacy = useFoldersQueryLegacy(isBrowsing, openFolders, permission, rootFolderUID);
+  const resultAppPlatform = useFoldersQueryAppPlatform(isBrowsing, openFolders, rootFolderUID);
 
   // Running the hooks themselves don't have any side effects, so we can just conditionally use one or the other
   // requestNextPage function from the result
