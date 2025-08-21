@@ -179,7 +179,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			}
 		}
 		if !r.Secure.WebhookSecret.IsZero() {
-			webhookSecret, err = secure.Token()
+			webhookSecret, err = secure.WebhookSecret()
 			if err != nil {
 				return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 			}

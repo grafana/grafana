@@ -338,8 +338,8 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 		{
 			"op":   "replace",
 			"path": "/secure/webhookSecret",
-			"value": &common.InlineSecureValue{
-				Create: common.RawSecureValue(hook.Secret),
+			"value": map[string]any{
+				"create": hook.Secret,
 			},
 		},
 	}, nil
