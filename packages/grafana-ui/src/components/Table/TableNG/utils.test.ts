@@ -1108,7 +1108,7 @@ describe('TableNG utils', () => {
           name: 'Tags',
           type: FieldType.string,
           values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
-          config: { custom: { cellOptions: { wrapText: true, type: TableCellDisplayMode.Pill } } },
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
       const measurers = buildCellHeightMeasurers(fields, ctx);
@@ -1146,7 +1146,7 @@ describe('TableNG utils', () => {
 
       const measurers = buildCellHeightMeasurers(fields, ctx);
       // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
-      expect(measurers).toEqual([]);
+      expect(measurers).toBeUndefined();
     });
 
     it('returns an undefined if no columns are wrapped', () => {

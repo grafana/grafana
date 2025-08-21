@@ -297,7 +297,10 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
+      } else if (
+        field.type === FieldType.string &&
+        getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer
+      ) {
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
       } else {
         // no measurer was configured for this cell type
