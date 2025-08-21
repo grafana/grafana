@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { TableCellDisplayMode } from '../../types';
-import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { ImageCellProps, TableCellStyles } from '../types';
 
 export const ImageCell = ({ cellOptions, field, value, rowIdx }: ImageCellProps) => {
