@@ -545,7 +545,7 @@ describe('LogLineContext', () => {
 
   test('Allows to change the time window surrounding the log', async () => {
     row.datasourceType = 'loki';
-    
+
     render(
       <LogLineContext
         log={row}
@@ -556,11 +556,13 @@ describe('LogLineContext', () => {
         sortOrder={LogsSortOrder.Descending}
       />
     );
-    await waitFor(() => expect(getRowContext).toHaveBeenCalledWith(expect.anything(), {
-      limit: PAGE_SIZE,
-      direction: LogRowContextQueryDirection.Forward,
-      timeWindowMs: DEFAULT_TIME_WINDOW,
-    }));
+    await waitFor(() =>
+      expect(getRowContext).toHaveBeenCalledWith(expect.anything(), {
+        limit: PAGE_SIZE,
+        direction: LogRowContextQueryDirection.Forward,
+        timeWindowMs: DEFAULT_TIME_WINDOW,
+      })
+    );
     expect(getRowContext).toHaveBeenCalledWith(expect.anything(), {
       limit: PAGE_SIZE,
       direction: LogRowContextQueryDirection.Backward,
