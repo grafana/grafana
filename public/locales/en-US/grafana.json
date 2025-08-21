@@ -3755,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Arrow Direction",
+    "category-arrow-direction": "Direction",
     "category-background": "Background",
     "category-border": "Border",
     "category-canvas": "Canvas",
@@ -3787,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "Both",
+        "label-forward": "Forward",
+        "label-none": "None",
+        "label-reverse": "Reverse"
+      }
+    },
     "description-experimental-types": "Enable selection of experimental element types",
     "description-inline-editing": "Enable editing the panel directly",
     "description-pan-zoom": "Enable pan and zoom",
-    "direction-options": {
-      "label-both": "Both",
-      "label-forward": "Forward",
-      "label-none": "None",
-      "label-reverse": "Reverse"
-    },
     "drone-front-item": {
       "category-drone-front": "Drone Front",
       "name-roll-angle": "Roll Angle"
@@ -6670,6 +6672,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Fixed color",
       "noOptionsMessage-no-fields-found": "No fields found"
+    },
+    "direction-dimension-editor": {
+      "description-field": "Direction based on field value",
+      "description-fixed": "Fixed direction value",
+      "label-direction": "Direction",
+      "label-field": "Field",
+      "label-fixed": "Fixed",
+      "label-source": "Source"
     },
     "file-dropzone-custom-children": {
       "upload": "Upload"
