@@ -3569,7 +3569,6 @@
       "button-cancel": "Zrušit",
       "button-move": "Přesunout",
       "button-moving": "Probíhá přesouvání…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11958,7 +11957,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Sbalit řádek dotazu",
       "datasource-help": "Zobrazit nápovědu pro zdroj dat",
       "drag-and-drop": "Přetažením změníte pořadí",
@@ -11969,11 +11967,7 @@
       "replace-query-from-library": "Nahradit dotazem z knihovny",
       "show-response": "Zobrazit odpověď"
     },
-    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
   },
   "recently-deleted": {
     "buttons": {

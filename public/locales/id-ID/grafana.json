@@ -3530,7 +3530,6 @@
       "button-cancel": "Batal",
       "button-move": "Pindahkan",
       "button-moving": "Memindahkan...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11850,7 +11849,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Ciutkan baris kueri",
       "datasource-help": "Tampilkan bantuan sumber data",
       "drag-and-drop": "Seret dan lepas untuk menyusun ulang",
@@ -11861,11 +11859,7 @@
       "replace-query-from-library": "Ganti dengan kueri dari pustaka",
       "show-response": "Tampilkan respons"
     },
-    "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
   },
   "recently-deleted": {
     "buttons": {

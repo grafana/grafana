@@ -3543,7 +3543,6 @@
       "button-cancel": "Annuleren",
       "button-move": "Verplaatsen",
       "button-moving": "Bezig met verplaatsen...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11886,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Queryrij samenvouwen",
       "datasource-help": "Hulp bij gegevensbron weergeven",
       "drag-and-drop": "Versleep om opnieuw te rangschikken",
@@ -11897,11 +11895,7 @@
       "replace-query-from-library": "Vervangen door query uit bibliotheek",
       "show-response": "Antwoord weergeven"
     },
-    "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
   },
   "recently-deleted": {
     "buttons": {

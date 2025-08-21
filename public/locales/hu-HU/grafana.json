@@ -3543,7 +3543,6 @@
       "button-cancel": "Mégse",
       "button-move": "Áthelyezés",
       "button-moving": "Áthelyezés...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11886,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Lekérdezési sor összecsukása",
       "datasource-help": "Adatforrás súgójának megjelenítése",
       "drag-and-drop": "Húzza át az átrendezéshez",
@@ -11897,11 +11895,7 @@
       "replace-query-from-library": "Lecserélés könyvtárból származó lekérdezésre",
       "show-response": "Válasz megjelenítése"
     },
-    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
   },
   "recently-deleted": {
     "buttons": {

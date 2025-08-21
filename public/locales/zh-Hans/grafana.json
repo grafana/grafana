@@ -3530,7 +3530,6 @@
       "button-cancel": "取消",
       "button-move": "移动",
       "button-moving": "正在移动…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11850,7 +11849,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "折叠查询行",
       "datasource-help": "显示数据源帮助",
       "drag-and-drop": "拖放以重新排序",
@@ -11861,11 +11859,7 @@
       "replace-query-from-library": "替换为来自库的查询",
       "show-response": "显示回复"
     },
-    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
   },
   "recently-deleted": {
     "buttons": {

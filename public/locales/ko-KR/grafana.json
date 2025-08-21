@@ -3530,7 +3530,6 @@
       "button-cancel": "취소",
       "button-move": "이동",
       "button-moving": "이동 중...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11850,7 +11849,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "쿼리 행 접기",
       "datasource-help": "데이터 소스 도움말 표시",
       "drag-and-drop": "드래그 앤 드롭으로 순서 변경",
@@ -11861,11 +11859,7 @@
       "replace-query-from-library": "라이브러리의 쿼리로 교체",
       "show-response": "응답 표시"
     },
-    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다.",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
   },
   "recently-deleted": {
     "buttons": {

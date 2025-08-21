@@ -3543,7 +3543,6 @@
       "button-cancel": "Abbrechen",
       "button-move": "Verschieben",
       "button-moving": "Wird verschoben ...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11886,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
@@ -11897,11 +11895,7 @@
       "replace-query-from-library": "Mit Abfrage von Bibliothek ersetzen",
       "show-response": "Antwort anzeigen "
     },
-    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
   "recently-deleted": {
     "buttons": {

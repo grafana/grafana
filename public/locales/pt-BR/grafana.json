@@ -3543,7 +3543,6 @@
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "Movendo…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11886,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Recolher linha de consulta",
       "datasource-help": "Mostrar ajuda da fonte de dados",
       "drag-and-drop": "Arraste e solte para reordenar",
@@ -11897,11 +11895,7 @@
       "replace-query-from-library": "Substituir por consulta da biblioteca",
       "show-response": "Mostrar resposta"
     },
-    "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
   },
   "recently-deleted": {
     "buttons": {

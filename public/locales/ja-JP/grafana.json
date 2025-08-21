@@ -3530,7 +3530,6 @@
       "button-cancel": "キャンセル",
       "button-move": "移動",
       "button-moving": "移動中…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11850,7 +11849,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "クエリ行を折りたたむ",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
@@ -11861,11 +11859,7 @@
       "replace-query-from-library": "ライブラリからのクエリに置き換え",
       "show-response": "応答の表示"
     },
-    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
   },
   "recently-deleted": {
     "buttons": {

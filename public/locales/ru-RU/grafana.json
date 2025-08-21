@@ -3569,7 +3569,6 @@
       "button-cancel": "Отмена",
       "button-move": "Переместить",
       "button-moving": "Перемещение...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11958,7 +11957,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Свернуть строку запроса",
       "datasource-help": "Показать справку по источнику данных",
       "drag-and-drop": "Перетащить для изменения порядка",
@@ -11969,11 +11967,7 @@
       "replace-query-from-library": "Замена на запрос из библиотеки",
       "show-response": "Показать ответ"
     },
-    "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
   },
   "recently-deleted": {
     "buttons": {
