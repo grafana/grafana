@@ -9,7 +9,10 @@ import {
   RepositoryView,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { Resource } from 'app/features/apiserver/types';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { useDispatch } from 'app/types/store';
 
 type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
 
@@ -45,6 +48,16 @@ interface ResourceConfig {
   supportedWorkflows: string[];
 }
 
+interface Props<T> {
+  request: ProvisionedRequest;
+  folderUID?: string | undefined; // this is used to refetch folder items
+  workflow?: string;
+  handlers: RequestHandlers<T>;
+  successMessage?: string;
+  repository?: RepositoryView;
+  resourceType?: ResourceType;
+}
+
 /**
  * Generic hook for handling provisioned resource operations across any resource type and repository provider.
  *
@@ -52,20 +65,15 @@ interface ResourceConfig {
  * Components are responsible for their own state management through specific workflow handlers.
  */
 export function useProvisionedRequestHandler<T>({
+  folderUID,
   request,
   workflow,
   handlers,
   successMessage,
   repository,
   resourceType,
-}: {
-  request: ProvisionedRequest;
-  workflow?: string;
-  handlers: RequestHandlers<T>;
-  successMessage?: string;
-  repository?: RepositoryView;
-  resourceType?: ResourceType;
-}) {
+}: Props<T>) {
+  const dispatch = useDispatch();
   useEffect(() => {
     const repoType = repository?.type || 'git';
     const info: ProvisionedOperationInfo = {
@@ -99,12 +107,16 @@ export function useProvisionedRequestHandler<T>({
 
       // Write workflow
       if (workflow === 'write' && handlers.onWriteSuccess) {
+        if (folderUID) {
+          // refetch folder items after success if folderUID is passed in
+          dispatch(refetchChildren({ parentUID: folderUID || repository?.name, pageSize: PAGE_SIZE }));
+        }
         handlers.onWriteSuccess(info, resourceData);
       }
 
       handlers.onDismiss?.();
     }
-  }, [request, workflow, handlers, successMessage, repository, resourceType]);
+  }, [request, workflow, handlers, successMessage, repository, resourceType, folderUID, dispatch]);
 }
 
 function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {

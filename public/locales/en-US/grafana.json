@@ -2221,6 +2221,13 @@
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "Filter by contact points",
+      "contact-point": "Contact point",
+      "no-grouping": "No grouping",
+      "placeholder-contact-point": "Filter by contact point",
+      "tooltip-contact-point": "Filter notifications by the contact point they are being delivered to."
+    },
     "receiver-form": {
       "add-contact-point-integration": "Add contact point integration",
       "body-attention": "Because there is no default policy configured yet, this contact point will automatically be set as default.",
@@ -3543,7 +3550,6 @@
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
-      "button-tooltip": "Please select a target folder",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -3552,7 +3558,7 @@
         "repository-not-found-title": "Repository not found"
       },
       "error-moving-resources": "Error moving resources",
-      "error-no-target-folder-path": "Target folder path in repository is invalid, please select another folder.",
+      "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
       "target-folder": "Target Folder"
     },
@@ -7131,7 +7137,7 @@
     "rich-history-card": {
       "add-comment-form": "Add comment form",
       "add-comment-tooltip": "Add comment",
-      "add-to-library": "Add to library",
+      "add-to-library": "Save query",
       "cancel": "Cancel",
       "confirm-delete": "Delete",
       "copy-query-tooltip": "Copy query to clipboard",
@@ -7243,7 +7249,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Add query from library",
+      "add-from-query-library": "Add from saved queries",
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
       "query-history-button": "Query history",
@@ -11893,7 +11899,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "replace-query-from-library": "Replace with query from library",
+      "replace-query-from-library": "Replace with saved query",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
