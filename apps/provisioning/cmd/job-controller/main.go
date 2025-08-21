@@ -18,9 +18,9 @@ import (
 	"k8s.io/client-go/transport"
 
 	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	controller "github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
 
 var (
