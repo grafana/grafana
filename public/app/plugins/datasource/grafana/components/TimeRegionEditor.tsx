@@ -155,7 +155,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
         description={
           <>
             {t('dashboard-settings.time-regions.advanced-description-use', 'Use ')}
-            <a href="https://crontab.run/" target="_blank">
+            <a href="https://crontab.run/" target="_blank" rel="noreferrer">
               {t('dashboard-settings.time-regions.advanced-description-cron', 'Cron syntax')}
             </a>
             {t(

@@ -8,6 +8,8 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
+// FIXME: Remove once eslint-config-grafana is updated to include correct plugin
+const hooksPlugin = require('eslint-plugin-react-hooks');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
@@ -58,13 +60,20 @@ module.exports = [
       'public/build-swagger', // swagger build output
     ],
   },
+  // FIXME: Remove once eslint-config-grafana is updated to include correct plugin
+  {
+    name: 'react-hooks-plugin',
+    plugins: {
+      'react-hooks': hooksPlugin,
+    },
+  },
   // Conditionally run the betterer rules if enabled in dev's config
   ...(enableBettererRules ? bettererConfig : []),
-  grafanaConfig,
+  // FIXME: Remove filtering once eslint-config-grafana is updated to include correct plugin
+  ...grafanaConfig.filter(Boolean),
   {
-    name: 'react/jsx-runtime',
-    // @ts-ignore - not sure why but flat config is typed as a maybe?
-    ...reactPlugin.configs.flat['jsx-runtime'],
+    name: 'react/jsx-runtime-rules',
+    rules: reactPlugin.configs.flat['jsx-runtime'].rules,
   },
   {
     name: 'grafana/defaults',
@@ -165,6 +174,8 @@ module.exports = [
           message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
         },
       ],
+      // FIXME: Fix these in follow up PR
+      'react/no-unescaped-entities': 'off',
     },
   },
   {
@@ -364,6 +375,14 @@ module.exports = [
       // grafana-ui has lots of violations of direct node access and container methods, so disabling for now
       'testing-library/no-node-access': 'off',
       'testing-library/no-container': 'off',
+    },
+  },
+  {
+    name: 'grafana/test-disables',
+    files: ['**/*.{spec,test}.{ts,tsx}'],
+    rules: {
+      'react/display-name': 'off',
+      'react/no-children-prop': 'off',
     },
   },
   {

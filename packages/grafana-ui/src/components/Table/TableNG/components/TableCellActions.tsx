@@ -81,3 +81,4 @@ export const TableCellActions = memo(
     </div>
   )
 );
+TableCellActions.displayName = 'TableCellActions';

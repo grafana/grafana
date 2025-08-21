@@ -157,3 +157,4 @@ export const TableCellTooltip = memo(
     );
   }
 );
+TableCellTooltip.displayName = 'TableCellTooltip';

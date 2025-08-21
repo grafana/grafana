@@ -30,3 +30,4 @@ export const MaybeWrapWithLink = memo(({ field, rowIdx, children }: MaybeWrapWit
   // raw value
   return children;
 });
+MaybeWrapWithLink.displayName = 'MaybeWrapWithLink';
