@@ -2,6 +2,7 @@ import { render, screen, waitFor, cleanup } from '@testing-library/react';
 
 import { CoreApp } from '@grafana/data';
 import { config } from '@grafana/runtime';
+// eslint-ignore-next-line
 import * as ui from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';

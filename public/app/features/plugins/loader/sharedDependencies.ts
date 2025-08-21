@@ -11,6 +11,7 @@ import 'vendor/flot/jquery.flot.gauge';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
+// eslint-ignore-next-line
 import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';

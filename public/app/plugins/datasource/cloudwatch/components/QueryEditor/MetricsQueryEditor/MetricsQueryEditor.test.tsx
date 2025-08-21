@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
 import { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data';
+// eslint-ignore-next-line
 import * as ui from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
