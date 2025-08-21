@@ -161,10 +161,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables previous SQL data source dataset dropdown behavior
-  */
-  sqlDatasourceDatabaseSelection?: boolean;
-  /**
   * Enables writing multiple items from a single query within Recorded Queries
   * @default true
   */
@@ -954,6 +950,11 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables integration with Grafana Assistant in Profiles Drilldown
+  * @default true
+  */
+  grafanaAssistantInProfilesDrilldown?: boolean;
+  /**
   * Enables using PGX instead of libpq for PostgreSQL datasource
   */
   postgresDSUsePGX?: boolean;
@@ -1015,6 +1016,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables the UI to see imported Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   */
@@ -1097,4 +1103,14 @@ export interface FeatureToggles {
   * @default false
   */
   newClickhouseConfigPageDesign?: boolean;
+  /**
+  * Enable experimental search-after-write guarantees to unified-storage search endpoints
+  * @default false
+  */
+  unifiedStorageSearchAfterWriteExperimentalAPI?: boolean;
+  /**
+  * Enables team folders functionality
+  * @default false
+  */
+  teamFolders?: boolean;
 }

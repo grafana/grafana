@@ -26,6 +26,7 @@ export interface Props {
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
+  loading?: boolean;
   loadMore?: LoadMoreLogsType;
   logs: LogListModel[];
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
@@ -50,6 +51,7 @@ export const InfiniteScroll = ({
   displayedFields,
   handleOverflow,
   infiniteScrollMode,
+  loading,
   loadMore,
   logs,
   onClick,
@@ -73,6 +75,7 @@ export const InfiniteScroll = ({
   const styles = useStyles2(getStyles, virtualization);
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
+  const noScrollRef = useRef(false);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -101,12 +104,12 @@ export const InfiniteScroll = ({
   }, [prevSortOrder, sortOrder]);
 
   useEffect(() => {
-    if (autoScroll) {
+    if (autoScroll && !loading) {
       setInitialScrollPosition(scrollToLogLineRef.current);
       scrollToLogLineRef.current = undefined;
       setAutoScroll(false);
     }
-  }, [autoScroll, setInitialScrollPosition]);
+  }, [autoScroll, loading, setInitialScrollPosition]);
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
@@ -237,10 +240,13 @@ export const InfiniteScroll = ({
 
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
-      if (!scrollElement || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+      if (!scrollElement) {
         return;
       }
-      if (scrollElement.scrollHeight <= scrollElement.clientHeight) {
+      if (props.visibleStartIndex === 0) {
+        noScrollRef.current = scrollElement.scrollHeight <= scrollElement.clientHeight;
+      }
+      if (noScrollRef.current || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
         return;
       }
       const lastLogIndex = logs.length - 1;

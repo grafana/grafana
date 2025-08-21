@@ -76,6 +76,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
+| `grafanaAssistantInProfilesDrilldown`  | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 
 ## Public preview feature toggles
@@ -90,7 +91,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
-| `sqlDatasourceDatabaseSelection`  | Enables previous SQL data source dataset dropdown behavior                                             |
 | `reportingRetries`                | Enables rendering retries for the reporting feature                                                    |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |

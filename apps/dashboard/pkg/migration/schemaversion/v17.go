@@ -2,6 +2,7 @@ package schemaversion
 
 import (
 	"math"
+	"sort"
 )
 
 // V17 migrates panel minSpan property to maxPerRow property.
@@ -57,8 +58,8 @@ func V17(dashboard map[string]interface{}) error {
 
 // migrateMinSpanToMaxPerRow converts minSpan to maxPerRow using the same algorithm as the frontend.
 func migrateMinSpanToMaxPerRow(panel map[string]interface{}) {
-	minSpanValue, hasMinSpan := panel["minSpan"]
-	if !hasMinSpan {
+	minSpanValue, ok := panel["minSpan"]
+	if !ok {
 		return
 	}
 
@@ -118,13 +119,7 @@ func getFactors(num int) []int {
 	}
 
 	// Sort factors in ascending order
-	for i := 0; i < len(factors)-1; i++ {
-		for j := i + 1; j < len(factors); j++ {
-			if factors[i] > factors[j] {
-				factors[i], factors[j] = factors[j], factors[i]
-			}
-		}
-	}
+	sort.Ints(factors)
 
 	return factors
 }
