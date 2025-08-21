@@ -81,12 +81,16 @@ Folders help you organize and group dashboards, which is useful when you have ma
 
 1. Enter a unique name and click **Create**.
 
+   Folder names can't include underscores (_) or percentage signs (%), as it interferes with the search functionality.
+
+   Also, alerts can't be placed in folders with slashes (\ /) in the name. If you want to place alerts in the folder, don't use slashes in the folder name.
+
 When you nest folders, you can do so up to four levels deep.
 
 When you save a dashboard, you can optionally select a folder to save the dashboard in.
 
 {{< admonition type="note" >}}
-Alerts can't be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, don't use slashes in the folder name.
+
 {{< /admonition >}}
 
 **To edit the name of a folder:**
