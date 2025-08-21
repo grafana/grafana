@@ -1087,6 +1087,12 @@ func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
 	return NewCfgFromINIFile(parsedFile)
 }
 
+// prevents a log line from being printed when the static root path is not found, useful for apiservers that have no frontend
+func NewCfgFromBytesWithoutValidation(bytes []byte) (*Cfg, error) {
+	skipStaticRootValidation = true
+	return NewCfgFromBytes(bytes)
+}
+
 // NewCfgFromINIFile specialized function to create a new Cfg from an ini.File.
 func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
 	cfg := NewCfg()
