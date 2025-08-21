@@ -32,7 +32,7 @@ export function getDirectionDimensionForField(
   }
 
   const getDirectionFromValue = (value: unknown): ConnectionDirection => {
-    if (value === null || value === undefined) {
+    if (value == null) {
       return ConnectionDirection.Forward;
     }
 
