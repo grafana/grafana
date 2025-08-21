@@ -36,7 +36,6 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import {
@@ -74,9 +73,10 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
       if (child instanceof SceneGridRow) {
         // Skip repeat clones or when generating a snapshot
-        if (isClonedKey(child.state.key!) && !isSnapshot) {
+        if (child.state.repeatSourceKey && !isSnapshot) {
           continue;
         }
+
         gridRowToSaveModel(child, panels, isSnapshot);
       }
     }
