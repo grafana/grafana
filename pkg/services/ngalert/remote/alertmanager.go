@@ -381,11 +381,13 @@ func (am *Alertmanager) GetRemoteState(ctx context.Context) (notifier.ExternalSt
 	// Mimir state has two parts:
 	// - "sil:<tenantID>": silences
 	// - "nfl:<tenantID>": notification log entries
+	// The tenant ID can be different in the remote AM, so we consider only the part before the ':'.
 	for _, p := range protoState.Parts {
-		switch p.Key {
-		case "sil:" + am.tenantID:
+		k := strings.Split(p.Key, ":")
+		switch k[0] {
+		case "sil":
 			rs.Silences = p.Data
-		case "nfl:" + am.tenantID:
+		case "nfl":
 			rs.Nflog = p.Data
 		default:
 			return rs, fmt.Errorf("unknown part key %q", p.Key)
