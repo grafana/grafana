@@ -299,7 +299,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     },
     {
       label: 'compare',
-      insertText: 'compare({$0})',
+      insertText: 'compare($0)',
       detail: 'Compare span groups',
       documentation:
         'Splits spans into two groups (selection and baseline) and returns time-series for all attributes to highlight differences. First parameter is a spanset filter for the selection group (e.g., {status=error}). Optional parameters: topN limit (default 10), start timestamp, end timestamp.',
