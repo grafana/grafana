@@ -573,6 +573,7 @@ This section outlines general instructions for provisioning Grafana resources wi
    ```
 
    You can follow the same process to provision additional Grafana resources by supplying the following folders:
+
    - `provisioning/dashboards`
    - `provisioning/datasources`
    - `provisioning/plugins`
