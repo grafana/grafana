@@ -21,11 +21,14 @@ type secureValues struct {
 	results map[string]contracts.DecryptResult
 }
 
-func (s *secureValues) get(name string) (common.RawSecureValue, error) {
-	if name == "" {
+func (s *secureValues) get(sv common.InlineSecureValue) (common.RawSecureValue, error) {
+	if !sv.Create.IsZero() {
+		return sv.Create, nil // If this was called before the value is actually saved
+	}
+	if sv.Name == "" {
 		return "", nil
 	}
-	v, found := s.results[name]
+	v, found := s.results[sv.Name]
 	if !found {
 		return "", fmt.Errorf("not found")
 	}
@@ -36,11 +39,11 @@ func (s *secureValues) get(name string) (common.RawSecureValue, error) {
 }
 
 func (s *secureValues) Token() (common.RawSecureValue, error) {
-	return s.get(s.names.Token.Name)
+	return s.get(s.names.Token)
 }
 
 func (s *secureValues) WebhookSecret() (common.RawSecureValue, error) {
-	return s.get(s.names.WebhookSecret.Name)
+	return s.get(s.names.WebhookSecret)
 }
 
 func DecryptService(svc contracts.DecryptService) Decrypter {
