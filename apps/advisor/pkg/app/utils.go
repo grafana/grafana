@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -170,6 +171,10 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		// Failure not in the list of items to retry, keep it
 		return false
 	})
+	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
+	if err != nil {
+		return err
+	}
 	err = checks.SetStatus(ctx, client, obj, c.Status)
 	log.Debug("Set status", "check", obj.GetName(), "status.count", c.Status.Report.Count)
 	if err != nil {
@@ -253,4 +258,26 @@ func annotationsChanged(oldObj, newObj resource.Object) bool {
 	oldAnnotations := oldObj.GetAnnotations()
 	newAnnotations := newObj.GetAnnotations()
 	return !reflect.DeepEqual(oldAnnotations, newAnnotations)
+}
+
+func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, itemToRetry string) error {
+	// Wait for the retry annotation to have been persisted
+	currentObj, err := client.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+	})
+	if err != nil {
+		return err
+	}
+	retries := 0
+	for currentRetryAnnotation := checks.GetRetryAnnotation(currentObj); currentRetryAnnotation != itemToRetry; {
+		log.Debug("Waiting for retry annotation to be persisted", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", currentRetryAnnotation)
+		time.Sleep(1 * time.Second)
+		retries++
+		if retries > 5 {
+			return fmt.Errorf("timeout waiting for retry annotation to be persisted")
+		}
+	}
+	log.Debug("Retry annotation persisted", "check", obj.GetName(), "item", itemToRetry)
+	return nil
 }
