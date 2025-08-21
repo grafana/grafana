@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -68,6 +69,7 @@ type dashboardSqlAccess struct {
 
 	accessControl   accesscontrol.AccessControl
 	libraryPanelSvc librarypanels.Service
+	userService     user.Service
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -644,4 +646,301 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 	}
 
 	return item, nil
+}
+
+func (a *dashboardSqlAccess) DeleteLibraryPanel(ctx context.Context, orgId int64, uid string) (*dashboardV0.LibraryPanel, bool, error) {
+	existingPanel, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
+		OrgID: orgId,
+		UID:   uid,
+		Limit: 1,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(existingPanel.Items) == 0 {
+		return nil, false, fmt.Errorf("library panel not found")
+	}
+
+	panelToDelete := existingPanel.Items[0]
+
+	sqlx, err := a.sql(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	req := newLibraryQueryReq(sqlx, &LibraryPanelQuery{
+		OrgID: orgId,
+		UID:   uid,
+	})
+
+	rawQuery, err := sqltemplate.Execute(sqlDeletePanel, req)
+	if err != nil {
+		return nil, false, fmt.Errorf("execute template %q: %w", "delete_panel.sql", err)
+	}
+
+	_, err = sqlx.DB.GetSqlxSession().Exec(ctx, rawQuery, req.GetArgs()...)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &panelToDelete, true, nil
+}
+
+// TODO: reduce code duplication with libraryelements/api.go
+func (a *dashboardSqlAccess) convertLibraryPanelSpecToLegacyModel(panel *dashboardV0.LibraryPanel) ([]byte, error) {
+	legacyModel := map[string]any{}
+
+	fmt.Println(panel.Spec.FieldConfig)
+	// Convert the spec fields to the legacy model format
+	legacyModel["datasource"] = panel.Spec.Datasource
+	legacyModel["description"] = panel.Spec.Description
+
+	// Handle fieldConfig - access the Object field directly
+	if optionsJSON, err := json.Marshal(panel.Spec.FieldConfig.Object); err == nil {
+		var optionsMap map[string]interface{}
+		if json.Unmarshal(optionsJSON, &optionsMap) == nil {
+			legacyModel["fieldConfig"] = optionsMap
+		}
+	}
+	legacyModel["gridPos"] = panel.Spec.GridPos
+
+	if optionsJSON, err := json.Marshal(panel.Spec.Options.Object); err == nil {
+		var optionsMap map[string]interface{}
+		if json.Unmarshal(optionsJSON, &optionsMap) == nil {
+			legacyModel["options"] = optionsMap
+		}
+	}
+	legacyModel["pluginVersion"] = panel.Spec.PluginVersion
+	legacyModel["type"] = panel.Spec.Type
+	legacyModel["title"] = panel.Spec.PanelTitle // this is the title of the panel when displayed in the dashboard
+	legacyModel["libraryPanel"] = map[string]string{
+		"name": panel.Spec.Title, // this is the title of the actual library panel, when displayed in the library panel list
+		"uid":  panel.Name,
+	}
+
+	if len(panel.Spec.Links) > 0 {
+		legacyModel["links"] = panel.Spec.Links
+	}
+	if len(panel.Spec.Targets) > 0 {
+		legacyModel["targets"] = panel.Spec.Targets
+	}
+	if panel.Spec.Transparent {
+		legacyModel["transparent"] = panel.Spec.Transparent
+	}
+
+	finalModel, err := json.Marshal(legacyModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal model: %w", err)
+	}
+
+	return finalModel, nil
+}
+
+func (a *dashboardSqlAccess) CreateLibraryPanel(ctx context.Context, orgId int64, panel *dashboardV0.LibraryPanel) (*dashboardV0.LibraryPanel, error) {
+	sqlx, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	meta, err := utils.MetaAccessor(panel)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+
+	modelData, err := a.convertLibraryPanelSpecToLegacyModel(panel)
+	if err != nil {
+		return nil, err
+	}
+
+	// we've already check if the user can create a panel, now check that they have
+	// access to this particular folder
+	folder := meta.GetFolder()
+	if folder != "" {
+		ok, err := a.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+			dashboards.ActionFoldersWrite,
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(meta.GetFolder()),
+		))
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+	} else {
+		// in legacy, uid is saved as general if no folder is specified
+		folder = "general"
+	}
+
+	saveQuery := &SavePanelQuery{
+		OrgID: orgId,
+		// TODO: FIXME - we will need to get the folder from the folder service, we cannot join in the sql template as folder may not be in the db anymore
+		// FolderID:    meta.GetFolderID(),
+		FolderUID:   meta.GetFolder(),
+		UID:         panel.Name,
+		Name:        panel.Spec.Title,
+		Kind:        1, // Panel kind
+		Type:        panel.Spec.Type,
+		Description: panel.Spec.Description,
+		Model:       modelData,
+		Version:     1,
+		Created:     now,
+		CreatedBy:   meta.GetCreatedBy(),
+		Updated:     now,
+		UpdatedBy:   meta.GetCreatedBy(),
+	}
+
+	req := newSavePanelQueryReq(sqlx, saveQuery)
+
+	rawQuery, err := sqltemplate.Execute(sqlCreatePanel, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", "create_panel.sql", err)
+	}
+
+	_, err = sqlx.DB.GetSqlxSession().Exec(ctx, rawQuery, req.GetArgs()...)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
+		OrgID: orgId,
+		UID:   panel.Name,
+		Limit: 1,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result.Items) == 0 {
+		return nil, fmt.Errorf("failed to retrieve created library panel")
+	}
+
+	return &result.Items[0], nil
+}
+
+func (a *dashboardSqlAccess) UpdateLibraryPanel(ctx context.Context, orgId int64, panel *dashboardV0.LibraryPanel) (*dashboardV0.LibraryPanel, error) {
+	sqlx, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	meta, err := utils.MetaAccessor(panel)
+	if err != nil {
+		return nil, err
+	}
+
+	// we've already check if the user can create a panel, now check that they have
+	// access to this particular folder
+	//
+	// note: the check for the library panel uid has already been done in the authorizer
+	folder := meta.GetFolder()
+	if folder != "" {
+		ok, err := a.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+			dashboards.ActionFoldersWrite,
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(meta.GetFolder()),
+		))
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+	} else {
+		// in legacy, uid is saved as general if no folder is specified
+		folder = "general"
+	}
+
+	now := time.Now()
+
+	existingPanel, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
+		OrgID: orgId,
+		UID:   panel.Name,
+		Limit: 1,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(existingPanel.Items) == 0 {
+		return nil, fmt.Errorf("library panel not found for update")
+	}
+
+	existing := existingPanel.Items[0]
+	existingMeta, _ := utils.MetaAccessor(&existing)
+	version := existingMeta.GetGeneration() + 1
+	// also need to check permissions of existing folder, if it changed
+	if existingMeta.GetFolder() != "" && existingMeta.GetFolder() != folder {
+		ok, err := a.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+			dashboards.ActionFoldersWrite,
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(existingMeta.GetFolder()),
+		))
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+	}
+
+	modelData, err := a.convertLibraryPanelSpecToLegacyModel(panel)
+	if err != nil {
+		return nil, err
+	}
+
+	saveQuery := &SavePanelQuery{
+		OrgID: orgId,
+		// TODO: FIXME - we will need to get the folder from the folder service, we cannot join in the sql template as folder may not be in the db anymore
+		// FolderID:    existingMeta.GetFolderID(),
+		FolderUID:   folder,
+		UID:         panel.Name,
+		Name:        panel.Spec.Title,
+		Kind:        1, // Panel kind
+		Type:        panel.Spec.Type,
+		Description: panel.Spec.Description,
+		Model:       modelData,
+		Version:     version,
+		Created:     existingMeta.GetCreationTimestamp().Time,
+		CreatedBy:   existingMeta.GetCreatedBy(),
+		Updated:     now,
+		UpdatedBy:   meta.GetUpdatedBy(),
+	}
+
+	req := newSavePanelQueryReq(sqlx, saveQuery)
+
+	rawQuery, err := sqltemplate.Execute(sqlUpdatePanel, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", "update_panel.sql", err)
+	}
+
+	_, err = sqlx.DB.GetSqlxSession().Exec(ctx, rawQuery, req.GetArgs()...)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
+		OrgID: orgId,
+		UID:   panel.Name,
+		Limit: 1,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result.Items) == 0 {
+		return nil, fmt.Errorf("failed to retrieve updated library panel")
+	}
+
+	return &result.Items[0], nil
 }

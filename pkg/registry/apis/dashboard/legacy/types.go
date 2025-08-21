@@ -62,4 +62,7 @@ type DashboardAccess interface {
 
 	// Get a typed list
 	GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error)
+	DeleteLibraryPanel(ctx context.Context, orgId int64, uid string) (*dashboardV0.LibraryPanel, bool, error)
+	CreateLibraryPanel(ctx context.Context, orgId int64, panel *dashboardV0.LibraryPanel) (*dashboardV0.LibraryPanel, error)
+	UpdateLibraryPanel(ctx context.Context, orgId int64, panel *dashboardV0.LibraryPanel) (*dashboardV0.LibraryPanel, error)
 }

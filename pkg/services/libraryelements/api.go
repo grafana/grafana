@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"strings"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,13 +43,13 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		uidScope := ScopeLibraryPanelsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
-		entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))                 // TODO: add wrapper for k8s
-		entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler)) // TODO: add wrapper for k8s
-		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))                    // TODO: add wrapper for k8s - requires search
+		entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
+		entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
+		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler)) // TODO: add wrapper for k8s - requires search
 		entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
-		entities.Get("/name/:name", routing.Wrap(l.getByNameHandler))                                                           // TODO: add wrapper for k8s - requires search
-		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler)) // TODO: add wrapper for k8s
+		entities.Get("/name/:name", routing.Wrap(l.getByNameHandler)) // TODO: add wrapper for k8s - requires search
+		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
 	})
 }
 
@@ -64,6 +67,11 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) response.Response {
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.createK8sLibraryElement(c)
+		return nil // already handled in the k8s handler
+	}
+
 	cmd := model.CreateLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -124,6 +132,11 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.deleteK8sLibraryElement(c)
+		return nil // already handled in the k8s handler
+	}
+
 	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to delete library element")
@@ -227,6 +240,11 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 // 412: preconditionFailedError
 // 500: internalServerError
 func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) response.Response {
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.patchK8sLibraryElement(c)
+		return nil // already handled in the k8s handler
+	}
+
 	cmd := model.PatchLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -588,6 +606,254 @@ func (lk8s *libraryElementsK8sHandler) getK8sLibraryElement(c *contextmodel.ReqC
 	}
 	uid := web.Params(c.Req)[":uid"]
 	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, *out)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+		return
+	}
+	c.JSON(http.StatusOK, model.LibraryElementResponse{Result: *dto})
+}
+
+func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	cmd := model.CreateLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+
+	libraryPanelSpec, err := lk8s.legacyModelToLibraryPanelSpec(c, cmd)
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "failed to convert model", err)
+		return
+	}
+
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": dashboardV0.APIVERSION,
+			"kind":       "LibraryPanel",
+			"metadata": map[string]interface{}{
+				"name": cmd.UID,
+			},
+			"spec": libraryPanelSpec,
+		},
+	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if cmd.FolderUID != nil && *cmd.FolderUID != "" {
+		if err == nil {
+			meta.SetFolder(*cmd.FolderUID)
+		}
+	}
+	meta.SetCreatedBy(c.SignedInUser.UserUID)
+
+	out, err := client.Create(c.Req.Context(), obj, v1.CreateOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, *out)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+		return
+	}
+	c.JSON(http.StatusOK, model.LibraryElementResponse{Result: *dto})
+}
+
+// TODO:
+// - authorization in mode 4+, when the library element will no longer exist
+// - patching the library elements
+// - folder ID inserts
+// - handle errors better (for example, try to create a library panel with the same name of one that aleady exists)
+// - test moving folders
+func (lk8s *libraryElementsK8sHandler) legacyModelToLibraryPanelSpec(c *contextmodel.ReqContext, cmd model.CreateLibraryElementCommand) (*dashboardV0.LibraryPanelSpec, error) {
+	var modelMap map[string]interface{}
+	if err := json.Unmarshal(cmd.Model, &modelMap); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal model: %w", err)
+	}
+
+	libraryPanelSpec := dashboardV0.LibraryPanelSpec{
+		Title: cmd.Name,
+	}
+
+	if description, ok := modelMap["description"].(string); ok {
+		libraryPanelSpec.Description = description
+	}
+
+	if panelTitle, ok := modelMap["title"].(string); ok {
+		libraryPanelSpec.PanelTitle = panelTitle
+	}
+
+	if t, ok := modelMap["type"].(string); ok {
+		libraryPanelSpec.Type = t
+	}
+
+	if options, ok := modelMap["options"].(map[string]interface{}); ok {
+		libraryPanelSpec.Options.SetUnstructuredContent(options)
+	}
+
+	if fieldConfig, ok := modelMap["fieldConfig"].(map[string]interface{}); ok {
+		libraryPanelSpec.FieldConfig.SetUnstructuredContent(fieldConfig)
+	}
+
+	if pluginVersion, ok := modelMap["pluginVersion"].(string); ok {
+		libraryPanelSpec.PluginVersion = pluginVersion
+	}
+
+	if datasource, ok := modelMap["datasource"]; ok && datasource != nil {
+		datasourceJSON, err := json.Marshal(datasource)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal datasource: %w", err)
+		}
+		var datasourceRef data.DataSourceRef
+		if err := json.Unmarshal(datasourceJSON, &datasourceRef); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal datasource: %w", err)
+		}
+		libraryPanelSpec.Datasource = &datasourceRef
+	}
+
+	if gridPos, ok := modelMap["gridPos"]; ok && gridPos != nil {
+		gridPosJSON, err := json.Marshal(gridPos)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal gridPos: %w", err)
+		}
+		var gridPosStruct dashboardV0.GridPos
+		if err := json.Unmarshal(gridPosJSON, &gridPosStruct); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal gridPos: %w", err)
+		}
+		libraryPanelSpec.GridPos = gridPosStruct
+	}
+
+	if transparent, ok := modelMap["transparent"].(bool); ok {
+		libraryPanelSpec.Transparent = transparent
+	}
+
+	if links, ok := modelMap["links"].([]interface{}); ok && len(links) > 0 {
+		libraryPanelSpec.Links = make([]common.Unstructured, len(links))
+		for i, link := range links {
+			if linkMap, ok := link.(map[string]interface{}); ok {
+				libraryPanelSpec.Links[i].SetUnstructuredContent(linkMap)
+			}
+		}
+	}
+
+	if targets, ok := modelMap["targets"].([]interface{}); ok && len(targets) > 0 {
+		targetsJSON, err := json.Marshal(targets)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal targets: %w", err)
+		}
+		var targetsStruct []data.DataQuery
+		if err := json.Unmarshal(targetsJSON, &targetsStruct); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal targets: %w", err)
+		}
+		libraryPanelSpec.Targets = targetsStruct
+	}
+
+	return &libraryPanelSpec, nil
+}
+
+func (lk8s *libraryElementsK8sHandler) deleteK8sLibraryElement(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	// we need to get the library element before deleting to return the proper api response
+	uid := web.Params(c.Req)[":uid"]
+	deleted, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	meta, err := utils.MetaAccessor(deleted)
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	meta.SetUpdatedBy(c.SignedInUser.UserUID)
+
+	err = client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, model.DeleteLibraryElementResponse{
+		Message: "Library element deleted",
+		ID:      meta.GetDeprecatedInternalID(), // nolint:staticcheck
+	})
+}
+
+func (lk8s *libraryElementsK8sHandler) patchK8sLibraryElement(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	uid := web.Params(c.Req)[":uid"]
+	cmd := model.PatchLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+
+	// Get the existing library element
+	existing, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	meta, err := utils.MetaAccessor(existing)
+	if cmd.FolderUID != nil {
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "failed to access metadata", err)
+			return
+		}
+		meta.SetFolder(*cmd.FolderUID)
+	}
+
+	meta.SetUpdatedBy(c.SignedInUser.UserUID)
+
+	if cmd.Model != nil {
+		libraryPanelSpec, err := lk8s.legacyModelToLibraryPanelSpec(c, model.CreateLibraryElementCommand{
+			Name:  cmd.Name,
+			Model: cmd.Model,
+		})
+		if err != nil {
+			c.JsonApiErr(http.StatusBadRequest, "failed to convert model", err)
+			return
+		}
+		specJSON, err := json.Marshal(libraryPanelSpec)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "failed to marshal spec", err)
+			return
+		}
+		var specMap map[string]interface{}
+		if err := json.Unmarshal(specJSON, &specMap); err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "failed to unmarshal spec", err)
+			return
+		}
+		existing.Object["spec"] = libraryPanelSpec
+	}
+
+	out, err := client.Update(c.Req.Context(), existing, v1.UpdateOptions{})
 	if err != nil {
 		lk8s.writeError(c, err)
 		return

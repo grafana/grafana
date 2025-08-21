@@ -65,14 +65,12 @@ func authorizeLibraryPanel(ctx context.Context, ac accesscontrol.AccessControl, 
 			return authorizer.DecisionDeny, "can not read any library panels", err
 		}
 	case "create":
-		// TODO: uncomment this when we implement create :)
-		//
 		// Detailed create permissions are handled by authz, this just checks whether the user can create *any* library panel
-		// ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsCreate))
-		// if !ok || err != nil {
-		// 	 return authorizer.DecisionDeny, "can not create any library panels", err
-		// }
-		return authorizer.DecisionDeny, "can not create any library panels", nil
+		// TODO: Check if this is working as expected
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsCreate))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not create any library panels", err
+		}
 	case "get":
 		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsRead, libraryelements.ScopeLibraryPanelsProvider.GetResourceScopeUID(attr.GetName())))
 		if !ok || err != nil {

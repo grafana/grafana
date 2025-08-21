@@ -70,6 +70,9 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		resourceInfo = dashboardV2.DashboardResourceInfo
 
 		// Noop for V2
+	case *dashboardV0.LibraryPanel:
+		// no mutation for library panels
+		return nil
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
 	}

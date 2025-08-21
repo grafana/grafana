@@ -62,6 +62,7 @@ var (
 	_ builder.APIGroupVersionsProvider = (*DashboardsAPIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor     = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -192,21 +193,31 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
-	return []string{dashv0.DashboardKind().Plural()}
+	return []string{dashv0.DashboardResourceInfo.GetName()}
 }
 
 // Validate validates dashboard operations for the apiserver
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
 
-	// Handle different operations
+	// Handle library panel validation
+	if a.GetKind() == dashv0.LibraryPanelResourceInfo.GroupVersionKind() {
+		switch op {
+		case admission.Delete:
+			return b.validatePanelDelete(ctx, a)
+		default:
+			return nil
+		}
+	}
+
+	// Handle dashboard validation
 	switch op {
 	case admission.Delete:
-		return b.validateDelete(ctx, a)
+		return b.validateDashboardDelete(ctx, a)
 	case admission.Create:
-		return b.validateCreate(ctx, a, o)
+		return b.validateDashboardCreate(ctx, a, o)
 	case admission.Update:
-		return b.validateUpdate(ctx, a, o)
+		return b.validateDashboardUpdate(ctx, a, o)
 	case admission.Connect:
 		return nil
 	}
@@ -215,7 +226,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 }
 
 // validateDelete checks if a dashboard can be deleted
-func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
+func (b *DashboardsAPIBuilder) validateDashboardDelete(ctx context.Context, a admission.Attributes) error {
 	obj := a.GetOperationOptions()
 	deleteOptions, ok := obj.(*metav1.DeleteOptions)
 	if !ok {
@@ -253,8 +264,39 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	return nil
 }
 
+// validatePanelDelete checks if a panel can be deleted
+func (b *DashboardsAPIBuilder) validatePanelDelete(ctx context.Context, a admission.Attributes) error {
+	obj := a.GetOperationOptions()
+	deleteOptions, ok := obj.(*metav1.DeleteOptions)
+	if !ok {
+		fmt.Println("expected v1.DeleteOptions")
+		return fmt.Errorf("expected v1.DeleteOptions")
+	}
+
+	// Skip validation for forced deletions (grace period = 0)
+	if deleteOptions.GracePeriodSeconds != nil && *deleteOptions.GracePeriodSeconds == 0 {
+		return nil
+	}
+
+	nsInfo, err := claims.ParseNamespace(a.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+	}
+
+	connectedDashboards, err := b.dashboardService.GetDashboardsByLibraryPanelUID(ctx, a.GetName(), nsInfo.OrgID)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "delete hook failed to check if panel is connected to a dashboard", err)
+	}
+
+	if len(connectedDashboards) > 0 {
+		return apierrors.NewBadRequest("panel is connected to a dashboard")
+	}
+
+	return nil
+}
+
 // validateCreate validates dashboard creation
-func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (b *DashboardsAPIBuilder) validateDashboardCreate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	// Get the dashboard object
 	dashObj := a.GetObject()
 
@@ -312,7 +354,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 }
 
 // validateUpdate validates dashboard updates
-func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (b *DashboardsAPIBuilder) validateDashboardUpdate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	// Get the new and old dashboards
 	newDashObj := a.GetObject()
 	oldDashObj := a.GetOldObject()
@@ -519,6 +561,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 	// Expose read only library panels
 	if libraryPanels != nil {
+		opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: true,
+		})
+
 		legacyLibraryStore := &LibraryPanelStore{
 			Access:        b.legacy.Access,
 			ResourceInfo:  *libraryPanels,
