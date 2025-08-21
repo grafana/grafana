@@ -6,6 +6,27 @@ const [mockTree] = wellFormedTree();
 const [mockTreeThatViewersCanEdit] = treeViewersCanEdit();
 const collator = new Intl.Collator();
 
+// TODO: Generalise access control response and additional properties
+const mockAccessControl = {
+  'dashboards.permissions:write': true,
+  'dashboards:create': true,
+};
+const additionalProperties = {
+  canAdmin: true,
+  canDelete: true,
+  canEdit: true,
+  canSave: true,
+  created: '2025-07-14T12:07:36+02:00',
+  createdBy: 'Anonymous',
+  hasAcl: false,
+  id: 1,
+  orgId: 1,
+  updated: '2025-07-15T18:01:36+02:00',
+  updatedBy: 'Anonymous',
+  url: '/grafana/dashboards/f/1ca93012-1ffc-5d64-ae2e-54835c234c67/rik-cujahda-pi',
+  version: 1,
+};
+
 const listFoldersHandler = () =>
   http.get('/api/folders', ({ request }) => {
     const url = new URL(request.url);
@@ -24,6 +45,7 @@ const listFoldersHandler = () =>
         return {
           uid: folder.item.uid,
           title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
+          ...additionalProperties,
         };
       })
       .sort((a, b) => collator.compare(a.title, b.title)) // API always sorts by title
@@ -33,10 +55,13 @@ const listFoldersHandler = () =>
   });
 
 const getFolderHandler = () =>
-  http.get('/api/folders/:uid', ({ params }) => {
+  http.get('/api/folders/:uid', ({ params, request }) => {
     const { uid } = params;
+    const url = new URL(request.url);
+    const accessControlQueryParam = url.searchParams.get('accesscontrol');
 
     const folder = mockTree.find((v) => v.item.uid === uid);
+
     if (!folder) {
       return HttpResponse.json({ message: 'folder not found', status: 'not-found' }, { status: 404 });
     }
@@ -44,6 +69,8 @@ const getFolderHandler = () =>
     return HttpResponse.json({
       title: folder?.item.title,
       uid: folder?.item.uid,
+      ...additionalProperties,
+      ...(accessControlQueryParam ? { accessControl: mockAccessControl } : {}),
     });
   });
 
