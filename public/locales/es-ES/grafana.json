@@ -3543,7 +3543,6 @@
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "Moviendo...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -11886,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Contraer la fila de la consulta",
       "datasource-help": "Mostrar la ayuda de la fuente de datos",
       "drag-and-drop": "Arrastrar y soltar para reordenar",
@@ -11897,11 +11895,7 @@
       "replace-query-from-library": "Reemplazar con consulta de la librería",
       "show-response": "Mostrar respuesta"
     },
-    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
   },
   "recently-deleted": {
     "buttons": {
