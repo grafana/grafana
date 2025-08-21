@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -39,11 +40,11 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	for _, inputFilePath := range inputFiles {
 		t.Run(inputFilePath, func(t *testing.T) {
 			input := helper.RenderObject(t, inputFilePath, nil)
+			name := mustNestedString(input.Object, "metadata", "name")
 
 			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
 			require.NoError(t, err, "failed to create resource")
 
-			name := mustNestedString(input.Object, "metadata", "name")
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
 
@@ -203,6 +204,8 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	require.Error(t, err, "invalid dashboard shouldn't exist")
 	require.True(t, apierrors.IsNotFound(err))
 
+	helper.DebugState(t, repo, "BEFORE PULL JOB WITH INVALID SCHEMA")
+
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
@@ -254,18 +257,15 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	// )
 
 	const repo = "github-create-test"
-	_, err := helper.Repositories.Resource.Create(ctx,
-		helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
-			"Name":        repo,
-			"SyncEnabled": true,
-			"SyncTarget":  "instance",
-			"Path":        "grafana/",
-		}),
-		metav1.CreateOptions{},
-	)
-	require.NoError(t, err)
+	testRepo := TestRepo{
+		Name:               repo,
+		Template:           "testdata/github-readonly.json.tmpl",
+		Target:             "folder",
+		ExpectedDashboards: 3,
+		ExpectedFolders:    3, // Folder sync creates an additional folder for the repository itself
+	}
 
-	helper.SyncAndWait(t, repo, nil)
+	helper.CreateRepo(t, testRepo)
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
@@ -289,6 +289,12 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		assert.NoError(t, err, "can list values")
 		assert.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
 	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be deleted")
+
+	// Wait for repository to be fully deleted before subtests run
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+	}, time.Second*10, time.Millisecond*50, "repository should be deleted before subtests")
 
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
@@ -315,9 +321,12 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
+				// Create repository directly without health checks since we're only testing URL cleanup
 				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
-					"Name": test.name,
-					"URL":  test.input,
+					"Name":        test.name,
+					"URL":         test.input,
+					"SyncTarget":  "folder",
+					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup
 				})
 
 				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
@@ -332,8 +341,122 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 				err = helper.Repositories.Resource.Delete(ctx, test.name, metav1.DeleteOptions{})
 				require.NoError(t, err, "failed to delete")
+
+				// Wait for repository to be fully deleted before next test
+				require.EventuallyWithT(t, func(collect *assert.CollectT) {
+					_, err := helper.Repositories.Resource.Get(ctx, test.name, metav1.GetOptions{})
+					assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+				}, time.Second*5, time.Millisecond*50, "repository should be deleted")
 			})
 		}
+	})
+}
+
+func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	originalName := "original-repo"
+	// Create instance sync repository first
+	originalRepo := TestRepo{
+		Name:               originalName,
+		Target:             "instance",
+		Copies:             map[string]string{}, // No files needed for this test
+		ExpectedDashboards: 0,
+		ExpectedFolders:    0,
+	}
+	helper.CreateRepo(t, originalRepo)
+
+	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
+		folderRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+			"Name":        "folder-blocked-by-instance",
+			"SyncEnabled": true,
+			"SyncTarget":  "folder",
+		})
+
+		_, err := helper.Repositories.Resource.Create(ctx, folderRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.Error(t, err, "folder sync repository should be rejected when instance sync exists")
+
+		// Verify the error message mentions the existing instance repository
+		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
+		require.Contains(t, statusError.Message, "Cannot create folder repository when instance repository exists: "+originalName)
+	})
+
+	t.Run("change between folder and instance sync for the same repository if no previous sync happened", func(t *testing.T) {
+		repo, err := helper.Repositories.Resource.Get(ctx, originalName, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get repository")
+		err = unstructured.SetNestedField(repo.Object, "folder", "spec", "sync", "target")
+		require.NoError(t, err, "failed to set syncTarget to folder")
+		_, err = helper.Repositories.Resource.Update(ctx, repo, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to update repository to folder sync")
+
+		// Verify that the repository is now a folder sync
+		// We verify with the listing APIs because it may take some time for the update to propagate
+		require.Eventually(t, func() bool {
+			repos, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return false
+			}
+
+			for _, repo := range repos.Items {
+				if repo.GetName() == originalName {
+					syncTarget, found, err := unstructured.NestedString(repo.Object, "spec", "sync", "target")
+					if err != nil || !found {
+						return false
+					}
+
+					return syncTarget == "folder"
+				}
+			}
+
+			return false
+		}, time.Second*10, time.Millisecond*100, "failed to verify that sync target is folder")
+	})
+
+	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
+		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+			"Name":        "instance-repo-blocked",
+			"SyncEnabled": true,
+			"SyncTarget":  "instance",
+		})
+
+		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.Error(t, err, "instance sync repository should be rejected when any other repository exists")
+
+		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
+		require.Contains(t, statusError.Message, "Instance repository can only be created when no other repositories exist. Found: "+originalName)
+	})
+
+	t.Run("repository limit validation of 10 for folder syncs repositories", func(t *testing.T) {
+		for i := 2; i <= 10; i++ {
+			repoName := fmt.Sprintf("limit-test-repo-%d", i)
+			limitTestRepo := TestRepo{
+				Name:               repoName,
+				Target:             "folder",
+				Copies:             map[string]string{}, // No files needed for this test
+				ExpectedDashboards: 0,
+				ExpectedFolders:    i, // Each repository creates a folder, so total = i
+			}
+			helper.CreateRepo(t, limitTestRepo)
+		}
+
+		// Try to create the 11th repository - should fail due to limit
+		eleventhRepoName := "limit-test-repo-11"
+		eleventhRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+			"Name":        eleventhRepoName,
+			"SyncEnabled": true,
+			"SyncTarget":  "folder",
+		})
+
+		_, err := helper.Repositories.Resource.Create(ctx, eleventhRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.Error(t, err, "11th repository should be rejected due to limit")
+
+		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
+		require.Contains(t, statusError.Message, "Maximum number of 10 repositories reached")
 	})
 }
 
@@ -350,11 +473,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	const targetPath = "all-panels.json"
 
 	// Set up the repository.
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{"Name": repo})
-	obj, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
-	name, _, _ := unstructured.NestedString(obj.Object, "metadata", "name")
-	require.Equal(t, repo, name, "wrote the expected name")
+	helper.CreateRepo(t, TestRepo{Name: repo})
 
 	// Write a file -- this will create it *both* in the local file system, and in grafana
 	t.Run("write all panels", func(t *testing.T) {
@@ -459,7 +578,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.Error(t, result.Error(), "invalid path should return error")
 
 		// Read a file with a bad path
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "../../all-panels.json")
 		require.Error(t, err, "invalid path should error")
 	})
 
@@ -499,7 +618,7 @@ spec:
 		err = json.Unmarshal(raw, obj)
 		require.NoError(t, err)
 
-		name, _, _ = unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
+		name, _, _ := unstructured.NestedString(obj.Object, "resource", "upsert", "metadata", "name")
 		require.True(t, strings.HasPrefix(name, "prefix-"), "should generate name")
 	})
 }
@@ -520,15 +639,15 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	const repo = "local-tmp"
 	// Set up the repository and the file to import.
-	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-	})
-
+	testRepo := TestRepo{
+		Name:               repo,
+		Target:             "instance",
+		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    0,
+	}
 	// We create the repository
-	_, err = helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
-	require.NoError(t, err)
+	helper.CreateRepo(t, testRepo)
 
 	// Now, we import it, such that it may exist
 	// The sync may not be necessary as the sync may have happened automatically at this point

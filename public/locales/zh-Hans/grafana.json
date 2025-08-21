@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "静音、分组和时间设定"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "未找到数据源"
     },
     "alert-menu": {
@@ -1237,20 +1242,6 @@
     "file-export-preview": {
       "copy-code": "复制代码",
       "download": "下载"
-    },
-    "filter-options": {
-      "label": {
-        "alert-rule": "提醒规则",
-        "all": "全部",
-        "error": "错误",
-        "firing": "触发中",
-        "no-data": "没有数据",
-        "normal": "正常",
-        "ok": "好",
-        "pending": "待处理",
-        "recording-rule": "录制规则",
-        "recovering": "正在恢复"
-      }
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "筛选规则列表"
@@ -2471,6 +2462,7 @@
       },
       "empty-data-source": "未找到规则",
       "error-button": "错误",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "取消搜索",
         "no-more-results": "没有更多结果 – 找到 {{numberOfRules}} 个规则",
@@ -2575,11 +2567,27 @@
       "delete-rule": {
         "success": "规则已成功删除"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "规则评估已暂停"
       },
       "resume-rule": {
         "success": "规则评估已恢复"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "规则已成功更新"
@@ -2588,20 +2596,29 @@
     "rules-filter": {
       "clear-filters": "清除筛选器",
       "configured-alert-rules": "包含已配置警报规则的数据源是 Mimir 或 Loki 数据源，其中警报规则在数据源中存储和评估。",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "仪表板",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "按数据源帮助搜索",
       "filter-options": {
-        "aria-label-show-filters": "显示筛选器",
-        "label-custom-filter": "自定义筛选器",
-        "label-saved-searches": "保存的搜索"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "健康",
       "label": {
         "hide": "隐藏",
         "show": "显示"
       },
       "manage-alerts": "在这些数据源中，您可以选择通过警报用户界面管理警报，以便能够在 Grafana 用户界面以及在其配置所在的数据源中管理这些警报规则。",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "所有数据源",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "插件规则",
       "rule-type": "规则类型",
       "rulesSearchInput-placeholder-search": "搜索",
@@ -2616,9 +2633,6 @@
       "text-federated": "联合",
       "text-provisioned": "已预置"
     },
-    "saved-searches": {
-      "text-default": "默认"
-    },
     "search": {
       "property": {
         "data-source": "数据源",
@@ -2626,11 +2640,10 @@
         "labels": "标签",
         "namespace": "文件夹/命名空间",
         "rule-health": "健康",
-        "rule-name": "提醒规则名称",
+        "rule-name": "",
         "rule-type": "类型",
         "state": "状态"
-      },
-      "save-query": "保存当前搜索"
+      }
     },
     "search-field-input": {
       "clear": "清除",
@@ -3517,7 +3530,6 @@
       "button-cancel": "取消",
       "button-move": "移动",
       "button-moving": "正在移动…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3607,11 +3619,11 @@
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
+      "error-invalid-characters": "",
       "error-required": "文件夹名称为必填项",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
       "label-folder-name": "文件夹名称",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
-      "text-your-folder-will-be-created-as": "您的文件夹将创建为 {{folderName}}",
       "title-pull-request-created": "拉取请求已创建",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
@@ -4078,10 +4090,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "应用",
     "cancel": "取消",
     "clear": "清除",
-    "close": "关闭",
     "collapse": "收起",
     "edit": "编辑",
     "help": "帮助",
@@ -4146,7 +4158,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "数据源",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "未找到与您的查询匹配的结果",
       "request-data-source": "请求新的数据源",
       "roadmap": "查看路线图"
@@ -4496,6 +4509,10 @@
           },
           "value": "值"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "由于条件渲染，元素已被隐藏。"
@@ -5324,6 +5341,7 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
+      "read-only": "",
       "refresh": "刷新仪表板",
       "save": "保存仪表板",
       "save-dashboard": {
@@ -6512,9 +6530,11 @@
       "explore": "探索"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "构建数据面板",
       "explore-data": "浏览数据",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "有关错误的更多详情"
@@ -6560,6 +6580,9 @@
       "description": {
         "hosted-graphite-prometheus-and-loki": "托管 Graphite、Prometheus 和 Loki"
       }
+    },
+    "list": {
+      "starred": ""
     },
     "new-data-source-view": {
       "cancel": "取消",
@@ -7453,6 +7476,13 @@
       "tooltip-title": "数学运算符",
       "tooltip-trigger": "表达式"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "功能",
       "label-input": "输入",
@@ -7468,6 +7498,11 @@
       "label-upsample": "升高采样",
       "tooltip-s-m-h": "10 秒、1 分钟、30 分钟、1 小时"
     },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
+    },
     "threshold": {
       "label-input": "输入"
     }
@@ -7478,13 +7513,9 @@
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
-  "folder-picker": {
-    "create-instructions": "按 Enter 键以创建新文件夹。",
-    "input-placeholder": "按 Enter 键以确认新文件夹",
-    "loading": "正在加载文件夹..."
-  },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7836,7 +7867,8 @@
       "edit-pane": {
         "go-back": "返回"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -8699,7 +8731,6 @@
       "filter-popup-input-placeholder": "筛选值",
       "filter-popup-match-case": "区分大小写",
       "inspect-drawer-title": "检查值",
-      "inspect-menu-label": "检查值",
       "nested-table": {
         "no-data": "无数据"
       },
@@ -9023,6 +9054,7 @@
       "sign-up": "注册"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "拖放以重新排序",
@@ -10828,7 +10860,6 @@
         "downloads": "下载",
         "from": "",
         "installedVersion": "安装的版本",
-        "lastCommitDate": "上次提交日期：",
         "latestReleaseDate": "最新发布日期：",
         "latestVersion": "最新版本",
         "license": "许可",
@@ -11212,7 +11243,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "回到存储库",
-      "repository-config-exists-configuration": "确保存储库配置存在于配置文件中。"
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "确保存储库配置存在于配置文件中。",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "保存",
@@ -11378,6 +11411,8 @@
         "subtitle": "如果要通过外部存储来同步和管理整个 Grafana 实例，请使用此选项。"
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "活跃的作业",
       "column-action": "操作",
@@ -11396,6 +11431,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "设置",
       "view": "查看"
     },
@@ -11407,6 +11443,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
         "view-repository": ""
       },
       "grafana-repository-synced": "您的资源现在位于外部存储中，并预配到您的实例中。从现在开始，您的实例和外部存储将被同步。",
@@ -12053,7 +12092,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "添加服务账户",
-      "message": "未找到服务账户",
+      "message": "",
       "more-info": "请记住，您可以为其他应用程序的 API 访问提供特定权限",
       "title": "您尚未创建任何服务账号"
     }
@@ -12446,6 +12485,21 @@
   "sort-picker": {
     "select-aria-label": "排序"
   },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
+  },
   "stat": {
     "add-orientation-option": {
       "description-orientation": "布局朝向",
@@ -12697,6 +12751,7 @@
     "description-fields": "选择应计算的字段",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
+    "description-tooltip-from-field": "",
     "name-calculation": "计算",
     "name-cell-height": "单元格高度",
     "name-cell-type": "单元格类型",
@@ -12712,8 +12767,17 @@
     "name-min-column-width": "最小列宽",
     "name-show-table-footer": "显示表格页脚",
     "name-show-table-header": "显示表格表头",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "自动",
-    "placeholder-fields": "所有数字字段"
+    "placeholder-fields": "所有数字字段",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "清除标记",

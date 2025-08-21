@@ -24,7 +24,7 @@ type PartialTempoQuery struct {
 	MetricsQueryType *dataquery.MetricsQueryType
 }
 
-func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
+func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *DatasourceInfo) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runMetricsStream")
 	defer span.End()
 

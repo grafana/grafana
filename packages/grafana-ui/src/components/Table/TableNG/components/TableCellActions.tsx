@@ -1,5 +1,6 @@
 import WKT from 'ol/format/WKT';
 import Geometry from 'ol/geom/Geometry';
+import { memo } from 'react';
 
 import { FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -9,21 +10,18 @@ import { TableCellInspectorMode } from '../../TableCellInspector';
 import { TableCellDisplayMode } from '../../types';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellActionsProps } from '../types';
 
-export function TableCellActions(props: TableCellActionsProps) {
-  const {
+export const TableCellActions = memo(
+  ({
     field,
     value,
     cellOptions,
     displayName,
-    setIsInspecting,
-    setContextMenuProps,
+    setInspectCell,
     onCellFilterAdded,
     className,
     cellInspect,
     showFilters,
-  } = props;
-
-  return (
+  }: TableCellActionsProps) => (
     // stopping propagation to prevent clicks within the actions menu from triggering the cell click events
     // for things like the data links tooltip.
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
@@ -47,11 +45,10 @@ export function TableCellActions(props: TableCellActionsProps) {
               mode = TableCellInspectorMode.code;
             }
 
-            setContextMenuProps({
+            setInspectCell({
               value: String(inspectValue ?? ''),
               mode,
             });
-            setIsInspecting(true);
           }}
         />
       )}
@@ -82,5 +79,5 @@ export function TableCellActions(props: TableCellActionsProps) {
         </>
       )}
     </div>
-  );
-}
+  )
+);
