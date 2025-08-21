@@ -851,7 +851,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 			}
 
 			switch res.Action {
-			case int64(resourcepb.WatchEvent_ADDED), int64(resourcepb.WatchEvent_MODIFIED):
+			case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
@@ -865,7 +865,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					Action: ActionIndex,
 					Doc:    doc,
 				})
-			case int64(resourcepb.WatchEvent_DELETED):
+			case resourcepb.WatchEvent_DELETED:
 				items = append(items, &BulkIndexItem{
 					Action: ActionDelete,
 					Key:    key,
