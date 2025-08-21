@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { t } from '@grafana/i18n';
 import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
@@ -17,25 +16,22 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.multi-value', 'Multi-value'),
-          id: uuidv4(),
-          render: (descriptor) => <MultiValueSwitch id={descriptor.props.id} variable={variable} />,
+          render: () => <MultiValueSwitch variable={variable} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All value'),
-          id: uuidv4(),
           description: t(
             'dashboard.edit-pane.variable.selection-options.include-all-description',
             'Enables a single option that represent all values'
           ),
-          render: (descriptor) => <IncludeAllSwitch id={descriptor.props.id} variable={variable} />,
+          render: () => <IncludeAllSwitch variable={variable} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.custom-all-value', 'Custom all value'),
-          id: uuidv4(),
           description: t(
             'dashboard.edit-pane.variable.selection-options.custom-all-value-description',
             'A wildcard regex or other value to represent All'
@@ -43,61 +39,46 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
           useShowIf: () => {
             return variable.useState().includeAll ?? false;
           },
-          render: (descriptor) => <CustomAllValueInput id={descriptor.props.id} variable={variable} />,
+          render: () => <CustomAllValueInput variable={variable} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values'),
-          id: uuidv4(),
           description: t(
             'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
           ),
-          render: (descriptor) => <AllowCustomSwitch id={descriptor.props.id} variable={variable} />,
+          render: () => <AllowCustomSwitch variable={variable} />,
         })
       );
   }, [variable]);
 }
 
-interface InputProps {
-  variable: MultiValueVariable;
-  id?: string;
-}
-
-function MultiValueSwitch({ variable, id }: InputProps) {
+function MultiValueSwitch({ variable }: { variable: MultiValueVariable }) {
   const { isMulti } = variable.useState();
 
-  return (
-    <Switch id={id} value={isMulti} onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })} />
-  );
+  return <Switch value={isMulti} onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })} />;
 }
 
-function IncludeAllSwitch({ variable, id }: InputProps) {
+function IncludeAllSwitch({ variable }: { variable: MultiValueVariable }) {
   const { includeAll } = variable.useState();
 
-  return (
-    <Switch
-      id={id}
-      value={includeAll}
-      onChange={(evt) => variable.setState({ includeAll: evt.currentTarget.checked })}
-    />
-  );
+  return <Switch value={includeAll} onChange={(evt) => variable.setState({ includeAll: evt.currentTarget.checked })} />;
 }
 
-function AllowCustomSwitch({ variable, id }: InputProps) {
+function AllowCustomSwitch({ variable }: { variable: MultiValueVariable }) {
   const { allowCustomValue } = variable.useState();
 
   return (
     <Switch
-      id={id}
       value={allowCustomValue}
       onChange={(evt) => variable.setState({ allowCustomValue: evt.currentTarget.checked })}
     />
   );
 }
 
-function CustomAllValueInput({ variable, id }: InputProps) {
+function CustomAllValueInput({ variable }: { variable: MultiValueVariable }) {
   const { allValue } = variable.useState();
   const ref = useRef<HTMLInputElement>(null);
 
@@ -116,5 +97,5 @@ function CustomAllValueInput({ variable, id }: InputProps) {
     [variable]
   );
 
-  return <Input id={id} ref={ref} defaultValue={allValue ?? ''} onBlur={onInputBlur} />;
+  return <Input ref={ref} defaultValue={allValue ?? ''} onBlur={onInputBlur} />;
 }
