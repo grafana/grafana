@@ -6127,9 +6127,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
     },
-    "solo-panel-page": {
-      "loading": "Loading"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
@@ -10693,10 +10690,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
     }
-  },
-  "panel-search": {
-    "no-matches": "No matches found",
-    "unsupported-layout": "Unsupported layout"
   },
   "panel-type-filter": {
     "clear-button": "Clear types",
