@@ -97,7 +97,16 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
       },
     },
   })
-  .setMigrationHandler(canvasMigrationHandler)
+  .setMigrationHandler(canvasMigrationHandler, (panel) => {
+    const root = panel.options?.root;
+    return (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      root?.elements?.some((element: any) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        element.connections?.some((connection: any) => connection.direction && typeof connection.direction === 'string')
+      ) ?? false
+    );
+  })
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;
 
