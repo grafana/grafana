@@ -13,6 +13,7 @@ import {
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
+  hasLogsContextSupport,
   LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
@@ -303,7 +304,7 @@ export const LogLineContext = memo(
         getDataSourceSrv()
           .get({ uid: log.datasourceUid })
           .then((ds) => {
-            if ('getLogRowContext' in ds) {
+            if (hasLogsContextSupport(ds)) {
               setDatasourceInstance(ds);
             }
           });
