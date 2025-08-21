@@ -14,10 +14,11 @@ import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
-import RulesFilterV2 from './RulesFilter.v2';
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const RulesFilterV2 = require('./RulesFilter.v2').default;
 
 let mockFilterState: RulesFilterType = {
   ruleName: '',
@@ -323,7 +324,7 @@ describe('RulesFilterV2', () => {
       // Permission is already mocked to true at module level
       const { user } = render(<RulesFilterV2 />);
       await user.click(ui.filterButton.get());
-      expect(screen.getByText('Contact point')).toBeInTheDocument();
+      expect(await screen.findByText('Contact point')).toBeInTheDocument();
     });
 
     it('Should show plugin filter when plugins are enabled', async () => {
@@ -335,7 +336,7 @@ describe('RulesFilterV2', () => {
 
       const { user } = render(<RulesFilterV2 />);
       await user.click(ui.filterButton.get());
-      expect(screen.getByText('Plugin rules')).toBeInTheDocument();
+      expect(await screen.findByText('Plugin rules')).toBeInTheDocument();
     });
 
     it('Should hide plugin filter when no plugins are available', async () => {
