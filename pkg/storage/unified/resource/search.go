@@ -835,6 +835,11 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 		docs := 0
 		for res, err := range it {
+			// Finish quickly if context is done.
+			if ctx.Err() != nil {
+				return 0, 0, ctx.Err()
+			}
+
 			docs++
 
 			if err != nil {
@@ -842,14 +847,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				return 0, 0, err
 			}
 
-			// Update the key name
-			key := &resourcepb.ResourceKey{
-				Group:     nsr.Group,
-				Resource:  nsr.Resource,
-				Namespace: nsr.Namespace,
-				Name:      res.Key.Name,
-			}
-
+			key := &res.Key
 			switch res.Action {
 			case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
@@ -866,12 +864,13 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					Doc:    doc,
 				})
 			case resourcepb.WatchEvent_DELETED:
+				span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
 				items = append(items, &BulkIndexItem{
 					Action: ActionDelete,
-					Key:    key,
+					Key:    &res.Key,
 				})
 			default:
-				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", res.Key)
+				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
 				continue
 			}
 

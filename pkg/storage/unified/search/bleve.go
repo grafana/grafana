@@ -589,6 +589,7 @@ type bleveIndex struct {
 	updaterEnabled bool               // When set to false, updater is no longer allowed to update index. Toggled on close().
 	updaterQueue   []updateRequest    // Queue of requests for next updater iteration.
 	updaterCancel  context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
+	updaterWg      sync.WaitGroup
 
 	updateLatency    prometheus.Histogram
 	updatedDocuments prometheus.Summary
@@ -1135,18 +1136,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 }
 
 func (b *bleveIndex) closeAndStopUpdates() error {
-	err := b.index.Close()
-
+	// Signal updater to stop. We do this by 1) setting updaterEnabled + sending signal, and by 2) calling cancel.
 	b.updaterMu.Lock()
 	b.updaterEnabled = false
+	// if updater is running, cancel it. (Setting to nil is only done from updater itself in defer.)
 	if b.updaterCancel != nil {
 		b.updaterCancel()
 	}
 	b.updaterCond.Broadcast()
 	b.updaterMu.Unlock()
 
-	// wait for updater to exit?
-	return err
+	b.updaterWg.Wait()
+	// Close index only after updater is not working on it anymore.
+	return b.index.Close()
 }
 
 func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
@@ -1171,6 +1173,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) error {
 	if b.updaterCancel == nil {
 		c, cf := context.WithCancel(context.Background())
 		b.updaterCancel = cf
+		b.updaterWg.Add(1)
 		go b.updater(c)
 	}
 	b.updaterCond.Broadcast() // If updater is waiting for next batch, wake it up.
@@ -1190,9 +1193,11 @@ const maxWait = 5 * time.Second
 func (b *bleveIndex) updater(ctx context.Context) {
 	defer func() {
 		b.updaterMu.Lock()
-		b.updaterCancel()
+		b.updaterCancel() // cannot be nil here.
 		b.updaterCancel = nil
 		b.updaterMu.Unlock()
+
+		b.updaterWg.Done()
 	}()
 
 	for {
