@@ -3587,10 +3587,10 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes-react@npm:^6.30.0":
-  version: 6.30.0
-  resolution: "@grafana/scenes-react@npm:6.30.0"
+  version: 6.30.1
+  resolution: "@grafana/scenes-react@npm:6.30.1"
   dependencies:
-    "@grafana/scenes": "npm:6.30.0"
+    "@grafana/scenes": "npm:6.30.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3602,13 +3602,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/107b930aaf88945cbc51601443190357d9733bd3e9063fa7d2fd7496ad772e25f7cbddd34fd6a2adeb5ae85d39d03cecf8d2ad3d74a351e61fedabb17dfce82a
+  checksum: 10/695c61665f38f09f6b49552a32caf1fbe6a3209d9df7039fd9110dcbda9e2031e41d53b7e471021e779bee78f8f27a3978fed96f9e70a07f2157e25f96a81937
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.30.0, @grafana/scenes@npm:^6.30.0":
-  version: 6.30.0
-  resolution: "@grafana/scenes@npm:6.30.0"
+"@grafana/scenes@npm:6.30.1, @grafana/scenes@npm:^6.30.0":
+  version: 6.30.1
+  resolution: "@grafana/scenes@npm:6.30.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3628,7 +3628,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/b1036a1d8c531b3e197c3de276c4fe4a7092fcd27e1fd350ff6530cabb8eb5436a6184840ef6a4e6747510326e58c9a73d54b0c36f8ee7d20f8fd6eaccea8d75
+  checksum: 10/6c50a31330ecb674de6664d6e119e54dee7ecee50925a71870c0a08562e4b3d5614e56e34008d6710e65ef03a8220ba2e9d811804b8a001392de46ef745a2e75
   languageName: node
   linkType: hard
 
@@ -5851,7 +5851,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.9.0, @opentelemetry/api@npm:^1.3.0, @opentelemetry/api@npm:^1.9.0":
+"@opentelemetry/api@npm:1.9.0, @opentelemetry/api@npm:^1.3.0, @opentelemetry/api@npm:^1.4.0, @opentelemetry/api@npm:^1.9.0":
   version: 1.9.0
   resolution: "@opentelemetry/api@npm:1.9.0"
   checksum: 10/a607f0eef971893c4f2ee2a4c2069aade6ec3e84e2a1f5c2aac19f65c5d9eeea41aa72db917c1029faafdd71789a1a040bdc18f40d63690e22ccae5d7070f194
@@ -12201,6 +12201,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bintrees@npm:1.0.2":
+  version: 1.0.2
+  resolution: "bintrees@npm:1.0.2"
+  checksum: 10/071896cea5ea5413316c8436e95799444c208630d5c539edd8a7089fc272fc5d3634aa4a2e4847b28350dda1796162e14a34a0eda53108cc5b3c2ff6a036c1fa
+  languageName: node
+  linkType: hard
+
 "bl@npm:^4.0.3, bl@npm:^4.1.0":
   version: 4.1.0
   resolution: "bl@npm:4.1.0"
@@ -18542,6 +18549,7 @@ __metadata:
     postcss-scss: "npm:4.0.9"
     prettier: "npm:3.6.2"
     prismjs: "npm:1.30.0"
+    prom-client: "npm:^15.1.3"
     publint: "npm:^0.3.12"
     rc-slider: "npm:11.1.8"
     rc-tree: "npm:5.13.1"
@@ -26297,6 +26305,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prom-client@npm:^15.1.3":
+  version: 15.1.3
+  resolution: "prom-client@npm:15.1.3"
+  dependencies:
+    "@opentelemetry/api": "npm:^1.4.0"
+    tdigest: "npm:^0.1.1"
+  checksum: 10/eba75e15ab896845d39359e3a4d6f7913ea05339b3122d8dde8c8c374669ad1a1d1ab2694ab2101c420bd98086a564e4f2a18aa29018fc14a4732e57c1c19aec
+  languageName: node
+  linkType: hard
+
 "promise-all-reject-late@npm:^1.0.0":
   version: 1.0.1
   resolution: "promise-all-reject-late@npm:1.0.1"
@@ -30721,6 +30739,15 @@ __metadata:
     mkdirp: "npm:^1.0.3"
     yallist: "npm:^4.0.0"
   checksum: 10/bfbfbb2861888077fc1130b84029cdc2721efb93d1d1fb80f22a7ac3a98ec6f8972f29e564103bbebf5e97be67ebc356d37fa48dbc4960600a1eb7230fbd1ea0
+  languageName: node
+  linkType: hard
+
+"tdigest@npm:^0.1.1":
+  version: 0.1.2
+  resolution: "tdigest@npm:0.1.2"
+  dependencies:
+    bintrees: "npm:1.0.2"
+  checksum: 10/45be99fa52dab74b8edafe150e473cdc45aa1352c75ed516a39905f350a08c3175f6555598111042c3677ba042d7e3cae6b5ce4c663fe609bc634f326aabc9d6
   languageName: node
   linkType: hard
 
