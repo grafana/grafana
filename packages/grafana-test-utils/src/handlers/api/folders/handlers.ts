@@ -1,3 +1,4 @@
+import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { treeViewersCanEdit, wellFormedTree } from '../../../fixtures/folders';
@@ -19,7 +20,6 @@ const additionalProperties = {
   created: '2025-07-14T12:07:36+02:00',
   createdBy: 'Anonymous',
   hasAcl: false,
-  id: 1,
   orgId: 1,
   updated: '2025-07-15T18:01:36+02:00',
   updatedBy: 'Anonymous',
@@ -42,10 +42,11 @@ const listFoldersHandler = () =>
     const folders = tree
       .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUid)
       .map((folder) => {
+        const random = Chance(folder.item.uid);
         return {
+          id: random.integer({ min: 1, max: 1000 }),
           uid: folder.item.uid,
           title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
-          ...additionalProperties,
         };
       })
       .sort((a, b) => collator.compare(a.title, b.title)) // API always sorts by title
@@ -66,7 +67,10 @@ const getFolderHandler = () =>
       return HttpResponse.json({ message: 'folder not found', status: 'not-found' }, { status: 404 });
     }
 
+    const random = Chance(folder.item.uid);
+
     return HttpResponse.json({
+      id: random.integer({ min: 1, max: 1000 }),
       title: folder?.item.title,
       uid: folder?.item.uid,
       ...additionalProperties,

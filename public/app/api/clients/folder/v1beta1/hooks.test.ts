@@ -83,7 +83,7 @@ describe('useGetFolderQueryFacade', () => {
     config.featureToggles.foldersAppPlatformAPI = false;
     const result = await renderFolderHook();
     expect(result.current.data).toMatchObject({
-      id: 1,
+      id: 791,
       title: folderA_folderA.item.title,
       url: expectedUrl,
       uid: expectedUid,
