@@ -11,8 +11,8 @@ const mockSetItem = jest.fn();
 jest.mock('./userStorage', () => {
   return {
     UserStorage: jest.fn().mockImplementation(() => ({
-      getItem: mockGetItem,
-      setItem: mockSetItem,
+      getItem: (key: string) => mockGetItem(key),
+      setItem: (key: string, value: string) => mockSetItem(key, value),
     })),
   };
 });
