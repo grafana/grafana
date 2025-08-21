@@ -15,6 +15,8 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName: "iam",
 	Group:   "iam.grafana.app",
@@ -70,6 +72,14 @@ var appManifestData = app.ManifestData{
 					Plural:     "Users",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
 				},
 
 				{

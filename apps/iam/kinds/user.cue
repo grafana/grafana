@@ -14,7 +14,22 @@ userKind: {
 }
 
 userv0alpha1: userKind & {
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	schema: {
 		spec: v0alpha1.UserSpec
 	}
+	// routes: {
+	// 	"/teams": {
+	// 		"GET": {
+	// 			response: {
+	// 				name: string
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
