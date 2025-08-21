@@ -77,6 +77,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       role: 'tab',
       'aria-selected': active,
       'aria-disabled': disabled,
+      tabIndex: disabled ? -1 : undefined,
       title: !!tooltip ? undefined : otherProps.title, // If tooltip is provided, don't set the title on the link or button, it looks weird
     };
 
@@ -87,7 +88,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
         <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
           <a
             {...commonProps}
-            href={href}
+            href={disabled ? undefined : href}
             // don't think we can avoid the type assertion here :(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             ref={ref as React.ForwardedRef<HTMLAnchorElement>}
@@ -189,15 +190,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     disabled: css({
       color: theme.colors.text.disabled,
       cursor: 'not-allowed',
-      boxShadow: 'none',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: 'none',
-      },
 
       '&:hover, &:focus': {
         color: theme.colors.text.disabled,
-        cursor: 'not-allowed',
-        boxShadow: 'none',
 
         '&::before': {
           backgroundColor: 'transparent',
