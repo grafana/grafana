@@ -1,5 +1,5 @@
 import { FC, SyntheticEvent } from 'react';
-import { Column } from 'react-data-grid';
+import { CellRendererProps, Column } from 'react-data-grid';
 
 import {
   DataFrame,
@@ -305,4 +305,12 @@ export interface MeasureCellHeightEntry {
    * indicates which field indexes of the visible fields this measurer applies to.
    */
   fieldIdxs: number[];
+}
+
+export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+
+export interface FromFieldsResult {
+  columns: TableColumn[];
+  cellRootRenderers: Record<string, CellRootRenderer>;
+  colsWithTooltip: Record<string, boolean>;
 }
