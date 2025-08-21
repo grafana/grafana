@@ -111,10 +111,7 @@ export function TableNG(props: TableNGProps) {
   } = props;
 
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, {
-    enablePagination,
-    transparent,
-  });
+  const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
 
   const getCellActions = useCallback(
@@ -332,7 +329,7 @@ export function TableNG(props: TableNGProps) {
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
-        const renderFieldCell = getCellRenderer(field, cellOptions);
+        const CellType = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
@@ -410,21 +407,21 @@ export function TableNG(props: TableNGProps) {
 
           return (
             <>
-              {renderFieldCell({
-                cellOptions,
-                frame,
-                field,
-                height,
-                rowIdx,
-                theme,
-                value,
-                width,
-                timeRange,
-                cellInspect,
-                showFilters,
-                getActions: getCellActions,
-                disableSanitizeHtml,
-              })}
+              <CellType
+                cellOptions={cellOptions}
+                frame={frame}
+                field={field}
+                height={height}
+                rowIdx={rowIdx}
+                theme={theme}
+                value={value}
+                width={width}
+                timeRange={timeRange}
+                cellInspect={cellInspect}
+                showFilters={showFilters}
+                getActions={getCellActions}
+                disableSanitizeHtml={disableSanitizeHtml}
+              />
               {showActions && (
                 <TableCellActions
                   field={field}
@@ -497,7 +494,7 @@ export function TableNG(props: TableNGProps) {
 
             renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
               // cached so we don't care about multiple calls.
-              const height = rowHeightFn(props.row);
+              const tooltipHeight = rowHeightFn(props.row);
               let tooltipStyle: CSSProperties = { ...rowCellStyle };
               if (tooltipCanBeColorized) {
                 const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
@@ -508,7 +505,7 @@ export function TableNG(props: TableNGProps) {
               }
 
               return (
-                <TableCellTooltip {...tooltipProps} height={height} rowIdx={props.rowIdx} style={tooltipStyle}>
+                <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.rowIdx} style={tooltipStyle}>
                   {renderBasicCellContent(props)}
                 </TableCellTooltip>
               );
@@ -795,6 +792,7 @@ export function TableNG(props: TableNGProps) {
  */
 const renderRowFactory =
   (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
+  // eslint-disable-next-line react/display-name
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;

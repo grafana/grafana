@@ -1,175 +1,107 @@
-import { QueryStatus } from '@reduxjs/toolkit/query';
-import { renderHook } from '@testing-library/react';
+import { renderHook, getWrapper, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
-import { useGetFolderQuery as useGetFolderQueryLegacy } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-
-import {
-  AnnoKeyCreatedBy,
-  AnnoKeyFolder,
-  AnnoKeyManagerKind,
-  AnnoKeyUpdatedBy,
-  AnnoKeyUpdatedTimestamp,
-  DeprecatedInternalId,
-} from '../../../../features/apiserver/types';
-import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { useGetFolderQueryFacade } from './hooks';
 
-import { useGetFolderQuery, useGetFolderParentsQuery } from './index';
+setBackendSrv(backendSrv);
+setupMockServer();
 
-// Mocks for the hooks used inside useGetFolderQueryFacade
-jest.mock('./index', () => ({
-  useGetFolderQuery: jest.fn(),
-  useGetFolderParentsQuery: jest.fn(),
-}));
+const [_, { folderA, folderA_folderA }] = getFolderFixtures();
 
-jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
-  useGetFolderQuery: jest.fn(),
-}));
+const expectedUid = folderA_folderA.item.uid;
+const expectedTitle = folderA_folderA.item.title;
+const urlSlug = expectedTitle.toLowerCase().replace(/ /g, '-').replace(/[\.]/g, '');
+const expectedUrl = `/grafana/dashboards/f/${expectedUid}/${urlSlug}`;
 
-jest.mock('../../iam/v0alpha1', () => ({
-  useGetDisplayMappingQuery: jest.fn(),
-}));
+const parentUrlSlug = folderA.item.title.toLowerCase().replace(/ /g, '-').replace(/[\.]/g, '');
+const expectedParentUrl = `/grafana/dashboards/f/${folderA.item.uid}/${parentUrlSlug}`;
 
-// Mock config and constants
-jest.mock('@grafana/runtime', () => {
-  const runtime = jest.requireActual('@grafana/runtime');
-  return {
-    ...runtime,
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        ...runtime.config.featureToggles,
-        foldersAppPlatformAPI: true,
-      },
-      appSubUrl: '/grafana',
-    },
-  };
-});
-
-const mockFolder = {
-  data: {
-    metadata: {
-      name: 'folder-uid',
-      labels: { [DeprecatedInternalId]: '123' },
-      annotations: {
-        [AnnoKeyUpdatedBy]: 'user-1',
-        [AnnoKeyCreatedBy]: 'user-2',
-        [AnnoKeyFolder]: 'parent-uid',
-        [AnnoKeyManagerKind]: 'user',
-        [AnnoKeyUpdatedTimestamp]: '2024-01-01T00:00:00Z',
-      },
-      creationTimestamp: '2023-01-01T00:00:00Z',
-      generation: 2,
-    },
-    spec: { title: 'Test Folder' },
-  },
-  ...getResponseAttributes(),
+const renderFolderHook = async () => {
+  const { result } = renderHook(() => useGetFolderQueryFacade(folderA_folderA.item.uid), {
+    wrapper: getWrapper({}),
+  });
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+  return result;
 };
 
-const mockParents = {
-  data: { items: [{ name: 'parent-uid', title: 'Parent Folder' }] },
-  ...getResponseAttributes(),
-};
-
-const mockLegacyResponse = {
-  data: {
-    id: 1,
-    uid: 'uiduiduid',
-    orgId: 1,
-    title: 'bar',
-    url: '/dashboards/f/uiduiduid/bar',
-    hasAcl: false,
-    canSave: true,
-    canEdit: true,
-    canAdmin: true,
-    canDelete: true,
-    createdBy: 'Anonymous',
-    created: '2025-07-14T12:07:36+02:00',
-    updatedBy: 'Anonymous',
-    updated: '2025-07-15T18:01:36+02:00',
-    version: 1,
-    accessControl: {
-      'dashboards.permissions:write': true,
-      'dashboards:create': true,
-    },
-  },
-  ...getResponseAttributes(),
-};
-
-const mockUserDisplay = {
-  data: {
-    keys: ['user-1', 'user-2'],
-    display: [{ displayName: 'User One' }, { displayName: 'User Two' }],
-  },
-  ...getResponseAttributes(),
-};
+const originalToggles = { ...config.featureToggles };
+const originalAppSubUrl = String(config.appSubUrl);
 
 describe('useGetFolderQueryFacade', () => {
-  const oldToggleValue = config.featureToggles.foldersAppPlatformAPI;
-
-  afterAll(() => {
-    config.featureToggles.foldersAppPlatformAPI = oldToggleValue;
-  });
-
   beforeEach(() => {
-    (useGetFolderQuery as jest.Mock).mockReturnValue(mockFolder);
-    (useGetFolderParentsQuery as jest.Mock).mockReturnValue(mockParents);
-    (useGetDisplayMappingQuery as jest.Mock).mockReturnValue(mockUserDisplay);
-    (useGetFolderQueryLegacy as jest.Mock).mockReturnValue(mockLegacyResponse);
+    config.appSubUrl = '/grafana';
   });
 
-  it('merges multiple responses into a single FolderDTO-like object if flag is true', () => {
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+    config.appSubUrl = originalAppSubUrl;
+  });
+
+  it('merges multiple responses into a single FolderDTO-like object if flag is true', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
-    const { result } = renderHook(() => useGetFolderQueryFacade('folder-uid'));
+
+    const result = await renderFolderHook();
+
     expect(result.current.data).toMatchObject({
       canAdmin: true,
       canDelete: true,
       canEdit: true,
       canSave: true,
       created: '2023-01-01T00:00:00Z',
-      createdBy: 'User Two',
+      createdBy: 'User 1',
       hasAcl: false,
       id: 123,
-      parentUid: 'parent-uid',
+      parentUid: folderA.item.uid,
       managedBy: 'user',
-      title: 'Test Folder',
-      uid: 'folder-uid',
+      title: expectedTitle,
+      uid: expectedUid,
       updated: '2024-01-01T00:00:00Z',
-      updatedBy: 'User One',
-      url: '/grafana/dashboards/f/folder-uid/test-folder',
-      version: 2,
+      updatedBy: 'User 2',
+      url: expectedUrl,
+      version: 1,
       accessControl: {
         'dashboards.permissions:write': true,
         'dashboards:create': true,
       },
       parents: [
         {
-          title: 'Parent Folder',
-          uid: 'parent-uid',
-          url: '/grafana/dashboards/f/parent-uid/parent-folder',
+          title: folderA.item.title,
+          uid: folderA.item.uid,
+          url: expectedParentUrl,
         },
       ],
     });
   });
 
-  it('returns legacy folder response if flag is false', () => {
+  it('returns legacy folder response if flag is false', async () => {
     config.featureToggles.foldersAppPlatformAPI = false;
-    const { result } = renderHook(() => useGetFolderQueryFacade('folder-uid'));
-    expect(result.current.data).toMatchObject(mockLegacyResponse.data);
+    const result = await renderFolderHook();
+    expect(result.current.data).toMatchObject({
+      id: 791,
+      title: folderA_folderA.item.title,
+      url: expectedUrl,
+      uid: expectedUid,
+      orgId: 1,
+      hasAcl: false,
+      canSave: true,
+      canEdit: true,
+      canAdmin: true,
+      canDelete: true,
+      createdBy: 'Anonymous',
+      created: '2025-07-14T12:07:36+02:00',
+      updatedBy: 'Anonymous',
+      updated: '2025-07-15T18:01:36+02:00',
+      version: 1,
+      accessControl: {
+        'dashboards.permissions:write': true,
+        'dashboards:create': true,
+      },
+    });
   });
 });
-
-function getResponseAttributes() {
-  return {
-    status: QueryStatus.fulfilled,
-    isUninitialized: false,
-    isLoading: false,
-    isFetching: false,
-    isSuccess: true,
-    isError: false,
-    error: undefined,
-    refetch: jest.fn(),
-  };
-}

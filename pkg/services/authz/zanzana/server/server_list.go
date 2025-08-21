@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"io"
 	"strings"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -19,9 +20,11 @@ import (
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
-	span.SetAttributes(
-		attribute.String("namespace", r.GetNamespace()),
-	)
+	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("server.List", r.GetNamespace()).Observe(time.Since(t).Seconds())
+	}(time.Now())
 
 	res, err := s.list(ctx, r)
 	if err != nil {

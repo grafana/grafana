@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -14,6 +15,10 @@ import (
 func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.Read")
 	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("server.Read", req.GetNamespace()).Observe(time.Since(t).Seconds())
+	}(time.Now())
 
 	res, err := s.read(ctx, req)
 	if err != nil {
