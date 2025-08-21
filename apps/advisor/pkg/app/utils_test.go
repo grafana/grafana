@@ -249,7 +249,9 @@ func TestProcessCheckRetry_SkipMissingItem(t *testing.T) {
 		t.Fatal(err)
 	}
 	meta.SetCreatedBy("user:1")
-	client := &mockClient{}
+	client := &mockClient{
+		res: obj,
+	}
 	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
@@ -281,7 +283,9 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 	meta.SetCreatedBy("user:1")
-	client := &mockClient{}
+	client := &mockClient{
+		res: obj,
+	}
 	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
@@ -360,12 +364,17 @@ func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 type mockClient struct {
 	resource.Client
 	values []any
+	res    resource.Object
 }
 
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
 	value := req.Operations[0].Value
 	m.values = append(m.values, value)
 	return nil
+}
+
+func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+	return m.res, nil
 }
 
 type mockTypesClient struct {
