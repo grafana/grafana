@@ -89,7 +89,7 @@ export const LogLineContext = memo(
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
     const [showLog, setShowLog] = useState(false);
     const [datasourceInstance, setDatasourceInstance] = useState<
-      (DataSourceApi & { hasLogsContextAdjustableWindow?: boolean }) | null
+      (DataSourceApi & DataSourceWithLogsContextSupport) | null
     >(null);
     const defaultTimeWindow = logOptionsStorageKey
       ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? '7200000')
@@ -332,7 +332,7 @@ export const LogLineContext = memo(
           <LogLineDetailsLog log={logListModel} syntaxHighlighting={syntaxHighlighting} />
         </Collapse>
         <div className={styles.controls}>
-          {datasourceInstance?.hasLogsContextAdjustableWindow && (
+          {datasourceInstance?.supportsAdjustableWindow && (
             <Stack>
               <InlineLabel
                 htmlFor="time-window-control"
