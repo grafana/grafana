@@ -276,11 +276,39 @@ GRAFANA_URL=http://localhost:3000 yarn e2e:playwright
 
 Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
 
-Playwright can be used through an UI running the following command:
+Playwright has several commands commonly used:
+
+1 - **To open Playwright in UI**. It boost Grafana server and then boost Playwright running against this server.
 
 ```
 yarn e2e:playwright --ui
 ```
+
+2 - **To run an indivudual test**. It will run the test that matches the string passed to _grep_. If you use a string that matches more than one test, Playwright will run all of them.
+
+```
+yarn e2e:playwright --grep <testname>
+```
+
+3 - **To run a project**. It will run the entire project, also known as _suite_. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
+
+```
+yarn e2e:playwright --project <projectname>
+```
+
+4 - **To run tests with a specific tagname**. The tagnames are specified in each test, like you can see here in [lokiEditor.spec.ts](https://github.com/grafana/grafana/blob/main/e2e-playwright/plugin-e2e/plugin-e2e-api-tests/as-admin-user/lokiEditor.spec.ts#L7)
+
+```
+yarn e2e:playwright --grep @<tagname>
+```
+
+5- **To open the last HTML report**. It will open a Chrome window with the list of the tests and the info related to them (success/error, name, time, steps, ...)
+
+```
+yarn playwright show-report
+```
+
+If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 
 ## Configure Grafana for development
 
