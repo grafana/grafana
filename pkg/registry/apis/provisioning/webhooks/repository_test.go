@@ -115,7 +115,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 	tests := []struct {
 		name          string
 		config        *provisioning.Repository
-		webhookSecret string
 		setupRequest  func() *http.Request
 		expected      *provisioning.WebhookResponse
 		expectedError error
@@ -146,8 +145,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader("invalid payload"))
 				req.Header.Set("X-Hub-Signature-256", "invalid")
@@ -164,13 +165,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
-				Secure: provisioning.SecureValues{
-					WebhookSecret: common.InlineSecureValue{
-						Name: "valid-secret",
-					},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
 				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{}`
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
@@ -201,8 +199,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Enabled: true,
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/feature",
@@ -240,8 +240,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Enabled: true,
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main",
@@ -280,8 +282,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main"
@@ -308,8 +312,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main",
@@ -342,8 +348,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Enabled: false,
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main",
@@ -378,8 +386,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -436,8 +446,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "synchronize",
@@ -491,8 +503,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -536,8 +550,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "closed",
@@ -581,8 +597,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -618,8 +636,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					// GitHub config is intentionally missing
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -660,8 +680,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -702,8 +724,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -726,24 +750,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			expectedError: fmt.Errorf("expected PR in event"),
 		},
 		{
-			name: "secret decryption error with new secrets store",
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-			},
-			setupRequest: func() *http.Request {
-				req, _ := http.NewRequest("POST", "/webhook", nil)
-				return req
-			},
-			expectedError: fmt.Errorf("failed to decrypt secret: decryption failed"),
-		},
-		{
 			name: "ping event with new secrets store",
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -754,8 +760,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{}`
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
@@ -790,8 +798,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Enabled: true,
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main",
@@ -830,8 +840,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 						Branch: "main",
 					},
 				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{},
+				},
 			},
-			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				payload := `{}`
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
@@ -860,7 +872,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				config: tt.config,
 				owner:  "grafana",
 				repo:   "grafana",
-				secret: common.RawSecureValue(tt.webhookSecret),
+				secret: common.RawSecureValue("webhook-secret"),
 			}
 
 			// Call the Webhook method
@@ -1068,12 +1080,17 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 				require.NoError(t, err)
 				if tt.expectedHook != nil {
 					require.NotNil(t, hookOps)
-					require.Len(t, hookOps, 1)
+					require.Len(t, hookOps, 2)
 					require.Equal(t, "replace", hookOps[0]["op"])
 					require.Equal(t, "/status/webhook", hookOps[0]["path"])
 					require.Equal(t, tt.expectedHook.ID, hookOps[0]["value"].(*provisioning.WebhookStatus).ID)
 					require.Equal(t, tt.expectedHook.URL, hookOps[0]["value"].(*provisioning.WebhookStatus).URL)
-					// ?????require.NotEmpty(t, hookOps[0]["value"].(*provisioning.WebhookStatus).Secret) // Secret is randomly generated, so just check it's not empty
+
+					require.Equal(t, "replace", hookOps[1]["op"])
+					require.Equal(t, "/secure/webhookSecret", hookOps[1]["path"])
+					vals, ok := hookOps[1]["value"].(common.InlineSecureValue)
+					require.True(t, ok, "expected common.InlineSecureValue")
+					require.False(t, vals.Create.IsZero(), "secret should be created")
 				} else {
 					require.Nil(t, hookOps)
 				}
@@ -1405,7 +1422,6 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 						URL:    "https://example.com/webhook",
 						Events: subscribedEvents,
 					}, nil)
-
 				// No EditWebhook call expected since no changes needed
 			},
 			config: &provisioning.Repository{
@@ -1426,12 +1442,8 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					},
 				},
 			},
-			webhookURL: "https://example.com/webhook",
-			expectedHook: &provisioning.WebhookStatus{
-				ID:               123,
-				URL:              "https://example.com/webhook",
-				SubscribedEvents: subscribedEvents,
-			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil, // nothing changed
 			expectedError: nil,
 		},
 	}
@@ -1463,7 +1475,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 				require.NoError(t, err)
 				if tt.expectedHook != nil {
 					require.NotNil(t, hookOps)
-					require.Len(t, hookOps, 1)
+					require.Len(t, hookOps, 2)
 					require.Equal(t, "replace", hookOps[0]["op"])
 					require.Equal(t, "/status/webhook", hookOps[0]["path"])
 					require.Equal(t, tt.expectedHook.ID, hookOps[0]["value"].(*provisioning.WebhookStatus).ID)

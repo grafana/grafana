@@ -306,7 +306,7 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 		{
 			"op":   "replace",
 			"path": "/secure/webhookSecret",
-			"value": &common.InlineSecureValue{
+			"value": common.InlineSecureValue{
 				Create: common.RawSecureValue(hook.Secret),
 			},
 		},
