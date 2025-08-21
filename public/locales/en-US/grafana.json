@@ -12754,7 +12754,9 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
+    "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -12781,14 +12783,24 @@
     "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
     "name-fields": "Fields",
+    "name-frozen-columns": "Frozen columns",
     "name-hide-in-table": "Hide in table",
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-tooltip-from-field": "Tooltip from field",
+    "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "tooltip-placement-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom",
+      "label-left": "Left",
+      "label-right": "Right",
+      "label-top": "Top"
+    }
   },
   "tag-filter": {
     "clear-button": "Clear tags",
