@@ -83,7 +83,7 @@ For recent releases of Grafana, there are also `minor` version tags in the `graf
 
 ## Run the Grafana main branch
 
-After every successful build of the main branch, two tags, `grafana/grafana:main` and `grafana/grafana:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-dev:<version>` and `grafana/grafana-dev:<version>-ubuntu`, where `version` is the a prerelease version of Grafana (e.g. `12.2.0-1234`, where `1234` is the GitHub Run ID of the build). These tags provide access to the most recent Grafana main builds. For more information, refer to [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags).
+After every successful build of the main branch, two tags, `grafana/grafana:main` and `grafana/grafana:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-dev:<version>` and `grafana/grafana-dev:<version>-ubuntu`, where `version` is a prerelease version of Grafana. For example, if `1234` is the GitHub Run ID of the build, `12.2.0-1234`. These tags provide access to the most recent Grafana main builds. For more information, refer to [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags).
 
 To ensure stability and consistency, we strongly recommend using the `grafana/grafana-dev:<version>` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce bugs or issues. It also avoids polluting the tag namespace for the main Grafana images with thousands of pre-release tags.
 
