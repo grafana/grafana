@@ -132,7 +132,6 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     }
   }, [query.expr]);
 
-  console.log(hideBuilderMode);
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
       reportInteraction('user_grafana_prometheus_editor_mode_clicked', {
