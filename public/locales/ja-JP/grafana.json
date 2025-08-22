@@ -2212,6 +2212,13 @@
       "preview": "プレビュー",
       "previewCondition": "アラートルール条件をプレビューする"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "連絡先の連携を追加",
       "body-attention": "デフォルトポリシーが未設定のため、自動的にこの連絡先がデフォルトとして設定されます。",
@@ -3530,7 +3537,6 @@
       "button-cancel": "キャンセル",
       "button-move": "移動",
       "button-moving": "移動中…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3731,7 +3737,7 @@
         }
       }
     },
-    "category-arrow-direction": "矢印の方向",
+    "category-arrow-direction": "",
     "category-background": "背景",
     "category-border": "境界線",
     "category-canvas": "キャンバス",
@@ -3763,15 +3769,17 @@
         "auto": "自動"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "実験的な要素タイプの選択を有効化",
     "description-inline-editing": "パネルの直接編集を有効化",
     "description-pan-zoom": "パンとズームを有効化",
-    "direction-options": {
-      "label-both": "両方",
-      "label-forward": "前進",
-      "label-none": "なし",
-      "label-reverse": "反転"
-    },
     "drone-front-item": {
       "category-drone-front": "ドローン正面",
       "name-roll-angle": "回転角度"
@@ -6644,6 +6652,14 @@
       "label-fixed-color": "固定色",
       "noOptionsMessage-no-fields-found": "フィールドが見つかりません"
     },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "アップロード"
     },
@@ -7110,7 +7126,7 @@
     "rich-history-card": {
       "add-comment-form": "コメントフォームを追加",
       "add-comment-tooltip": "コメントを追加する",
-      "add-to-library": "ライブラリに追加",
+      "add-to-library": "",
       "cancel": "キャンセル",
       "confirm-delete": "削除",
       "copy-query-tooltip": "クエリをクリップボードにコピー",
@@ -7222,7 +7238,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "ライブラリからクエリを追加",
+      "add-from-query-library": "",
       "query-add-button": "クエリを追加",
       "query-add-button-aria-label": "クエリを追加",
       "query-history-button": "クエリ履歴",
@@ -9447,6 +9463,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9718,7 +9736,8 @@
       "message-name-required": "名前を入力してください",
       "message-reserved-name": "これは予約済みの名前であり、フォルダには使用できません。",
       "message-same-name": "同じ名前のダッシュボードまたはフォルダがすでに存在します",
-      "message-same-name-general": "一般フォルダ内に同じ名前のフォルダまたはダッシュボードがすでに存在します"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11850,7 +11869,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "クエリ行を折りたたむ",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
@@ -11858,14 +11876,10 @@
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
       "remove-query": "クエリを削除",
-      "replace-query-from-library": "ライブラリからのクエリに置き換え",
+      "replace-query-from-library": "",
       "show-response": "応答の表示"
     },
-    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
   },
   "recently-deleted": {
     "buttons": {
@@ -12706,6 +12720,9 @@
       "description-title-text": "画像にカーソルを合わせたときに表示されるテキスト",
       "label-alt-text": "代替テキスト",
       "label-title-text": "タイトルテキスト"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",

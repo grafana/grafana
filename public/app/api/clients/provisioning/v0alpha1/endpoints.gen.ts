@@ -658,6 +658,7 @@ export type CreateRepositoryTestApiArg = {
     /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
     kind?: string;
     metadata?: any;
+    secure?: any;
     spec?: any;
     status?: any;
   };
@@ -909,17 +910,44 @@ export type JobList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type InlineSecureValue =
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove?: boolean;
+    }
+  | {
+      /** Create a secure value -- this is only used for POST/PUT */
+      create?: string;
+      /** Name in the secret service (reference) */
+      name?: string;
+      /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
+      remove: boolean;
+    };
+export type SecureValues = {
+  /** Token used to connect the configured repository */
+  token?: InlineSecureValue;
+  /** Some webhooks (including github) require a secret key value */
+  webhookSecret?: InlineSecureValue;
+};
 export type BitbucketRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
@@ -928,14 +956,10 @@ export type BitbucketRepositoryConfig = {
 export type GitRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test.git`). */
@@ -944,30 +968,22 @@ export type GitRepositoryConfig = {
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
 export type GitLabRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
-  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
-  encryptedToken?: string;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
-  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
-  token?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
@@ -1018,6 +1034,12 @@ export type RepositorySpec = {
 export type HealthStatus = {
   /** When the health was checked last time */
   checked?: number;
+  /** The type of the error
+    
+    Possible enum values:
+     - `"health"`
+     - `"hook"` */
+  error?: 'health' | 'hook';
   /** When not healthy, requests will not be executed */
   healthy: boolean;
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
@@ -1054,10 +1076,8 @@ export type SyncStatus = {
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
 export type WebhookStatus = {
-  encryptedSecret?: string;
   id?: number;
   lastEvent?: number;
-  secret?: string;
   subscribedEvents?: string[];
   url?: string;
 };
@@ -1079,6 +1099,7 @@ export type Repository = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ObjectMeta;
+  secure?: SecureValues;
   spec?: RepositorySpec;
   status?: RepositoryStatus;
 };

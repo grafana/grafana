@@ -26,6 +26,7 @@ export interface Props {
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
+  loading?: boolean;
   loadMore?: LoadMoreLogsType;
   logs: LogListModel[];
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
@@ -50,6 +51,7 @@ export const InfiniteScroll = ({
   displayedFields,
   handleOverflow,
   infiniteScrollMode,
+  loading,
   loadMore,
   logs,
   onClick,
@@ -102,12 +104,12 @@ export const InfiniteScroll = ({
   }, [prevSortOrder, sortOrder]);
 
   useEffect(() => {
-    if (autoScroll) {
+    if (autoScroll && !loading) {
       setInitialScrollPosition(scrollToLogLineRef.current);
       scrollToLogLineRef.current = undefined;
       setAutoScroll(false);
     }
-  }, [autoScroll, setInitialScrollPosition]);
+  }, [autoScroll, loading, setInitialScrollPosition]);
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {

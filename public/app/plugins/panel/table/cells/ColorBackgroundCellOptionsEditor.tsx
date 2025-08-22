@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
@@ -33,16 +31,12 @@ export const ColorBackgroundCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
-  const applyToRowSwitchId = useId();
-  const wrapTextSwitchId = useId();
-
   const label = (
     <Label
       description={t(
         'table.color-background-cell-options-editor.description-wrap-text',
         'If selected text will be wrapped to the width of text in the configured column'
       )}
-      htmlFor={wrapTextSwitchId}
     >
       <Trans i18nKey="table.color-background-cell-options-editor.wrap-text">Wrap text</Trans>{' '}
       <Badge
@@ -71,10 +65,10 @@ export const ColorBackgroundCellOptionsEditor = ({
           'If selected the entire row will be colored as this cell would be.'
         )}
       >
-        <Switch id={applyToRowSwitchId} value={cellOptions.applyToRow} onChange={onColorRowChange} />
+        <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
       </Field>
       <Field label={label}>
-        <Switch id={wrapTextSwitchId} value={cellOptions.wrapText} onChange={onWrapTextChange} />
+        <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
       </Field>
     </>
   );

@@ -128,25 +128,6 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.
 							Format:      "",
 						},
 					},
-					"token": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"encryptedToken": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
@@ -402,25 +383,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
-					"token": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"encryptedToken": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
@@ -461,25 +423,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-						},
-					},
-					"token": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"encryptedToken": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
-							Type:        []string{"string"},
-							Format:      "byte",
 						},
 					},
 					"path": {
@@ -524,25 +467,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 							Format:      "",
 						},
 					},
-					"token": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"encryptedToken": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
@@ -569,6 +493,14 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"health", "hook"},
 						},
 					},
 					"checked": {
@@ -2370,8 +2302,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "NOT YET USED FOR REAL -- testing secure value workflow",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"token": {
 						SchemaProps: spec.SchemaProps{
@@ -2382,7 +2313,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 					},
 					"webhookSecret": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Some webhooks (github) require a secret key value",
+							Description: "Some webhooks (including github) require a secret key value",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue"),
 						},
@@ -2661,18 +2592,6 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
-						},
-					},
-					"secret": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"encryptedSecret": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "byte",
 						},
 					},
 					"subscribedEvents": {

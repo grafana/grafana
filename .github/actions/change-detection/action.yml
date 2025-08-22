@@ -98,7 +98,6 @@ runs:
             - 'proto/**'
             - '**/Makefile'
             - 'scripts/**'
-            - '!scripts/drone/**'
             - '!**.md'
             - '.github/actions/change-detection/**'
             - '**.cue'
@@ -123,7 +122,6 @@ runs:
             - 'scripts/**'
             - '!**.md'
             - '.citools/**'
-            - '.bingo/**'
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
           docs:
