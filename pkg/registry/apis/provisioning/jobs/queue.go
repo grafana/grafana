@@ -94,7 +94,12 @@ func (s *unifiedStorageQueue) Insert(ctx context.Context, namespace string, spec
 	generateJobName(job) // Side-effect: updates the job's name.
 
 	ctx = request.WithNamespace(ctx, job.GetNamespace())
-	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
+	creater, ok := s.jobStore.(rest.Creater)
+	if !ok {
+		return nil, apifmt.Errorf("job store does not support creation")
+	}
+
+	obj, err := creater.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
 	}
