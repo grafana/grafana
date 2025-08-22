@@ -178,11 +178,4 @@ module.exports = [
       ],
     },
   },
-  {
-    name: 'grafana/story-disables',
-    files: ['packages/grafana-ui/src/**/*.story.tsx'],
-    rules: {
-      'react-hooks/rules-of-hooks': 'off',
-    },
-  },
 ];

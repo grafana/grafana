@@ -606,6 +606,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "packages/grafana-ui/src/components/Combobox/Combobox.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useEffect\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useState\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"]
+    ],
+    "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"]
+    ],
     "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -630,6 +644,28 @@ exports[`better eslint`] = {
       [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"],
       [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
       [0, 0, 0, "React Hook \\"useContext\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "2"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Form.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "5"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "6"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "7"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "8"]
+    ],
+    "packages/grafana-ui/src/components/Forms/InlineField.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"basic: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"error: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"grow: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"multiple: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"multiple: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"multiple: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "5"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"withCombobox: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "6"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"withTooltip: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "7"],
+      [0, 0, 0, "React Hook \\"useState\\" is called in function \\"withCombobox: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "8"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

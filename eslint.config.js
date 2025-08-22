@@ -190,7 +190,6 @@ module.exports = [
     files: ['packages/grafana-ui/src/**/*.story.tsx'],
     rules: {
       '@grafana/consistent-story-titles': 'error',
-      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {
