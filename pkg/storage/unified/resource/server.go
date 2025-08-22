@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -21,8 +22,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/ring"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -114,12 +115,23 @@ type StorageBackend interface {
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
+	// ListModifiedSince will return all resources that have changed since the given resource version.
+	// If a resource has changes, only the latest change will be returned.
+	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
+
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+}
+
+type ModifiedResource struct {
+	Action          resourcepb.WatchEvent_Type
+	Key             resourcepb.ResourceKey
+	Value           []byte
+	ResourceVersion int64
 }
 
 type ResourceStats struct {
@@ -208,6 +220,9 @@ type ResourceServerOptions struct {
 	// Link RBAC
 	AccessClient claims.AccessClient
 
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
 
@@ -229,9 +244,12 @@ type ResourceServerOptions struct {
 
 	Ring           *ring.Ring
 	RingLifecycler *ring.BasicLifecycler
+
+	// Enable strong consistency for searches. When enabled, index is always updated with latest changes before search.
+	SearchAfterWrite bool
 }
 
-func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
@@ -297,6 +315,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		blob:             blobstore,
 		diagnostics:      opts.Diagnostics,
 		access:           opts.AccessClient,
+		secure:           opts.SecureValues,
 		writeHooks:       opts.WriteHooks,
 		lifecycle:        opts.Lifecycle,
 		now:              opts.Now,
@@ -311,7 +330,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler, opts.SearchAfterWrite)
 		if err != nil {
 			return nil, err
 		}
@@ -333,6 +352,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -444,16 +464,6 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
-	// Verify that this resource can reference secure values
-	secure, err := obj.GetSecureValues()
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if len(secure) > 0 {
-		// See: https://github.com/grafana/grafana/pull/107803
-		return nil, NewBadRequestError("Saving secure values is not yet supported")
-	}
-
 	event := &WriteEvent{
 		Value:  value,
 		Key:    key,
@@ -475,6 +485,11 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
+	}
+
+	// Verify that this resource can reference secure values
+	if err := canReferenceSecureValues(ctx, obj, event.ObjectOld, s.secure); err != nil {
+		return nil, err
 	}
 
 	if key.Namespace != obj.GetNamespace() {

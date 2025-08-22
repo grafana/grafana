@@ -31,13 +31,9 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 		branch = repo.gitConfig.Branch
 	}
 
-	ref, err := repo.client.GetRef(ctx, "refs/heads/"+branch)
+	ref, err := repo.ensureBranchExists(ctx, branch)
 	if err != nil {
-		// TODO: opts.CreateIfNotExists doesn't make sense in the context of the staged repository
-		// because we only support the branch that is passed in.
-		// we should probably add branch to the repository.CloneOptions which should be repurposed
-		// as some kind of branch creation options.
-		return nil, err
+		return nil, fmt.Errorf("ensure branch exists: %w", err)
 	}
 
 	writer, err := repo.client.NewStagedWriter(ctx, ref)
@@ -91,22 +87,37 @@ func (r *stagedGitRepository) ReadTree(ctx context.Context, ref string) ([]repos
 	return r.gitRepository.ReadTree(ctx, ref)
 }
 
-// handleCommitAndPush handles the commit and push logic based on the StageMode
+// handleCommitAndPush handles the commit and push logic based on the StageMode and PushOnWrites flag
 func (r *stagedGitRepository) handleCommitAndPush(ctx context.Context, message string) error {
 	switch r.opts.Mode {
 	case repository.StageModeCommitOnEach:
-		return r.commit(ctx, r.writer, message)
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
+		// Only push if PushOnWrites is enabled
+		if r.opts.PushOnWrites {
+			return r.Push(ctx)
+		}
+		return nil
 	case repository.StageModeCommitAndPushOnEach:
 		if err := r.commit(ctx, r.writer, message); err != nil {
 			return err
 		}
+		// Always push for this mode (explicit push-on-each mode)
 		return r.Push(ctx)
 	case repository.StageModeCommitOnlyOnce:
 		// No immediate commit, will commit on Push
 		return nil
 	default:
 		// Default to StageModeCommitOnEach for backward compatibility
-		return r.commit(ctx, r.writer, message)
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
+		// Only push if PushOnWrites is enabled
+		if r.opts.PushOnWrites {
+			return r.Push(ctx)
+		}
+		return nil
 	}
 }
 
@@ -180,6 +191,18 @@ func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message str
 	return r.handleCommitAndPush(ctx, message)
 }
 
+func (r *stagedGitRepository) Move(ctx context.Context, oldPath, newPath, ref, message string) error {
+	if !r.isRefSupported(ref) {
+		return errors.New("ref is not supported for staged repository")
+	}
+
+	if err := r.move(ctx, oldPath, newPath, r.writer); err != nil {
+		return err
+	}
+
+	return r.handleCommitAndPush(ctx, message)
+}
+
 func (r *stagedGitRepository) Push(ctx context.Context) error {
 	if r.opts.Timeout > 0 {
 		var cancel context.CancelFunc
@@ -192,12 +215,24 @@ func (r *stagedGitRepository) Push(ctx context.Context) error {
 		if message == "" {
 			message = "Staged changes"
 		}
+
 		if err := r.commit(ctx, r.writer, message); err != nil {
 			return err
 		}
 	}
 
-	return r.writer.Push(ctx)
+	err := r.writer.Push(ctx)
+	if err != nil {
+		// Convert nanogit-specific errors to repository-level errors to avoid leaky abstraction
+		if errors.Is(err, nanogit.ErrNothingToPush) {
+			return repository.ErrNothingToPush
+		}
+		if errors.Is(err, nanogit.ErrNothingToCommit) {
+			return repository.ErrNothingToCommit
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *stagedGitRepository) Remove(ctx context.Context) error {

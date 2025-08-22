@@ -188,7 +188,7 @@ func (ng *AlertNG) init() error {
 
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
-	var overrides []notifier.Option
+	var opts []notifier.Option
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
@@ -220,71 +220,31 @@ func (ng *AlertNG) init() error {
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
 		}
+		store := notifier.NewFileStore(cfg.OrgID, ng.KVStore)
 
-		var override notifier.Option
+		// This function will be used by the MOA to create new Alertmanagers.
+		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
+
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			ng.Cfg.UnifiedAlerting.SkipClustering = true
-			// This function will be used by the MOA to create new Alertmanagers.
-			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
-				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-					// Create internal Alertmanager.
-					internalAM, err := factoryFn(ctx, orgID)
-					if err != nil {
-						return nil, err
-					}
-
-					// Create remote Alertmanager.
-					cfg.OrgID = orgID
-					cfg.PromoteConfig = true
-					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
-					if err != nil {
-						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-						return internalAM, nil
-					}
-
-					// Use both Alertmanager implementations in the forked Alertmanager.
-					return remote.NewRemotePrimaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-primary"), internalAM, remoteAM), nil
-				}
-			})
+			override = remote.NewRemotePrimaryFactory(cfg, store, crypto, autogenFn, m, ng.tracer)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
-
-			// This function will be used by the MOA to create new Alertmanagers.
-			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
-				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-					// Create internal Alertmanager.
-					internalAM, err := factoryFn(ctx, orgID)
-					if err != nil {
-						return nil, err
-					}
-
-					// Create remote Alertmanager.
-					cfg.OrgID = orgID
-					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
-					if err != nil {
-						if remoteSecondaryWithRemoteState {
-							// We can't start the internal Alertmanager without the remote state.
-							return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
-						}
-						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-						return internalAM, nil
-					}
-
-					// Use both Alertmanager implementations in the forked Alertmanager.
-					rsCfg := remote.RemoteSecondaryConfig{
-						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
-						OrgID:        orgID,
-						Store:        ng.store,
-						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
-					}
-					return remote.NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
-				}
-			})
+			override = remote.NewRemoteSecondaryFactory(cfg,
+				store,
+				ng.store,
+				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+				crypto,
+				autogenFn,
+				m,
+				ng.tracer,
+				remoteSecondaryWithRemoteState,
+			)
 		}
-		overrides = append(overrides, override)
+
+		opts = append(opts, notifier.WithAlertmanagerOverride(override))
 	}
 
 	notificationHistorian, err := configureNotificationHistorian(
@@ -315,7 +275,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.FeatureToggles,
 		notificationHistorian,
-		overrides...,
+		opts...,
 	)
 	if err != nil {
 		return err
@@ -761,10 +721,6 @@ func configureNotificationHistorian(
 		l.Error("Failed to communicate with configured remote Loki backend, notification history may not be persisted", "error", err)
 	}
 	return notificationHistorian, nil
-}
-
-func createRemoteAlertmanager(ctx context.Context, cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, crypto remote.Crypto, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*remote.Alertmanager, error) {
-	return remote.NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, kvstore), crypto, autogenFn, m, tracer)
 }
 
 func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, pluginContextProvider *plugincontext.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {

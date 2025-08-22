@@ -105,11 +105,28 @@ func NewMapperRegistry() MapperRegistry {
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams":     newResourceTranslation("teams", "uid", false),
 			"coreroles": newResourceTranslation("roles", "uid", false),
-			"roles":     newResourceTranslation("roles", "uid", false),
+			"roles": translation{
+				resource:  "roles",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate:           "roles:write",
+					utils.VerbGet:              "roles:read",
+					utils.VerbUpdate:           "roles:write",
+					utils.VerbPatch:            "roles:write",
+					utils.VerbDelete:           "roles:delete",
+					utils.VerbDeleteCollection: "roles:delete",
+					utils.VerbList:             "roles:read",
+					utils.VerbWatch:            "roles:read",
+				},
+				folderSupport: false,
+			},
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false),
+		},
+		"settings.grafana.app": {
+			"settings": newResourceTranslation("settings", "uid", false),
 		},
 		"query.grafana.app": {
 			"query": translation{

@@ -1,11 +1,7 @@
-import {
-  Spec as DashboardV2Spec,
-  RowsLayoutRowKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { isClonedKey } from '../../utils/clone';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
@@ -14,7 +10,7 @@ export function serializeRowsLayout(layoutManager: RowsLayoutManager): Dashboard
   return {
     kind: 'RowsLayout',
     spec: {
-      rows: layoutManager.state.rows.filter((row) => !isClonedKey(row.state.key!)).map(serializeRow),
+      rows: layoutManager.state.rows.filter((row) => !row.state.repeatSourceKey).map(serializeRow),
     },
   };
 }

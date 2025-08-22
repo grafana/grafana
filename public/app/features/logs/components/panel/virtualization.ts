@@ -2,6 +2,7 @@ import ansicolor from 'ansicolor';
 
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
+import { LogLineTimestampResolution } from './LogLine';
 import { LOG_LINE_DETAILS_HEIGHT, LogLineDetailsMode } from './LogLineDetails';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
@@ -11,6 +12,8 @@ export const LOG_LIST_MIN_WIDTH = 35 * 8;
 export const FIELD_GAP_MULTIPLIER = 1.5;
 
 export const DEFAULT_LINE_HEIGHT = 22;
+
+export const LOG_LIST_CONTROLS_WIDTH = 32;
 
 export class LogLineVirtualization {
   private ctx: CanvasRenderingContext2D | null = null;
@@ -176,7 +179,11 @@ export class LogLineVirtualization {
     };
   };
 
-  calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = []) => {
+  calculateFieldDimensions = (
+    logs: LogListModel[],
+    displayedFields: string[] = [],
+    timestampResolution: LogLineTimestampResolution
+  ) => {
     if (!logs.length) {
       return [];
     }
@@ -184,7 +191,7 @@ export class LogLineVirtualization {
     let levelWidth = 0;
     const fieldWidths: Record<string, number> = {};
     for (let i = 0; i < logs.length; i++) {
-      let width = this.measureTextWidth(logs[i].timestamp);
+      let width = this.measureTextWidth(timestampResolution === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
       if (width > timestampWidth) {
         timestampWidth = Math.round(width);
       }
@@ -370,7 +377,7 @@ export function getScrollbarWidth() {
 }
 
 export interface ScrollToLogsEventPayload {
-  scrollTo: 'top' | 'bottom';
+  scrollTo: 'top' | 'bottom' | string;
 }
 
 export class ScrollToLogsEvent extends BusEventWithPayload<ScrollToLogsEventPayload> {

@@ -3,21 +3,18 @@ import React from 'react';
 
 import {
   CustomVariable,
-  LocalValueVariable,
   MultiValueVariable,
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
   VizPanel,
-  VizPanelState,
 } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
@@ -113,27 +110,32 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
     const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
     const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
+    // Loop through variable values and create repeats
     for (let index = 0; index < variableValues.length; index++) {
-      const cloneState: Partial<VizPanelState> = {
-        $variables: new SceneVariableSet({
-          variables: [
-            new LocalValueVariable({
-              name: variable.state.name,
-              value: variableValues[index],
-              text: String(variableTexts[index]),
-            }),
-          ],
-        }),
-        key: getCloneKey(panelToRepeat.state.key!, index),
-      };
-      const clone = panelToRepeat.clone(cloneState);
-      repeatedPanels.push(clone);
+      const isSource = index === 0;
+      const clone = isSource
+        ? panelToRepeat
+        : panelToRepeat.clone({
+            key: getCloneKey(panelToRepeat.state.key!, index),
+            repeatSourceKey: panelToRepeat.state.key,
+          });
+
+      clone.setState({ $variables: getLocalVariableValueSet(variable, variableValues[index], variableTexts[index]) });
+
+      if (index > 0) {
+        repeatedPanels.push(clone);
+      }
     }
 
     this.setState({ repeatedPanels });
     this._prevRepeatValues = values;
 
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
+  }
+
+  public getPanelCount() {
+    return (this.state.repeatedPanels?.length ?? 0) + 1;
   }
 
   public setRepeatByVariable(variableName: string | undefined) {
@@ -171,13 +173,6 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
   public editingStarted() {
     if (!this.state.variableName) {
       return;
-    }
-
-    if ((this.state.repeatedPanels?.length ?? 0) > 1) {
-      this.state.body.setState({
-        $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
-        $data: this.state.repeatedPanels![0].state.$data?.clone(),
-      });
     }
   }
 

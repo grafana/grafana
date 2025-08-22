@@ -79,7 +79,7 @@ describe('Explore QueryRows', () => {
 
     render(
       <Provider store={store}>
-        <QueryRows exploreId={'left'} />
+        <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
       </Provider>
     );
 
@@ -94,13 +94,13 @@ describe('Explore QueryRows', () => {
     expect(await screen.findByLabelText('Query editor row title B')).toBeInTheDocument();
   });
 
-  it('Should contain a select query from library button when query library is enabled', async () => {
+  it('Should contain a select query from library button when saved queries is enabled', async () => {
     const { store } = setup([{ refId: 'A' }]);
 
     render(
       <Provider store={store}>
         <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
-          <QueryRows exploreId={'left'} />
+          <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
         </QueryLibraryContextProviderMock>
       </Provider>
     );
@@ -108,16 +108,16 @@ describe('Explore QueryRows', () => {
     // waiting for the component to fully render.
     await screen.findAllByText('someDs query editor');
 
-    expect(screen.getByLabelText(/Replace with query from library/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Replace with saved query/i)).toBeInTheDocument();
   });
 
-  it('Should not contain a select query from library button when query library is disabled', async () => {
+  it('Should not contain a select query from library button when saved queries is disabled', async () => {
     const { store } = setup([{ refId: 'A' }]);
 
     render(
       <Provider store={store}>
         <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
-          <QueryRows exploreId={'left'} />
+          <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
         </QueryLibraryContextProviderMock>
       </Provider>
     );

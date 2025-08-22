@@ -6,6 +6,7 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
+const hooksPlugin = require('eslint-plugin-react-hooks');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
@@ -16,7 +17,7 @@ const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 // as we just want to pull in all of the necessary configuration but not run the rules
 // (this should only be concerned with checking rules that we want to improve,
 // so there's no need to try and run the rules that will be linted properly anyway)
-const { rules, ...baseConfig } = grafanaConfig;
+const { rules, ...baseConfig } = grafanaConfig.find((config) => config?.name === '@grafana/eslint-config/flat');
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -52,6 +53,13 @@ module.exports = [
     name: 'react/jsx-runtime',
     // @ts-ignore - not sure why but flat config is typed as a maybe?
     ...reactPlugin.configs.flat['jsx-runtime'],
+  },
+  // FIXME: Remove once eslint-config-grafana is updated to include correct plugin
+  {
+    name: 'react-hooks-plugin',
+    plugins: {
+      'react-hooks': hooksPlugin,
+    },
   },
   {
     files: ['**/*.{ts,tsx,js}'],
@@ -155,6 +163,25 @@ module.exports = [
     files: ['public/app/**/*.{ts,tsx}'],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
+    },
+  },
+  {
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        },
+      ],
     },
   },
 ];

@@ -22,13 +22,6 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: () => ({
-    publish: jest.fn(),
-  }),
-}));
-
 jest.mock('../hooks/useCreateOrUpdateRepository');
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
@@ -36,10 +29,6 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(),
-}));
-
-jest.mock('app/features/browse-dashboards/api/services', () => ({
-  PAGE_SIZE: 20,
 }));
 
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
@@ -406,7 +395,7 @@ describe('ProvisioningWizard', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/admin/provisioning');
     });
 
-    it('should handle cancel on subsequent steps with repository deletion', async () => {
+    it('should handle going back to previous step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -422,10 +411,10 @@ describe('ProvisioningWizard', () => {
         expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /Cancel/i }));
+      await user.click(screen.getByRole('button', { name: /Previous/i }));
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/admin/provisioning');
+        expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
       });
     });
 

@@ -5,7 +5,10 @@ import { locationUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import {
   getImportPhrase,
   getNewDashboardPhrase,
@@ -18,15 +21,22 @@ import { ManagerKind } from '../../apiserver/types';
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
 
 import { NewFolderForm } from './NewFolderForm';
-import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
 interface Props {
   parentFolder?: FolderDTO;
   canCreateFolder: boolean;
   canCreateDashboard: boolean;
+  isReadOnlyRepo: boolean;
+  repoType?: RepoType;
 }
 
-export default function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder }: Props) {
+export default function CreateNewButton({
+  parentFolder,
+  canCreateDashboard,
+  canCreateFolder,
+  isReadOnlyRepo,
+  repoType,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const [newFolder] = useNewFolderMutation();
@@ -94,7 +104,11 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   return (
     <>
       <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
-        <Button>
+        <Button
+          disabled={isReadOnlyRepo}
+          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
+          variant="secondary"
+        >
           {getNewPhrase()}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
@@ -109,7 +123,11 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           {parentFolder?.managedBy === ManagerKind.Repo || isProvisionedInstance ? (
             <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
           ) : (
-            <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
+            <NewFolderForm
+              onConfirm={onCreateFolder}
+              onCancel={() => setShowNewFolderDrawer(false)}
+              parentFolder={parentFolder}
+            />
           )}
         </Drawer>
       )}

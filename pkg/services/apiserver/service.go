@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -39,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
@@ -105,6 +107,7 @@ type service struct {
 	contextProvider    datasource.PluginContextWrapper
 	pluginStore        pluginstore.Store
 	unified            resource.ResourceClient
+	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
@@ -128,6 +131,7 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
@@ -159,6 +163,7 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
+		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
@@ -287,11 +292,6 @@ func (s *service) start(ctx context.Context) error {
 
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 
-	// Register admission plugins from app installers after options are created
-	if err := appinstaller.RegisterAdmissionPlugins(ctx, s.appInstallers, o); err != nil {
-		return err
-	}
-
 	// Register authorizers from app installers
 	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
 
@@ -304,8 +304,16 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
+	if errs := o.APIEnablementOptions.Validate(s.scheme); len(errs) != 0 {
+		return errs[0]
+	}
+
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
+		return err
+	}
+
+	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, appinstaller.NewAPIResourceConfig(s.appInstallers), s.scheme); err != nil {
 		return err
 	}
 
@@ -329,7 +337,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
 	}
@@ -350,6 +358,14 @@ func (s *service) start(ctx context.Context) error {
 		s.buildHandlerChainFuncFromBuilders,
 		groupVersions,
 		defGetters,
+	)
+	if err != nil {
+		return err
+	}
+
+	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
+		serverConfig.AdmissionControl,
+		s.appInstallers,
 	)
 	if err != nil {
 		return err
@@ -395,6 +411,7 @@ func (s *service) start(ctx context.Context) error {
 		s.storageStatus,
 		s.dualWriterMetrics,
 		s.builderMetrics,
+		serverConfig.MergedResourceConfig,
 	); err != nil {
 		return err
 	}
@@ -455,6 +472,13 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = runningServer.Handler
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
+
+	for _, installer := range s.appInstallers {
+		err := installer.InitializeApp(*s.restConfig)
+		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+			return err
+		}
+	}
 
 	return nil
 }

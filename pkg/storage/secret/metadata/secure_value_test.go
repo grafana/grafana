@@ -5,15 +5,16 @@ import (
 	"slices"
 	"testing"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/mitchellh/copystructure"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
 type modelSecureValue struct {
@@ -403,9 +404,8 @@ func TestStateMachine(t *testing.T) {
 			},
 			"decrypt": func(t *rapid.T) {
 				input := decryptGen.Draw(t, "decryptInput")
-				authCtx := testutils.CreateServiceAuthContext(t.Context(), input.decrypter, []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", input.name)})
 				modelResult, modelErr := model.decrypt(input.decrypter, input.namespace, input.name)
-				result, err := sut.DecryptService.Decrypt(authCtx, input.namespace, input.name)
+				result, err := sut.DecryptService.Decrypt(t.Context(), input.decrypter, input.namespace, input.name)
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -440,8 +440,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sv.Status.Version, deletedSv.Status.Version)
 
-		authCtx := testutils.CreateServiceAuthContext(t.Context(), sv.Spec.Decrypters[0], []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", sv.Name)})
-		result, err := sut.DecryptService.Decrypt(authCtx, sv.Namespace, sv.Name)
+		result, err := sut.DecryptService.Decrypt(t.Context(), sv.Spec.Decrypters[0], sv.Namespace, sv.Name)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(result))
 		require.ErrorIs(t, result[sv.Name].Error(), contracts.ErrDecryptNotFound)
