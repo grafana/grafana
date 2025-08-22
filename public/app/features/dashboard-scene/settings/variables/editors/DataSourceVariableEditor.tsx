@@ -1,6 +1,5 @@
 import React, { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -81,27 +80,20 @@ export function getDataSourceVariableOptions(variable: SceneVariable): OptionsPa
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.datasource-options.type', 'Type'),
-      id: uuidv4(),
-      render: ({ props }) => <DataSourceTypeSelect id={props.id} variable={variable} />,
+      render: () => <DataSourceTypeSelect variable={variable} />,
     }),
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.datasource-options.name-filter', 'Name filter'),
-      id: uuidv4(),
       description: t(
         'dashboard.edit-pane.variable.datasource-options.name-filter-description',
         'Regex filter for which data source instances to include. Leave empty for all.'
       ),
-      render: ({ props }) => <DataSourceNameFilter id={props.id} variable={variable} />,
+      render: () => <DataSourceNameFilter variable={variable} />,
     }),
   ];
 }
 
-interface InputProps {
-  variable: DataSourceVariable;
-  id?: string;
-}
-
-function DataSourceTypeSelect({ variable, id }: InputProps) {
+function DataSourceTypeSelect({ variable }: { variable: DataSourceVariable }) {
   const { pluginId } = variable.useState();
   const options = getOptionDataSourceTypes();
 
@@ -112,7 +104,6 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
 
   return (
     <Combobox
-      id={id}
       options={options}
       value={pluginId}
       onChange={onChange}
@@ -122,7 +113,7 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
   );
 }
 
-function DataSourceNameFilter({ variable, id }: InputProps) {
+function DataSourceNameFilter({ variable }: { variable: DataSourceVariable }) {
   const { regex } = variable.useState();
 
   const onBlur = async (evt: React.FormEvent<HTMLInputElement>) => {
@@ -132,7 +123,6 @@ function DataSourceNameFilter({ variable, id }: InputProps) {
 
   return (
     <Input
-      id={id}
       defaultValue={regex}
       onBlur={onBlur}
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter}

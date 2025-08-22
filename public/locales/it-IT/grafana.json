@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Disattivazione audio, raggruppamento e orari"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nessuna fonte dati trovata"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Anteprima",
       "previewCondition": "Anteprima condizione regola di avviso"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Aggiungi integrazione del punto di contatto",
       "body-attention": "Poiché non è ancora stato configurato un criterio predefinito, questo punto di contatto verrà automaticamente impostato come predefinito.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "Nessuna regola trovata",
       "error-button": "Errore",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Annulla ricerca",
         "no-more-results": "Nessun altro risultato: {{numberOfRules}} regole trovate",
@@ -3537,7 +3550,6 @@
       "button-cancel": "Annulla",
       "button-move": "Sposta",
       "button-moving": "Spostamento in corso...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3644,11 @@
       "button-create": "Crea",
       "button-creating": "Creazione in corso...",
       "cancel": "Annulla",
+      "error-invalid-characters": "",
       "error-required": "Il nome della cartella è obbligatorio",
       "folder-name-input-placeholder-enter-folder-name": "Inserisci nome cartella",
       "label-folder-name": "Nome cartella",
       "text-pull-request-created": "È stata creata una richiesta di pull con modifiche a questa cartella:",
-      "text-your-folder-will-be-created-as": "La tua cartella verrà creata come {{folderName}}",
       "title-pull-request-created": "Richiesta di pull creata",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
     },
@@ -3743,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Direzione della freccia",
+    "category-arrow-direction": "",
     "category-background": "Sfondo",
     "category-border": "Bordo",
     "category-canvas": "Tela",
@@ -3775,15 +3787,17 @@
         "auto": "Automatico"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Abilita la selezione di tipi di elementi sperimentali",
     "description-inline-editing": "Abilita la modifica diretta del pannello",
     "description-pan-zoom": "Abilita panoramica e zoom",
-    "direction-options": {
-      "label-both": "Entrambe",
-      "label-forward": "Inoltra",
-      "label-none": "Nessuno",
-      "label-reverse": "Inverti"
-    },
     "drone-front-item": {
       "category-drone-front": "Parte anteriore del drone",
       "name-roll-angle": "Angolo di rollio"
@@ -4171,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Fonti dei dati",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nessun risultato trovato corrisponde alla tua ricerca",
       "request-data-source": "Richiedi una nuova origine dati",
       "roadmap": "Visualizza roadmap"
@@ -6545,9 +6560,11 @@
       "explore": "Esplora"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Crea una dashboard",
       "explore-data": "Esplora i dati",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Maggiori dettagli sull'errore"
@@ -6655,6 +6672,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Colore fisso",
       "noOptionsMessage-no-fields-found": "Nessun campo trovato"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Carica"
@@ -7122,7 +7147,7 @@
     "rich-history-card": {
       "add-comment-form": "Aggiungi modulo di commento",
       "add-comment-tooltip": "Aggiungi commento",
-      "add-to-library": "Aggiungi alla libreria",
+      "add-to-library": "",
       "cancel": "Annulla",
       "confirm-delete": "Elimina",
       "copy-query-tooltip": "Copia la query negli appunti",
@@ -7234,7 +7259,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Aggiungi query dalla libreria",
+      "add-from-query-library": "",
       "query-add-button": "Aggiungi query",
       "query-add-button-aria-label": "Aggiungi query",
       "query-history-button": "Cronologia query",
@@ -7525,11 +7550,6 @@
     "noOptionsMessage-no-folders-found": "Nessuna cartella trovata",
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
-  },
-  "folder-picker": {
-    "create-instructions": "Premi Invio per creare la nuova cartella.",
-    "input-placeholder": "Premi Invio per confermare la nuova cartella",
-    "loading": "Caricamento delle cartelle in corso..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8749,7 +8769,6 @@
       "filter-popup-input-placeholder": "Valori filtro",
       "filter-popup-match-case": "Corrispondenza",
       "inspect-drawer-title": "Ispeziona valore",
-      "inspect-menu-label": "Ispeziona valore",
       "nested-table": {
         "no-data": "Nessun dato"
       },
@@ -9473,6 +9492,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9744,7 +9765,8 @@
       "message-name-required": "Il nome è obbligatorio",
       "message-reserved-name": "Questo è un nome riservato e non può essere utilizzato per una cartella.",
       "message-same-name": "Esiste già una dashboard o una cartella con lo stesso nome",
-      "message-same-name-general": "Esiste già una cartella o una dashboard nella cartella generale con lo stesso nome"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11883,7 +11905,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Riduci riga della query",
       "datasource-help": "Mostra la guida dell'origine dati",
       "drag-and-drop": "Trascina e rilascia per riordinare",
@@ -11891,14 +11912,10 @@
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
       "remove-query": "Rimuovi query",
-      "replace-query-from-library": "Sostituisci con query dalla libreria",
+      "replace-query-from-library": "",
       "show-response": "Mostra la risposta"
     },
-    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
   },
   "recently-deleted": {
     "buttons": {
@@ -12745,6 +12762,9 @@
       "label-alt-text": "Testo alternativo",
       "label-title-text": "Testo del titolo"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12795,6 +12815,7 @@
     "description-fields": "Seleziona i campi da calcolare",
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
+    "description-tooltip-from-field": "",
     "name-calculation": "Calcolo",
     "name-cell-height": "Altezza cella",
     "name-cell-type": "Tipo di cella",
@@ -12810,8 +12831,17 @@
     "name-min-column-width": "Larghezza minima colonna",
     "name-show-table-footer": "Mostra piè di pagina tabella",
     "name-show-table-header": "Mostra intestazione tabella",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automatico",
-    "placeholder-fields": "Tutti i campi numerici"
+    "placeholder-fields": "Tutti i campi numerici",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Cancella tag",

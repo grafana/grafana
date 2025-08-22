@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Dempen, groeperen en timings"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Geen gegevensbronnen gevonden"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Voorbeeld",
       "previewCondition": "Voorbeeld waarschuwingsregel voorwaarde"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Contactpuntintegratie toevoegen",
       "body-attention": "Omdat er nog geen standaardbeleid is geconfigureerd, wordt dit contactpunt automatisch als standaard ingesteld.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "Geen regels gevonden",
       "error-button": "Fout",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -3537,7 +3550,6 @@
       "button-cancel": "Annuleren",
       "button-move": "Verplaatsen",
       "button-moving": "Bezig met verplaatsen...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3644,11 @@
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
+      "error-invalid-characters": "",
       "error-required": "Mapnaam is vereist",
       "folder-name-input-placeholder-enter-folder-name": "Mapnaam invoeren",
       "label-folder-name": "Mapnaam",
       "text-pull-request-created": "Er is een pull request gemaakt met wijzigingen in deze map:",
-      "text-your-folder-will-be-created-as": "Je map wordt gemaakt als {{folderName}} ",
       "title-pull-request-created": "Pull request is aangemaakt",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
@@ -3743,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Pijlrichting",
+    "category-arrow-direction": "",
     "category-background": "Achtergrond",
     "category-border": "Rand",
     "category-canvas": "Canvas",
@@ -3775,15 +3787,17 @@
         "auto": "Automatisch"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Selectie van experimentele elementtypes inschakelen",
     "description-inline-editing": "Rechtstreekse bewerking van het paneel inschakelen",
     "description-pan-zoom": "Pan en zoom inschakelen",
-    "direction-options": {
-      "label-both": "Allebei",
-      "label-forward": "Vooruit",
-      "label-none": "Geen",
-      "label-reverse": "Omkeren"
-    },
     "drone-front-item": {
       "category-drone-front": "Drone voorkant",
       "name-roll-angle": "Slingerhoek"
@@ -4171,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Gegevensbronnen",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Er zijn geen resultaten gevonden die overeenkomen met je query",
       "request-data-source": "Een nieuwe gegevensbron aanvragen",
       "roadmap": "Routekaart weergeven"
@@ -6545,9 +6560,11 @@
       "explore": "Verkennen"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Maak een dashboard",
       "explore-data": "Gegevens verkennen",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Meer informatie over de fout"
@@ -6655,6 +6672,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Vaste kleur",
       "noOptionsMessage-no-fields-found": "Geen velden gevonden"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Uploaden"
@@ -7122,7 +7147,7 @@
     "rich-history-card": {
       "add-comment-form": "Opmerkingenformulier toevoegen",
       "add-comment-tooltip": "Opmerking toevoegen",
-      "add-to-library": "Toevoegen aan bibliotheek",
+      "add-to-library": "",
       "cancel": "Annuleren",
       "confirm-delete": "Verwijderen",
       "copy-query-tooltip": "Query naar klembord kopiëren",
@@ -7234,7 +7259,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Query toevoegen uit bibliotheek",
+      "add-from-query-library": "",
       "query-add-button": "Query toevoegen",
       "query-add-button-aria-label": "Query toevoegen",
       "query-history-button": "Querygeschiedenis",
@@ -7525,11 +7550,6 @@
     "noOptionsMessage-no-folders-found": "Geen mappen gevonden",
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
-  },
-  "folder-picker": {
-    "create-instructions": "Druk op enter om de nieuwe map aan te maken.",
-    "input-placeholder": "Druk op enter om nieuwe map te bevestigen",
-    "loading": "Mappen laden ..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8749,7 +8769,6 @@
       "filter-popup-input-placeholder": "Filter waarden",
       "filter-popup-match-case": "Case matchen",
       "inspect-drawer-title": "Waarde inspecteren",
-      "inspect-menu-label": "Waarde inspecteren",
       "nested-table": {
         "no-data": "Geen gegevens"
       },
@@ -9473,6 +9492,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9744,7 +9765,8 @@
       "message-name-required": "Naam is vereist",
       "message-reserved-name": "Dit is een gereserveerde naam en kan niet worden gebruikt voor een map.",
       "message-same-name": "Er bestaat al een dashboard of een map met dezelfde naam",
-      "message-same-name-general": "Er bestaat al een map of dashboard in de algemene map met dezelfde naam"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11883,7 +11905,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Queryrij samenvouwen",
       "datasource-help": "Hulp bij gegevensbron weergeven",
       "drag-and-drop": "Versleep om opnieuw te rangschikken",
@@ -11891,14 +11912,10 @@
       "expand-row": "Queryrij uitvouwen",
       "hide-response": "Antwoord verbergen",
       "remove-query": "Query verwijderen",
-      "replace-query-from-library": "Vervangen door query uit bibliotheek",
+      "replace-query-from-library": "",
       "show-response": "Antwoord weergeven"
     },
-    "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
   },
   "recently-deleted": {
     "buttons": {
@@ -12745,6 +12762,9 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Titeltekst"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12795,6 +12815,7 @@
     "description-fields": "Selecteer de velden die moeten worden berekend",
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
+    "description-tooltip-from-field": "",
     "name-calculation": "Berekening",
     "name-cell-height": "Celhoogte",
     "name-cell-type": "Type cel",
@@ -12810,8 +12831,17 @@
     "name-min-column-width": "Minimale kolombreedte",
     "name-show-table-footer": "Voettekst tabel tonen",
     "name-show-table-header": "Header tabel tonen",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automatisch",
-    "placeholder-fields": "Alle numerieke velden"
+    "placeholder-fields": "Alle numerieke velden",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Tags wissen",

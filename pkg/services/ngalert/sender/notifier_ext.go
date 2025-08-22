@@ -19,7 +19,16 @@ import (
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/model/labels"
+
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
+
+func do(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+	if client == nil {
+		client = httpclient.New()
+	}
+	return client.Do(req.WithContext(ctx))
+}
 
 // ApplyConfig updates the status state as the new config requires.
 // Extension: add new parameter headers.

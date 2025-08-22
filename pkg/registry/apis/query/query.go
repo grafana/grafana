@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -125,7 +125,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
-		connectLogger := b.log.New("traceId", traceId.String())
+		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
@@ -255,9 +255,9 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	instanceConfig := instance.GetSettings()
 
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger).New("ruleuid", headers["X-Rule-Uid"])
+	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
 
-	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithInstance(
+	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
 		instance,
 		ctx,
 		dsQuerierLoggerWithSlug,
@@ -275,10 +275,10 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		instanceConfig.FeatureToggles,
 		nil,
 		b.tracer,
-		mtDsClientBuilder,
+		qsDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
 
 	// tell the `instance` structure that it can now report
 	// metrics that are only reported once during a request

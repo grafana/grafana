@@ -165,6 +165,7 @@ export const OptionsPaneCategory = React.memo(
     );
   }
 );
+OptionsPaneCategory.displayName = 'OptionsPaneCategory';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   box: css({

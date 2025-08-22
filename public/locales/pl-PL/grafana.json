@@ -501,6 +501,11 @@
       "title-muting-grouping-and-timings": "Wyciszanie, grupowanie i harmonogramy"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nie znaleziono źródeł danych"
     },
     "alert-menu": {
@@ -2234,6 +2239,13 @@
       "preview": "Podgląd",
       "previewCondition": "Podgląd warunku reguły alertu"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Dodaj integrację z punktem kontaktu",
       "body-attention": "Ponieważ nie ma jeszcze skonfigurowanych zasad domyślnych, ten punkt kontaktu zostanie automatycznie ustawiony jako domyślny.",
@@ -2487,6 +2499,7 @@
       },
       "empty-data-source": "Nie znaleziono reguł",
       "error-button": "Błąd",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -3563,7 +3576,6 @@
       "button-cancel": "Anuluj",
       "button-move": "Przenieś",
       "button-moving": "Przenoszenie…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3668,11 +3680,11 @@
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
+      "error-invalid-characters": "",
       "error-required": "Wymagana jest nazwa folderu",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
       "label-folder-name": "Nazwa folderu",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
-      "text-your-folder-will-be-created-as": "Zostanie utworzony folder o nazwie {{folderName}}",
       "title-pull-request-created": "Utworzono żądanie pull",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
@@ -3779,7 +3791,7 @@
         }
       }
     },
-    "category-arrow-direction": "Kierunek strzałki",
+    "category-arrow-direction": "",
     "category-background": "Tło",
     "category-border": "Obramowanie",
     "category-canvas": "Kanwa",
@@ -3811,15 +3823,17 @@
         "auto": "Automatycznie"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Włącz wybór eksperymentalnych typów elementów",
     "description-inline-editing": "Włącz bezpośrednią edycję panelu",
     "description-pan-zoom": "Włącz przesuwanie i powiększanie",
-    "direction-options": {
-      "label-both": "Oba",
-      "label-forward": "Do przodu",
-      "label-none": "Brak",
-      "label-reverse": "Odwróć"
-    },
     "drone-front-item": {
       "category-drone-front": "Dron – przód",
       "name-roll-angle": "Kąt wznoszenia"
@@ -4207,7 +4221,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Źródła danych",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nie znaleziono wyników pasujących do Twojego zapytania",
       "request-data-source": "Poproś o nowe źródło danych",
       "roadmap": "Widok etapów"
@@ -6587,9 +6602,11 @@
       "explore": "Eksploruj"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Utwórz pulpit",
       "explore-data": "Przeglądaj dane",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Więcej informacji o błędzie"
@@ -6697,6 +6714,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Stały kolor",
       "noOptionsMessage-no-fields-found": "Nie znaleziono pól"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Prześlij"
@@ -7164,7 +7189,7 @@
     "rich-history-card": {
       "add-comment-form": "Dodaj formularz komentarza",
       "add-comment-tooltip": "Dodaj komentarz",
-      "add-to-library": "Zapisz i dodaj do biblioteki",
+      "add-to-library": "",
       "cancel": "Anuluj",
       "confirm-delete": "Usuń",
       "copy-query-tooltip": "Kopiuj zapytanie do schowka",
@@ -7276,7 +7301,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Dodaj zapytanie z biblioteki",
+      "add-from-query-library": "",
       "query-add-button": "Dodaj zapytanie",
       "query-add-button-aria-label": "Dodaj zapytanie",
       "query-history-button": "Historia zapytań",
@@ -7567,11 +7592,6 @@
     "noOptionsMessage-no-folders-found": "Nie znaleziono folderów",
     "select-aria-label": "Filtr folderów",
     "select-placeholder": "Filtruj wg folderu"
-  },
-  "folder-picker": {
-    "create-instructions": "Naciśnij Enter, aby utworzyć nowy folder.",
-    "input-placeholder": "Naciśnij Enter, aby potwierdzić nowy folder",
-    "loading": "Ładowanie folderów…"
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8791,7 +8811,6 @@
       "filter-popup-input-placeholder": "Wartości filtra",
       "filter-popup-match-case": "Dopasuj wielkość liter",
       "inspect-drawer-title": "Sprawdź wartość",
-      "inspect-menu-label": "Sprawdź wartość",
       "nested-table": {
         "no-data": "Brak danych"
       },
@@ -9531,6 +9550,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9802,7 +9823,8 @@
       "message-name-required": "Nazwa jest wymagana",
       "message-reserved-name": "Ta nazwa jest zarezerwowana i nie można jej użyć dla folderu.",
       "message-same-name": "Pulpit lub folder o tej samej nazwie już istnieje",
-      "message-same-name-general": "W folderze ogólnym istnieje już folder lub pulpit o tej samej nazwie"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11955,7 +11977,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Zwiń wiersz zapytania",
       "datasource-help": "Pokaż pomoc dotyczącą źródła danych",
       "drag-and-drop": "Przeciągnij i upuść, aby zmienić kolejność",
@@ -11963,14 +11984,10 @@
       "expand-row": "Rozwiń wiersz zapytania",
       "hide-response": "Ukryj odpowiedź",
       "remove-query": "Usuń zapytanie",
-      "replace-query-from-library": "Zastąp zapytanie z biblioteki",
+      "replace-query-from-library": "",
       "show-response": "Pokaż odpowiedź"
     },
-    "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
   },
   "recently-deleted": {
     "buttons": {
@@ -12827,6 +12844,9 @@
       "label-alt-text": "Tekst alternatywny",
       "label-title-text": "Tekst tytułu"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12877,6 +12897,7 @@
     "description-fields": "Wybierz pola, które powinny być obliczone",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
+    "description-tooltip-from-field": "",
     "name-calculation": "Obliczenie",
     "name-cell-height": "Wysokość komórki",
     "name-cell-type": "Typ komórki",
@@ -12892,8 +12913,17 @@
     "name-min-column-width": "Minimalna szerokość kolumny",
     "name-show-table-footer": "Pokaż stopkę tabeli",
     "name-show-table-header": "Pokaż nagłówek tabeli",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "automatycznie",
-    "placeholder-fields": "Wszystkie pola numeryczne"
+    "placeholder-fields": "Wszystkie pola numeryczne",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Wyczyść znaczniki",

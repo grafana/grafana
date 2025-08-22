@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Sessize alma, gruplandırma ve zamanlamalar"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Veri kaynağı bulunamadı"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Ön izleme",
       "previewCondition": "Uyarı kuralı koşulunu ön izle"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "İletişim noktası entegrasyonu ekle",
       "body-attention": "Henüz varsayılan bir politika yapılandırılmadığı için bu iletişim noktası otomatik olarak varsayılan olarak ayarlanacak.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "Kural bulunamadı",
       "error-button": "Hata",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Aramayı iptal et",
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
@@ -3537,7 +3550,6 @@
       "button-cancel": "İptal et",
       "button-move": "Taşı",
       "button-moving": "Taşınıyor...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3644,11 @@
       "button-create": "Oluştur",
       "button-creating": "Oluşturuluyor...",
       "cancel": "İptal",
+      "error-invalid-characters": "",
       "error-required": "Klasör adı gereklidir",
       "folder-name-input-placeholder-enter-folder-name": "Klasör adını girin",
       "label-folder-name": "Klasör adı",
       "text-pull-request-created": "Bu klasörde yapılan değişikliklerle bir çekme isteği oluşturuldu:",
-      "text-your-folder-will-be-created-as": "Klasörünüz şu şekilde oluşturulacak: {{folderName}}",
       "title-pull-request-created": "Çekme isteği oluşturuldu",
       "title-this-repository-is-read-only": "Bu depo salt okunur"
     },
@@ -3743,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Ok yönü",
+    "category-arrow-direction": "",
     "category-background": "Arka Plan",
     "category-border": "Kenarlık",
     "category-canvas": "Tuval",
@@ -3775,15 +3787,17 @@
         "auto": "Otomatik"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Deneysel öge türlerinin seçimini etkinleştir",
     "description-inline-editing": "Paneli doğrudan düzenlemeyi etkinleştir",
     "description-pan-zoom": "Kaydırma ve yakınlaştırmayı etkinleştir",
-    "direction-options": {
-      "label-both": "Her ikisi de",
-      "label-forward": "İleri",
-      "label-none": "Yok",
-      "label-reverse": "Geri döndür"
-    },
     "drone-front-item": {
       "category-drone-front": "Ön Drone",
       "name-roll-angle": "Yuvarlanma Açısı"
@@ -4171,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Veri kaynakları",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Sorgunuzla eşleşen sonuç bulunamadı",
       "request-data-source": "Yeni veri kaynağı talep et",
       "roadmap": "Yol haritasını görüntüle"
@@ -6545,9 +6560,11 @@
       "explore": "Keşfet"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Pano oluştur",
       "explore-data": "Verileri keşfedin",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Hata hakkında daha fazla bilgi"
@@ -6655,6 +6672,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Sabit renk",
       "noOptionsMessage-no-fields-found": "Hiçbir alan bulunamadı"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Yükle"
@@ -7122,7 +7147,7 @@
     "rich-history-card": {
       "add-comment-form": "Yorum formu ekleyin",
       "add-comment-tooltip": "Yorum ekleyin",
-      "add-to-library": "Kütüphaneye ekle",
+      "add-to-library": "",
       "cancel": "İptal",
       "confirm-delete": "Sil",
       "copy-query-tooltip": "Sorguyu panoya kopyala",
@@ -7234,7 +7259,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Kütüphaneden sorgu ekle",
+      "add-from-query-library": "",
       "query-add-button": "Sorgu ekle",
       "query-add-button-aria-label": "Sorgu ekleyin",
       "query-history-button": "Sorgu geçmişi",
@@ -7525,11 +7550,6 @@
     "noOptionsMessage-no-folders-found": "Klasör bulunamadı",
     "select-aria-label": "Klasör filtresi",
     "select-placeholder": "Klasöre göre filtrele"
-  },
-  "folder-picker": {
-    "create-instructions": "Yeni klasörü oluşturmak için enter tuşuna basın.",
-    "input-placeholder": "Yeni klasörü onaylamak için Enter tuşuna basın",
-    "loading": "Klasörler yükleniyor..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8749,7 +8769,6 @@
       "filter-popup-input-placeholder": "Değerleri filtrele",
       "filter-popup-match-case": "Büyük/küçük harf duyarlılığı",
       "inspect-drawer-title": "Değeri incele",
-      "inspect-menu-label": "Değeri incele",
       "nested-table": {
         "no-data": "Veri yok"
       },
@@ -9473,6 +9492,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9744,7 +9765,8 @@
       "message-name-required": "Ad gereklidir",
       "message-reserved-name": "Bu ayrılmış bir addır ve bir klasör için kullanılamaz.",
       "message-same-name": "Aynı isimde bir pano veya klasör zaten mevcut",
-      "message-same-name-general": "Genel klasörde aynı ada sahip bir klasör veya kontrol paneli zaten mevcut"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11883,7 +11905,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Sorgu satırını daralt",
       "datasource-help": "Veri kaynağı yardımını göster",
       "drag-and-drop": "Yeniden düzenlemek için sürükleyip bırakın",
@@ -11891,14 +11912,10 @@
       "expand-row": "Sorgu satırını genişlet",
       "hide-response": "Yanıtı gizle",
       "remove-query": "Sorguyu kaldır",
-      "replace-query-from-library": "Kütüphaneden sorguyla değiştir",
+      "replace-query-from-library": "",
       "show-response": "Yanıtı göster"
     },
-    "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor.",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
   },
   "recently-deleted": {
     "buttons": {
@@ -12745,6 +12762,9 @@
       "label-alt-text": "Alternatif metin",
       "label-title-text": "Başlık metni"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12795,6 +12815,7 @@
     "description-fields": "Hesaplanacak alanları seçin",
     "description-frozen-columns": "",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
+    "description-tooltip-from-field": "",
     "name-calculation": "Hesaplama",
     "name-cell-height": "Hücre yüksekliği",
     "name-cell-type": "Hücre tipi",
@@ -12810,8 +12831,17 @@
     "name-min-column-width": "Minimum sütun genişliği",
     "name-show-table-footer": "Tablo alt bilgisini göster",
     "name-show-table-header": "Tablo başlığını göster",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "otomatik",
-    "placeholder-fields": "Tüm Sayısal Alanlar"
+    "placeholder-fields": "Tüm Sayısal Alanlar",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Etiketleri temizle",
