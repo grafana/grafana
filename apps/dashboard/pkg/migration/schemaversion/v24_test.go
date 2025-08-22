@@ -47,6 +47,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducer": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -287,6 +290,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducer": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -314,7 +320,7 @@ func TestV24(t *testing.T) {
 							map[string]interface{}{
 								"id": "reduce",
 								"options": map[string]interface{}{
-									"reducers":         []interface{}{"mean", "max", "min", "sum", "lastNotNull", "count"},
+									"reducer":          []interface{}{"mean", "max", "min", "sum", "lastNotNull", "count"},
 									"includeTimeField": false,
 								},
 							},
@@ -364,6 +370,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducer": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -391,7 +400,7 @@ func TestV24(t *testing.T) {
 							map[string]interface{}{
 								"id": "seriesToRows",
 								"options": map[string]interface{}{
-									"reducers": []interface{}{},
+									"reducer": []interface{}{},
 								},
 							},
 						},
@@ -440,6 +449,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducer": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -467,7 +479,7 @@ func TestV24(t *testing.T) {
 							map[string]interface{}{
 								"id": "seriesToColumns",
 								"options": map[string]interface{}{
-									"reducers": []interface{}{},
+									"reducer": []interface{}{},
 								},
 							},
 						},
@@ -515,6 +527,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducer": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -542,7 +557,7 @@ func TestV24(t *testing.T) {
 							map[string]interface{}{
 								"id": "merge",
 								"options": map[string]interface{}{
-									"reducers": []interface{}{},
+									"reducer": []interface{}{},
 								},
 							},
 						},
@@ -601,6 +616,9 @@ func TestV24(t *testing.T) {
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
 									},
+									"footer": map[string]interface{}{
+										"reducer": []interface{}{},
+									},
 									"inspect": false,
 								},
 								"mappings": []interface{}{},
@@ -636,7 +654,7 @@ func TestV24(t *testing.T) {
 							map[string]interface{}{
 								"id": "seriesToRows",
 								"options": map[string]interface{}{
-									"reducers": []interface{}{},
+									"reducer": []interface{}{},
 								},
 							},
 						},
@@ -782,6 +800,9 @@ func TestV24(t *testing.T) {
 									"align": "auto",
 									"cellOptions": map[string]interface{}{
 										"type": "auto",
+									},
+									"footer": map[string]interface{}{
+										"reducer": []interface{}{},
 									},
 									"inspect": false,
 								},
