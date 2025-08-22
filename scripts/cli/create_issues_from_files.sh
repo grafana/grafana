@@ -55,7 +55,6 @@ for file in "$DIRECTORY"/*.txt; do
     [ -e "$file" ] || continue
 
     filename=$(basename "$file")
-    filename_no_ext="${filename%.*}"
 
     echo "Processing: $filename"
 
