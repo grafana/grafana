@@ -212,24 +212,26 @@ This option is only available when you're editing the panel.
 The table footer displays the results of calculations (and reducer functions) on fields.
 The footer is only displayed after you select an option in the **Calculation** drop-down list:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-select-v12.2.png" max-width="300px" alt="" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-selector-v12.2.png" max-width="300px" alt="" >}}
 
-There are several calculations that you can choose from including minimum, maximum, first, last, and total.
+There are several calculations you can choose from including minimum, maximum, first, last, and total.
 For the full list of options, refer to [Calculations](ref:calculations).
 
-You can apply multiple calculations at once.
-For example, in the following image, **Mean**, **Max**, and **Last** have been applied:
+In the table footer:
+
+- You can apply multiple calculations at once.
+- All calculations and reducer functions are labeled in the footer except **Total**.
+- The calculations and reducer functions apply to all fields in the table, by default. To control which fields have a calculation or function applied, add the table footer in an override instead.
+- If you enable a mathematical function for a non-numeric field, nothing for that function is displayed in the footer for that field.
+
+In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Last**&mdash;have been applied:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-1-v12.2.png" max-width="750px" alt="" >}}
 
-The calculations apply to all fields in the table, by default.
-To control which fields have a calculation applied, use the table footer as an override instead.
-
-If you enable a mathematical function for a non-numeric field, nothing for that function is displayed for that field.
-You can see this in the previous image where the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
+You can also see in the previous image that the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
 Only the **Last** function has been applied to that field.
 
-All calculations are labeled in the footer except **Total**, as shown in the following image:
+In the following image, the **Total** calculation has been applied, and no label is displayed:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-2-v12.2.png" max-width="750px" alt="" >}}
 
