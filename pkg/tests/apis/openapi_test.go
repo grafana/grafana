@@ -31,7 +31,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
-			featuremgmt.FlagSecretsManagementAppPlatform,
 		},
 	})
 

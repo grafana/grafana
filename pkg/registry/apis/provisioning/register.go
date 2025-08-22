@@ -236,10 +236,6 @@ func RegisterAPIService(
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}
-	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		logging.DefaultLogger.Warn("Provisioning is not running because it also requires secrets")
-		return nil, nil
-	}
 
 	folderResolver := &local.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
