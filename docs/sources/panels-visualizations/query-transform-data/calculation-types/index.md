@@ -21,8 +21,8 @@ The following table contains a list of calculations you can perform in Grafana. 
 | Calculation        | Description                                               |
 | :----------------- | :-------------------------------------------------------- |
 | All nulls          | True when all values are null                             |
-| All values         | Array with all values                                     |
 | All unique values  | Array with all unique values                              |
+| All values         | Array with all values                                     |
 | All zeros          | True when all values are 0                                |
 | Change count       | Number of times the field's value changes                 |
 | Count              | Number of values in a field                               |
@@ -36,10 +36,10 @@ The following table contains a list of calculations you can perform in Grafana. 
 | Last\* (not null)  | Last, not null value in a field (also excludes NaNs)      |
 | Max                | Maximum value of a field                                  |
 | Mean               | Mean value of all values in a field                       |
-| Variance           | Variance of all values in a field                         |
-| StdDev             | Standard deviation of all values in a field               |
 | Min                | Minimum value of a field                                  |
 | Min (above zero)   | Minimum, positive value of a field                        |
 | Range              | Difference between maximum and minimum values of a field  |
+| StdDev             | Standard deviation of all values in a field               |
 | Step               | Minimal interval between values of a field                |
 | Total              | Sum of all values in a field                              |
+| Variance           | Variance of all values in a field                         |
