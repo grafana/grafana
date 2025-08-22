@@ -33,7 +33,7 @@ test.describe(
         expect(adHocVariable).toBeVisible();
       });
 
-      await test.step('2.View widgets/chargs in fullscreen mode', async () => {
+      await test.step('2.View individual panel', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         const viewPanelBreadcrumb = dashboardPage.getByGrafanaSelector(
@@ -76,7 +76,7 @@ test.describe(
           expect.soft(await timePickerButton.textContent()).toContain('Last 5 minutes');
         });
 
-        await test.step('3.2.Absolute time range', async () => {
+        await test.step('3.2.Set absolute time range', async () => {
           await timePickerButton.click();
           await dashboardPage
             .getByGrafanaSelector(selectors.components.TimePicker.fromField)
@@ -105,7 +105,7 @@ test.describe(
           await timePickerButton.click();
         });
 
-        await test.step('3.4.User can quickly move the time', async () => {
+        await test.step('3.4.Navigate time range', async () => {
           await timePickerButton.click();
 
           await dashboardPage

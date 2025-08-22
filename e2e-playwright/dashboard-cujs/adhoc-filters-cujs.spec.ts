@@ -2,6 +2,10 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { setScopes } from '../utils/scope-helpers';
 
+import { prepareAPIMocks } from './utils';
+
+export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+
 test.use({
   featureToggles: {
     scopeFilters: true,
@@ -10,10 +14,6 @@ test.use({
   },
 });
 
-const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
-
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
-
 test.describe(
   'AdHoc Filters CUJs',
   {
@@ -21,6 +21,8 @@ test.describe(
   },
   () => {
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
+      const apiMocks = await prepareAPIMocks(page);
+
       await test.step('1.Apply filtering to a whole dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
@@ -30,46 +32,17 @@ test.describe(
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-
-          // mock the API call to get the labels
-          const values = ['value1', 'value2', 'value3'];
-          await page.route('**/resources/**/values*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: values,
-              }),
-            });
-          });
-        }
-
         const adHocVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
           .locator('..')
           .locator('input');
 
-        const labelsResponsePromise = page.waitForResponse('**/resources/**/labels*');
+        const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
         await labelsResponsePromise;
-        await page.waitForSelector('[role="option"]', { state: 'visible' });
         await adHocVariable.press('Enter');
         await page.waitForSelector('[role="option"]', { state: 'visible' });
-        const valuesResponsePromise = page.waitForResponse('**/resources/**/values*');
+        const valuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
         await page.waitForSelector('[role="option"]', { state: 'visible' });
@@ -95,45 +68,17 @@ test.describe(
       await test.step('2.Autocomplete for the filter values', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-
-          // mock the API call to get the labels
-          const values = ['value1', 'value2', 'value3', 'some', 'other', 'vals'];
-          await page.route('**/resources/**/values*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: values,
-              }),
-            });
-          });
-        }
-
         const adHocVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
           .locator('..')
           .locator('input');
 
-        const labelsResponsePromise = page.waitForResponse('**/resources/**/labels*');
+        const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
         await page.waitForSelector('[role="option"]', { state: 'visible' });
-        const valuesResponsePromise = page.waitForResponse('**/resources/**/values*');
+        const valuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
 
@@ -160,40 +105,12 @@ test.describe(
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-
-          // mock the API call to get the labels
-          const values = ['value1', 'value2', 'value3'];
-          await page.route('**/resources/**/values*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: values,
-              }),
-            });
-          });
-        }
-
         const adHocVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
           .locator('..')
           .locator('input');
 
-        const labelsResponsePromise = page.waitForResponse('**/resources/**/labels*');
+        const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
@@ -202,7 +119,7 @@ test.describe(
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
-        const valuesResponsePromise = page.waitForResponse('**/resources/**/values*');
+        const valuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
         await adHocVariable.press('Enter');
@@ -259,7 +176,7 @@ test.describe(
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
-        await setScopes(page, USE_LIVE_DATA);
+        await setScopes(page);
 
         await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
@@ -295,48 +212,20 @@ test.describe(
 
         expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
 
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-
-          // mock the API call to get the labels
-          const values = ['value1', 'value2', 'value3'];
-          await page.route('**/resources/**/values*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: values,
-              }),
-            });
-          });
-        }
-
         const adHocVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
           .locator('..')
           .locator('input');
 
-        const labelsResponsePromise = page.waitForResponse('**/resources/**/labels*');
+        const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
         await page.waitForSelector('[role="option"]', { state: 'visible' });
-        const valuesResponsePromise = page.waitForResponse('**/resources/**/values*');
+        const valuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
-        const secondLabelsPromise = page.waitForResponse('**/resources/**/labels*');
+        const secondLabelsPromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.press('Enter');
 
         // add another filter
@@ -347,7 +236,7 @@ test.describe(
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
-        const secondValuesResponsePromise = page.waitForResponse('**/resources/**/values*');
+        const secondValuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await secondValuesResponsePromise;
         //select firs value, then arrow down to another

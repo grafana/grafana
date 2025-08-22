@@ -2,6 +2,8 @@ import { Page, Response } from '@playwright/test';
 
 import { testScopes } from './scopes';
 
+const USE_LIVE_DATA = Boolean(process.env.API_CALLS_CONFIG_PATH);
+
 export type TestScope = {
   name: string;
   title: string;
@@ -256,28 +258,24 @@ export async function getScopeLeafTitle(page: Page, nth: number): Promise<string
   return scopeTitle;
 }
 
-export async function setScopes(
-  page: Page,
-  useLiveData: boolean,
-  scopeBindingSetting?: { uid: string; title: string }
-) {
+export async function setScopes(page: Page, scopeBindingSetting?: { uid: string; title: string }) {
   const scopes = testScopes(scopeBindingSetting);
-  await openScopesSelector(page, useLiveData ? undefined : scopes); //used only in mocked scopes version
+  await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
 
   let scopeName = await getScopeTreeName(page, 0);
 
   const firstLevelScopes = scopes[0].children!; //used only in mocked scopes version
-  await expandScopesSelection(page, scopeName, useLiveData ? undefined : firstLevelScopes);
+  await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : firstLevelScopes);
 
   scopeName = await getScopeTreeName(page, 1);
 
   const secondLevelScopes = firstLevelScopes[0].children!; //used only in mocked scopes version
-  await expandScopesSelection(page, scopeName, useLiveData ? undefined : secondLevelScopes);
+  await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : secondLevelScopes);
 
   const selectedScopes = [secondLevelScopes[0]]; //used only in mocked scopes version
 
   scopeName = await getScopeLeafName(page, 0);
-  await selectScope(page, scopeName, useLiveData ? undefined : selectedScopes[0]);
+  await selectScope(page, scopeName, USE_LIVE_DATA ? undefined : selectedScopes[0]);
 
-  await applyScopes(page, useLiveData ? undefined : selectedScopes); //used only in mocked scopes version
+  await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes); //used only in mocked scopes version
 }

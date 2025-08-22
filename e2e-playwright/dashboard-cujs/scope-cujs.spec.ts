@@ -21,7 +21,7 @@ test.use({
   },
 });
 
-const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
+const USE_LIVE_DATA = Boolean(process.env.API_CALLS_CONFIG_PATH);
 
 export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 

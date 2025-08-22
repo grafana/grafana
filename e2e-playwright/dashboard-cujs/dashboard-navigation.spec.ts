@@ -10,8 +10,6 @@ test.use({
   },
 });
 
-const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
-
 export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 export const NAVIGATE_TO = 'cuj-dashboard-2';
 
@@ -25,7 +23,7 @@ test.describe(
       await test.step('1.Search dashboard', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await setScopes(page, USE_LIVE_DATA);
+        await setScopes(page);
 
         await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
@@ -41,10 +39,10 @@ test.describe(
         await expect(scopeDashboards).not.toHaveCount(scopeDashboardsCount);
       });
 
-      await test.step('2.Timeselection persisting', async () => {
+      await test.step('2.Time selection persisting', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await setScopes(page, USE_LIVE_DATA);
+        await setScopes(page);
 
         await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
@@ -72,7 +70,7 @@ test.describe(
       await test.step('3.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: NAVIGATE_TO });
 
-        await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 3', uid: 'cuj-dashboard-3' });
+        await setScopes(page, { title: 'CUJ Dashboard 3', uid: 'cuj-dashboard-3' });
 
         await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 
@@ -115,7 +113,7 @@ test.describe(
       await test.step('4.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await setScopes(page, USE_LIVE_DATA, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
+        await setScopes(page, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
 
         await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
 

@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { prepareAPIMocks } from './utils';
+
 test.use({
   featureToggles: {
     scopeFilters: true,
@@ -7,8 +9,6 @@ test.use({
     reloadDashboardsOnParamsChange: true,
   },
 });
-
-const USE_LIVE_DATA = Boolean(process.env.USE_LIVE_DATA);
 
 export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
@@ -19,23 +19,10 @@ test.describe(
   },
   () => {
     test('Groupby data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
+      prepareAPIMocks(page);
+
       await test.step('1.Apply a groupBy across one or mulitple dimensions', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
-
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-        }
 
         const groupByVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('groupBy'))
@@ -65,31 +52,14 @@ test.describe(
       await test.step('2.Autocomplete for the groupby values', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-        }
-
         const groupByVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('groupBy'))
           .locator('..')
           .locator('input');
 
-        await groupByVariable.click();
+        await expect(groupByVariable).toBeVisible();
 
-        if (USE_LIVE_DATA) {
-          await page.waitForResponse('**/resources/**/labels*', { timeout: 10000 });
-        }
+        await groupByVariable.click();
 
         const groupByOption = page.getByTestId('data-testid Select option').nth(0);
         const text = await groupByOption.textContent();
@@ -106,21 +76,6 @@ test.describe(
       await test.step('3.Edit and restore default groupBy', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-        }
-
         const initialSelectedOptionsCount = await page
           .getByTestId(/^GroupBySelect-/)
           .first()
@@ -133,10 +88,6 @@ test.describe(
           .locator('input');
 
         await groupByVariable.click();
-
-        if (USE_LIVE_DATA) {
-          await page.waitForResponse('**/resources/**/labels*', { timeout: 10000 });
-        }
 
         const groupByOption = page.getByTestId('data-testid Select option').nth(1);
         await groupByOption.click();
@@ -165,31 +116,12 @@ test.describe(
       await test.step('4.Enter multiple values using keyboard only', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        if (!USE_LIVE_DATA) {
-          // mock the API call to get the labels
-          const labels = ['asserts_env', 'cluster', 'job'];
-          await page.route('**/resources/**/labels*', async (route) => {
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                status: 'success',
-                data: labels,
-              }),
-            });
-          });
-        }
-
         const groupByVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('groupBy'))
           .locator('..')
           .locator('input');
 
         await groupByVariable.click();
-
-        if (USE_LIVE_DATA) {
-          await page.waitForResponse('**/resources/**/labels*', { timeout: 10000 });
-        }
 
         const groupByOptionOne = page.getByTestId('data-testid Select option').nth(0);
         const groupByOptionTwo = page.getByTestId('data-testid Select option').nth(1);
