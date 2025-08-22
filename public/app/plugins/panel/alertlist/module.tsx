@@ -128,12 +128,11 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       description: t('alertlist.description-datasource', 'Filter from alert source'),
       id: 'datasource',
       defaultValue: null,
-      editor: function RenderDatasourcePicker({ id, ...props }) {
+      editor: function RenderDatasourcePicker(props) {
         return (
           <Stack gap={1}>
             <DataSourcePicker
               {...props}
-              inputId={id}
               type={SUPPORTED_RULE_SOURCE_TYPES}
               noDefault
               current={props.value}

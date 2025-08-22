@@ -511,6 +511,63 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 
 			require.Equal(t, 403, response.Status())
 		})
+
+		t.Run("with notification settings", func(t *testing.T) {
+			t.Run("POST returns 400 when receiver does not exist", func(t *testing.T) {
+				env := createTestEnv(t, testConfig)
+				env.nsValidator = &fakeRejectingNotificationSettingsValidatorProvider{}
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.NotificationSettings.Receiver = "non-existent-receiver"
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.Contains(t, string(response.Body()), "receiver non-existent-receiver does not exist")
+			})
+
+			t.Run("PUT returns 400 when receiver does not exist", func(t *testing.T) {
+				env := createTestEnv(t, testConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = "test-uid"
+				insertRule(t, sut, rule)
+
+				env.nsValidator = &fakeRejectingNotificationSettingsValidatorProvider{}
+				sut = createProvisioningSrvSutFromEnv(t, &env)
+				rule.NotificationSettings.Receiver = "non-existent-receiver"
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 400, response.Status())
+				require.Contains(t, string(response.Body()), "receiver non-existent-receiver does not exist")
+			})
+
+			t.Run("POST returns 201 when receiver exists", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 201, response.Status())
+			})
+
+			t.Run("PUT returns 200 when receiver exists", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = "test-uid-2"
+				insertRule(t, sut, rule)
+				rule.Title = "updated rule"
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 200, response.Status())
+			})
+		})
 	})
 
 	t.Run("recording rules", func(t *testing.T) {
@@ -1993,6 +2050,7 @@ type testEnvironment struct {
 	user             *user.SignedInUser
 	rulesAuthz       *fakes.FakeRuleService
 	features         featuremgmt.FeatureToggles
+	nsValidator      provisioning.NotificationSettingsValidatorProvider
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -2111,6 +2169,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		user:             user,
 		rulesAuthz:       ruleAuthz,
 		features:         features,
+		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
 	}
 }
 
@@ -2142,7 +2201,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
 	}
@@ -2253,6 +2312,12 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 }
 
 type fakeRejectingNotificationPolicyService struct{}
+
+type fakeRejectingNotificationSettingsValidatorProvider struct{}
+
+func (f *fakeRejectingNotificationSettingsValidatorProvider) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
+	return notifier.RejectingValidation{}, nil
+}
 
 func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	return definitions.Route{}, "", nil

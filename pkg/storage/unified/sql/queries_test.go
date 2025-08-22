@@ -120,6 +120,18 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceHistoryListModifiedSince: {
+				{
+					Name: "single path",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+					},
+				},
+			},
 			sqlResourceHistoryPoll: {
 				{
 					Name: "single path",

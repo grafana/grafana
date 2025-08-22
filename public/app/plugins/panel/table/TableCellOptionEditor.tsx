@@ -23,10 +23,9 @@ export interface TableCellEditorProps<T> {
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
-  id?: string;
 }
 
-export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
+export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
   const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
@@ -61,7 +60,7 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   return (
     <div className={styles.fixBottomMargin}>
       <Field>
-        <Select inputId={id} options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
+        <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
         <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />

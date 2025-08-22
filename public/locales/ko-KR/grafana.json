@@ -2212,6 +2212,13 @@
       "preview": "미리보기",
       "previewCondition": "경고 규칙 조건 미리보기"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "연락처 통합 추가",
       "body-attention": "아직 구성된 기본 정책이 없으므로 이 연락처가 자동으로 기본값으로 설정됩니다.",
@@ -3530,7 +3537,6 @@
       "button-cancel": "취소",
       "button-move": "이동",
       "button-moving": "이동 중...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3731,7 +3737,7 @@
         }
       }
     },
-    "category-arrow-direction": "화살표 방향",
+    "category-arrow-direction": "",
     "category-background": "배경",
     "category-border": "테두리",
     "category-canvas": "캔버스",
@@ -3763,15 +3769,17 @@
         "auto": "자동"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "실험적 요소 유형 선택 활성화",
     "description-inline-editing": "패널 직접 편집 활성화",
     "description-pan-zoom": "이동 및 확대/축소 활성화",
-    "direction-options": {
-      "label-both": "둘 다",
-      "label-forward": "앞으로",
-      "label-none": "없음",
-      "label-reverse": "되돌리기"
-    },
     "drone-front-item": {
       "category-drone-front": "드론 전면",
       "name-roll-angle": "롤 각도"
@@ -6644,6 +6652,14 @@
       "label-fixed-color": "고정 색상",
       "noOptionsMessage-no-fields-found": "필드를 찾을 수 없습니다"
     },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "업로드"
     },
@@ -7110,7 +7126,7 @@
     "rich-history-card": {
       "add-comment-form": "코멘트 양식 추가",
       "add-comment-tooltip": "코멘트 추가",
-      "add-to-library": "라이브러리에 추가",
+      "add-to-library": "",
       "cancel": "취소",
       "confirm-delete": "삭제",
       "copy-query-tooltip": "쿼리를 클립보드에 복사합니다.",
@@ -7222,7 +7238,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "라이브러리에서 쿼리 추가",
+      "add-from-query-library": "",
       "query-add-button": "쿼리 추가",
       "query-add-button-aria-label": "쿼리 추가",
       "query-history-button": "쿼리 이력",
@@ -9447,6 +9463,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9718,7 +9736,8 @@
       "message-name-required": "이름은 필수 입력 항목입니다",
       "message-reserved-name": "이 이름은 예약어이므로 폴더에 사용할 수 없습니다.",
       "message-same-name": "동일한 이름의 대시보드 또는 폴더가 이미 존재합니다",
-      "message-same-name-general": "일반 폴더에 동일한 이름의 폴더 또는 대시보드가 이미 존재합니다"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11850,7 +11869,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "쿼리 행 접기",
       "datasource-help": "데이터 소스 도움말 표시",
       "drag-and-drop": "드래그 앤 드롭으로 순서 변경",
@@ -11858,14 +11876,10 @@
       "expand-row": "쿼리 행 펼치기",
       "hide-response": "응답 숨기기",
       "remove-query": "쿼리 제거",
-      "replace-query-from-library": "라이브러리의 쿼리로 교체",
+      "replace-query-from-library": "",
       "show-response": "응답 표시"
     },
-    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다.",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
   },
   "recently-deleted": {
     "buttons": {
@@ -12706,6 +12720,9 @@
       "description-title-text": "이미지에 커서를 가져갔을 때 표시되는 텍스트",
       "label-alt-text": "대체 텍스트",
       "label-title-text": "제목 텍스트"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",

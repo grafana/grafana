@@ -68,7 +68,7 @@ type jobDriver struct {
 	repoGetter RepoGetter
 
 	// save info about finished jobs
-	historicJobs History
+	historicJobs HistoryWriter
 
 	// Workers process the job.
 	// Only the first worker who supports the job will process it; the rest are ignored.
@@ -82,7 +82,7 @@ func NewJobDriver(
 	jobTimeout, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
-	historicJobs History,
+	historicJobs HistoryWriter,
 	notifications chan struct{},
 	workers ...Worker,
 ) (*jobDriver, error) {

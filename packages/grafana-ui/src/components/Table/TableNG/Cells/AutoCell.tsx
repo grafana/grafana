@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { formattedValueToString } from '@grafana/data';
 
-import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { AutoCellProps, TableCellStyles } from '../types';
 
 export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
