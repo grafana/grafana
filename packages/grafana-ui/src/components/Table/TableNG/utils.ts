@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import memoize from 'micro-memoize';
 import { CSSProperties } from 'react';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
@@ -500,33 +501,18 @@ const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
  * Returns the text and background colors for a table cell based on its options and display value.
  */
 export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
-  const computedColorCache: Record<'bg-cell-text-color' | 'bg-cell-gradient', Record<string, string>> = {
-    'bg-cell-text-color': {},
-    'bg-cell-gradient': {},
-  } as const;
-
-  const cached = (cacheName: keyof typeof computedColorCache, fn: (color: string) => string) => {
-    return (color: string) => {
-      if (computedColorCache[cacheName][color]) {
-        return computedColorCache[cacheName][color];
-      }
-      const computedColor = fn(color);
-      computedColorCache[cacheName][color] = computedColor;
-      return computedColor;
-    };
-  };
-
-  const bgCellTextColor = cached('bg-cell-text-color', (color: string) =>
-    getTextColorForAlphaBackground(color, theme.isDark)
-  );
-  const gradientBg = cached('bg-cell-gradient', (color: string) => {
-    // How much to darken elements depends upon if we're in dark mode
-    const darkeningFactor = theme.isDark ? 1 : -0.7;
-    return tinycolor(color)
-      .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-      .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES)
-      .toRgbString();
+  const bgCellTextColor = memoize((color: string) => getTextColorForAlphaBackground(color, theme.isDark), {
+    maxSize: 1000,
   });
+  const darkeningFactor = theme.isDark ? 1 : -0.7; // How much to darken elements depends upon if we're in dark mode
+  const gradientBg = memoize(
+    (color: string) =>
+      tinycolor(color)
+        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+        .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES)
+        .toRgbString(),
+    { maxSize: 1000 }
+  );
 
   return (cellOptions: TableCellOptions, displayValue: DisplayValue): CSSProperties => {
     const result: CSSProperties = {};

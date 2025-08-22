@@ -41,6 +41,7 @@ import { RowExpander } from './components/RowExpander';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { COLUMN, TABLE } from './constants';
+import { GetTextColorForBackgroundContextProvider } from './contexts';
 import {
   useColumnResize,
   useColWidths,
@@ -704,7 +705,7 @@ export function TableNG(props: TableNGProps) {
   const numRows = sortedRows.length;
 
   return (
-    <>
+    <GetTextColorForBackgroundContextProvider>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
         ref={gridRef}
@@ -789,7 +790,7 @@ export function TableNG(props: TableNGProps) {
           onDismiss={() => setInspectCell(null)}
         />
       )}
-    </>
+    </GetTextColorForBackgroundContextProvider>
   );
 }
 

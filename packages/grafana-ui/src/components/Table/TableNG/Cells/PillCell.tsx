@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import {
   GrafanaTheme2,
   classicColors,
-  colorManipulator,
   Field,
   getColorByStringHash,
   FALLBACK_COLOR,
@@ -12,14 +11,27 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
+import { useGetTextColorForBackground } from '../contexts';
 import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
 
 export function PillCell({ rowIdx, field, theme }: PillCellProps) {
+  const textColorForBg = useGetTextColorForBackground();
   const value = field.values[rowIdx];
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
-    return pillValues.length > 0 ? createPills(pillValues, field, theme) : [];
-  }, [value, field, theme]);
+    return pillValues.length > 0
+      ? pillValues.map((pill, index) => {
+          const bgColor = getPillColor(pill, field, theme);
+          const textColor = textColorForBg(bgColor);
+          return {
+            value: String(pill),
+            key: `${pill}-${index}`,
+            bgColor,
+            color: textColor,
+          };
+        })
+      : [];
+  }, [value, field, theme, textColorForBg]);
 
   if (pills.length === 0) {
     return null;
@@ -48,19 +60,6 @@ interface Pill {
 
 const SPLIT_RE = /\s*,\s*/;
 const TRANSPARENT = 'rgba(0,0,0,0)';
-
-function createPills(pillValues: unknown[], field: Field, theme: GrafanaTheme2): Pill[] {
-  return pillValues.map((pill, index) => {
-    const bgColor = getPillColor(pill, field, theme);
-    const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
-    return {
-      value: String(pill),
-      key: `${pill}-${index}`,
-      bgColor,
-      color: textColor,
-    };
-  });
-}
 
 export function inferPills(rawValue: TableCellValue): unknown[] {
   if (rawValue === '' || rawValue == null) {
