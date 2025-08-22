@@ -655,7 +655,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 			b.repositoryLister = repoInformer.Lister()
 
-			// Initialize the API client-based job store now that the client is available
+			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewAPIClientJobStore(b.client, 30*time.Second)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
