@@ -1170,7 +1170,7 @@ func (b *bleveIndex) UpdateIndex(ctx context.Context, reason string) (int64, err
 	b.updaterMu.Lock()
 	if b.updaterShutdown {
 		b.updaterMu.Unlock()
-		return 0, fmt.Errorf("cannot update index: index is closed")
+		return 0, fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)
 	}
 
 	b.updaterQueue = append(b.updaterQueue, req)
@@ -1239,7 +1239,7 @@ func (b *bleveIndex) runUpdater(ctx context.Context) {
 
 		if shutdown {
 			for _, req := range batch {
-				req.callback <- updateResult{err: fmt.Errorf("cannot update index: index is closed")}
+				req.callback <- updateResult{err: fmt.Errorf("cannot update index: %w", bleve.ErrorIndexClosed)}
 			}
 			return
 		}

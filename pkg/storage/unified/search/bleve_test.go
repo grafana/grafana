@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -1232,7 +1234,93 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	require.Contains(t, err.Error(), bleve.ErrorIndexClosed.Error())
 }
 
-// this is testing concurrent index updates, not concurrent index update + search
+func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
+
+	_, err := be.BuildIndex(t.Context(), ns, 10, 0, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5))
+	require.NoError(t, err)
+
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	rebuilds := atomic.NewInt64(0)
+	updates := atomic.NewInt64(0)
+	searches := atomic.NewInt64(0)
+	const searchConcurrency = 25
+	for i := 0; i < searchConcurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			for ctx.Err() == nil {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(time.Duration(i) * time.Millisecond): // introduce small jitter
+					break
+				}
+
+				// We use t.Context() here to avoid getting errors from context cancellation.
+				idx, err := be.GetIndex(t.Context(), ns)
+				require.NoError(t, err)
+
+				_, err = idx.UpdateIndex(t.Context(), "test")
+				if err != nil {
+					if errors.Is(err, bleve.ErrorIndexClosed) {
+						continue
+					}
+					require.NoError(t, err)
+				}
+				updates.Inc()
+
+				resp, err := idx.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+					Options: &resourcepb.ListOptions{
+						Key: &resourcepb.ResourceKey{
+							Namespace: ns.Namespace,
+							Group:     ns.Group,
+							Resource:  ns.Resource,
+						},
+					},
+					Fields: []string{"title"},
+					Query:  "Document",
+					Limit:  10,
+				}, nil)
+				if err != nil {
+					if errors.Is(err, bleve.ErrorIndexClosed) {
+						continue
+					}
+					require.NoError(t, err)
+				}
+				require.Equal(t, int64(10), resp.TotalHits)
+				searches.Inc()
+			}
+		}()
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for ctx.Err() == nil {
+			_, err := be.BuildIndex(t.Context(), ns, 10, 0, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5))
+			require.NoError(t, err)
+			rebuilds.Inc()
+		}
+	}()
+
+	time.Sleep(5 * time.Second)
+	cancel()
+	wg.Wait()
+
+	fmt.Println("Updates:", updates.Load(), "searches:", searches.Load(), "rebuilds:", rebuilds.Load())
+}
+
 // Verify concurrent updates and searches work as expected.
 func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 	ns := resource.NamespacedResource{
