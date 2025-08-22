@@ -23,8 +23,19 @@ func ProvidePromMigrationService(
 }
 
 func (s *PromMigrationService) Migrate(ctx context.Context) error {
-	//some how check if migration needs to happen
+	//feature flag check
+	//if stuiff
+
+	//check to see if azure/aws is available
+	//s.dataSourcesService
+	const azurePromExists = false
+	const amazonPromExists = false
+	if !azurePromExists && !amazonPromExists {
+		return nil
+	}
+
 	logger.Debug("performing prometheus data source type migration")
+
 	query := &datasources.GetDataSourcesByTypeQuery{
 		Type: datasources.DS_PROMETHEUS,
 	}
@@ -34,36 +45,52 @@ func (s *PromMigrationService) Migrate(ctx context.Context) error {
 	}
 
 	for _, ds := range dsList {
-		if _, found := ds.JsonData.CheckGet("azureCredentials"); !found {
+		if _, found := ds.JsonData.CheckGet("azureCredentials"); azurePromExists && found {
+			err = updateDataSourceType(ctx, s.dataSourcesService, ds, "grafana-azureprometheus-datasource")
+			if err != nil {
+				return err
+			}
 			continue
 		}
-		secureJsonData, err := s.dataSourcesService.DecryptedValues(ctx, ds)
-		if err != nil {
-			return err
-		}
-		_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
-			ID:             ds.ID,
-			Type:           "grafana-azureprometheus-datasource",
-			OrgID:          ds.OrgID,
-			UID:            ds.UID,
-			Name:           ds.Name,
-			JsonData:       ds.JsonData,
-			SecureJsonData: secureJsonData,
-
-			// These are needed by the SQL function due to UseBool and MustCols
-			IsDefault:       ds.IsDefault,
-			BasicAuth:       ds.BasicAuth,
-			WithCredentials: ds.WithCredentials,
-			ReadOnly:        ds.ReadOnly,
-			User:            ds.User,
-			Database:        ds.Database,
-		})
-		if err != nil {
-			return err
+		if sigV4Auth, found := ds.JsonData.CheckGet("sigV4Auth"); amazonPromExists && found {
+			if enabled, err := sigV4Auth.Bool(); err != nil || !enabled {
+				continue
+			}
+			err = updateDataSourceType(ctx, s.dataSourcesService, ds, "grafana-amazonprometheus-datasource")
+			if err != nil {
+				return err
+			}
+			continue
 		}
 	}
 
 	logger.Debug("prometheus data source type migration complete")
 
 	return nil
+}
+
+func updateDataSourceType(ctx context.Context, service datasources.DataSourceService, ds *datasources.DataSource, newType string) error {
+	secureJsonData, err := service.DecryptedValues(ctx, ds)
+	if err != nil {
+		return err
+	}
+	ds.JsonData.Set("prometheus-type-migration", true)
+	_, err = service.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
+		ID:             ds.ID,
+		Type:           newType,
+		OrgID:          ds.OrgID,
+		UID:            ds.UID,
+		Name:           ds.Name,
+		JsonData:       ds.JsonData,
+		SecureJsonData: secureJsonData,
+
+		// These are needed by the SQL function due to UseBool and MustCols
+		IsDefault:       ds.IsDefault,
+		BasicAuth:       ds.BasicAuth,
+		WithCredentials: ds.WithCredentials,
+		ReadOnly:        ds.ReadOnly,
+		User:            ds.User,
+		Database:        ds.Database,
+	})
+	return err
 }
