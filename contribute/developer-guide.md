@@ -278,19 +278,19 @@ Note this will not start a development server, so you must ensure that Grafana i
 
 Playwright has several commands commonly used:
 
-1 - **To open Playwright in UI**. It boost Grafana server and then boost Playwright running against this server.
+1 - **To open Playwright in UI**. It boosts the Grafana server and then Playwright, which runs against this server.
 
 ```
 yarn e2e:playwright --ui
 ```
 
-2 - **To run an indivudual test**. It will run the test that matches the string passed to _grep_. If you use a string that matches more than one test, Playwright will run all of them.
+2 - **To run an individual test**. It will run the test that matches the string passed to _grep_. Playwright will run all of them if you use a string that matches multiple tests.
 
 ```
 yarn e2e:playwright --grep <testname>
 ```
 
-3 - **To run a project**. It will run the entire project, also known as _suite_. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
+3 - **To run a project**. It will run the entire project, also known as '_suite_'. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
 
 ```
 yarn e2e:playwright --project <projectname>
@@ -302,13 +302,13 @@ yarn e2e:playwright --project <projectname>
 yarn e2e:playwright --grep @<tagname>
 ```
 
-5- **To open the last HTML report**. It will open a Chrome window with the list of the tests and the info related to them (success/error, name, time, steps, ...)
+5- **To open the last HTML report**. It will open a Chrome window with the test list and the related info (success/error, name, time, steps, ...).
 
 ```
 yarn playwright show-report
 ```
 
-If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
+You can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options) if you are curious about other commands.
 
 ## Configure Grafana for development
 
