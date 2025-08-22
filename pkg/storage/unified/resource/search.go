@@ -722,7 +722,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		}
 		elapsed := time.Since(start)
 		if s.indexMetrics != nil {
-			s.indexMetrics.UpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
+			s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 		}
 	}
 
