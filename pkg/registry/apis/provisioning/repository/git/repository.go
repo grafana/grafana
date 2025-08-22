@@ -102,7 +102,7 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 	// If the repository has workflows, we require a token or encrypted token
 	if len(r.config.Spec.Workflows) > 0 {
 		if cfg.Token == "" && cfg.Token.IsZero() {
-			list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
+			list = append(list, field.Required(field.NewPath("secure", "token"), "a access token is required"))
 		}
 	}
 
