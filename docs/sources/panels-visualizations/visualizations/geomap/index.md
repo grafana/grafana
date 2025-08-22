@@ -536,7 +536,7 @@ The XYZ Tile layer is a map from a generic tile layer.
 
 #### MapLibre Style Layer
 
-The MapLibre Style Layer is a map defined via a MapLibre / Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions and more. Most often, they are based on vector tiles as opposed to raster tiles.
+The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style url, for example: https://demotiles.maplibre.org/style.json
 - **Access Token** - An API token for mapbox maps. Only works for `mapbox://` URLs. In other cases, you might have to include the token in the URL, for example: https://example.com/map/style.json?key=XXX
