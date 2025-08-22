@@ -1,17 +1,8 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { ManagerKind } from 'app/features/apiserver/types';
-import { DashboardViewItem } from 'app/features/search/types';
+import { ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
 
-import { findItem } from '../state/utils';
-import {
-  DashboardTreeSelection,
-  DashboardViewItemWithUIItems,
-  BrowseDashboardsPermissions,
-  BrowseDashboardsState,
-} from '../types';
-
-import { ResourceRef } from './BulkActions/useBulkActionJob';
+import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return baseId + item.uid;
@@ -31,41 +22,6 @@ export function getFolderURL(uid: string) {
     return `${url}?orgId=${orgId}`;
   }
   return url;
-}
-
-export function hasFolderNameCharactersToReplace(folderName: string): boolean {
-  if (typeof folderName !== 'string') {
-    return false;
-  }
-
-  // whitespace that needs to be replaced with hyphens
-  const hasWhitespace = /\s+/.test(folderName);
-
-  // characters that are not lowercase letters, numbers, or hyphens
-  const hasInvalidCharacters = /[^a-z0-9-]/.test(folderName);
-
-  return hasWhitespace || hasInvalidCharacters;
-}
-
-export function formatFolderName(folderName?: string): string {
-  if (typeof folderName !== 'string') {
-    console.error('Invalid folder name type:', typeof folderName);
-    return '';
-  }
-
-  const result = folderName
-    .trim() // Remove leading/trailing whitespace first
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-
-  // If the result is empty, return empty string
-  if (result === '') {
-    return '';
-  }
-
-  return result;
 }
 
 // Collect selected dashboard and folder from the DashboardTreeSelection
@@ -103,36 +59,4 @@ export function canSelectItems(permissions: BrowseDashboardsPermissions) {
   const canSelectFolders = canEditFolders || canDeleteFolders;
   const canSelectDashboards = canEditDashboards || canDeleteDashboards;
   return Boolean(canSelectFolders || canSelectDashboards);
-}
-
-/**
- * Finds the repository name for an item by traversing up the tree to find the root provisioned folder (managed by ManagerKind.Repo)
- * This should be an edge case where user have multiple provisioned folders and try to managing resources on root folder
- */
-export function getItemRepositoryUid(
-  item: DashboardViewItem,
-  rootItems: DashboardViewItem[],
-  childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
-): string {
-  // For root provisioned folders, the UID is the repository name
-  if (item.managedBy === ManagerKind.Repo && !item.parentUID && item.kind === 'folder') {
-    return item.uid;
-  }
-
-  // Traverse up the tree to find the root provisioned folder
-  let currentItem = item;
-  while (currentItem.parentUID) {
-    const parent = findItem(rootItems, childrenByParentUID, currentItem.parentUID);
-    if (!parent) {
-      break;
-    }
-
-    if (parent.managedBy === ManagerKind.Repo && !parent.parentUID) {
-      return currentItem.parentUID;
-    }
-
-    currentItem = parent;
-  }
-
-  return 'non_provisioned';
 }

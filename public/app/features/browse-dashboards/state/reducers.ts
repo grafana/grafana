@@ -1,6 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
-import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { GENERAL_FOLDER_UID } from '../../search/constants';
@@ -97,11 +96,6 @@ export function setItemSelectionState(
     return;
   }
 
-  // Prevent selection of root provisioned folders
-  if (item.managedBy === ManagerKind.Repo && !item.parentUID) {
-    return;
-  }
-
   // Selecting a folder selects all children, and unselecting a folder deselects all children
   // so propagate the new selection state to all descendants
   function markChildren(kind: DashboardViewItemKind, uid: string) {
@@ -145,9 +139,9 @@ export function setItemSelectionState(
 
 export function setAllSelection(
   state: BrowseDashboardsState,
-  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined }>
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeUIDs?: string[] }>
 ) {
-  const { isSelected, folderUID: folderUIDArg } = action.payload;
+  const { isSelected, folderUID: folderUIDArg, excludeUIDs } = action.payload;
 
   // If we're in the folder view for sharedwith me (currently not supported)
   // bail and don't select anything
@@ -184,8 +178,8 @@ export function setAllSelection(
           continue;
         }
 
-        // Skip all provisioned resources during "select all" on root level
-        if (child.managedBy === ManagerKind.Repo && !child.parentUID) {
+        // Skip items in the exclude list
+        if (excludeUIDs?.includes(child.uid)) {
           continue;
         }
 
