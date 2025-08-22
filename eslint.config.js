@@ -8,8 +8,6 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
-// FIXME: Remove once eslint-config-grafana is updated to include correct plugin
-const hooksPlugin = require('eslint-plugin-react-hooks');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
@@ -60,17 +58,7 @@ module.exports = [
       'public/build-swagger', // swagger build output
     ],
   },
-  // FIXME: Remove once eslint-config-grafana is updated to include correct plugin
-  {
-    name: 'react-hooks-plugin',
-    plugins: {
-      'react-hooks': hooksPlugin,
-    },
-  },
-  // Conditionally run the betterer rules if enabled in dev's config
-  ...(enableBettererRules ? bettererConfig : []),
-  // FIXME: Remove filtering once eslint-config-grafana is updated to include correct plugin
-  ...grafanaConfig.filter(Boolean),
+  ...grafanaConfig,
   {
     name: 'react/jsx-runtime-rules',
     rules: reactPlugin.configs.flat['jsx-runtime'].rules,
@@ -176,6 +164,8 @@ module.exports = [
       ],
       // FIXME: Fix these in follow up PR
       'react/no-unescaped-entities': 'off',
+      // Turn off react-hooks/rules-of-hooks whilst present in betterer
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {
@@ -200,6 +190,7 @@ module.exports = [
     files: ['packages/grafana-ui/src/**/*.story.tsx'],
     rules: {
       '@grafana/consistent-story-titles': 'error',
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {
@@ -455,4 +446,7 @@ module.exports = [
       ],
     },
   },
+  // Conditionally run the betterer rules if enabled in dev's config
+  // Should be last in the config so it can override any temporary disables in here
+  ...(enableBettererRules ? bettererConfig : []),
 ];
