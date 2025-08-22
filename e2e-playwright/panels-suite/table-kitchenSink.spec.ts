@@ -95,8 +95,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Cell options Cell value inspect'))
       .first()
-      .getByRole('switch', { name: 'Cell value inspect' })
-      .click({ force: true });
+      .locator('label[for="custom.inspect"]')
+      .click();
     await loremIpsumCell.hover();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
@@ -133,6 +133,15 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await displayNameInput.fill('State (renamed)');
     await displayNameInput.press('Enter');
     expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
+
+    // toggle the "State" column visibility again to hide it again. this confirms that we avoid bugs related to
+    // array lengths between the fields array and the column widths array.
+    await hideStateColumnSwitch.click();
+    expect(page.getByRole('row').nth(0)).not.toContainText('State');
+
+    // since the previous assertion is just for the absence of text, let's also confirm that the table is
+    // actually still on the page and that an error has not been throw.
+    await waitForTableLoad(page);
   });
 
   // we test niche cases for sorting, filtering, pagination, etc. in a unit tests already.

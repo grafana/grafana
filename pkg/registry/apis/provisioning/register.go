@@ -99,7 +99,7 @@ type APIBuilder struct {
 		jobs.Store
 	}
 	jobHistoryConfig  *JobHistoryConfig
-	jobHistory        jobs.History
+	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
 	legacyMigrator    legacy.LegacyMigrator
@@ -441,28 +441,27 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage := map[string]rest.Storage{}
 	// Create job history based on configuration
-	// Default to in-memory cache if no config provided
-	var jobHistory jobs.History
+	// Default to unified storage if no config provided
+	var jobHistory jobs.HistoryReader
 	if b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil {
-		jobHistory = jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
+		b.jobHistoryLoki = jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
+		jobHistory = b.jobHistoryLoki
 	} else {
 		historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
 		if err != nil {
-			return fmt.Errorf("failed to create historic job storage: %w", err)
+			return fmt.Errorf("create historic job storage: %w", err)
 		}
 
 		jobHistory, err = jobs.NewStorageBackedHistory(historicJobStore)
 		if err != nil {
-			return fmt.Errorf("failed to create historic job wrapper: %w", err)
+			return fmt.Errorf("create historic job wrapper: %w", err)
 		}
-
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
-	b.jobHistory = jobHistory
 	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
-		return fmt.Errorf("failed to create job store: %w", err)
+		return fmt.Errorf("create job store: %w", err)
 	}
 
 	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
@@ -485,7 +484,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-		historic:   b.jobHistory,
+		historic:   jobHistory,
 	}
 
 	// Add any extra storage
@@ -505,6 +504,12 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 	if obj == nil || a.GetOperation() == admission.Connect {
 		return nil // This is normal for sub-resource
+	}
+
+	// FIXME: Do nothing for HistoryJobs for now
+	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
+		return nil
 	}
 
 	r, ok := obj.(*provisioning.Repository)
@@ -548,6 +553,12 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	// Do not validate objects we are trying to delete
 	meta, _ := apiutils.MetaAccessor(obj)
 	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	// FIXME: Do nothing for HistoryJobs for now
+	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
 		return nil
 	}
 
@@ -743,6 +754,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				workers = append(workers, extra.GetJobWorkers()...)
 			}
 
+			var jobHistoryWriter jobs.HistoryWriter
+			if b.jobHistoryLoki != nil {
+				jobHistoryWriter = b.jobHistoryLoki
+			} else {
+				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
+			}
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
@@ -750,7 +768,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
-				b.jobs, b, b.jobHistory,
+				b.jobs, b, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				workers...,
 			)
@@ -783,8 +801,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
 
-			// If Loki not used, start the controller for history jobs
-			if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
+			if b.jobHistoryLoki == nil {
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
 				historyJobExpiration := 30 * time.Second
