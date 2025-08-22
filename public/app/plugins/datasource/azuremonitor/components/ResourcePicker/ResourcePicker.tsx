@@ -18,6 +18,7 @@ import {
   MultiCombobox,
 } from '@grafana/ui';
 
+import { resourceTypeDisplayNames } from '../../azureMetadata/resourceTypes';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
@@ -69,6 +70,8 @@ const ResourcePicker = ({
   const selectionNoticeText = selectionNotice?.(selectedRows);
   const [subscriptions, setSubscriptions] = useState<Array<ComboboxOption<string>>>([]);
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false);
+  const [namespaces, setNamespaces] = useState<Array<ComboboxOption<string>>>([]);
+  const [isLoadingNamespaces, setIsLoadingNamespaces] = useState(false);
   const [filters, setFilters] = useState<ResourceGraphFilters>({
     subscriptions: [],
     types: [],
@@ -85,7 +88,21 @@ const ResourcePicker = ({
     const subscriptions = await datasource.getSubscriptions();
     setSubscriptions(subscriptions.map((sub) => ({ label: sub.text, value: sub.value })));
     setIsLoadingSubscriptions(false);
-  }, [datasource]);
+
+    if (queryType === 'metrics') {
+      setIsLoadingNamespaces(true);
+      const initialNamespaces = await datasource.getMetricNamespaces(
+        subscriptions[0]?.value || datasource.getDefaultSubscriptionId()
+      );
+      setNamespaces(
+        initialNamespaces?.map((ns) => ({
+          label: resourceTypeDisplayNames[ns.value.toLowerCase()] || ns.value,
+          value: ns.value,
+        }))
+      );
+      setIsLoadingNamespaces(false);
+    }
+  }, [datasource, queryType]);
 
   const loadInitialData = useCallback(async () => {
     if (!isLoading) {
@@ -225,6 +242,9 @@ const ResourcePicker = ({
       case 'subscriptions':
         updatedFilters.subscriptions = values;
         break;
+      case 'types':
+        updatedFilters.types = values;
+        break;
     }
     setFilters(updatedFilters);
     loadFilteredRows(updatedFilters);
@@ -258,6 +278,24 @@ const ResourcePicker = ({
               data-testid={selectors.components.queryEditor.resourcePicker.filters.subscription.input}
             />
           </Field>
+          {queryType === 'metrics' && (
+            <Field
+              label={t('components.resource-picker.types-filter', 'Resource Types')}
+              noMargin
+              className={styles.filterInput(queryType)}
+            >
+              <MultiCombobox
+                aria-label={t('components.resource-picker.types-filter', 'Resource Types')}
+                value={filters.types}
+                options={namespaces}
+                onChange={(value) => updateFilters(value, 'types')}
+                isClearable
+                enableAllOption
+                loading={isLoadingNamespaces}
+                data-testid={selectors.components.queryEditor.resourcePicker.filters.type.input}
+              />
+            </Field>
+          )}
         </Stack>
       )}
       {shouldShowLimitFlag ? (
