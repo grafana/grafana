@@ -62,7 +62,7 @@ During the replacement process, Grafana:
 1. Replaces the variables that use the syntax `${ENV_VAR_NAME}`.
 1. Next, it replaces the variables that use the syntax `$ENV_VAR_NAME`.
 
-If your data contains the character `$`, for example `Pa$sw0rd`, and you're using an environment variable, use the `$ENV_VAR_NAME` syntax to avoid double expansion. If you use the `${ENV_VAR_NAME}` syntax, the value will be first replaced as `Pa$sw0rd` and then again as `Pa` since `$sw0rd` will be considered another variable.
+If your data contains the character `$`, for example `Pa$sw0rd`, and you're using an environment variable, use the `$ENV_VAR_NAME` syntax to avoid double expansion. If you use the `${ENV_VAR_NAME}` syntax, the value is first replaced as `Pa$sw0rd` and then again as `Pa` since `$sw0rd` will be considered another variable.
 
 If you want to use the literal value `Pa$sw0rd`, you need to escape the character `$` using a double `$$`: `Pa$$sw0rd`.
 
