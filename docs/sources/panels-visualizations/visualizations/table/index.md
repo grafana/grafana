@@ -220,9 +220,9 @@ For the full list of options, refer to [Calculations](ref:calculations).
 In the table footer:
 
 - You can apply multiple calculations at once.
-- All calculations and reducer functions are labeled in the footer except **Total**.
+- All calculations and reducer functions are labeled except **Total**.
 - The calculations and reducer functions apply to all fields in the table, by default. To control which fields have a calculation or function applied, add the table footer in an override instead.
-- If you enable a mathematical function for a non-numeric field, nothing for that function is displayed in the footer for that field.
+- If you enable a mathematical function for a non-numeric field, nothing for that function is displayed for that field.
 
 In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Last**&mdash;have been applied:
 
