@@ -2654,7 +2654,8 @@
       "metadata": {
         "name": "provisioningSecretsService",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
+        "creationTimestamp": "2025-07-25T13:06:00Z",
+        "deletionTimestamp": "2025-08-20T12:48:19Z"
       },
       "spec": {
         "description": "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",

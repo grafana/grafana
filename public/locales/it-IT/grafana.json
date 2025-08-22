@@ -2221,6 +2221,13 @@
       "preview": "Anteprima",
       "previewCondition": "Anteprima condizione regola di avviso"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Aggiungi integrazione del punto di contatto",
       "body-attention": "Poiché non è ancora stato configurato un criterio predefinito, questo punto di contatto verrà automaticamente impostato come predefinito.",
@@ -3543,7 +3550,6 @@
       "button-cancel": "Annulla",
       "button-move": "Sposta",
       "button-moving": "Spostamento in corso...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3749,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Direzione della freccia",
+    "category-arrow-direction": "",
     "category-background": "Sfondo",
     "category-border": "Bordo",
     "category-canvas": "Tela",
@@ -3781,15 +3787,17 @@
         "auto": "Automatico"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Abilita la selezione di tipi di elementi sperimentali",
     "description-inline-editing": "Abilita la modifica diretta del pannello",
     "description-pan-zoom": "Abilita panoramica e zoom",
-    "direction-options": {
-      "label-both": "Entrambe",
-      "label-forward": "Inoltra",
-      "label-none": "Nessuno",
-      "label-reverse": "Inverti"
-    },
     "drone-front-item": {
       "category-drone-front": "Parte anteriore del drone",
       "name-roll-angle": "Angolo di rollio"
@@ -6665,6 +6673,14 @@
       "label-fixed-color": "Colore fisso",
       "noOptionsMessage-no-fields-found": "Nessun campo trovato"
     },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Carica"
     },
@@ -7131,7 +7147,7 @@
     "rich-history-card": {
       "add-comment-form": "Aggiungi modulo di commento",
       "add-comment-tooltip": "Aggiungi commento",
-      "add-to-library": "Aggiungi alla libreria",
+      "add-to-library": "",
       "cancel": "Annulla",
       "confirm-delete": "Elimina",
       "copy-query-tooltip": "Copia la query negli appunti",
@@ -7243,7 +7259,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Aggiungi query dalla libreria",
+      "add-from-query-library": "",
       "query-add-button": "Aggiungi query",
       "query-add-button-aria-label": "Aggiungi query",
       "query-history-button": "Cronologia query",
@@ -9476,6 +9492,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9747,7 +9765,8 @@
       "message-name-required": "Il nome è obbligatorio",
       "message-reserved-name": "Questo è un nome riservato e non può essere utilizzato per una cartella.",
       "message-same-name": "Esiste già una dashboard o una cartella con lo stesso nome",
-      "message-same-name-general": "Esiste già una cartella o una dashboard nella cartella generale con lo stesso nome"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11886,7 +11905,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Riduci riga della query",
       "datasource-help": "Mostra la guida dell'origine dati",
       "drag-and-drop": "Trascina e rilascia per riordinare",
@@ -11894,14 +11912,10 @@
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
       "remove-query": "Rimuovi query",
-      "replace-query-from-library": "Sostituisci con query dalla libreria",
+      "replace-query-from-library": "",
       "show-response": "Mostra la risposta"
     },
-    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
   },
   "recently-deleted": {
     "buttons": {
@@ -12747,6 +12761,9 @@
       "description-title-text": "Testo che verrà visualizzato quando si passa con il cursore sull'immagine",
       "label-alt-text": "Testo alternativo",
       "label-title-text": "Testo del titolo"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",

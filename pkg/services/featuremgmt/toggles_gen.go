@@ -171,10 +171,6 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagProvisioningSecretsService
-	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-	FlagProvisioningSecretsService = "provisioningSecretsService"
-
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
