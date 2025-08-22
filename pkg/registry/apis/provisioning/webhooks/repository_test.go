@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1088,9 +1089,13 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 
 					require.Equal(t, "replace", hookOps[1]["op"])
 					require.Equal(t, "/secure/webhookSecret", hookOps[1]["path"])
-					vals, ok := hookOps[1]["value"].(common.InlineSecureValue)
-					require.True(t, ok, "expected common.InlineSecureValue")
-					require.False(t, vals.Create.IsZero(), "secret should be created")
+					vals, ok := hookOps[1]["value"].(map[string]string)
+					require.True(t, ok, "expected webhookSecret as map")
+					require.Len(t, vals, 1, "with one property")
+					require.NotEmpty(t, vals["create"], "secret should be created")
+
+					_, err := uuid.Parse(vals["create"])
+					require.NoError(t, err, "the secret is a valid UUID")
 				} else {
 					require.Nil(t, hookOps)
 				}
@@ -1488,6 +1493,9 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					require.True(t, ok, "expected webhookSecret as map")
 					require.Len(t, vals, 1, "with one property")
 					require.NotEmpty(t, vals["create"], "secret should be created")
+
+					_, err := uuid.Parse(vals["create"])
+					require.NoError(t, err, "the secret is a valid UUID")
 				} else {
 					require.Nil(t, hookOps)
 				}
