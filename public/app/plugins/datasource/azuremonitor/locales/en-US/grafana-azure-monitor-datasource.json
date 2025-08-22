@@ -233,6 +233,7 @@
       "header-scope": "Scope",
       "header-type": "Type",
       "heading-selection": "Selection",
+      "locations-filter": "Locations",
       "result-limit": "Showing first {{numResults}} results",
       "subscriptions-filter": "Subscriptions",
       "text-loading": "Loading...",

@@ -72,6 +72,8 @@ const ResourcePicker = ({
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false);
   const [namespaces, setNamespaces] = useState<Array<ComboboxOption<string>>>([]);
   const [isLoadingNamespaces, setIsLoadingNamespaces] = useState(false);
+  const [locations, setLocations] = useState<Array<ComboboxOption<string>>>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const [filters, setFilters] = useState<ResourceGraphFilters>({
     subscriptions: [],
     types: [],
@@ -102,6 +104,16 @@ const ResourcePicker = ({
       );
       setIsLoadingNamespaces(false);
     }
+
+    setIsLoadingLocations(true);
+    const initialLocations = await datasource.getLocations(subscriptions.map((s) => s.value));
+    setLocations(
+      Array.from(initialLocations.values()).map((location) => ({
+        label: location.displayName,
+        value: location.name,
+      }))
+    );
+    setIsLoadingLocations(false);
   }, [datasource, queryType]);
 
   const loadInitialData = useCallback(async () => {
@@ -245,6 +257,9 @@ const ResourcePicker = ({
       case 'types':
         updatedFilters.types = values;
         break;
+      case 'locations':
+        updatedFilters.locations = values;
+        break;
     }
     setFilters(updatedFilters);
     loadFilteredRows(updatedFilters);
@@ -296,6 +311,22 @@ const ResourcePicker = ({
               />
             </Field>
           )}
+          <Field
+            label={t('components.resource-picker.locations-filter', 'Locations')}
+            noMargin
+            className={styles.filterInput(queryType)}
+          >
+            <MultiCombobox
+              aria-label={t('components.resource-picker.locations-filter', 'Locations')}
+              value={filters.locations}
+              options={locations}
+              onChange={(value) => updateFilters(value, 'locations')}
+              isClearable
+              enableAllOption
+              loading={isLoadingLocations}
+              data-testid={selectors.components.queryEditor.resourcePicker.filters.location.input}
+            />
+          </Field>
         </Stack>
       )}
       {shouldShowLimitFlag ? (
