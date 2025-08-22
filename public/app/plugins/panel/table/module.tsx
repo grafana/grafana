@@ -117,7 +117,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           path: 'wrapHeaderText',
           name: t('table.name-wrap-header-text', 'Wrap header text'),
           category,
-          defaultValue: defaultTableFieldOptions.wrapHeaderText,
         })
         .addBooleanSwitch({
           path: 'hideFrom.viz',
