@@ -1484,9 +1484,10 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 
 					require.Equal(t, "replace", hookOps[1]["op"])
 					require.Equal(t, "/secure/webhookSecret", hookOps[1]["path"])
-					vals, ok := hookOps[1]["value"].(common.InlineSecureValue)
-					require.True(t, ok, "expected common.InlineSecureValue")
-					require.False(t, vals.Create.IsZero(), "secret should be created")
+					vals, ok := hookOps[1]["value"].(map[string]string)
+					require.True(t, ok, "expected webhookSecret as map")
+					require.Len(t, vals, 1, "with one property")
+					require.NotEmpty(t, vals["create"], "secret should be created")
 				} else {
 					require.Nil(t, hookOps)
 				}

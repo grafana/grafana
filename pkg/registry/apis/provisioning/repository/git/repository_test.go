@@ -151,7 +151,7 @@ func TestGitRepository_Validate(t *testing.T) {
 				Token:  "", // Empty token
 			},
 			want: field.ErrorList{
-				field.Required(field.NewPath("spec", "test_type", "token"), "a git access token is required"),
+				field.Required(field.NewPath("secure", "token"), "a git access token is required"),
 			},
 		},
 		{
@@ -500,7 +500,7 @@ func TestGitRepository_Test(t *testing.T) {
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "test_type", "token").String(),
+						Field:  field.NewPath("secure", "token").String(),
 						Detail: "failed check if authorized: auth error",
 					},
 				},
@@ -521,7 +521,7 @@ func TestGitRepository_Test(t *testing.T) {
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "test_type", "token").String(),
+						Field:  field.NewPath("secure", "token").String(),
 						Detail: "not authorized",
 					},
 				},

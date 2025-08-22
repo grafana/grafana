@@ -334,7 +334,7 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 	}, {
 		"op":   "replace",
 		"path": "/secure/webhookSecret",
-		"value": map[string]any{
+		"value": map[string]string{
 			"create": hook.Secret,
 		},
 	}}, nil

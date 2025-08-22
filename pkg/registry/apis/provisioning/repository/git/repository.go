@@ -102,7 +102,7 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 	// Readonly repositories may not need a token (if public)
 	if len(r.config.Spec.Workflows) > 0 {
 		if cfg.Token == "" && r.config.Secure.Token.IsZero() {
-			list = append(list, field.Required(field.NewPath("secure", "token"), "an access token is required"))
+			list = append(list, field.Required(field.NewPath("secure", "token"), "a git access token is required"))
 		}
 	}
 
