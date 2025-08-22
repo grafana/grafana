@@ -49,8 +49,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -109,7 +107,6 @@ type APIBuilder struct {
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
-	mutators         []controller.Mutator
 	statusPatcher    *controller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
@@ -138,14 +135,7 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
-	// FIXME: mutators
-	mutators := []controller.Mutator{
-		git.Mutator(repositorySecrets),
-		github.Mutator(repositorySecrets),
-	}
-
 	b := &APIBuilder{
-		mutators:            mutators,
 		tracer:              tracer,
 		usageStats:          usageStats,
 		features:            features,
@@ -164,11 +154,6 @@ func NewAPIBuilder(
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
-	}
-
-	// TODO: we should have mutators from the repository extras
-	for _, extra := range b.extras {
-		b.mutators = append(b.mutators, extra.Mutators()...)
 	}
 
 	return b
@@ -515,11 +500,9 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	// Mutate the repository with any extra mutators
-	for _, mutator := range b.mutators {
-		if err := mutator(ctx, r); err != nil {
-			return fmt.Errorf("failed to mutate repository: %w", err)
-		}
+	// Extra mutators
+	if err := b.repoFactory.Mutate(ctx, r); err != nil {
+		return fmt.Errorf("failed to mutate repository: %w", err)
 	}
 
 	return nil

@@ -9,16 +9,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type extra struct {
 	factory *Factory
 	secrets secrets.RepositorySecrets
+	mutate  repository.Mutator
 }
 
 func Extra(secrets secrets.RepositorySecrets, factory *Factory) repository.Extra {
-	// FIXME: probably we should encapsulate the creation of the github factory here
-	return &extra{secrets: secrets, factory: factory}
+	return &extra{
+		secrets: secrets,
+		factory: factory,
+		mutate:  Mutator(secrets),
+	}
 }
 
 func (e *extra) Type() provisioning.RepositoryType {
@@ -63,4 +68,8 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	return ghRepo, nil
+}
+
+func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
+	return e.mutate(ctx, obj)
 }

@@ -8,11 +8,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
-func Mutator(secrets secrets.RepositorySecrets) controller.Mutator {
+func Mutator(secrets secrets.RepositorySecrets) repository.Mutator {
 	return func(ctx context.Context, obj runtime.Object) error {
 		repo, ok := obj.(*provisioning.Repository)
 		if !ok {

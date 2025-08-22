@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
@@ -135,8 +134,9 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 }
 
 // Mutators returns the mutators for the webhook extra
-func (e *WebhookExtra) Mutators() []controller.Mutator {
-	return []controller.Mutator{
+func (e *WebhookExtra) Mutators() []repository.Mutator {
+	// TODO: Convert to extra
+	return []repository.Mutator{
 		Mutator(e.secrets),
 	}
 }

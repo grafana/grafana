@@ -7,14 +7,19 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type extra struct {
 	secrets secrets.RepositorySecrets
+	mutate  repository.Mutator
 }
 
 func Extra(secrets secrets.RepositorySecrets) repository.Extra {
-	return &extra{secrets: secrets}
+	return &extra{
+		secrets: secrets,
+		mutate:  Mutator(secrets),
+	}
 }
 
 func (e *extra) Type() provisioning.RepositoryType {
@@ -41,4 +46,8 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		EncryptedToken: r.Spec.Git.EncryptedToken,
 	}
 	return NewGitRepository(ctx, r, cfg, e.secrets)
+}
+
+func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
+	return e.mutate(ctx, obj)
 }
