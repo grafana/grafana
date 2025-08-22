@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   backport:
     # Only run this job if the triggering workflow was not skipped (and on grafana repo)
-    if: github.repository == 'grafana/grafana' && github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.head_repository.fork == false && github.repository == 'grafana/grafana' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
