@@ -89,7 +89,7 @@
     "@crowdin/crowdin-api-client": "^1.42.0",
     "@cypress/webpack-preprocessor": "6.0.4",
     "@emotion/eslint-plugin": "11.12.0",
-    "@grafana/eslint-config": "8.0.0",
+    "@grafana/eslint-config": "8.1.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/plugin-e2e": "2.1.7",
     "@grafana/test-utils": "workspace:*",
