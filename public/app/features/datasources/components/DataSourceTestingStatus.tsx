@@ -52,13 +52,7 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   };
 };
 
-const AlertSuccessMessage = ({
-  title,
-  exploreUrl,
-  dataSourceId,
-  onDashboardLinkClicked,
-  extensionLinks = [],
-}: AlertMessageProps) => {
+const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
 
   const hasTitle = Boolean(title);
@@ -90,26 +84,6 @@ const AlertSuccessMessage = ({
         </Link>
         .
       </Trans>
-
-      {/* Extension links for allowed datasource extension plugins */}
-      {extensionLinks.length > 0 && (
-        <div className={styles.extensionLinks}>
-          <Trans i18nKey="data-source-testing-status-page.success-more-details-links-extensions">
-            You can also explore data with the following extensions:
-          </Trans>
-          {extensionLinks.map((link) => (
-            <Link
-              key={link.id}
-              href={link.path || '#'}
-              title={link.description}
-              className="external-link"
-              onClick={'onClick' in link ? link.onClick : undefined}
-            >
-              {link.title}
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
@@ -236,7 +210,6 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                   exploreUrl={exploreUrl}
                   dataSourceId={dataSource.uid}
                   onDashboardLinkClicked={onDashboardLinkClicked}
-                  extensionLinks={extensionLinks}
                 />
               ) : null}
               {severity === 'error' && errorDetailsLink ? <ErrorDetailsLink link={String(errorDetailsLink)} /> : null}
