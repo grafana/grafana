@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "External Alertmanagers",
+      "extra-config-warning": {
+        "content": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.",
+        "title": "Imported configuration"
+      },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -1243,20 +1248,6 @@
     "file-export-preview": {
       "copy-code": "Copy code",
       "download": "Download"
-    },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Alert rule",
-        "all": "All",
-        "error": "Error",
-        "firing": "Firing",
-        "no-data": "No data",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "Pending",
-        "recording-rule": "Recording rule",
-        "recovering": "Recovering"
-      }
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
@@ -2230,6 +2221,13 @@
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "Filter by contact points",
+      "contact-point": "Contact point",
+      "no-grouping": "No grouping",
+      "placeholder-contact-point": "Filter by contact point",
+      "tooltip-contact-point": "Filter notifications by the contact point they are being delivered to."
+    },
     "receiver-form": {
       "add-contact-point-integration": "Add contact point integration",
       "body-attention": "Because there is no default policy configured yet, this contact point will automatically be set as default.",
@@ -2481,6 +2479,7 @@
       },
       "empty-data-source": "No rules found",
       "error-button": "Error",
+      "export-all-grafana-rules": "Export all Grafana rules",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -2588,11 +2587,27 @@
       "delete-rule": {
         "success": "Rule successfully deleted"
       },
+      "health": {
+        "error": "Error",
+        "no-data": "No data",
+        "ok": "OK"
+      },
       "pause-rule": {
         "success": "Rule evaluation paused"
       },
       "resume-rule": {
         "success": "Rule evaluation resumed"
+      },
+      "state": {
+        "firing": "Firing",
+        "normal": "Normal",
+        "pending": "Pending",
+        "recovering": "Recovering",
+        "unknown": "Unknown"
+      },
+      "type": {
+        "alert": "Alert rule",
+        "recording": "Recording rule"
       },
       "update-rule": {
         "success": "Rule updated successfully"
@@ -2601,20 +2616,29 @@
     "rules-filter": {
       "clear-filters": "Clear filters",
       "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
+      "contact-point-tooltip": "Filters alert rules which route directly to the selected contact point. Alert rules routed to notification policies will not be displayed.",
+      "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label-show-filters": "Show filters",
-        "label-custom-filter": "Custom filter",
-        "label-saved-searches": "Saved searches"
+        "aria-label": "Filter options",
+        "aria-label-show-filters": "Filter",
+        "placeholder-namespace": "Select namespace",
+        "placeholder-search-input": "Search by name or enter filter query..."
       },
+      "grafana-folder": "Grafana folder",
       "health": "Health",
       "label": {
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
+      "no-groups": "No groups available",
+      "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
+      "placeholder-contact-point": "Select contact point",
+      "placeholder-data-sources": "Select data sources",
+      "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-type": "Rule type",
       "rulesSearchInput-placeholder-search": "Search",
@@ -2629,9 +2653,6 @@
       "text-federated": "Federated",
       "text-provisioned": "Provisioned"
     },
-    "saved-searches": {
-      "text-default": "Default"
-    },
     "search": {
       "property": {
         "data-source": "Data source",
@@ -2639,11 +2660,10 @@
         "labels": "Labels",
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
-        "rule-name": "Alerting rule name",
+        "rule-name": "Rule name",
         "rule-type": "Type",
         "state": "State"
-      },
-      "save-query": "Save current search"
+      }
     },
     "search-field-input": {
       "clear": "Clear",
@@ -3519,26 +3539,17 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "All resources have been deleted successfully",
-      "all-moved": "All resources have been moved successfully",
-      "button-done": "Done",
-      "failed-alert_one": "{{count}} items failed",
-      "failed-alert_other": "{{count}} items failed",
-      "progress-title": "Success"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-path-not-found": "Path not found"
+      "error-deleting-resources": "Error deleting resources"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
-      "deleting": "Deleting",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -3546,13 +3557,9 @@
         "repository-not-found-message": "The repository for the selected folder could not be found. Please ensure that the folder is provisioned correctly.",
         "repository-not-found-title": "Repository not found"
       },
-      "error-file-content-not-found": "File content not found",
-      "error-path-not-found": "Path not found",
-      "error-target-folder-path-missing": "Target folder path is missing",
-      "error-title": "Target Folder Error",
+      "error-moving-resources": "Error moving resources",
+      "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
-      "moving": "Moving",
-      "progress": "Progress: {{current}} of {{total}}",
       "target-folder": "Target Folder"
     },
     "counts": {
@@ -3568,6 +3575,9 @@
       "total_other": "{{count}} item"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
+      },
       "collapse-folder-button": "Collapse folder {{title}}",
       "expand-folder-button": "Expand folder {{title}}",
       "name-column": "Name",
@@ -3634,11 +3644,11 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
+      "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
       "error-required": "Folder name is required",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
-      "text-your-folder-will-be-created-as": "Your folder will be created as {{folderName}}",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -3745,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Arrow Direction",
+    "category-arrow-direction": "Direction",
     "category-background": "Background",
     "category-border": "Border",
     "category-canvas": "Canvas",
@@ -3777,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "Both",
+        "label-forward": "Forward",
+        "label-none": "None",
+        "label-reverse": "Reverse"
+      }
+    },
     "description-experimental-types": "Enable selection of experimental element types",
     "description-inline-editing": "Enable editing the panel directly",
     "description-pan-zoom": "Enable pan and zoom",
-    "direction-options": {
-      "label-both": "Both",
-      "label-forward": "Forward",
-      "label-none": "None",
-      "label-reverse": "Reverse"
-    },
     "drone-front-item": {
       "category-drone-front": "Drone Front",
       "name-roll-angle": "Roll Angle"
@@ -4105,10 +4117,10 @@
     }
   },
   "common": {
+    "all": "All",
     "apply": "Apply",
     "cancel": "Cancel",
     "clear": "Clear",
-    "close": "Close",
     "collapse": "Collapse",
     "edit": "Edit",
     "help": "Help",
@@ -4173,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Data sources",
+      "apps-header": "Apps",
+      "datasources-header": "Data Sources",
       "empty-message": "No results matching your query were found",
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
@@ -4509,15 +4522,24 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": "Invalid regex"
+          },
           "info": "Show or hide the {{type}} dynamically based on the variable value.",
           "label": "Template variable",
           "name": "Name",
           "operator": {
             "equals": "Equals",
-            "not-equals": "Not equals"
+            "matches": "Matches",
+            "not-equals": "Not equals",
+            "not-matches": "Not matches"
           },
           "value": "Value"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.",
+        "unsupported-item-type": "Conditional rendering not supported for this item type"
       },
       "overlay": {
         "tooltip": "Element is hidden due to conditional rendering."
@@ -5347,6 +5369,7 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-dashboard": {
@@ -5399,6 +5422,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
+      "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
+      "sql-expressions-message-link": "Learn more",
+      "sql-expressions-title": "SQL Expressions",
       "title-add-another-transformation": "Add another transformation",
       "view-all": "View all"
     },
@@ -6534,9 +6560,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "Add to favorites",
       "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
-      "open-in-explore": "Open in Explore View"
+      "open-in-explore": "Open in Explore View",
+      "remove-favorite": "Remove from favorites"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
@@ -6582,6 +6610,9 @@
       "description": {
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus, and Loki"
       }
+    },
+    "list": {
+      "starred": "Starred"
     },
     "new-data-source-view": {
       "cancel": "Cancel",
@@ -6641,6 +6672,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Fixed color",
       "noOptionsMessage-no-fields-found": "No fields found"
+    },
+    "direction-dimension-editor": {
+      "description-field": "Direction based on field value",
+      "description-fixed": "Fixed direction value",
+      "label-direction": "Direction",
+      "label-field": "Field",
+      "label-fixed": "Fixed",
+      "label-source": "Source"
     },
     "file-dropzone-custom-children": {
       "upload": "Upload"
@@ -7108,7 +7147,7 @@
     "rich-history-card": {
       "add-comment-form": "Add comment form",
       "add-comment-tooltip": "Add comment",
-      "add-to-library": "Add to library",
+      "add-to-library": "Save query",
       "cancel": "Cancel",
       "confirm-delete": "Delete",
       "copy-query-tooltip": "Copy query to clipboard",
@@ -7220,7 +7259,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Add query from library",
+      "add-from-query-library": "Add from saved queries",
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
       "query-history-button": "Query history",
@@ -7475,6 +7514,13 @@
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "Collapse editor",
+      "tooltip-copy-query": "Copy query",
+      "tooltip-expand-editor": "Expand editor",
+      "tooltip-format-query": "Format query",
+      "tooltip-run-query": "Hit ctrl/cmd+enter to run query"
+    },
     "reduce": {
       "label-function": "Function",
       "label-input": "Input",
@@ -7490,6 +7536,11 @@
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
+    "sql-expr": {
+      "button-run-query": "Run query",
+      "modal-title": "SQL Editor",
+      "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
+    },
     "threshold": {
       "label-input": "Input"
     }
@@ -7500,13 +7551,9 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-picker": {
-    "create-instructions": "Press enter to create the new folder.",
-    "input-placeholder": "Press enter to confirm new folder",
-    "loading": "Loading folders..."
-  },
   "folder-repo": {
-    "badge-tooltip": "Provisioned"
+    "provisioned-badge": "Provisioned",
+    "read-only-badge": "Read only"
   },
   "folders": {
     "api": {
@@ -7859,7 +7906,8 @@
       "edit-pane": {
         "go-back": "Go back"
       }
-    }
+    },
+    "select-group": "Select group"
   },
   "grafana-data": {
     "valueFormats": {
@@ -8722,7 +8770,6 @@
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
-      "inspect-menu-label": "Inspect value",
       "nested-table": {
         "no-data": "No data"
       },
@@ -9048,6 +9095,7 @@
       "sign-up": "Sign up"
     }
   },
+  "label-dropdown-info": "Can't find your label? Enter it manually",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Drag and drop to reorder",
@@ -9445,6 +9493,8 @@
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
+      "time-window-label": "Context time window",
+      "time-window-tooltip": "Amount of time before and after the referenced log",
       "title-log-context": "Log context",
       "title-log-line": "Referenced log line"
     },
@@ -9716,7 +9766,8 @@
       "message-name-required": "Name is required",
       "message-reserved-name": "This is a reserved name and cannot be used for a folder.",
       "message-same-name": "A dashboard or a folder with the same name already exists",
-      "message-same-name-general": "A folder or dashboard in the general folder with the same name already exists"
+      "message-same-name-current-folder": "A dashboard or a folder with the same name already exists in the current folder",
+      "message-same-name-general": "A folder or dashboard with the same name already exists in the root folder"
     }
   },
   "metric-select": {
@@ -10862,7 +10913,6 @@
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed Version",
-        "lastCommitDate": "Last commit date:",
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
@@ -11249,7 +11299,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Back to repositories",
-      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file."
+      "history-not-supported": "File history is not supported for this repository",
+      "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
+      "repository-not-found": "Repository not found"
     },
     "file-status-page": {
       "save": "Save",
@@ -11415,6 +11467,8 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "read-only-local-tooltip": "This folder is read-only and provisioned through file provisioning. To make any changes in the folder, update the connected file repository. To modify the folder settings go to Administration > Provisioning > Repositories.",
+    "read-only-remote-tooltip": "This folder is read-only and provisioned through Git. To make any changes in the folder, update the connected repository. To modify the folder settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
       "active-jobs": "active jobs",
       "column-action": "Action",
@@ -11433,6 +11487,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },
@@ -11443,8 +11498,16 @@
       "title-repository-is-unhealthy": "Repository is unhealthy"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "compare-branch": "Compare branch",
+        "open-pull-request": "Open pull request",
+        "view-branch": "View branch",
+        "view-repository": "View repository"
+      },
       "grafana-repository-synced": "Your resources are now in your external storage and provisioned into your instance. From now on, your instance and the external storage will be synchronized.",
-      "view-repository": "View repository"
+      "sync-job": {
+        "view-repository": "View repository"
+      }
     },
     "repository-overview": {
       "checked": "Checked:",
@@ -11850,7 +11913,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "replace-query-from-library": "Replace with query from library",
+      "replace-query-from-library": "Replace with saved query",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -12089,7 +12152,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
-      "message": "No services accounts found",
+      "message": "No service accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
     }
@@ -12483,6 +12546,21 @@
   "sort-picker": {
     "select-aria-label": "Sort"
   },
+  "sql-expressions": {
+    "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
+    "ai-explain-title": "AI-powered SQL expression explanation",
+    "ai-suggestions-title": "AI-powered SQL expression suggestions",
+    "apply": "Apply",
+    "code-label": "{{ language }}",
+    "copy": "Copy",
+    "explain-empty-query-tooltip": "Enter a SQL expression to get an explanation",
+    "explain-query": "Explain query",
+    "explanation-modal-title": "SQL Query Explanation",
+    "sql-ai-interaction": "{{text}}",
+    "sql-suggestion-history": "SQL Suggestion History",
+    "suggestions": "Suggestions",
+    "view-explanation": "View explanation"
+  },
   "stat": {
     "add-orientation-option": {
       "description-orientation": "Layout orientation",
@@ -12685,6 +12763,9 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
     },
+    "link-wrapper": {
+      "menu": "view data links and actions"
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
       "label": {
@@ -12735,6 +12816,7 @@
     "description-fields": "Select the fields that should be calculated",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
     "name-cell-type": "Cell type",
@@ -12750,8 +12832,17 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-tooltip-from-field": "Tooltip from field",
+    "name-tooltip-placement": "Tooltip placement",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "tooltip-placement-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom",
+      "label-left": "Left",
+      "label-right": "Right",
+      "label-top": "Top"
+    }
   },
   "tag-filter": {
     "clear-button": "Clear tags",

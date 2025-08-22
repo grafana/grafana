@@ -95,7 +95,6 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 		success := decryptErr == nil
 		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-		s.metrics.DecryptRequestCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	// Basic authn check before reading a secure value metadata, it is here on purpose.
@@ -111,7 +110,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotFound
 	}
 
-	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, name, sv.Spec.Decrypters)
+	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, namespace, name, sv.Spec.Decrypters)
 	if !authorized {
 		return "", contracts.ErrDecryptNotAuthorized
 	}

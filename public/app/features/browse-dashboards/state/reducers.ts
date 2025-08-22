@@ -139,9 +139,9 @@ export function setItemSelectionState(
 
 export function setAllSelection(
   state: BrowseDashboardsState,
-  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined }>
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeUIDs?: string[] }>
 ) {
-  const { isSelected, folderUID: folderUIDArg } = action.payload;
+  const { isSelected, folderUID: folderUIDArg, excludeUIDs } = action.payload;
 
   // If we're in the folder view for sharedwith me (currently not supported)
   // bail and don't select anything
@@ -175,6 +175,11 @@ export function setAllSelection(
       for (const child of collection.items) {
         // Don't traverse into the sharedwithme folder
         if (isSharedWithMe(child.uid)) {
+          continue;
+        }
+
+        // Skip items in the exclude list
+        if (excludeUIDs?.includes(child.uid)) {
           continue;
         }
 

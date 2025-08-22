@@ -4,11 +4,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
+import { DeleteProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/DeleteProvisionedDashboardDrawer';
 
 import { useDeleteDashboardsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { DashboardScene } from '../scene/DashboardScene';
-
-import { DeleteProvisionedDashboardDrawer } from './DeleteProvisionedDashboardDrawer';
 
 interface ButtonProps {
   dashboard: DashboardScene;

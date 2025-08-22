@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/codes"
 
@@ -41,11 +42,11 @@ type SQLCommand struct {
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
+func NewSQLCommand(ctx context.Context, refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, ErrMissingSQLQuery
 	}
-	tables, err := sql.TablesList(rawSQL)
+	tables, err := sql.TablesList(ctx, rawSQL)
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
 		return nil, ErrInvalidSQLQuery.Build(errutil.TemplateData{
@@ -77,7 +78,8 @@ func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64,
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
+func UnmarshalSQLCommand(ctx context.Context, rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
+	sqlLogger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
 	if rn.TimeRange == nil {
 		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
@@ -85,19 +87,19 @@ func UnmarshalSQLCommand(rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
 
 	expressionRaw, ok := rn.Query["expression"]
 	if !ok {
-		logger.Error("no expression in the query", "query", rn.Query)
+		sqlLogger.Error("no expression in the query", "query", rn.Query)
 		return nil, errors.New("no expression in the query")
 	}
 	expression, ok := expressionRaw.(string)
 	if !ok {
-		logger.Error("expected sql expression to be type string", "expression", expressionRaw)
+		sqlLogger.Error("expected sql expression to be type string", "expression", expressionRaw)
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
-	return NewSQLCommand(rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
+	return NewSQLCommand(ctx, rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -111,6 +113,7 @@ func (gr *SQLCommand) NeedsVars() []string {
 func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	start := time.Now()
+	sqlLogger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
 	tc := int64(0)
 	rsp := mathexp.Results{}
 
@@ -122,6 +125,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			statusLabel = "error"
 			span.RecordError(rsp.Error)
 			span.SetStatus(codes.Error, rsp.Error.Error())
+			sqlLogger.Error("SQL command execution failed", "error", rsp.Error.Error())
 		}
 		span.End()
 
@@ -134,7 +138,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	for _, ref := range gr.varsToQuery {
 		results, ok := vars[ref]
 		if !ok {
-			logger.Warn("no results found for", "ref", ref)
+			sqlLogger.Warn("no results found for", "ref", ref)
 			continue
 		}
 		frames := results.Values.AsDataFrames(ref)
@@ -153,16 +157,16 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		return rsp, nil
 	}
 
-	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
+	sqlLogger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 
 	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames, sql.WithMaxOutputCells(gr.outputLimit), sql.WithTimeout(gr.timeout))
 	if err != nil {
-		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
 		return rsp, nil
 	}
-	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
+
+	sqlLogger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
 
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{

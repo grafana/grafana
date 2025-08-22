@@ -581,10 +581,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-    reportInteraction('grafana_explore_logs_log_context_closed', {
-      datasourceType: contextRow?.datasourceType,
-      logRowUid: contextRow?.uid,
-    });
+    if (!config.featureToggles.newLogContext) {
+      reportInteraction('grafana_explore_logs_log_context_closed', {
+        datasourceType: contextRow?.datasourceType,
+        logRowUid: contextRow?.uid,
+      });
+    }
     onCloseCallbackRef?.current();
   }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallbackRef]);
 
@@ -592,10 +594,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     setContextOpen(true);
     setContextRow(row);
-    reportInteraction('grafana_explore_logs_log_context_opened', {
-      datasourceType: row.datasourceType,
-      logRowUid: row.uid,
-    });
+    if (!config.featureToggles.newLogContext) {
+      reportInteraction('grafana_explore_logs_log_context_opened', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
+      });
+    }
     onCloseCallbackRef.current = onClose;
   }, []);
 
@@ -1125,9 +1129,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 />
               </>
             )}
-          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && hasData && (
+          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
             <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
-              {logsContainerRef.current && (
+              {logsContainerRef.current && hasData && (
                 <LogList
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}
