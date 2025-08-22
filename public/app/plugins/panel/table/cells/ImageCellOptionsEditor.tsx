@@ -1,4 +1,4 @@
-import { FormEvent, useId } from 'react';
+import { FormEvent } from 'react';
 
 import { t } from '@grafana/i18n';
 import { TableImageCellOptions } from '@grafana/schema';
@@ -17,9 +17,6 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
     onChange(cellOptions);
   };
 
-  const altTextInputId = useId();
-  const titleTextInputId = useId();
-
   return (
     <>
       <Field
@@ -29,7 +26,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
           "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader"
         )}
       >
-        <Input id={altTextInputId} onChange={onAltChange} defaultValue={cellOptions.alt} />
+        <Input onChange={onAltChange} defaultValue={cellOptions.alt} />
       </Field>
 
       <Field
@@ -39,7 +36,7 @@ export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEdito
           'Text that will be displayed when the image is hovered by a cursor'
         )}
       >
-        <Input id={titleTextInputId} onChange={onTitleChange} defaultValue={cellOptions.title} />
+        <Input onChange={onTitleChange} defaultValue={cellOptions.title} />
       </Field>
     </>
   );
