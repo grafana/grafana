@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -52,10 +51,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
@@ -84,12 +81,16 @@ type JobHistoryConfig struct {
 }
 
 type APIBuilder struct {
+	// onlyApiServer used to disable starting controllers for the standalone API server.
+	// HACK:This will be removed once we have proper wire providers for the controllers.
+	// TODO: Set this up in the standalone API server
+	onlyApiServer bool
+
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
 	getter              rest.Getter
-	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -107,21 +108,21 @@ type APIBuilder struct {
 	unified           resource.ResourceClient
 	decryptSvc        secret.DecryptService
 	repositorySecrets secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
+	repoFactory       repository.Factory
 	client            client.ProvisioningV0alpha1Interface
 	access            authlib.AccessChecker
 	mutators          []controller.Mutator
 	statusPatcher     *controller.RepositoryStatusPatcher
 	healthChecker     *controller.HealthChecker
 	// Extras provides additional functionality to the API.
-	extras                   []Extra
-	availableRepositoryTypes map[provisioning.RepositoryType]bool
+	extras []Extra
 }
 
 // NewAPIBuilder creates an API builder.
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
-	local *local.LocalFolderResolver,
+	repoFactory repository.Factory,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
@@ -149,9 +150,9 @@ func NewAPIBuilder(
 		mutators:            mutators,
 		tracer:              tracer,
 		usageStats:          usageStats,
-		localFileResolver:   local,
 		features:            features,
 		ghFactory:           ghFactory,
+		repoFactory:         repoFactory,
 		clients:             clients,
 		parsers:             parsers,
 		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
@@ -163,22 +164,15 @@ func NewAPIBuilder(
 		repositorySecrets:   repositorySecrets,
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
-		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
-			provisioning.LocalRepositoryType:  true,
-			provisioning.GitHubRepositoryType: true,
-		},
 	}
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
 	}
 
+	// FIXME: Clean up as soon as https://github.com/grafana/grafana/pull/109908 is merged
 	// Add the available repository types and mutators from the extras
 	for _, extra := range b.extras {
-		for _, t := range extra.RepositoryTypes() {
-			b.availableRepositoryTypes[t] = true
-		}
-
 		b.mutators = append(b.mutators, extra.Mutators()...)
 	}
 
@@ -236,16 +230,15 @@ func RegisterAPIService(
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	repoExtras []repository.Extra,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}
 
-	folderResolver := &local.LocalFolderResolver{
-		PermittedPrefixes: cfg.PermittedProvisioningPaths,
-		HomePath:          safepath.Clean(cfg.HomePath),
-	}
-	builder := NewAPIBuilder(folderResolver, features,
+	builder := NewAPIBuilder(
+		repository.NewFactory(repoExtras),
+		features,
 		client,
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
@@ -472,7 +465,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{}, b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoFactory, &repository.Tester{}, b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -483,7 +476,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		repoGetter: b,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
-		repoGetter: b,
+		repoGetter: b, // repoGetter
 		jobs:       b.jobs,
 		historic:   b.jobHistory,
 	}
@@ -659,7 +652,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
 
 			// if running solely CRUD, skip the rest of the setup
-			if b.localFileResolver == nil {
+			if b.onlyApiServer {
 				return nil
 			}
 
@@ -767,7 +760,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
-				b, // repoGetter
+				b.repoFactory,
 				b.resourceLister,
 				b.parsers,
 				b.clients,
@@ -1269,95 +1262,13 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repo
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
 	}
+
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil, fmt.Errorf("expected repository configuration")
 	}
-	return b.AsRepository(ctx, r)
-}
 
-func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	// Try first with any extra
-	for _, extra := range b.extras {
-		r, err := extra.AsRepository(ctx, r)
-		if err != nil {
-			return nil, fmt.Errorf("convert repository for extra %T: %w", extra, err)
-		}
-
-		if r != nil {
-			return r, nil
-		}
-	}
-
-	switch r.Spec.Type {
-	case provisioning.BitbucketRepositoryType:
-		return nil, errors.New("repository type bitbucket is not available")
-	case provisioning.GitLabRepositoryType:
-		return nil, errors.New("repository type gitlab is not available")
-	case provisioning.LocalRepositoryType:
-		return local.NewLocal(r, b.localFileResolver), nil
-	case provisioning.GitRepositoryType:
-		// Decrypt token if needed
-		token := r.Spec.Git.Token
-		if token == "" && len(r.Spec.Git.EncryptedToken) > 0 {
-			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(r.Spec.Git.EncryptedToken))
-			if err != nil {
-				return nil, fmt.Errorf("decrypt git token: %w", err)
-			}
-			token = string(decrypted)
-		}
-
-		cfg := git.RepositoryConfig{
-			URL:            r.Spec.Git.URL,
-			Branch:         r.Spec.Git.Branch,
-			Path:           r.Spec.Git.Path,
-			TokenUser:      r.Spec.Git.TokenUser,
-			Token:          token,
-			EncryptedToken: r.Spec.Git.EncryptedToken,
-		}
-
-		return git.NewGitRepository(ctx, r, cfg, b.repositorySecrets)
-	case provisioning.GitHubRepositoryType:
-		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
-		logger.Info("Instantiating Github repository")
-
-		ghCfg := r.Spec.GitHub
-		if ghCfg == nil {
-			return nil, fmt.Errorf("github configuration is required for nano git")
-		}
-
-		// Decrypt GitHub token if needed
-		ghToken := ghCfg.Token
-		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
-			}
-			ghToken = string(decrypted)
-		}
-
-		gitCfg := git.RepositoryConfig{
-			URL:            ghCfg.URL,
-			Branch:         ghCfg.Branch,
-			Path:           ghCfg.Path,
-			Token:          ghToken,
-			EncryptedToken: ghCfg.EncryptedToken,
-		}
-
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, b.repositorySecrets)
-		if err != nil {
-			return nil, fmt.Errorf("error creating git repository: %w", err)
-		}
-
-		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken, b.repositorySecrets)
-		if err != nil {
-			return nil, fmt.Errorf("error creating github repository: %w", err)
-		}
-
-		return ghRepo, nil
-	default:
-		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
-	}
+	return b.repoFactory.Build(ctx, r)
 }
 
 func getJSONResponse(ref string) *spec3.Responses {
