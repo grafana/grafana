@@ -368,7 +368,6 @@ describe('SharePublic - Report interactions', () => {
     await waitFor(() => {
       expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_time_picker_clicked', {
         enabled: !pubdashResponse.timeSelectionEnabled,
-        isDynamicDashboard: false,
       });
     });
   });
@@ -385,7 +384,6 @@ describe('SharePublic - Report interactions', () => {
     await waitFor(() => {
       expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_annotations_clicked', {
         enabled: !pubdashResponse.annotationsEnabled,
-        isDynamicDashboard: false,
       });
     });
   });
@@ -399,7 +397,6 @@ describe('SharePublic - Report interactions', () => {
     await waitFor(() => {
       expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_pause_clicked', {
         paused: pubdashResponse.isEnabled,
-        isDynamicDashboard: false,
       });
     });
   });
