@@ -209,11 +209,9 @@ This option is only available when you're editing the panel.
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
 | Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
-| Wrap text            | Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch. |
+| Wrap text            | Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
-
-<!-- Check if this can be a field override and if so, where does it live? -->
 
 ### Table footer options
 
