@@ -62,7 +62,6 @@ ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
-ARG BINGO="true"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
@@ -76,7 +75,6 @@ RUN if grep -i -q alpine /etc/issue; then \
 WORKDIR /tmp/grafana
 
 COPY go.* ./
-COPY .bingo .bingo
 COPY .citools .citools
 
 # Copy go dependencies first
@@ -109,10 +107,6 @@ COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
 
 RUN go mod download
-RUN if [[ "$BINGO" = "true" ]]; then \
-  go install github.com/bwplotka/bingo@latest && \
-  bingo get -v; \
-  fi
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
