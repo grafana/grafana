@@ -47,7 +47,6 @@ type Store interface {
 	Get(ctx context.Context, name string) (*provisioning.Job, error)
 }
 
-var _ Store = (*persistentStore)(nil)
 
 // jobDriver drives jobs to completion and manages the job queue.
 // There may be multiple jobDrivers running in parallel.

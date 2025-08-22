@@ -36,7 +36,6 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -94,24 +93,21 @@ type APIBuilder struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
 	ghFactory           *github.Factory
-	jobs                interface {
-		jobs.Queue
-		jobs.Store
-	}
-	jobHistoryConfig  *JobHistoryConfig
-	jobHistoryLoki    *jobs.LokiJobHistory
-	resourceLister    resources.ResourceLister
-	repositoryLister  listers.RepositoryLister
-	legacyMigrator    legacy.LegacyMigrator
-	storageStatus     dualwrite.Service
-	unified           resource.ResourceClient
-	decryptSvc        secret.DecryptService
-	repositorySecrets secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
-	client            client.ProvisioningV0alpha1Interface
-	access            authlib.AccessChecker
-	mutators          []controller.Mutator
-	statusPatcher     *controller.RepositoryStatusPatcher
-	healthChecker     *controller.HealthChecker
+	jobs                *jobs.APIClientJobStore
+	jobHistoryConfig    *JobHistoryConfig
+	jobHistoryLoki      *jobs.LokiJobHistory
+	resourceLister      resources.ResourceLister
+	repositoryLister    listers.RepositoryLister
+	legacyMigrator      legacy.LegacyMigrator
+	storageStatus       dualwrite.Service
+	unified             resource.ResourceClient
+	decryptSvc          secret.DecryptService
+	repositorySecrets   secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
+	client              client.ProvisioningV0alpha1Interface
+	access              authlib.AccessChecker
+	mutators            []controller.Mutator
+	statusPatcher       *controller.RepositoryStatusPatcher
+	healthChecker       *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -434,7 +430,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
-	realJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
+	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
@@ -459,14 +455,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
-	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
-	if err != nil {
-		return fmt.Errorf("create job store: %w", err)
-	}
-
-	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
-	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
-
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
@@ -665,6 +654,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			b.client = c.ProvisioningV0alpha1()
 			b.repositoryLister = repoInformer.Lister()
+
+			// Initialize the API client-based job store now that the client is available
+			b.jobs, err = jobs.NewAPIClientJobStore(b.client, 30*time.Second)
+			if err != nil {
+				return fmt.Errorf("create API client job store: %w", err)
+			}
 
 			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
 			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
