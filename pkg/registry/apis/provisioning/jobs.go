@@ -18,7 +18,7 @@ import (
 type jobsConnector struct {
 	repoGetter RepoGetter
 	jobs       jobs.Queue
-	historic   jobs.History
+	historic   jobs.HistoryReader
 }
 
 func (*jobsConnector) New() runtime.Object {
