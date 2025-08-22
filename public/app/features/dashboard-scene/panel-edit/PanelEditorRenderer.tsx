@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { cloneDeep } from 'lodash';
 import { useEffect } from 'react';
 import { useMedia } from 'react-use';
 
@@ -115,6 +114,8 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 
   const noScroll = useMedia(MEDIA_QUERY);
 
+  const collapsed = noScroll ? false : splitterState.collapsed;
+
   if (noScroll) {
     containerProps.className = styles.container;
     primaryProps.className = styles.fixedSizePanel;
@@ -152,7 +153,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           <>
             <div {...splitterProps} />
             <div {...secondaryProps}>
-              {splitterState.collapsed && (
+              {collapsed && (
                 <div className={styles.expandDataPane}>
                   <Button
                     tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
@@ -165,7 +166,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
                   />
                 </div>
               )}
-              {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
+              {!collapsed && <dataPane.Component model={dataPane} />}
             </div>
           </>
         )}
