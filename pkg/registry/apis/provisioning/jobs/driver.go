@@ -47,7 +47,6 @@ type Store interface {
 	Get(ctx context.Context, name string) (*provisioning.Job, error)
 }
 
-
 // jobDriver drives jobs to completion and manages the job queue.
 // There may be multiple jobDrivers running in parallel.
 // The jobDriver processes jobs but does not handle cleanup - that's handled by ConcurrentJobDriver.
