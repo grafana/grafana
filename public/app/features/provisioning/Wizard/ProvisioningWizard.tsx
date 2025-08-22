@@ -273,7 +273,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       try {
         const formData = getValues();
         const spec = dataToSpec(formData.repository);
-        const rsp = await submitData(spec);
+        const rsp = await submitData(spec, formData.repository.token);
         if (rsp.error) {
           setStepStatusInfo({
             status: 'error',

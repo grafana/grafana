@@ -78,8 +78,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);
     try {
-      const spec = dataToSpec(form, data);
-      await submitData(spec);
+      const spec = dataToSpec(form);
+      await submitData(spec, form.token);
     } finally {
       setIsLoading(false);
     }

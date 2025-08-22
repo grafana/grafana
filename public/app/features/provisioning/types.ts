@@ -44,6 +44,8 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
   LocalRepositoryConfig & {
     readOnly: boolean;
     prWorkflow: boolean;
+    // top-level inline secure value
+    token?: string;
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;

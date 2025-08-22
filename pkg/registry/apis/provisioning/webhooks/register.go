@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -47,7 +46,6 @@ func isPublicURL(url string) bool {
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	repositorySecrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -79,7 +77,6 @@ func ProvideWebhooks(
 				render,
 				webhook,
 				urlProvider,
-				repositorySecrets,
 				ghFactory,
 				parsers,
 				[]jobs.Worker{pullRequestWorker},
@@ -95,7 +92,6 @@ type WebhookExtra struct {
 	render      *renderConnector
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
-	secrets     secrets.RepositorySecrets
 	ghFactory   *github.Factory
 	parsers     resources.ParserFactory
 	workers     []jobs.Worker
@@ -106,7 +102,6 @@ func NewWebhookExtra(
 	render *renderConnector,
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
-	secrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
@@ -116,7 +111,6 @@ func NewWebhookExtra(
 		render:      render,
 		webhook:     webhook,
 		urlProvider: urlProvider,
-		secrets:     secrets,
 		ghFactory:   ghFactory,
 		parsers:     parsers,
 		workers:     workers,
@@ -136,9 +130,7 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 
 // Mutators returns the mutators for the webhook extra
 func (e *WebhookExtra) Mutators() []controller.Mutator {
-	return []controller.Mutator{
-		Mutator(e.secrets),
-	}
+	return nil
 }
 
 // UpdateStorage updates the storage with both render and webhook connectors
@@ -164,7 +156,7 @@ func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
 }
 
 // AsRepository delegates repository creation to the webhook connector
-func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Repository, secure repository.SecureValues) (repository.Repository, error) {
 	// Only handle GitHub repositories with webhooks if URL is public
 	if r.Spec.Type == provisioning.GitHubRepositoryType && e.isPublic {
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
@@ -186,34 +178,33 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 		}
 
 		// Decrypt GitHub token if needed
-		ghToken := ghCfg.Token
-		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := e.secrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
-			}
-			ghToken = string(decrypted)
+		ghToken, err := secure.Token(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt github token: %w", err)
+		}
+		webhookSecret, err := secure.WebhookSecret(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 		}
 
 		gitCfg := git.RepositoryConfig{
-			URL:            ghCfg.URL,
-			Branch:         ghCfg.Branch,
-			Path:           ghCfg.Path,
-			Token:          ghToken,
-			EncryptedToken: ghCfg.EncryptedToken,
+			URL:    ghCfg.URL,
+			Branch: ghCfg.Branch,
+			Path:   ghCfg.Path,
+			Token:  ghToken,
 		}
 
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, e.secrets)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken, e.secrets)
+		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}
 
-		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets), nil
+		return NewGithubWebhookRepository(basicRepo, webhookURL, webhookSecret), nil
 	}
 
 	return nil, nil

@@ -49,12 +49,12 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			require.NoError(t, err, "failed to read back resource")
 
 			// Move encrypted token mutation
-			token, found, err := unstructured.NestedString(output.Object, "spec", "github", "encryptedToken")
-			require.NoError(t, err, "encryptedToken is not a string")
+			token, found, err := unstructured.NestedString(output.Object, "secure", "token", "name")
+			require.NoError(t, err, "secure token name is not a string")
 			if found {
-				unstructured.RemoveNestedField(input.Object, "spec", "github", "token")
-				err = unstructured.SetNestedField(input.Object, token, "spec", "github", "encryptedToken")
-				require.NoError(t, err, "unable to copy encrypted token")
+				require.True(t, strings.HasPrefix("inline-", token)) // name created automatically
+				err = unstructured.SetNestedField(input.Object, token, "secure", "token", "name")
+				require.NoError(t, err, "unable to copy secure token")
 			}
 
 			// Marshal as real objects to ",omitempty" values are tested properly

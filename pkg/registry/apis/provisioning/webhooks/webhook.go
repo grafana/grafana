@@ -172,7 +172,7 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 	eventAge := time.Since(lastEvent)
 
 	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
-		patchOp := map[string]interface{}{
+		patchOp := map[string]any{
 			"op":    "replace",
 			"path":  "/status/webhook/lastEvent",
 			"value": time.Now().UnixMilli(),

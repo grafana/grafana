@@ -197,10 +197,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-  */
-  provisioningSecretsService?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;

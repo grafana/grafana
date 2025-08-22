@@ -15,9 +15,9 @@ import (
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 func TestNewGitHub(t *testing.T) {
@@ -81,16 +81,13 @@ func TestNewGitHub(t *testing.T) {
 
 			gitRepo := git.NewMockGitRepository(t)
 
-			mockSecrets := secrets.NewMockRepositorySecrets(t)
-
 			// Call the function under test
 			repo, err := NewGitHub(
 				context.Background(),
 				tt.config,
 				gitRepo,
 				factory,
-				tt.token,
-				mockSecrets,
+				common.RawSecureValue(tt.token),
 			)
 
 			// Check results
@@ -179,8 +176,12 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
-						Token:  "valid-token",
 						Path:   "dashboards",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -190,8 +191,12 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "https://github.com/grafana/grafana",
 							Branch: "main",
-							Token:  "valid-token",
 							Path:   "dashboards",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -223,7 +228,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -233,7 +242,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "",
 							Branch: "main",
-							Token:  "valid-token",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -248,7 +261,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "invalid-url",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -258,7 +275,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "invalid-url",
 							Branch: "main",
-							Token:  "valid-token",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -273,7 +294,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://gitlab.com/grafana/grafana",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -283,7 +308,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "https://gitlab.com/grafana/grafana",
 							Branch: "main",
-							Token:  "valid-token",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -339,7 +368,11 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -361,7 +394,11 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "invalid-url",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -878,7 +915,11 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 			GitHub: &provisioning.GitHubRepositoryConfig{
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
-				Token:  "test-token",
+			},
+		},
+		Secure: provisioning.SecureValues{
+			Token: common.InlineSecureValue{
+				Name: "with-name",
 			},
 		},
 	}
@@ -1095,7 +1136,6 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 			GitHub: &provisioning.GitHubRepositoryConfig{
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
-				Token:  "test-token",
 			},
 		},
 	}
@@ -1135,82 +1175,6 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 		result := repo.Client()
 		assert.Equal(t, mockClient, result)
 	})
-}
-
-func TestGitHubRepository_OnDelete(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupMock     func(*secrets.MockRepositorySecrets)
-		config        *provisioning.Repository
-		expectedError string
-	}{
-		{
-			name: "successful secret deletion",
-			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
-				mockSecrets.EXPECT().Delete(
-					context.Background(),
-					&provisioning.Repository{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-repo",
-							Namespace: "default",
-						},
-					},
-					"test-repo"+githubTokenSecretSuffix,
-				).Return(nil)
-			},
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
-			},
-		},
-		{
-			name: "secret deletion error",
-			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
-				mockSecrets.EXPECT().Delete(
-					context.Background(),
-					&provisioning.Repository{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-repo",
-							Namespace: "default",
-						},
-					},
-					"test-repo"+githubTokenSecretSuffix,
-				).Return(errors.New("failed to delete secret"))
-			},
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
-			},
-			expectedError: "delete github token secret: failed to delete secret",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockSecrets := secrets.NewMockRepositorySecrets(t)
-			tt.setupMock(mockSecrets)
-
-			githubRepo := &githubRepository{
-				config:  tt.config,
-				secrets: mockSecrets,
-			}
-
-			err := githubRepo.OnDelete(context.Background())
-
-			if tt.expectedError != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				require.NoError(t, err)
-			}
-
-			mockSecrets.AssertExpectations(t)
-		})
-	}
 }
 
 func TestGithubRepository_Move(t *testing.T) {
@@ -1262,7 +1226,6 @@ func TestGithubRepository_Move(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock git repository
 			mockGitRepo := git.NewMockGitRepository(t)
-			mockSecrets := &secrets.MockRepositorySecrets{}
 
 			// Setup mock expectations
 			tt.setupMock(mockGitRepo)
@@ -1285,7 +1248,6 @@ func TestGithubRepository_Move(t *testing.T) {
 				GitRepository: mockGitRepo,
 				owner:         "example",
 				repo:          "repo",
-				secrets:       mockSecrets,
 			}
 
 			// Execute move operation
