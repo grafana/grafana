@@ -16,7 +16,7 @@ type extra struct {
 	secrets secrets.RepositorySecrets
 }
 
-func NewExtra(secrets secrets.RepositorySecrets, factory *Factory) repository.Extra {
+func Extra(secrets secrets.RepositorySecrets, factory *Factory) repository.Extra {
 	// FIXME: probably we should encapsulate the creation of the github factory here
 	return &extra{secrets: secrets, factory: factory}
 }

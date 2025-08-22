@@ -13,7 +13,7 @@ type extra struct {
 	secrets secrets.RepositorySecrets
 }
 
-func NewExtra(secrets secrets.RepositorySecrets) repository.Extra {
+func Extra(secrets secrets.RepositorySecrets) repository.Extra {
 	return &extra{secrets: secrets}
 }
 

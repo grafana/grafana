@@ -13,7 +13,7 @@ type extra struct {
 	resolver *LocalFolderResolver
 }
 
-func LocalExtra(cfg *setting.Cfg) repository.Extra {
+func Extra(cfg *setting.Cfg) repository.Extra {
 	resolver := &LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
