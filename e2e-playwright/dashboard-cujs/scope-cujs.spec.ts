@@ -12,6 +12,7 @@ import {
   TestScope,
 } from '../utils/scope-helpers';
 import { testScopes } from '../utils/scopes';
+import { getRecentScopesSelector, getScopesSelectorInput, getScopeTreeCheckboxes } from './cuj-selectors';
 
 test.use({
   featureToggles: {
@@ -32,10 +33,12 @@ test.describe(
   },
   () => {
     test('Choose a scope', async ({ page, gotoDashboardPage }) => {
+      const scopesSelector = getScopesSelectorInput(page);
+      const recentScopesSelector = getRecentScopesSelector(page);
+      const scopeTreeCheckboxes = getScopeTreeCheckboxes(page);
+
       await test.step('1.View and select any scope', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
-
-        const scopesSelector = page.getByTestId('scopes-selector-input');
 
         expect.soft(scopesSelector).toHaveValue('');
 
@@ -65,8 +68,6 @@ test.describe(
 
       await test.step('2.Select a scope across multiple types of production entities', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
-
-        const scopesSelector = page.getByTestId('scopes-selector-input');
 
         expect.soft(scopesSelector).toHaveValue('');
 
@@ -100,18 +101,14 @@ test.describe(
         // this step depends on the previous ones because they set recent scopes
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        const scopesSelector = page.getByTestId('scopes-selector-input');
-
         expect.soft(scopesSelector).toHaveValue('');
 
         const scopes = testScopes();
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
 
-        const recentScopesElement = page.getByTestId('scopes-selector-recent-scopes-section');
+        await recentScopesSelector.click();
 
-        await recentScopesElement.click();
-
-        const recentScope = recentScopesElement.locator('../..').locator('button').nth(1);
+        const recentScope = recentScopesSelector.locator('../..').locator('button').nth(1);
 
         const scopeName = await recentScope.locator('span').first().textContent();
 
@@ -122,8 +119,6 @@ test.describe(
 
       await test.step('4.View and select a scope configured by any team', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
-
-        const scopesSelector = page.getByTestId('scopes-selector-input');
 
         expect.soft(scopesSelector).toHaveValue('');
 
@@ -172,15 +167,13 @@ test.describe(
 
         await searchScopes(page, scopeSearchOne, [secondLevelScopes[0]]);
 
-        let filteredScopes = page.locator('input[type="checkbox"][data-testid^="scopes-tree"]');
-        await expect.soft(filteredScopes).toHaveCount(1);
-        expect.soft(await filteredScopes.first().locator('../..').textContent()).toBe(scopeSearchOne);
+        await expect.soft(scopeTreeCheckboxes).toHaveCount(1);
+        expect.soft(await scopeTreeCheckboxes.first().locator('../..').textContent()).toBe(scopeSearchOne);
 
         await searchScopes(page, scopeSearchTwo, [secondLevelScopes[1]]);
 
-        filteredScopes = page.locator('input[type="checkbox"][data-testid^="scopes-tree"]');
-        await expect.soft(filteredScopes).toHaveCount(1);
-        expect.soft(await filteredScopes.first().locator('../..').textContent()).toBe(scopeSearchTwo);
+        await expect.soft(scopeTreeCheckboxes).toHaveCount(1);
+        expect.soft(await scopeTreeCheckboxes.first().locator('../..').textContent()).toBe(scopeSearchTwo);
       });
     });
   }

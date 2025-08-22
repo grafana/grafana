@@ -3,6 +3,15 @@ import { test, expect } from '@grafana/plugin-e2e';
 import { setScopes } from '../utils/scope-helpers';
 
 import { prepareAPIMocks } from './utils';
+import {
+  getAdHocFilterOptionValues,
+  getAdHocFilterPills,
+  getAdHocFilterRestoreButton,
+  getAdhocFiltersInput,
+  getMarkdownHTMLContent,
+  getScopesSelectorInput,
+  waitForAdHocOption,
+} from './cuj-selectors';
 
 export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
@@ -22,15 +31,15 @@ test.describe(
   () => {
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
       const apiMocks = await prepareAPIMocks(page);
+      const adHocFilterPills = getAdHocFilterPills(page);
+      const scopesSelectorInput = getScopesSelectorInput(page);
 
       await test.step('1.Apply filtering to a whole dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
-          state: 'visible',
-        });
+        await expect(adHocFilterPills.first()).toBeVisible();
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
+        expect(await adHocFilterPills.count()).toBe(2);
 
         const adHocVariable = dashboardPage
           .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
@@ -41,16 +50,16 @@ test.describe(
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
-        await page.waitForSelector('[role="option"]', { state: 'visible' });
+        await waitForAdHocOption(page);
         const valuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
-        await page.waitForSelector('[role="option"]', { state: 'visible' });
+        await waitForAdHocOption(page);
         await adHocVariable.press('Enter');
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(3);
+        expect(await adHocFilterPills.count()).toBe(3);
 
-        const pills = await page.getByLabel(/^Edit filter with key/).allTextContents();
+        const pills = await adHocFilterPills.allTextContents();
         const processedPills = pills
           .map((p) => {
             const parts = p.split(' ');
@@ -59,36 +68,31 @@ test.describe(
           .join(',');
 
         // assert the panel is visible and has the correct value
-        const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-        await expect(panelContent).toBeVisible();
-        const markdownContent = panelContent.locator('.markdown-html');
+        const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
         await expect(markdownContent).toContainText(`AdHocVar: ${processedPills}`);
       });
 
       await test.step('2.Autocomplete for the filter values', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        const adHocVariable = dashboardPage
-          .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
-          .locator('..')
-          .locator('input');
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors);
 
         const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
-        await page.waitForSelector('[role="option"]', { state: 'visible' });
+        await waitForAdHocOption(page);
         const valuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
 
-        const valuesLocator = page.getByTestId(/^data-testid ad hoc filter option value/);
+        const valuesLocator = getAdHocFilterOptionValues(page);
         const valuesCount = await valuesLocator.count();
         const firstValue = await valuesLocator.first().textContent();
 
         await adHocVariable.fill(firstValue!.slice(0, -1));
 
-        await page.waitForSelector('[role="option"]', { state: 'visible' });
+        await waitForAdHocOption(page);
 
         const newValuesCount = await valuesLocator.count();
         expect(newValuesCount).toBeLessThan(valuesCount);
@@ -99,22 +103,17 @@ test.describe(
       await test.step('3.Choose operators on the filters', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
-          state: 'visible',
-        });
+        await expect(adHocFilterPills.first()).toBeVisible();
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
+        expect(await adHocFilterPills.count()).toBe(2);
 
-        const adHocVariable = dashboardPage
-          .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
-          .locator('..')
-          .locator('input');
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors);
 
         const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
-        await page.waitForSelector('[role="option"]', { state: 'visible' });
+        await waitForAdHocOption(page);
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
         await adHocVariable.press('ArrowDown');
@@ -124,9 +123,9 @@ test.describe(
         await valuesResponsePromise;
         await adHocVariable.press('Enter');
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(3);
+        expect(await adHocFilterPills.count()).toBe(3);
 
-        const pills = await page.getByLabel(/^Edit filter with key/).allTextContents();
+        const pills = await adHocFilterPills.allTextContents();
         const processedPills = pills
           .map((p) => {
             const parts = p.split(' ');
@@ -135,9 +134,7 @@ test.describe(
           .join(',');
 
         // assert the panel is visible and has the correct value
-        const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-        await expect(panelContent).toBeVisible();
-        const markdownContent = panelContent.locator('.markdown-html');
+        const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
         await expect(markdownContent).toContainText(`AdHocVar: ${processedPills}`);
         // regex operator applied to the filter
         await expect(markdownContent).toContainText(`=~`);
@@ -146,14 +143,10 @@ test.describe(
       await test.step('4.Edit and restore default filters applied to the dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        const defaultDashboardFilter = page.getByLabel(/^Edit filter with key/).first();
+        const defaultDashboardFilter = adHocFilterPills.first();
         const pillText = await defaultDashboardFilter.textContent();
 
-        const adHocVariable = dashboardPage
-          .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
-          .locator('..')
-          .locator('input')
-          .first();
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors).first();
 
         await defaultDashboardFilter.click();
         await adHocVariable.fill('new value');
@@ -161,7 +154,7 @@ test.describe(
 
         expect(await defaultDashboardFilter.textContent()).not.toBe(pillText);
 
-        const restoreButton = page.getByLabel('Restore the value set by this dashboard.');
+        const restoreButton = getAdHocFilterRestoreButton(page, 'dashboard');
         await restoreButton.click();
 
         expect(await defaultDashboardFilter.textContent()).toBe(pillText);
@@ -170,26 +163,20 @@ test.describe(
       await test.step('5.Edit and restore filters implied by scope', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
-          state: 'visible',
-        });
+        await expect(adHocFilterPills.first()).toBeVisible();
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
+        expect(await adHocFilterPills.count()).toBe(2);
 
         await setScopes(page);
 
-        await expect(page.getByTestId('scopes-selector-input')).toHaveValue(/.+/);
+        await expect(scopesSelectorInput).toHaveValue(/.+/);
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(3);
+        expect(await adHocFilterPills.count()).toBe(3);
 
-        const defaultDashboardFilter = page.getByLabel(/^Edit filter with key/).first();
+        const defaultDashboardFilter = adHocFilterPills.first();
         const pillText = await defaultDashboardFilter.textContent();
 
-        const adHocVariable = dashboardPage
-          .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
-          .locator('..')
-          .locator('input')
-          .first();
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors).first();
 
         await defaultDashboardFilter.click();
         await adHocVariable.fill('new value');
@@ -197,7 +184,7 @@ test.describe(
 
         expect(await defaultDashboardFilter.textContent()).not.toBe(pillText);
 
-        const restoreButton = page.getByLabel('Restore the value set by your selected scope.');
+        const restoreButton = getAdHocFilterRestoreButton(page, 'scope');
         await restoreButton.click();
 
         expect(await defaultDashboardFilter.textContent()).toBe(pillText);
@@ -206,22 +193,17 @@ test.describe(
       await test.step('6.Add and edit filters through keyboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        await page.waitForSelector('[aria-label*="Edit filter with key"]', {
-          state: 'visible',
-        });
+        await expect(adHocFilterPills.first()).toBeVisible();
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(2);
+        expect(await adHocFilterPills.count()).toBe(2);
 
-        const adHocVariable = dashboardPage
-          .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
-          .locator('..')
-          .locator('input');
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors);
 
         const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
         await labelsResponsePromise;
         await adHocVariable.press('Enter');
-        await page.waitForSelector('[role="option"]', { state: 'visible' });
+        await waitForAdHocOption(page);
         const valuesResponsePromise = page.waitForResponse(apiMocks.values);
         await adHocVariable.press('Enter');
         await valuesResponsePromise;
@@ -246,13 +228,13 @@ test.describe(
         //escape applies it
         await adHocVariable.press('Escape');
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(4);
+        expect(await adHocFilterPills.count()).toBe(4);
 
         //remove last value through keyboard
         await page.keyboard.press('Shift+Tab');
         await page.keyboard.press('Enter');
 
-        expect(await page.getByLabel(/^Edit filter with key/).count()).toBe(3);
+        expect(await adHocFilterPills.count()).toBe(3);
       });
     });
   }
