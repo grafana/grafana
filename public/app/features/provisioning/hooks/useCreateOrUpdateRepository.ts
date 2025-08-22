@@ -43,7 +43,7 @@ export function useCreateOrUpdateRepository(name?: string) {
           },
         });
       }
-      return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data } });
+      return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data, secure } });
     },
     [create, name, update, testConfig]
   );
