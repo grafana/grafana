@@ -554,7 +554,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre / Mapbox style URL.
+- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
