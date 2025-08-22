@@ -12,8 +12,8 @@ weight: 400
 ---
 
 {{< admonition type="caution" >}}
-Starting with Grafana releases `12.4.0` and `13.0.0`, the `grafana/grafana-oss` Docker Hub repository will no longer be updated.
-Instead, we encourage you to use the `grafana/grafana` Docker Hub repository. These two repositories have the same docker images.
+Starting with Grafana release `12.4.0` , the `grafana/grafana-oss` Docker Hub repository will no longer be updated.
+Instead, we encourage you to use the `grafana/grafana` Docker Hub repository. These two repositories have the same Grafana OSS docker images.
 {{< /admonition >}}
 
 # Run Grafana Docker image
