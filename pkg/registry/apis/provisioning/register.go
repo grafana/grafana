@@ -141,6 +141,7 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
+	// FIXME: mutators
 	mutators := []controller.Mutator{
 		git.Mutator(repositorySecrets),
 		github.Mutator(repositorySecrets),
@@ -170,8 +171,7 @@ func NewAPIBuilder(
 		b.extras = append(b.extras, builder(b))
 	}
 
-	// FIXME: Clean up as soon as https://github.com/grafana/grafana/pull/109908 is merged
-	// Add the available repository types and mutators from the extras
+	// TODO: we should have mutators from the repository extras
 	for _, extra := range b.extras {
 		b.mutators = append(b.mutators, extra.Mutators()...)
 	}

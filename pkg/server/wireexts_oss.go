@@ -70,6 +70,7 @@ import (
 var provisioningExtras = wire.NewSet(
 	webhooks.ProvideWebhooks,
 	extras.ProvideProvisioningOSSExtras,
+	extras.ProvideProvisioningOSSRepositoryExtras,
 )
 
 var configProviderExtras = wire.NewSet(

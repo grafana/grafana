@@ -165,6 +165,7 @@ func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
 
 // AsRepository delegates repository creation to the webhook connector
 func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	// TODO: Convert to extra
 	// Only handle GitHub repositories with webhooks if URL is public
 	if r.Spec.Type == provisioning.GitHubRepositoryType && e.isPublic {
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
