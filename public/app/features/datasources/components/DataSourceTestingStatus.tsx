@@ -52,12 +52,7 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   };
 };
 
-const AlertSuccessMessage = ({
-  title,
-  exploreUrl,
-  dataSourceId,
-  onDashboardLinkClicked,
-}: AlertMessageProps) => {
+const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
 
   const hasTitle = Boolean(title);
