@@ -1088,7 +1088,7 @@ func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
 }
 
 // prevents a log line from being printed when the static root path is not found, useful for apiservers that have no frontend
-func NewCfgFromBytesWithoutValidation(bytes []byte) (*Cfg, error) {
+func NewCfgFromBytesWithoutJSValidation(bytes []byte) (*Cfg, error) {
 	skipStaticRootValidation = true
 	return NewCfgFromBytes(bytes)
 }
