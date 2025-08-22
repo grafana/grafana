@@ -326,6 +326,7 @@ export const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>)
 
   panel.fieldConfig.defaults.custom = panel.fieldConfig.defaults.custom ?? {};
   panel.fieldConfig.defaults.custom.wrapText = legacyDefaultWrapText;
+  delete panel.fieldConfig.defaults.custom.cellOptions?.wrapText;
 
   return panel;
 };

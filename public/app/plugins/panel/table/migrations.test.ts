@@ -1,6 +1,12 @@
 import { createDataFrame, FieldType, PanelModel } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/ui';
 
-import { migrateFromParentRowIndexToNestedFrames, tablePanelChangedHandler } from './migrations';
+import {
+  migrateFromParentRowIndexToNestedFrames,
+  migrateHiddenFields,
+  migrateTextWrapToFieldLevel,
+  tablePanelChangedHandler,
+} from './migrations';
 
 describe('Table Migrations', () => {
   it('migrates transform out to core transforms', () => {
@@ -363,15 +369,109 @@ describe('Table Migrations', () => {
   });
 
   describe('migrateTextWrapToFieldLevel', () => {
-    it.todo('migrates a top-level config.custom.cellOptions.wrapText to a config.custom.wrapText');
+    it('migrates a top-level config.custom.cellOptions.wrapText to a config.custom.wrapText', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {
+              cellOptions: {
+                wrapText: true,
+              },
+            },
+          },
+          overrides: [],
+        },
+      } as unknown as PanelModel;
 
-    // needs to delete the wrapTexts from the existing cellOptions
-    it.todo('migrates field override config.custom.cellOptions.wrapTexts to a field override config.custom.wrapTexts');
+      migrateTextWrapToFieldLevel(panel);
+      expect(panel.fieldConfig.defaults.custom.wrapText).toBe(true);
+      expect(panel.fieldConfig.defaults.custom.cellOptions.wrapText).toBeUndefined();
+    });
 
-    it.todo('does not overwrite field overrides for cellOptions which do not have wrapText set');
+    it('migrates field override config.custom.cellOptions.wrapTexts to a field override config.custom.wrapTexts', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'field1' },
+              properties: [
+                {
+                  id: 'custom.cellOptions',
+                  value: { wrapText: true, type: TableCellDisplayMode.Pill },
+                },
+              ],
+            },
+          ],
+        },
+      } as unknown as PanelModel;
+
+      migrateTextWrapToFieldLevel(panel);
+      expect(panel.fieldConfig.overrides[0].properties).toEqual(
+        expect.arrayContaining([
+          { id: 'custom.wrapText', value: true },
+          { id: 'custom.cellOptions', value: { type: TableCellDisplayMode.Pill } },
+        ])
+      );
+    });
+
+    it('does not overwrite field overrides for cellOptions which do not have wrapText set', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'field1' },
+              properties: [
+                {
+                  id: 'custom.cellOptions',
+                  value: { type: TableCellDisplayMode.Pill },
+                },
+              ],
+            },
+          ],
+        },
+      } as unknown as PanelModel;
+
+      migrateTextWrapToFieldLevel(panel);
+      // passes the override through with no changes
+      expect(panel.fieldConfig.overrides[0]).toBe(panel.fieldConfig.overrides[0]);
+    });
   });
 
   describe('migrateHiddenFields', () => {
-    it.todo('migrates fields with config.custom.hidden=true to config.custom.hideFrom.viz=true');
+    it('migrates fields with config.custom.hidden=true to config.custom.hideFrom.viz=true', () => {
+      const panel = {
+        fieldConfig: {
+          defaults: {
+            custom: {},
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'field1' },
+              properties: [
+                {
+                  id: 'custom.hidden',
+                  value: true,
+                },
+              ],
+            },
+          ],
+        },
+      } as unknown as PanelModel;
+
+      migrateHiddenFields(panel);
+
+      expect(panel.fieldConfig.overrides[0].properties).toEqual(
+        expect.arrayContaining([{ id: 'custom.hideFrom.viz', value: true }])
+      );
+      expect(panel.fieldConfig.overrides[0].properties).not.toEqual(
+        expect.arrayContaining([{ id: 'custom.hidden', value: true }])
+      );
+    });
   });
 });
