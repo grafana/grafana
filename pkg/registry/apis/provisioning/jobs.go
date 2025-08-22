@@ -95,12 +95,6 @@ func (c *jobsConnector) Connect(
 			return
 		}
 
-		jobs := c.jobs.GetJobQueue()
-		if jobs == nil {
-			responder.Error(apierrors.NewServiceUnavailable("job queue is not configured, server is not ready yet"))
-			return
-		}
-
 		// POST operations: require healthy repository
 		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
 		if err != nil {
@@ -121,7 +115,7 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		job, err := jobs.Insert(ctx, cfg.Namespace, spec)
+		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
 		if err != nil {
 			responder.Error(err)
 			return
