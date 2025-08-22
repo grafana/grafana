@@ -106,6 +106,9 @@ jobs:
           SHARD: ${{ matrix.shard }}
       - run: go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
 
+      - name: Setup Grafana Bench
+        uses: ./.github/actions/setup-grafana-bench
+
       # Run code
       - name: Run unit tests
         env:
@@ -114,9 +117,13 @@ jobs:
           set -euo pipefail
 
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
-          # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
-          go test -short -timeout=30m "${PACKAGES[@]}"
+          SUITE_REPO_DIRS=()
+          for PACKAGE in "${PACKAGES[@]}"; do
+            SUITE_REPO_DIRS+=("--go-test-packages" "$PACKAGE")
+          done
+
+          grafana-bench test --log-level DEBUG --grafana-version "CI-${{ github.sha }}" \
+            --test-runner go --go-retries 2 --go-test-args "-test.short" --go-test-args "-test.timeout=30m" "${SUITE_REPO_DIRS[@]}"
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
