@@ -223,10 +223,6 @@ export class Scene {
     this.height = height;
     this.style = { width, height };
 
-    if (this.selecto?.getSelectedTargets().length) {
-      this.clearCurrentSelection();
-    }
-
     if (config.featureToggles.canvasPanelPanZoom) {
       this.updateConnectionsSize();
       this.fitContent(this, this.zoomToContent!);
