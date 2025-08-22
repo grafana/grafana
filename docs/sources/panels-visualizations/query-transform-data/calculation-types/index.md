@@ -16,7 +16,7 @@ weight: 1100
 
 # Calculation types
 
-The following table contains a list of calculations you can perform in Grafana. You can find these calculations in the **Transform** tab and in the bar gauge, gauge, and stat visualizations.
+The following table contains a list of calculations you can perform in Grafana. You can find these calculations in the **Transform** tab and in the bar gauge, gauge, stat, and table visualizations.
 
 | Calculation        | Description                                               |
 | :----------------- | :-------------------------------------------------------- |
