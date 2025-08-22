@@ -3171,9 +3171,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:8.1.0":
-  version: 8.1.0
-  resolution: "@grafana/eslint-config@npm:8.1.0"
+"@grafana/eslint-config@npm:8.2.0":
+  version: 8.2.0
+  resolution: "@grafana/eslint-config@npm:8.2.0"
   peerDependencies:
     "@stylistic/eslint-plugin-ts": ">=2.9.0"
     "@typescript-eslint/eslint-plugin": ">=6.18.0"
@@ -3184,7 +3184,7 @@ __metadata:
     eslint-plugin-react: ">=7.33.0"
     eslint-plugin-react-hooks: ">=4.6.0"
     typescript: ">=5.2.0"
-  checksum: 10/d82f169de300dbb2ca62f74a4cb80461ab43e1adb5885e59a02c6080d9cef93f9aaac584b58b91f360014edf52b3dd1e81aad97e67011edc99de54a49deba7f2
+  checksum: 10/ba006bf69401678be446901d1e35e121f0a220181798bc873b123112206b5544dc86c2f69fd401a57d38ba5427926ceaea651d7e3025e41a497787cacbb4ec0b
   languageName: node
   linkType: hard
 
@@ -16344,12 +16344,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-hooks@npm:5.1.0":
-  version: 5.1.0
-  resolution: "eslint-plugin-react-hooks@npm:5.1.0"
+"eslint-plugin-react-hooks@npm:5.2.0":
+  version: 5.2.0
+  resolution: "eslint-plugin-react-hooks@npm:5.2.0"
   peerDependencies:
     eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
-  checksum: 10/b6778fd9e1940b06868921309e8b269426e17eda555816d4b71def4dcf0572de1199fdb627ac09ce42160b9569a93cd9b0fd81b740ab4df98205461c53997a43
+  checksum: 10/ebb79e9cf69ae06e3a7876536653c5e556b5fd8cd9dc49577f10a6e728360e7b6f5ce91f4339b33e93b26e3bb23805418f8b5e75db80baddd617b1dffe73bed1
   languageName: node
   linkType: hard
 
@@ -18304,7 +18304,7 @@ __metadata:
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": "npm:8.1.0"
+    "@grafana/eslint-config": "npm:8.2.0"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/faro-core": "npm:^1.19.0"
     "@grafana/faro-web-sdk": "npm:^1.19.0"
@@ -18471,7 +18471,7 @@ __metadata:
     eslint-plugin-lodash: "npm:8.0.0"
     eslint-plugin-no-barrel-files: "npm:^1.1.1"
     eslint-plugin-react: "npm:7.37.5"
-    eslint-plugin-react-hooks: "npm:5.1.0"
+    eslint-plugin-react-hooks: "npm:5.2.0"
     eslint-plugin-testing-library: "npm:^7.0.0"
     eslint-plugin-unicorn: "npm:^56.0.0"
     eslint-scope: "npm:^8.1.0"
