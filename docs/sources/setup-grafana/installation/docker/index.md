@@ -11,6 +11,11 @@ title: Run Grafana Docker image
 weight: 400
 ---
 
+{{< admonition type="caution" >}}
+Starting with Grafana releases `12.4.0` and `13.0.0`, the `grafana/grafana-oss` Docker Hub repository will no longer be updated.
+Instead, we enourage users to use the `grafana/grafana` Docker Hub repository. These two repositories have the same docker images.
+{{< /admonition >}}
+
 # Run Grafana Docker image
 
 This topic guides you through installing Grafana via the official Docker images. Specifically, it covers running Grafana via the Docker command line interface (CLI) and docker-compose.
@@ -20,7 +25,7 @@ This topic guides you through installing Grafana via the official Docker images.
 Grafana Docker images come in two editions:
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise`
-- **Grafana Open Source**: `grafana/grafana-oss`
+- **Grafana Open Source**: `grafana/grafana`
 
 > **Note:** The recommended and default edition of Grafana is Grafana Enterprise. It is free and includes all the features of the OSS edition. Additionally, you have the option to upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which includes support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
