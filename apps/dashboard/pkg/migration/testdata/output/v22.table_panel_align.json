@@ -13,6 +13,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducer": []
+            },
             "inspect": false
           },
           "mappings": [],
