@@ -107,7 +107,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 // Delete implements rest.GracefulDeleter.
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	err := s.datasources.Delete(ctx, name)
+	err := s.datasources.DeleteDataSource(ctx, name)
 	return nil, false, err
 }
 
@@ -118,7 +118,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 	for _, ds := range dss.Items {
-		if err = s.datasources.Delete(ctx, ds.Name); err != nil {
+		if err = s.datasources.DeleteDataSource(ctx, ds.Name); err != nil {
 			return nil, err
 		}
 	}
