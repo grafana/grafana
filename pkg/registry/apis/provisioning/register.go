@@ -506,7 +506,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		return nil // This is normal for sub-resource
 	}
 
-	// Do nothing for HistoryJobs
+	// FIXME: Do nothing for HistoryJobs for now
 	_, ok := obj.(*provisioning.HistoricJob)
 	if ok {
 		return nil
@@ -556,7 +556,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
-	// Do nothing for HistoryJobs
+	// FIXME: Do nothing for HistoryJobs for now
 	_, ok := obj.(*provisioning.HistoricJob)
 	if ok {
 		return nil
