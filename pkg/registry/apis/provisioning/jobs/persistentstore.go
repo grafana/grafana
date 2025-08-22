@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -30,23 +31,19 @@ const (
 	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
 )
 
-var (
-	ErrNoJobs = &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Reason:  metav1.StatusReasonConflict,
-			Message: "no jobs are available to claim, try again later",
-			Code:    http.StatusNoContent,
-			Details: &metav1.StatusDetails{
-				Group:             provisioning.GROUP,
-				Kind:              provisioning.JobResourceInfo.GetName(),
-				RetryAfterSeconds: 3,
-			},
+var ErrNoJobs = &apierrors.StatusError{
+	ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Reason:  metav1.StatusReasonConflict,
+		Message: "no jobs are available to claim, try again later",
+		Code:    http.StatusNoContent,
+		Details: &metav1.StatusDetails{
+			Group:             provisioning.GROUP,
+			Kind:              provisioning.JobResourceInfo.GetName(),
+			RetryAfterSeconds: 3,
 		},
-	}
-
-	errWouldCreate = errors.New("this call would have created a new resource; it is rejected")
-)
+	},
+}
 
 // Queue is a job queue abstraction.
 //
@@ -403,4 +400,47 @@ func (s *APIClientJobStore) Insert(ctx context.Context, namespace string, spec p
 	}
 
 	return created, nil
+}
+
+// generateJobName creates and updates the job's name to one that fits it.
+func generateJobName(job *provisioning.Job) {
+	switch job.Spec.Action {
+	case provisioning.JobActionMigrate, provisioning.JobActionPull:
+		// Pull and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
+		job.Name = job.Spec.Repository + "-sync"
+	case provisioning.JobActionPullRequest:
+		var pr int
+		if job.Spec.PullRequest != nil {
+			pr = job.Spec.PullRequest.PR
+		}
+		// There may be multiple pull requests at the same time. They need different names.
+		job.Name = fmt.Sprintf("%s-pr-%d", job.Spec.Repository, pr)
+	default:
+		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
+	}
+}
+
+func mutateJobAction(job *provisioning.Job) error {
+	kinds := map[provisioning.JobAction]any{}
+	spec := job.Spec
+	if spec.Migrate != nil {
+		job.Spec.Action = provisioning.JobActionMigrate
+		kinds[provisioning.JobActionMigrate] = spec.Migrate
+	}
+	if spec.Pull != nil {
+		job.Spec.Action = provisioning.JobActionPull
+		kinds[provisioning.JobActionPull] = spec.Pull
+	}
+	if spec.Push != nil {
+		job.Spec.Action = provisioning.JobActionPush
+		kinds[provisioning.JobActionPush] = spec.Push
+	}
+	if spec.PullRequest != nil {
+		job.Spec.Action = provisioning.JobActionPullRequest
+		kinds[provisioning.JobActionPullRequest] = spec.PullRequest
+	}
+	if len(kinds) > 1 {
+		return apierrors.NewBadRequest("multiple job types found")
+	}
+	return nil
 }
