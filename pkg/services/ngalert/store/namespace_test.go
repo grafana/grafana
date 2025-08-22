@@ -78,7 +78,8 @@ func TestGetNamespaceByTitle(t *testing.T) {
 
 func TestGetOrCreateNamespaceByTitle(t *testing.T) {
 	store := DBstore{}
-	_, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.RootFolderUID)
+	_, created, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.RootFolderUID)
+	require.False(t, created)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "title is empty")
 
