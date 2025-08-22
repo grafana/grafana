@@ -313,6 +313,27 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 		})
 	})
 
+	t.Run("When doing a query without a format should default to table", func(t *testing.T) {
+		query := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON: []byte(`{
+						"rawSql": "SELECT 1"
+					}`),
+					RefID: "A",
+				},
+			},
+		}
+		resp, err := exe.QueryDataPGX(t.Context(), query)
+		require.NoError(t, err)
+		queryResult := resp.Responses["A"]
+		require.NoError(t, queryResult.Error)
+
+		frames := queryResult.Frames
+		require.Len(t, frames, 1)
+		require.Len(t, frames[0].Fields, 1)
+	})
+
 	t.Run("Given a table with metrics that lacks data for some series ", func(t *testing.T) {
 		sql := `
 				DROP TABLE IF EXISTS metric;
