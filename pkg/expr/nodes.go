@@ -319,7 +319,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			var resp *backend.QueryDataResponse
 
 			// get the new client if it exists
-			mtDSClient, ok, err := s.mtDatasourceClientBuilder.BuildClient(firstNode.datasource.Type, firstNode.datasource.UID)
+			qsDSClient, ok, err := s.qsDatasourceClientBuilder.BuildClient(firstNode.datasource.Type, firstNode.datasource.UID)
 			if err != nil {
 				for _, dn := range nodeGroup {
 					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
@@ -348,7 +348,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 					return
 				}
 
-				resp, queryErr = mtDSClient.QueryData(ctx, *k8sReq)
+				resp, queryErr = qsDSClient.QueryData(ctx, *k8sReq)
 			}
 
 			if queryErr != nil {
