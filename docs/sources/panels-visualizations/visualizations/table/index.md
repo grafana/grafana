@@ -209,28 +209,30 @@ This option is only available when you're editing the panel.
 
 ### Table footer options
 
-Use the table footer to show [calculations](ref:calculations) on fields.
-By default, the table footer isn't displayed.
-Make a selection in the **Calculation** drop-down to show the table footer:
+The table footer displays the results of calculations (and reducer functions) on fields.
+The footer is only displayed after you select an option in the **Calculation** drop-down list:
 
-screenshot here
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-select-v12.2.png" max-width="300px" alt="" >}}
 
-You can see the full list of available calculations here.
+There are several calculations that you can choose from including minimum, maximum, first, last, and total.
+For the full list of options, refer to [Calculations](ref:calculations).
 
-You can have a mix of calculations per column.
-For example, in the following image, the x, x, and x calculations have been applied:
+You can apply multiple calculations at once.
+For example, in the following image, **Mean**, **Max**, and **Last** have been applied:
 
-screenshot here
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-1-v12.2.png" max-width="750px" alt="" >}}
 
-Grafana intelligently only applies calculations that that apply to numeric fields to just number ifleds.
-If you have it enabled for a non-numeric field, nothing is displayed.
-For example, in the image below, the numeric Total calculation has been applied to the two numeric fields, but not the text field:
+If you enable a mathematical function for a non-numeric field, nothing for that function is displayed for that field.
+You can see this in the previous image where the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
+Only the **Last** function has been applied to that field.
 
-screenshot here
+All calculations are labeled in the footer except **Total**, as shown in the following image:
 
-All calculations are labeled except Total.
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-2-v12.2.png" max-width="750px" alt="" >}}
 
-Calculations applied to cell types like Markdown + HTML, may have unexpected results.
+{{< admonition type="note">}}
+Calculations applied to cell types like **Markdown + HTML**, might have unexpected results.
+{{< /admonition>}}
 
 Current limitations
 You can’t update the first column
