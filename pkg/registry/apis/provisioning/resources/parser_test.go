@@ -11,6 +11,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestParser(t *testing.T) {
@@ -27,6 +28,16 @@ func TestParser(t *testing.T) {
 			Name:      "repo",
 		},
 		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "xxx",
+				Name:      "repo",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		},
 	}
 
 	t.Run("invalid input", func(t *testing.T) {
