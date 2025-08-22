@@ -2221,6 +2221,13 @@
       "preview": "Vorschau",
       "previewCondition": "Vorschau der Warnregelbedingung"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Kontaktpunkt-Integration hinzufügen",
       "body-attention": "Da noch keine Standardrichtlinie konfiguriert ist, wird dieser Kontaktpunkt automatisch als Standard festgelegt.",
@@ -3748,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Pfeilrichtung",
+    "category-arrow-direction": "",
     "category-background": "Hintergrund",
     "category-border": "Rahmen",
     "category-canvas": "Leinwand",
@@ -3780,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Auswahl experimenteller Elementtypen aktivieren",
     "description-inline-editing": "Direkte Bearbeitung des Panels aktivieren",
     "description-pan-zoom": "Schwenken und Zoomen aktivieren",
-    "direction-options": {
-      "label-both": "Beides",
-      "label-forward": "Vorwärts",
-      "label-none": "Keine",
-      "label-reverse": "Rückwärts"
-    },
     "drone-front-item": {
       "category-drone-front": "Drohne vorne",
       "name-roll-angle": "Rollwinkel"
@@ -6664,6 +6673,14 @@
       "label-fixed-color": "Feste Farbe",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden"
     },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Hochladen"
     },
@@ -7130,7 +7147,7 @@
     "rich-history-card": {
       "add-comment-form": "Kommentarformular hinzufügen",
       "add-comment-tooltip": "Kommentar hinzufügen",
-      "add-to-library": "Zur Bibliothek hinzufügen",
+      "add-to-library": "",
       "cancel": "Abbrechen",
       "confirm-delete": "Löschen",
       "copy-query-tooltip": "Abfrage in Zwischenablage kopieren",
@@ -7242,7 +7259,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Abfrage aus Bibliothek hinzufügen",
+      "add-from-query-library": "",
       "query-add-button": "Abfrage hinzufügen",
       "query-add-button-aria-label": "Abfrage hinzufügen",
       "query-history-button": "Abfrageverlauf",
@@ -9475,6 +9492,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9746,7 +9765,8 @@
       "message-name-required": "Name ist erforderlich",
       "message-reserved-name": "Dies ist ein reservierter Name und kann nicht für einen Ordner verwendet werden.",
       "message-same-name": "Ein Dashboard oder ein Ordner mit demselben Namen existiert bereits",
-      "message-same-name-general": "Ein Ordner oder Dashboard im allgemeinen Ordner mit demselben Namen existiert bereits"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11892,7 +11912,7 @@
       "expand-row": "Suchzeile erweitern",
       "hide-response": "Antwort ausblenden",
       "remove-query": "Abfrage entfernen",
-      "replace-query-from-library": "Mit Abfrage von Bibliothek ersetzen",
+      "replace-query-from-library": "",
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
@@ -12741,6 +12761,9 @@
       "description-title-text": "Text, der angezeigt wird, wenn über dem Bild der Mauszeiger bewegt wird",
       "label-alt-text": "Alt-Text",
       "label-title-text": "Titeltext"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
