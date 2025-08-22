@@ -5,6 +5,7 @@ description: Describes provisioning settings for Grafana using configuration fil
 keywords:
   - grafana
   - provisioning
+  - provision
 labels:
   products:
     - enterprise
@@ -15,8 +16,7 @@ weight: 600
 
 # Provision Grafana
 
-Grafana has an active provisioning system that uses configuration files.
-This makes GitOps more natural since data sources and dashboards can be defined using files that can be version controlled.
+Grafana has an active provisioning system that uses configuration files. You can define data sources and dashboards using files that can be version controlled, making GitOps more natural.
 
 ## Configuration file
 
@@ -25,22 +25,22 @@ Refer to [Configuration](../../setup-grafana/configure-grafana/) for more inform
 ### Configuration file locations
 
 Grafana reads its default configuration from `<WORKING DIRECTORY>/conf/defaults.ini`.
-By default, Grafana reads custom configuration from `<WORKING DIRECTORY>/conf/custom.ini`.
-You can override the custom configuration path with the `--config` option.
+
+Grafana reads custom configuration from `<WORKING DIRECTORY>/conf/custom.ini`. You can override the custom configuration path with the `--config` option.
 
 {{< admonition type="note" >}}
 The Deb and RPM packages install the configuration file at `/etc/grafana/grafana.ini`.
 The Grafana init.d script sets the `--config` option to that path.
 {{< /admonition >}}
 
-### Use environment variables
+## Use environment variables
 
-You can use environment variable lookups in all provisioning configuration.
-The syntax for an environment variable is `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`.
-If the environment variable value has a `$` in it (for example, `Pa$sw0rd`), use the `$ENV_VAR_NAME` syntax to avoid double expansion.
-You can only use environment variables for configuration values and not for keys or bigger parts of the configuration file structure.
+You can use environment variable lookups in all provisioning configuration. The syntax for an environment variable is `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`.
 
-You can use environment variables in dashboard provisioning configuration but not the dashboard definition files themselves.
+The following applies:
+
+- Only use environment variables for configuration values. Do not use it for keys or bigger parts of the configuration file structure.
+- Use environment variables in dashboard provisioning configuration, but not in the dashboard definition files themselves.
 
 The following example looks up the data source URL port, user, and password using environment variables:
 
@@ -53,7 +53,30 @@ datasources:
       password: $PASSWORD
 ```
 
-To escape a literal `$` in your provisioning file values, use `$$`.
+### Use of the special character `$`
+
+Grafana's provisioning system considers any set of characters after an `$` a variable name.
+
+During the replacement process, Grafana:
+
+1. Replaces the variables that use the syntax `${ENV_VAR_NAME}`.
+1. Next, it replaces the variables that use the syntax `$ENV_VAR_NAME`.
+
+If your data contains the character `$`, for example `Pa$sw0rd`, and you're using an environment variable, use the `$ENV_VAR_NAME` syntax to avoid double expansion. If you use the `${ENV_VAR_NAME}` syntax, the value is first replaced as `Pa$sw0rd` and then again as `Pa` since `$sw0rd` will be considered another variable.
+
+If you want to use the literal value `Pa$sw0rd`, you need to escape the character `$` using a double `$$`: `Pa$$sw0rd`.
+
+The following example shows how variables are replaced, assuming `PASSWORD=Pa$sw0rd`:
+
+```yaml
+datasources:
+  - name: Graphite
+    secureJsonData:
+      password1: $PASSWORD # Resolved as Pa$sw0rd
+      password2: ${PASSWORD} # Resolved as Pa
+      password3: 'Pa$$sw0rd' # Resolved as Pa$sw0rd
+      password4: 'Pa$sw0rd' # Resolved as Pa
+```
 
 ## Configuration management tools
 
