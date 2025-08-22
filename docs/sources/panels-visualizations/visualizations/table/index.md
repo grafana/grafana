@@ -209,14 +209,31 @@ This option is only available when you're editing the panel.
 
 ### Table footer options
 
-Toggle the **Show table footer** switch on and off to control the display of the footer.
-When the toggle is switched on, you can use the table footer to show [calculations](ref:calculations) on fields.
+Use the table footer to show [calculations](ref:calculations) on fields.
+By default, the table footer isn't displayed.
+Make a selection in the **Calculation** drop-down to show the table footer:
 
-After you activate the table footer, make selections for the following options:
+screenshot here
 
-- **Calculation** - The calculation that you want to apply.
-- **Count rows** - This option is displayed if you select the **Count** calculation. If you want to show the number of rows in the dataset instead of the number of values in the selected fields, toggle on the **Count rows** switch.
-- **Fields** - The fields to which you want to apply the calculation. Grafana applies the calculation to all numeric fields if you don't select a field.
+You can see the full list of available calculations here.
+
+You can have a mix of calculations per column.
+For example, in the following image, the x, x, and x calculations have been applied:
+
+screenshot here
+
+Grafana intelligently only applies calculations that that apply to numeric fields to just number ifleds.
+If you have it enabled for a non-numeric field, nothing is displayed.
+For example, in the image below, the numeric Total calculation has been applied to the two numeric fields, but not the text field:
+
+screenshot here
+
+All calculations are labeled except Total.
+
+Calculations applied to cell types like Markdown + HTML, may have unexpected results.
+
+Current limitations
+You can’t update the first column
 
 ### Cell options
 
