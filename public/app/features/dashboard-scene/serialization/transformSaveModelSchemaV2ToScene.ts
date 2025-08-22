@@ -28,6 +28,7 @@ import {
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
+  defaultDataQueryKind,
   defaultDatasourceVariableKind,
   defaultGroupByVariableKind,
   defaultIntervalVariableKind,
@@ -39,7 +40,7 @@ import {
   PanelKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -48,9 +49,14 @@ import {
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
   DeprecatedInternalId,
+  AnnoKeyEmbedded,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardMeta } from 'app/types';
+import {
+  getDashboardInteractionCallback,
+  getDashboardSceneProfiler,
+} from 'app/features/dashboard/services/DashboardProfiler';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -62,9 +68,10 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
+import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
-import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -90,32 +97,23 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const { spec: dashboard, metadata, apiVersion } = dto;
 
   // annotations might not come with the builtIn Grafana annotation, we need to add it
-
   const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
   if (grafanaBuiltAnnotation) {
     dashboard.annotations.unshift(grafanaBuiltAnnotation);
   }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
-    let annoQuerySpec = annotation.spec;
-    // some annotations will contain in the legacyOptions properties that need to be
-    // added to the root level annotation spec
-    if (annoQuerySpec?.legacyOptions) {
-      annoQuerySpec = {
-        ...annoQuerySpec,
-        ...annoQuerySpec.legacyOptions,
-      };
-    }
-    return new DashboardAnnotationsDataLayer({
+    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
+
+    const layerState = {
       key: uniqueId('annotations-'),
-      query: {
-        ...annoQuerySpec,
-        builtIn: annotation.spec.builtIn ? 1 : 0,
-      },
+      query: annotationQuerySpec,
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
-    });
+    };
+
+    return new DashboardAnnotationsDataLayer(layerState);
   });
 
   const isDashboardEditable = Boolean(dashboard.editable);
@@ -142,6 +140,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
+    isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -163,6 +162,15 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
   //createLayoutManager(dashboard);
+
+  const queryController = new behaviors.SceneQueryController(
+    {
+      enableProfiling:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      onProfileComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
+    },
+    getDashboardSceneProfiler()
+  );
 
   const dashboardScene = new DashboardScene(
     {
@@ -191,7 +199,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         new behaviors.CursorSync({
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
         }),
-        new behaviors.SceneQueryController(),
+        queryController,
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
@@ -207,6 +215,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       controls: new DashboardControls({
         timePicker: new SceneTimePicker({
           quickRanges: dashboard.timeSettings.quickRanges,
+          defaultQuickRanges: config.quickRanges,
         }),
         refreshPicker: new SceneRefreshPicker({
           refresh: dashboard.timeSettings.autoRefresh,
@@ -266,21 +275,26 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
     description: variable.spec.description,
   };
   if (variable.kind === defaultAdhocVariableKind().kind) {
+    const ds = getDataSourceForQuery(
+      {
+        type: variable.group,
+        uid: variable.datasource?.name,
+      },
+      variable.group
+    );
     return new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.spec.description,
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      datasource: variable.spec.datasource,
+      datasource: ds,
       applyMode: 'auto',
       filters: variable.spec.filters ?? [],
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys,
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
-      supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings(variable.spec.datasource)?.meta.multiValueFilterOperators
-      ),
+      supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     });
   }
   if (variable.kind === defaultCustomVariableKind().kind) {
@@ -371,9 +385,17 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
   } else if (config.featureToggles.groupByVariable && variable.kind === defaultGroupByVariableKind().kind) {
+    const ds = getDataSourceForQuery(
+      {
+        type: variable.group,
+        uid: variable.datasource?.name,
+      },
+      variable.group
+    );
+
     return new GroupByVariable({
       ...commonProperties,
-      datasource: variable.spec.datasource,
+      datasource: ds,
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
@@ -421,6 +443,14 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
       try {
         // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
         if (v.kind === 'AdhocVariable') {
+          const ds = getDataSourceForQuery(
+            {
+              type: v.group,
+              uid: v.datasource?.name,
+            },
+            v.group
+          );
+
           return new AdHocFiltersVariable({
             name: v.spec.name,
             label: v.spec.label,
@@ -428,7 +458,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             description: v.spec.description,
             skipUrlSync: v.spec.skipUrlSync,
             hide: transformVariableHideToEnumV1(v.spec.hide),
-            datasource: v.spec.datasource,
+            datasource: ds,
             applyMode: 'auto',
             filters: v.spec.filters ?? [],
             baseFilters: v.spec.baseFilters ?? [],
@@ -436,7 +466,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
             supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings(v.spec.datasource)?.meta.multiValueFilterOperators
+              getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators
             ),
           });
         }
@@ -513,7 +543,15 @@ function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
   const grafanaBuiltAnnotation: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      datasource: { uid: '-- Grafana --', type: 'grafana' },
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: 'grafana',
+        datasource: {
+          name: '-- Grafana --',
+        },
+        spec: {},
+      },
       name: 'Annotations & Alerts',
       iconColor: DEFAULT_ANNOTATION_COLOR,
       enable: true,

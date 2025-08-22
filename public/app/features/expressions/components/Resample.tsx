@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
 import { downsamplingTypes, ExpressionQuery, upsamplingTypes } from '../types';
@@ -14,8 +14,6 @@ interface Props {
 }
 
 export const Resample = ({ labelWidth = 'auto', onChange, refIds, query }: Props) => {
-  const { t } = useTranslate();
-
   const downsampler = downsamplingTypes.find((o) => o.value === query.downsampler);
   const upsampler = upsamplingTypes.find((o) => o.value === query.upsampler);
 

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+import { AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
 
@@ -12,7 +12,6 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
   const [defaultTimeColumns, setDefaultTimeColumns] = useState<SelectableValue[] | undefined>();
   const [timeColumns, setTimeColumns] = useState<SelectableValue[] | undefined>();
   const [disabledTimePicker, setDisabledTimePicker] = useState<boolean>(false);
-  const { t } = useTranslate();
 
   const setDefaultColumn = useCallback((column: string) => onChange(setTimeColumn(query, column)), [query, onChange]);
 
@@ -22,7 +21,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       const timeColumnsSet: Set<string> = new Set();
       const defaultColumnsMap: Map<string, SelectableValue> = new Map();
       const db = schema.database;
-      if (db) {
+      if (db && db?.tables?.length > 0) {
         for (const table of db.tables) {
           const cols = table.columns.reduce<SelectableValue[]>((prev, curr, i) => {
             if (curr.type === 'datetime') {
@@ -41,28 +40,27 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
             });
           }
         }
-      }
-      setTimeColumns(timeColumnOptions);
-      const defaultColumns = Array.from(defaultColumnsMap.values());
-      setDefaultTimeColumns(defaultColumns);
-
-      // Set default value
-      if (
-        !query.azureLogAnalytics.timeColumn ||
-        (query.azureLogAnalytics.timeColumn &&
-          !timeColumnsSet.has(query.azureLogAnalytics.timeColumn) &&
-          !defaultColumnsMap.has(query.azureLogAnalytics.timeColumn))
-      ) {
-        if (defaultColumns && defaultColumns.length) {
-          setDefaultColumn(defaultColumns[0].value);
-          setDefaultColumn(defaultColumns[0].value);
-          return;
-        } else if (timeColumnOptions && timeColumnOptions.length) {
-          setDefaultColumn(timeColumnOptions[0].value);
-          return;
-        } else {
-          setDefaultColumn('TimeGenerated');
-          return;
+        setTimeColumns(timeColumnOptions);
+        const defaultColumns = Array.from(defaultColumnsMap.values());
+        setDefaultTimeColumns(defaultColumns);
+        // Set default value
+        if (
+          !query.azureLogAnalytics.timeColumn ||
+          (query.azureLogAnalytics.timeColumn &&
+            !timeColumnsSet.has(query.azureLogAnalytics.timeColumn) &&
+            !defaultColumnsMap.has(query.azureLogAnalytics.timeColumn))
+        ) {
+          if (defaultColumns && defaultColumns.length) {
+            setDefaultColumn(defaultColumns[0].value);
+            setDefaultColumn(defaultColumns[0].value);
+            return;
+          } else if (timeColumnOptions && timeColumnOptions.length) {
+            setDefaultColumn(timeColumnOptions[0].value);
+            return;
+          } else {
+            setDefaultColumn('TimeGenerated');
+            return;
+          }
         }
       }
     }

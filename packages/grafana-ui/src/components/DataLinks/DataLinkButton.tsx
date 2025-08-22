@@ -1,10 +1,10 @@
 import { Field, LinkModel } from '@grafana/data';
 
-import { ButtonProps, Button } from '../Button';
+import { ButtonProps, Button } from '../Button/Button';
 
 type DataLinkButtonProps = {
   link: LinkModel<Field>;
-  buttonProps?: ButtonProps;
+  buttonProps?: Omit<ButtonProps, 'children'>;
 };
 
 /**

@@ -1,14 +1,13 @@
 import { useState } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { EmbeddedDashboard } from './EmbeddedDashboard';
 
 export function EmbeddedDashboardTestPage() {
-  const { t } = useTranslate();
   const [state, setState] = useState('?from=now-5m&to=now');
 
   return (

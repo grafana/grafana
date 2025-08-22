@@ -6,32 +6,31 @@ import (
 
 // MySQL is the default implementation of Dialect for the MySQL DMBS,
 // currently supporting MySQL-8.x.
-var MySQL = mysql{
-	rowLockingClauseMap: rowLockingClauseAll,
-	argPlaceholderFunc:  argFmtSQL92,
-	name:                "mysql",
+var MySQL = mysql{}
+
+type mysql struct{}
+
+func (m mysql) DialectName() string {
+	return "mysql"
 }
 
-var _ Dialect = MySQL
-
-type mysql struct {
-	backtickIdent
-	rowLockingClauseMap
-	argPlaceholderFunc
-	name
-}
-
-// MySQL always supports backticks for identifiers
-// https://dev.mysql.com/doc/refman/8.4/en/identifiers.html
-type backtickIdent struct{}
-
-func (backtickIdent) Ident(s string) (string, error) {
+func (m mysql) Ident(s string) (string, error) {
+	// MySQL always supports backticks for identifiers
+	// https://dev.mysql.com/doc/refman/8.4/en/identifiers.html
 	if strings.ContainsRune(s, '`') {
 		return "", ErrInvalidIdentInput
 	}
 	return escapeIdentity(s, '`', func(s string) string {
 		return s
 	})
+}
+
+func (m mysql) ArgPlaceholder(argNum int) string {
+	return "?"
+}
+
+func (m mysql) SelectFor(s ...string) (string, error) {
+	return rowLockingClauseAll.SelectFor(s...)
 }
 
 func (mysql) CurrentEpoch() string {

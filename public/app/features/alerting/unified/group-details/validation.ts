@@ -1,6 +1,6 @@
 import { FieldValues, RegisterOptions } from 'react-hook-form';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { MIN_TIME_RANGE_STEP_S } from '../components/rule-editor/GrafanaEvaluationBehavior';

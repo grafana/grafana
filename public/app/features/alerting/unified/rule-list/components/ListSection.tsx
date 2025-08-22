@@ -4,7 +4,7 @@ import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { Spacer } from '../../components/Spacer';
@@ -25,7 +25,7 @@ export const ListSection = ({
 }: ListSectionProps) => {
   const styles = useStyles2(getStyles);
   const [isCollapsed, toggleCollapsed] = useToggle(collapsed);
-  const { t } = useTranslate();
+
   return (
     <li className={styles.wrapper} role="treeitem" aria-selected="false">
       <div className={styles.sectionTitle}>
@@ -65,6 +65,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // unfortunately we have to resort to this since we can't overwrite the styles of the list items individually
     // unless we clone the React Elements and modify className
     'li[role=treeitem]': {
+      listStyle: 'none',
+      position: 'relative',
       paddingLeft: theme.spacing(6.5),
 
       '&:before': {

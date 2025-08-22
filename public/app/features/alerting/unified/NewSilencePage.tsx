@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,
@@ -9,7 +9,7 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { SilencesEditor } from './components/silences/SilencesEditor';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
@@ -27,7 +27,7 @@ const SilencesEditorComponent = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <SilencesEditor
         formValues={formValues}
         alertManagerSourceName={selectedAlertmanager}
@@ -38,7 +38,6 @@ const SilencesEditorComponent = () => {
 };
 
 function NewSilencePage() {
-  const { t } = useTranslate();
   const pageNav = {
     id: 'silence-new',
     text: t('alerting.new-silence-page.page-nav.text.silence-alert-rule', 'Silence alert rule'),

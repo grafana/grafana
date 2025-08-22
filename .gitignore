@@ -69,6 +69,7 @@ public/css/*.min.css
 !.vscode/launch.json
 .vs/
 .cursor/
+.devcontainer/
 
 .eslintcache
 .stylelintcache
@@ -114,7 +115,11 @@ profile.cov
 # Extensions
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 /pkg/server/wireexts_enterprise.go
+/pkg/server/enterprise_wire_gen.go
 /pkg/build/cmd/enterprise.go
+/pkg/build/cmd/artifactspage.go
+/pkg/build/cmd/artifactspage.tmpl.html
+/pkg/build/cmd/exportversion.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
@@ -203,9 +208,6 @@ compilation-stats.json
 # auto generated frontend docs
 /docs/sources/packages_api
 
-# wire generated files
-**/wire_gen.go
-
 # Auto-generated internationalization files
 public/locales/_build/
 public/locales/*/*.js
@@ -238,4 +240,4 @@ public/app/plugins/**/dist/
 # Mock service worker used for fake API responses in frontend development
 public/mockServiceWorker.js
 
-/e2e/test-plugins/*/dist
+/e2e-playwright/test-plugins/*/dist

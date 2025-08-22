@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { Field, HorizontalGroup, Select, Switch, VerticalGroup, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Field, Select, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DetailText } from 'app/features/inspector/DetailText';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
@@ -39,7 +39,7 @@ export const InspectDataOptions = ({
   toggleDownloadForExcel,
 }: Props) => {
   const styles = useStyles2(getPanelInspectorStyles2);
-  const { t } = useTranslate();
+
   let dataSelect = dataFrames;
   if (selectedDataFrame === DataTransformerID.joinByField) {
     dataSelect = data!;
@@ -100,7 +100,7 @@ export const InspectDataOptions = ({
         actions={actions}
       >
         <div className={styles.options} data-testid="dataOptions">
-          <VerticalGroup spacing="none">
+          <Stack direction="column" gap={0}>
             {data!.length > 1 && (
               <Field label={t('dashboard.inspect-data.dataframe-label', 'Show data frame')}>
                 <Select
@@ -113,7 +113,7 @@ export const InspectDataOptions = ({
               </Field>
             )}
 
-            <HorizontalGroup>
+            <Stack>
               {hasTransformations && onOptionsChange && (
                 <Field
                   label={t('dashboard.inspect-data.transformations-label', 'Apply panel transformations')}
@@ -155,8 +155,8 @@ export const InspectDataOptions = ({
               >
                 <Switch id="excel-toggle" value={downloadForExcel} onChange={toggleDownloadForExcel} />
               </Field>
-            </HorizontalGroup>
-          </VerticalGroup>
+            </Stack>
+          </Stack>
         </div>
       </QueryOperationRow>
     </div>

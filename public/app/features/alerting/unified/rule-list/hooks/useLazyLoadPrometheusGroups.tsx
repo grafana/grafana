@@ -16,7 +16,8 @@ import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
  */
 export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
   groupsGenerator: AsyncIterator<TGroup>,
-  pageSize: number
+  pageSize: number,
+  filter?: (group: TGroup) => boolean
 ) {
   const [groups, setGroups] = useState<TGroup[]>([]);
   const [hasMoreGroups, setHasMoreGroups] = useState<boolean>(true);
@@ -31,7 +32,12 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
         done = true;
         break;
       }
+
       const group = generatorResult.value;
+      if (filter && !filter(group)) {
+        continue;
+      }
+
       currentGroups.push(group);
     }
 
@@ -53,7 +59,7 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
     isLoading,
     error: groupsRequestState.error,
     groups,
-    hasMoreGroups: !isLoading && hasMoreGroups,
+    hasMoreGroups,
     fetchMoreGroups,
   };
 }

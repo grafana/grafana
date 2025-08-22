@@ -1,0 +1,499 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "注释数据加载错误！",
+        "aria-label-lower-limit-parameter": "设置步长参数的下限",
+        "label-min-step": "最小步长",
+        "label-series-value-as-timestamp": "作为时间戳的序列值",
+        "label-tags": "标签",
+        "label-text": "文本",
+        "label-title": "标题",
+        "placeholder-auto": "自动",
+        "tooltip-either-pattern-example-instance-replaced-label": "使用名称或模式。例如，{{labelTemplate}}将替换为标签{{labelName}}的标签值。",
+        "tooltip-min-step": "Prometheus 查询的步长参数以及 <2>{{intervalVar}}</2> 和 <4>{{rateIntervalVar}}</4> 变量的附加下限。",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "时间戳的单位是毫秒。如果序列值的单位为秒，则将其范围向量乘以 1000。"
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": "运行即时查询和范围查询"
+        },
+        "label": {
+          "both": "两个都"
+        },
+        "range-options": {
+          "description": {
+            "query-range": "针对时间范围运行查询"
+          },
+          "label": {
+            "instant": "即时",
+            "range": "范围"
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "筛选标签表达式",
+        "description-select-labels": "选择标签值后，仅显示可能的标签组合。",
+        "select-labels-to-search-in": "2. 选择要搜索的标签"
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "筛选指标表达式",
+        "aria-label-limit-results-from-series-endpoint": "限制来自序列端点的结果",
+        "description-series-limit": "该限制适用于所有指标、标签和值。若将字段留空，则使用默认限制。设置为 0 以禁用限制并获取所有内容，但这可能会导致性能问题。",
+        "label-select-metric": "选择指标后，仅显示可能的标签。标签受以下序列限制的约束。",
+        "select-a-metric": "1. 选择指标",
+        "series-limit": "序列限制"
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": "PromQL 速查表"
+      },
+      "prom-exemplar-field": {
+        "exemplars": "范例",
+        "tooltip-disable-query": "禁用带有范例的查询",
+        "tooltip-enable-query": "启用带有范例的查询"
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "Prometheus 额外字段",
+        "aria-label-query-type-field": "查询类型字段",
+        "aria-label-step-field": "步长字段",
+        "min-step": "最小步长",
+        "query-type": "查询类型",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "此处可以使用时间单位和内置变量，例如：{{example1}}、{{example2}}、{{example3}}、{{example4}}{{example5}}、{{example6}}、{{example7}}（如果未指定单位，则为默认值：{{default}}）"
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": "输入 PromQL 查询……"
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "经典查询",
+        "aria-label-metric-regex": "指标正则表达式",
+        "aria-label-metric-selector": "指标选择器",
+        "aria-label-prometheus-query": "Prometheus 查询",
+        "aria-label-query-type": "查询类型",
+        "aria-label-series-query": "序列查询",
+        "label-classic-query": "经典查询",
+        "label-label": "标签",
+        "label-metric-regex": "指标正则表达式",
+        "label-query": "查询",
+        "label-query-type": "查询类型",
+        "label-series-query": "序列查询",
+        "placeholder-classic-query": "经典查询",
+        "placeholder-metric-regex": "指标正则表达式",
+        "placeholder-prometheus-query": "Prometheus 查询",
+        "placeholder-select-query-type": "选择查询类型",
+        "placeholder-series-query": "序列查询",
+        "returns-metrics-matching-specified-metric-regex": "返回与指定指标正则表达式匹配的指标列表。",
+        "tooltip-classic-query": "Prometheus 变量查询编辑器的原始执行操作。按照这些文档中所述，输入包含正确查询类型和参数的字符串。例如，{{exampleQuery}}。",
+        "tooltip-label": "返回所有指标中标签名称的标签值列表，除非指定了指标。",
+        "tooltip-metric-regex": "返回标签名称列表，可选择按指定的指标正则表达式进行筛选。",
+        "tooltip-query": "返回查询的 Prometheus 查询结果列表。这可以包含 Prometheus 函数，即 {{exampleQuery}}。",
+        "tooltip-query-type": "Prometheus 数据源插件为模板变量提供以下查询类型。",
+        "tooltip-series-query": "输入带有标签的指标、仅指标或仅标签，即 {{example1}}、{{example2}} 或 {{example3}}。返回与输入数据关联的时间序列列表。"
+      },
+      "selector-actions": {
+        "aria-label-selector": "选择器",
+        "aria-label-selector-clear-button": "选择器清除按钮",
+        "aria-label-use-selector-as-metrics-button": "使用选择器作为指标按钮",
+        "aria-label-use-selector-for-query-button": "使用选择器作为查询按钮",
+        "aria-label-validate-submit-button": "验证提交按钮",
+        "clear": "清除",
+        "resulting-selector": "4. 结果选择器",
+        "use-as-rate-query": "用作速率查询",
+        "use-query": "使用查询",
+        "validate-selector": "验证选择器"
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "筛选标签值表达式",
+        "aria-label-values-for": "{{labelKey}}的值",
+        "description-search-field-values-across-selected-labels": "使用搜索字段在所选标签中查找值。",
+        "select-multiple-values-for-your-labels": "3. 为您的标签选择（多个）值"
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-allow-as-recording-rules-target": "允许作为录制规则目标",
+        "label-manage-alerts-via-alerting-ui": "通过警报用户界面管理警报",
+        "title-alerting": "警报",
+        "tooltip-allow-as-recording-rules-target": "允许此数据源被选为撰写录制规则的目标。",
+        "tooltip-manage-alerts-via-alerting-ui": "管理此数据源的提醒规则。要管理其他 Alerting 资源，请添加 Alertmanager 数据源。"
+      },
+      "config-editor": {
+        "browser-access-mode-error": "Prometheus 数据源中的浏览器访问模式不再可用。切换到服务器访问模式。",
+        "description-advanced-settings": "附加设置是可选设置，通过配置，可对数据源进行更精细的控制。",
+        "title-advanced-settings": "高级设置",
+        "title-error": "错误"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "您的访问方式是<1>浏览器</1>，这意味着需要从浏览器访问 URL。",
+        "tooltip-http-url": "指定完整的 HTTP 网址（例如 {{exampleURL}}）",
+        "tooltip-server-access-mode": "您的访问方式是<1>服务器</1>，这意味着需要从 grafana 后端/服务器访问 URL。"
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": "请访问此处的文档了解更多信息。"
+      },
+      "exemplar-setting": {
+        "label-data-source": "数据源",
+        "label-internal-link": "内部链接",
+        "label-label-name": "标签名称",
+        "label-remove-exemplar-link": "移除范例链接",
+        "label-url": "URL",
+        "label-url-label": "网址标签",
+        "placeholder-go-to-examplecom": "前往 example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "移除范例链接",
+        "tooltip-data-source": "范例将要导航到的数据源。",
+        "tooltip-internal-link": "如果您有内部链接，请启用此选项。启用后，页面将出现数据源选择器。为您的范例数据选择后端跟踪数据存储。",
+        "tooltip-label-name": "应用于获取 traceID 的标签对象中的字段名称。",
+        "tooltip-url": "用户将查看其跟踪的跟踪后端的网址",
+        "tooltip-url-label": "用于覆盖示例 traceID 字段上的按钮标签。"
+      },
+      "exemplars-settings": {
+        "add": "添加",
+        "no-exemplars-configurations": "没有范例配置",
+        "title-exemplars": "范例"
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "默认编辑器（代码或构建器）",
+        "aria-label-prom-type-type": "{{promType}} 类型",
+        "aria-label-prometheus-type": "Prometheus 类型",
+        "aria-label-select-http-method": "选择 HTTP 方法",
+        "editor-options": {
+          "label-builder": "构建器",
+          "label-code": "代码"
+        },
+        "label-cache-level": "缓存级别",
+        "label-custom-query-parameters": "自定义查询参数",
+        "label-default-editor": "默认编辑器",
+        "label-disable-metrics-lookup": "禁用指标查找",
+        "label-disable-recording-rules-beta": "禁用录制规则（测试版）",
+        "label-http-method": "HTTP 方法",
+        "label-incremental-querying-beta": "增量查询（测试版）",
+        "label-metric-names-suggestion-limit": "指标名称建议限制",
+        "label-prom-type-version": "{{promType}} 版本",
+        "label-prometheus-type": "Prometheus 类型",
+        "label-query-overlap-window": "查询重叠窗口",
+        "label-query-timeout": "查询超时",
+        "label-scrape-interval": "抓取间隔",
+        "label-series-limit": "序列限制",
+        "label-use-series-endpoint": "使用序列端点",
+        "more-info": "有关在数据源中配置 prometheus 类型和版本的更多信息，请参阅<2>预配文档</2>。",
+        "placeholder-example-maxsourceresolutionmtimeout": "示例：{{example}}",
+        "title-interval-behaviour": "间隔行为",
+        "title-other": "其他",
+        "title-performance": "性能",
+        "title-query-editor": "查询编辑器",
+        "tooltip-cache-level": "设置编辑器查询的浏览器缓存级别。对于高基数数据源，建议使用更高的缓存设置。",
+        "tooltip-custom-query-parameters": "将自定义参数添加到 Prometheus 查询网址。例如 {{example1}}、{{example2}}、{{example3}} 或 {{example4}}。多个参数应使用 {{concatenationChar}} 连接起来。",
+        "tooltip-default-editor": "为此数据源的所有用户设置默认编辑器选项。",
+        "tooltip-disable-metrics-lookup": "选中此选项将禁用查询字段自动完成中的指标选择器和指标/标签支持。如果您在使用较大的 Prometheus 实例时遇到性能问题，这样做会有所帮助。",
+        "tooltip-disable-recording-rules-beta": "此功能将禁用录制规则。开启此选项可提高数据面板性能",
+        "tooltip-http-method": "您可以使用 POST 或 GET HTTP 方法来查询 Prometheus 数据源。POST 是推荐的方法，因为它允许更大的查询。如果您的 Prometheus 版本低于 2.1，或者您的网络中限制了 POST 请求，请将其更改为 GET。",
+        "tooltip-incremental-querying-beta": "此功能将改变相对查询的默认行为，使其总是从 Prometheus 实例请求新数据，而不会缓存查询结果，且只请求新数据。开启此选项可减少数据库和网络负载。",
+        "tooltip-metric-names-suggestion-limit": "在查询编辑器的“代码”模式下，可能显示为自动完成建议的指标名称的最大数量。",
+        "tooltip-prom-type-version": "如果 {{promType}} 实例未自动配置版本，请使用此项来设置它的版本。",
+        "tooltip-prometheus-type": "将此设置为 Prometheus 数据库的类型，例如 Prometheus、Cortex、Mimir 或 Thanos。更改此字段将保存您的当前设置。某些类型的 Prometheus 对 API 的支持不一样。例如，某些类型支持标签查询的正则表达式匹配，以提高性能。某些类型具有用于元数据的 API。如果设置不正确，则在查询指标和标签时可能会遇到奇怪的行为。请检查您的 Prometheus 文档，以确保您输入了正确的类型。",
+        "tooltip-query-overlap-window": "设置持续时间，如 {{example1}} 或 {{example2}} 或 {{example3}}。默认值为 {{default}}。此持续时间将添加到每个增量请求的持续时间中。",
+        "tooltip-query-timeout": "设置 Prometheus 查询超时。",
+        "tooltip-scrape-interval": "此间隔是 Prometheus 抓取目标的频率。将此设置为 Prometheus 配置文件中配置的典型抓取和评估间隔。如果您将此值设置为大于 Prometheus 配置文件的间隔，Grafana 将根据此间隔评估数据，您将看到较少的数据点。默认值为 {{default}}。",
+        "tooltip-series-limit": "限制适用于两个端点（系列和标签）的所有资源（指标、标签和值）。将字段留空，以使用默认限制 (40000)。设置为 0 以禁用限制并获取所有内容，但这可能会导致性能问题。默认限制为 40000。",
+        "tooltip-use-series-endpoint": "选中此选项将优先使用带有 {{exampleParameter}} 参数的序列端点，而不是带有 {{exampleParameter}} 参数的标签值端点。虽然标签值端点在性能方面表现更好，但有些用户可能更喜欢序列，因为它具有 POST 方法，而标签值端点仅具有 GET 方法。"
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "（已禁用）",
+      "enabled-label": "指标浏览器"
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "仅包含唯一标签",
+        "description-custom": "提供命名模板",
+        "description-verbose": "所有标签名称和值",
+        "label-auto": "自动",
+        "label-custom": "自定义",
+        "label-verbose": "详细"
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "计算各维度的平均值",
+        "documentation-bottomk": "按样本值取最小的 k 个元素",
+        "documentation-count": "计算向量中的元素数",
+        "documentation-count-values": "计算具有相同值的元素数",
+        "documentation-group": "结果向量中的所有值均为 1",
+        "documentation-max": "选择各维度的最大值",
+        "documentation-min": "选择各维度的最小值",
+        "documentation-quantile": "计算各维度的 φ-quantile (0 ≤ φ ≤ 1)",
+        "documentation-stddev": "计算各维度的总体标准差",
+        "documentation-stdvar": "计算各维度的总体标准差",
+        "documentation-sum": "计算各维度的总和",
+        "documentation-topk": "按样本值取最大的 k 个元素"
+      },
+      "getFunctions": {
+        "documentation-abs": "返回输入向量，其中所有样本值都转换为其绝对值。",
+        "documentation-absent": "如果传入的向量包含任意元素，则返回一个空向量；如果传入的向量不包含任何元素，则返回一个值为 1 的单元素向量。这在针对某个特定指标名称和标签组合不存在任何时间序列时发出告警时非常有用。",
+        "documentation-absent-over-time": "如果传入的向量包含任意元素，则返回一个空向量；如果传入的向量不包含任何元素，则返回一个值为·1·的单元素向量。",
+        "documentation-avg-over-time": "指定间隔内所有点的平均值。",
+        "documentation-ceil": "将“v”中所有元素的样本值向上舍入到最接近的整数。",
+        "documentation-changes": "对于每个输入时间序列，“changes(v range-vector)”返回其值在提供的时间范围内更改的次数，作为瞬时向量。",
+        "documentation-clamp": "将“v”中所有元素的样本值限制为下限为“min”且上限为“max”。",
+        "documentation-clamp-max": "将“v”中所有元素的样本值限制为上限为“max”。",
+        "documentation-clamp-min": "将“v”中所有元素的样本值限制为下限为“min”。",
+        "documentation-count-over-time": "指定间隔内所有值的计数。",
+        "documentation-count-scalar": "返回时间序列向量中元素的数量作为标量。这与 'count()' 聚合运算符相反，后者始终返回一个向量（如果输入向量为空，则为空向量），并允许通过 'by' 子句按标签分组。",
+        "documentation-day-of-month": "返回每个月中给定时间的日期（UTC 时间）。返回的值介于 1 到 31 之间。",
+        "documentation-day-of-week": "返回每周中给定时间的日期（UTC 时间）。返回的值介于 0 到 6 之间，其中 0 表示星期日，以此类推。",
+        "documentation-day-of-year": "返回每年中的给定时间的日期（UTC 时间）。对于非闰年，返回的值介于 1 到 365 之间；对于闰年，返回的值介于 1 到 366 之间。",
+        "documentation-days-in-month": "返回每月中给定时间的天数（UTC 时间）。返回的值介于 28 到 31 之间。",
+        "documentation-deg": "将 v 中所有元素的弧度转换为度",
+        "documentation-delta": "计算范围矢量“v”中每个时间序列元素的第一个值和最后一个值之间的差，返回具有给定增量和等效标签的瞬时矢量。增量被外推以覆盖范围矢量选择器中指定的全时间范围，因此即使样本值都是整数，也可以获得非整数结果。",
+        "documentation-deriv": "使用简单线性回归计算范围向量“v”中时间序列的每秒导数。",
+        "documentation-double-exponential-smoothing": "根据“v”中的范围为时间序列生成平滑值。平滑因子“sf”越低，旧数据的重要性就越高。趋势因子“tf”越高，考虑的数据趋势就越多。“sf”和“tf”都必须介于 0 和 1 之间。",
+        "documentation-drop-common-labels": "删除输入向量中所有序列中具有相同名称和值的所有标签。",
+        "documentation-exp": "计算“v”中所有元素的指数函数。\n特殊情况是：\n* `Exp(+Inf) = +Inf` \n* `Exp(NaN) = NaN`",
+        "documentation-floor": "将“v”中所有元素的样本值向下舍入到最接近的整数。",
+        "documentation-histogram-avg": "返回存储在原生直方图中的观测值的算术平均值。非原生直方图的样本将被忽略，不会显示在返回的向量中。",
+        "documentation-histogram-count": "返回存储在原生直方图中的观测值的计数。",
+        "documentation-histogram-fraction": "返回所提供的下限值和上限值之间的估计观测值分数。",
+        "documentation-histogram-quantile": "从直方图的存储桶 'b' 计算 φ-quantile (0 ≤ φ ≤ 1)。'b' 中的样本是每个存储桶中的观测值计数。每个样本都必须有一个标签 'le'，其中标签值表示存储桶的包含上限。（没有此类标签的样本将被静默忽略。）直方图指标类型自动为时间序列提供 '_bucket' 后缀和相应的标签。",
+        "documentation-histogram-stddev": "根据观测值所在的存储桶的几何平均值，返回原生直方图中观测值的估计标准差。",
+        "documentation-histogram-stdvar": "返回原生直方图中观测值的估计标准方差。",
+        "documentation-histogram-sum": "返回存储在原生直方图中的观测值的总和。",
+        "documentation-holt-winters": "在 prometheus v3.x 中重命名为 double_exponential_smoothing。对于等于和大于 v3.0 的 prometheus 版本，请使用 double_exponential_smoothing。\n\n根据“v”中的范围为时间序列生成平滑值。平滑因子“sf”越低，旧数据的重要性就越高。趋势因子“tf”越高，考虑的数据趋势就越多。“sf”和“tf”都必须介于 0 和 1 之间。",
+        "documentation-hour": "返回每天中给定时间的小时（UTC 时间）。返回的值介于 0 到 23 之间。",
+        "documentation-idelta": "计算范围矢量“v”中最后两个样本之间的差，返回具有给定增量和等效标签的瞬时矢量。",
+        "documentation-increase": "计算范围矢量中时间序列的增加。单调性中断（例如由于目标重新启动而导致的计数器重置）会自动调整。增加被外推以覆盖范围矢量选择器中指定的全时间范围，因此即使计数器仅以整数增量增加，也可以获得非整数结果。",
+        "documentation-info": "返回有关一组指标的最新详细信息和元数据，例如其标签和当前值，而无需进行任何计算",
+        "documentation-irate": "计算范围矢量中时间序列的每秒瞬时增加率。这是基于最后两个数据点。单调性中断（例如由于目标重新启动而导致的计数器重置）会自动调整。",
+        "documentation-label-join": "对于“v”中的每个时间序列，使用“separator”连接所有“src_labels”的所有值，并返回包含连接值的标签“dst_label”的时间序列。此函数中可以有任意数量的“src_labels”。",
+        "documentation-label-replace": "对于“v”中的每个时间序列，“label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)”将正则表达式“regex”与标签“src_label”进行匹配。如果匹配，则返回时间序列，并将标签“dst_label”替换为“replacement”的扩展。“$1”替换为第一个匹配的子组，“$2”替换为第二个匹配的子组，依此类推。如果正则表达式不匹配，则返回不变的时间序列。",
+        "documentation-last-over-time": "指定间隔内的最近点值。",
+        "documentation-ln": "计算“v”中所有元素的自然对数。\n特殊情况是：\n * 'ln(+Inf) = +Inf'\n * 'ln(0) = -Inf'\n * 'ln(x < 0) = NaN'\n * 'ln(NaN) = NaN'",
+        "documentation-log10": "计算“v”中所有元素的十进制对数。特殊情况等同于“ln”中的情况。",
+        "documentation-log2": "计算“v”中所有元素的二进制对数。特殊情况等同于“ln”中的情况。",
+        "documentation-max-over-time": "指定间隔内所有点的最大值。",
+        "documentation-min-over-time": "指定间隔内所有点的最小值。",
+        "documentation-minute": "返回每小时中给定时间的分钟（UTC 时间）。返回的值介于 0 到 59 之间。",
+        "documentation-month": "返回每年中的给定时间的月份（UTC 时间）。返回的值介于 1 到 12 之间，其中 1 表示一月，以此类推。",
+        "documentation-pi": "返回 pi",
+        "documentation-predict-linear": "使用简单线性回归，根据范围向量“v”预测从现在开始的时间序列“t”秒的值。",
+        "documentation-present-over-time": "指定间隔内任何系列的值 1。",
+        "documentation-quantile-over-time": "指定间隔内值的 φ-quantile (0 ≤ φ ≤ 1)。",
+        "documentation-rad": "将 v 中所有元素的度转换为弧度",
+        "documentation-rate": "计算范围矢量中时间序列的每秒平均增加率。单调性中断（例如由于目标重新启动而导致的计数器重置）会自动调整。此外，计算外推到时间范围的末端，允许遗漏的抓取或抓取周期与范围的时间段不完美对齐。",
+        "documentation-resets": "对于每个输入时间序列，“resets(v range-vector)”返回提供的时间范围内的计数器重置次数，作为瞬时向量。两个连续样本之间的值的任何减小都被解释为计数器重置。",
+        "documentation-round": "将“v”中所有元素的样本值舍入到最接近的整数。通过向上舍入来解决绑定。可选的“to_nearest”参数允许指定应舍入样本值的最接近倍数。这个倍数也可能是分数。",
+        "documentation-scalar": "给定单元素输入向量，“scalar(v instant-vector)”返回该单个元素的样本值作为标量。如果输入向量不正好只有一个元素，“scalar”将返回“NaN”。",
+        "documentation-sgn": "返回一个向量，其中所有样本值都转换为其符号，定义如下：如果 v 为正，则为 1；如果 v 为负，则为 -1；如果 v 为零，则为 0。",
+        "documentation-sort": "返回按样本值排序的矢量元素，按升序排列。",
+        "documentation-sort-desc": "返回按样本值排序的向量元素，按降序排列。",
+        "documentation-sqrt": "计算“v”中所有元素的平方根。",
+        "documentation-stddev-over-time": "指定间隔内值的总体标准差。",
+        "documentation-stdvar-over-time": "指定间隔内值的总体标准方差。",
+        "documentation-sum-over-time": "指定间隔内所有值的总和。",
+        "documentation-time": "返回自 1970 年 1 月 1 日（UTC 时间）起的秒数。请注意，这实际上并不返回当前时间，而是返回要计算表达式的时间。",
+        "documentation-timestamp": "返回给定向量每个样本的时间戳，作为自 1970 年 1 月 1 日（UTC 时间）起的秒数。",
+        "documentation-vector": "返回标量“s”作为没有标签的矢量。",
+        "documentation-year": "返回每年给定时间的年份（UTC 时间）。"
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "计算 {{argument}} 中所有元素的反余弦",
+        "documentation-acosh": "计算 {{argument}} 中所有元素的反双曲余弦",
+        "documentation-asin": "计算 {{argument}} 中所有元素的反正弦",
+        "documentation-asinh": "计算 {{argument}} 中所有元素的反双曲正弦",
+        "documentation-atan": "计算 {{argument}} 中所有元素的反正切",
+        "documentation-atanh": "计算 {{argument}} 中所有元素的反双曲正切",
+        "documentation-cos": "计算 {{argument}} 中所有元素的余弦",
+        "documentation-cosh": "计算 {{argument}} 中所有元素的双曲余弦",
+        "documentation-sin": "计算 {{argument}} 中所有元素的正弦",
+        "documentation-sinh": "计算 {{argument}} 中所有元素的双曲正弦",
+        "documentation-tan": "计算 {{argument}} 中所有元素的正切",
+        "documentation-tanh": "计算 {{argument}} 中所有元素的双曲正切"
+      }
+    },
+    "querybuilder": {
+      "feedback-link": {
+        "give-feedback": "提供反馈",
+        "title-give-feedback": "指标浏览器是新功能，请告诉我们如何改进"
+      },
+      "get-collapsed-info": {
+        "exemplars": "范例：{{value}}",
+        "format": "格式：{{value}}",
+        "legend": "图例：{{value}}",
+        "step": "步骤：{{value}}",
+        "type": "类型：{{value}}"
+      },
+      "get-placeholders": {
+        "browse": "按名称搜索指标",
+        "type": "按类型筛选"
+      },
+      "get-prom-types": {
+        "description-counter": "表示单个单调递增计数器的累积指标，其值只能在重新启动时增加或重置为零。",
+        "description-gauge": "表示可以任意上下移动的单个数值的指标。",
+        "description-histogram": "直方图对观测值（通常是请求持续时间或响应大小等）进行抽样，并在可配置的存储桶中对其进行计数。",
+        "description-native-histogram": "原生直方图在许多方面与经典的 Prometheus 直方图不同：原生直方图的存储桶边界由公式计算，该公式取决于原生直方图的比例（分辨率），而不是由用户自定义。",
+        "description-no-type": "这些指标在元数据中没有定义的类型。",
+        "description-summary": "汇总对观测值（通常是请求持续时间和响应大小等）进行抽样，并可以在滑动时间窗口中计算可配置的分位数。",
+        "description-unknown": "这些指标在元数据中被赋予未知类型。",
+        "label-counter": "计数器",
+        "label-gauge": "仪表",
+        "label-histogram": "直方图",
+        "label-native-histogram": "原生直方图",
+        "label-no-type": "无类型",
+        "label-summary": "摘要",
+        "label-unknown": "未知"
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": "查询解析不明确。"
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "移除{{name}}",
+        "placeholder-select-label": "选择标签",
+        "placeholder-select-value": "选择值"
+      },
+      "label-filters": {
+        "label-filters": "标签筛选",
+        "label-label-filters": "标签筛选",
+        "tooltip-label-filters": "可选：用于筛选为此查询类型选择的指标。"
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "正在加载标签",
+        "noOptionsMessage-no-labels-found": "未找到标签"
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "打开指标浏览器",
+          "placeholder-select-metric": "选择指标",
+          "tooltip-open-metrics-explorer": "打开指标浏览器"
+        },
+        "label-metric": "指标",
+        "tooltip-metric": "可选：返回指定指标中标签名称的标签值列表。"
+      },
+      "metrics-modal": {
+        "aria-label-browse-metrics": "浏览指标",
+        "currently-selected": "当前选择：{{selected}}",
+        "metrics-pre-filtered": "这些指标已通过标签筛选器中选择的标签进行预筛选。",
+        "title-metrics-explorer": "指标浏览器"
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "忽略",
+          "on": "方式"
+        },
+        "operator": "运算符",
+        "tooltip-remove-match": "移除匹配",
+        "vector-matches": "矢量匹配"
+      },
+      "operation-editor": {
+        "not-found": "找不到操作 {{id}}",
+        "title-remove": "移除{{name}}"
+      },
+      "operation-header": {
+        "placeholder-replace-with": "替换为",
+        "title-click-to-view-alternative-operations": "点击以查看替代操作",
+        "title-remove-operation": "移除操作"
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "点击以显示描述",
+        "title-remove-operation": "移除操作"
+      },
+      "operation-list": {
+        "operations": "操作",
+        "placeholder-search": "搜索",
+        "title-add-operation": "添加操作"
+      },
+      "operation-param-editor": {
+        "title-add": "添加{{name}}",
+        "title-remove": "移除{{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "计算各维度的 {{aggregationName}}，同时保留 {{labelWord}} {{labels}}。",
+          "label-default": "计算各维度的 {{aggregationName}}。",
+          "label-without": "计算各维度的 {{aggregationName}} {{labels}}。所有其他标签都将保留。"
+        }
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "设置步长参数的下限",
+        "aria-label-select-resolution": "选择分辨率",
+        "format-options": {
+          "label-heatmap": "热图",
+          "label-table": "表格",
+          "label-time-series": "时间序列"
+        },
+        "label-exemplars": "范例",
+        "label-format": "格式",
+        "label-min-step": "最小步长",
+        "label-resolution": "分辨率",
+        "label-type": "类型",
+        "placeholder-auto": "自动",
+        "title-options": "选项",
+        "tooltip-min-step": "Prometheus 查询的步长参数以及 <2>{{interval}}</2> 和 <4>{{rateInterval}}</4> 变量的附加下限。"
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "自动完成建议受限",
+        "tooltip-autocomplete-suggestions-limited": "指标名称的数量超过了自动完成限制。仅显示 {{autocompleteLimit}} 个最相关的指标。您可以在数据源设置中调整阈值。"
+      },
+      "prom-query-editor-selector": {
+        "body-syntax-error": "存在语法错误，或者切换到构建器模式时无法可视化查询结构。查询的某些部分可能会丢失。",
+        "confirmText-continue": "继续",
+        "kick-start-your-query": "启动您的查询",
+        "label-explain": "解释",
+        "run-queries": "运行查询",
+        "title-parsing-error-switch-builder": "解析错误：切换到构建器模式？"
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "图例",
+        "placeholder-select-legend-mode": "选择图例模式",
+        "tooltip-legend": "序列名称覆盖或模板。例如，{{templateExample}} 将替换为 {{labelName}} 的标签值。"
+      },
+      "query-builder-hints": {
+        "hint-details": "提示：{{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "构建器",
+          "label-code": "代码"
+        }
+      },
+      "query-pattern": {
+        "apply-query": "应用查询",
+        "aria-label-apply-query-starter-button": "应用查询启动按钮",
+        "aria-label-back-button": "后退按钮",
+        "aria-label-create-new-query-button": "创建新查询按钮",
+        "aria-label-raw-query": "{{patternName}} 原始查询",
+        "aria-label-use-this-query-button": "使用此查询按钮",
+        "back": "上一步",
+        "create-new-query": "创建新查询",
+        "use-this-query": "使用此查询"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "关闭“快速启动查询”弹窗",
+        "aria-label-kick-start-your-query-modal": "启动您的查询模式",
+        "aria-label-toggle-query-starter": "打开和关闭 {{patternType}} 查询启动卡",
+        "close": "关闭",
+        "description-kick-start-your-query": "通过选择其中一个查询来快速启动您的查询。然后，您可以继续完成查询。",
+        "label-toggle-query-starter": "{{patternType}} 查询启动器",
+        "title-kick-start-your-query": "启动您的查询"
+      },
+      "raw-query": {
+        "aria-label-selector": "选择器"
+      },
+      "results-table": {
+        "content-descriptive-type": "创建 {{descriptiveType}} 时，Prometheus 会使用类型计数器公开多个序列。",
+        "description": "描述",
+        "message-expand-label-filters": "未找到指标。尝试展开您的标签筛选条件。",
+        "message-expand-search": "未找到指标。尝试展开您的搜索和筛选条件。",
+        "message-no-metrics-found": "数据源中未找到指标。",
+        "name": "名称",
+        "type": "类型"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": "查询解析不明确。"
+        }
+      }
+    }
+  }
+}

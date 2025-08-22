@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardBase } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -24,7 +24,6 @@ interface Props extends SceneComponentProps<SharePublicDashboardTab> {
 }
 
 export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: Props) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -48,7 +47,10 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
             isOpen: true,
             title: t('dashboard-scene.config-public-dashboard.title.revoke-public-url', 'Revoke public URL'),
             icon: 'trash-alt',
-            confirmText: 'Revoke public URL',
+            confirmText: t(
+              'dashboard-scene.config-public-dashboard.confirmText.revoke-public-url',
+              'Revoke public URL'
+            ),
             body: (
               <p className={styles.description}>
                 <Trans i18nKey="public-dashboard.config.revoke-body">

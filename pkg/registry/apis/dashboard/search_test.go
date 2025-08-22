@@ -35,7 +35,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -62,7 +62,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -89,7 +89,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -116,7 +116,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -143,7 +143,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -170,7 +170,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -341,30 +341,10 @@ func TestSearchHandler(t *testing.T) {
 }
 
 func TestSearchHandlerSharedDashboards(t *testing.T) {
-	t.Run("should bail out if FlagUnifiedStorageSearchPermissionFiltering is not enabled globally", func(t *testing.T) {
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		assert.Equal(t, mockClient.CallCount, 0)
-	})
-
 	t.Run("should return empty result without searching if user does not have shared dashboards", func(t *testing.T) {
 		mockClient := &MockClient{}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -451,7 +431,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -571,7 +551,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,

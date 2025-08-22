@@ -12,7 +12,7 @@ jobs:
   handle-ephemeral-instances:
     if: ${{ github.event.issue.pull_request && (startsWith(github.event.comment.body, '/deploy-to-hg') || github.event.action == 'closed') && github.repository_owner == 'grafana' }}
     runs-on:
-      labels: ubuntu-latest-8-cores
+      labels: ubuntu-x64-xlarge
     continue-on-error: true
     permissions:
       # For commenting.

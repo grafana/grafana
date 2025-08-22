@@ -1,5 +1,5 @@
 import { DataLink, LinkModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -33,7 +33,7 @@ export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
   const { menu, rawLinks } = model.useState();
   sceneGraph.getTimeRange(model).useState();
-  const { t } = useTranslate();
+
   if (!(model.parent instanceof VizPanel)) {
     throw new Error('VizPanelLinks must be a child of VizPanel');
   }

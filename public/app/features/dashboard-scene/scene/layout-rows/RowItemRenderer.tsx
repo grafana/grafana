@@ -4,12 +4,12 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
-import { useIsClone } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -17,7 +17,7 @@ import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
-  const isClone = useIsClone(model);
+  const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
     useIsConditionallyHidden(model);
@@ -38,7 +38,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
-  const { t } = useTranslate();
 
   const isDraggable = !isClone && isEditing;
 
@@ -84,6 +83,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
             setTimeout(() => onSelect?.(evt));
           }}
+          data-testid={selectors.components.DashboardRow.wrapper(title!)}
           {...dragProvided.draggableProps}
         >
           {(!isHeaderHidden || isEditing) && (

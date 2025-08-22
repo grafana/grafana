@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Tooltip, useStyles2, type PopoverContent } from '@grafana/ui';
+import { Icon, TextLink, Tooltip, useStyles2, type PopoverContent } from '@grafana/ui';
 
 import { FuncInstance } from '../gfunc';
 
@@ -22,6 +22,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       cursor: 'pointer',
       display: 'inline-block',
+      overflowWrap: 'anywhere',
+      height: '100%',
     }),
   };
 };
@@ -62,14 +64,9 @@ const TooltipContent = memo(() => {
   return (
     <span>
       This function is not supported. Check your function for typos and{' '}
-      <a
-        target="_blank"
-        className="external-link"
-        rel="noreferrer noopener"
-        href="https://graphite.readthedocs.io/en/latest/functions.html"
-      >
+      <TextLink external href="https://graphite.readthedocs.io/en/latest/functions.html">
         read the docs
-      </a>{' '}
+      </TextLink>{' '}
       to see whether you need to upgrade your data source’s version to make this function available.
     </span>
   );

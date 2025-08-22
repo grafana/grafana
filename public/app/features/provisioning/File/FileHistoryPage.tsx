@@ -1,22 +1,36 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
-import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from 'app/api/clients/provisioning';
+import {
+  useGetRepositoryHistoryWithPathQuery,
+  useGetRepositoryStatusQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
+import { useUrlParams } from 'app/core/navigation/hooks';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { PROVISIONING_URL } from '../constants';
 import { HistoryListResponse } from '../types';
 import { formatTimestamp } from '../utils/time';
 
+import { isFileHistorySupported } from './utils';
+
 export default function FileHistoryPage() {
   const params = useParams();
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
+  const [urlParams] = useUrlParams();
+  const repoType = urlParams.get('repo_type');
+  const historyNotSupported = !isFileHistorySupported(repoType);
   const query = useGetRepositoryStatusQuery({ name });
-  const history = useGetRepositoryHistoryWithPathQuery({ name, path });
-  const notFound = query.isError && isNotFoundError(query.error);
+  const history = useGetRepositoryHistoryWithPathQuery(historyNotSupported ? skipToken : { name, path });
+  const notFound = (query.isError && isNotFoundError(query.error)) || historyNotSupported;
+
+  const notFoundErrorMsg = historyNotSupported
+    ? t('provisioning.file-history-page.history-not-supported', 'File history is not supported for this repository')
+    : t('provisioning.file-history-page.repository-not-found', 'Repository not found');
 
   return (
     <Page
@@ -28,11 +42,14 @@ export default function FileHistoryPage() {
     >
       <Page.Contents isLoading={false}>
         {notFound ? (
-          <EmptyState message={`Repository not found`} variant="not-found">
+          <EmptyState message={notFoundErrorMsg} variant="not-found">
             <Text element={'p'}>
-              <Trans i18nKey="provisioning.file-history-page.repository-config-exists-configuration">
-                Make sure the repository config exists in the configuration file.
-              </Trans>
+              {/* only show detail message if repoType is not git */}
+              {repoType !== 'git' && (
+                <Trans i18nKey="provisioning.file-history-page.repository-config-exists-configuration">
+                  Make sure the repository config exists in the configuration file.
+                </Trans>
+              )}
             </Text>
             <TextLink href={PROVISIONING_URL}>
               <Trans i18nKey="provisioning.file-history-page.back-to-repositories">Back to repositories</Trans>

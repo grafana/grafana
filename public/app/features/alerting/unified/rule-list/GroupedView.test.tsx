@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
@@ -10,7 +10,7 @@ import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 
 import { GroupedView } from './GroupedView';
-import { DATA_SOURCE_GROUP_PAGE_SIZE } from './PaginatedDataSourceLoader';
+import { FRONTED_GROUPED_PAGE_SIZE } from './paginationLimits';
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -38,7 +38,7 @@ beforeEach(() => {
 const ui = {
   dsSection: (ds: string | RegExp) => byRole('listitem', { name: ds }),
   namespace: (ns: string | RegExp) => byRole('treeitem', { name: ns }),
-  group: (group: string | RegExp) => byRole('treeitem', { name: group }),
+  group: (group: string | RegExp) => byRole('link', { name: group }),
   loadMoreButton: () => byRole('button', { name: /Show more/i }),
 };
 
@@ -67,7 +67,7 @@ describe('RuleList - GroupedView', () => {
     const mimirNamespace = await ui.namespace(/test-mimir-namespace/).find(mimirSection);
     const firstPageGroups = await ui.group(/test-group-([1-9]|[1-3][0-9]|40)/).findAll(mimirNamespace);
 
-    expect(firstPageGroups).toHaveLength(DATA_SOURCE_GROUP_PAGE_SIZE);
+    expect(firstPageGroups).toHaveLength(FRONTED_GROUPED_PAGE_SIZE);
     expect(firstPageGroups[0]).toHaveTextContent('test-group-1');
     expect(firstPageGroups[24]).toHaveTextContent('test-group-25');
     expect(firstPageGroups[39]).toHaveTextContent('test-group-40');
@@ -79,7 +79,7 @@ describe('RuleList - GroupedView', () => {
 
     const secondPageGroups = await ui.group(/test-group-(4[1-9]|[5-7][0-9]|80)/).findAll(mimirNamespace);
 
-    expect(secondPageGroups).toHaveLength(DATA_SOURCE_GROUP_PAGE_SIZE);
+    expect(secondPageGroups).toHaveLength(FRONTED_GROUPED_PAGE_SIZE);
     expect(secondPageGroups[0]).toHaveTextContent('test-group-41');
     expect(secondPageGroups[24]).toHaveTextContent('test-group-65');
     expect(secondPageGroups[39]).toHaveTextContent('test-group-80');
@@ -90,24 +90,26 @@ describe('RuleList - GroupedView', () => {
 
     const prometheusSection = await ui.dsSection(/Prometheus/).find();
     const promNamespace = await ui.namespace(/test-prometheus-namespace/).find(prometheusSection);
+    const loadMoreButton = ui.loadMoreButton();
 
     // initial load – should have all groups 1-40
-    await ui.group(/test-group-([1-9]|[1-3][0-9]|40)/).findAll(promNamespace);
+    await ui.group('test-group-40').find(promNamespace);
 
     // fetch page 2
-    const loadMoreButton = await ui.loadMoreButton().find(prometheusSection);
-    await waitFor(() => expect(loadMoreButton).toBeEnabled());
-
+    await user.click(await loadMoreButton.find(prometheusSection));
     // we should now have all groups 1-80
-    await ui.group(/test-group-([1-9]|[1-7][0-9]|80)/).findAll(promNamespace);
+    await ui.group('test-group-80').find(promNamespace);
 
-    // fetch third page
-    await waitFor(() => expect(loadMoreButton).toBeEnabled());
-    await user.click(loadMoreButton);
+    // fetch page 3
+    await user.click(await loadMoreButton.find(prometheusSection));
+    // we should now have all groups 1-120
+    await ui.group('test-group-120').find(promNamespace);
 
+    // fetch page 4
+    await user.click(await loadMoreButton.find(prometheusSection));
     // we should now have all groups 1-130
-    await ui.group(/test-group-([1-9]|[1-9][0-9]|1[0-2][0-9]|130)/).findAll(promNamespace);
+    await ui.group('test-group-130').find(promNamespace);
 
-    expect(loadMoreButton).not.toBeInTheDocument();
+    expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
   });
 });

@@ -2,10 +2,8 @@ package database
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -15,16 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -68,6 +67,33 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 
 func (d *dashboardStore) emitEntityEvent() bool {
 	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
+}
+
+func (d *dashboardStore) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboardsByLibraryPanelUID")
+	defer span.End()
+
+	connectedDashboards := make([]*dashboards.DashboardRef, 0)
+	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.store.WithDbSession(ctx, func(session *db.Session) error {
+		builder := db.NewSqlBuilder(d.cfg, d.features, d.store.GetDialect(), recursiveQueriesAreSupported)
+		builder.Write("SELECT d.*")
+		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
+		builder.Write(" INNER JOIN " + model.LibraryElementTableName + " AS le ON lec.element_id = le.id")
+		builder.Write(" INNER JOIN dashboard AS d ON lec.connection_id = d.id")
+		builder.Write(` WHERE le.uid=? AND le.org_id=?`, libraryPanelUID, orgID)
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&connectedDashboards); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return connectedDashboards, err
 }
 
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
@@ -324,34 +350,6 @@ func (d *dashboardStore) UnprovisionDashboard(ctx context.Context, id int64) err
 	})
 }
 
-func (d *dashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
-	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteOrphanedProvisionedDashboards")
-	defer span.End()
-
-	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var result []*dashboards.DashboardProvisioning
-
-		convertedReaderNames := make([]any, len(cmd.ReaderNames))
-		for index, readerName := range cmd.ReaderNames {
-			convertedReaderNames[index] = readerName
-		}
-
-		err := sess.NotIn("name", convertedReaderNames...).Find(&result)
-		if err != nil {
-			return err
-		}
-
-		for _, deleteDashCommand := range result {
-			err := d.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{ID: deleteDashCommand.DashboardID})
-			if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
 func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.Count")
 	defer span.End()
@@ -591,14 +589,20 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 
-		// remove all access control permission with folder scope
-		err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
-		if err != nil {
-			return err
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID)); err != nil {
+				return err
+			}
 		}
 	} else {
-		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
-			return err
+		// While migrating to unified storage, we might execute commands in both stores, so we delete the permissions
+		// only when the command is executed on both stores, thus we can skip it here.
+		if cmd.RemovePermissions {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -660,16 +664,6 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 	})
 
 	return err
-}
-
-func (d *dashboardStore) DeleteAllDashboards(ctx context.Context, orgID int64) error {
-	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteAllDashboards")
-	defer span.End()
-
-	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Where("org_id = ?", orgID).Delete(&dashboards.Dashboard{})
-		return err
-	})
 }
 
 // FIXME: Remove me and handle nested deletions in the service with the DashboardPermissionsService
@@ -793,58 +787,6 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 	return queryResult, err
 }
 
-func (d *dashboardStore) GetDashboardUIDByID(ctx context.Context, query *dashboards.GetDashboardRefByIDQuery) (*dashboards.DashboardRef, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboardUIDByID")
-	defer span.End()
-
-	us := &dashboards.DashboardRef{}
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = `SELECT uid, slug, folder_uid from dashboard WHERE Id=?`
-		exists, err := sess.SQL(rawSQL, query.ID).Get(us)
-		if err != nil {
-			return err
-		} else if !exists {
-			return dashboards.ErrDashboardNotFound
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return us, nil
-}
-
-func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboards")
-	defer span.End()
-
-	var dashboards = make([]*dashboards.Dashboard, 0)
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		if len(query.DashboardIDs) == 0 && len(query.DashboardUIDs) == 0 {
-			return star.ErrCommandValidationFailed
-		}
-
-		// remove soft deleted dashboards from the response
-		sess.Where("deleted IS NULL")
-
-		if len(query.DashboardIDs) > 0 {
-			sess.In("id", query.DashboardIDs)
-		} else {
-			sess.In("uid", query.DashboardUIDs)
-		}
-		if query.OrgID > 0 {
-			sess.Where("org_id = ?", query.OrgID)
-		}
-
-		err := sess.Find(&dashboards)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards, nil
-}
-
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.FindDashboards")
 	defer span.End()
@@ -882,7 +824,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title, TitleExactMatch: query.TitleExactMatch})
 	}
 
 	if len(query.Type) > 0 {
@@ -896,10 +838,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              d.store.GetDialect(),
-			OrgID:                orgID,
-			UIDs:                 query.FolderUIDs,
-			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+			Dialect: d.store.GetDialect(),
+			OrgID:   orgID,
+			UIDs:    query.FolderUIDs,
 		})
 	}
 
@@ -965,6 +906,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		if item.Term != "" {
 			item.Tags = append(item.Tags, item.Term)
 		}
+		if item.FolderTitle != "" {
+			item.FolderSlug = slugify.Slugify(item.FolderTitle)
+		}
 		seen[item.ID] = len(uniqueRes)
 		uniqueRes = append(uniqueRes, item)
 	}
@@ -995,39 +939,6 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 		return nil, err
 	}
 	return queryResult, nil
-}
-
-// CountDashboardsInFolder returns a count of all dashboards associated with the
-// given parent folder ID.
-func (d *dashboardStore) CountDashboardsInFolders(
-	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.CountDashboardsInFolders")
-	defer span.End()
-
-	if len(req.FolderUIDs) == 0 {
-		return 0, nil
-	}
-	var count int64
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		s := strings.Builder{}
-		args := make([]any, 0, 3)
-		s.WriteString("SELECT COUNT(*) FROM dashboard WHERE ")
-		if len(req.FolderUIDs) == 1 && req.FolderUIDs[0] == "" {
-			s.WriteString("folder_uid IS NULL")
-		} else {
-			s.WriteString(fmt.Sprintf("folder_uid IN (%s)", strings.Repeat("?,", len(req.FolderUIDs)-1)+"?"))
-			for _, folderUID := range req.FolderUIDs {
-				args = append(args, folderUID)
-			}
-		}
-		s.WriteString(" AND org_id = ? AND is_folder = ? AND deleted IS NULL")
-		args = append(args, req.OrgID, d.store.GetDialect().BooleanValue(false))
-		sql := s.String()
-		_, err := sess.SQL(sql, args...).Get(&count)
-		return err
-	})
-	return count, err
 }
 
 func (d *dashboardStore) DeleteDashboardsInFolders(

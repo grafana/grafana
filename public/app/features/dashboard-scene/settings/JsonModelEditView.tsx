@@ -2,17 +2,16 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import {
   NameAlreadyExistsError,
@@ -74,7 +73,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
       const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
       newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
@@ -85,7 +84,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         dashboard: jsonModel,
         meta: dashboard.state.meta,
       });
-      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
@@ -93,6 +92,9 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     }
 
     this.setState({ jsonText: this.getJsonText() });
+
+    // We also need to resume tracking changes since the change handler won't see any later edit
+    dashboard.resumeTrackingChanges();
   };
 
   static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {

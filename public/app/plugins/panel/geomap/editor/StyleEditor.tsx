@@ -4,7 +4,7 @@ import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
 import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem, FrameMatcher } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   ScaleDimensionConfig,
   ResourceDimensionConfig,
@@ -12,24 +12,14 @@ import {
   TextDimensionConfig,
   ScalarDimensionConfig,
 } from '@grafana/schema';
-import {
-  ColorPicker,
-  Field,
-  HorizontalGroup,
-  InlineField,
-  InlineFieldRow,
-  InlineLabel,
-  RadioButtonGroup,
-} from '@grafana/ui';
+import { ColorPicker, Field, Stack, InlineField, InlineFieldRow, InlineLabel, RadioButtonGroup } from '@grafana/ui';
 import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
-import {
-  ColorDimensionEditor,
-  ResourceDimensionEditor,
-  ScaleDimensionEditor,
-  ScalarDimensionEditor,
-  TextDimensionEditor,
-} from 'app/features/dimensions/editors';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
+import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
 import {
@@ -55,7 +45,6 @@ export interface StyleEditorOptions {
 type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
 
 export const StyleEditor = (props: Props) => {
-  const { t } = useTranslate();
   const { value, onChange, item } = props;
   const context = useMemo(() => {
     if (!item.settings?.frameMatcher) {
@@ -141,7 +130,12 @@ export const StyleEditor = (props: Props) => {
                       settings: {
                         resourceType: 'icon',
                         folderName: ResourceFolderName.Marker,
-                        placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                        placeholderText: hasTextLabel
+                          ? t('geomap.style-editor.placeholderText-select-symbol', 'Select a symbol')
+                          : t(
+                              'geomap.style-editor.placeholderText-select-symbol-or-add-text',
+                              'Select a symbol or add a text label'
+                            ),
                         placeholderValue: defaultStyleConfig.symbol.fixed,
                         showSourceRadio: false,
                         maxFiles,
@@ -231,7 +225,12 @@ export const StyleEditor = (props: Props) => {
                   settings: {
                     resourceType: MediaType.Icon,
                     folderName: ResourceFolderName.Marker,
-                    placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                    placeholderText: hasTextLabel
+                      ? t('geomap.style-editor.placeholderText-select-symbol', 'Select a symbol')
+                      : t(
+                          'geomap.style-editor.placeholderText-select-symbol-or-add-text',
+                          'Select a symbol or add a text label'
+                        ),
                     placeholderValue: defaultStyleConfig.symbol.fixed,
                     showSourceRadio: false,
                     maxFiles,
@@ -245,9 +244,15 @@ export const StyleEditor = (props: Props) => {
               value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
               onChange={onAlignVerticalChange}
               options={[
-                { value: VerticalAlign.Top, label: capitalize(VerticalAlign.Top) },
-                { value: VerticalAlign.Center, label: capitalize(VerticalAlign.Center) },
-                { value: VerticalAlign.Bottom, label: capitalize(VerticalAlign.Bottom) },
+                { value: VerticalAlign.Top, label: t('geomap.style-editor.vertical-align-options.label-top', 'Top') },
+                {
+                  value: VerticalAlign.Center,
+                  label: t('geomap.style-editor.vertical-align-options.label-center', 'Center'),
+                },
+                {
+                  value: VerticalAlign.Bottom,
+                  label: t('geomap.style-editor.vertical-align-options.label-bottom', 'Bottom'),
+                },
               ]}
             />
           </Field>
@@ -256,9 +261,18 @@ export const StyleEditor = (props: Props) => {
               value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
               onChange={onAlignHorizontalChange}
               options={[
-                { value: HorizontalAlign.Left, label: capitalize(HorizontalAlign.Left) },
-                { value: HorizontalAlign.Center, label: capitalize(HorizontalAlign.Center) },
-                { value: HorizontalAlign.Right, label: capitalize(HorizontalAlign.Right) },
+                {
+                  value: HorizontalAlign.Left,
+                  label: t('geomap.style-editor.horizontal-align-options.label-left', 'Left'),
+                },
+                {
+                  value: HorizontalAlign.Center,
+                  label: t('geomap.style-editor.horizontal-align-options.label-center', 'Center'),
+                },
+                {
+                  value: HorizontalAlign.Right,
+                  label: t('geomap.style-editor.horizontal-align-options.label-right', 'Right'),
+                },
               ]}
             />
           </Field>
@@ -316,7 +330,7 @@ export const StyleEditor = (props: Props) => {
 
       {hasTextLabel && (
         <>
-          <HorizontalGroup>
+          <Stack>
             <Field label={t('geomap.style-editor.label-font-size', 'Font size')}>
               <NumberValueEditor
                 value={value?.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
@@ -341,7 +355,7 @@ export const StyleEditor = (props: Props) => {
                 item={{} as FieldConfigPropertyItem}
               />
             </Field>
-          </HorizontalGroup>
+          </Stack>
           <Field label={t('geomap.style-editor.label-align', 'Align')}>
             <RadioButtonGroup
               value={value?.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}

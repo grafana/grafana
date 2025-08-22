@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 func newTestBackend(b testing.TB) resource.StorageBackend {
@@ -41,6 +42,7 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
+	tests.SkipIntegrationTestInShortMode(t)
 	opts := test.DefaultBenchmarkOptions()
 	if db.IsTestDbSQLite() {
 		opts.Concurrency = 1 // to avoid SQLite database is locked error
@@ -49,9 +51,12 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationBenchmarkResourceServer(t *testing.T) {
+	t.Skip("skipping slow test, causing CI to fail due to timeout")
+
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	opts := &test.BenchmarkOptions{
@@ -68,9 +73,11 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	// Create a new bleve backend
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		Root: tempDir,
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
+
+	t.Cleanup(search.CloseAllIndexes)
 
 	// Create a new resource backend
 	dbstore := db.InitTestDB(t)

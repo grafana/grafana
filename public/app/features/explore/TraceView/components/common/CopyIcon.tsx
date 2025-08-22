@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => ({
@@ -24,7 +24,6 @@ const getStyles = () => ({
     backgroundColor: 'transparent',
     border: 'none',
     color: 'inherit',
-    height: '100%',
     overflow: 'hidden',
     '&:focus': {
       backgroundColor: 'rgba(255, 255, 255, 0.25)',
@@ -44,7 +43,7 @@ export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: Prop
   const styles = useStyles2(getStyles);
 
   const [hasCopied, setHasCopied] = useState(false);
-  const { t } = useTranslate();
+
   const handleClick = () => {
     navigator.clipboard.writeText(copyText);
     setHasCopied(true);
@@ -52,7 +51,13 @@ export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: Prop
 
   return (
     <Tooltip content={hasCopied ? t('explore.trace-view.tooltip-copy-icon', 'Copied') : tooltipTitle}>
-      <Button className={cx(styles.CopyIcon)} type="button" icon={icon} onClick={handleClick} />
+      <Button
+        aria-label={t('explore.trace-view.aria-label-copy', 'Copy to clipboard')}
+        className={cx(styles.CopyIcon)}
+        type="button"
+        icon={icon}
+        onClick={handleClick}
+      />
     </Tooltip>
   );
 }

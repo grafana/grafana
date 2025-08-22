@@ -12,7 +12,7 @@ import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/serv
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import RuleList from './RuleList';

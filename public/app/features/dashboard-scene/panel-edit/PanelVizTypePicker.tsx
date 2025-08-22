@@ -5,7 +5,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
@@ -73,7 +73,6 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       setListMode(defaultTab);
     }
   }, [defaultTab, listMode, setListMode, supportedListModes]);
-  const { t } = useTranslate();
 
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
     {
@@ -97,7 +96,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
           placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
         />
         <Button
-          title={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+          aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
           variant="secondary"
           icon="angle-up"
           className={styles.closeButton}

@@ -77,6 +77,22 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
+  create_security_branch_grafana:
+    name: Create security branch (Grafana Security Mirror)
+    needs: setup
+    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
+    with:
+      release_branch: ${{ needs.setup.outputs.release_branch }}
+      security_branch_number: "01"
+      repository: grafana/grafana-security-mirror
+  create_security_branch_enterprise:
+    name: Create security branch (Enterprise)
+    needs: setup
+    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
+    with:
+      release_branch: ${{ needs.setup.outputs.release_branch }}
+      security_branch_number: "01"
+      repository: grafana/grafana-enterprise
   migrate_prs_grafana:
     needs:
       - setup

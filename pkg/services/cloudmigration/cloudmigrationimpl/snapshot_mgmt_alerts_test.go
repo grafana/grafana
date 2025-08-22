@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -102,14 +104,12 @@ func TestGetContactPoints(t *testing.T) {
 			},
 		}
 
-		defaultEmailContactPointCount := 1
-
 		createdContactPoints := createContactPoints(t, ctx, s, user)
 
 		contactPoints, err := s.getContactPoints(ctx, user)
 		require.NoError(t, err)
 		require.NotNil(t, contactPoints)
-		require.Len(t, contactPoints, len(createdContactPoints)+defaultEmailContactPointCount)
+		require.Len(t, contactPoints, len(createdContactPoints))
 	})
 
 	t.Run("it returns an error when user lacks permission to read contact point secrets", func(t *testing.T) {
@@ -410,6 +410,9 @@ func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Se
 func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, isPaused bool, ruleGroup string) models.AlertRule {
 	t.Helper()
 
+	// Ensure the folder exists before creating alert rules
+	createFolder(t, ctx, service, user, "folderUID", "Test Folder")
+
 	rule := models.AlertRule{
 		OrgID:        user.GetOrgID(),
 		Title:        fmt.Sprintf("Alert Rule SLO (Paused: %v) - %v", isPaused, ruleGroup),
@@ -437,6 +440,19 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 	require.NoError(t, err)
 
 	return createdRule
+}
+
+func createFolder(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, uid, title string) {
+	t.Helper()
+	_, err := service.folderService.Create(ctx, &folder.CreateFolderCommand{
+		OrgID:        user.GetOrgID(),
+		UID:          uid,
+		Title:        title,
+		SignedInUser: user,
+	})
+	if err != nil && !errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+		require.NoError(t, err)
+	}
 }
 
 func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, title string, rules []models.AlertRule) models.AlertRuleGroup {

@@ -175,12 +175,12 @@ func (dp *DataPipeline) GetCommandTypes() []string {
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
-func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
+func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
 	}
 
-	graph, err := s.buildDependencyGraph(req)
+	graph, err := s.buildDependencyGraph(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -194,8 +194,8 @@ func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, error) {
-	graph, err := s.buildGraph(req)
+func (s *Service) buildDependencyGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
+	graph, err := s.buildGraph(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +252,7 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 }
 
 // buildGraph creates a new graph populated with nodes for every query.
-func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
+func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for i, query := range req.Queries {
@@ -287,7 +287,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
-			node, err = buildCMDNode(rn, s.features, s.cfg)
+			node, err = buildCMDNode(ctx, rn, s.features, s.cfg)
 		case TypeMLNode:
 			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
@@ -328,14 +328,6 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
-				_, ok := cmdNode.Command.(*SQLCommand)
-				// If the SSE is a SQL expression, and the node can't be found, it might be a CTE table name
-				// CTEs are calculated during the evaluation of the SQL, so we won't have a node for them
-				// So we `continue` in order to support CTE functionality
-				// TODO: remove CTE table names from the list of table names during parsing of the SQL
-				if ok {
-					continue
-				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 

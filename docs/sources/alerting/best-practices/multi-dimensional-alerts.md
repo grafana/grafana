@@ -19,9 +19,9 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
   table-data-example:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/table-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/multi-dimensional-alerts/table-data/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
   annotations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
@@ -116,7 +116,6 @@ You can quickly experiment with multi-dimensional alerts using the [**TestData**
 1. Go to **Alerting** and create an alert rule
 1. Select **TestData** as the data source.
 1. Configure the TestData scenario
-
    - Scenario: **Random Walk**
    - Labels: `cpu=cpu-$seriesIndex`
    - Series count: 3
@@ -147,7 +146,7 @@ For demo purposes, this example uses the **Advanced mode** with a **Reduce** exp
 
    {{< figure src="/media/docs/alerting/using-expressions-with-multiple-series.png" max-width="750px" caption="The alert condition evaluates the reduced value for each alert instance and shows whether each instance is Firing or Normal." alt="Alert preview using a Reduce expression and a threshold condition" >}}
 
-   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/cemqwfn334npce/view" >}}
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/dep7osljedaf4a/view" >}}
 
 ## Learn more
 
@@ -155,5 +154,6 @@ This example shows how Grafana Alerting implements a multi-dimensional alerting 
 
 For additional learning resources, check out:
 
-- [Get started with Grafana Alerting – Part 2](https://grafana.com/tutorials/alerting-get-started-pt2/)
+- [Get started tutorial – Create multi-dimensional alerts and route them](https://grafana.com/tutorials/alerting-get-started-pt2/)
 - [Example of alerting on tabular data](ref:table-data-example)
+  Update the interval of a rule group or modify the rules of the group.

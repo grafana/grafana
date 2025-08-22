@@ -1076,7 +1076,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
         "operationId": "RouteConvertPrometheusCortexGetRules",
@@ -1110,7 +1111,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
         "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
@@ -1136,7 +1138,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
         "operationId": "RouteConvertPrometheusCortexGetNamespace",
@@ -1178,7 +1181,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
         "operationId": "RouteConvertPrometheusCortexPostRuleGroup",
@@ -1248,7 +1252,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
         "operationId": "RouteConvertPrometheusCortexDeleteNamespace",
@@ -1282,7 +1287,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusCortexGetRuleGroup",
@@ -1326,7 +1332,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusCortexDeleteRuleGroup",
@@ -1360,13 +1367,131 @@
         }
       }
     },
+    "/convert/api/v1/alerts": {
+      "get": {
+        "description": "Returns a specific imported Alertmanager configuration by its identifier.",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Get extra Alertmanager configuration from Grafana.",
+        "operationId": "RouteConvertPrometheusGetAlertmanagerConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Unique identifier for the Alertmanager configuration to retrieve.",
+            "name": "x-grafana-alerting-config-identifier",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertmanagerUserConfig",
+            "schema": {
+              "$ref": "#/definitions/AlertmanagerUserConfig"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "This endpoint allows importing Alertmanager configurations to Grafana. Each configuration is identified by\na unique identifier and can include merge matchers to select which alerts should be handled by\nthis specific configuration.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Load extra Alertmanager configuration to Grafana and merge it with the existing configuration.",
+        "operationId": "RouteConvertPrometheusPostAlertmanagerConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Unique identifier for this Alertmanager configuration.\nThis identifier is used to distinguish between different imported configurations.",
+            "name": "x-grafana-alerting-config-identifier",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "example": "'environment=production,team=backend' will only apply this",
+            "description": "Comma-separated list of label matchers in 'key=value' format.\nThese matchers determine which alerts this configuration should handle.",
+            "name": "x-grafana-alerting-merge-matchers",
+            "in": "header"
+          },
+          {
+            "description": "Alertmanager configuration including routing rules, receivers, and template files",
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertmanagerUserConfig"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        },
+        "x-raw-request": "true"
+      },
+      "delete": {
+        "description": "The main Grafana Alertmanager configuration remains unaffected.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Delete extra Alertmanager configuration from Grafana by its identifier.",
+        "operationId": "RouteConvertPrometheusDeleteAlertmanagerConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Unique identifier for the Alertmanager configuration to delete.",
+            "name": "x-grafana-alerting-config-identifier",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
     "/convert/prometheus/config/v1/rules": {
       "get": {
         "produces": [
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
         "operationId": "RouteConvertPrometheusGetRules",
@@ -1400,7 +1525,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
         "operationId": "RouteConvertPrometheusPostRuleGroups",
@@ -1426,7 +1552,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).",
         "operationId": "RouteConvertPrometheusGetNamespace",
@@ -1468,7 +1595,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.",
         "operationId": "RouteConvertPrometheusPostRuleGroup",
@@ -1538,7 +1666,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.",
         "operationId": "RouteConvertPrometheusDeleteNamespace",
@@ -1572,7 +1701,8 @@
           "application/yaml"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusGetRuleGroup",
@@ -1616,7 +1746,8 @@
           "application/json"
         ],
         "tags": [
-          "convert_prometheus"
+          "convert_prometheus",
+          "stable"
         ],
         "summary": "Deletes a specific rule group if it was imported from a Prometheus-compatible source.",
         "operationId": "RouteConvertPrometheusDeleteRuleGroup",
@@ -4695,6 +4826,9 @@
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
         "queriedDatasourceUIDs": {
           "type": "array",
           "items": {
@@ -4744,6 +4878,21 @@
         "numExternalAlertmanagers": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertmanagerUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "description": "Configuration for Alertmanager in YAML format.\nin: body",
+          "type": "string"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -5278,6 +5427,26 @@
         },
         "wechat_configs": {
           "$ref": "#/definitions/WechatConfig"
+        }
+      }
+    },
+    "ExtraConfiguration": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "type": "string"
+        },
+        "identifier": {
+          "type": "string"
+        },
+        "merge_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -5999,6 +6168,12 @@
         "alertmanager_config": {
           "$ref": "#/definitions/GettableApiAlertingConfig"
         },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
+        },
         "template_file_provenances": {
           "type": "object",
           "additionalProperties": {
@@ -6203,7 +6378,11 @@
       "type": "object",
       "properties": {
         "equal": {
-          "$ref": "#/definitions/LabelNames"
+          "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "source_match": {
           "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
@@ -6324,17 +6503,6 @@
         "Name": {
           "type": "string"
         }
-      }
-    },
-    "LabelName": {
-      "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-      "type": "string"
-    },
-    "LabelNames": {
-      "type": "array",
-      "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-      "items": {
-        "$ref": "#/definitions/LabelName"
       }
     },
     "LabelSet": {
@@ -7210,6 +7378,12 @@
         "alertmanager_config": {
           "$ref": "#/definitions/PostableApiAlertingConfig"
         },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
+        },
         "template_files": {
           "type": "object",
           "additionalProperties": {
@@ -8001,6 +8175,9 @@
         },
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "query": {
           "type": "string"

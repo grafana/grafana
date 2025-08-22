@@ -6,286 +6,306 @@
     "advanced-resource-picker": {
       "aria-label-add": "Hinzufügen",
       "aria-label-remove": "Entfernen",
-      "button-add-resource": "",
-      "button-add-resource-uri": "",
+      "button-add-resource": "Ressource hinzufügen",
+      "button-add-resource-uri": "Ressourcen-URI hinzufügen",
       "label-namespace": "Namensraum",
-      "label-region": "",
-      "label-resource-group": "",
-      "label-resource-name": "",
-      "label-resource-number": "",
-      "label-resource-uri": "",
-      "label-subscription": "",
+      "label-region": "Region",
+      "label-resource-group": "Ressourcengruppe",
+      "label-resource-name": "Ressourcenname",
+      "label-resource-number": "Ressource {{resourceNum}}",
+      "label-resource-uri": "Ressourcen-URI(s) ",
+      "label-subscription": "Abonnement",
       "placeholder-resource-name": "Name",
-      "tooltip-region": "",
-      "tooltip-resource-uri": ""
+      "tooltip-region": "Die Code-Region der Ressource. Optional für eine Ressource, aber zwingend notwendig bei der Auswahl mehrerer Ressourcen.",
+      "tooltip-resource-uri": "Bearbeiten Sie die <2>Ressourcen-URI</2> manuell. Unterstützt die Verwendung mehrerer Vorlagenvariablen (Beispiel: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
-      "aria-label-aggregate-function": "",
+      "aria-label-aggregate-function": "Aggregatfunktion",
       "aria-label-column": "Spalte",
       "aria-label-remove": "Entfernen",
       "label-percentile": "VON"
     },
     "aggregate-section": {
-      "label-aggregate": "",
-      "tooltip-aggregate": ""
+      "label-aggregate": "Aggregat",
+      "tooltip-aggregate": "Führen Sie Berechnungen über mehrere Datenzeilen durch, z. B. Anzahl, Summe, Durchschnitt, Minimum, Maximum, Standardabweichung oder Perzentile."
     },
     "aggregation-field": {
-      "label-aggregation": ""
+      "label-aggregation": "Aggregation"
     },
     "app-registration-credentials": {
-      "aria-label-azure-cloud": "",
-      "aria-label-client-id": "",
-      "aria-label-client-secret": "",
-      "aria-label-symbol-client-secret": "",
-      "aria-label-tenant-id": "",
-      "label-azure-cloud": "",
-      "label-client-id": "",
-      "label-client-secret": "",
-      "label-symbol-client-secret": "",
-      "label-tenant-id": "",
-      "placeholder-symbol-client-secret": "",
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "Client-ID",
+      "aria-label-client-secret": "Client Secret",
+      "aria-label-symbol-client-secret": "Client Secret",
+      "aria-label-tenant-id": "Tenant-ID",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "ID der Anwendung (Client)",
+      "label-client-secret": "Client Secret",
+      "label-symbol-client-secret": "Client Secret",
+      "label-tenant-id": "ID des Verzeichnisses (Tenant)",
+      "placeholder-symbol-client-secret": "konfiguriert",
       "reset-symbol-client-secret": "Zurücksetzen"
     },
     "azure-cheat-sheet": {
-      "aria-label-raw-query": "",
-      "aria-label-use-query": "",
-      "button-use-query": "",
-      "label-categories": "",
-      "label-query-results": "",
-      "placeholder-all-categories": "",
-      "placeholder-search-logs": "",
+      "aria-label-raw-query": "{{queryDisplayName}}-Raw-Abfrage",
+      "aria-label-use-query": "Diese Abfrage-Schaltfläche nutzen",
+      "button-use-query": "Diese Abfrage nutzen",
+      "label-categories": "Kategorien",
+      "label-query-results": "Abfrageergebnisse: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "Es können nicht alle Kategorien aufgelistet werden",
+      "placeholder-all-categories": "Alle Kategorien",
+      "placeholder-search-logs": "Logs-Abfragen durchsuchen",
       "text-loading": "Wird geladen ..."
     },
     "azure-cheat-sheet-modal": {
-      "aria-label-kick-start": "",
-      "title-kick-start": ""
+      "aria-label-kick-start": "Starten Sie Ihr Abfrage-Modal",
+      "title-kick-start": "Starten Sie Ihre Abfrage"
     },
     "azure-credentials-form": {
-      "description-authentication": "",
+      "description-authentication": "Wählen Sie die Art der Authentifizierung für Azure-Dienste",
       "label-authentication": "Authentifizierung",
       "title-authentication": "Authentifizierung"
     },
     "basic-logs-toggle": {
-      "aria-label-enable-basic-logs": "",
-      "description-basic-logs": "",
-      "label-enable-basic-logs": ""
+      "aria-label-enable-basic-logs": "Basis-Logs",
+      "description-basic-logs": "Wenn Sie diese Funktion aktivieren, fallen pro Abfrage Azure Monitor-Kosten für Dashboard-Panels an, die Tabellen abfragen, die für <2>Basis-Logs</2> konfiguriert sind.",
+      "label-enable-basic-logs": "Basis-Logs aktivieren"
     },
     "config-editor": {
       "description-additional-settings": "",
-      "description-request-timeout": "",
-      "title-additional-settings": "Zusätzliche Einstellungen",
-      "title-request-timeout": ""
+      "title-additional-settings": "Zusätzliche Einstellungen"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "",
-      "body-service-credentials": "",
-      "description-authentication": "",
-      "description-service-credentials": "",
+      "alert-fallback-credentials-disabled": "Fallback-Anmeldedaten wurden deaktiviert. Da die nutzerbasierte Authentifizierung grundsätzlich nur Anfragen mit einem Nutzer im Geltungsbereich unterstützt, funktionieren Funktionen wie Warnungen, aufgezeichnete Abfragen oder die Berichtserstellung nicht wie erwartet. Weitere Informationen finden Sie in der <2>Dokumentation</2>.",
+      "body-service-credentials": "Die nutzerbasierte Authentifizierung unterstützt grundsätzlich keine Grafana-Funktionen, die Anfragen an die Datenquelle stellen, ohne dass der Anfrage die Daten eines Nutzers zur Verfügung stehen. Ein Beispiel hierfür sind Warnungen. Wenn Sie sicherstellen möchten, dass Funktionen, die keinen Nutzer im Kontext der Anfrage haben, dennoch funktionieren, geben Sie bitte weiter unten die Fallback-Anmeldedaten an.",
+      "description-authentication": "Wählen Sie die Art der Authentifizierung für Azure-Dienste",
+      "description-service-credentials": "Wählen Sie, ob die Fallbackdienst-Anmeldedaten für diese Datenquelle aktiviert oder deaktiviert werden",
       "label-authentication": "Authentifizierung",
-      "label-service-credentials": "",
-      "note-service-credentials": "",
-      "title-fallback-credentials-disabled": "",
-      "title-fallback-service-credentials": "",
-      "title-service-credentials": ""
+      "label-service-credentials": "Dienst-Anmeldedaten",
+      "note-service-credentials": "Hinweis: Funktionen wie Warnungen werden auf die Zugriffsebene der Fallback-Anmeldedaten und nicht auf den Nutzer beschränkt. Dies könnte unter Nutzern für Verwirrung sorgen und sollte geklärt werden.",
+      "title-fallback-credentials-disabled": "Fallback-Anmeldedaten deaktiviert",
+      "title-fallback-service-credentials": "Fallbackdienst-Anmeldedaten",
+      "title-service-credentials": "Dienst-Anmeldedaten"
     },
     "default-subscription": {
-      "aria-label-default-subscription": "",
-      "label-default-subscription": "",
-      "load-subscriptions": ""
+      "aria-label-default-subscription": "Standard-Abonnement",
+      "label-default-subscription": "Standard-Abonnement",
+      "load-subscriptions": "Abonnements laden"
     },
     "dimension-fields": {
       "aria-label-remove": "Entfernen",
-      "label-dimensions": "",
+      "label-dimensions": "Abmessungen",
       "placeholder-field": "Feld",
       "placeholder-operation": "Operation",
       "placeholder-select-value": "Wert auswählen",
-      "placeholder-select-values": ""
+      "placeholder-select-values": "Wert(e) auswählen"
     },
     "editor-for-query-type": {
-      "body-unknown-query-type": "",
-      "title-unknown-query-type": ""
+      "body-unknown-query-type": "{{type}} wurde mit Grafana 9 eingestellt. Weitere Informationen zur Migration Ihrer Abfragen finden Sie im <3>Hinweis zur Einstellung</3>. Dies ist die aktuelle Abfragedefinition:",
+      "title-unknown-query-type": "Unbekannter Abfragetyp"
     },
     "filter": {
-      "aria-label-remove-filter": "",
-      "placeholder-property": "",
+      "aria-label-remove-filter": "Filter entfernen",
+      "placeholder-property": "Eigenschaft",
       "placeholder-value": "Wert"
     },
     "filter-item": {
       "aria-label-column": "Spalte",
-      "aria-label-column-value": "",
+      "aria-label-column-value": "Spaltenwert",
       "aria-label-operator": "Bediener",
-      "label-or": ""
+      "aria-label-remove-filter": "",
+      "label-or": "ODER"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Gruppe hinzufügen",
       "label-and": "UND",
-      "label-filters": "",
-      "tooltip-filters": ""
+      "label-filters": "Filter",
+      "tooltip-filters": "Grenzen Sie die Ergebnisse ein, indem Sie Bedingungen für bestimmte Spalten anwenden."
     },
     "filters": {
-      "label-filters": ""
+      "label-filters": "Filter"
     },
     "format-as-field": {
-      "label-format-as": ""
+      "label-format-as": "Formatieren als"
     },
     "fuzzy-search": {
-      "aria-label-select-column": "",
-      "label-fuzzy-search": "",
-      "placeholder-search-team": "",
-      "tooltip-fuzzy-search": ""
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
+      "aria-label-select-column": "Spalte auswählen",
+      "label-fuzzy-search": "Unscharfe Suche",
+      "placeholder-search-team": "Suchbegriff eingeben",
+      "tooltip-fuzzy-search": "Finden Sie ungefähre Textübereinstimmungen mit Toleranz für unterschiedliche Schreibweisen. Standardmäßig scannt die unscharfe Suche alle Spalten (*) in der gesamten Tabelle, nicht nur bestimmte Felder."
     },
     "grafana-template-variable-fn-input": {
-      "label-grafana-template-variable": "",
-      "placeholder-grafana-template-variable": ""
+      "label-grafana-template-variable": "Vorlagenvariablen-Funktion für Grafana",
+      "placeholder-grafana-template-variable": "Geben Sie eine Vorlagenvariablen-Funktion für Grafana ein, z. B. {{example}}"
     },
     "group-by-item": {
       "aria-label-column": "Spalte",
       "aria-label-remove": "Entfernen"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Gruppieren nach",
-      "tooltip-group-by": ""
+      "tooltip-group-by": "Organisieren Sie die Ergebnisse in Kategorien, basierend auf den angegebenen Spalten. „Gruppieren nach“ kann unabhängig verwendet werden, um eindeutige Werte in ausgewählten Spalten aufzulisten, oder mit Aggregatfunktionen kombiniert werden, um zusammenfassende Statistiken für jede Gruppe zu erstellen. Wenn es allein verwendet wird, gibt es unterschiedliche Kombinationen der angegebenen Spalten zurück."
     },
     "kql-preview": {
       "button-hide": "Ausblenden",
       "button-show": "Anzeigen",
-      "label-query-preview": ""
+      "label-query-preview": "Abfragevorschau"
     },
     "legend-format-field": {
-      "label-legend-format": "",
-      "placeholder-legend-format": ""
+      "label-legend-format": "Legendenformat",
+      "placeholder-legend-format": "Alias-Muster"
     },
     "limit-section": {
       "label-limit": "Limit",
-      "placeholder-limit": "",
-      "tooltip-limit": ""
+      "placeholder-limit": "Limit eingeben",
+      "tooltip-limit": "Beschränken Sie die Zahl der zurückgegebenen Zeilen (Standard ist 1000)."
     },
     "logs-management": {
-      "description-basic-logs-queries": "",
+      "body-basic-logs-queries": "Sind Sie sicher, dass Sie zu Basic-Logs wechseln möchten?",
+      "confirmText-confirm": "Bestätigen",
+      "description-basic-logs-queries": "Für Abfragen von Basis-Logs fallen Kosten an, je nach der Menge der gescannten Daten.",
       "label-logs": "Logs",
-      "title-basic-logs-queries": "",
-      "tooltip-logs": ""
+      "title-basic-logs-queries": "Abfragen von Basis-Logs",
+      "tooltip-logs": "Gibt an, ob eine Basis- oder Analyse-Logs-Abfrage ausgeführt wird."
     },
     "logs-query-builder": {
-      "title-no-tables": ""
+      "title-no-tables": "Ressource erfolgreich geladen, aber ohne Tabellen"
     },
     "logs-query-editor": {
-      "learn-more": "",
-      "view-query": ""
+      "learn-more": "Mehr erfahren",
+      "view-query": "Abfrage im Azure Portal anzeigen"
     },
     "metric-name-field": {
       "label-metric": "Metrik"
     },
     "metric-namespace-field": {
-      "label-metric-namespace": ""
+      "label-metric-namespace": "Metrik-Namensraum"
     },
     "nested-row": {
       "text-loading": "Wird geladen ..."
     },
     "order-by-section": {
-      "aria-label-order-by-column": "",
-      "aria-label-order-direction": "",
-      "label-by": "",
-      "label-order-by": "",
-      "tooltip-order-by": ""
+      "aria-label-add-order-by": "",
+      "aria-label-order-by-column": "Nach Spalte ordnen",
+      "aria-label-order-direction": "Ordnungsrichtung",
+      "aria-label-remove-order-by": "",
+      "label-by": "NACH",
+      "label-order-by": "Ordnen nach",
+      "tooltip-order-by": "Sortieren Sie die Ergebnisse auf der Grundlage einer oder mehrerer Spalten in aufsteigender oder absteigender Reihenfolge."
     },
     "query-editor": {
-      "alert-error-occurred": ""
+      "alert-error-occurred": "Bei der Anfrage von Metadaten von Azure Monitor ist ein Fehler aufgetreten"
     },
     "query-header": {
-      "aria-label-kick-start": "",
-      "button-kick-start-your-query": "",
+      "aria-label-kick-start": "Azure-Logs starten Ihre Abfrage-Schaltfläche",
+      "body-switching-to-builder": "Wenn Sie zum Builder wechseln, wird Ihre aktuelle KQL-Abfrage verworfen und der KQL-Editor gelöscht. Sind Sie sicher?",
+      "body-switching-to-kql": "Wenn Sie zu KQL wechseln, werden Ihre aktuellen Builder-Einstellungen verworfen. Sind Sie sicher?",
+      "button-kick-start-your-query": "Starten Sie Ihre Abfrage",
       "button-run-query": "Abfrage ausführen",
-      "label-service": "",
-      "placeholder-service": "",
-      "title-switch-mode": ""
+      "confirmText-switch-to": "Wechseln zu {{newMode}}",
+      "editor-modes": {
+        "label-builder": "Builder",
+        "label-kql": "KQL"
+      },
+      "label-service": "Dienst",
+      "placeholder-service": "Dienst …",
+      "title-switch-mode": "Editor-Modus wechseln?"
     },
     "raw-query": {
-      "aria-label-selector": ""
+      "aria-label-selector": "Selektor"
     },
     "resource-field": {
-      "label-resource": "",
-      "title-select-resource": ""
+      "label-resource": "Ressource",
+      "title-select-resource": "Ressource auswählen"
     },
     "resource-label": {
-      "select-resource": ""
+      "select-resource": "Ressource auswählen"
     },
     "resource-picker": {
       "button-apply": "Anwenden",
       "button-cancel": "Abbrechen",
       "header-location": "Standort",
-      "header-scope": "",
+      "header-scope": "Bereich",
       "header-type": "Typ",
-      "heading-selection": "",
-      "result-limit": "",
+      "heading-selection": "Auswahl",
+      "result-limit": "Die ersten {{numResults}} Ergebnisse werden angezeigt",
       "text-loading": "Wird geladen ...",
-      "text-no-resources": "",
-      "title-error-occurred": ""
+      "text-no-resources": "Keine Ressourcen gefunden",
+      "title-error-occurred": "Bei der Anforderung von Ressourcen von Azure Monitor ist ein Fehler aufgetreten"
+    },
+    "scope-selector": {
+      "label": "Bereich"
     },
     "search": {
-      "aria-label-resource-search": "",
-      "placeholder-resource-search": ""
+      "aria-label-resource-search": "Ressourcensuche",
+      "placeholder-resource-search": "Suchen Sie eine Ressource"
     },
     "subscription-field": {
-      "label-subscriptions": "",
-      "validation-subscriptions": ""
+      "label-subscriptions": "Abonnements",
+      "validation-subscriptions": "Es muss mindestens ein Abonnement ausgewählt werden."
     },
     "table-section": {
-      "aria-label-columns": "",
+      "aria-label-columns": "Spalten",
       "aria-label-table": "Tabelle",
-      "label-columns": "",
+      "label-columns": "Spalten",
       "label-table": "Tabelle",
-      "placeholder-select-columns": "",
-      "placeholder-select-table": ""
+      "placeholder-select-columns": "Spalten auswählen",
+      "placeholder-select-table": "Tabelle auswählen",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
-      "label-time-grain": ""
+      "label-time-grain": "Zeitgranularität"
     },
     "time-management": {
-      "label-time-column": "",
-      "label-time-range": "",
-      "tooltip-time-column": "",
-      "tooltip-time-range": ""
+      "label-time-column": "Zeitspalte",
+      "label-time-range": "Zeitbereich",
+      "tooltip-time-column": "<0>Gibt die Zeitspalte an, die zum Filtern verwendet wird. Standardmäßig wird die erste Tabelle <1>timeSpan</1>, die erste gefundene Spalte <3>datetime</3> oder <5>TimeGenerated</5> verwendet.</0>",
+      "tooltip-time-range": "<0>Gibt den Zeitbereich an, der für die Abfrage verwendet wird. Die Option <1>Abfrage</1> verwendet nur die in der Abfrage angegebenen Zeitbereiche. <3>Dashboard</3> verwendet nur den Zeitbereich von Grafana. Im Logs-Builder-Modus wird nur die Zeit des Dashboards verwendet.</0>"
     },
     "top-field": {
-      "label-top": ""
+      "label-top": "Oben"
     },
     "trace-type-field": {
-      "label-event-type": "",
-      "placeholder-event-type": ""
+      "label-event-type": "Ereignistyp",
+      "placeholder-event-type": "Ereignistypen auswählen"
     },
     "traces-query-editor": {
-      "label-operation-id": ""
+      "label-operation-id": "Operations-ID"
     },
     "user-auth-alert": {
-      "body-unsupported-auth": "",
-      "title-unsupported-auth": ""
+      "body-unsupported-auth": "Die Nutzung dieser Datenquelle erfordert Ihre Authentifizierung über Azure Entra (ehemals Azure Active Directory). Weitere Informationen finden Sie in der <2>Dokumentation</2>.",
+      "title-unsupported-auth": "Nicht unterstützter Authentifizierungsanbieter"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "",
-      "title-no-fallback-credentials": ""
+      "body-no-fallback-credentials": "Datenquellen-Backend-Funktionen (wie Warnungen) erfordern für ihre Funktion Dienst-Anmeldedaten. Diese Datenquelle ist ohne Fallback für Dienst-Anmeldedaten konfiguriert oder die Fallback-Funktion ist deaktiviert. Weitere Informationen finden Sie in der <2>Dokumentation</2>.",
+      "title-no-fallback-credentials": "Keine Fallback-Anmeldedaten verfügbar"
     },
     "variable-editor": {
-      "aria-label-select-custom-namespace": "",
+      "aria-label-select-custom-namespace": "Benutzerdefinierten Namensraum auswählen",
       "aria-label-select-namespace": "Namensraum auswählen",
-      "aria-label-select-query-type": "",
-      "aria-label-select-region": "",
-      "aria-label-select-resource": "",
-      "aria-label-select-resource-group": "",
-      "aria-label-select-subscription": "",
-      "label-custom-namespace": "",
+      "aria-label-select-query-type": "Abfragetyp auswählen",
+      "aria-label-select-region": "Region auswählen",
+      "aria-label-select-resource": "Ressource auswählen",
+      "aria-label-select-resource-group": "Ressourcengruppe auswählen",
+      "aria-label-select-subscription": "Abonnement auswählen",
+      "label-custom-namespace": "Benutzerdefinierter Namensraum",
       "label-namespace": "Namensraum",
-      "label-query-type": "",
-      "label-region": "",
-      "label-resource": "",
-      "label-resource-group": "",
-      "label-resource-type": "",
-      "label-subscription": "",
-      "placeholder-custom-namespace": "",
-      "placeholder-namespace": "",
-      "placeholder-region": "",
-      "placeholder-resource-group": "",
-      "title-error-occurred": ""
+      "label-query-type": "Abfragetyp",
+      "label-region": "Region",
+      "label-resource": "Ressource",
+      "label-resource-group": "Ressourcengruppe",
+      "label-resource-type": "Ressourcentyp",
+      "label-subscription": "Abonnement",
+      "placeholder-custom-namespace": "Optional",
+      "placeholder-namespace": "Optional",
+      "placeholder-region": "Optional",
+      "placeholder-resource-group": "Optional",
+      "title-error-occurred": "Bei der Anfrage von Metadaten von Azure Monitor ist ein Fehler aufgetreten"
     }
   }
 }

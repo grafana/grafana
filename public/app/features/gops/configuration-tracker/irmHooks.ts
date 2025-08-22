@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useGrafanaContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useNotificationPolicyRoute } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
@@ -305,8 +305,9 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                   },
                   label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
                   urlLinkOnDone: {
-                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/apps/grate.irm.slack`,
                   },
+                  labelOnDone: 'View',
                 },
                 done: isChatOpsInstalled,
               },

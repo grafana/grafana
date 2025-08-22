@@ -65,9 +65,9 @@ describe('Prometheus query editor', () => {
     // check options
     e2e.components.DataSource.Prometheus.queryEditor.legend().scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.format().scrollIntoView().should('exist');
-    cy.get(`[data-test-id="prometheus-step"]`).scrollIntoView().should('exist');
+    e2e.components.DataSource.Prometheus.queryEditor.step().scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
-    cy.get(`[data-testid="prometheus-exemplars"]`).scrollIntoView().should('exist');
+    e2e.components.DataSource.Prometheus.queryEditor.exemplars().scrollIntoView().should('exist');
   });
 
   describe('Code editor', () => {
@@ -138,12 +138,11 @@ describe('Prometheus query editor', () => {
 
     it('can select a metric and provide a hint', () => {
       navigateToEditor('Builder', 'prometheusBuilder');
-
       getResources();
-
-      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click().type('metric1');
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist').click();
+      cy.wait('@getMetadata');
+      e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().type('metric1');
       selectOption('metric1');
-
       e2e.components.DataSource.Prometheus.queryEditor.builder.hints().contains('hint: add rate');
     });
 

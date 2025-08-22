@@ -3,9 +3,9 @@ import { ReactElement, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, VerticalGroup } from '@grafana/ui';
+import { CollapsableSection, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { VariableModel } from '../types';
@@ -56,14 +56,14 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
     <div className={style.container}>
       <CollapsableSection label={<CollapseLabel />} isOpen={open} onToggle={onToggle}>
         {loading && (
-          <VerticalGroup justify="center">
-            <HorizontalGroup justify="center">
+          <Stack direction="column" justifyContent="center">
+            <Stack justifyContent="center">
               <span>
                 <Trans i18nKey="variables.variables-unknown-table.loading">Loading...</Trans>
               </span>
               <Spinner />
-            </HorizontalGroup>
-          </VerticalGroup>
+            </Stack>
+          </Stack>
         )}
         {!loading && usages && (
           <>
@@ -78,7 +78,6 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
 
 function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <h5>

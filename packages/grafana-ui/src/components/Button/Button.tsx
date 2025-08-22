@@ -4,41 +4,57 @@ import * as React from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { ComponentSize, IconSize, IconType } from '../../types';
-import { IconName } from '../../types/icon';
+import { IconName, IconSize, IconType } from '../../types/icon';
+import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
-import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
-type CommonProps = {
+type BaseProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
   icon?: IconName | React.ReactElement;
   className?: string;
-  children?: React.ReactNode;
   fullWidth?: boolean;
   type?: string;
-  /** Tooltip content to display on hover */
   tooltip?: PopoverContent;
-  /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
   /** Position of the icon */
   iconPlacement?: 'left' | 'right';
 };
+
+// either aria-label or tooltip is required for buttons without children
+type NoChildrenAriaLabel = BaseProps & {
+  children?: never;
+  'aria-label': string;
+};
+type NoChildrenTooltip = BaseProps & {
+  children?: never;
+  tooltip: PopoverContent;
+  tooltipPlacement?: TooltipPlacement;
+};
+
+type BasePropsWithChildren = BaseProps & {
+  children: React.ReactNode;
+};
+
+type CommonProps = BasePropsWithChildren | NoChildrenTooltip | NoChildrenAriaLabel;
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
+      'aria-label': ariaLabel,
       variant = 'primary',
       size = 'md',
       fill = 'solid',
@@ -91,6 +107,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={hasTooltip && disabled}
         disabled={!hasTooltip && disabled}
         ref={tooltip ? undefined : ref}
+        aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
         {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
@@ -112,13 +129,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-export type ButtonLinkProps = CommonProps &
-  ButtonHTMLAttributes<HTMLButtonElement> &
-  AnchorHTMLAttributes<HTMLAnchorElement>;
+export type ButtonLinkProps = ButtonProps & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'aria-label'>;
 
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   (
     {
+      'aria-label': ariaLabel,
       variant = 'primary',
       size = 'md',
       fill = 'solid',
@@ -163,6 +179,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
         ref={tooltip ? undefined : ref}
+        aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
         <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}

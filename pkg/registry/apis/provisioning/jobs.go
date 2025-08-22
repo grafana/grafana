@@ -11,14 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 type jobsConnector struct {
 	repoGetter RepoGetter
 	jobs       jobs.Queue
-	historic   jobs.History
+	historic   jobs.HistoryReader
 }
 
 func (*jobsConnector) New() runtime.Object {
@@ -49,17 +49,17 @@ func (c *jobsConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	cfg := repo.Config()
-
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx = r.Context()
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if r.Method == http.MethodGet {
+			// GET operations: allow even for unhealthy repositories
+			repo, err := c.repoGetter.GetRepository(ctx, name)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			cfg := repo.Config()
 			if idx > 0 {
 				jobUID := r.URL.Path[idx+len(prefix):]
 				if !ValidUUID(jobUID) {
@@ -82,6 +82,15 @@ func (c *jobsConnector) Connect(
 			responder.Object(http.StatusOK, recent)
 			return
 		}
+
+		// POST operations: require healthy repository
+		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		cfg := repo.Config()
+
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
 			return

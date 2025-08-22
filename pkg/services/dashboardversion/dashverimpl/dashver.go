@@ -61,6 +61,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 			userService,
 			unified,
 			sorter,
+			features,
 		),
 		dashSvc: dashboardService,
 		log:     log.New("dashboard-version"),
@@ -68,7 +69,6 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 }
 
 func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersionDTO, error) {
-	// Get the DashboardUID if not populated
 	if query.DashboardUID == "" {
 		u, err := s.getDashUIDMaybeEmpty(ctx, query.DashboardID)
 		if err != nil {
@@ -77,31 +77,11 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 		query.DashboardUID = u
 	}
 
-	// The store methods require the dashboard ID (uid is not in the dashboard
-	// versions table, at time of this writing), so get the DashboardID if it
-	// was not populated.
-	if query.DashboardID == 0 {
-		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID, query.OrgID)
-		if err != nil {
-			return nil, err
-		}
-		query.DashboardID = id
-	}
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
-		if err != nil {
-			return nil, err
-		}
-		return version, nil
-	}
-
-	version, err := s.store.Get(ctx, query)
+	version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
 	if err != nil {
 		return nil, err
 	}
-	version.Data.Set("id", version.DashboardID)
-	return version.ToDTO(query.DashboardUID), nil
+	return version, nil
 }
 
 func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
@@ -136,7 +116,6 @@ func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredV
 
 // List all dashboard versions for the given dashboard ID.
 func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) (*dashver.DashboardVersionResponse, error) {
-	// Get the DashboardUID if not populated
 	if query.DashboardUID == "" {
 		u, err := s.getDashUIDMaybeEmpty(ctx, query.DashboardID)
 		if err != nil {
@@ -145,45 +124,21 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 		query.DashboardUID = u
 	}
 
-	// The store methods require the dashboard ID (uid is not in the dashboard
-	// versions table, at time of this writing), so get the DashboardID if it
-	// was not populated.
-	if query.DashboardID == 0 {
-		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID, query.OrgID)
-		if err != nil {
-			return nil, err
-		}
-		query.DashboardID = id
-	}
 	if query.Limit == 0 {
 		query.Limit = 1000
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		versions, err := s.listHistoryThroughK8s(
-			ctx,
-			query.OrgID,
-			query.DashboardUID,
-			int64(query.Limit),
-			query.ContinueToken,
-		)
-		if err != nil {
-			return nil, err
-		}
-		return versions, nil
-	}
-
-	dvs, err := s.store.List(ctx, query)
+	versions, err := s.listHistoryThroughK8s(
+		ctx,
+		query.OrgID,
+		query.DashboardUID,
+		int64(query.Limit),
+		query.ContinueToken,
+	)
 	if err != nil {
 		return nil, err
 	}
-	dtos := make([]*dashver.DashboardVersionDTO, len(dvs))
-	for i, v := range dvs {
-		dtos[i] = v.ToDTO(query.DashboardUID)
-	}
-	return &dashver.DashboardVersionResponse{
-		Versions: dtos,
-	}, nil
+	return versions, nil
 }
 
 // getDashUIDMaybeEmpty is a helper function which takes a dashboardID and
@@ -204,33 +159,18 @@ func (s *Service) getDashUIDMaybeEmpty(ctx context.Context, id int64) (string, e
 	return result.UID, nil
 }
 
-// getDashIDMaybeEmpty is a helper function which takes a dashboardUID and
-// returns the ID. If the dashboard is not found, it will return -1.
-func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int64) (int64, error) {
-	q := dashboards.GetDashboardQuery{UID: uid, OrgID: orgID}
-	result, err := s.dashSvc.GetDashboard(ctx, &q)
-	if err != nil {
-		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			s.log.Debug("dashboard not found")
-			return -1, nil
-		} else {
-			s.log.Error("error getting dashboard", err)
-			return -1, err
-		}
-	}
-	return result.ID, nil
-}
-
 func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, version int64) (*dashver.DashboardVersionDTO, error) {
 	// this is an unideal implementation - we have to list all versions and filter here, since there currently is no way to query for the
 	// generation id in unified storage, so we cannot query for the dashboard version directly, and we cannot use search as history is not indexed.
 	// use batches to make sure we don't load too much data at once.
 	const batchSize = 50
-	labelSelector := utils.LabelKeyGetHistory + "=" + dashboardUID
+	labelSelector := utils.LabelKeyGetHistory + "=true"
+	fieldSelector := "metadata.name=" + dashboardUID
 	var continueToken string
 	for {
 		out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
 			LabelSelector: labelSelector,
+			FieldSelector: fieldSelector,
 			Limit:         int64(batchSize),
 			Continue:      continueToken,
 		})
@@ -260,8 +200,11 @@ func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboa
 }
 
 func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string) (*dashver.DashboardVersionResponse, error) {
+	labelSelector := utils.LabelKeyGetHistory + "=true"
+	fieldSelector := "metadata.name=" + dashboardUID
 	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
-		LabelSelector: utils.LabelKeyGetHistory + "=" + dashboardUID,
+		LabelSelector: labelSelector,
+		FieldSelector: fieldSelector,
 		Limit:         limit,
 		Continue:      continueToken,
 	})
@@ -276,13 +219,29 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
+	// if k8s returns a continue token, we need to fetch the next page(s) until we either reach the limit or there are no more pages
+	continueToken = out.GetContinue()
+	for (len(out.Items) < int(limit)) && (continueToken != "") {
+		tempOut, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
+			LabelSelector: labelSelector,
+			FieldSelector: fieldSelector,
+			Continue:      continueToken,
+			Limit:         limit - int64(len(out.Items)),
+		})
+		if err != nil {
+			return nil, err
+		}
+		out.Items = append(out.Items, tempOut.Items...)
+		continueToken = tempOut.GetContinue()
+	}
+
 	dashboards, err := s.UnstructuredToLegacyDashboardVersionList(ctx, out.Items, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dashver.DashboardVersionResponse{
-		ContinueToken: out.GetContinue(),
+		ContinueToken: continueToken,
 		Versions:      dashboards,
 	}, nil
 }

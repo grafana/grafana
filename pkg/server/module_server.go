@@ -16,8 +16,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -38,6 +40,7 @@ func NewModule(opts Options,
 	indexMetrics *resource.BleveIndexMetrics,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
+	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 ) (*ModuleServer, error) {
 	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
@@ -52,7 +55,16 @@ func NewModule(opts Options,
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, reg prometheus.Registerer, promGatherer prometheus.Gatherer, license licensing.Licensing) (*ModuleServer, error) {
+func newModuleServer(opts Options,
+	apiOpts api.ServerOptions,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+	reg prometheus.Registerer,
+	promGatherer prometheus.Gatherer,
+	license licensing.Licensing,
+) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -106,10 +118,10 @@ type ModuleServer struct {
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
 
-	MemberlistKVConfig    kv.Config
-	httpServerRouter      *mux.Router
-	storageRing           *ring.Ring
-	storageRingClientPool *ringclient.Pool
+	MemberlistKVConfig         kv.Config
+	httpServerRouter           *mux.Router
+	searchServerRing           *ring.Ring
+	searchServerRingClientPool *ringclient.Pool
 }
 
 // init initializes the server and its services.
@@ -152,8 +164,8 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
-	m.RegisterModule(modules.StorageRing, s.initRing)
-	m.RegisterModule(modules.Distributor, s.initDistributor)
+	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
+	m.RegisterModule(modules.SearchServerDistributor, s.initSearchServerDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
@@ -173,15 +185,15 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics, s.indexMetrics, s.storageRing, s.MemberlistKVConfig)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.promGatherer, s.license)
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
 	m.RegisterModule(modules.All, nil)

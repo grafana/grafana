@@ -3,17 +3,22 @@ package definitions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -265,10 +270,44 @@ type (
 	ReceiverType              = definition.ReceiverType
 )
 
+type MergeResult definition.MergeResult
+
+func (m MergeResult) LogContext() []any {
+	if len(m.RenamedReceivers) == 0 && len(m.RenamedTimeIntervals) == 0 {
+		return nil
+	}
+	logCtx := make([]any, 0, 4)
+	if len(m.RenamedReceivers) > 0 {
+		rcvBuilder := strings.Builder{}
+		for from, to := range m.RenamedReceivers {
+			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+		}
+		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+	}
+	if len(m.RenamedTimeIntervals) > 0 {
+		intervalBuilder := strings.Builder{}
+		for from, to := range m.RenamedTimeIntervals {
+			intervalBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+		}
+		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
+	}
+	return logCtx
+}
+
 const (
 	GrafanaReceiverType      = definition.GrafanaReceiverType
 	AlertmanagerReceiverType = definition.AlertmanagerReceiverType
+
+	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
 )
+
+var (
+	errInvalidExtraConfigurationBase = errutil.ValidationFailed("alerting.invalidExtraConfiguration").MustTemplate(errInvalidExtraConfigurationMsg, errutil.WithPublic(errInvalidExtraConfigurationMsg))
+)
+
+func errInvalidExtraConfiguration(err error) error {
+	return errInvalidExtraConfigurationBase.Build(errutil.TemplateData{Public: map[string]any{"Error": err}})
+}
 
 var (
 	AsGrafanaRoute = definition.AsGrafanaRoute
@@ -643,11 +682,145 @@ type DatasourceUIDReference struct {
 	DatasourceUID string
 }
 
+type ExtraConfiguration struct {
+	Identifier         string            `yaml:"identifier" json:"identifier"`
+	MergeMatchers      config.Matchers   `yaml:"merge_matchers" json:"merge_matchers"`
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+}
+
+func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
+	if c.AlertmanagerConfig == "" {
+		return config.Config{}, fmt.Errorf("no alertmanager configuration available")
+	}
+
+	var prometheusConfig config.Config
+	if err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &prometheusConfig); err != nil {
+		return config.Config{}, fmt.Errorf("failed to parse alertmanager config: %w", err)
+	}
+
+	return prometheusConfig, nil
+}
+
+func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
+	prometheusConfig, err := c.parsePrometheusConfig()
+	if err != nil {
+		return PostableApiAlertingConfig{}, err
+	}
+
+	return fromPrometheusConfig(prometheusConfig), nil
+}
+
+// GetSanitizedAlertmanagerConfigYAML returns the alertmanager configuration as a YAML string
+// with secrets masked and global settings removed for mimirtool compatibility.
+func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error) {
+	prometheusConfig, err := c.parsePrometheusConfig()
+	if err != nil {
+		return "", err
+	}
+
+	// Remove global settings as they are not used in Grafana
+	prometheusConfig.Global = nil
+
+	configYAML, err := yaml.Marshal(prometheusConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal sanitized configuration: %w", err)
+	}
+
+	return string(configYAML), nil
+}
+
+func (c ExtraConfiguration) Validate() error {
+	if c.Identifier == "" {
+		return errors.New("identifier is required")
+	}
+
+	if len(c.MergeMatchers) == 0 {
+		return errInvalidExtraConfiguration(errors.New("at least one matcher is required"))
+	}
+
+	for _, m := range c.MergeMatchers {
+		if m.Type != labels.MatchEqual {
+			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
+		}
+	}
+
+	cfg, err := c.GetAlertmanagerConfig()
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+	err = cfg.Validate()
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
+	}
+
+	return nil
+}
+
+func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
+	config := PostableApiAlertingConfig{
+		Config: Config{
+			Global:            prometheusConfig.Global,
+			Route:             AsGrafanaRoute(prometheusConfig.Route),
+			InhibitRules:      prometheusConfig.InhibitRules,
+			TimeIntervals:     prometheusConfig.TimeIntervals,
+			MuteTimeIntervals: prometheusConfig.MuteTimeIntervals,
+			Templates:         prometheusConfig.Templates,
+		},
+	}
+
+	for _, receiver := range prometheusConfig.Receivers {
+		config.Receivers = append(config.Receivers, &PostableApiReceiver{
+			Receiver: receiver,
+		})
+	}
+
+	return config
+}
+
 // swagger:model
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
+}
+
+func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
+	if len(c.ExtraConfigs) == 0 {
+		return MergeResult{
+			Config: c.AlertmanagerConfig,
+		}, nil
+	}
+	// support only one config for now
+	mimirCfg := c.ExtraConfigs[0]
+	opts := definition.MergeOpts{
+		DedupSuffix:     mimirCfg.Identifier,
+		SubtreeMatchers: mimirCfg.MergeMatchers,
+	}
+	if err := opts.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
+	}
+
+	mcfg, err := mimirCfg.GetAlertmanagerConfig()
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
+	}
+
+	m, err := definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
+	}
+	return MergeResult(m), nil
+}
+
+// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.
+func (c *PostableUserConfig) GetMergedTemplateDefinitions() []definition.PostableApiTemplate {
+	out := definition.TemplatesMapToPostableAPITemplates(c.TemplateFiles, definition.GrafanaTemplateKind)
+	if len(c.ExtraConfigs) == 0 || len(c.ExtraConfigs[0].TemplateFiles) == 0 {
+		return out
+	}
+	return append(out, definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)...)
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
@@ -659,6 +832,10 @@ func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 	// validate first
 	if err := c.validate(); err != nil {
 		return err
+	}
+
+	if len(c.ExtraConfigs) > 1 {
+		return errors.New("only one extra config is supported")
 	}
 
 	type intermediate struct {
@@ -750,6 +927,7 @@ type GettableUserConfig struct {
 	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
 	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
 	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs            []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
@@ -890,21 +1068,9 @@ func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
 func (c *GettableApiAlertingConfig) validate() error {
 	receivers := make(map[string]struct{}, len(c.Receivers))
 
-	var hasGrafReceivers, hasAMReceivers bool
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-		switch r.Type() {
-		case GrafanaReceiverType:
-			hasGrafReceivers = true
-		case AlertmanagerReceiverType:
-			hasAMReceivers = true
-		default:
-			continue
-		}
-	}
-
-	if hasGrafReceivers && hasAMReceivers {
-		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
+	// Populate the receivers map with defined receiver names
+	for _, receiver := range c.Receivers {
+		receivers[receiver.Name] = struct{}{}
 	}
 
 	for _, receiver := range AllReceivers(c.Route.AsAMRoute()) {

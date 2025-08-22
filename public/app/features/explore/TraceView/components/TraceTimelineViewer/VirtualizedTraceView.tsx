@@ -19,16 +19,18 @@ import * as React from 'react';
 import { RefObject } from 'react';
 
 import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
+import { SpanBarOptions } from '../settings/SpanBarSettings';
+import TNil from '../types/TNil';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceSpan, Trace, TraceSpanReference } from '../types/trace';
+import { SpanLinkFunc } from '../types/links';
+import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';

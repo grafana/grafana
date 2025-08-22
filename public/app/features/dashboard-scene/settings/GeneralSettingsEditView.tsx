@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
@@ -23,6 +23,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
+import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
 
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -33,18 +34,13 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { DeleteDashboardButton } from './DeleteDashboardButton';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
-
-const EDITABLE_OPTIONS = [
-  { label: 'Editable', value: true },
-  { label: 'Read-only', value: false },
-];
-
-const GRAPH_TOOLTIP_OPTIONS = [
-  { value: 0, label: 'Default' },
-  { value: 1, label: 'Shared crosshair' },
-  { value: 2, label: 'Shared Tooltip' },
-];
+export interface GeneralSettingsEditViewState extends DashboardEditViewState {
+  showMoveModal?: boolean;
+  moveModalProps?: {
+    targetFolderUID?: string;
+    targetFolderTitle?: string;
+  };
+}
 
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
@@ -167,22 +163,84 @@ export class GeneralSettingsEditView
 
   public onDeleteDashboard = () => {};
 
+  public onProvisionedFolderChange = async (newUID?: string, newTitle?: string) => {
+    if (newUID !== this._dashboard.state.meta.folderUid) {
+      this.setState({
+        showMoveModal: true,
+        moveModalProps: {
+          targetFolderUID: newUID,
+          targetFolderTitle: newTitle,
+        },
+      });
+    }
+  };
+
+  public onMoveModalDismiss = () => {
+    this.setState({
+      showMoveModal: false,
+      moveModalProps: undefined,
+    });
+  };
+
+  private onMoveSuccess = (folderUID: string, folderTitle: string) => {
+    const newMeta = {
+      ...this._dashboard.state.meta,
+      folderUid: folderUID,
+      folderTitle: folderTitle,
+    };
+    this._dashboard.setState({ meta: newMeta });
+    this.onMoveModalDismiss();
+  };
+
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = model.getDashboard();
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const { title, description, tags, meta, editable } = dashboard.useState();
+    const { showMoveModal, moveModalProps } = model.useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
     const { enabled: liveNow } = model.getLiveNowTimer().useState();
-    const { t } = useTranslate();
+    const EDITABLE_OPTIONS = [
+      {
+        label: t('dashboard-scene.general-settings-edit-view.editable_options.label.editable', 'Editable'),
+        value: true,
+      },
+      {
+        label: t('dashboard-scene.general-settings-edit-view.editable_options.label.readonly', 'Read-only'),
+        value: false,
+      },
+    ];
+
+    const GRAPH_TOOLTIP_OPTIONS = [
+      {
+        value: 0,
+        label: t('dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.default', 'Default'),
+      },
+      {
+        value: 1,
+        label: t(
+          'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-crosshair',
+          'Shared crosshair'
+        ),
+      },
+      {
+        value: 2,
+        label: t(
+          'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-tooltip',
+          'Shared tooltip'
+        ),
+      },
+    ];
+
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={dashboard} />
         <div style={{ maxWidth: '600px' }}>
-          <Box marginBottom={5}>
+          <Box display="flex" direction="column" gap={2} marginBottom={5}>
             <Field
+              noMargin
               label={
                 <Stack justifyContent="space-between">
                   <Label htmlFor="title-input">
@@ -202,6 +260,7 @@ export class GeneralSettingsEditView
               />
             </Field>
             <Field
+              noMargin
               label={
                 <Stack justifyContent="space-between">
                   <Label htmlFor="description-input">
@@ -220,26 +279,18 @@ export class GeneralSettingsEditView
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => model.onDescriptionChange(e.target.value)}
               />
             </Field>
-            <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
+            <Field noMargin label={t('dashboard-settings.general.tags-label', 'Tags')}>
               <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
             </Field>
-            <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-              {dashboard.isManagedRepository() ? (
-                <Input readOnly value={meta.folderTitle} />
-              ) : (
-                <FolderPicker
-                  value={meta.folderUid}
-                  onChange={model.onFolderChange}
-                  // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-                  initialTitle={meta.folderTitle}
-                  inputId="dashboard-folder-input"
-                  enableCreateNew
-                  skipInitialLoad
-                />
-              )}
+            <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
+              <FolderPicker
+                value={meta.folderUid}
+                onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
+              />
             </Field>
 
             <Field
+              noMargin
               label={t('dashboard-settings.general.editable-label', 'Editable')}
               description={t(
                 'dashboard-settings.general.editable-description',
@@ -270,33 +321,51 @@ export class GeneralSettingsEditView
             label={t('dashboard-settings.general.panel-options-label', 'Panel options')}
             isOpen={true}
           >
-            <Field
-              label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Graph tooltip')}
-              description={t(
-                'dashboard-settings.general.panel-options-graph-tooltip-description',
-                'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
-              )}
-            >
-              <RadioButtonGroup onChange={model.onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
-            </Field>
+            <Stack direction="column" gap={2}>
+              <Field
+                noMargin
+                label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Graph tooltip')}
+                description={t(
+                  'dashboard-settings.general.panel-options-graph-tooltip-description',
+                  'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
+                )}
+              >
+                <RadioButtonGroup
+                  onChange={model.onTooltipChange}
+                  options={GRAPH_TOOLTIP_OPTIONS}
+                  value={graphTooltip}
+                />
+              </Field>
 
-            <Field
-              label={t('dashboard-settings.general.panels-preload-label', 'Preload panels')}
-              description={t(
-                'dashboard-settings.general.panels-preload-description',
-                'When enabled all panels will start loading as soon as the dashboard has been loaded.'
-              )}
-            >
-              <Switch
-                id="preload-panels-dashboards-toggle"
-                value={dashboard.state.preload}
-                onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
-              />
-            </Field>
+              <Field
+                noMargin
+                label={t('dashboard-settings.general.panels-preload-label', 'Preload panels')}
+                description={t(
+                  'dashboard-settings.general.panels-preload-description',
+                  'When enabled all panels will start loading as soon as the dashboard has been loaded.'
+                )}
+              >
+                <Switch
+                  id="preload-panels-dashboards-toggle"
+                  value={dashboard.state.preload}
+                  onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
+                />
+              </Field>
+            </Stack>
           </CollapsableSection>
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
         </div>
+
+        {showMoveModal && moveModalProps && (
+          <MoveProvisionedDashboardDrawer
+            dashboard={dashboard}
+            targetFolderUID={moveModalProps.targetFolderUID}
+            targetFolderTitle={moveModalProps.targetFolderTitle}
+            onDismiss={model.onMoveModalDismiss}
+            onSuccess={model.onMoveSuccess}
+          />
+        )}
       </Page>
     );
   };

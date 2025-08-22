@@ -2,8 +2,8 @@ import { toLonLat } from 'ol/proj';
 import { useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
-import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { Options, MapViewConfig, GeomapInstanceState } from '../types';
@@ -17,7 +17,6 @@ export const MapViewEditor = ({
   onChange,
   context,
 }: StandardEditorProps<MapViewConfig, unknown, Options, GeomapInstanceState>) => {
-  const { t } = useTranslate();
   const labelWidth = 10;
 
   const views = useMemo(() => {
@@ -100,13 +99,13 @@ export const MapViewEditor = ({
         </InlineField>
       </InlineFieldRow>
 
-      <VerticalGroup>
+      <Stack direction="column">
         <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>
           <span>
             <Trans i18nKey="geomap.map-view-editor.use-current-map-settings">Use current map settings</Trans>
           </span>
         </Button>
-      </VerticalGroup>
+      </Stack>
     </>
   );
 };

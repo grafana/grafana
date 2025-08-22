@@ -14,7 +14,7 @@ import {
   LogLabelStatsModel,
   LogRowModel,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   ClipboardButton,
@@ -83,6 +83,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
     }),
     copyButton: css({
       '& > button': {
+        gap: 0,
         color: theme.colors.text.secondary,
         padding: 0,
         justifyContent: 'center',
@@ -249,7 +250,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <div className={`log-details-value-copy ${styles.copyButton}`}>
         <ClipboardButton
           getText={() => val}
-          title={t('logs.un-themed-log-details-row.title-copy-value-to-clipboard', 'Copy value to clipboard')}
+          aria-label={t('logs.un-themed-log-details-row.title-copy-value-to-clipboard', 'Copy value to clipboard')}
           fill="text"
           variant="secondary"
           icon="copy"

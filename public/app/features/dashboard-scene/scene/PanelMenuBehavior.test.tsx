@@ -23,7 +23,7 @@ import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
@@ -76,7 +76,7 @@ describe('panelMenuBehavior', () => {
 
     expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
-    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=panel-12');
+    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=a$panel-12');
     // verify edit url keeps url time range
     expect(menu.state.items?.[1].href).toBe('/d/dash-1?from=now-5m&to=now&editPanel=12');
     // verify share
@@ -90,8 +90,7 @@ describe('panelMenuBehavior', () => {
     expect(getExploreArgs.queries).toEqual([{ query: 'QueryA', refId: 'A' }]);
     expect(getExploreArgs.scopedVars?.__sceneObject?.value).toBe(panel);
 
-    // verify inspect url keeps url params and adds inspect=<panel-key>
-    expect(menu.state.items?.[4].href).toBe('/d/dash-1?from=now-5m&to=now&inspect=panel-12');
+    expect(menu.state.items?.[4].text).toBe('Inspect');
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);

@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, useStyles2 } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   PromRuleDTO,
@@ -16,13 +18,15 @@ import {
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { prometheusApi } from '../api/prometheusApi';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
+import { useContinuousPagination } from '../hooks/usePagination';
+import { DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP, RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { hashRule } from '../utils/rule-id';
 import { getRuleName, isCloudRulerGroup } from '../utils/rules';
 
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleOperationListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+import { LoadMoreButton } from './components/LoadMoreButton';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
 import { matchRulesGroup } from './ruleMatching';
@@ -85,7 +89,6 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
         }
       : skipToken
   );
-  const { t } = useTranslate();
 
   const isLoading = isPromResponseLoading || isDsFeaturesLoading || isRulerGroupFetching;
   if (isLoading) {
@@ -142,6 +145,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
             rule={rule}
             groupIdentifier={groupIdentifier}
             application={dsFeatures?.application}
+            showLocation={false}
           />
         ))}
       </>
@@ -174,15 +178,21 @@ export function RulerBasedGroupRules({
   promGroup,
   rulerGroup,
 }: RulerBasedGroupRulesProps) {
+  const styles = useStyles2(getStyles);
   const { namespace, groupName } = groupIdentifier;
 
   const { matches, promOnlyRules } = useMemo(() => {
     return matchRulesGroup(rulerGroup, promGroup);
   }, [promGroup, rulerGroup]);
 
+  const { pageItems, hasMore, loadMore } = useContinuousPagination(
+    rulerGroup.rules,
+    DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP
+  );
+
   return (
     <>
-      {rulerGroup.rules.map((rulerRule) => {
+      {pageItems.map((rulerRule) => {
         const promRule = matches.get(rulerRule);
 
         return promRule ? (
@@ -195,6 +205,7 @@ export function RulerBasedGroupRules({
             actions={
               <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
             }
+            showLocation={false}
           />
         ) : (
           <RuleOperationListItem
@@ -205,6 +216,7 @@ export function RulerBasedGroupRules({
             rulesSource={groupIdentifier.rulesSource}
             application={application}
             operation={RuleOperation.Creating}
+            showLocation={false}
           />
         );
       })}
@@ -217,8 +229,21 @@ export function RulerBasedGroupRules({
           rulesSource={groupIdentifier.rulesSource}
           application={application}
           operation={RuleOperation.Deleting}
+          showLocation={false}
         />
       ))}
+      {hasMore && (
+        <li aria-selected="false" role="treeitem" className={styles.loadMoreWrapper}>
+          <LoadMoreButton onClick={loadMore} />
+        </li>
+      )}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  loadMoreWrapper: css({
+    listStyle: 'none',
+    paddingTop: theme.spacing(1),
+  }),
+});

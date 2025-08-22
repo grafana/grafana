@@ -3,14 +3,14 @@ import { ChangeEvent, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { getProvisionedMeta } from './provisioned/utils/getProvisionedMeta';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
@@ -43,14 +43,14 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     },
   });
 
-  const { errors, isValid, defaultValues } = formState;
+  const { errors, isValid } = formState;
   const formValues = watch();
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
   const [hasFolderChanged, setHasFolderChanged] = useState(false);
-  const { t } = useTranslate();
+
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
@@ -118,7 +118,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     <form onSubmit={handleSubmit(() => onSave(false))}>
       <Field label={<TitleFieldLabel onChange={setValue} />} invalid={!!errors.title} error={errors.title?.message}>
         <Input
-          {...register('title', { required: 'Required', validate: validateDashboardName })}
+          {...register('title', {
+            required: t('dashboard-scene.save-dashboard-as-form.required', 'Required'),
+            validate: validateDashboardName,
+          })}
           aria-label={t(
             'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
             'Save dashboard title field'
@@ -158,11 +161,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
               },
             });
           }}
-          // Old folder picker fields
           value={formValues.folder?.uid}
-          initialTitle={defaultValues!.folder!.title}
-          dashboardId={dashboard.state.id ?? undefined}
-          enableCreateNew
         />
       </Field>
       {!changeInfo.isNew && (

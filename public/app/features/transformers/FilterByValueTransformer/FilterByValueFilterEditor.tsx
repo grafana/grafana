@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { Field, SelectableValue, valueMatchers } from '@grafana/data';
 import { FilterByValueFilter } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Select, InlineField, InlineFieldRow, Box } from '@grafana/ui';
 
 import { valueMatchersUI } from './ValueMatchers/valueMatchersUI';
@@ -20,7 +20,6 @@ export interface DataFrameFieldsInfo {
 }
 
 export const FilterByValueFilterEditor = (props: Props) => {
-  const { t } = useTranslate();
   const { onDelete, onChange, filter, fieldsInfo } = props;
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
@@ -100,7 +99,12 @@ export const FilterByValueFilterEditor = (props: Props) => {
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </InlineField>
       <Box marginBottom={0.5}>
-        <Button icon="times" onClick={onDelete} variant="secondary" />
+        <Button
+          aria-label={t('transformers.filter-by-value-filter-editor.aria-label-remove-filter', 'Remove filter')}
+          icon="times"
+          onClick={onDelete}
+          variant="secondary"
+        />
       </Box>
     </InlineFieldRow>
   );

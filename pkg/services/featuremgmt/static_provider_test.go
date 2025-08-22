@@ -20,9 +20,9 @@ func Test_StaticProvider(t *testing.T) {
 	stFeatValue := stFeat.Expression == "true"
 
 	t.Run("empty config loads standard flags", func(t *testing.T) {
-		p := provider(t, []byte(``))
+		setup(t, []byte(``))
 		// Check for one of the standard flags
-		feat, err := p.Client.BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
+		feat, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
 		assert.NoError(t, err)
 		assert.True(t, stFeatValue == feat.Value)
 	})
@@ -32,27 +32,64 @@ func Test_StaticProvider(t *testing.T) {
 [feature_toggles]
 featureOne = true
 `)
-		p := provider(t, conf)
-		feat, err := p.Client.BooleanValueDetails(ctx, "featureOne", false, evalCtx)
+		setup(t, conf)
+		feat, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, "featureOne", false, evalCtx)
 		assert.NoError(t, err)
 		assert.True(t, feat.Value)
 	})
 
 	t.Run("missing feature should return default evaluation value and an error", func(t *testing.T) {
-		p := provider(t, []byte(``))
-		missingFeature, err := p.Client.BooleanValueDetails(ctx, "missingFeature", true, evalCtx)
+		setup(t, []byte(``))
+		missingFeature, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, "missingFeature", true, evalCtx)
 		assert.Error(t, err)
 		assert.True(t, missingFeature.Value)
 		assert.Equal(t, openfeature.ErrorCode("FLAG_NOT_FOUND"), missingFeature.ErrorCode)
 	})
 }
 
-func provider(t *testing.T, conf []byte) *OpenFeatureService {
+func setup(t *testing.T, conf []byte) {
 	t.Helper()
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
 
-	p, err := ProvideOpenFeatureService(cfg)
+	err = InitOpenFeatureWithCfg(cfg)
 	require.NoError(t, err)
-	return p
+}
+
+func Test_CompareStaticProviderWithFeatureManager(t *testing.T) {
+	conf := []byte(`
+[feature_toggles]
+ABCD = true
+`)
+
+	cfg, err := setting.NewCfgFromBytes(conf)
+	require.NoError(t, err)
+
+	// InitOpenFeatureWithCfg needed to initialize OpenFeature with the static provider configuration,
+	// so that StaticFlagEvaluator can use an open feature client.
+	// In real scenarios, this would be done during server startup.
+	err = InitOpenFeatureWithCfg(cfg)
+	require.NoError(t, err)
+
+	// Use StaticFlagEvaluator instead of OpenFeatureService for static evaluation
+	staticEvaluator, err := CreateStaticEvaluator(cfg)
+	require.NoError(t, err)
+
+	ctx := openfeature.WithTransactionContext(context.Background(), openfeature.NewEvaluationContext("grafana", nil))
+	allFlags, err := staticEvaluator.EvalAllFlags(ctx)
+	require.NoError(t, err)
+
+	openFeatureEnabledFlags := map[string]bool{}
+	for _, flag := range allFlags.Flags {
+		if v, ok := flag.Value.(bool); ok && v {
+			openFeatureEnabledFlags[flag.Key] = true
+		}
+	}
+
+	mgr, err := ProvideManagerService(cfg)
+	require.NoError(t, err)
+
+	// compare enabled feature flags match between StaticFlagEvaluator and Feature Manager
+	enabledFeatureManager := mgr.GetEnabled(ctx)
+	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
 }

@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"iter"
 	"math"
 	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -300,6 +301,8 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 			}
 			if row.Count > int64(minCount) {
 				res = append(res, row)
+			} else {
+				b.log.Debug("skipping stats for resource with count less than min count", "namespace", row.Namespace, "group", row.Group, "resource", row.Resource, "count", row.Count, "minCount", minCount)
 			}
 		}
 		return err
@@ -387,9 +390,8 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 // IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
 func IsRowAlreadyExistsError(err error) bool {
-	var sqlite sqlite3.Error
-	if errors.As(err, &sqlite) {
-		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
 	}
 
 	var pg *pgconn.PgError
@@ -630,6 +632,99 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
+// ListModifiedSince will return all resources that have changed since the given resource version.
+// If a resource has changes, only the latest change will be returned.
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	tx, err := b.db.BeginTx(ctx, RepeatableRead)
+	if err != nil {
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
+	}
+
+	// Fetch latest RV within the transaction
+	latestRv, err := b.fetchLatestRV(ctx, tx, b.dialect, key.Group, key.Resource)
+	if err != nil {
+		terr := tx.Rollback()
+		if terr != nil {
+			b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", terr)
+		}
+		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
+	}
+
+	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
+	lastSeen := ""
+
+	// rollback transaction if iterator not called within 30 seconds
+	rollbackTimer := time.AfterFunc(30*time.Second, func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			b.log.Warn("rollback timer error", "err", err)
+		}
+	})
+
+	seq := func(yield func(*resource.ModifiedResource, error) bool) {
+		rollbackTimer.Stop()
+
+		defer func() {
+			// Always rollback the read-only transaction when iterator is done
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				b.log.Warn("Error rolling back transaction in ListModifiedSince", "error", rollbackErr)
+			}
+		}()
+
+		query := sqlResourceListModifiedSinceRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Namespace:   key.Namespace,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			SinceRv:     sinceRv,
+		}
+
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryListModifiedSince, query)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+		if rows != nil {
+			defer func() {
+				if cerr := rows.Close(); cerr != nil {
+					b.log.Warn("listSinceModified error closing rows", "error", cerr)
+				}
+			}()
+		}
+
+		for rows.Next() {
+			mr := &resource.ModifiedResource{}
+			if err := rows.Scan(&mr.Key.Namespace, &mr.Key.Group, &mr.Key.Resource, &mr.Key.Name, &mr.ResourceVersion, &mr.Action, &mr.Value); err != nil {
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+
+			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
+			if mr.Key.Name == lastSeen {
+				continue
+			}
+
+			if mr.Key.Name <= lastSeen {
+				// resource names should be sorted alphabetically. So if not, the query is not correct.
+				yield(nil, fmt.Errorf("listModifiedSince: resources are not sorted by name ASC, lastSeen: %q, current: %q", lastSeen, mr.Key.Name))
+			}
+
+			lastSeen = mr.Key.Name
+
+			if !yield(mr, nil) {
+				return
+			}
+		}
+	}
+
+	return latestRv, seq
+}
+
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")
@@ -640,7 +735,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		iter.listRV = continueToken.ResourceVersion
 		iter.offset = continueToken.StartOffset
@@ -742,7 +837,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
 		listReq.SortAscending = continueToken.SortAscending
@@ -780,7 +875,14 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 			listReq.MinRV = latestDeletedRV + 1
 		}
 
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		var rows db.Rows
+		if listReq.Trash {
+			// unlike history, trash will not return an object if an object of the same name is live
+			// (i.e. in the resource table)
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceTrash, listReq)
+		} else {
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		}
 		if rows != nil {
 			defer func() {
 				if err := rows.Close(); err != nil {

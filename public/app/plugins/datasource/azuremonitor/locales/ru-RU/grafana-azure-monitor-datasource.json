@@ -6,286 +6,306 @@
     "advanced-resource-picker": {
       "aria-label-add": "Добавить",
       "aria-label-remove": "Удалить",
-      "button-add-resource": "",
-      "button-add-resource-uri": "",
+      "button-add-resource": "Добавить ресурс",
+      "button-add-resource-uri": "Добавить URI ресурса",
       "label-namespace": "Пространство имен",
-      "label-region": "",
-      "label-resource-group": "",
-      "label-resource-name": "",
-      "label-resource-number": "",
-      "label-resource-uri": "",
-      "label-subscription": "",
+      "label-region": "Область",
+      "label-resource-group": "Группа ресурсов",
+      "label-resource-name": "Имя ресурса",
+      "label-resource-number": "Ресурс {{resourceNum}}",
+      "label-resource-uri": "URI ресурса ",
+      "label-subscription": "Подписка",
       "placeholder-resource-name": "имя",
-      "tooltip-region": "",
-      "tooltip-resource-uri": ""
+      "tooltip-region": "Область кода ресурса. Необязательно для одного ресурса, но обязательно при выборе нескольких.",
+      "tooltip-resource-uri": "Вручную измените <2>URI ресурса</2>. Поддерживает использование нескольких переменных шаблона (например, /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
-      "aria-label-aggregate-function": "",
+      "aria-label-aggregate-function": "Агрегатная функция",
       "aria-label-column": "Столбец",
       "aria-label-remove": "Удалить",
       "label-percentile": "ИЗ"
     },
     "aggregate-section": {
-      "label-aggregate": "",
-      "tooltip-aggregate": ""
+      "label-aggregate": "Агрегировать",
+      "tooltip-aggregate": "Выполняйте вычисления по строкам данных, таким как количество, сумма, среднее значение, минимум, максимум, стандартное отклонение или процентили."
     },
     "aggregation-field": {
-      "label-aggregation": ""
+      "label-aggregation": "Агрегирование"
     },
     "app-registration-credentials": {
-      "aria-label-azure-cloud": "",
-      "aria-label-client-id": "",
-      "aria-label-client-secret": "",
-      "aria-label-symbol-client-secret": "",
-      "aria-label-tenant-id": "",
-      "label-azure-cloud": "",
-      "label-client-id": "",
-      "label-client-secret": "",
-      "label-symbol-client-secret": "",
-      "label-tenant-id": "",
-      "placeholder-symbol-client-secret": "",
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "Идентификатор клиента",
+      "aria-label-client-secret": "Секрет клиента",
+      "aria-label-symbol-client-secret": "Секрет клиента",
+      "aria-label-tenant-id": "Идентификатор клиента",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "Идентификатор приложения (клиента)",
+      "label-client-secret": "Секрет клиента",
+      "label-symbol-client-secret": "Секрет клиента",
+      "label-tenant-id": "Идентификатор каталога (клиента)",
+      "placeholder-symbol-client-secret": "установлен",
       "reset-symbol-client-secret": "Сброс"
     },
     "azure-cheat-sheet": {
-      "aria-label-raw-query": "",
-      "aria-label-use-query": "",
-      "button-use-query": "",
-      "label-categories": "",
-      "label-query-results": "",
-      "placeholder-all-categories": "",
-      "placeholder-search-logs": "",
+      "aria-label-raw-query": "Необработанный запрос {{queryDisplayName}}",
+      "aria-label-use-query": "Использовать кнопку запроса",
+      "button-use-query": "Использовать запрос",
+      "label-categories": "Категории",
+      "label-query-results": "Результатов запроса: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "Невозможно перечислить все категории",
+      "placeholder-all-categories": "Все категории",
+      "placeholder-search-logs": "Поиск запросов журналов",
       "text-loading": "Загрузка…"
     },
     "azure-cheat-sheet-modal": {
-      "aria-label-kick-start": "",
-      "title-kick-start": ""
+      "aria-label-kick-start": "Модальное окно запуска запроса",
+      "title-kick-start": "Запуск запроса"
     },
     "azure-credentials-form": {
-      "description-authentication": "",
+      "description-authentication": "Выберите тип аутентификации для служб Azure.",
       "label-authentication": "Аутентификация",
       "title-authentication": "Аутентификация"
     },
     "basic-logs-toggle": {
-      "aria-label-enable-basic-logs": "",
-      "description-basic-logs": "",
-      "label-enable-basic-logs": ""
+      "aria-label-enable-basic-logs": "Базовые журналы",
+      "description-basic-logs": "Включение этой функции влечет за собой затраты на каждый запрос Azure Monitor на панелях дашбордов, связанный с таблицами для <2>базовых журналов</2>.",
+      "label-enable-basic-logs": "Включить базовые журналы"
     },
     "config-editor": {
       "description-additional-settings": "",
-      "description-request-timeout": "",
-      "title-additional-settings": "Дополнительные параметры",
-      "title-request-timeout": ""
+      "title-additional-settings": "Дополнительные параметры"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "",
-      "body-service-credentials": "",
-      "description-authentication": "",
-      "description-service-credentials": "",
+      "alert-fallback-credentials-disabled": "Резервные учетные данные отключены. Поскольку аутентификация на основе пользователей по своей сути поддерживает только запросы, в область действия которых входит пользователь, то такие функции, как оповещение, записанные запросы или создание отчетов, не будут работать должным образом. Подробнее — в <2>документации</2>.",
+      "body-service-credentials": "Аутентификация на основе пользователей по своей сути не поддерживает функции Grafana, которые отправляют запросы в источник данных без предоставления сведений о пользователях. Примером является оповещение. Чтобы функции, которые не имеют пользователя в контексте запроса, продолжали работать, укажите резервные учетные данные ниже.",
+      "description-authentication": "Выберите тип аутентификации для служб Azure.",
+      "description-service-credentials": "Выберите, следует ли включить или отключить резервные учетные данные службы для этого источника данных.",
       "label-authentication": "Аутентификация",
-      "label-service-credentials": "",
-      "note-service-credentials": "",
-      "title-fallback-credentials-disabled": "",
-      "title-fallback-service-credentials": "",
-      "title-service-credentials": ""
+      "label-service-credentials": "Учетные данные службы",
+      "note-service-credentials": "Примечание. Такие функции, как оповещение, будут ограничены уровнем доступа резервных учетных данных, а не пользователя. Это может сбить пользователей с толку и требует пояснения.",
+      "title-fallback-credentials-disabled": "Резервные учетные данные отключены",
+      "title-fallback-service-credentials": "Резервные учетные данные службы",
+      "title-service-credentials": "Учетные данные службы"
     },
     "default-subscription": {
-      "aria-label-default-subscription": "",
-      "label-default-subscription": "",
-      "load-subscriptions": ""
+      "aria-label-default-subscription": "Подписка по умолчанию",
+      "label-default-subscription": "Подписка по умолчанию",
+      "load-subscriptions": "Загрузить подписки"
     },
     "dimension-fields": {
       "aria-label-remove": "Удалить",
-      "label-dimensions": "",
+      "label-dimensions": "Размеры",
       "placeholder-field": "Поле",
       "placeholder-operation": "Операция",
       "placeholder-select-value": "Выбрать значение",
-      "placeholder-select-values": ""
+      "placeholder-select-values": "Выберите значения"
     },
     "editor-for-query-type": {
-      "body-unknown-query-type": "",
-      "title-unknown-query-type": ""
+      "body-unknown-query-type": "{{type}} не поддерживается в Grafana 9. Подробнее о переносе запросов в <3>уведомлении об устаревании</3>. Текущее определение запроса:",
+      "title-unknown-query-type": "Неизвестный тип запроса"
     },
     "filter": {
-      "aria-label-remove-filter": "",
-      "placeholder-property": "",
+      "aria-label-remove-filter": "Удалить фильтр",
+      "placeholder-property": "Свойство",
       "placeholder-value": "Значение"
     },
     "filter-item": {
       "aria-label-column": "Столбец",
-      "aria-label-column-value": "",
+      "aria-label-column-value": "Значение столбца",
       "aria-label-operator": "Оператор",
-      "label-or": ""
+      "aria-label-remove-filter": "",
+      "label-or": "ИЛИ"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Добавить группу",
       "label-and": "И",
-      "label-filters": "",
-      "tooltip-filters": ""
+      "label-filters": "Фильтры",
+      "tooltip-filters": "Сузьте результаты, применив условия к определенным столбцам."
     },
     "filters": {
-      "label-filters": ""
+      "label-filters": "Фильтры"
     },
     "format-as-field": {
-      "label-format-as": ""
+      "label-format-as": "Форматировать как"
     },
     "fuzzy-search": {
-      "aria-label-select-column": "",
-      "label-fuzzy-search": "",
-      "placeholder-search-team": "",
-      "tooltip-fuzzy-search": ""
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
+      "aria-label-select-column": "Выбрать столбец",
+      "label-fuzzy-search": "Нечеткий поиск",
+      "placeholder-search-team": "Введите ключевое слово",
+      "tooltip-fuzzy-search": "Найдите приблизительные текстовые совпадения с допустимыми отклонениями в написании. По умолчанию при нечетком поиске сканируются все столбцы (*) во всей таблице, а не только определенные поля."
     },
     "grafana-template-variable-fn-input": {
-      "label-grafana-template-variable": "",
-      "placeholder-grafana-template-variable": ""
+      "label-grafana-template-variable": "Функция переменной шаблона Grafana",
+      "placeholder-grafana-template-variable": "Введите функцию переменной шаблона Grafana: например, {{example}}"
     },
     "group-by-item": {
       "aria-label-column": "Столбец",
       "aria-label-remove": "Удалить"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Группировать по",
-      "tooltip-group-by": ""
+      "tooltip-group-by": "Упорядочите результаты по категориям на основе указанных столбцов. Функцию группировки можно использовать отдельно для перечисления уникальных значений в выбранных столбцах или в сочетании с агрегатными функциями для получения сводной статистики по каждой группе. При использовании в отдельности она возвращает различные комбинации указанных столбцов."
     },
     "kql-preview": {
       "button-hide": "Скрыть",
       "button-show": "Показать",
-      "label-query-preview": ""
+      "label-query-preview": "Предварительный просмотр запроса"
     },
     "legend-format-field": {
-      "label-legend-format": "",
-      "placeholder-legend-format": ""
+      "label-legend-format": "Формат условных обозначений",
+      "placeholder-legend-format": "Шаблоны псевдонимов"
     },
     "limit-section": {
       "label-limit": "Предельное значение",
-      "placeholder-limit": "",
-      "tooltip-limit": ""
+      "placeholder-limit": "Введите лимит",
+      "tooltip-limit": "Установите ограничение по количеству возвращаемых строк (по умолчанию — 1000)."
     },
     "logs-management": {
-      "description-basic-logs-queries": "",
+      "body-basic-logs-queries": "Действительно перейти на базовые журналы?",
+      "confirmText-confirm": "Подтвердить",
+      "description-basic-logs-queries": "Запросы базовых журналов являются платными. Затраты зависят от объема сканируемых данных.",
       "label-logs": "Журналы",
-      "title-basic-logs-queries": "",
-      "tooltip-logs": ""
+      "title-basic-logs-queries": "Запросы базовых журналов",
+      "tooltip-logs": "Указывает, следует ли выполнять запросы базовых или аналитических журналов."
     },
     "logs-query-builder": {
-      "title-no-tables": ""
+      "title-no-tables": "Ресурс загружен, но без таблиц"
     },
     "logs-query-editor": {
-      "learn-more": "",
-      "view-query": ""
+      "learn-more": "Подробнее",
+      "view-query": "Просмотр запроса на портале Azure"
     },
     "metric-name-field": {
       "label-metric": "Метрика"
     },
     "metric-namespace-field": {
-      "label-metric-namespace": ""
+      "label-metric-namespace": "Пространство имен метрик"
     },
     "nested-row": {
       "text-loading": "Загрузка…"
     },
     "order-by-section": {
-      "aria-label-order-by-column": "",
-      "aria-label-order-direction": "",
-      "label-by": "",
-      "label-order-by": "",
-      "tooltip-order-by": ""
+      "aria-label-add-order-by": "",
+      "aria-label-order-by-column": "Упорядочить по столбцу",
+      "aria-label-order-direction": "Направление упорядочивания",
+      "aria-label-remove-order-by": "",
+      "label-by": "ПО",
+      "label-order-by": "Упорядочить по",
+      "tooltip-order-by": "Сортируйте результаты по одному или нескольким столбцам в порядке возрастания или убывания"
     },
     "query-editor": {
-      "alert-error-occurred": ""
+      "alert-error-occurred": "Ошибка при запросе метаданных из Azure Monitor"
     },
     "query-header": {
-      "aria-label-kick-start": "",
-      "button-kick-start-your-query": "",
+      "aria-label-kick-start": "Кнопка запуска запроса журналов Azure",
+      "body-switching-to-builder": "Переключение на конструктор приведет к отмене текущего KQL-запроса и очистке редактора KQL. Вы уверены?",
+      "body-switching-to-kql": "Переключение на KQL приведет к отмене текущих настроек конструктора. Вы уверены?",
+      "button-kick-start-your-query": "Запустить запрос",
       "button-run-query": "Выполнить запрос",
-      "label-service": "",
-      "placeholder-service": "",
-      "title-switch-mode": ""
+      "confirmText-switch-to": "Переключиться на {{newMode}}",
+      "editor-modes": {
+        "label-builder": "Конструктор",
+        "label-kql": "KQL"
+      },
+      "label-service": "Служба",
+      "placeholder-service": "Служба...",
+      "title-switch-mode": "Переключить режим редактора?"
     },
     "raw-query": {
-      "aria-label-selector": ""
+      "aria-label-selector": "Селектор"
     },
     "resource-field": {
-      "label-resource": "",
-      "title-select-resource": ""
+      "label-resource": "Ресурс",
+      "title-select-resource": "Выбор ресурса"
     },
     "resource-label": {
-      "select-resource": ""
+      "select-resource": "Выбрать ресурс"
     },
     "resource-picker": {
       "button-apply": "Применить",
       "button-cancel": "Отмена",
       "header-location": "Расположение",
-      "header-scope": "",
+      "header-scope": "Область применения",
       "header-type": "Тип",
-      "heading-selection": "",
-      "result-limit": "",
+      "heading-selection": "Выбор",
+      "result-limit": "Показано первых результатов: {{numResults}}",
       "text-loading": "Загрузка…",
-      "text-no-resources": "",
-      "title-error-occurred": ""
+      "text-no-resources": "Ресурсы не найдены",
+      "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor"
+    },
+    "scope-selector": {
+      "label": "Область"
     },
     "search": {
-      "aria-label-resource-search": "",
-      "placeholder-resource-search": ""
+      "aria-label-resource-search": "Поиск ресурсов",
+      "placeholder-resource-search": "Поиск ресурса"
     },
     "subscription-field": {
-      "label-subscriptions": "",
-      "validation-subscriptions": ""
+      "label-subscriptions": "Подписки",
+      "validation-subscriptions": "Выберите хотя бы одну подписку."
     },
     "table-section": {
-      "aria-label-columns": "",
+      "aria-label-columns": "Столбцы",
       "aria-label-table": "Таблица",
-      "label-columns": "",
+      "label-columns": "Столбцы",
       "label-table": "Таблица",
-      "placeholder-select-columns": "",
-      "placeholder-select-table": ""
+      "placeholder-select-columns": "Выберите столбцы",
+      "placeholder-select-table": "Выберите таблицу",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
-      "label-time-grain": ""
+      "label-time-grain": "Интервал времени"
     },
     "time-management": {
-      "label-time-column": "",
-      "label-time-range": "",
-      "tooltip-time-column": "",
-      "tooltip-time-range": ""
+      "label-time-column": "Столбец времени",
+      "label-time-range": "Временной диапазон",
+      "tooltip-time-column": "<0>Указывает столбец времени, используемый для фильтрации. По умолчанию используется первый столбец таблиц (<1>Временной диапазон</1>), первый найденный столбец (<3>дата и время</3>) или <5>время создания</5>.</0>",
+      "tooltip-time-range": "<0>Указывает временной диапазон, используемый для запроса. При выборе параметра <1>Запрос</1> будут использованы только временные диапазоны, указанные в запросе. При выборе параметра <3>Дашборд</3> будет использован только временной диапазон Grafana. В режиме создания журналов будет использоваться только время дашборда.</0>"
     },
     "top-field": {
-      "label-top": ""
+      "label-top": "Верх"
     },
     "trace-type-field": {
-      "label-event-type": "",
-      "placeholder-event-type": ""
+      "label-event-type": "Тип события",
+      "placeholder-event-type": "Выберите типы событий"
     },
     "traces-query-editor": {
-      "label-operation-id": ""
+      "label-operation-id": "Идентификатор операции"
     },
     "user-auth-alert": {
-      "body-unsupported-auth": "",
-      "title-unsupported-auth": ""
+      "body-unsupported-auth": "Для использования этого источника данных требуется аутентификация через Azure Entra (ранее — Azure Active Directory). Подробнее — в <2>документации</2>.",
+      "title-unsupported-auth": "Неподдерживаемый поставщик аутентификации"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "",
-      "title-no-fallback-credentials": ""
+      "body-no-fallback-credentials": "Для работы внутренних функций источника данных (например, оповещения) требуются учетные данные службы. Этот источник данных не имеет резервных учетных данных службы, или отключена функция использования резервных данных. Подробнее — в <2>документации</2>.",
+      "title-no-fallback-credentials": "Резервные учетные данные недоступны"
     },
     "variable-editor": {
-      "aria-label-select-custom-namespace": "",
+      "aria-label-select-custom-namespace": "Выбрать пользовательское пространство имен",
       "aria-label-select-namespace": "Выбрать пространство имен",
-      "aria-label-select-query-type": "",
-      "aria-label-select-region": "",
-      "aria-label-select-resource": "",
-      "aria-label-select-resource-group": "",
-      "aria-label-select-subscription": "",
-      "label-custom-namespace": "",
+      "aria-label-select-query-type": "Выбрать тип запроса",
+      "aria-label-select-region": "Выбрать область",
+      "aria-label-select-resource": "Выбрать ресурс",
+      "aria-label-select-resource-group": "Выбрать группу ресурсов",
+      "aria-label-select-subscription": "Выбрать подписку",
+      "label-custom-namespace": "Пользовательское пространство имен",
       "label-namespace": "Пространство имен",
-      "label-query-type": "",
-      "label-region": "",
-      "label-resource": "",
-      "label-resource-group": "",
-      "label-resource-type": "",
-      "label-subscription": "",
-      "placeholder-custom-namespace": "",
-      "placeholder-namespace": "",
-      "placeholder-region": "",
-      "placeholder-resource-group": "",
-      "title-error-occurred": ""
+      "label-query-type": "Тип запроса",
+      "label-region": "Область",
+      "label-resource": "Ресурс",
+      "label-resource-group": "Группа ресурсов",
+      "label-resource-type": "Тип ресурса",
+      "label-subscription": "Подписка",
+      "placeholder-custom-namespace": "Необязательно",
+      "placeholder-namespace": "Необязательно",
+      "placeholder-region": "Необязательно",
+      "placeholder-resource-group": "Необязательно",
+      "title-error-occurred": "Ошибка при запросе метаданных из Azure Monitor"
     }
   }
 }

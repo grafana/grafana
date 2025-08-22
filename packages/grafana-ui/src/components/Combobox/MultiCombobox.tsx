@@ -2,13 +2,14 @@ import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ComboboxBaseProps, AutoSizeConditionals } from './Combobox';
 import { ComboboxList } from './ComboboxList';
@@ -29,6 +30,7 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
+  portalContainer?: HTMLElement;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -46,6 +48,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     createCustomValue = false,
+    'aria-labelledby': ariaLabelledBy,
+    'data-testid': dataTestId,
+    portalContainer,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -115,7 +120,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             break;
         }
       },
-      stateReducer: (state, actionAndChanges) => {
+      stateReducer: (_state, actionAndChanges) => {
         const { changes } = actionAndChanges;
         return {
           ...changes,
@@ -194,6 +199,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          // Don't allow selection of info options
+          if (newSelectedItem?.infoOption) {
+            break;
+          }
+
           // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
             // TODO: fix bug where if the search filtered items list is the
@@ -201,12 +211,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             const isAllFilteredSelected = selectedItems.length === options.length - 1;
 
             // if every option is already selected, clear the selection.
-            // otherwise, select all the options (excluding the first ALL_OTION)
-            const realOptions = options.slice(1);
+            // otherwise, select all the options (excluding the first ALL_OPTION and info options)
+            const realOptions = options.slice(1).filter((option) => !option.infoOption);
             let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
             if (!isAllFilteredSelected && inputValue !== '') {
-              // Select all currently filtered items and deduplicate
               newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
             }
 
@@ -217,7 +226,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             }
             setSelectedItems(newSelectedItems);
           } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
-            removeSelectedItem(newSelectedItem);
+            // Find the actual selected item object that matches the clicked item by value
+            // This is necessary because the clicked item (from async options) may be a different
+            // object reference than the selected item, and useMultipleSelection uses object equality
+            const itemToRemove = selectedItems.find((item) => item.value === newSelectedItem.value);
+            if (itemToRemove) {
+              removeSelectedItem(itemToRemove);
+            }
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
@@ -284,15 +299,17 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           )}
           <input
             className={multiStyles.input}
-            {...getInputProps(
-              getDropdownProps({
+            {...getInputProps({
+              ...getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: visibleItems.length === 0 ? placeholder : '',
                 ref: inputRef,
                 style: { width: inputWidth },
-              })
-            )}
+              }),
+              'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+              'data-testid': dataTestId,
+            })}
           />
 
           <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
@@ -318,12 +335,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           </div>
         </span>
       </div>
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{
             ...floatStyles,
             width: floatStyles.width + 24, // account for checkbox
+            pointerEvents: 'auto', // Override container's pointer-events: none
           }}
           {...getMenuProps({ ref: floatingRef })}
         >

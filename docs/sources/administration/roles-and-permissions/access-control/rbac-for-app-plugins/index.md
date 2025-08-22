@@ -36,9 +36,9 @@ refs:
 
 # RBAC for app plugins
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 RBAC can be used to manage access to [app plugins](https://grafana.com/docs/grafana/latest/administration/plugin-management/#app-plugins).
 Each app plugin grants the basic Viewer, Editor and Admin organization roles a default set of plugin permissions.
@@ -72,6 +72,7 @@ The following list contains app plugins that have fine-grained RBAC support.
 | [Performance Testing (K6)](https://grafana.com/docs/grafana-cloud/testing/k6/)                                                                                                        | `k6-app`                       | [Configure RBAC for K6](https://grafana.com/docs/grafana-cloud/testing/k6/projects-and-users/configure-rbac/)                                                              |
 | [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)                                                    | `grafana-pdc-app`              | n/a                                                                                                                                                                        |
 | [Service Level Objective (SLO)](https://grafana.com/docs/grafana-cloud/alerting-and-irm/slo/)                                                                                         | `grafana-slo-app`              | [Configure RBAC for SLO](https://grafana.com/docs/grafana-cloud/alerting-and-irm/slo/set-up/rbac/)                                                                         |
+| [Cloud Provider](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/monitor-cloud-provider/)                                                                               | `grafana-csp-app`              | [Cloud Provider Observability role-based access control](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/monitor-cloud-provider/rbac/)                       |
 
 ### Revoke fine-grained access from app plugins
 

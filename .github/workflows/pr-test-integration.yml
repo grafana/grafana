@@ -18,17 +18,37 @@ concurrency:
 permissions: {}
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-test-integration.yml
+
   sqlite:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
+        # We don't need more than this since it has to wait for the other tests.
         shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
+          1/4, 2/4, 3/4, 4/4,
         ]
       fail-fast: false
 
     name: Sqlite (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
     steps:
@@ -37,29 +57,32 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: true
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
         ]
       fail-fast: false
 
     name: MySQL (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
     env:
@@ -67,7 +90,7 @@ jobs:
       MYSQL_HOST: 127.0.0.1
     services:
       mysql:
-        image: mysql:8.0.32
+        image: mysql:8.0.43
         env:
           MYSQL_ROOT_PASSWORD: rootpass
           MYSQL_DATABASE: grafana_tests
@@ -82,31 +105,34 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: true
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
   postgres:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
         ]
       fail-fast: false
 
     name: Postgres (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
     env:
@@ -115,7 +141,7 @@ jobs:
       POSTGRES_HOST: 127.0.0.1
     services:
       postgres:
-        image: postgres:12.3-alpine
+        image: postgres:17.6
         env:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
@@ -128,17 +154,43 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
           cache: true
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  # This is the job that is actually required by rulesets.
+  # We want to only require one job instead of all the individual tests and shards.
+  # Future work also allows us to start skipping some tests based on changed files.
+  required-backend-integration-tests:
+    needs:
+      - mysql
+      - postgres
+      - sqlite
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All backend integration tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"

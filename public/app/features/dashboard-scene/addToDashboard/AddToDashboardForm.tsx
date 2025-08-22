@@ -3,13 +3,13 @@ import { ReactElement, useEffect, useState } from 'react';
 import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { addToDashboard, SubmissionError } from './addToDashboard';
 
@@ -57,7 +57,6 @@ export function AddToDashboardForm<TOptions = undefined>({
   } = useForm<FormDTO>({
     defaultValues: { saveTarget: SaveTarget.NewDashboard },
   });
-  const { t } = useTranslate();
 
   const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
   const canWriteDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsWrite);

@@ -1,9 +1,9 @@
 import { cx } from '@emotion/css';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { Role } from 'app/types';
+import { Role } from 'app/types/accessControl';
 
 import { RoleMenuOption } from './RoleMenuOption';
 import { MENU_MAX_HEIGHT } from './constants';
@@ -30,7 +30,7 @@ export const RolePickerSubMenu = ({
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const customStyles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const onClearInternal = async () => {
     if (onClear) {
       onClear();

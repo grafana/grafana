@@ -85,8 +85,8 @@ func TestLoader_Load(t *testing.T) {
 							Description: "Data source for Amazon AWS monitoring service",
 							Keywords:    []string{"aws", "amazon"},
 							Logos: plugins.Logos{
-								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Small: "public/plugins/cloudwatch/img/amazon-web-services.png",
+								Large: "public/plugins/cloudwatch/img/amazon-web-services.png",
 							},
 							Links: []plugins.InfoLink{
 								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
@@ -122,11 +122,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:    "core:plugin/cloudwatch",
-					BaseURL:   "public/app/plugins/datasource/cloudwatch",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
-					Signature: plugins.SignatureStatusInternal,
-					Class:     plugins.ClassCore,
+					Module:       "core:plugin/cloudwatch",
+					BaseURL:      "public/plugins/cloudwatch",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
+					Signature:    plugins.SignatureStatusInternal,
+					Class:        plugins.ClassCore,
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -221,6 +222,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -266,11 +268,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
-					Signature: "unsigned",
+					Class:        plugins.ClassExternal,
+					Module:       "public/plugins/test-datasource/module.js",
+					BaseURL:      "public/plugins/test-datasource",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+					Signature:    "unsigned",
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -323,11 +326,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
-					Signature: plugins.SignatureStatusUnsigned,
+					Class:        plugins.ClassExternal,
+					Module:       "public/plugins/test-datasource/module.js",
+					BaseURL:      "public/plugins/test-datasource",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+					Signature:    plugins.SignatureStatusUnsigned,
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -424,6 +428,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:     plugins.SignatureStatusUnsigned,
 					Module:        "public/plugins/test-app/module.js",
 					BaseURL:       "public/plugins/test-app",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -450,9 +455,6 @@ func TestLoader_Load(t *testing.T) {
 		src := &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"http://example.com"}
 			},
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false
@@ -508,9 +510,6 @@ func TestLoader_Load(t *testing.T) {
 		src := &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"http://example.com"}
 			},
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false
@@ -570,9 +569,6 @@ func TestLoader_Load(t *testing.T) {
 		src := &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"http://example.com"}
 			},
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false

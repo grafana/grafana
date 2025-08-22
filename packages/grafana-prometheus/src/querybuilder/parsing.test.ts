@@ -948,6 +948,25 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses query with custom variable', () => {
+    expect(buildVisualQueryFromString('topk($custom, rate(metric_name[$__rate_interval]))')).toEqual(
+      noErrors({
+        metric: 'metric_name',
+        labels: [],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'topk',
+            params: ['$custom'],
+          },
+        ],
+      })
+    );
+  });
 });
 
 function noErrors(query: PromVisualQuery) {

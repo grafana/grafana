@@ -132,10 +132,15 @@ type Cfg struct {
 	HomePath                   string
 	ProvisioningPath           string
 	PermittedProvisioningPaths []string
-	DataPath                   string
-	LogsPath                   string
-	PluginsPath                string
-	EnterpriseLicensePath      string
+	// Job History Configuration
+	ProvisioningLokiURL      string
+	ProvisioningLokiUser     string
+	ProvisioningLokiPassword string
+	ProvisioningLokiTenantID string
+	DataPath                 string
+	LogsPath                 string
+	PluginsPath              string
+	EnterpriseLicensePath    string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -157,6 +162,7 @@ type Cfg struct {
 	DisableInitAdminCreation             bool
 	DisableBruteForceLoginProtection     bool
 	BruteForceLoginProtectionMaxAttempts int64
+	DisableUsernameLoginProtection       bool
 	DisableIPAddressLoginProtection      bool
 	CookieSecure                         bool
 	CookieSameSiteDisabled               bool
@@ -312,6 +318,7 @@ type Cfg struct {
 	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
+	QuickRanges QuickRanges
 
 	// User
 	UserInviteMaxLifetime        time.Duration
@@ -340,6 +347,9 @@ type Cfg struct {
 	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
 	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
 	DefaultDatasourceManageAlertsUIToggle bool
+	// Default behavior for the "Allow as recording rules target" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool
 
 	// IP range access control
 	IPRangeACEnabled     bool
@@ -475,6 +485,9 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
+	// Open feature settings
+	OpenFeature OpenFeatureSettings
+
 	Storage StorageSettings
 
 	Search SearchSettings
@@ -545,22 +558,31 @@ type Cfg struct {
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
-	//Short Links
+	// Short Links
 	ShortLinkExpiration int
 
 	// Unified Storage
 	UnifiedStorage                             map[string]UnifiedStorageConfig
+	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
+	IndexMaxCount                              int
+	IndexRebuildInterval                       time.Duration
+	IndexCacheTTL                              time.Duration
 	EnableSharding                             bool
+	QOSEnabled                                 bool
+	QOSNumberWorker                            int
+	QOSMaxSizePerTenant                        int
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
+	MemberlistAdvertisePort                    int
 	MemberlistJoinMember                       string
 	MemberlistClusterLabel                     string
 	MemberlistClusterLabelVerificationDisabled bool
+	SearchRingReplicationFactor                int
 	InstanceID                                 string
 	SprinklesApiServer                         string
 	SprinklesApiServerPageLimit                int
@@ -770,7 +792,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 
-	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
+	newAnnotationCleanupSettings := func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
 		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
@@ -1316,6 +1338,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := cfg.readOpenFeatureSettings(); err != nil {
+		cfg.Logger.Error("Failed to read open feature settings", "error", err)
+		return err
+	}
+
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
 	cfg.readK8sDashboardCleanupSettings()
@@ -1387,6 +1414,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	scopesSection := iniFile.Section("scopes")
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
+	// Time picker settings
+	if err := cfg.readTimePicker(); err != nil {
+		return err
+	}
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
@@ -1561,6 +1593,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+	cfg.DisableUsernameLoginProtection = security.Key("disable_username_login_protection").MustBool(false)
 	cfg.DisableIPAddressLoginProtection = security.Key("disable_ip_address_login_protection").MustBool(true)
 
 	// Ensure at least one login attempt can be performed.
@@ -1743,7 +1776,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(identity.RoleNone),
 			string(identity.RoleViewer),
 			string(identity.RoleEditor),
-			string(identity.RoleAdmin)})
+			string(identity.RoleAdmin),
+		})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	// Deprecated
@@ -1952,6 +1986,7 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
 	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
+	cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle = datasources.Key("default_allow_recording_rules_target_alerts_ui_toggle").MustBool(true)
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {
@@ -2049,6 +2084,13 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
 		}
 	}
+
+	// Read job history configuration
+	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
+	cfg.ProvisioningLokiUser = valueAsString(iniFile.Section("provisioning"), "loki_user", "")
+	cfg.ProvisioningLokiPassword = valueAsString(iniFile.Section("provisioning"), "loki_password", "")
+	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
+
 	return nil
 }
 

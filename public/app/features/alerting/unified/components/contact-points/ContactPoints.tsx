@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -17,16 +17,17 @@ import {
 import { contextSrv } from 'app/core/core';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import { ContactPoint } from './ContactPoint';
 import { NotificationTemplates } from './NotificationTemplates';
@@ -68,7 +69,7 @@ const ContactPointsTab = () => {
   );
 
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
-  const { t } = useTranslate();
+
   const search = queryParams.get('search');
 
   if (isLoading) {
@@ -140,8 +141,12 @@ const ContactPointsTab = () => {
       ) : (
         <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
       )}
+
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
-      {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
+      {/* Extra configs also don't support global config */}
+      {!isGrafanaManagedAlertmanager && !isExtraConfig(selectedAlertmanager!) && (
+        <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />
+      )}
       {ExportDrawer}
     </>
   );
@@ -196,8 +201,11 @@ const useTabQueryParam = (defaultTab: ActiveTab) => {
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, canViewContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, canCreateContactPoints] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
   const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+
+  const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 
   // Depending on permissions, user may not have access to all tabs,
   // but we can default to picking the first one that they definitely _do_ have access to
@@ -211,14 +219,13 @@ export const ContactPointsPageContents = () => {
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
-  const { t } = useTranslate();
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
       <Stack direction="column">
         <TabsBar>
           {showContactPointsTab && (
@@ -257,7 +264,7 @@ interface ContactPointsListProps {
 const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
-  const { t } = useTranslate();
+
   if (pageItems.length === 0) {
     const emptyMessage = t('alerting.contact-points.no-contact-points-found', 'No contact points found');
     return <EmptyState variant="not-found" message={emptyMessage} />;

@@ -33,7 +33,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestReceiverService_GetReceiver(t *testing.T) {
+func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -61,7 +64,10 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 	})
 }
 
-func TestReceiverService_GetReceivers(t *testing.T) {
+func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -91,7 +97,10 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 	})
 }
 
-func TestReceiverService_DecryptRedact(t *testing.T) {
+func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -275,7 +284,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: definitions.Provenance(models.ProvenanceFile),
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI))),
-			//expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
+			// expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
 		},
 		{
 			name:        "delete receiver with optimistic version mismatch fails",
@@ -673,7 +682,7 @@ func TestReceiverService_Update(t *testing.T) {
 			user:     writer,
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI)),
 			existing: util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			//expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceAPI),
+			// expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceAPI),
 			expectedUpdate: models.CopyReceiverWith(baseReceiver,
 				models.ReceiverMuts.WithProvenance(models.ProvenanceAPI),
 				rm.Encrypted(models.Base64Enrypt)),
@@ -728,7 +737,7 @@ func TestReceiverService_Update(t *testing.T) {
 				result, err := revision.CreateReceiver(tc.existing)
 				require.NoError(t, err)
 
-				created, err := PostableApiReceiverToReceiver(result, tc.existing.Provenance)
+				created, err := legacy_storage.PostableApiReceiverToReceiver(result, tc.existing.Provenance)
 				require.NoError(t, err)
 				err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
 				require.NoError(t, err)
@@ -1529,7 +1538,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 
 	return NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
-		legacy_storage.NewAlertmanagerConfigStore(store),
+		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc)),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
 		encryptSvc,

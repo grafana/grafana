@@ -19,15 +19,15 @@ weight: 800
 
 Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, please [file a support ticket](/profile/org/tickets/new). Note that standard ingest and retention rates apply for ingesting these audit logs.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Only API requests or UI actions that trigger an API request generate an audit log.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Audit logs
 
@@ -328,8 +328,6 @@ external group.
 
 #### Cloud migration management
 
-{{< docs/public-preview product="Cloud Migration Assistant" featureFlag="onPremToCloudMigrations" >}}
-
 | Action                           | Distinguishing fields                                       |
 | -------------------------------- | ----------------------------------------------------------- |
 | Connect to a cloud instance      | `{"action": "connect-instance"}`                            |
@@ -354,9 +352,9 @@ Furthermore, you can also record `GET` requests. See below how to configure it.
 
 ## Configuration
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The auditing feature is disabled by default.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Audit logs can be saved into files, sent to a Loki instance or sent to the Grafana default logger. By default, only the file exporter is enabled.
 You can choose which exporter to use in the [configuration file](../../configure-grafana/).
@@ -373,6 +371,10 @@ enabled = false
 loggers = file
 # Keep dashboard content in the logs (request or response fields); this can significantly increase the size of your logs.
 log_dashboard_content = false
+# Whether to record data source queries' request body. This can significantly increase the size of your logs. Enabled by default.
+log_datasource_query_request_body = true
+# Whether to record data source queries' response body. This can significantly increase the size of your logs. Enabled by default.
+log_datasource_query_response_body = true
 # Keep requests and responses body; this can significantly increase the size of your logs.
 verbose = false
 # Write an audit log for every status code.
@@ -403,9 +405,9 @@ max_file_size_mb = 256
 
 Audit logs are sent to a [Loki](/oss/loki/) service, through HTTP or gRPC.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The HTTP option for the Loki exporter is available only in Grafana Enterprise version 7.4 and later.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```ini
 [auditing.logs.loki]
@@ -422,9 +424,11 @@ tenant_id =
 
 If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:
 
-- **host** - OS hostname on which the Grafana instance is running.
-- **grafana_instance** - Application URL.
-- **kind** - `auditing`
+| Label            | Value                                                |
+| ---------------- | ---------------------------------------------------- |
+| host             | OS hostname on which the Grafana instance is running |
+| grafana_instance | Application URL                                      |
+| kind             | `auditing`                                           |
 
 When basic authentication is needed to ingest logs in your Loki instance, you can specify credentials in the URL field. For example:
 

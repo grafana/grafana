@@ -13,8 +13,8 @@ import {
   isValidDate,
   parseDuration,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { config, isFetchError, locationService } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -32,6 +32,7 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
+import { contextSrv } from '../../../../../core/services/context_srv';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SilenceFormFields } from '../../types/silence-form';
@@ -39,7 +40,7 @@ import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
@@ -74,7 +75,6 @@ const ExistingSilenceEditor = () => {
     const filteredMatchers = silence.matchers?.filter((m) => m.name !== MATCHER_ALERT_RULE_UID);
     return getFormFieldsForSilence({ ...silence, matchers: filteredMatchers });
   }, [silence]);
-  const { t } = useTranslate();
 
   if (silenceId && getSilenceIsLoading) {
     return (
@@ -119,7 +119,7 @@ const ExistingSilenceEditor = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={alertManagerSourceName} />
       <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
     </>
   );
@@ -216,8 +216,8 @@ export const SilencesEditor = ({
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
-  const { t } = useTranslate();
-  const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
+
+  const userLogged = Boolean(contextSrv.user.isSignedIn && contextSrv.user.name);
 
   return (
     <FormProvider {...formAPI}>
@@ -325,7 +325,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function ExistingSilenceEditorPage() {
-  const { t } = useTranslate();
   const pageNav = {
     id: 'silence-edit',
     text: t('alerting.existing-silence-editor-page.page-nav.text.edit-silence', 'Edit silence'),

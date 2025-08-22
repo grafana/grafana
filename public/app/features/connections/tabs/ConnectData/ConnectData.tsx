@@ -3,7 +3,7 @@ import { useMemo, useState, MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -14,7 +14,7 @@ import { SearchField } from 'app/features/plugins/admin/components/SearchField';
 import { Sorters } from 'app/features/plugins/admin/helpers';
 import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
 import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/admin/state/hooks';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ROUTES } from '../../constants';
 
@@ -61,13 +61,12 @@ export function AddNewConnection() {
   const { error, plugins, isLoading } = useGetAll(
     {
       keyword: searchTerm,
-      type: PluginType.datasource,
       isInstalled: filterBy === 'installed' ? true : undefined,
       hasUpdate: filterBy === 'has-update' ? true : undefined,
     },
     sortBy
   );
-  const { t } = useTranslate();
+
   const filterByOptions = [
     { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
     { value: 'installed', label: t('connections.add-new-connection.filter-by-options.label.installed', 'Installed') },
@@ -100,14 +99,34 @@ export function AddNewConnection() {
     setFocusedItem(null);
   };
 
-  const cardGridItems = useMemo(
+  const getPluginsByType = useMemo(() => {
+    return {
+      [PluginType.datasource]: plugins.filter((plugin) => plugin.type === PluginType.datasource),
+      [PluginType.app]: plugins.filter((plugin) => plugin.type === PluginType.app),
+    };
+  }, [plugins]);
+
+  const dataSourcesPlugins = getPluginsByType[PluginType.datasource];
+  const appsPlugins = getPluginsByType[PluginType.app];
+
+  const datasourceCardGridItems = useMemo(
     () =>
-      plugins.map((plugin) => ({
+      dataSourcesPlugins.map((plugin) => ({
         ...plugin,
         logo: plugin.info.logos.small,
         url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
       })),
-    [plugins]
+    [dataSourcesPlugins]
+  );
+
+  const appsCardGridItems = useMemo(
+    () =>
+      appsPlugins.map((plugin) => ({
+        ...plugin,
+        logo: plugin.info.logos.small,
+        url: `/plugins/${plugin.id}`,
+      })),
+    [appsPlugins]
   );
 
   const onSortByChange = (value: SelectableValue<string>) => {
@@ -118,8 +137,10 @@ export function AddNewConnection() {
     history.push({ query: { filterBy: value } });
   };
 
-  const showNoResults = useMemo(() => !isLoading && !error && plugins.length < 1, [isLoading, error, plugins]);
-  const categoryHeaderLabel = t('connections.connect-data.category-header-label', 'Data sources');
+  const showNoResults = useMemo(
+    () => !isLoading && !error && dataSourcesPlugins.length < 1 && appsPlugins.length < 1,
+    [isLoading, error, dataSourcesPlugins, appsPlugins]
+  );
 
   return (
     <>
@@ -179,7 +200,7 @@ export function AddNewConnection() {
           </Field>
         </HorizontalGroup>
       </HorizontalGroup>
-      <CategoryHeader iconName="database" label={categoryHeaderLabel} />
+
       {isLoading ? (
         <LoadingPlaceholder text={t('common.loading', 'Loading...')} />
       ) : !!error ? (
@@ -187,8 +208,29 @@ export function AddNewConnection() {
           Error message: "{{ error: error.message }}"
         </Trans>
       ) : (
-        <CardGrid items={cardGridItems} onClickItem={onClickCardGridItem} />
+        <>
+          {/* Data Sources Section */}
+          {dataSourcesPlugins.length > 0 && (
+            <>
+              <CategoryHeader
+                iconName="database"
+                label={t('connections.connect-data.datasources-header', 'Data Sources')}
+              />
+              <CardGrid items={datasourceCardGridItems} onClickItem={onClickCardGridItem} />
+            </>
+          )}
+
+          {/* Apps Section */}
+          {appsPlugins.length > 0 && (
+            <>
+              <div className={styles.spacer} />
+              <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
+              <CardGrid items={appsCardGridItems} onClickItem={onClickCardGridItem} />
+            </>
+          )}
+        </>
       )}
+
       {showNoResults && (
         <EmptyState
           variant="not-found"

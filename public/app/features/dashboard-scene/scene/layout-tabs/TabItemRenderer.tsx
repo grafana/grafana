@@ -3,12 +3,12 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useLocation } from 'react-router';
 
 import { locationUtil, textUtil } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Box, Icon, Tab, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
-import { useIsClone } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 
 import { TabItem } from './TabItem';
@@ -16,21 +16,21 @@ import { TabItem } from './TabItem';
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, key, isDropTarget } = model.useState();
   const parentLayout = model.getParentLayout();
-  const { tabs, currentTabIndex } = parentLayout.useState();
+  const { currentTabIndex } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
-  const myIndex = tabs.findIndex((tab) => tab === model);
+  const myIndex = parentLayout.getTabs().findIndex((tab) => tab === model);
   const isActive = myIndex === currentTabIndex;
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
   const [isConditionallyHidden] = useIsConditionallyHidden(model);
-  const isClone = useIsClone(model);
-  const { t } = useTranslate();
+  const isClone = isRepeatCloneOrChildOf(model);
+
   const isDraggable = !isClone && isEditing;
 
   if (isConditionallyHidden && !isEditing && !isActive) {
@@ -93,7 +93,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 }
 
 function IsHiddenSuffix() {
-  const { t } = useTranslate();
   return (
     <Box paddingLeft={1} display={'inline'}>
       <Tooltip

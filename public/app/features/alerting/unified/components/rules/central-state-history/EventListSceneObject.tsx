@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   SceneComponentProps,
@@ -25,6 +25,7 @@ import {
 
 import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEventsReached } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGenTriageButton/addAITriageButton';
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
@@ -37,6 +38,7 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAler
 import { EventDetails } from './EventDetails';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
+import { parseBackendLabelFilters } from './utils';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -64,6 +66,8 @@ export const HistoryEventsList = ({
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
+  const labelFilters = parseBackendLabelFilters(valueInLabelFilter.toString());
+
   const {
     data: stateHistory,
     isLoading,
@@ -73,6 +77,7 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
+    labels: labelFilters,
   });
 
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
@@ -80,7 +85,6 @@ export const HistoryEventsList = ({
     stateFrom: valueInStateFromFilter.toString(),
     stateTo: valueInStateToFilter.toString(),
   });
-  const { t } = useTranslate();
 
   const historyRecords = historyRecordsNotSorted.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -94,7 +98,7 @@ export const HistoryEventsList = ({
   }
 
   return (
-    <>
+    <Stack direction="column" gap={0.5}>
       {maximumEventsReached && (
         <Alert
           severity="warning"
@@ -102,13 +106,13 @@ export const HistoryEventsList = ({
         >
           {t(
             'alerting.central-alert-history.too-many-events.text',
-            'The selected time period has too many events to display. Diplaying the latest 5000 events. Try using a shorter time period.'
+            'The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.'
           )}
         </Alert>
       )}
       <LoadingIndicator visible={isLoading} />
       <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} timeRange={timeRange} />
-    </>
+    </Stack>
   );
 };
 
@@ -125,9 +129,17 @@ interface HistoryLogEventsProps {
 }
 function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
+  const styles = useStyles2(getStyles);
+
   return (
     <Stack direction="column" gap={0}>
-      <ListHeader />
+      <div className={styles.headerContainer}>
+        <ListHeader />
+
+        <div className={styles.triageButtonContainer}>
+          <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} />
+        </div>
+      </div>
       <ul>
         {pageItems.map((record) => {
           return (
@@ -149,28 +161,26 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
 function ListHeader() {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.headerWrapper}>
-      <div className={styles.mainHeader}>
-        <div className={styles.timeCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.timestamp">Timestamp</Trans>
-          </Text>
-        </div>
-        <div className={styles.transitionCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.state">State</Trans>
-          </Text>
-        </div>
-        <div className={styles.alertNameCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.alert-rule">Alert rule</Trans>
-          </Text>
-        </div>
-        <div className={styles.labelsCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.instance">Instance</Trans>
-          </Text>
-        </div>
+    <div className={styles.mainHeader}>
+      <div className={styles.timeCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.timestamp">Timestamp</Trans>
+        </Text>
+      </div>
+      <div className={styles.transitionCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.state">State</Trans>
+        </Text>
+      </div>
+      <div className={styles.alertNameCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.alert-rule">Alert rule</Trans>
+        </Text>
+      </div>
+      <div className={styles.labelsCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.instance">Instance</Trans>
+        </Text>
       </div>
     </div>
   );
@@ -296,7 +306,7 @@ interface EventStateProps {
 }
 export function EventState({ state, showLabel = false, addFilter, type }: EventStateProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const toolTip = t('alerting.central-alert-history.details.no-recognized-state', 'No recognized state');
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
@@ -483,9 +493,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         cursor: 'pointer',
       },
     }),
-    headerWrapper: css({
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
     mainHeader: css({
       display: 'flex',
       flexDirection: 'row',
@@ -494,6 +501,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: '30px',
       padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
       gap: theme.spacing(0.5),
+    }),
+    headerContainer: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    triageButtonContainer: css({
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     }),
   };
 };

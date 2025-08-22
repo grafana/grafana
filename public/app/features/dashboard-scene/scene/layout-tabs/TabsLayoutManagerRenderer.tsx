@@ -4,14 +4,17 @@ import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
+import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
+import { TabItem } from './TabItem';
+import { TabItemRepeater } from './TabItemRepeater';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
@@ -23,6 +26,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
+
+  const isClone = isRepeatCloneOrChildOf(model);
 
   return (
     <div className={styles.tabLayoutContainer}>
@@ -38,7 +43,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               return;
             }
 
-            model.moveTab(result.draggableId, result.source.index, result.destination.index);
+            model.moveTab(result.source.index, result.destination.index);
           }}
         >
           <div className={styles.tabsRow}>
@@ -46,14 +51,14 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               {(dropProvided) => (
                 <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
                   {tabs.map((tab) => (
-                    <tab.Component model={tab} key={tab.state.key!} />
+                    <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
                   ))}
 
                   {dropProvided.placeholder}
                 </div>
               )}
             </Droppable>
-            {isEditing && (
+            {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
                 <Button
                   icon="plus"
@@ -95,6 +100,19 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       )}
     </div>
   );
+}
+
+function TabWrapper({ tab, manager }: { tab: TabItem; manager: TabsLayoutManager }) {
+  const { repeatByVariable } = useSceneObjectState(tab, { shouldActivateOrKeepAlive: true });
+
+  if (repeatByVariable) {
+    const variable = sceneGraph.lookupVariable(repeatByVariable, manager);
+
+    if (variable instanceof MultiValueVariable) {
+      return <TabItemRepeater tab={tab} key={tab.state.key!} manager={manager} variable={variable} />;
+    }
+  }
+  return <tab.Component model={tab} key={tab.state.key!} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

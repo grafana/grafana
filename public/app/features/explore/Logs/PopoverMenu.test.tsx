@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createLogRow } from '../../logs/components/__mocks__/logRow';
+import { createLogRow } from '../../logs/components/mocks/logRow';
 
 import { PopoverMenu } from './PopoverMenu';
 

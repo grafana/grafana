@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Button, Stack, Icon, useStyles2 } from '@grafana/ui';
 import { FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
 
 interface Props {
@@ -22,14 +22,14 @@ export const OverrideCategoryTitle = ({
   onOverrideRemove,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
   const propertyNames = properties.map((p) => p?.name).join(', ');
   const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
 
   return (
     <div>
-      <HorizontalGroup justify="space-between">
+      <Stack justifyContent="space-between">
         <div>{overrideName}</div>
         <Button
           variant="secondary"
@@ -39,7 +39,7 @@ export const OverrideCategoryTitle = ({
           tooltip={t('dashboard.override-category-title.tooltip-remove-override', 'Remove override')}
           aria-label={t('dashboard.override-category-title.aria-label-remove-override', 'Remove override')}
         />
-      </HorizontalGroup>
+      </Stack>
       {!isExpanded && (
         <div className={styles.overrideDetails}>
           <div className={styles.options} title={matcherOptions}>

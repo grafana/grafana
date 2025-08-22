@@ -15,7 +15,6 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import {
   getDataSourceByUid,
@@ -52,7 +51,6 @@ interface GetIteratorResult {
 }
 
 export function useFilteredRulesIteratorProvider() {
-  const { populateGroupResponseCache } = usePopulateGrafanaPrometheusApiCache();
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
@@ -65,15 +63,18 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
-    const grafanaRulesGenerator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+    const grafanaRulesGenerator = from(
+      grafanaGroupsGenerator(groupLimit, {
+        contactPoint: filterState.contactPoint ?? undefined,
+        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
+        state: filterState.ruleState ? [filterState.ruleState] : [],
+      })
+    ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
           .filter((group) => groupFilter(group, normalizedFilterState))
-          .flatMap((group) => {
-            populateGroupResponseCache(group);
-            return group.rules.map((rule) => [group, rule] as const);
-          })
+          .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
           .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
           .map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),

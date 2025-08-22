@@ -1,9 +1,9 @@
 import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 import { CollapsibleSection } from '../CollapsibleSection';
@@ -34,7 +34,7 @@ export const SubformArrayField = ({
   const path = `${pathPrefix}${option.propertyName}`;
   const formAPI = useFormContext();
   const { fields, append, remove } = useControlledFieldArray({ name: path, formAPI, defaults: defaultValues });
-  const { t } = useTranslate();
+
   return (
     <div className={styles.wrapper}>
       <CollapsibleSection

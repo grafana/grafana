@@ -1,9 +1,16 @@
 import { fireEvent, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
+import {
+  Average,
+  Derivative,
+  ElasticsearchDataQuery,
+  Terms,
+  TopMetrics,
+} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { renderWithESProvider } from '../../../../test-helpers/render';
-import { ElasticsearchQuery, Terms, Average, Derivative, TopMetrics } from '../../../../types';
 import { describeMetric } from '../../../../utils';
 
 import { TermsSettingsEditor } from './TermsSettingsEditor';
@@ -19,7 +26,7 @@ describe('Terms Settings Editor', () => {
     const avg: Average = { id: '2', type: 'avg', field: '@value' };
     const derivative: Derivative = { id: '3', field: avg.id, type: 'derivative' };
     const topMetrics: TopMetrics = { id: '4', type: 'top_metrics' };
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: 'A',
       query: '',
       bucketAggs: [termsAgg],
@@ -56,7 +63,7 @@ describe('Terms Settings Editor', () => {
       const avg: Average = { id: '2', type: 'avg', field: '@value' };
       const derivative: Derivative = { id: '3', field: avg.id, type: 'derivative' };
       const topMetrics: TopMetrics = { id: '4', type: 'top_metrics' };
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         query: '',
         bucketAggs: [termsAgg],

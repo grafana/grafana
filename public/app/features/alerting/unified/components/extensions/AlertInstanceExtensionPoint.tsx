@@ -1,7 +1,7 @@
 import { ReactElement, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
@@ -23,7 +23,7 @@ export const AlertInstanceExtensionPoint = ({
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const context = useMemo(() => ({ instance, rule }), [instance, rule]);
   const { links } = usePluginLinks({ context, extensionPointId, limitPerPlugin: 3 });
-  const { t } = useTranslate();
+
   if (links.length === 0) {
     return null;
   }

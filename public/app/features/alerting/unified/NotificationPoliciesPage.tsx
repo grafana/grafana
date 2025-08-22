@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
@@ -10,7 +10,7 @@ import { NotificationPoliciesList } from 'app/features/alerting/unified/componen
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
@@ -40,7 +40,7 @@ const NotificationPoliciesTabs = () => {
   const [queryParams, setQueryParams] = useQueryParams();
   const { tab } = getActiveTabFromUrl(queryParams, availableTabs[0]);
   const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
-  const { t } = useTranslate();
+
   const muteTimingsTabActive = activeTab === ActiveTab.TimeIntervals;
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
 
@@ -48,7 +48,7 @@ const NotificationPoliciesTabs = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
         {policiesSupported && canSeePoliciesTab && (
           <Tab

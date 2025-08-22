@@ -12,7 +12,7 @@ import {
   FieldType,
   GrafanaTheme2,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { LayerName } from 'app/core/components/Layers/LayerName';
@@ -24,7 +24,6 @@ export const SeriesEditor = ({
   onChange,
   context,
 }: StandardEditorProps<XYSeriesConfig[], unknown, Options>) => {
-  const { t } = useTranslate();
   const style = useStyles2(getStyles);
 
   // reset opts when mapping changes (no way to do this in panel opts builder?)
@@ -183,10 +182,13 @@ export const SeriesEditor = ({
                   filter: (field) =>
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                    field.type === FieldType.number &&
+                    (field.type === FieldType.number || field.type === FieldType.time) &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'First number field in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto
+                      ? t('xychart.series-editor.placeholder-x-field', 'First number or time field in each frame')
+                      : undefined,
                 },
               }}
             />
@@ -221,7 +223,10 @@ export const SeriesEditor = ({
                     field.type === FieldType.number &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'Remaining number fields in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto
+                      ? t('xychart.series-editor.placeholder-y-field', 'Remaining number fields in each frame')
+                      : undefined,
                 },
               }}
             />
@@ -251,7 +256,6 @@ export const SeriesEditor = ({
                 settings: {
                   // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
                   filter: (field) =>
-                    field.name !== series.x?.matcher.options &&
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
                     field.type === FieldType.number &&
@@ -287,7 +291,6 @@ export const SeriesEditor = ({
                 settings: {
                   // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
                   filter: (field) =>
-                    field.name !== series.x?.matcher.options &&
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
                     field.type === FieldType.number &&

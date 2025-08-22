@@ -1,32 +1,27 @@
-import { render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
 import { assertIsDefined } from 'test/helpers/asserts';
+import { render, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 
-import {
-  sharedWithMeFolder,
-  wellFormedDashboard,
-  wellFormedEmptyFolder,
-  wellFormedFolder,
-} from '../fixtures/dashboardsTreeItem.fixture';
+import { sharedWithMeFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
+const [_, { folderA: folder, folderB_empty: emptyFolderIndicator, dashbdD: dashboard }] = getFolderFixtures();
 
 describe('browse-dashboards DashboardsTree', () => {
   const WIDTH = 800;
   const HEIGHT = 600;
+  const mockPermissions = {
+    canEditFolders: true,
+    canEditDashboards: true,
+    canDeleteFolders: true,
+    canDeleteDashboards: true,
+  };
 
-  const folder = wellFormedFolder(1);
-  const emptyFolderIndicator = wellFormedEmptyFolder();
-  const dashboard = wellFormedDashboard(2);
   const noop = () => {};
   const isSelected = () => SelectionState.Unselected;
   const allItemsAreLoaded = () => true;
@@ -36,10 +31,20 @@ describe('browse-dashboards DashboardsTree', () => {
     config.sharedWithMeFolderUID = 'sharedwithme';
   });
 
+  afterEach(() => {
+    // Reset permissions back to defaults
+    Object.assign(mockPermissions, {
+      canEditFolders: true,
+      canEditDashboards: true,
+      canDeleteFolders: true,
+      canDeleteDashboards: true,
+    });
+  });
+
   it('renders a dashboard item', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[dashboard]}
         isSelected={isSelected}
         width={WIDTH}
@@ -51,15 +56,20 @@ describe('browse-dashboards DashboardsTree', () => {
         requestLoadMore={requestLoadMore}
       />
     );
-    expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
-    expect(screen.queryByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
+    expect(screen.getByText(dashboard.item.title)).toBeInTheDocument();
+    expect(screen.getByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
     expect(screen.getByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
   });
 
   it('does not render checkbox when disabled', () => {
+    mockPermissions.canEditFolders = false;
+    mockPermissions.canEditDashboards = false;
+    mockPermissions.canDeleteFolders = false;
+    mockPermissions.canDeleteDashboards = false;
+
     render(
       <DashboardsTree
-        canSelect={false}
+        permissions={mockPermissions}
         items={[dashboard]}
         isSelected={isSelected}
         width={WIDTH}
@@ -79,7 +89,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a folder item', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -92,13 +102,13 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
 
-    expect(screen.queryByText(folder.item.title)).toBeInTheDocument();
+    expect(screen.getByText(folder.item.title)).toBeInTheDocument();
   });
 
   it('renders a folder link', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -119,7 +129,7 @@ describe('browse-dashboards DashboardsTree', () => {
 
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[sharedWithMe, folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -140,7 +150,7 @@ describe('browse-dashboards DashboardsTree', () => {
 
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[sharedWithMe, folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -160,9 +170,9 @@ describe('browse-dashboards DashboardsTree', () => {
 
   it('calls onFolderClick when a folder button is clicked', async () => {
     const handler = jest.fn();
-    render(
+    const { user } = render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -175,7 +185,7 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
     const folderButton = screen.getByLabelText(`Expand folder ${folder.item.title}`);
-    await userEvent.click(folderButton);
+    await user.click(folderButton);
 
     expect(handler).toHaveBeenCalledWith(folder.item.uid, true);
   });
@@ -183,7 +193,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders empty folder indicators', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[emptyFolderIndicator]}
         isSelected={isSelected}
         width={WIDTH}
@@ -195,6 +205,6 @@ describe('browse-dashboards DashboardsTree', () => {
         requestLoadMore={requestLoadMore}
       />
     );
-    expect(screen.queryByText('No items')).toBeInTheDocument();
+    expect(screen.getByText('No items')).toBeInTheDocument();
   });
 });

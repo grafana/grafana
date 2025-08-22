@@ -106,6 +106,9 @@ var (
 )
 
 func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -172,6 +175,9 @@ func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *
 }
 
 func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool, postContentType string) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -377,6 +383,9 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -457,6 +466,9 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -538,6 +550,9 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -645,6 +660,9 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -741,6 +759,9 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -850,6 +871,9 @@ func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -1143,7 +1167,61 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 	})
 }
 
+func TestIntegrationConvertPrometheusEndpoints_Editor(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableRecordingRules:  true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "editor",
+	})
+	editorClient := newAlertingApiClient(grafanaListedAddr, "editor", "password")
+
+	ds := adminClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+	testGroup := apimodels.PrometheusRuleGroup{
+		Name:     "test-group-permission-cache",
+		Interval: prommodel.Duration(60 * time.Second),
+		Rules: []apimodels.PrometheusRule{
+			{
+				Alert: "test-editor-permissions",
+				Expr:  "vector(0)",
+				For:   util.Pointer(prommodel.Duration(1 * time.Minute)),
+			},
+		},
+	}
+
+	ns := util.GenerateShortUID()
+
+	t.Run("editor can import rules that create new folder", func(t *testing.T) {
+		editorClient.ConvertPrometheusPostRuleGroup(t, ns, ds.Body.Datasource.UID, testGroup, nil)
+
+		group := editorClient.ConvertPrometheusGetRuleGroupRules(t, ns, testGroup.Name, nil)
+		require.Equal(t, testGroup.Name, group.Name)
+		require.Len(t, group.Rules, 1)
+		require.Equal(t, testGroup.Rules[0].Alert, group.Rules[0].Alert)
+	})
+}
+
 func TestIntegrationConvertPrometheusEndpoints_GroupLabels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

@@ -27,12 +27,31 @@ var (
 	ScopeAllKeepers      = ScopeProviderSecretKeepers.GetResourceAllScope()
 )
 
-func RegisterAccessControlRoles(service accesscontrol.Service) error {
+func registerAccessControlRoles(service accesscontrol.Service) error {
 	// SecureValues
+	// These are broken down into more granular fixed roles on purpose.
+	// For inline Secure Values, we want to allow creation and deletion by Editors because there's no API to read/update.
+	// References are only available with the API and RBAC, so those roles can be granted to any basic role by Operators.
+	secureValuesCreator := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:secret.securevalues:creator",
+			DisplayName: "Secure Values Creator",
+			Description: "Create secure values.",
+			Group:       "Secrets Manager",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionSecretSecureValuesCreate,
+					Scope:  ScopeAllSecureValues,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	secureValuesReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:secret.securevalues:reader",
-			DisplayName: "Secrets Manager secure values reader",
+			DisplayName: "Secure Values Reader",
 			Description: "Read and list secure values.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
@@ -45,25 +64,29 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	secureValuesWriter := accesscontrol.RoleRegistration{
+	secureValuesUpdater := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:secret.securevalues:writer",
-			DisplayName: "Secrets Manager secure values writer",
-			Description: "Create, update and delete secure values.",
+			Name:        "fixed:secret.securevalues:updater",
+			DisplayName: "Secure Values Updater",
+			Description: "Update secure values.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
-				{
-					Action: ActionSecretSecureValuesCreate,
-					Scope:  ScopeAllSecureValues,
-				},
-				{
-					Action: ActionSecretSecureValuesRead,
-					Scope:  ScopeAllSecureValues,
-				},
 				{
 					Action: ActionSecretSecureValuesWrite,
 					Scope:  ScopeAllSecureValues,
 				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
+	secureValuesDeleter := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:secret.securevalues:deleter",
+			DisplayName: "Secure Values Deleter",
+			Description: "Delete secure values.",
+			Group:       "Secrets Manager",
+			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionSecretSecureValuesDelete,
 					Scope:  ScopeAllSecureValues,
@@ -77,7 +100,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 	keepersReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:secret.keepers:reader",
-			DisplayName: "Secrets Manager keepers reader",
+			DisplayName: "Keepers Reader",
 			Description: "Read and list keepers.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
@@ -93,7 +116,7 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 	keepersWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:secret.keepers:writer",
-			DisplayName: "Secrets Manager keepers writer",
+			DisplayName: "Keepers Writer",
 			Description: "Create, update and delete keepers.",
 			Group:       "Secrets Manager",
 			Permissions: []accesscontrol.Permission{
@@ -119,7 +142,11 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 	}
 
 	return service.DeclareFixedRoles(
-		secureValuesReader, secureValuesWriter,
-		keepersReader, keepersWriter,
+		secureValuesCreator,
+		secureValuesReader,
+		secureValuesUpdater,
+		secureValuesDeleter,
+		keepersReader,
+		keepersWriter,
 	)
 }

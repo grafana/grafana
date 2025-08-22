@@ -8,7 +8,7 @@ import { TextLink } from './TextLink';
 import mdx from './TextLink.mdx';
 
 const meta: Meta = {
-  title: 'General/TextLink',
+  title: 'Foundations/TextLink',
   component: TextLink,
   parameters: {
     docs: {

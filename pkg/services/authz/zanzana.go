@@ -88,7 +88,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer)
+		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -127,11 +127,12 @@ type ZanzanaService interface {
 var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Zanzana, error) {
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (*Zanzana, error) {
 	s := &Zanzana{
 		cfg:      cfg,
 		features: features,
 		logger:   log.New("zanzana.server"),
+		reg:      reg,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -147,6 +148,7 @@ type Zanzana struct {
 	logger   log.Logger
 	handle   grpcserver.Provider
 	features featuremgmt.FeatureToggles
+	reg      prometheus.Registerer
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -172,24 +174,37 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer)
+	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer, z.reg)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	authenticator := authnlib.NewAccessTokenAuthenticator(
-		authnlib.NewAccessTokenVerifier(
-			authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
-			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
-				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
-			}),
-		),
-	)
+	var authenticatorInterceptor interceptors.Authenticator
+	if z.cfg.ZanzanaServer.AllowInsecure && z.cfg.Env == setting.Dev {
+		z.logger.Info("Allowing insecure connections to OpenFGA HTTP server")
+		authenticatorInterceptor = noopAuthenticator{}
+	} else {
+		z.logger.Info("Requiring secure connections to OpenFGA HTTP server")
+		authenticator := authnlib.NewAccessTokenAuthenticator(
+			authnlib.NewAccessTokenVerifier(
+				authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
+				authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
+					SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
+				}),
+			),
+		)
+		authenticatorInterceptor = interceptors.AuthenticatorFunc(
+			grpcutils.NewAuthenticatorInterceptor(
+				authenticator,
+				tracer,
+			),
+		)
+	}
 
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
 		z.features,
-		interceptors.AuthenticatorFunc(grpcutils.NewAuthenticatorInterceptor(authenticator, tracer)),
+		authenticatorInterceptor,
 		tracer,
 		prometheus.DefaultRegisterer,
 	)
@@ -221,6 +236,9 @@ func (z *Zanzana) running(ctx context.Context) error {
 				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
 			} else {
 				z.logger.Info("Starting OpenFGA HTTP server")
+				if z.cfg.ZanzanaServer.AllowInsecure {
+					z.logger.Warn("Allowing unauthenticated connections!")
+				}
 				if err := srv.ListenAndServe(); err != nil {
 					z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
 				}
@@ -237,4 +255,12 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
+}
+
+// TODO this impl might be more broadly useful in authlib
+type noopAuthenticator struct {
+}
+
+func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
+	return ctx, nil
 }

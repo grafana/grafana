@@ -20,9 +20,9 @@ The use of AngularJS in Grafana has been [deprecated](../) in favor of React. Su
 
 This page explains how Grafana users might be impacted by the removal of Angular support based on plugins dependent on this legacy framework. You will also see if there is a migration option available for a given plugin.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem. Guidance on migrating a plugin to React can be found in our [migration guide](/developers/plugin-tools/migration-guides/migrate-angularjs-to-react).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## What should I do with the list of AngularJS plugins?
 
@@ -34,9 +34,9 @@ Refer to the [table below](#angularjs-based-plugins) and take the appropriate ac
 - Customers of Grafana Enterprise and users of Grafana Cloud can also leverage [usage insights](../../../dashboards/assess-dashboard-usage/) to prioritize any migration efforts.
 - Review the plugin source repositories to add your support to any migration issues or consider forking the repo.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you want to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking **Suggest an edit** at the bottom of this page.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Private plugins
 

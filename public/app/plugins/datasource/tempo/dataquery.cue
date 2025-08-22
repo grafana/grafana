@@ -84,6 +84,8 @@ composableKinds: DataQuery: {
 					valueType?: string
 					// The scope of the filter, can either be unscoped/all scopes, resource or span
 					scope?: #TraceqlSearchScope
+					// Whether the value is a custom value typed by the user
+					isCustomValue?: bool
 				} @cuetsy(kind="interface")
 			}
 		}]

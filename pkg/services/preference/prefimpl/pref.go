@@ -26,10 +26,11 @@ func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
 
 func prefsFromConfig(cfg *setting.Cfg) pref.Preference {
 	return pref.Preference{
-		Theme:           cfg.DefaultTheme,
-		Timezone:        cfg.DateFormats.DefaultTimezone,
-		WeekStart:       &cfg.DateFormats.DefaultWeekStart,
-		HomeDashboardID: 0,
+		Theme:            cfg.DefaultTheme,
+		Timezone:         cfg.DateFormats.DefaultTimezone,
+		WeekStart:        &cfg.DateFormats.DefaultWeekStart,
+		HomeDashboardID:  0, // nolint:staticcheck
+		HomeDashboardUID: "",
 		JSONData: &pref.PreferenceJSONData{
 			Language: cfg.DefaultLanguage,
 		},
@@ -59,16 +60,20 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		if p.WeekStart != nil && *p.WeekStart != "" {
 			res.WeekStart = p.WeekStart
 		}
+		// nolint: staticcheck
 		if p.HomeDashboardID != 0 {
 			res.HomeDashboardID = p.HomeDashboardID
+		}
+		if p.HomeDashboardUID != "" {
+			res.HomeDashboardUID = p.HomeDashboardUID
 		}
 		if p.JSONData != nil {
 			if p.JSONData.Language != "" {
 				res.JSONData.Language = p.JSONData.Language
 			}
 
-			if p.JSONData.Locale != "" {
-				res.JSONData.Locale = p.JSONData.Locale
+			if p.JSONData.RegionalFormat != "" {
+				res.JSONData.RegionalFormat = p.JSONData.RegionalFormat
 			}
 
 			if p.JSONData.QueryHistory.HomeTab != "" {
@@ -118,9 +123,10 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	if err != nil {
 		if errors.Is(err, pref.ErrPrefNotFound) {
 			preference := &pref.Preference{
-				UserID:          cmd.UserID,
-				OrgID:           cmd.OrgID,
-				TeamID:          cmd.TeamID,
+				UserID: cmd.UserID,
+				OrgID:  cmd.OrgID,
+				TeamID: cmd.TeamID,
+				// nolint: staticcheck
 				HomeDashboardID: cmd.HomeDashboardID,
 				Timezone:        cmd.Timezone,
 				WeekStart:       &cmd.WeekStart,
@@ -129,6 +135,11 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Updated:         time.Now(),
 				JSONData:        jsonData,
 			}
+
+			if cmd.HomeDashboardUID != nil {
+				preference.HomeDashboardUID = *cmd.HomeDashboardUID
+			}
+
 			_, err = s.store.Insert(ctx, preference)
 			if err != nil {
 				return err
@@ -142,7 +153,10 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
-	preference.HomeDashboardID = cmd.HomeDashboardID
+	preference.HomeDashboardID = cmd.HomeDashboardID // nolint:staticcheck
+	if cmd.HomeDashboardUID != nil {
+		preference.HomeDashboardUID = *cmd.HomeDashboardUID
+	}
 	preference.JSONData = jsonData
 
 	return s.store.Update(ctx, preference)
@@ -178,11 +192,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
-	if cmd.Locale != nil {
+	if cmd.RegionalFormat != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
 		}
-		preference.JSONData.Locale = *cmd.Locale
+		preference.JSONData.RegionalFormat = *cmd.RegionalFormat
 	}
 
 	if cmd.Navbar != nil && cmd.Navbar.BookmarkUrls != nil {
@@ -201,8 +215,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		}
 	}
 
+	// nolint: staticcheck
 	if cmd.HomeDashboardID != nil {
 		preference.HomeDashboardID = *cmd.HomeDashboardID
+	}
+
+	if cmd.HomeDashboardUID != nil {
+		preference.HomeDashboardUID = *cmd.HomeDashboardUID
 	}
 
 	if cmd.CookiePreferences != nil {
@@ -242,10 +261,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 func (s *Service) GetDefaults() *pref.Preference {
 	return &pref.Preference{
-		Theme:           s.defaults.Theme,
-		Timezone:        s.defaults.Timezone,
-		WeekStart:       s.defaults.WeekStart,
-		HomeDashboardID: 0,
+		Theme:            s.defaults.Theme,
+		Timezone:         s.defaults.Timezone,
+		WeekStart:        s.defaults.WeekStart,
+		HomeDashboardID:  0, // nolint:staticcheck
+		HomeDashboardUID: "",
 		JSONData: &pref.PreferenceJSONData{
 			Language: s.defaults.JSONData.Language,
 		},
@@ -276,8 +296,8 @@ func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error
 
 func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, error) {
 	jsonData := &pref.PreferenceJSONData{
-		Language: cmd.Language,
-		Locale:   cmd.Locale,
+		Language:       cmd.Language,
+		RegionalFormat: cmd.RegionalFormat,
 	}
 	if cmd.Navbar != nil {
 		jsonData.Navbar = *cmd.Navbar

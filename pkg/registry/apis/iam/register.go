@@ -2,12 +2,18 @@ package iam
 
 import (
 	"context"
+	"fmt"
+	"maps"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -15,8 +21,12 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
@@ -25,41 +35,41 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
-var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
-
-// This is used just so wire has something unique to return
-type IdentityAccessManagementAPIBuilder struct {
-	store        legacy.LegacyIdentityStore
-	authorizer   authorizer.Authorizer
-	accessClient types.AccessClient
-
-	// non-k8s api route
-	display *user.LegacyDisplayREST
-
-	// Not set for multi-tenant deployment for now
-	sso ssosettings.Service
-}
-
 func RegisterAPIService(
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
+	accessClient types.AccessClient,
+	reg prometheus.Registerer,
+	coreRolesStorage CoreRoleStorageBackend,
+	rolesStorage RoleStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
-	authorizer, client := newLegacyAuthorizer(ac, store)
+	legacyAccessClient := newLegacyAccessClient(ac, store)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:        store,
-		sso:          ssoService,
-		authorizer:   authorizer,
-		accessClient: client,
-		display:      user.NewLegacyDisplayREST(store),
+		store:               store,
+		coreRolesStorage:    coreRolesStorage,
+		rolesStorage:        rolesStorage,
+		sso:                 ssoService,
+		authorizer:          authorizer,
+		legacyAccessClient:  legacyAccessClient,
+		accessClient:        accessClient,
+		display:             user.NewLegacyDisplayREST(store),
+		reg:                 reg,
+		enableAuthZApis:     features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableAuthnMutation: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter:    true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -85,50 +95,95 @@ func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAP
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return iamv0.SchemeGroupVersion
+	return legacyiamv0.SchemeGroupVersion
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	iamv0.AddKnownTypes(scheme, iamv0.VERSION)
+	if b.enableAuthZApis {
+		if err := iamv0.AddToScheme(scheme); err != nil {
+			return err
+		}
+	}
+
+	legacyiamv0.AddKnownTypes(scheme, legacyiamv0.VERSION)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	// "no kind is registered for the type"
-	iamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
+	legacyiamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
-	metav1.AddToGroupVersion(scheme, iamv0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, legacyiamv0.SchemeGroupVersion)
+	return scheme.SetVersionPriority(legacyiamv0.SchemeGroupVersion)
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	teamResource := iamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.accessClient)
+	teamResource := legacyiamv0.TeamResourceInfo
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
-	teamBindingResource := iamv0.TeamBindingResourceInfo
+	teamBindingResource := legacyiamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
-	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
-	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
+	userResource := legacyiamv0.UserResourceInfo
+	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
+	storage[userResource.StoragePath()] = legacyStore
 
-	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.accessClient)
+	if b.enableDualWriter {
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
+		if err != nil {
+			return err
+		}
+
+		storage[userResource.StoragePath()] = dw
+	}
+
+	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
+	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
+	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
-		ssoResource := iamv0.SSOSettingResourceInfo
+		ssoResource := legacyiamv0.SSOSettingResourceInfo
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
+	if b.enableAuthZApis {
+		// v0alpha1
+		coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
+
+		roleStore, err := NewLocalStore(iamv0.RoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.rolesStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.RoleInfo.StoragePath()] = roleStore
+	}
+
+	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
 	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return iamv0.GetOpenAPIDefinitions
+	return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		dst := legacyiamv0.GetOpenAPIDefinitions(rc)
+		maps.Copy(dst, iamv0.GetOpenAPIDefinitions(rc))
+
+		return dst
+	}
 }
 
 func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -190,4 +245,109 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.authorizer
+}
+
+// Validate implements builder.APIGroupValidation.
+// TODO: Move this to the ValidateFunc of the user resource after moving the APIs to use the app-platofrm-sdk.
+// TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
+func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	switch a.GetOperation() {
+	case admission.Create:
+		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
+			return b.validateCreateUser(ctx, a, o)
+		}
+		return nil
+	case admission.Connect:
+	case admission.Delete:
+	case admission.Update:
+		return nil
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	userObj, ok := a.GetObject().(*iamv0.User)
+	if !ok {
+		return nil
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewBadRequest("no identity found")
+	}
+
+	// Temporary validation that the user is not trying to create a Grafana Admin without being a Grafana Admin.
+	if userObj.Spec.GrafanaAdmin && !requester.GetIsGrafanaAdmin() {
+		return apierrors.NewForbidden(legacyiamv0.UserResourceInfo.GroupResource(),
+			userObj.Name,
+			fmt.Errorf("only grafana admins can create grafana admins"))
+	}
+
+	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
+		return apierrors.NewBadRequest("user must have either login or email")
+	}
+
+	return nil
+}
+
+// Mutate implements builder.APIGroupMutation.
+// TODO: Move this to the MutateFunc of the user resource after moving the APIs to use the app-platofrm-sdk.
+// TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
+func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	switch a.GetOperation() {
+	case admission.Create:
+		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
+			return b.mutateUser(ctx, a, o)
+		}
+		return nil
+	case admission.Update:
+		return nil
+	case admission.Delete:
+		return nil
+	case admission.Connect:
+		return nil
+	}
+
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) mutateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	userObj, ok := a.GetObject().(*iamv0.User)
+	if !ok {
+		return nil
+	}
+
+	userObj.Spec.Email = strings.ToLower(userObj.Spec.Email)
+	userObj.Spec.Login = strings.ToLower(userObj.Spec.Login)
+
+	if userObj.Spec.Login == "" {
+		userObj.Spec.Login = userObj.Spec.Email
+	}
+	if userObj.Spec.Email == "" {
+		userObj.Spec.Email = userObj.Spec.Login
+	}
+
+	return nil
+}
+
+func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter,
+	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend) (grafanarest.Storage, error) {
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      storageBackend,
+		Reg:          reg,
+		AccessClient: ac,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client := resource.NewLocalResourceClient(server)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
+
+	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+	return store, err
 }

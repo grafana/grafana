@@ -3,17 +3,26 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-ARG BASE_IMAGE=alpine:3.21
-ARG JS_IMAGE=node:22-alpine
+ARG BASE_IMAGE=alpine-base
+ARG GO_IMAGE=go-builder-base
+ARG JS_IMAGE=js-builder-base
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.3-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
+# Dependabot cannot update dependencies listed in ARGs
+# By using FROM instructions we can delegate dependency updates to dependabot
+FROM alpine:3.21.3 AS alpine-base
+FROM ubuntu:22.04 AS ubuntu-base
+FROM golang:1.24.6-alpine AS go-builder-base
+FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+ARG JS_NODE_ENV=production
+ARG JS_YARN_INSTALL_FLAG=--immutable
+ARG JS_YARN_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -28,15 +37,23 @@ COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
 RUN apk add --no-cache make build-base python3
-
-RUN yarn install --immutable
+#
+# Set the node env according to defaults or argument passed
+#
+ENV NODE_ENV=${JS_NODE_ENV}
+#
+RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
+    yarn install; \
+  else \
+    yarn install --immutable; \
+  fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV=production
-RUN yarn build
+# Set the build argument according to default or argument passed
+RUN yarn ${JS_YARN_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
@@ -45,7 +62,6 @@ ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
-ARG BINGO="true"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
@@ -59,12 +75,11 @@ RUN if grep -i -q alpine /etc/issue; then \
 WORKDIR /tmp/grafana
 
 COPY go.* ./
-COPY .bingo .bingo
 COPY .citools .citools
 
-# Include vendored dependencies
+# Copy go dependencies first
+# If updating this, please also update devenv/frontend-service/backend.dockerfile
 COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
@@ -76,6 +91,10 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
+COPY apps/plugins apps/plugins
+COPY apps/shorturl apps/shorturl
+COPY apps/provisioning apps/provisioning
+COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
@@ -88,10 +107,6 @@ COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
 
 RUN go mod download
-RUN if [[ "$BINGO" = "true" ]]; then \
-  go install github.com/bwplotka/bingo@latest && \
-  bingo get -v; \
-  fi
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod

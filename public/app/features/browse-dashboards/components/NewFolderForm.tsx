@@ -1,14 +1,16 @@
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Field, Stack } from '@grafana/ui';
+import { FolderDTO } from 'app/types/folders';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
 interface Props {
   onConfirm: (folderName: string) => void;
   onCancel: () => void;
+  parentFolder?: FolderDTO;
 }
 
 interface FormModel {
@@ -17,30 +19,17 @@ interface FormModel {
 
 const initialFormModel: FormModel = { folderName: '' };
 
-export function NewFolderForm({ onCancel, onConfirm }: Props) {
-  const { t } = useTranslate();
+export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   const {
     handleSubmit,
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormModel>({ defaultValues: initialFormModel });
 
   const translatedFolderNameRequiredPhrase = t(
     'browse-dashboards.action.new-folder-name-required-phrase',
     'Folder name is required.'
   );
-  const validateFolderName = async (folderName: string) => {
-    try {
-      await validationSrv.validateNewFolderName(folderName);
-      return true;
-    } catch (e) {
-      if (e instanceof Error) {
-        return e.message;
-      } else {
-        throw e;
-      }
-    }
-  };
 
   const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
 
@@ -61,7 +50,7 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
           defaultValue={initialFormModel.folderName}
           {...register('folderName', {
             required: translatedFolderNameRequiredPhrase,
-            validate: async (v) => await validateFolderName(v),
+            validate: async (v) => await validateFolderName(v, parentFolder?.uid),
           })}
         />
       </Field>
@@ -69,10 +58,23 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
         <Button variant="secondary" fill="outline" onClick={onCancel}>
           <Trans i18nKey="browse-dashboards.new-folder-form.cancel-label">Cancel</Trans>
         </Button>
-        <Button type="submit">
+        <Button type="submit" disabled={isSubmitting}>
           <Trans i18nKey="browse-dashboards.new-folder-form.create-label">Create</Trans>
         </Button>
       </Stack>
     </form>
   );
+}
+
+export async function validateFolderName(folderName: string, parentFolderUid?: string) {
+  try {
+    await validationSrv.validateNewFolderName(folderName, parentFolderUid);
+    return true;
+  } catch (e) {
+    if (e instanceof Error) {
+      return e.message;
+    } else {
+      throw e;
+    }
+  }
 }

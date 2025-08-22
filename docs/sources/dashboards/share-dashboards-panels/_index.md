@@ -259,7 +259,6 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view it.
 1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering), customize the image settings:
-
    - **Width** - In pixels. The default is 1000.
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.
@@ -296,7 +295,7 @@ https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&t
 You can share a panel by embedding it on another website using an iframe. Users must be signed into Grafana to view the panel unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-Anonymous access permission is no longer available for Grafana Cloud even for panels in [externally shared dashboards](ref:shared-dashboards). This feature is only supported for Grafana Enterprise and Grafana Open Source.
+Panel embedding and anonymous access permissions are not available in Grafana Cloud, even for panels in [externally shared dashboards](ref:shared-dashboards). These capabilities are only supported in Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 To create a panel that can be embedded, follow these steps:

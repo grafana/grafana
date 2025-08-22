@@ -1,10 +1,11 @@
 import { useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, Text } from '@grafana/ui';
 
+import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
 import { RuleFormValues } from '../../../types/rule-form';
-import { isRecordingRuleByType } from '../../../utils/rules';
+import { isGrafanaManagedRuleByType, isRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 import { LabelsInRule } from './LabelsField';
@@ -14,11 +15,12 @@ interface LabelsFieldInFormProps {
 }
 export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const { watch } = useFormContext<RuleFormValues>();
-  const { t } = useTranslate();
+
   const labels = watch('labels');
   const type = watch('type');
 
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
+  const isGrafanaManaged = type ? isGrafanaManagedRuleByType(type) : false;
 
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
@@ -35,17 +37,22 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         <Text element="h5">
           <Trans i18nKey="alerting.labels-field-in-form.labels">Labels</Trans>
         </Text>
-        <Stack direction={'row'} gap={1}>
-          <Text variant="bodySmall" color="secondary">
-            {text}
-          </Text>
-          <NeedHelpInfo
-            externalLink={'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/'}
-            linkText={`Read about labels`}
-            contentText="The dropdown only displays labels that you have previously used for alerts.
+        <Stack direction={'column'} gap={1}>
+          <Stack direction={'row'} gap={1}>
+            <Text variant="bodySmall" color="secondary">
+              {text}
+            </Text>
+            <NeedHelpInfo
+              externalLink={
+                'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/'
+              }
+              linkText={`Read about labels`}
+              contentText="The dropdown only displays labels that you have previously used for alerts.
               Select a label from the options below or type in a new one."
-            title={t('alerting.labels-field-in-form.title-labels', 'Labels')}
-          />
+              title={t('alerting.labels-field-in-form.title-labels', 'Labels')}
+            />
+          </Stack>
+          {isGrafanaManaged && <AIImproveLabelsButtonComponent />}
         </Stack>
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">

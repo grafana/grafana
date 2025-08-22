@@ -1,5 +1,5 @@
 import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
@@ -27,11 +27,10 @@ import {
   DashboardRoutes,
   HomeDashboardRedirectDTO,
   isRedirectResponse,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
+} from 'app/types/dashboard';
+import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
+import { contextSrv } from '../../../core/services/context_srv';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
@@ -287,7 +286,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     if (dashboard.weekStart !== '' && dashboard.weekStart !== undefined) {
       setWeekStart(dashboard.weekStart);
     } else {
-      setWeekStart(config.bootData.user.weekStart);
+      setWeekStart(contextSrv.user.weekStart);
     }
 
     // Propagate an app-wide event about the dashboard being loaded

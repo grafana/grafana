@@ -18,7 +18,13 @@ weight: 200
 
 # Dashboard JSON schema v2
 
-{{< docs/experimental product="Dashboard JSON schema v2" featureFlag="`dashboardNewLayouts`" >}}
+{{< admonition type="caution" >}}
+
+Dashboard JSON schema v2 is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
 
 Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
 
@@ -26,7 +32,8 @@ Observability as Code works with all versions of the JSON model, and it's fully 
 
 ## Before you begin
 
-Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle, `dashboardNewLayouts`.
+Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle.
+To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
 It also requires the new dashboards API feature toggle, `kubernetesDashboards`, to be enabled as well.
 
 For more information on how dashboards behave depending on your feature flag configuration, refer to [Notes and limitations](#notes-and-limitations).
@@ -211,18 +218,18 @@ Upon saving, they’ll be updated to the new schema where you can take advantage
 
 ### Dashboard behavior with disabled feature flags
 
-If you disable the `dashboardNewLayouts` or `kubernetesDashboards` feature flags, you should be aware of how dashboards will behave.
+If you disable the Dynamic dashboards or `kubernetesDashboards` feature flags, you should be aware of how dashboards will behave.
 
-#### Disable `dashboardNewLayouts`
+#### Disable Dynamic dashboards
 
-If `dashboardNewLayouts` feature toggle is disabled, depending on how the dashboard was built, it will behave differently:
+If the Dynamic dashboards feature toggle is disabled, depending on how the dashboard was built, it will behave differently:
 
 - Dashboards built on the new schema through the UI - View only
 - Dashboards built on Schema v1 - View and edit
 - Dashboards built on the new schema by way of Terraform or the CLI - View and edit
 - Provisioned dashboards built on the new schema - View and edit, but the edit experience will be the old experience
 
-#### Disable `dashboardNewLayouts` and `kubernetesDashboards`
+#### Disable Dynamic dashboards and `kubernetesDashboards`
 
 You’ll be unable to view or edit dashboards created or updated in the new schema.
 

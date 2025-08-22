@@ -35,9 +35,9 @@ side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
 automatically. Defaults to `true`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The license only automatically updates once per day. To immediately update the terms for a license, use the Grafana UI to renew your license token.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### license_validation_type
 
@@ -198,6 +198,14 @@ List of enabled loggers.
 
 Keep dashboard content in the logs (request or response fields). This can significantly increase the size of your logs.
 
+### log_datasource_query_request_body
+
+Whether to record data source queries' request body. This can significantly increase the size of your logs. Enabled by default.
+
+### log_datasource_query_response_body
+
+Whether to record data source queries' response body. This can significantly increase the size of your logs. Enabled by default.
+
 ### verbose
 
 Log all requests and keep requests and responses body. This can significantly increase the size of your logs.
@@ -290,11 +298,11 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 ### assertion_attribute_login
 
-Friendly name or name of the attribute within the SAML assertion to use as the user login handle.
+Friendly name or name of the attribute within the SAML assertion to use as the user login handle. Defaults to `login`.
 
 ### assertion_attribute_email
 
-Friendly name or name of the attribute within the SAML assertion to use as the user email.
+Friendly name or name of the attribute within the SAML assertion to use as the user email. Defaults to `email`.
 
 ### assertion_attribute_groups
 
@@ -310,7 +318,7 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 ### assertion_attribute_external_uid
 
-Friendly name or name of the attribute within the SAML assertion to use as the user external UID.
+Friendly name or name of the attribute within the SAML assertion to use as the user external UID. Defaults to `userUID`.
 
 ### allowed_organizations
 
@@ -412,9 +420,9 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs](../../../administration/data-source-management/#enable-and-configure-query-caching).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### ttl
 
@@ -426,9 +434,9 @@ The max duration that a query result is stored in the caching system before it i
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling this constraint is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### max_value_mb
 
@@ -448,9 +456,9 @@ This setting defines the duration to wait for the caching backend to return a ca
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling this timeout is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### write_timeout
 
@@ -458,9 +466,9 @@ This setting defines the number of seconds to wait for the caching backend to st
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling this timeout is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## [caching.encryption]
 
@@ -492,9 +500,9 @@ To disable the maximum, set this value to `0`.
 
 The default is `25`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling the maximum is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## [caching.redis]
 
@@ -509,13 +517,13 @@ The default is `"redis://localhost:6379"`.
 A comma-separated list of Redis cluster members, either in `host:port` format or using the full Redis URLs (`redis://username:password@localhost:6379`). For example, `localhost:7000, localhost: 7001, localhost:7002`.
 If you use the full Redis URLs, then you can specify the scheme, username, and password only once. For example, `redis://username:password@localhost:0000,localhost:1111,localhost:2222`. You cannot specify a different username and password for each URL.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you have specify `cluster`, the value for `url` is ignored.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can enable TLS for cluster mode using the `rediss` scheme in Grafana Enterprise v8.5 and later versions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### prefix
 
@@ -531,9 +539,9 @@ A space-separated list of memcached servers. Example: `memcached-server-1:11211 
 
 The default is `"localhost:11211"`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The following memcached configuration requires the `tlsMemcached` feature toggle.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### tls_enabled
 

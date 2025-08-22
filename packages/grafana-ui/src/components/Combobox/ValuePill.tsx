@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { forwardRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 
 interface ValuePillProps {
@@ -38,6 +38,7 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
     );
   }
 );
+ValuePill.displayName = 'ValuePill';
 
 const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
   wrapper: css({

@@ -4,7 +4,7 @@ import Draggable, { DraggableEventHandler } from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -21,7 +21,6 @@ const OFFSET_X = 10;
 const OFFSET_Y = 32;
 
 export function InlineEdit({ onClose, id, scene }: Props) {
-  const { t } = useTranslate();
   const root = scene.root.div?.getBoundingClientRect();
   const windowHeight = window.innerHeight;
   const windowWidth = window.innerWidth;

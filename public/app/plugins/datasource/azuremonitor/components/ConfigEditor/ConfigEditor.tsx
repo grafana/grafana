@@ -1,10 +1,10 @@
-import { ChangeEvent, PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
-import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
+import { t } from '@grafana/i18n';
+import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
-import { Alert, Divider, Field, Input, SecureSocksProxySettings } from '@grafana/ui';
+import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
 import {
@@ -13,7 +13,7 @@ import {
   AzureMonitorDataSourceSecureJsonData,
   AzureMonitorDataSourceSettings,
   Subscription,
-} from '../../types';
+} from '../../types/types';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
@@ -100,23 +100,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options, onOptionsChange } = this.props;
     const { error } = this.state;
 
-    const onTimeoutChange = (e: ChangeEvent<HTMLInputElement>) => {
-      if (e.currentTarget.value?.trim() === '') {
-        this.updateOptions((options) => ({
-          ...options,
-          jsonData: { ...options.jsonData, timeout: undefined },
-        }));
-      } else {
-        const newVal = Number(e.currentTarget.value);
-        if (!Number.isNaN(newVal)) {
-          this.updateOptions((options) => ({
-            ...options,
-            jsonData: { ...options.jsonData, timeout: newVal },
-          }));
-        }
-      }
-    };
-
     return (
       <>
         <DataSourceDescription
@@ -138,27 +121,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
             title={t('components.config-editor.title-additional-settings', 'Additional settings')}
             description={t(
               'components.config-editor.description-additional-settings',
-              'Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy.'
+              'Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.'
             )}
             isCollapsible={true}
-            isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
+            isInitiallyOpen={
+              options.jsonData.enableSecureSocksProxy !== undefined ||
+              options.jsonData.timeout !== undefined ||
+              options.jsonData.keepCookies !== undefined
+            }
           >
-            <Field
-              label={t('components.config-editor.title-request-timeout', 'Request Timeout')}
-              description={t(
-                'components.config-editor.description-request-timeout',
-                'Set the request timeout in seconds. Default is 30 seconds.'
-              )}
-            >
-              <Input
-                value={options.jsonData.timeout}
-                type="number"
-                className="width-15"
-                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                placeholder="30"
-                onChange={onTimeoutChange}
-              />
-            </Field>
+            <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
             {config.secureSocksDSProxyEnabled && (
               <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
             )}

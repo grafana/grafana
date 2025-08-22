@@ -3,8 +3,9 @@ import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import React, { useCallback, useId, useMemo } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
@@ -31,6 +32,10 @@ interface ComboboxStaticProps<T extends string | number>
    * Allows the user to set a value which is not in the list of options.
    */
   createCustomValue?: boolean;
+  /**
+   * Custom container for rendering the dropdown menu via Portal
+   */
+  portalContainer?: HTMLElement;
 
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
@@ -130,6 +135,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     autoFocus,
     onBlur,
     disabled,
+    portalContainer,
     invalid,
   } = props;
 
@@ -382,10 +388,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'data-testid': dataTestId,
         })}
       />
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={floatStyles}
+          style={{
+            ...floatStyles,
+            pointerEvents: 'auto', // Override container's pointer-events: none
+          }}
           {...getMenuProps({
             ref: floatingRef,
             'aria-labelledby': ariaLabelledBy,

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { QuickPlacement } from 'app/features/canvas/types';
@@ -17,7 +17,6 @@ type Props = {
 };
 
 export const QuickPositioning = ({ onPositionChange, element, settings }: Props) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const onQuickPositioningChange = (position: QuickPlacement) => {

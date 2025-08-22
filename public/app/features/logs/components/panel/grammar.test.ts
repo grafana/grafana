@@ -1,12 +1,14 @@
 import Prism, { Token } from 'prismjs';
 
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
 import { generateLogGrammar } from './grammar';
 
 describe('generateLogGrammar', () => {
   function generateScenario(entry: string) {
     const log = createLogLine({ labels: { place: 'luna', source: 'logs' }, entry });
+    // Access body getter to trigger LogLineModel internals
+    expect(log.body).toBeDefined();
     const grammar = generateLogGrammar(log);
     const tokens = Prism.tokenize(log.entry, grammar);
     return { log, grammar, tokens };
@@ -29,7 +31,7 @@ describe('generateLogGrammar', () => {
       expect(tokens[1].type).toBe('log-token-json-key');
     }
     if (tokens[3] instanceof Token) {
-      expect(tokens[3].content).toBe('"value"');
+      expect(tokens[3].content).toEqual(['"value"']);
       expect(tokens[3].type).toBe('log-token-string');
     }
     if (tokens[5] instanceof Token) {
@@ -37,10 +39,10 @@ describe('generateLogGrammar', () => {
       expect(tokens[5].type).toBe('log-token-json-key');
     }
     if (tokens[7] instanceof Token) {
-      expect(tokens[7].content).toBe('"value2"');
+      expect(tokens[7].content).toEqual(['"value2"']);
       expect(tokens[7].type).toBe('log-token-string');
     }
-    expect.assertions(8);
+    expect.assertions(9);
   });
 
   test('Identifies sizes', () => {
@@ -53,7 +55,7 @@ describe('generateLogGrammar', () => {
       expect(tokens[2].content).toBe('2 KB');
       expect(tokens[2].type).toBe('log-token-size');
     }
-    expect.assertions(4);
+    expect.assertions(5);
   });
 
   test('Identifies durations', () => {
@@ -70,7 +72,7 @@ describe('generateLogGrammar', () => {
       expect(tokens[4].content).toBe('1h');
       expect(tokens[4].type).toBe('log-token-duration');
     }
-    expect.assertions(6);
+    expect.assertions(7);
   });
 
   test.each(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT'])(
@@ -81,7 +83,7 @@ describe('generateLogGrammar', () => {
         expect(tokens[1].content).toBe(method);
         expect(tokens[1].type).toBe('log-token-method');
       }
-      expect.assertions(2);
+      expect.assertions(3);
     }
   );
 });

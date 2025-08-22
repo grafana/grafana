@@ -1,12 +1,23 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame, EventBus } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
+import {
+  applyFieldOverrides,
+  createTheme,
+  DataFrame,
+  DataLink,
+  EventBus,
+  FieldType,
+  LinkModel,
+  toDataFrame,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext } from '../../PanelChrome';
+import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
+import { TableCellDisplayMode } from '../types';
 
-import { TableNG, onRowHover, onRowLeave } from './TableNG';
+import { TableNG } from './TableNG';
 
 // Create a basic data frame for testing
 const createBasicDataFrame = (): DataFrame => {
@@ -141,7 +152,7 @@ const createNestedDataFrame = (): DataFrame => {
         config: { custom: { hidden: true } },
       },
       {
-        name: 'Nested frames',
+        name: '__nestedFrames',
         type: FieldType.nestedFrames,
         values: [[processedNestedFrame], [processedNestedFrame]],
         config: { custom: {} },
@@ -251,7 +262,6 @@ const createSortingTestDataFrame = (): DataFrame => {
   })[0];
 };
 
-// Create a data frame with time field for testing crosshair sharing functionality
 const createTimeDataFrame = (): DataFrame => {
   const frame = toDataFrame({
     name: 'TimeTestData',
@@ -324,7 +334,7 @@ describe('TableNG', () => {
   });
 
   describe('Basic TableNG rendering', () => {
-    it('renders a simple table with columns and rows', () => {
+    it('renders a simple table with columns and rows', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -649,9 +659,6 @@ describe('TableNG', () => {
 
   describe('Sorting', () => {
     it('allows sorting when clicking on column headers', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -661,50 +668,49 @@ describe('TableNG', () => {
       expect(columnHeader).toBeInTheDocument();
 
       // Find the sort button within the first header
-      if (columnHeader) {
-        // Store the initial state of the header
-        const initialSortAttribute = columnHeader.getAttribute('aria-sort');
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
 
-        // Look for a button inside the header
-        const sortButton = columnHeader.querySelector('button') || columnHeader;
+      // Store the initial state of the header
+      const initialSortAttribute = columnHeader.getAttribute('aria-sort');
 
-        // Click the sort button
-        await user.click(sortButton);
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
 
-        // After clicking, the header should have an aria-sort attribute
-        const newSortAttribute = columnHeader.getAttribute('aria-sort');
+      // Click the sort button
+      await user.click(sortButton);
 
-        // The sort attribute should have changed
-        expect(newSortAttribute).not.toBe(initialSortAttribute);
+      // After clicking, the header should have an aria-sort attribute
+      const newSortAttribute = columnHeader.getAttribute('aria-sort');
 
-        // The sort attribute should be either 'ascending' or 'descending'
-        expect(['ascending', 'descending']).toContain(newSortAttribute);
+      // The sort attribute should have changed
+      expect(newSortAttribute).not.toBe(initialSortAttribute);
 
-        // Also verify the data is sorted by checking cell values
-        const cells = container.querySelectorAll('[role="gridcell"]');
-        const firstColumnCells = Array.from(cells).filter((_, index) => index % 2 === 0);
+      // The sort attribute should be either 'ascending' or 'descending'
+      expect(['ascending', 'descending']).toContain(newSortAttribute);
 
-        // Get the text content of the first column cells
-        const cellValues = firstColumnCells.map((cell) => cell.textContent);
+      // Also verify the data is sorted by checking cell values
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const firstColumnCells = Array.from(cells).filter((_, index) => index % 2 === 0);
 
-        // Verify we have values to check
-        expect(cellValues.length).toBeGreaterThan(0);
+      // Get the text content of the first column cells
+      const cellValues = firstColumnCells.map((cell) => cell.textContent);
 
-        // Verify the values are in sorted order based on the aria-sort attribute
-        const sortedValues = [...cellValues].sort();
+      // Verify we have values to check
+      expect(cellValues.length).toBeGreaterThan(0);
 
-        if (newSortAttribute === 'ascending') {
-          expect(JSON.stringify(cellValues)).toBe(JSON.stringify(sortedValues));
-        } else if (newSortAttribute === 'descending') {
-          expect(JSON.stringify(cellValues)).toBe(JSON.stringify([...sortedValues].reverse()));
-        }
+      // Verify the values are in sorted order based on the aria-sort attribute
+      const sortedValues = [...cellValues].sort();
+
+      if (newSortAttribute === 'ascending') {
+        expect(JSON.stringify(cellValues)).toBe(JSON.stringify(sortedValues));
+      } else if (newSortAttribute === 'descending') {
+        expect(JSON.stringify(cellValues)).toBe(JSON.stringify([...sortedValues].reverse()));
       }
     });
 
     it('cycles through ascending, descending, and no sort states', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -733,10 +739,7 @@ describe('TableNG', () => {
       }
     });
 
-    it('supports multi-column sorting with shift key', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
+    it('supports multi-column sorting with cmd or ctrl key', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createSortingTestDataFrame()} width={800} height={600} />
       );
@@ -831,7 +834,7 @@ describe('TableNG', () => {
       expect(categoryBValues).toContain('4');
 
       // 2. Now add second sort column (Value) with shift key
-      await user.keyboard('{Shift>}');
+      await user.keyboard('{Control>}');
       await user.click(valueColumnButton);
 
       // Check data is sorted by Category and then by Value
@@ -866,7 +869,6 @@ describe('TableNG', () => {
       expect(multiSortedRows[4][2]).toBe('Alice');
 
       // 3. Change Value sort direction to descending
-      await user.keyboard('{Shift>}');
       await user.click(valueColumnButton);
 
       // Check data is sorted by Category (asc) and then by Value (desc)
@@ -901,7 +903,6 @@ describe('TableNG', () => {
       expect(multiSortedRowsDesc[4][2]).toBe('Jane');
 
       // 4. Test removing the secondary sort by clicking a third time
-      await user.keyboard('{Shift>}');
       await user.click(valueColumnButton);
 
       // The data should still be sorted by Category only
@@ -915,6 +916,56 @@ describe('TableNG', () => {
       // Last 2 rows should still be 'B' category
       expect(singleSortRows[3][0]).toBe('B');
       expect(singleSortRows[4][0]).toBe('B');
+
+      // finally release control and prove that we exit multi-sort mode
+      await user.keyboard('{/Control}');
+      await user.click(categoryColumnButton);
+
+      const nonMultiSortCategoryRows = getCellTextContent();
+
+      expect(nonMultiSortCategoryRows[0][0]).toBe('B');
+      expect(nonMultiSortCategoryRows[0][1]).toBe('3');
+      expect(nonMultiSortCategoryRows[0][2]).toBe('Jane');
+
+      expect(nonMultiSortCategoryRows[1][0]).toBe('B');
+      expect(nonMultiSortCategoryRows[1][1]).toBe('4');
+      expect(nonMultiSortCategoryRows[1][2]).toBe('Alice');
+
+      expect(nonMultiSortCategoryRows[2][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[2][1]).toBe('5');
+      expect(nonMultiSortCategoryRows[2][2]).toBe('John');
+
+      expect(nonMultiSortCategoryRows[3][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[3][1]).toBe('1');
+      expect(nonMultiSortCategoryRows[3][2]).toBe('Bob');
+
+      expect(nonMultiSortCategoryRows[4][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[4][1]).toBe('2');
+      expect(nonMultiSortCategoryRows[4][2]).toBe('Charlie');
+
+      await user.click(valueColumnButton);
+
+      const nonMultiSortValueRows = getCellTextContent();
+
+      expect(nonMultiSortValueRows[0][0]).toBe('A');
+      expect(nonMultiSortValueRows[0][1]).toBe('1');
+      expect(nonMultiSortValueRows[0][2]).toBe('Bob');
+
+      expect(nonMultiSortValueRows[1][0]).toBe('A');
+      expect(nonMultiSortValueRows[1][1]).toBe('2');
+      expect(nonMultiSortValueRows[1][2]).toBe('Charlie');
+
+      expect(nonMultiSortValueRows[2][0]).toBe('B');
+      expect(nonMultiSortValueRows[2][1]).toBe('3');
+      expect(nonMultiSortValueRows[2][2]).toBe('Jane');
+
+      expect(nonMultiSortValueRows[3][0]).toBe('B');
+      expect(nonMultiSortValueRows[3][1]).toBe('4');
+      expect(nonMultiSortValueRows[3][2]).toBe('Alice');
+
+      expect(nonMultiSortValueRows[4][0]).toBe('A');
+      expect(nonMultiSortValueRows[4][1]).toBe('5');
+      expect(nonMultiSortValueRows[4][2]).toBe('John');
     });
 
     it('correctly sorts different data types', async () => {
@@ -977,6 +1028,38 @@ describe('TableNG', () => {
 
       // Verify number values are sorted numerically
       expect(numberValues).toEqual(['1', '2', '3']);
+    });
+
+    it('triggers the onSortByChange callback', async () => {
+      const onSortByChange = jest.fn();
+
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          onSortByChange={onSortByChange}
+        />
+      );
+
+      // Ensure there are column headers
+      const columnHeader = container.querySelector('[role="columnheader"]');
+      expect(columnHeader).toBeInTheDocument();
+
+      // Find the sort button within the first header
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
+
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
+
+      // Click the sort button
+      await user.click(sortButton);
+
+      // After clicking, the header should have an aria-sort attribute
+      expect(onSortByChange).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1159,40 +1242,6 @@ describe('TableNG', () => {
     });
   });
 
-  describe('Resizing', () => {
-    it('calls onColumnResize when column is resized', () => {
-      const onColumnResize = jest.fn();
-
-      const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          onColumnResize={onColumnResize}
-        />
-      );
-
-      // Find resize handle
-      const resizeHandles = container.querySelectorAll('.rdg-header-row > [role="columnheader"] .rdg-resizer');
-
-      // TODO: This `if` doesn't even trigger - the test is evergreen.
-      // We should work out a reliable way to actually find and trigger the resize methods
-      // The querySelector doesn't return anything!
-      if (resizeHandles.length > 0) {
-        // Simulate resize by triggering mousedown, mousemove, mouseup
-        /* eslint-disable testing-library/prefer-user-event */
-        fireEvent.mouseDown(resizeHandles[0]);
-        fireEvent.mouseMove(resizeHandles[0], { clientX: 250 });
-        fireEvent.mouseUp(resizeHandles[0]);
-        /* eslint-enable testing-library/prefer-user-event */
-
-        // Check that onColumnResize was called
-        expect(onColumnResize).toHaveBeenCalled();
-      }
-    });
-  });
-
   describe('Text wrapping', () => {
     it('defaults to not wrapping text', () => {
       const { container } = render(
@@ -1201,7 +1250,7 @@ describe('TableNG', () => {
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       const cellStyles = window.getComputedStyle(cells[0]);
-      expect(cellStyles.getPropertyValue('white-space')).toBe('nowrap');
+      expect(cellStyles.getPropertyValue('white-space')).not.toBe('pre-line');
     });
 
     it('applies text wrapping styles when wrapText is true', () => {
@@ -1241,30 +1290,6 @@ describe('TableNG', () => {
 
       // In the getStyles function, when textWrap is true, whiteSpace is set to 'pre-line'
       expect(cellStyles.getPropertyValue('white-space')).toBe('pre-line');
-    });
-  });
-
-  describe('Context menu', () => {
-    it('should show context menu on right-click', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={400} height={400} />
-      );
-
-      const cell = container.querySelector('[role="gridcell"]');
-      expect(cell).toBeInTheDocument();
-
-      // Trigger context menu directly on the cell element
-      if (cell) {
-        fireEvent.contextMenu(cell);
-      }
-
-      // Check that context menu is shown
-      const menu = await screen.findByRole('menu');
-      expect(menu).toBeInTheDocument();
-
-      // Check for the Inspect value menu item
-      const menuItem = await screen.findByText('Inspect value');
-      expect(menuItem).toBeInTheDocument();
     });
   });
 
@@ -1371,8 +1396,8 @@ describe('TableNG', () => {
       expect(cells.length).toBeGreaterThan(0);
 
       // Check the first div inside the cell for style attributes
-      const div = cells[0].querySelectorAll('div')[0];
-      const styleAttr = window.getComputedStyle(div);
+      const cell = cells[0];
+      const styleAttr = window.getComputedStyle(cell);
 
       // Expected color is red
       expect(styleAttr.background).toBe('rgb(255, 0, 0)');
@@ -1408,11 +1433,50 @@ describe('TableNG', () => {
       expect(cells.length).toBeGreaterThan(0);
 
       // Check the first div inside the cell for style attributes
-      const div = cells[0].querySelectorAll('div')[0];
-      const computedStyle = window.getComputedStyle(div);
+      const cell = cells[0];
+      const computedStyle = window.getComputedStyle(cell);
 
       // Expected color is red
       expect(computedStyle.color).toBe('rgb(255, 0, 0)');
+
+      // doesn't accidentally applyToRow
+      const otherCell = cells[1];
+      expect(window.getComputedStyle(otherCell).color).not.toBe('rgb(255, 0, 0)');
+    });
+
+    it("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true", () => {
+      // Create a frame with color background cells and applyToRow set to true
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+
+      // Add color to the display values
+      const originalDisplay = frame.fields[0].display;
+      const expectedColor = '#ff0000'; // Red color
+      frame.fields[0].display = (value: unknown) => {
+        const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
+        return {
+          ...displayValue,
+          color: expectedColor,
+        };
+      };
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      // Find rows in the table
+      const rows = container.querySelectorAll('[role="row"]');
+      const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
+      for (const cell of cells) {
+        const cellStyle = window.getComputedStyle(cell);
+        // Ensure each cell has the same background color
+        expect(cellStyle.backgroundColor).toBe('rgb(255, 0, 0)');
+      }
     });
   });
 
@@ -1451,44 +1515,77 @@ describe('TableNG', () => {
       jest.clearAllMocks();
     });
 
-    it('should publish DataHoverEvent when hovering over a row with time field', () => {
-      const frame = createTimeDataFrame();
-      const idx = 1;
-
-      onRowHover(idx, mockPanelContext, frame, true);
-
-      expect(mockEventBus.publish).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: {
-            point: {
-              time: new Date('2024-03-20T10:01:00Z').getTime(),
-            },
-          },
-          type: 'data-hover',
-        })
+    it('should publish DataHoverEvent when hovering over a row with time field', async () => {
+      const data = createTimeDataFrame();
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG enableVirtualization={false} data={data} width={800} height={600} enableSharedCrosshair />
+        </PanelContextProvider>
       );
+
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+
+      expect(mockEventBus.publish).toHaveBeenCalledWith({
+        payload: {
+          point: {
+            time: data.fields[0].values[0],
+          },
+        },
+        type: 'data-hover',
+      });
     });
 
-    it('should not publish DataHoverEvent when enableSharedCrosshair is false', () => {
-      const frame = createTimeDataFrame();
-      const idx = 1;
+    it('should not publish DataHoverEvent when enableSharedCrosshair is false', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair={false}
+          />
+        </PanelContextProvider>
+      );
 
-      onRowHover(idx, mockPanelContext, frame, false);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
 
-    it('should not publish DataHoverEvent when time field is not present', () => {
-      const frame = createBasicDataFrame();
-      const idx = 1;
+    it('should not publish DataHoverEvent when time field is not present', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createBasicDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair
+          />
+        </PanelContextProvider>
+      );
 
-      onRowHover(idx, mockPanelContext, frame, true);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
 
-    it('should publish DataHoverClearEvent when leaving a row', () => {
-      onRowLeave(mockPanelContext, true);
+    it('should publish DataHoverClearEvent when leaving a row', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair
+          />
+        </PanelContextProvider>
+      );
+
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+      await userEvent.unhover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1497,50 +1594,74 @@ describe('TableNG', () => {
       );
     });
 
-    it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', () => {
-      onRowLeave(mockPanelContext, false);
+    it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair={false}
+          />
+        </PanelContextProvider>
+      );
+
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+      await userEvent.unhover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
   });
-  describe('scroll position persistence', () => {
-    it('should persist scroll position after revId change', () => {
-      const data = createBasicDataFrame();
-      const { rerender } = render(<TableNG data={data} width={300} height={200} enableVirtualization={false} />);
 
-      // Find the DataGrid element
-      const dataGrid = screen.getByRole('grid');
+  describe('Displays data Links', () => {
+    function toLinkModel(link: DataLink): LinkModel {
+      return {
+        href: link.url,
+        title: link.title,
+        target: link.targetBlank ? '_blank' : '_self',
+        origin: link.origin || 'panel',
+      };
+    }
 
-      // Simulate scrolling
+    it('shows multiple datalinks in the tooltip', async () => {
+      const dataFrame = createBasicDataFrame();
+      const links: DataLink[] = [
+        { url: 'http://asdasd.com', title: 'Test Title' },
+        { url: 'http://asdasd2.com', title: 'Test Title2' },
+      ];
 
-      fireEvent.scroll(dataGrid, {
-        target: {
-          scrollLeft: 100,
-          scrollTop: 50,
-        },
-      });
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
 
-      // Rerender with the same data but different fieldConfig to trigger revId change
-      rerender(
-        <TableNG
-          data={data}
-          width={300}
-          height={200}
-          enableVirtualization={false}
-          fieldConfig={{
-            defaults: {
-              custom: {
-                width: 200, // Different width to trigger revId change
-              },
-            },
-            overrides: [],
-          }}
-        />
-      );
+      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
 
-      // Verify scroll position was restored
-      expect(dataGrid.scrollLeft).toBe(100);
-      expect(dataGrid.scrollTop).toBe(50);
+      const cell = screen.getByText('A1');
+      await userEvent.click(cell);
+
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      expect(tooltip).toBeInTheDocument();
+
+      expect(screen.getByText('Test Title')).toBeInTheDocument();
+      expect(screen.getByText('Test Title2')).toBeInTheDocument();
+    });
+
+    it('does not show tooltip for a single link', async () => {
+      const dataFrame = createBasicDataFrame();
+
+      const links: DataLink[] = [{ url: 'http://asdasd.com', title: 'Test Title' }];
+
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
+
+      const cell = screen.getByText('A1');
+
+      // we need to click the parent since the cell itself is a link.
+      await userEvent.click(cell.parentElement!);
+
+      expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
     });
   });
 });

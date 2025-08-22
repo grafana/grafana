@@ -19,7 +19,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -33,7 +33,7 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -58,7 +58,7 @@ import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeDatasource } from './state/datasource';
-import { changeSize } from './state/explorePane';
+import { changeSize, changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
   addQueryRow,
@@ -182,14 +182,16 @@ export class Explore extends PureComponent<Props, ExploreState> {
   onContentOutlineToogle = () => {
     store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !this.state.contentOutlineVisible);
     this.setState((state) => {
+      const newContentOutlineVisible = this.props.compact ? true : !state.contentOutlineVisible;
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',
-        type: state.contentOutlineVisible ? 'close' : 'open',
+        type: newContentOutlineVisible ? 'open' : 'close',
       });
       return {
-        contentOutlineVisible: !state.contentOutlineVisible,
+        contentOutlineVisible: newContentOutlineVisible,
       };
     });
+    this.props.changeCompactMode(this.props.exploreId, false);
   };
 
   /**
@@ -306,9 +308,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  /**
+   * Used for interaction from the visualizations. Will open split view in compact mode.
+   */
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
-      this.props.splitOpen(options);
+      this.props.splitOpen(options ? { ...options, compact: true } : options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
         const source =
@@ -573,6 +578,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationEditorHelperData,
       showQueryInspector,
       setShowQueryInspector,
+      splitted,
+      compact,
+      queryLibraryRef,
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
@@ -614,7 +622,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           }}
         >
           <div className={styles.wrapper}>
-            {contentOutlineVisible && (
+            {contentOutlineVisible && !compact && (
               <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
             <ScrollContainer
@@ -631,13 +639,23 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       mergeSingleChild={true}
                     >
                       <PanelContainer className={styles.queryContainer}>
-                        <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />
+                        {!splitted && <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />}
                         {correlationsBox}
-                        <QueryRows exploreId={exploreId} />
+                        <QueryRows
+                          exploreId={exploreId}
+                          // Don't simply pass isOpen here to avoid opening the row when content outline is openend and
+                          // triggers exiting from compact mode. If it's confusing we can change the behavior to exit
+                          // compact mode explicitly with a button in the UI instead of exiting when row is opened or
+                          // content outline is opened.
+                          isOpen={compact ? false : undefined}
+                          changeCompactMode={(compact: boolean) =>
+                            this.props.changeCompactMode(this.props.exploreId, false)
+                          }
+                        />
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
                           addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
+                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
                           }
                           // We cannot show multiple traces at the same time right now so we do not show add query button.
                           //TODO:unification
@@ -748,6 +766,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     supplementaryQueries,
     correlationEditorHelperData,
+    compact,
+    queryLibraryRef,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -774,12 +794,14 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     showFlameGraph,
     splitted: isSplit(state),
+    compact,
     loading,
     logsSample,
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
+    queryLibraryRef,
   };
 }
 
@@ -794,6 +816,7 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
+  changeCompactMode,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

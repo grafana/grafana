@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 import { config } from 'app/core/config';
 
@@ -18,7 +18,6 @@ type Props = {
 };
 
 export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
-  const { t } = useTranslate();
   const vector = useRef(new MeasureVectorLayer());
   const measureStyle = getStyles(config.theme2);
 
@@ -85,7 +84,14 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
                 vector.current.addInteraction(map, m.geometry, showSegments, clearPrevious);
               }}
             />
-            <Button className={measureStyle.button} icon="times" variant="secondary" size="sm" onClick={toggleMenu} />
+            <Button
+              aria-label={t('geomap.measure-overlay.aria-label-close', 'Close measure tools')}
+              className={measureStyle.button}
+              icon="times"
+              variant="secondary"
+              size="sm"
+              onClick={toggleMenu}
+            />
           </div>
           <Select
             className={measureStyle.unitSelect}

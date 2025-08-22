@@ -1,11 +1,10 @@
 import { SceneGridLayout } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
 import { deserializeRowsLayout, serializeRowsLayout } from './RowsLayoutSerializer';
@@ -169,12 +168,7 @@ describe('deserialization', () => {
     expect(deserialized.state.rows).toHaveLength(1);
 
     const row = deserialized.state.rows[0];
-    expect(row.state.$behaviors).toBeDefined();
-    const behaviors = row.state.$behaviors ?? [];
-    expect(behaviors).toHaveLength(1);
-    const repeaterBehavior = behaviors[0] as RowItemRepeaterBehavior;
-    expect(repeaterBehavior).toBeInstanceOf(RowItemRepeaterBehavior);
-    expect(repeaterBehavior.state.variableName).toBe('foo');
+    expect(row.state.repeatByVariable).toBe('foo');
   });
 });
 
@@ -270,7 +264,7 @@ describe('serialization', () => {
               isResizable: true,
             }),
           }),
-          $behaviors: [new RowItemRepeaterBehavior({ variableName: 'foo' })],
+          repeatByVariable: 'foo',
         }),
       ],
     });

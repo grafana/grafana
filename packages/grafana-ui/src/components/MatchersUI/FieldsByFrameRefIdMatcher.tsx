@@ -8,6 +8,7 @@ import {
   SelectableValue,
   toOption,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { MultiSelect, Select } from '../Select/Select';
 
@@ -128,7 +129,6 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
 
   const currentValue = useMemo(() => {
     let extractedRefIds = new Set<string>();
-
     if (value) {
       if (value.startsWith('/^')) {
         try {
@@ -151,8 +151,10 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
     }
 
     const newRefIds = [...extractedRefIds].map(toOption);
+    const recoveredRefIDs =
+      recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value) ?? [];
 
-    return recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value);
+    return recoveredRefIDs.length > 0 ? recoveredRefIDs : newRefIds.length > 0 ? newRefIds : undefined;
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
@@ -198,7 +200,9 @@ function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>>
   for (const [refId, frames] of queries.entries()) {
     values.push({
       value: refId,
-      label: `Query: ${refId ?? '(missing refId)'}`,
+      label: refId
+        ? t('grafana-ui.matchers-ui.get-list-of-query-ref-ids.label', 'Query: {{refId}}', { refId })
+        : t('grafana-ui.matchers-ui.get-list-of-query-ref-ids.label-missing-ref-id', 'Query: (missing refId)'),
       description: getFramesDescription(frames),
     });
   }
@@ -207,27 +211,35 @@ function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>>
 }
 
 function getFramesDescription(frames: DataFrame[]): string {
-  return `Frames (${frames.length}):
-    ${frames
-      .slice(0, Math.min(3, frames.length))
-      .map((x) => getFrameDisplayName(x))
-      .join(', ')} ${frames.length > 3 ? '...' : ''}`;
+  return t(
+    'grafana-ui.matchers-ui.get-list-of-query-ref-ids.description',
+    'Frames ({{framesCount}}): {{framesNames}}',
+    {
+      framesCount: frames.length,
+      framesNames: `${frames
+        .slice(0, Math.min(3, frames.length))
+        .map((x) => getFrameDisplayName(x))
+        .join(', ')} ${frames.length > 3 ? '...' : ''}`,
+    }
+  );
 }
 
 /**
  * Registry item for UI to configure "fields by frame refId"-matcher.
- * @public
  */
-export const fieldsByFrameRefIdItem: FieldMatcherUIRegistryItem<string> = {
+export const getFieldsByFrameRefIdItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byFrameRefID,
   component: (props: MatcherUIProps<string>) => {
     return <RefIDPicker value={props.options} data={props.data} onChange={props.onChange} />;
   },
   matcher: fieldMatchers.get(FieldMatcherID.byFrameRefID),
-  name: 'Fields returned by query',
-  description: 'Set properties for fields from a specific query',
+  name: t('grafana-ui.matchers-ui.name-fields-by-query', 'Fields returned by query'),
+  description: t(
+    'grafana-ui.matchers-ui.description-fields-by-query',
+    'Set properties for fields from a specific query'
+  ),
   optionsToLabel: (options) => options,
-};
+});
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
 function escapeRegExp(string: string) {

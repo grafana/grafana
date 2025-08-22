@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { STOP_GENERATION_TEXT } from './GenAIButton';
@@ -18,6 +18,7 @@ export interface GenAIHistoryProps {
   onApplySuggestion: (suggestion: string) => void;
   updateHistory: (historyEntry: string) => void;
   eventTrackingSrc: EventTrackingSrc;
+  timeout?: number;
 }
 
 const temperature = 0.5;
@@ -28,11 +29,16 @@ export const GenAIHistory = ({
   messages,
   onApplySuggestion,
   updateHistory,
+  timeout,
 }: GenAIHistoryProps) => {
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
   const [customFeedback, setCustomPrompt] = useState('');
+
+  // Keep ref in sync with messages prop to avoid stale closure issues
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
 
   const onResponse = useCallback(
     (response: string) => {
@@ -45,8 +51,8 @@ export const GenAIHistory = ({
     model: DEFAULT_LLM_MODEL,
     temperature,
     onResponse,
+    timeout,
   });
-  const { t } = useTranslate();
 
   const reportInteraction = (item: AutoGenerateItem, otherMetadata?: object) =>
     reportAutoGenerateInteraction(eventTrackingSrc, item, otherMetadata);
@@ -71,7 +77,7 @@ export const GenAIHistory = ({
   };
 
   const onGenerateWithFeedback = (suggestion: string) => {
-    setMessages((messages) => [...messages, ...getFeedbackMessage(history[currentIndex - 1], suggestion)]);
+    setMessages(() => [...messagesRef.current, ...getFeedbackMessage(history[currentIndex - 1], suggestion)]);
 
     if (suggestion in QuickFeedbackType) {
       reportInteraction(AutoGenerateItem.quickFeedback, { quickFeedbackItem: suggestion });
@@ -105,7 +111,6 @@ export const GenAIHistory = ({
       )}
 
       <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
-
       <div className={styles.actionButtons}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
       </div>

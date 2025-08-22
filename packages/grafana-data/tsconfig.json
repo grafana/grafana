@@ -1,13 +1,14 @@
 {
+  "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
+    "declaration": true,
     "jsx": "react-jsx",
-    "declarationDir": "./compiled",
+    "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
-  "extends": "@grafana/tsconfig",
   "include": [
     "src/**/*.ts*",
     "typings/jest",

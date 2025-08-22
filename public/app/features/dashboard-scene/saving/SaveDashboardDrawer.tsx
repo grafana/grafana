@@ -1,7 +1,8 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
+import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -9,7 +10,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
-import { SaveProvisionedDashboard } from './provisioned/SaveProvisionedDashboard';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -77,11 +77,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       </TabsBar>
     );
 
-    let title = 'Save dashboard';
+    let title = t('dashboard-scene.save-dashboard-drawer.tabs.title', 'Save dashboard');
     if (saveAsCopy) {
-      title = 'Save dashboard copy';
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
     } else if (isProvisioned || isProvisionedNG) {
-      title = 'Provisioned dashboard';
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
     }
 
     const renderBody = () => {

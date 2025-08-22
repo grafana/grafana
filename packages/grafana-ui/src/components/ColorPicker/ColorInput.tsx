@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Input, Props as InputProps } from '../Input/Input';
 
 import { ColorPickerProps } from './ColorPickerPopover';

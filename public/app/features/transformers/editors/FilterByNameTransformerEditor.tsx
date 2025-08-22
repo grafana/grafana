@@ -12,11 +12,13 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/filterFieldsByName.svg';
+import lightImage from '../images/light/filterFieldsByName.svg';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -253,12 +255,18 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
-  id: DataTransformerID.filterFieldsByName,
-  editor: FilterByNameTransformerEditor,
-  transformation: standardTransformers.filterFieldsByNameTransformer,
-  name: standardTransformers.filterFieldsByNameTransformer.name,
-  description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
-  categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
-};
+export const getFilterFieldsByNameTransformRegistryItem: () => TransformerRegistryItem<FilterFieldsByNameTransformerOptions> =
+  () => ({
+    id: DataTransformerID.filterFieldsByName,
+    editor: FilterByNameTransformerEditor,
+    transformation: standardTransformers.filterFieldsByNameTransformer,
+    name: t('transformers.filter-by-name-transformer-editor.name.filter-fields-by-name', 'Filter fields by name'),
+    description: t(
+      'transformers.filter-by-name-transformer-editor.description.remove-part-query-results-regex-pattern',
+      'Remove parts of the query results using a regex pattern.'
+    ),
+    categories: new Set([TransformerCategory.Filter]),
+    help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

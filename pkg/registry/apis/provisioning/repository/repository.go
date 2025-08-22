@@ -2,15 +2,13 @@ package repository
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 // FIXME: the name of the mock is different because there is another generated mock for Repository
@@ -38,6 +36,20 @@ var ErrFileNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "file not found",
 }}
 
+var ErrRefNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusNotFound,
+	Reason:  metav1.StatusReasonNotFound,
+	Message: "ref not found",
+}}
+
+var ErrFileAlreadyExists error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusConflict,
+	Reason:  metav1.StatusReasonAlreadyExists,
+	Message: "file already exists",
+}}
+
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.
@@ -51,47 +63,6 @@ type FileInfo struct {
 	Hash string
 	// When was the file changed (if known)
 	Modified *metav1.Time
-}
-
-//go:generate mockery --name CloneFn --structname MockCloneFn --inpackage --filename clone_fn_mock.go --with-expecter
-type CloneFn func(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
-
-type CloneOptions struct {
-	// If the branch does not exist, create it
-	CreateIfNotExists bool
-
-	// Push on every write
-	PushOnWrites bool
-
-	// Maximum allowed size for repository clone in bytes (0 means no limit)
-	MaxSize int64
-
-	// Maximum time allowed for clone operation in seconds (0 means no limit)
-	Timeout time.Duration
-
-	// Progress is the writer to report progress to
-	Progress io.Writer
-
-	// BeforeFn is called before the clone operation starts
-	BeforeFn func() error
-}
-
-//go:generate mockery --name ClonableRepository --structname MockClonableRepository --inpackage --filename clonable_repository_mock.go --with-expecter
-type ClonableRepository interface {
-	Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
-}
-
-type PushOptions struct {
-	Timeout  time.Duration
-	Progress io.Writer
-	BeforeFn func() error
-}
-
-//go:generate mockery --name ClonedRepository --structname MockClonedRepository --inpackage --filename cloned_repository_mock.go --with-expecter
-type ClonedRepository interface {
-	ReaderWriter
-	Push(ctx context.Context, opts PushOptions) error
-	Remove(ctx context.Context) error
 }
 
 // An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.
@@ -143,19 +114,24 @@ type Writer interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
+
+	// Move a file from one path to another in the remote repository
+	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
+//go:generate mockery --name ReaderWriter --structname MockReaderWriter --inpackage --filename reader_writer_mock.go --with-expecter
 type ReaderWriter interface {
 	Reader
 	Writer
 }
 
-// Hooks called after the repository has been created, updated or deleted
+//go:generate mockery --name RepositoryWithURLs --structname MockRepositoryWithURLs --inpackage --filename repository_with_urls_mock.go --with-expecter
 type RepositoryWithURLs interface {
 	Repository
 
 	// Get resource URLs for a file inside a repository
-	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error)
+	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.RepositoryURLs, error)
+	RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted
@@ -196,5 +172,6 @@ type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
+	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }

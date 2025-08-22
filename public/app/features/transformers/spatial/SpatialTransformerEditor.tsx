@@ -11,16 +11,18 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/spatial.svg';
+import lightImage from '../images/light/spatial.svg';
 
 import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
-import { isLineBuilderOption, spatialTransformer } from './spatialTransformer';
+import { isLineBuilderOption, getSpatialTransformer } from './spatialTransformer';
 
 // Nothing defined in state
 const supplier = (
@@ -173,13 +175,18 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransformOptions> = {
-  id: DataTransformerID.spatial,
-  editor: SetGeometryTransformerEditor,
-  transformation: spatialTransformer,
-  name: spatialTransformer.name,
-  description: spatialTransformer.description,
-  state: PluginState.alpha,
-  categories: new Set([TransformerCategory.PerformSpatialOperations]),
-  help: getTransformationContent(DataTransformerID.spatial).helperDocs,
+export const getSpatialTransformRegistryItem: () => TransformerRegistryItem<SpatialTransformOptions> = () => {
+  const spatialTransformer = getSpatialTransformer();
+  return {
+    id: DataTransformerID.spatial,
+    editor: SetGeometryTransformerEditor,
+    transformation: spatialTransformer,
+    name: spatialTransformer.name,
+    description: spatialTransformer.description,
+    state: PluginState.alpha,
+    categories: new Set([TransformerCategory.PerformSpatialOperations]),
+    help: getTransformationContent(DataTransformerID.spatial).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  };
 };

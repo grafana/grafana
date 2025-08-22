@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   CollapsableSection,
@@ -30,7 +30,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
+import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import { Matchers } from './Matchers';
 import { NoSilencesSplash } from './NoSilencesCTA';
@@ -110,7 +110,6 @@ const SilencesTable = () => {
       };
     });
   }, [filteredSilencesExpired, alertManagerAlerts, canPreview]);
-  const { t } = useTranslate();
 
   if (isLoading || amAlertsIsLoading) {
     return <LoadingPlaceholder text={t('alerting.silences-table.text-loading-silences', 'Loading silences...')} />;
@@ -147,7 +146,7 @@ const SilencesTable = () => {
 
   return (
     <div data-testid="silences-table">
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+      <GrafanaAlertmanagerWarning currentAlertmanager={alertManagerSourceName} />
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter />
@@ -283,7 +282,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
-  const { t } = useTranslate();
+
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   return useMemo((): SilenceTableColumnProps[] => {
@@ -406,7 +405,7 @@ function useColumns(alertManagerSourceName: string) {
       });
     }
     return columns;
-  }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported, t]);
+  }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
 }
 
 function SilencesTablePage() {

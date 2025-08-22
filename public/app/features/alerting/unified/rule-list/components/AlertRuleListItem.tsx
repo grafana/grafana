@@ -1,26 +1,27 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
-import { ReactNode, useEffect, useId } from 'react';
+import { ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
+import { AlertLabels } from '../../components/AlertLabels';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datasource';
 import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
-import { DataSourceIcon } from './Namespace';
 import { RuleListIcon, RuleOperation } from './RuleListIcon';
+import { RuleLocation } from './RuleLocation';
 import { calculateNextEvaluationEstimate } from './util';
 
 export interface AlertRuleListItemProps {
@@ -38,6 +39,7 @@ export interface AlertRuleListItemProps {
   instancesCount?: number;
   namespace?: string;
   group?: string;
+  groupUrl?: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
   // used for alert rules that use simplified routing
@@ -45,6 +47,9 @@ export interface AlertRuleListItemProps {
   actions?: ReactNode;
   origin?: RulePluginOrigin;
   operation?: RuleOperation;
+  // the grouped view doesn't need to show the location again – it's redundant
+  showLocation?: boolean;
+  querySourceUIDs?: string[];
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -62,6 +67,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     instancesCount = 0,
     namespace,
     group,
+    groupUrl,
     rulesSource,
     application,
     contactPoint,
@@ -69,17 +75,29 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     origin,
     actions = null,
     operation,
+    showLocation = true,
+    querySourceUIDs = [],
   } = props;
 
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+        <RuleLocation
+          namespace={namespace}
+          group={group}
+          groupUrl={groupUrl}
+          rulesSource={rulesSource}
+          application={application}
+        />
       </Text>
     );
+  }
+
+  if (querySourceUIDs.length > 0) {
+    metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
   if (!isPaused) {
@@ -100,12 +118,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     }
   }
 
-  if (labelsSize(labels) > 0) {
+  if (labels && labelsSize(labels) > 0) {
     metadata.push(
       <MetaText icon="tag-alt">
-        <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
-          {pluralize('label', labelsSize(labels), true)}
-        </TextLink>
+        <RuleLabels labels={labels} />
       </MetaText>
     );
   }
@@ -158,6 +174,7 @@ export function RecordingRuleListItem({
   name,
   namespace,
   group,
+  groupUrl,
   rulesSource,
   application,
   href,
@@ -167,14 +184,26 @@ export function RecordingRuleListItem({
   isPaused,
   origin,
   actions,
+  showLocation = true,
+  querySourceUIDs = [],
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+        <RuleLocation
+          namespace={namespace}
+          group={group}
+          groupUrl={groupUrl}
+          rulesSource={rulesSource}
+          application={application}
+        />
       </Text>
     );
+  }
+
+  if (querySourceUIDs.length > 0) {
+    metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
   }
 
   return (
@@ -203,26 +232,36 @@ interface RuleOperationListItemProps {
   name: string;
   namespace: string;
   group: string;
+  groupUrl?: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
   operation: RuleOperation;
+  showLocation?: boolean;
 }
 
 export function RuleOperationListItem({
   name,
   namespace,
   group,
+  groupUrl,
   rulesSource,
   application,
   operation,
+  showLocation = true,
 }: RuleOperationListItemProps) {
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+        <RuleLocation
+          namespace={namespace}
+          group={group}
+          groupUrl={groupUrl}
+          rulesSource={rulesSource}
+          application={application}
+        />
       </Text>
     );
   }
@@ -256,13 +295,58 @@ function Summary({ content, error }: SummaryProps) {
   }
   if (content) {
     return (
-      <Text variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary" truncate>
         {content}
       </Text>
     );
   }
 
   return null;
+}
+
+interface QuerySourceIconsProps {
+  queriedDatasourceUIDs: string[];
+}
+
+const QuerySourceIcons = memo(function QuerySourceIcons({ queriedDatasourceUIDs }: QuerySourceIconsProps) {
+  // Make icons unique - deduplicate datasource UIDs
+  const dataSources = Array.from(new Set(queriedDatasourceUIDs))
+    .map(getDataSourceByUid)
+    .filter((ds): ds is DataSourceInstanceSettings => ds !== undefined);
+
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      {dataSources.map((dataSource) => {
+        return (
+          <Tooltip key={dataSource.uid} content={dataSource.name}>
+            <DataSourceLogo dataSource={dataSource} />
+          </Tooltip>
+        );
+      })}
+    </Stack>
+  );
+});
+
+function RuleLabels({ labels }: { labels: Labels }) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Tooltip
+      content={
+        <div className={styles.ruleLabels.tooltip}>
+          <AlertLabels labels={labels} size="sm" />
+        </div>
+      }
+      placement="right"
+      interactive
+    >
+      <div>
+        <Text variant="bodySmall" color="primary">
+          {pluralize('label', labelsSize(labels), true)}
+        </Text>
+      </div>
+    </Tooltip>
+  );
 }
 
 interface EvaluationMetadataProps {
@@ -323,7 +407,6 @@ export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition 
     };
     logError(new Error('unknown rule type'), ruleContext);
   }, [ruleName, groupIdentifier]);
-  const { t } = useTranslate();
 
   return (
     <Alert
@@ -342,38 +425,6 @@ export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition 
   );
 };
 
-interface RuleLocationProps {
-  namespace: string;
-  group: string;
-  rulesSource?: RulesSourceIdentifier;
-  application?: RulesSourceApplication;
-}
-
-// @TODO make the datasource / namespace / group click-able to allow further filtering of the list
-export const RuleLocation = ({ namespace, group, rulesSource, application }: RuleLocationProps) => {
-  const isGrafanaApp = application === 'grafana';
-  const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
-
-  return (
-    <Stack direction="row" alignItems="center" gap={0.5}>
-      {isGrafanaApp && <Icon size="xs" name="folder" />}
-      {isDataSourceApp && (
-        <Tooltip content={rulesSource.name}>
-          <span>
-            <DataSourceIcon application={application} size={14} />
-          </span>
-        </Tooltip>
-      )}
-
-      <Stack direction="row" alignItems="center" gap={0}>
-        {namespace}
-        <Icon size="sm" name="angle-right" />
-        {group}
-      </Stack>
-    </Stack>
-  );
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({
     position: 'relative',
@@ -386,9 +437,48 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resetMargin: css({
     margin: 0,
   }),
+  ruleLabels: {
+    tooltip: css({
+      padding: theme.spacing(1),
+    }),
+    text: css({
+      cursor: 'pointer',
+    }),
+  },
 });
 
 export type RuleListItemCommonProps = Pick<
   AlertRuleListItemProps,
   Extract<keyof AlertRuleListItemProps, keyof RecordingRuleListItemProps>
 >;
+
+interface DataSourceLogoProps {
+  dataSource: DataSourceInstanceSettings;
+}
+
+const DataSourceLogo = forwardRef<HTMLImageElement, DataSourceLogoProps>(({ dataSource }, ref) => {
+  const styles = useStyles2(dataSourceLogoStyles);
+
+  return (
+    <img
+      ref={ref}
+      className={cx(styles.logo, {
+        [styles.filter]: dataSource.meta.builtIn,
+      })}
+      alt={`${dataSource.meta.name} logo`}
+      src={dataSource.meta.info.logos.small}
+    />
+  );
+});
+DataSourceLogo.displayName = 'DataSourceLogo';
+
+const dataSourceLogoStyles = (theme: GrafanaTheme2) => ({
+  logo: css({
+    height: '14px',
+    width: '14px',
+    borderRadius: theme.shape.radius.default,
+  }),
+  filter: css({
+    filter: `invert(${theme.isLight ? 1 : 0})`,
+  }),
+});

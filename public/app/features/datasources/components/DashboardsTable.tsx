@@ -1,6 +1,6 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon } from '@grafana/ui';
-import { PluginDashboard } from 'app/types';
+import { PluginDashboard } from 'app/types/plugins';
 
 export interface Props {
   // List of plugin dashboards to show in the table
@@ -15,8 +15,6 @@ export function DashboardsTable({ dashboards, onImport, onRemove }: Props) {
   function buttonText(dashboard: PluginDashboard) {
     return dashboard.revision !== dashboard.importedRevision ? 'Update' : 'Re-import';
   }
-
-  const { t } = useTranslate();
 
   return (
     <table className="filter-table">

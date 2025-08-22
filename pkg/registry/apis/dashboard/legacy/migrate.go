@@ -11,10 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -30,8 +34,9 @@ type MigrateOptions struct {
 	LargeObjects apistore.LargeObjectSupport
 	BlobStore    resourcepb.BlobStoreClient
 	Resources    []schema.GroupResource
-	WithHistory  bool // only applies to dashboards
-	OnlyCount    bool // just count the values
+	WithHistory  bool   // only applies to dashboards
+	OnlyCount    bool   // just count the values
+	StackID      string // stack identifier for logging
 	Progress     func(count int, msg string)
 }
 
@@ -46,9 +51,13 @@ type LegacyMigrator interface {
 func ProvideLegacyMigrator(
 	sql db.DB, // direct access to tables
 	provisioning provisioning.ProvisioningService, // only needed for dashboard settings
+	libraryPanelSvc librarypanels.Service,
+	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
+	accessControl accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles,
 ) LegacyMigrator {
 	dbp := legacysql.NewDatabaseProvider(sql)
-	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, sort.ProvideService())
+	return NewDashboardAccess(dbp, authlib.OrgNamespaceFormatter, nil, provisioning, libraryPanelSvc, sort.ProvideService(), dashboardPermissionSvc, accessControl, features)
 }
 
 type BlobStoreInfo struct {
@@ -57,7 +66,7 @@ type BlobStoreInfo struct {
 }
 
 // migrate function -- works for a single kind
-type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
+type migratorFunc = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error)
 
 func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
@@ -73,7 +82,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
-	migrators := []migrator{}
+	migratorFuncs := []migratorFunc{}
 	settings := resource.BulkSettings{
 		RebuildCollection: true,
 		SkipValidation:    true,
@@ -82,7 +91,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	for _, res := range opts.Resources {
 		switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
 		case "folder.grafana.app/folders":
-			migrators = append(migrators, a.migrateFolders)
+			migratorFuncs = append(migratorFuncs, a.migrateFolders)
 			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     folders.GROUP,
@@ -90,7 +99,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			})
 
 		case "dashboard.grafana.app/librarypanels":
-			migrators = append(migrators, a.migratePanels)
+			migratorFuncs = append(migratorFuncs, a.migratePanels)
 			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
@@ -98,7 +107,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			})
 
 		case "dashboard.grafana.app/dashboards":
-			migrators = append(migrators, a.migrateDashboards)
+			migratorFuncs = append(migratorFuncs, a.migrateDashboards)
 			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
@@ -108,12 +117,22 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			return nil, fmt.Errorf("unsupported resource: %s", res)
 		}
 	}
-
 	if opts.OnlyCount {
 		return a.countValues(ctx, opts)
 	}
 
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
+	if md, ok := metadata.FromOutgoingContext(ctx); ok {
+		a.log.Debug("bulk grpc request metadata",
+			"metadata", md,
+			"collection", settings.Collection,
+		)
+	} else {
+		a.log.Debug("bulk grpc request, no metadata found",
+			"collection", settings.Collection,
+		)
+	}
+
 	stream, err := opts.Store.BulkProcess(ctx)
 	if err != nil {
 		return nil, err
@@ -121,9 +140,12 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 
 	// Now run each migration
 	blobStore := BlobStoreInfo{}
-	for _, m := range migrators {
+	opts.StackID = fmt.Sprintf("%d", info.StackID) // Pass stack ID through options
+	a.log.Info("start migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
+	for _, m := range migratorFuncs {
 		blobs, err := m(ctx, info.OrgID, opts, stream)
 		if err != nil {
+			a.log.Error("error migrating legacy resources", "error", err, "namespace", opts.Namespace)
 			return nil, err
 		}
 		if blobs != nil {
@@ -131,7 +153,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			blobStore.Size += blobs.Size
 		}
 	}
-	fmt.Printf("BLOBS: %+v\n", blobStore)
+	a.log.Info("finished migrating legacy resources", "blobStore", blobStore)
 	return stream.CloseAndRecv()
 }
 
@@ -195,10 +217,11 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 
 func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
-		OrgID:      orgId,
-		Limit:      100000000,
-		GetHistory: opts.WithHistory, // include history
-		Order:      "ASC",            // oldest first
+		OrgID:         orgId,
+		Limit:         100000000,
+		GetHistory:    opts.WithHistory, // include history
+		AllowFallback: true,             // allow fallback to dashboard table during migration
+		Order:         "ASC",            // oldest first
 	}
 
 	blobs := &BlobStoreInfo{}
@@ -289,7 +312,14 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	if len(rows.rejected) > 0 {
 		for _, row := range rows.rejected {
 			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
-			fmt.Printf("REJECTED: %s / %s\n", id, row.Dash.Name)
+			a.log.Warn("rejected dashboard",
+				"namespace", opts.Namespace,
+				"dashboard", row.Dash.Name,
+				"uid", row.Dash.UID,
+				"id", id,
+				"version", row.Dash.Generation,
+				"stackId", opts.StackID,
+			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}
 	}

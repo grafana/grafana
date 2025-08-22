@@ -1,4 +1,5 @@
 import { PromQuery } from '@grafana/prometheus';
+import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
   AlertQuery,
@@ -7,7 +8,7 @@ import {
   RulerAlertingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { mockDataSource } from '../mocks';
+import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { setupDataSources } from '../testSetup/datasources';
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
@@ -22,6 +23,7 @@ import {
   getContactPointsFromDTO,
   getInstantFromDataQuery,
   getNotificationSettingsForDTO,
+  rulerRuleToFormValues,
 } from './rule-form';
 
 describe('formValuesToRulerGrafanaRuleDTO', () => {
@@ -111,6 +113,85 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     expect(alertingRulerRuleToRuleForm(rule)).toMatchSnapshot();
   });
 });
+
+describe('rulerRuleToFormValues', () => {
+  it('should convert grafana recording rule to form values', () => {
+    const mockRecordingRule = mockRulerGrafanaRecordingRule({
+      grafana_alert: {
+        uid: 'recording-rule-uid',
+        title: 'My Recording Rule',
+        namespace_uid: 'folder-uid',
+        rule_group: 'recording-group',
+        condition: 'A',
+        record: {
+          metric: 'my_metric',
+          from: 'A',
+          target_datasource_uid: 'target-ds-uid',
+        },
+        data: [
+          {
+            datasourceUid: 'prom-uid',
+            refId: 'A',
+            queryType: '',
+            model: { refId: 'A' },
+          },
+        ],
+        is_paused: false,
+      },
+      annotations: {
+        description: 'This is a recording rule',
+        summary: 'Recording rule summary',
+      },
+      labels: {
+        team: 'platform',
+        env: 'production',
+      },
+    });
+
+    const ruleWithLocation: RuleWithLocation = mockRuleWithLocation(mockRecordingRule, {
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+      namespace: 'Test Folder',
+      group: {
+        name: 'recording-group',
+        interval: '1m',
+        rules: [mockRecordingRule],
+      },
+    });
+
+    const result = rulerRuleToFormValues(ruleWithLocation);
+
+    expect(result).toMatchObject({
+      name: 'My Recording Rule',
+      type: RuleFormType.grafanaRecording,
+      group: 'recording-group',
+      evaluateEvery: '1m',
+      queries: [
+        {
+          datasourceUid: 'prom-uid',
+          refId: 'A',
+          queryType: '',
+          model: { refId: 'A' },
+        },
+      ],
+      condition: 'A',
+      annotations: [
+        { key: 'summary', value: 'Recording rule summary' },
+        { key: 'description', value: 'This is a recording rule' },
+        { key: 'runbook_url', value: '' },
+      ],
+      labels: [
+        { key: 'team', value: 'platform' },
+        { key: 'env', value: 'production' },
+        { key: '', value: '' }, // empty row added for form editing
+      ],
+      folder: { title: 'Test Folder', uid: 'folder-uid' },
+      isPaused: false,
+      metric: 'my_metric',
+      targetDatasourceUid: 'target-ds-uid',
+    });
+  });
+});
+
 describe('getContactPointsFromDTO', () => {
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {

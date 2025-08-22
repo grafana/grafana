@@ -10,29 +10,30 @@ import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
-import { useDatasource } from '../../hooks';
+import { useDatasource, useDatasources } from '../../hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
-const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
-const INTERACTION_ITEM = {
+export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+export const INTERACTION_ITEM = {
   SEARCH: 'search',
   OPEN_DROPDOWN: 'open_dspicker',
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
+  TOGGLE_FAVORITE: 'toggle_favorite',
 };
 
 export interface DataSourcePickerProps {
@@ -102,6 +103,19 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
+  const dataSources = useDatasources({
+    alerting: props.alerting,
+    annotations: props.annotations,
+    dashboard: props.dashboard,
+    logs: props.logs,
+    metrics: props.metrics,
+    mixed: props.mixed,
+    pluginId: props.pluginId,
+    tracing: props.tracing,
+    type: props.type,
+    variables: props.variables,
+  });
+  const favoriteDataSources = useFavoriteDatasources();
 
   // the order of middleware is important!
   const middleware = [
@@ -163,8 +177,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     },
     ref
   );
-
-  const { t } = useTranslate();
 
   function openDropdown() {
     setOpen(true);
@@ -237,6 +249,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
             item: INTERACTION_ITEM.OPEN_DROPDOWN,
             creator_team: 'grafana_plugins_catalog',
             schema_version: '1.0.0',
+            total_configured: dataSources.length,
           });
         }}
       >
@@ -284,13 +297,20 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                 onClose();
                 if (ds.uid !== currentValue?.uid) {
                   onChange(ds, defaultQueries);
-                  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
+                  reportInteraction(INTERACTION_EVENT_NAME, {
+                    item: INTERACTION_ITEM.SELECT_DS,
+                    ds_type: ds.type,
+                    is_favorite: favoriteDataSources.enabled
+                      ? favoriteDataSources.isFavoriteDatasource(ds.uid)
+                      : undefined,
+                  });
                 }
               }}
               onClose={onClose}
               onClickAddCSV={onClickAddCSV}
               onDismiss={onClose}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
+              dataSources={dataSources}
             />
           </div>
         </Portal>
@@ -327,10 +347,11 @@ export interface PickerContentProps extends DataSourcePickerProps {
   onDismiss: () => void;
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+  dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, dataSources } = props;
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -362,6 +383,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
             })
           }
+          dataSources={dataSources}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>
@@ -452,6 +474,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
                   onChange(ds, defaultQueries);
                   hideModal();
                 },
+                dataSources: props.dataSources,
               });
               reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
             }}

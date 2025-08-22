@@ -3,14 +3,13 @@ import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 
-import { ColorPicker, SeriesColorPicker } from './ColorPicker';
+import { ColorPicker } from './ColorPicker';
 import mdx from './ColorPicker.mdx';
-import { ColorPickerInput } from './ColorPickerInput';
 
 const meta: Meta<typeof ColorPicker> = {
-  title: 'Pickers and Editors/ColorPicker',
+  title: 'Pickers/ColorPicker',
   component: ColorPicker,
   parameters: {
     docs: {
@@ -22,7 +21,7 @@ const meta: Meta<typeof ColorPicker> = {
   },
   args: {
     enableNamedColors: false,
-    color: '#00ff00',
+    color: '#0000ff',
   },
 };
 
@@ -35,24 +34,6 @@ export const Basic: StoryFn<typeof ColorPicker> = ({ color, enableNamedColors })
         enableNamedColors={enableNamedColors}
         color={color}
         onChange={(color: string) => {
-          action('Color changed')(color);
-          updateArgs({ color });
-        }}
-      />
-    </div>
-  );
-};
-
-export const SeriesPicker: StoryFn<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
-  const [, updateArgs] = useArgs();
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-      <SeriesColorPicker
-        enableNamedColors={enableNamedColors}
-        yaxis={1}
-        onToggleAxis={() => {}}
-        color={color}
-        onChange={(color) => {
           action('Color changed')(color);
           updateArgs({ color });
         }}
@@ -86,21 +67,6 @@ export const CustomTrigger: StoryFn<typeof ColorPicker> = ({ color, enableNamedC
         </button>
       )}
     </ColorPicker>
-  );
-};
-
-export const Input: StoryFn<typeof ColorPickerInput> = ({ color }) => {
-  const [, updateArgs] = useArgs();
-  return (
-    <div style={{ minHeight: '100dvh', display: 'grid', placeContent: 'center' }}>
-      <ColorPickerInput
-        value={color}
-        onChange={(color) => {
-          action('Color changed')(color);
-          updateArgs({ color });
-        }}
-      />
-    </div>
   );
 };
 

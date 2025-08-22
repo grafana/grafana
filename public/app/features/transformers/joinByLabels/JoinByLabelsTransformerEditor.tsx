@@ -8,19 +8,19 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/joinByLabels.svg';
+import lightImage from '../images/light/joinByLabels.svg';
 import { getDistinctLabels } from '../utils';
 
-import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
+import { getJoinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
 
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 
 export function JoinByLabelsTransformerEditor({ input, options, onChange }: Props) {
-  const { t } = useTranslate();
-
   const info = useMemo(() => {
     let warn: React.ReactNode = undefined;
     const distinct = getDistinctLabels(input);
@@ -65,7 +65,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     }
 
     return { warn, valueOptions, valueOption, joinOptions, addOptions, addText, hasJoin, key: Date.now() };
-  }, [options, input, t]);
+  }, [options, input]);
 
   const updateJoinValue = (idx: number, value?: string) => {
     if (!options.join) {
@@ -110,7 +110,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
 
       <InlineFieldRow>
         <InlineField
-          error="required"
+          error={t('transformers.join-by-labels-transformer-editor.error-required', 'Required')}
           invalid={!Boolean(options.value?.length)}
           label={t('transformers.join-by-labels-transformer-editor.label-value', 'Value')}
           labelWidth={labelWidth}
@@ -136,7 +136,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
               error="Unable to join by the value label"
               invalid={v === options.value}
             >
-              <HorizontalGroup>
+              <Stack>
                 <Select
                   options={info.joinOptions}
                   value={info.joinOptions.find((o) => o.value === v)}
@@ -153,7 +153,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                     variant="secondary"
                   />
                 )}
-              </HorizontalGroup>
+              </Stack>
             </InlineField>
           </InlineFieldRow>
         ))
@@ -180,13 +180,18 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
   );
 }
 
-export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLabelsTransformOptions> = {
-  id: joinByLabelsTransformer.id,
-  editor: JoinByLabelsTransformerEditor,
-  transformation: joinByLabelsTransformer,
-  name: joinByLabelsTransformer.name,
-  description: joinByLabelsTransformer.description,
-  state: PluginState.beta,
-  categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
+export const getJoinByLabelsTransformRegistryItem: () => TransformerRegistryItem<JoinByLabelsTransformOptions> = () => {
+  const joinByLabelsTransformer = getJoinByLabelsTransformer();
+  return {
+    id: joinByLabelsTransformer.id,
+    editor: JoinByLabelsTransformerEditor,
+    transformation: joinByLabelsTransformer,
+    name: joinByLabelsTransformer.name,
+    description: joinByLabelsTransformer.description,
+    state: PluginState.beta,
+    categories: new Set([TransformerCategory.Combine]),
+    help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  };
 };

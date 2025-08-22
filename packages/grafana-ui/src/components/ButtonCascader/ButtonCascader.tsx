@@ -4,9 +4,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
-import { Button, ButtonProps } from '../Button';
+import { Button, ButtonProps } from '../Button/Button';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 import { getCascaderStyles } from '../Cascader/styles';
@@ -14,7 +14,7 @@ import { Icon } from '../Icon/Icon';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
-  children?: string;
+  children: string;
   icon?: IconName;
   disabled?: boolean;
   value?: string[];
@@ -24,7 +24,7 @@ export interface ButtonCascaderProps {
   onPopupVisibleChange?: (visible: boolean) => void;
   className?: string;
   variant?: ButtonProps['variant'];
-  buttonProps?: ButtonProps;
+  buttonProps?: Omit<ButtonProps, 'children'>;
   hideDownIcon?: boolean;
 }
 

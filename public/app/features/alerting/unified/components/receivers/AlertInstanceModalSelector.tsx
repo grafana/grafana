@@ -4,7 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   FilterInput,
@@ -88,7 +88,6 @@ export function AlertInstanceModalSelector({
     });
     return filteredRulesObject;
   }, [rulesWithInstances, ruleFilter]);
-  const { t } = useTranslate();
 
   if (error) {
     return null;

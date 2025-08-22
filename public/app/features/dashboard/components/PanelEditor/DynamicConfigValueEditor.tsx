@@ -9,8 +9,8 @@ import {
   FieldOverrideContext,
   GrafanaTheme2,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { Counter, Field, HorizontalGroup, IconButton, Label, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
@@ -34,7 +34,7 @@ export const DynamicConfigValueEditor = ({
   searchQuery,
 }: DynamicConfigValueEditorProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const item = registry?.getIfExists(property.id);
 
   const componentId = useId();
@@ -56,7 +56,7 @@ export const DynamicConfigValueEditor = ({
   const renderLabel =
     (includeDescription = true, includeCounter = false) =>
     (isExpanded = false) => (
-      <HorizontalGroup justify="space-between">
+      <Stack justifyContent="space-between">
         <Label
           category={labelCategory}
           description={includeDescription ? item.description : undefined}
@@ -83,7 +83,7 @@ export const DynamicConfigValueEditor = ({
             />
           </div>
         )}
-      </HorizontalGroup>
+      </Stack>
     );
   /* eslint-enable react/display-name */
 

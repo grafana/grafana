@@ -2,12 +2,12 @@ import { ComponentType } from 'react';
 
 import { DataLink, RegistryItem, Action } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/internal';
-import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
+import { ColorDimensionConfig, ScaleDimensionConfig, DirectionDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
-import { DimensionContext } from '../dimensions';
+import { DimensionContext } from '../dimensions/context';
 
 import { StandardEditorConfig } from './types';
 
@@ -64,7 +64,7 @@ export interface CanvasConnection {
   lineStyle?: LineStyleConfig;
   vertices?: ConnectionCoordinates[];
   radius?: ScaleDimensionConfig;
-  direction?: ConnectionDirection;
+  direction?: DirectionDimensionConfig;
   sourceOriginal?: ConnectionCoordinates;
   targetOriginal?: ConnectionCoordinates;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
