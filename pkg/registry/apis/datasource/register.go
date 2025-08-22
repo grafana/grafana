@@ -173,7 +173,7 @@ func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&datasourceV0.DataSource{}, // or AddKnownTypeWithName?
+		&datasourceV0.DataSource{},
 		&datasourceV0.DataSourceList{},
 		&datasourceV0.HealthCheckResult{},
 		&unstructured.Unstructured{},

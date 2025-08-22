@@ -31,7 +31,7 @@ type PluginDatasourceProvider interface {
 	UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error)
 
 	// Delete a data source (any type)
-	Delete(ctx context.Context, uid string) error
+	DeleteDataSource(ctx context.Context, uid string) error
 
 	// Return settings (decrypted!) for a specific plugin
 	// This will require "query" permission for the user in context
@@ -130,7 +130,7 @@ func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *dat
 }
 
 // Delete implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) Delete(ctx context.Context, uid string) error {
+func (q *scopedDatasourceProvider) DeleteDataSource(ctx context.Context, uid string) error {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return err

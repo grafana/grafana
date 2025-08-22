@@ -133,7 +133,7 @@ func (m mockDatasources) UpdateDataSource(ctx context.Context, ds *v0alpha1.Data
 }
 
 // Delete implements PluginDatasourceProvider.
-func (m mockDatasources) Delete(ctx context.Context, uid string) error {
+func (m mockDatasources) DeleteDataSource(ctx context.Context, uid string) error {
 	return nil
 }
 
