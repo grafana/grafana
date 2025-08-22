@@ -17,16 +17,13 @@ export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
     'local.path',
     'github.branch',
     'github.url',
-    'github.token',
+    'secure.token',
     'gitlab.branch',
     'gitlab.url',
-    'gitlab.token',
     'bitbucket.branch',
     'bitbucket.url',
-    'bitbucket.token',
     'git.branch',
     'git.url',
-    'git.token',
   ];
   const fieldMap: Record<string, RepositoryFormPath> = {
     path: 'repository.path',
