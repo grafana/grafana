@@ -1,4 +1,4 @@
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 let isScenesContextSet = false;
 
@@ -136,10 +136,11 @@ export const DashboardInteractions = {
 
 const reportDashboardInteraction: typeof reportInteraction = (name, properties) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
+  const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
 
   if (properties) {
-    reportInteraction(`dashboards_${name}`, { ...properties, ...meta });
+    reportInteraction(`dashboards_${name}`, { ...properties, ...meta, isDynamicDashboard });
   } else {
-    reportInteraction(`dashboards_${name}`);
+    reportInteraction(`dashboards_${name}`, { isDynamicDashboard });
   }
 };
