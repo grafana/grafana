@@ -506,6 +506,12 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		return nil // This is normal for sub-resource
 	}
 
+	// Do nothing for HistoryJobs
+	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
+		return nil
+	}
+
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return fmt.Errorf("expected repository configuration")
@@ -547,6 +553,12 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	// Do not validate objects we are trying to delete
 	meta, _ := apiutils.MetaAccessor(obj)
 	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	// Do nothing for HistoryJobs
+	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
 		return nil
 	}
 
