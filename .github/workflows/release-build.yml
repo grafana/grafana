@@ -210,7 +210,6 @@ jobs:
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
   publish-dockerhub:
-    if: github.ref_name == 'main'
     permissions:
       contents: read
       id-token: write
