@@ -6421,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>.",
-    "success-more-details-links-extensions": "You can also explore data with the following extensions:"
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11254,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Delete",
-      "confirm-delete-repository": "Are you sure you want to delete the repository config?",
+      "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
+      "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
+      "delete": "Delete",
+      "delete-and-keep-resources": "Delete and keep resources",
+      "delete-and-remove-resources": "Delete and remove resources (default)",
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
-      "title-delete-repository": "Delete repository config",
-      "tooltip-delete-this-repository": "Delete this repository"
+      "title-delete-repository-and-resources": "Delete repository configuration and resources",
+      "title-delete-repository-only": "Delete repository configuration only"
     },
     "edit-repository-page": {
       "back-to-repositories": "Back to repositories",
