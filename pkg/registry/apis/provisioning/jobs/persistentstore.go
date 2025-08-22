@@ -58,13 +58,12 @@ type Queue interface {
 }
 
 var (
-	_ Queue = (*APIClientJobStore)(nil)
-	_ Store = (*APIClientJobStore)(nil)
+	_ Queue = (*persistentStore)(nil)
+	_ Store = (*persistentStore)(nil)
 )
 
-// APIClientJobStore is a job queue implementation that uses the API client instead of rest.Storage.
-// This provides better type safety and consistency with other parts of the codebase.
-type APIClientJobStore struct {
+// persistentStore is a job queue implementation that uses the API client instead of rest.Storage.
+type persistentStore struct {
 	client client.ProvisioningV0alpha1Interface
 
 	// clock is a function that returns the current time.
@@ -75,31 +74,13 @@ type APIClientJobStore struct {
 	expiry time.Duration
 }
 
-// persistentStore is the legacy job queue implementation that uses rest.Storage.
-// It calls out to a real storage implementation to store the jobs, and a separate storage for historic jobs that have been completed.
-// When persistentStore claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
-// When a job is completed, it is moved to the historic job store by first deleting it from the job store and then creating it in the historic job store. We are fine with the job being lost if the historic job store fails to create it.
-//
-// Deprecated: Use apiClientJobStore instead. This is kept for backward compatibility.
-type persistentStore struct {
-	jobStore interface{} // Changed from jobStorage to interface{} to break dependency
-
-	// clock is a function that returns the current time.
-	clock func() time.Time
-
-	// expiry is the time after which a job is considered abandoned.
-	// If a job is abandoned, it will have its claim cleaned up periodically.
-	expiry time.Duration
-}
-
-// NewAPIClientJobStore creates a new job queue implementation using the API client.
-// This is the preferred approach for new code as it provides better type safety and API consistency.
-func NewAPIClientJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration) (*APIClientJobStore, error) {
+// NewJobStore creates a new job queue implementation using the API client.
+func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
 
-	return &APIClientJobStore{
+	return &persistentStore{
 		client: provisioningClient,
 		clock:  time.Now,
 		expiry: expiry,
@@ -112,7 +93,7 @@ func NewAPIClientJobStore(provisioningClient client.ProvisioningV0alpha1Interfac
 //
 // If err is not nil, the job and rollback values are always nil.
 // The err may be ErrNoJobs if there are no jobs to claim.
-func (s *APIClientJobStore) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
+func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
 		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
@@ -197,7 +178,7 @@ func (s *APIClientJobStore) Claim(ctx context.Context) (job *provisioning.Job, r
 }
 
 // Update saves the job back to the store.
-func (s *APIClientJobStore) Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+func (s *persistentStore) Update(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 	if err != nil {
@@ -213,8 +194,7 @@ func (s *APIClientJobStore) Update(ctx context.Context, job *provisioning.Job) (
 }
 
 // Get retrieves a job by name for conflict resolution.
-// Note: This searches across all namespaces since the Store interface doesn't provide namespace context.
-func (s *APIClientJobStore) Get(ctx context.Context, namespace, name string) (*provisioning.Job, error) {
+func (s *persistentStore) Get(ctx context.Context, namespace, name string) (*provisioning.Job, error) {
 	// Set up provisioning identity to access jobs across all namespaces
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
@@ -232,7 +212,7 @@ func (s *APIClientJobStore) Get(ctx context.Context, namespace, name string) (*p
 
 // Complete marks a job as completed and moves it to the historic job store.
 // When in the historic store, there is no more claim on the job.
-func (s *APIClientJobStore) Complete(ctx context.Context, job *provisioning.Job) error {
+func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) error {
 	logger := logging.FromContext(ctx).With("namespace", job.GetNamespace(), "job", job.GetName())
 
 	// Set up the provisioning identity for this namespace
@@ -264,7 +244,7 @@ func (s *APIClientJobStore) Complete(ctx context.Context, job *provisioning.Job)
 
 // RenewLease renews the lease for a claimed job, extending its expiry time.
 // Returns an error if the lease cannot be renewed (e.g., job was completed or lease expired).
-func (s *APIClientJobStore) RenewLease(ctx context.Context, job *provisioning.Job) error {
+func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job) error {
 	if job.Labels == nil || job.Labels[LabelJobClaim] == "" {
 		return apifmt.Errorf("job '%s' in '%s' is not claimed", job.GetName(), job.GetNamespace())
 	}
@@ -313,7 +293,7 @@ func (s *APIClientJobStore) RenewLease(ctx context.Context, job *provisioning.Jo
 
 // Cleanup finds jobs with expired leases and marks them as failed.
 // This replaces the old cleanup mechanism and should be called more frequently.
-func (s *APIClientJobStore) Cleanup(ctx context.Context) error {
+func (s *persistentStore) Cleanup(ctx context.Context) error {
 	// Set up provisioning identity to access jobs across all namespaces
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants access to all namespaces
 	if err != nil {
@@ -367,7 +347,7 @@ func (s *APIClientJobStore) Cleanup(ctx context.Context) error {
 	return nil
 }
 
-func (s *APIClientJobStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
+func (s *persistentStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
 	if spec.Repository == "" {
 		return nil, errors.New("missing repository in job")
 	}

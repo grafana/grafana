@@ -93,21 +93,24 @@ type APIBuilder struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
 	ghFactory           *github.Factory
-	jobs                *jobs.APIClientJobStore
-	jobHistoryConfig    *JobHistoryConfig
-	jobHistoryLoki      *jobs.LokiJobHistory
-	resourceLister      resources.ResourceLister
-	repositoryLister    listers.RepositoryLister
-	legacyMigrator      legacy.LegacyMigrator
-	storageStatus       dualwrite.Service
-	unified             resource.ResourceClient
-	decryptSvc          secret.DecryptService
-	repositorySecrets   secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
-	client              client.ProvisioningV0alpha1Interface
-	access              authlib.AccessChecker
-	mutators            []controller.Mutator
-	statusPatcher       *controller.RepositoryStatusPatcher
-	healthChecker       *controller.HealthChecker
+	jobs                interface {
+		jobs.Queue
+		jobs.Store
+	}
+	jobHistoryConfig  *JobHistoryConfig
+	jobHistoryLoki    *jobs.LokiJobHistory
+	resourceLister    resources.ResourceLister
+	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
+	decryptSvc        secret.DecryptService
+	repositorySecrets secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
+	client            client.ProvisioningV0alpha1Interface
+	access            authlib.AccessChecker
+	mutators          []controller.Mutator
+	statusPatcher     *controller.RepositoryStatusPatcher
+	healthChecker     *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -389,7 +392,7 @@ func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 	return b.client
 }
 
-func (b *APIBuilder) GetQueue() jobs.Queue {
+func (b *APIBuilder) GetJobQueue() jobs.Queue {
 	return b.jobs
 }
 
@@ -472,7 +475,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
-		jobs:       b.GetQueue(),
+		jobs:       b.GetJobQueue(),
 		historic:   jobHistory,
 	}
 
@@ -667,7 +670,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.repositoryLister = repoInformer.Lister()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewAPIClientJobStore(b.client, 30*time.Second)
+			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}

@@ -145,7 +145,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
-			job, err := s.core.GetQueue().Insert(ctx, namespace, *rsp.Job)
+			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				responder.Error(err)
 				return
