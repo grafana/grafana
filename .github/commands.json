@@ -629,14 +629,6 @@
   },
   {
     "type": "label",
-    "name": "area/security",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/476"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/admin/user",
     "action": "addToProject",
     "addToProject": {
