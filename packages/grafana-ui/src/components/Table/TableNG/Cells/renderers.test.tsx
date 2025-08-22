@@ -110,6 +110,7 @@ describe('TableNG Cells renderers', () => {
             height={100}
             width={100}
             theme={createTheme()}
+            getTextColorForBackground={jest.fn(() => '#000000')}
             cellOptions={cellOptions}
             cellInspect={false}
             showFilters={false}
