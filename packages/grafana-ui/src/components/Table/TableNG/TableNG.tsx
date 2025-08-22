@@ -554,6 +554,7 @@ export function TableNG(props: TableNGProps) {
               disableSanitizeHtml,
               field: tooltipField,
               getActions: getCellActions,
+              getTextColorForBackground,
               gridRef,
               placement,
               renderer: tooltipFieldRenderer,
