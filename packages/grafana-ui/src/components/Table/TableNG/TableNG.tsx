@@ -1,6 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
+import memoize from 'micro-memoize';
 import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Cell,
@@ -28,6 +29,7 @@ import { Trans } from '@grafana/i18n';
 import { FieldColorModeId, TableCellTooltipPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
@@ -41,7 +43,6 @@ import { RowExpander } from './components/RowExpander';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { COLUMN, TABLE } from './constants';
-import { GetTextColorForBackgroundContextProvider } from './contexts';
 import {
   useColumnResize,
   useColWidths,
@@ -144,6 +145,7 @@ export function TableNG(props: TableNGProps) {
 
   const rows = useMemo(() => frameToRecords(data), [data]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const {
     rows: filteredRows,
@@ -488,6 +490,7 @@ export function TableNG(props: TableNGProps) {
                 showFilters={showFilters}
                 getActions={getCellActions}
                 disableSanitizeHtml={disableSanitizeHtml}
+                getTextColorForBackground={getTextColorForBackground}
               />
               {showActions && (
                 <TableCellActions
@@ -630,6 +633,7 @@ export function TableNG(props: TableNGProps) {
       frozenColumns,
       getCellActions,
       getCellColorInlineStyles,
+      getTextColorForBackground,
       isCountRowsSet,
       numFrozenColsFullyInView,
       onCellFilterAdded,
@@ -705,7 +709,7 @@ export function TableNG(props: TableNGProps) {
   const numRows = sortedRows.length;
 
   return (
-    <GetTextColorForBackgroundContextProvider>
+    <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
         ref={gridRef}
@@ -790,7 +794,7 @@ export function TableNG(props: TableNGProps) {
           onDismiss={() => setInspectCell(null)}
         />
       )}
-    </GetTextColorForBackgroundContextProvider>
+    </>
   );
 }
 

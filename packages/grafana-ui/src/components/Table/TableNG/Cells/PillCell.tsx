@@ -11,18 +11,16 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { useGetTextColorForBackground } from '../contexts';
 import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
 
-export function PillCell({ rowIdx, field, theme }: PillCellProps) {
-  const textColorForBg = useGetTextColorForBackground();
+export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
   const value = field.values[rowIdx];
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
     return pillValues.length > 0
       ? pillValues.map((pill, index) => {
           const bgColor = getPillColor(pill, field, theme);
-          const textColor = textColorForBg(bgColor);
+          const textColor = getTextColorForBackground(bgColor);
           return {
             value: String(pill),
             key: `${pill}-${index}`,
@@ -31,7 +29,7 @@ export function PillCell({ rowIdx, field, theme }: PillCellProps) {
           };
         })
       : [];
-  }, [value, field, theme, textColorForBg]);
+  }, [value, field, theme, getTextColorForBackground]);
 
   if (pills.length === 0) {
     return null;

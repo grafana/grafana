@@ -91,6 +91,7 @@ describe('TableNG Cells renderers', () => {
           getActions={jest.fn(() => [
             { title: 'Action', onClick: jest.fn(() => {}), confirmation: jest.fn(), style: {} },
           ])}
+          getTextColorForBackground={jest.fn(() => '#000000')}
         />
       );
     };
