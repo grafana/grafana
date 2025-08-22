@@ -99,7 +99,8 @@ type APIBuilder struct {
 		jobs.Store
 	}
 	jobHistoryConfig  *JobHistoryConfig
-	jobHistory        jobs.History
+	jobHistoryReader  jobs.HistoryReader
+	jobHistoryWriter  jobs.HistoryWriter
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
 	legacyMigrator    legacy.LegacyMigrator
@@ -441,28 +442,38 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage := map[string]rest.Storage{}
 	// Create job history based on configuration
-	// Default to in-memory cache if no config provided
-	var jobHistory jobs.History
+	// Default to unified storage if no config provided
+	var (
+		jobHistory       jobs.HistoryReader
+		jobHistoryWriter jobs.HistoryWriter
+	)
+
 	if b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil {
-		jobHistory = jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
+		lokiHistory := jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
+		jobHistory, jobHistoryWriter = lokiHistory, lokiHistory
 	} else {
 		historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
 		if err != nil {
-			return fmt.Errorf("failed to create historic job storage: %w", err)
+			return fmt.Errorf("create historic job storage: %w", err)
 		}
 
 		jobHistory, err = jobs.NewStorageBackedHistory(historicJobStore)
 		if err != nil {
-			return fmt.Errorf("failed to create historic job wrapper: %w", err)
+			return fmt.Errorf("create historic job wrapper: %w", err)
 		}
 
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
+		jobHistoryWriter, err = jobs.NewStorageBackedHistoryWriter(historicJobStore)
+		if err != nil {
+			return fmt.Errorf("create historic job writer: %w", err)
+		}
 	}
 
-	b.jobHistory = jobHistory
+	b.jobHistoryReader = jobHistory
+	b.jobHistoryWriter = jobHistoryWriter
 	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
-		return fmt.Errorf("failed to create job store: %w", err)
+		return fmt.Errorf("create job store: %w", err)
 	}
 
 	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
@@ -485,7 +496,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-		historic:   b.jobHistory,
+		historic:   b.jobHistoryReader,
 	}
 
 	// Add any extra storage
@@ -750,7 +761,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
-				b.jobs, b, b.jobHistory,
+				b.jobs, b, b.jobHistoryWriter,
 				jobController.InsertNotifications(),
 				workers...,
 			)
