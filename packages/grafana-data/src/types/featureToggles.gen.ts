@@ -197,10 +197,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-  */
-  provisioningSecretsService?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -949,6 +945,11 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables integration with Grafana Assistant in Profiles Drilldown
+  * @default true
+  */
+  grafanaAssistantInProfilesDrilldown?: boolean;
   /**
   * Enables using PGX instead of libpq for PostgreSQL datasource
   */

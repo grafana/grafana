@@ -282,7 +282,7 @@ The markers layer allows you to display data points as different marker shapes s
 | Symbol Horizontal Align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
 | Color | Configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
 | Fill opacity | Configures the transparency of each marker. |
-| Rotation angle | Configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Rotation angle | Configures the rotation angle of each marker in degrees. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
 | Text label | Configures a text label for each marker. |
 | Show legend | Allows you to toggle the legend for the layer. |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
@@ -449,7 +449,7 @@ You can convert node graph data to a network layer:
 | Symbol | Allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
 | Color | Configures the color of the nodes. The default `Fixed color` sets all nodes to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
 | Fill opacity | Configures the transparency of each node. |
-| Rotation angle | Configures the rotation angle of each node. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field. |
+| Rotation angle | Configures the rotation angle of each node in degrees. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field. |
 | Text label | Configures a text label for each node. |
 <!-- prettier-ignore-end -->
 

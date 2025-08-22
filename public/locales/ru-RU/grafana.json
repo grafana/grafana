@@ -501,6 +501,11 @@
       "title-muting-grouping-and-timings": "Отключение звука, группировка и определение времени"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Источники данных не найдены"
     },
     "alert-menu": {
@@ -2234,6 +2239,13 @@
       "preview": "Предварительный просмотр",
       "previewCondition": "Предварительный просмотр условия правила оповещения"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Добавить интеграцию точки контакта",
       "body-attention": "Поскольку стандартная политика еще не задана, эта точка контакта будет автоматически установлена как значение по умолчанию.",
@@ -2487,6 +2499,7 @@
       },
       "empty-data-source": "Правила не найдены",
       "error-button": "Ошибка",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Отменить поиск",
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
@@ -3563,7 +3576,6 @@
       "button-cancel": "Отмена",
       "button-move": "Переместить",
       "button-moving": "Перемещение...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3668,11 +3680,11 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
+      "error-invalid-characters": "",
       "error-required": "Требуется имя папки",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
       "label-folder-name": "Имя папки",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
-      "text-your-folder-will-be-created-as": "Ваша папка будет создана как {{folderName}}",
       "title-pull-request-created": "Создан запрос на включение изменений",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
@@ -3779,7 +3791,7 @@
         }
       }
     },
-    "category-arrow-direction": "Направление стрелки",
+    "category-arrow-direction": "",
     "category-background": "Фон",
     "category-border": "Граница",
     "category-canvas": "Холст",
@@ -3811,15 +3823,17 @@
         "auto": "Авто"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Включить выбор экспериментальных типов элементов",
     "description-inline-editing": "Включить прямое редактирование панели",
     "description-pan-zoom": "Включить панорамирование и масштабирование",
-    "direction-options": {
-      "label-both": "Оба",
-      "label-forward": "Вперед",
-      "label-none": "Нет",
-      "label-reverse": "Назад"
-    },
     "drone-front-item": {
       "category-drone-front": "Дрон, вид спереди",
       "name-roll-angle": "Угол крена"
@@ -4207,7 +4221,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Источники данных",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "По вашему запросу ничего не найдено",
       "request-data-source": "Запросить новый источник данных",
       "roadmap": "Просмотр дорожной карты"
@@ -6587,9 +6602,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Создать дашборд",
       "explore-data": "Просмотреть данные",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Подробнее об ошибке"
@@ -6697,6 +6714,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Фиксированный цвет",
       "noOptionsMessage-no-fields-found": "Поля не найдены"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Передать"
@@ -7164,7 +7189,7 @@
     "rich-history-card": {
       "add-comment-form": "Добавить форму для комментариев",
       "add-comment-tooltip": "Добавить комментарий",
-      "add-to-library": "Добавить в библиотеку",
+      "add-to-library": "",
       "cancel": "Отмена",
       "confirm-delete": "Удалить",
       "copy-query-tooltip": "Скопировать запрос в буфер обмена",
@@ -7276,7 +7301,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Добавить запрос из библиотеки",
+      "add-from-query-library": "",
       "query-add-button": "Добавить запрос",
       "query-add-button-aria-label": "Добавить запрос",
       "query-history-button": "История запросов",
@@ -7567,11 +7592,6 @@
     "noOptionsMessage-no-folders-found": "Папки не найдены",
     "select-aria-label": "Фильтр папок",
     "select-placeholder": "Фильтровать по папкам"
-  },
-  "folder-picker": {
-    "create-instructions": "Чтобы создать новую папку, нажмите Enter.",
-    "input-placeholder": "Нажмите Enter, чтобы подтвердить новую папку",
-    "loading": "Загрузка папок..."
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8791,7 +8811,6 @@
       "filter-popup-input-placeholder": "Значения фильтра",
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
-      "inspect-menu-label": "Проверить значение",
       "nested-table": {
         "no-data": "Нет данных"
       },
@@ -9531,6 +9550,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9802,7 +9823,8 @@
       "message-name-required": "Требуется ввести имя",
       "message-reserved-name": "Это имя зарезервировано, его нельзя использовать для папки.",
       "message-same-name": "Дашборд или папка с таким именем уже существует",
-      "message-same-name-general": "Папка или дашборд в общей папке с таким именем уже существует"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11955,7 +11977,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Свернуть строку запроса",
       "datasource-help": "Показать справку по источнику данных",
       "drag-and-drop": "Перетащить для изменения порядка",
@@ -11963,14 +11984,10 @@
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
       "remove-query": "Удалить запрос",
-      "replace-query-from-library": "Замена на запрос из библиотеки",
+      "replace-query-from-library": "",
       "show-response": "Показать ответ"
     },
-    "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
   },
   "recently-deleted": {
     "buttons": {
@@ -12827,6 +12844,9 @@
       "label-alt-text": "Альтернативный текст",
       "label-title-text": "Текст заголовка"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12877,6 +12897,7 @@
     "description-fields": "Выбрать поля, которые необходимо рассчитать",
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
+    "description-tooltip-from-field": "",
     "name-calculation": "Расчет",
     "name-cell-height": "Высота ячеек",
     "name-cell-type": "Тип ячеек",
@@ -12892,8 +12913,17 @@
     "name-min-column-width": "Минимальная ширина столбца",
     "name-show-table-footer": "Показать футер таблицы",
     "name-show-table-header": "Показать заголовок таблицы",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "авто",
-    "placeholder-fields": "Все числовые поля"
+    "placeholder-fields": "Все числовые поля",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Очистить теги",

@@ -316,13 +316,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "provisioningSecretsService",
-			Description:     "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
-			Stage:           FeatureStageExperimental,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -1637,6 +1630,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "grafanaAssistantInProfilesDrilldown",
+			Description:  "Enables integration with Grafana Assistant in Profiles Drilldown",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:        "postgresDSUsePGX",

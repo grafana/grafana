@@ -501,6 +501,11 @@
       "title-muting-grouping-and-timings": "Ztlumení, seskupení a časování"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nebyly nalezeny žádné zdroje dat"
     },
     "alert-menu": {
@@ -2234,6 +2239,13 @@
       "preview": "Náhled",
       "previewCondition": "Podmínka pravidla náhledu výstrahy"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Přidat integraci kontaktního bodu",
       "body-attention": "Protože nejsou zatím nakonfigurované žádné výchozí zásady, tento kontaktní bod se automaticky nastaví jako výchozí.",
@@ -2487,6 +2499,7 @@
       },
       "empty-data-source": "Nebyla nalezena žádná pravidla",
       "error-button": "Chyba",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
@@ -3563,7 +3576,6 @@
       "button-cancel": "Zrušit",
       "button-move": "Přesunout",
       "button-moving": "Probíhá přesouvání…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3668,11 +3680,11 @@
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
+      "error-invalid-characters": "",
       "error-required": "Název složky je povinný",
       "folder-name-input-placeholder-enter-folder-name": "Zadejte název složky",
       "label-folder-name": "Název složky",
       "text-pull-request-created": "Byl vytvořen pull request se změnami v této složce:",
-      "text-your-folder-will-be-created-as": "Vaše složka bude vytvořena pod názvem {{folderName}}",
       "title-pull-request-created": "Pull request byl vytvořen",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
@@ -3779,7 +3791,7 @@
         }
       }
     },
-    "category-arrow-direction": "Směr šipky",
+    "category-arrow-direction": "",
     "category-background": "Pozadí",
     "category-border": "Okraj",
     "category-canvas": "Plátno",
@@ -3811,15 +3823,17 @@
         "auto": "Automaticky"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Povolit výběr experimentálních typů prvků",
     "description-inline-editing": "Povolit přímé úpravy panelu",
     "description-pan-zoom": "Povolit posouvání a přiblížení",
-    "direction-options": {
-      "label-both": "Oba",
-      "label-forward": "Dopředu",
-      "label-none": "Žádné",
-      "label-reverse": "Dozadu"
-    },
     "drone-front-item": {
       "category-drone-front": "Přední strana dronu",
       "name-roll-angle": "Úhel příčného sklonu"
@@ -4207,7 +4221,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Zdroje dat",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nebyly nalezeny žádné výsledky odpovídající vašemu dotazu",
       "request-data-source": "Požádat o nový zdroj dat",
       "roadmap": "Zobrazit plán"
@@ -6587,9 +6602,11 @@
       "explore": "Prozkoumat"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Vytvořit nástěnku",
       "explore-data": "Prozkoumat data",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Další podrobnosti o chybě"
@@ -6697,6 +6714,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Pevná barva",
       "noOptionsMessage-no-fields-found": "Nebyla nalezena žádná pole"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Nahrát"
@@ -7164,7 +7189,7 @@
     "rich-history-card": {
       "add-comment-form": "Přidat formulář komentáře",
       "add-comment-tooltip": "Přidat komentář",
-      "add-to-library": "Přidat do knihovny",
+      "add-to-library": "",
       "cancel": "Zrušit",
       "confirm-delete": "Odstranit",
       "copy-query-tooltip": "Kopírovat dotaz do schránky",
@@ -7276,7 +7301,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Přidat dotaz z knihovny",
+      "add-from-query-library": "",
       "query-add-button": "Přidat dotaz",
       "query-add-button-aria-label": "Přidat dotaz",
       "query-history-button": "Historie dotazů",
@@ -7567,11 +7592,6 @@
     "noOptionsMessage-no-folders-found": "Nebyly nalezeny žádné složky",
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
-  },
-  "folder-picker": {
-    "create-instructions": "Stisknutím klávesy Enter vytvoříte novou složku.",
-    "input-placeholder": "Stisknutím klávesy Enter potvrdíte novou složku",
-    "loading": "Načítání složek…"
   },
   "folder-repo": {
     "provisioned-badge": "",
@@ -8791,7 +8811,6 @@
       "filter-popup-input-placeholder": "Filtrovat hodnoty",
       "filter-popup-match-case": "Rozlišovat malá a velká písmena",
       "inspect-drawer-title": "Zkontrolovat hodnotu",
-      "inspect-menu-label": "Zkontrolovat hodnotu",
       "nested-table": {
         "no-data": "Žádná data"
       },
@@ -9531,6 +9550,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9802,7 +9823,8 @@
       "message-name-required": "Název je povinný",
       "message-reserved-name": "Toto je vyhrazený název a nelze jej použít pro složku.",
       "message-same-name": "Nástěnka nebo složka se stejným názvem už existuje",
-      "message-same-name-general": "Ve všeobecné složce už existuje složka nebo nástěnka se stejným názvem"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11955,7 +11977,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Sbalit řádek dotazu",
       "datasource-help": "Zobrazit nápovědu pro zdroj dat",
       "drag-and-drop": "Přetažením změníte pořadí",
@@ -11963,14 +11984,10 @@
       "expand-row": "Rozbalit řádek dotazu",
       "hide-response": "Skrýt odpověď",
       "remove-query": "Odebrat dotaz",
-      "replace-query-from-library": "Nahradit dotazem z knihovny",
+      "replace-query-from-library": "",
       "show-response": "Zobrazit odpověď"
     },
-    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
   },
   "recently-deleted": {
     "buttons": {
@@ -12827,6 +12844,9 @@
       "label-alt-text": "Alternativní text",
       "label-title-text": "Text názvu"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12877,6 +12897,7 @@
     "description-fields": "Vyberte pole, která by měla být vypočtena",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
+    "description-tooltip-from-field": "",
     "name-calculation": "Výpočet",
     "name-cell-height": "Výška buňky",
     "name-cell-type": "Typ buňky",
@@ -12892,8 +12913,17 @@
     "name-min-column-width": "Minimální šířka sloupce",
     "name-show-table-footer": "Zobrazit zápatí tabulky",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto.",
-    "placeholder-fields": "Všechna číselná pole"
+    "placeholder-fields": "Všechna číselná pole",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Vymazat tagy",

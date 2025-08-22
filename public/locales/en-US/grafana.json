@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "External Alertmanagers",
+      "extra-config-warning": {
+        "content": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.",
+        "title": "Imported configuration"
+      },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "Filter by contact points",
+      "contact-point": "Contact point",
+      "no-grouping": "No grouping",
+      "placeholder-contact-point": "Filter by contact point",
+      "tooltip-contact-point": "Filter notifications by the contact point they are being delivered to."
+    },
     "receiver-form": {
       "add-contact-point-integration": "Add contact point integration",
       "body-attention": "Because there is no default policy configured yet, this contact point will automatically be set as default.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "No rules found",
       "error-button": "Error",
+      "export-all-grafana-rules": "Export all Grafana rules",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -3537,7 +3550,6 @@
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
-      "button-tooltip": "Please select a target folder",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -3546,7 +3558,7 @@
         "repository-not-found-title": "Repository not found"
       },
       "error-moving-resources": "Error moving resources",
-      "error-no-target-folder-path": "Target folder path in repository is invalid, please select another folder.",
+      "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
       "target-folder": "Target Folder"
     },
@@ -3743,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Arrow Direction",
+    "category-arrow-direction": "Direction",
     "category-background": "Background",
     "category-border": "Border",
     "category-canvas": "Canvas",
@@ -3775,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "Both",
+        "label-forward": "Forward",
+        "label-none": "None",
+        "label-reverse": "Reverse"
+      }
+    },
     "description-experimental-types": "Enable selection of experimental element types",
     "description-inline-editing": "Enable editing the panel directly",
     "description-pan-zoom": "Enable pan and zoom",
-    "direction-options": {
-      "label-both": "Both",
-      "label-forward": "Forward",
-      "label-none": "None",
-      "label-reverse": "Reverse"
-    },
     "drone-front-item": {
       "category-drone-front": "Drone Front",
       "name-roll-angle": "Roll Angle"
@@ -4171,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Data sources",
+      "apps-header": "Apps",
+      "datasources-header": "Data Sources",
       "empty-message": "No results matching your query were found",
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
@@ -6406,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>.",
-    "success-more-details-links-extensions": "You can also explore data with the following extensions:"
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6545,9 +6559,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "Add to favorites",
       "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
-      "open-in-explore": "Open in Explore View"
+      "open-in-explore": "Open in Explore View",
+      "remove-favorite": "Remove from favorites"
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
@@ -6655,6 +6671,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Fixed color",
       "noOptionsMessage-no-fields-found": "No fields found"
+    },
+    "direction-dimension-editor": {
+      "description-field": "Direction based on field value",
+      "description-fixed": "Fixed direction value",
+      "label-direction": "Direction",
+      "label-field": "Field",
+      "label-fixed": "Fixed",
+      "label-source": "Source"
     },
     "file-dropzone-custom-children": {
       "upload": "Upload"
@@ -7122,7 +7146,7 @@
     "rich-history-card": {
       "add-comment-form": "Add comment form",
       "add-comment-tooltip": "Add comment",
-      "add-to-library": "Add to library",
+      "add-to-library": "Save query",
       "cancel": "Cancel",
       "confirm-delete": "Delete",
       "copy-query-tooltip": "Copy query to clipboard",
@@ -7234,7 +7258,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Add query from library",
+      "add-from-query-library": "Add from saved queries",
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
       "query-history-button": "Query history",
@@ -9467,6 +9491,8 @@
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
+      "time-window-label": "Context time window",
+      "time-window-tooltip": "Amount of time before and after the referenced log",
       "title-log-context": "Log context",
       "title-log-line": "Referenced log line"
     },
@@ -9738,7 +9764,8 @@
       "message-name-required": "Name is required",
       "message-reserved-name": "This is a reserved name and cannot be used for a folder.",
       "message-same-name": "A dashboard or a folder with the same name already exists",
-      "message-same-name-general": "A folder or dashboard in the general folder with the same name already exists"
+      "message-same-name-current-folder": "A dashboard or a folder with the same name already exists in the current folder",
+      "message-same-name-general": "A folder or dashboard with the same name already exists in the root folder"
     }
   },
   "metric-select": {
@@ -11226,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Delete",
-      "confirm-delete-repository": "Are you sure you want to delete the repository config?",
+      "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
+      "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
+      "delete": "Delete",
+      "delete-and-keep-resources": "Delete and keep resources",
+      "delete-and-remove-resources": "Delete and remove resources (default)",
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
-      "title-delete-repository": "Delete repository config",
-      "tooltip-delete-this-repository": "Delete this repository"
+      "title-delete-repository-and-resources": "Delete repository configuration and resources",
+      "title-delete-repository-only": "Delete repository configuration only"
     },
     "edit-repository-page": {
       "back-to-repositories": "Back to repositories",
@@ -11877,7 +11908,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "Discard changes",
       "collapse-row": "Collapse query row",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
@@ -11885,14 +11915,10 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
-      "replace-query-from-library": "Replace with query from library",
+      "replace-query-from-library": "Replace with saved query",
       "show-response": "Show response"
     },
-    "query-editor-not-exported": "Data source plugin does not export any Query Editor component",
-    "query-library": {
-      "editing-tooltip": "Updating query from library\nUID: {{queryLibraryRef}}",
-      "from-library": "Updating query from library"
-    }
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "recently-deleted": {
     "buttons": {
@@ -12738,6 +12764,9 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "link-wrapper": {
+      "menu": "view data links and actions"
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
