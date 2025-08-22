@@ -11,10 +11,13 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	genericoptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -50,6 +53,14 @@ type StorageOptions struct {
 	GrpcClientAuthenticationTokenExchangeURL string
 	GrpcClientAuthenticationTokenNamespace   string
 	GrpcClientAuthenticationAllowInsecure    bool
+
+	// Secrets Manager Configuration for InlineSecureValueSupport
+	SecretsManagerGrpcClientEnable        bool
+	SecretsManagerGrpcServerAddress       string
+	SecretsManagerGrpcServerUseTLS        bool
+	SecretsManagerGrpcServerTLSSkipVerify bool
+	SecretsManagerGrpcServerTLSServerName string
+	SecretsManagerGrpcServerTLSCAFile     string
 
 	// For file storage, this is the requested path
 	DataPath string
@@ -92,6 +103,14 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.GrpcClientAuthenticationTokenExchangeURL, "grpc-client-authentication-token-exchange-url", o.GrpcClientAuthenticationTokenExchangeURL, "Token exchange url for grpc client authentication")
 	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
 	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
+
+	// Secrets Manager Configuration flags
+	fs.BoolVar(&o.SecretsManagerGrpcClientEnable, "grafana.secrets-manager.grpc-client-enable", false, "Enable gRPC client for secrets manager")
+	fs.StringVar(&o.SecretsManagerGrpcServerAddress, "grafana.secrets-manager.grpc-server-address", "", "gRPC server address for secrets manager")
+	fs.BoolVar(&o.SecretsManagerGrpcServerUseTLS, "grafana.secrets-manager.grpc-server-use-tls", false, "Use TLS for gRPC server communication")
+	fs.BoolVar(&o.SecretsManagerGrpcServerTLSSkipVerify, "grafana.secrets-manager.grpc-server-tls-skip-verify", false, "Skip TLS verification for gRPC server")
+	fs.StringVar(&o.SecretsManagerGrpcServerTLSServerName, "grafana.secrets-manager.grpc-server-tls-server-name", "", "Server name for TLS verification")
+	fs.StringVar(&o.SecretsManagerGrpcServerTLSCAFile, "grafana.secrets-manager.grpc-server-tls-ca-file", "", "CA file for TLS verification")
 }
 
 func (o *StorageOptions) Validate() []error {
@@ -133,7 +152,7 @@ func (o *StorageOptions) Validate() []error {
 	return errs
 }
 
-func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, tracer tracing.Tracer) error {
+func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, tracer tracing.Tracer, secureServing *genericoptions.SecureServingOptions) error {
 	if o.StorageType != StorageTypeUnifiedGrpc {
 		return nil
 	}
@@ -168,6 +187,35 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
+
+	// setup inline secrets if configured
+	if o.InlineSecrets == nil && o.SecretsManagerGrpcClientEnable {
+		tlsCfg := inlinesecurevalue.TLSConfig{
+			UseTLS:             o.SecretsManagerGrpcServerUseTLS,
+			CAFile:             o.SecretsManagerGrpcServerTLSCAFile,
+			ServerName:         o.SecretsManagerGrpcServerTLSServerName,
+			InsecureSkipVerify: o.SecretsManagerGrpcServerTLSSkipVerify,
+		}
+		if o.SecretsManagerGrpcServerUseTLS && secureServing != nil {
+			tlsCfg.CertFile = secureServing.ServerCert.CertKey.CertFile
+			tlsCfg.KeyFile = secureServing.ServerCert.CertKey.KeyFile
+		}
+		inlineSecureValueService, err := inlinesecurevalue.NewGRPCSecureValueService(
+			&grpcutils.GrpcClientConfig{
+				Token:            o.GrpcClientAuthenticationToken,
+				TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
+				TokenNamespace:   o.GrpcClientAuthenticationTokenNamespace,
+			},
+			o.SecretsManagerGrpcServerAddress,
+			tlsCfg,
+			tracer,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create inline secure value service: %w", err)
+		}
+		o.InlineSecrets = inlineSecureValueService
+	}
+
 	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
