@@ -1267,20 +1267,19 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 					break
 				}
 
-				// We use t.Context() here to avoid getting errors from context cancellation.
-				idx, err := be.GetIndex(t.Context(), ns)
-				require.NoError(t, err)
+				idx, err := be.GetIndex(ctx, ns)
+				require.NoError(t, err) // GetIndex doesn't really return error.
 
-				_, err = idx.UpdateIndex(t.Context(), "test")
+				_, err = idx.UpdateIndex(ctx, "test")
 				if err != nil {
-					if errors.Is(err, bleve.ErrorIndexClosed) {
+					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue
 					}
 					require.NoError(t, err)
 				}
 				updates.Inc()
 
-				resp, err := idx.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+				resp, err := idx.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
 					Options: &resourcepb.ListOptions{
 						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
@@ -1293,7 +1292,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 					Limit:  10,
 				}, nil)
 				if err != nil {
-					if errors.Is(err, bleve.ErrorIndexClosed) {
+					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue
 					}
 					require.NoError(t, err)
