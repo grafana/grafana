@@ -94,26 +94,24 @@ type APIBuilder struct {
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
-	ghFactory           *github.Factory
 	jobs                interface {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistoryConfig  *JobHistoryConfig
-	jobHistory        jobs.History
-	resourceLister    resources.ResourceLister
-	repositoryLister  listers.RepositoryLister
-	legacyMigrator    legacy.LegacyMigrator
-	storageStatus     dualwrite.Service
-	unified           resource.ResourceClient
-	decryptSvc        secret.DecryptService
-	repositorySecrets secrets.RepositorySecrets // << Will be removed when the decryptSvc usage is stable
-	repoFactory       repository.Factory
-	client            client.ProvisioningV0alpha1Interface
-	access            authlib.AccessChecker
-	mutators          []controller.Mutator
-	statusPatcher     *controller.RepositoryStatusPatcher
-	healthChecker     *controller.HealthChecker
+	jobHistoryConfig *JobHistoryConfig
+	jobHistory       jobs.History
+	resourceLister   resources.ResourceLister
+	repositoryLister listers.RepositoryLister
+	legacyMigrator   legacy.LegacyMigrator
+	storageStatus    dualwrite.Service
+	unified          resource.ResourceClient
+	decryptSvc       secret.DecryptService
+	repoFactory      repository.Factory
+	client           client.ProvisioningV0alpha1Interface
+	access           authlib.AccessChecker
+	mutators         []controller.Mutator
+	statusPatcher    *controller.RepositoryStatusPatcher
+	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras []Extra
 }
@@ -126,7 +124,6 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
@@ -152,7 +149,6 @@ func NewAPIBuilder(
 		tracer:              tracer,
 		usageStats:          usageStats,
 		features:            features,
-		ghFactory:           ghFactory,
 		repoFactory:         repoFactory,
 		clients:             clients,
 		parsers:             parsers,
@@ -162,7 +158,6 @@ func NewAPIBuilder(
 		storageStatus:       storageStatus,
 		unified:             unified,
 		decryptSvc:          decryptSvc,
-		repositorySecrets:   repositorySecrets,
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
 	}
@@ -221,7 +216,6 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
-	ghFactory *github.Factory,
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
@@ -240,7 +234,7 @@ func RegisterAPIService(
 		repository.NewFactory(repoExtras),
 		features,
 		client,
-		configProvider, ghFactory,
+		configProvider,
 		legacyMigrator, storageStatus,
 		usageStats,
 		decryptSvc,
