@@ -46,10 +46,9 @@ function setup(
   startPosition: number,
   logs: LogListModel[],
   order: LogsSortOrder,
-  infiniteScrollMode: InfiniteScrollMode = 'interval'
+  infiniteScrollMode: InfiniteScrollMode = 'interval',
+  { element, events } = getMockElement(startPosition)
 ) {
-  const { element, events } = getMockElement(startPosition);
-
   function scrollTo(position: number, timeStamp?: number) {
     element.scrollTop = position;
 
@@ -168,11 +167,13 @@ describe('InfiniteScroll', () => {
 
       test('Does not request more logs when there is no scroll', async () => {
         const loadMoreMock = jest.fn();
-        const { scrollTo, element } = setup(loadMoreMock, 0, logs, order);
-
-        expect(await screen.findByText('log line 1')).toBeInTheDocument();
+        const { element, events } = getMockElement(0);
         element.clientHeight = 40;
         element.scrollHeight = element.clientHeight;
+
+        const { scrollTo } = setup(loadMoreMock, 0, logs, order, undefined, { element, events });
+
+        expect(await screen.findByText('log line 1')).toBeInTheDocument();
 
         scrollTo(39, 1);
         scrollTo(40, 600);
