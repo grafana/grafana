@@ -630,7 +630,7 @@ default_baselayer_config = `{
 }`
 ```
 
-- **maplibre** loads a custom tile server defined by the user. Set a valid style `url` for this option in order to properly load a default base map. Here is an example:
+- **maplibre** loads a custom tile server defined by the user. Set a valid style `url` for this option in order to properly load a default base map. Here's an example:
 
 ```ini
 default_baselayer_config = `{
