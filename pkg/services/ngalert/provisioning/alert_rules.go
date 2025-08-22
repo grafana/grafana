@@ -233,7 +233,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		}
 		for _, setting := range rule.NotificationSettings {
 			if err := validator.Validate(setting); err != nil {
-				return models.AlertRule{}, err
+				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 			}
 		}
 	}
@@ -688,7 +688,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		}
 		for _, setting := range rule.NotificationSettings {
 			if err := validator.Validate(setting); err != nil {
-				return models.AlertRule{}, err
+				return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 			}
 		}
 	}
