@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -118,6 +119,12 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
+		jobs := s.core.GetJobQueue()
+		if jobs == nil {
+			responder.Error(apierrors.NewServiceUnavailable("job queue is not configured, server is not ready yet"))
+			return
+		}
+
 		hooks, ok := repo.(WebhookRepository)
 		if !ok {
 			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
@@ -145,7 +152,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
-			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
+			job, err := jobs.Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				responder.Error(err)
 				return
