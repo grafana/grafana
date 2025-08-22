@@ -180,10 +180,9 @@ export function useFoldersQueryLegacy(
       return flatList;
     }
 
-    const startingParentUid = rootFolderUID ?? undefined;
     const startingPages = rootFolderUID ? state.pagesByParent[rootFolderUID] : state.rootPages;
 
-    const rootFlatTree = createFlatList(startingParentUid, startingPages ?? [], 1);
+    const rootFlatTree = createFlatList(rootFolderUID ?? undefined, startingPages ?? [], 1);
     rootFlatTree.unshift(getRootFolderItem());
 
     return rootFlatTree;
