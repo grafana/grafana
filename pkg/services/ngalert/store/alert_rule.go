@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 
@@ -860,8 +861,10 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		}
 
 		if query.Limit > 0 {
+			// Ensure we clamp to the max int available on the platform
+			lim := min(query.Limit, math.MaxInt)
 			// Fetch one extra rule to determine if there are more results
-			q = q.Limit(int(query.Limit) + 1)
+			q = q.Limit(int(lim) + 1)
 		}
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
