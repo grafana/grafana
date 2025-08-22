@@ -149,6 +149,15 @@ func (o *StorageOptions) Validate() []error {
 			errs = append(errs, fmt.Errorf("grpc client auth namespace is required for unified-grpc storage"))
 		}
 	}
+
+	if o.SecretsManagerGrpcClientEnable {
+		if o.SecretsManagerGrpcServerAddress == "" {
+			errs = append(errs, fmt.Errorf("secrets manager grpc server address is required for secrets manager grpc client"))
+		}
+		if o.SecretsManagerGrpcServerUseTLS && !o.SecretsManagerGrpcServerTLSSkipVerify && o.SecretsManagerGrpcServerTLSCAFile == "" {
+			errs = append(errs, fmt.Errorf("secrets manager grpc server ca file is required for secrets manager grpc client"))
+		}
+	}
 	return errs
 }
 
