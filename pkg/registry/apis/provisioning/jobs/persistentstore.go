@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -108,14 +107,6 @@ func NewAPIClientJobStore(provisioningClient client.ProvisioningV0alpha1Interfac
 		clock:  time.Now,
 		expiry: expiry,
 	}, nil
-}
-
-// NewJobStore creates a new job queue implementation using rest.Storage.
-//
-// Deprecated: Use NewAPIClientJobStore instead. This function is kept for backward
-// compatibility and will be removed in a future version.
-func NewJobStore(jobStore interface{}, expiry time.Duration) (*persistentStore, error) {
-	return nil, fmt.Errorf("NewJobStore is deprecated. Use NewAPIClientJobStore with a client.ProvisioningV0alpha1Interface instead")
 }
 
 // Claim takes a job from storage, marks it as ours, and returns it.
