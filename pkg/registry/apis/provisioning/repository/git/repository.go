@@ -99,9 +99,11 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
 	}
 
-	// TODO: is this check required?  for public repositories it should not be necessary
-	if cfg.Token == "" && r.config.Secure.Token.IsZero() {
-		list = append(list, field.Required(field.NewPath("secure", "token"), "an access token is required"))
+	// Readonly repositories may not need a token (if public)
+	if len(r.config.Spec.Workflows) > 0 {
+		if cfg.Token == "" && r.config.Secure.Token.IsZero() {
+			list = append(list, field.Required(field.NewPath("secure", "token"), "an access token is required"))
+		}
 	}
 
 	if err := safepath.IsSafe(cfg.Path); err != nil {

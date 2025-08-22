@@ -1480,12 +1480,13 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					require.Equal(t, "/status/webhook", hookOps[0]["path"])
 					require.Equal(t, tt.expectedHook.ID, hookOps[0]["value"].(*provisioning.WebhookStatus).ID)
 					require.Equal(t, tt.expectedHook.URL, hookOps[0]["value"].(*provisioning.WebhookStatus).URL)
-					// if tt.expectedHook.Secret != "" {
-					// 	require.Equal(t, tt.expectedHook.Secret, hookOps[0]["value"].(*provisioning.WebhookStatus).Secret)
-					// } else {
-					// 	require.NotEmpty(t, hookOps[0]["value"].(*provisioning.WebhookStatus).Secret) // Secret is randomly generated, so just check it's not empty
-					// }
 					require.ElementsMatch(t, tt.expectedHook.SubscribedEvents, hookOps[0]["value"].(*provisioning.WebhookStatus).SubscribedEvents)
+
+					require.Equal(t, "replace", hookOps[1]["op"])
+					require.Equal(t, "/secure/webhookSecret", hookOps[1]["path"])
+					vals, ok := hookOps[1]["value"].(common.InlineSecureValue)
+					require.True(t, ok, "expected common.InlineSecureValue")
+					require.False(t, vals.Create.IsZero(), "secret should be created")
 				} else {
 					require.Nil(t, hookOps)
 				}

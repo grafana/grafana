@@ -1,7 +1,7 @@
 package repository
 
 import (
-	context "context"
+	"context"
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
