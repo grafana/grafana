@@ -825,15 +825,3 @@ func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context
 
 	return ctx, logger
 }
-
-func (r *gitRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *gitRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *gitRepository) OnDelete(ctx context.Context) error {
-	return nil
-}

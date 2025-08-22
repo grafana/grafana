@@ -12,10 +12,9 @@ import (
 	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
@@ -342,10 +341,6 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 }
 
 func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
-	if err := r.GithubRepository.OnDelete(ctx); err != nil {
-		return fmt.Errorf("on delete from basic github repository: %w", err)
-	}
-
 	if r.config.Status.Webhook == nil {
 		return nil
 	}

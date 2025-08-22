@@ -37,7 +37,6 @@ type GithubRepository interface {
 	repository.Reader
 	repository.RepositoryWithURLs
 	repository.StageableRepository
-	repository.Hooks
 	Owner() string
 	Repo() string
 	Client() Client
@@ -234,16 +233,4 @@ func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioni
 	}
 
 	return urls, nil
-}
-
-func (r *githubRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *githubRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *githubRepository) OnDelete(ctx context.Context) error {
-	return nil
 }
