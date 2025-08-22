@@ -688,7 +688,7 @@
     },
     "languages": {
       "type": "array",
-      "description": "The list of languages supported by the plugin. Each entry should be a locale identifier in the format `language-COUNTRY` (e.g., `en-US`, `fr-FR`, `es-ES`).",
+      "description": "The list of languages supported by the plugin. Each entry should be a locale identifier in the format `language-COUNTRY` (for example `en-US`, `fr-FR`, `es-ES`).",
       "items": {
         "type": "string"
       }
