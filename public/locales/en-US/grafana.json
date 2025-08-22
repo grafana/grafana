@@ -871,6 +871,7 @@
     },
     "common": {
       "cancel": "Cancel",
+      "clear": "Clear",
       "clear-filters": "Clear filters",
       "delete": "Delete",
       "edit": "Edit",
@@ -879,6 +880,7 @@
       "learn-more": "Learn more",
       "loading": "Loading...",
       "search-by-matchers": "Search by matchers",
+      "test-alert-routing": "Test alert routing",
       "titles": {
         "notification-templates": "Notification Templates"
       },
@@ -1971,7 +1973,8 @@
     "notification-policies-filter": {
       "label-search-by-contact-point": "Search by contact point",
       "placeholder-search-by-contact-point": "Choose a contact point",
-      "search-query-input-placeholder-search": "Search"
+      "search-query-input-placeholder-search": "Search",
+      "test-alert-routing-placeholder": "e.g., severity=critical, region=EMEA"
     },
     "notification-policies-list": {
       "title-error-loading-alertmanager-config": "Error loading Alertmanager config",
@@ -2124,6 +2127,8 @@
       "no-matchers": "No matchers",
       "reload-policies": "Reload policies",
       "save-policy": "Save policy",
+      "test-labels-match": "Alert would be routed here",
+      "test-routing-description": "Test how an alert with these labels would be routed through your notification policies:<1>severity=critical, region=EMEA</1>",
       "update": {
         "please-wait": "Please wait while we update your notification policies.",
         "update-policy": "Update policy",
