@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import {ReactNode, useCallback, useMemo, useState} from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -25,7 +25,7 @@ import {
   GraphThresholdsStyleMode,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import {ExploreGraphStyle, ExploreTimeRangeOptions} from 'app/types';
+import { ExploreGraphStyle, ExploreTimeRangeOptions } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
 
@@ -126,9 +126,9 @@ export const GraphContainer = ({
   let actions: ReactNode = null;
   if (!hideMiniOptions) {
     if (queryBuilderOnly && hideQueryEditor) {
-      actions = <ExploreGraphTimeSelector timeRange={timeRangeOption} onChangeTimeRange={onTimeRangeChange}/>
+      actions = <ExploreGraphTimeSelector timeRange={timeRangeOption} onChangeTimeRange={onTimeRangeChange} />
     } else {
-      actions = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange}/>
+      actions = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />
     }
   }
 
@@ -155,6 +155,11 @@ export const GraphContainer = ({
                 <Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>
               </Button>
             </Tooltip>
+          </div>
+        ),
+        (queryBuilderOnly && (showAllSeries || MAX_NUMBER_OF_TIME_SERIES >= data.length)) && data.length > 0 && (
+          <div key="series-count" className={styles.seriesCount}>
+            {t('graph.container.series-count', '{{count}} series', { count: data.length })}
           </div>
         ),
       ].filter(Boolean)}
@@ -198,5 +203,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(0.5),
     color: theme.colors.warning.main,
     fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  seriesCount: css({
+    label: 'series-count',
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    display: 'flex',
+    alignItems: 'center',
   }),
 });
