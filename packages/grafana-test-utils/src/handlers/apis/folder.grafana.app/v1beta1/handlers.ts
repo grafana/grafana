@@ -114,18 +114,4 @@ const getFolderParentsHandler = () =>
     }
   );
 
-const deleteFolderHandler = () =>
-  http.delete<{ folderUid: string; namespace: string }>(
-    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid',
-    ({ params }) => {
-      return HttpResponse.json({
-        kind: 'Status',
-        apiVersion: 'v1',
-        metadata: {},
-        status: 'Success',
-        message: 'Folder deleted',
-      });
-    }
-  );
-
-export default [getFolderHandler(), getFolderParentsHandler(), deleteFolderHandler()];
+export default [getFolderHandler(), getFolderParentsHandler()];
