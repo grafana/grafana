@@ -28,6 +28,7 @@ type ruleAccessControlService interface {
 	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
 	// CanWriteAllRules returns true if the user has full access to write rules via provisioning API and bypass regular checks
 	CanWriteAllRules(ctx context.Context, user identity.Requester) (bool, error)
+	HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 
 var errProvenanceMismatch = errutil.NewBase(errutil.StatusConflict, "alerting.provenanceMismatch").MustTemplate(
@@ -96,6 +97,34 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		Limit:         opts.Limit,
 		ContinueToken: opts.ContinueToken,
 	}
+
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	// If user does not have blanket privilege to read rules, filter to only folders they have rule access to
+	if !can {
+		fq := folder.GetFoldersQuery{
+			OrgID:        user.GetOrgID(),
+			SignedInUser: user,
+		}
+		folders, err := service.folderService.GetFolders(ctx, fq)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		folderUIDs := make([]string, 0, len(folders))
+		for _, f := range folders {
+			access, err := service.authz.HasAccessInFolder(ctx, user, models.Namespace(*f.ToFolderReference()))
+			if err != nil {
+				return nil, nil, "", err
+			}
+			if access {
+				folderUIDs = append(folderUIDs, f.UID)
+			}
+		}
+		q.NamespaceUIDs = folderUIDs
+	}
+
 	rules, nextToken, err = service.ruleStore.ListAlertRulesPaginated(ctx, &q)
 	if err != nil {
 		return nil, nil, "", err
@@ -109,30 +138,7 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		}
 	}
 
-	can, err := service.authz.CanReadAllRules(ctx, user)
-	if err != nil {
-		return nil, nil, "", err
-	}
-	if can {
-		return rules, provenances, nextToken, nil
-	}
-	// If user does not have blanket privilege to read rules, remove all rules that are not allowed to the user.
-	groups := models.GroupByAlertRuleGroupKey(rules)
-	result := make([]*models.AlertRule, 0, len(rules))
-	for _, group := range groups {
-		if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
-			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
-				// remove provenances for rules that will not be added to the output
-				for _, rule := range group {
-					delete(provenances, rule.ResourceID())
-				}
-				continue
-			}
-			return nil, nil, "", err
-		}
-		result = append(result, group...)
-	}
-	return result, provenances, nextToken, nil
+	return rules, provenances, nextToken, nil
 }
 
 func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, map[string]models.Provenance, error) {
