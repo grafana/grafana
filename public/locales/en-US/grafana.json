@@ -5215,6 +5215,9 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "search-panel": {
+      "no-match": "No panels matching"
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Loading configuration"
     },
@@ -5486,6 +5489,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": "Panel not found"
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",

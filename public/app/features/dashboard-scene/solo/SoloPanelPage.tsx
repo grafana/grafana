@@ -15,7 +15,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
-import { SoloPanelContext, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {}
 
@@ -63,7 +63,7 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   const { controls, body } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
   const styles = useStyles2(getStyles);
-  const soloPanelContext = useDefineSoloPanelContext(panelId);
+  const soloPanelContext = useDefineSoloPanelContext(panelId)!;
 
   useEffect(() => {
     const dashDeactivate = dashboard.activate();
@@ -77,9 +77,9 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
 
   return (
     <div className={styles.container}>
-      <SoloPanelContext.Provider value={soloPanelContext}>
+      <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
         <body.Component model={body} />
-      </SoloPanelContext.Provider>
+      </SoloPanelContextProvider>
     </div>
   );
 }

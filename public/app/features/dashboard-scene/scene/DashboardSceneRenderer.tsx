@@ -12,7 +12,7 @@ import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitte
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
-import { SoloPanelContext, useDefineSoloPanelContext } from './SoloPanelContext';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -78,9 +78,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
     if (soloPanelContext) {
       return (
-        <SoloPanelContext.Provider value={soloPanelContext}>
+        <SoloPanelContextProvider value={soloPanelContext} singleMatch={true} dashboard={model}>
           <body.Component model={body} />
-        </SoloPanelContext.Provider>
+        </SoloPanelContextProvider>
       );
     }
 

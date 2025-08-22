@@ -7,7 +7,7 @@ import { VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
-import { SoloPanelContext } from './SoloPanelContext';
+import { SoloPanelContextProvider } from './SoloPanelContext';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -27,17 +27,11 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
       className={classNames(styles.grid, { [styles.perRow]: panelsPerRow !== undefined })}
       style={{ [panelsPerRowCSSVar]: panelsPerRow } as Record<string, number>}
     >
-      <SoloPanelContext.Provider value={soloPanelContext}>
+      <SoloPanelContextProvider value={soloPanelContext} singleMatch={false} dashboard={dashboard}>
         <body.Component model={body} />
-      </SoloPanelContext.Provider>
+      </SoloPanelContextProvider>
     </div>
   );
-
-  // return (
-  //   <p className={styles.noHits}>
-  //     <Trans i18nKey="panel-search.no-matches">No matches found</Trans>
-  //   </p>
-  // );
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -59,12 +53,19 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 export class SoloPanelContextValueWithSearchStringFilter {
+  public matchFound = false;
+
   public constructor(private searchQuery: string) {}
 
   public matches(panel: VizPanel): boolean {
     const interpolatedSearchString = sceneGraph.interpolate(panel, this.searchQuery).toLowerCase();
     const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
 
-    return interpolatedTitle.includes(interpolatedSearchString);
+    const match = interpolatedTitle.includes(interpolatedSearchString);
+    if (match) {
+      this.matchFound = true;
+    }
+
+    return match;
   }
 }
