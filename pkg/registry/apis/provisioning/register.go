@@ -93,7 +93,7 @@ type APIBuilder struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
 	ghFactory           *github.Factory
-	unifiedStorageJobs  *jobs.APIClientJobStore
+	jobs                *jobs.APIClientJobStore
 	jobHistoryConfig    *JobHistoryConfig
 	jobHistoryLoki      *jobs.LokiJobHistory
 	resourceLister      resources.ResourceLister
@@ -389,8 +389,8 @@ func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 	return b.client
 }
 
-func (b *APIBuilder) GetUnifiedStorageJobQueue() jobs.Queue {
-	return b.unifiedStorageJobs
+func (b *APIBuilder) GetQueue() jobs.Queue {
+	return b.jobs
 }
 
 func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
@@ -472,9 +472,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
-		// FIXME: should we use unified storage or do everything via API client?
-		jobs:     jobs.NewUnifiedStorageQueue(jobStore),
-		historic: jobHistory,
+		jobs:       b.GetQueue(),
+		historic:   jobHistory,
 	}
 
 	// Add any extra storage
@@ -668,7 +667,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.repositoryLister = repoInformer.Lister()
 
 			// Initialize the API client-based job store
-			apiServerJobs, err := jobs.NewAPIClientJobStore(b.client, 30*time.Second)
+			b.jobs, err = jobs.NewAPIClientJobStore(b.client, 30*time.Second)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -775,7 +774,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
-				apiServerJobs, b, jobHistoryWriter,
+				b.jobs, b, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				workers...,
 			)
@@ -797,7 +796,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.parsers,
 				b.clients,
 				&repository.Tester{},
-				apiServerJobs,
+				b.jobs,
 				b.storageStatus,
 				b.GetHealthChecker(),
 				b.statusPatcher,
