@@ -70,6 +70,11 @@ async function getAllMetricNamesCompletions(
   dataProvider: DataProvider,
   timeRange: TimeRange
 ): Promise<Completion[]> {
+  if (dataProvider.languageProvider.datasource.lazyLoading) {
+    if (!searchTerm || searchTerm.length < dataProvider.languageProvider.datasource.lazyLoadingLengthThreshold) {
+      return [];
+    }
+  }
   let metricNames = await dataProvider.queryMetricNames(timeRange, searchTerm);
 
   if (

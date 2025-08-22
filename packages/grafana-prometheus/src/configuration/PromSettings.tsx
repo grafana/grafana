@@ -263,6 +263,61 @@ export const PromSettings = (props: Props) => {
               />
             </InlineField>
           </div>
+          <div className="gf-form">
+            <InlineField
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
+              label={t(
+                'grafana-prometheus.configuration.prom-settings.label-enable-lazy-loading',
+                'Enable lazy loading'
+              )}
+              tooltip={
+                <>
+                  <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-enable-lazy-loading">
+                    Checking this option will not load all metrics at once when the explore code/browser is open.
+                    Instead it will search for a metric names matching with your input text.
+                  </Trans>
+                  {docsTip()}
+                </>
+              }
+              interactive={true}
+              disabled={optionsWithDefaults.readOnly}
+              className={styles.switchField}
+            >
+              <Switch
+                value={optionsWithDefaults.jsonData.enableLazyLoading ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'enableLazyLoading')}
+                id={selectors.components.DataSource.Prometheus.configPage.enableLazyLoading}
+              />
+            </InlineField>
+          </div>
+          <div className="gf-form">
+            <InlineField
+              label={t(
+                'grafana-prometheus.configuration.prom-settings.label-lazy-loading-length-threshold',
+                'Lazy loading length threshold'
+              )}
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
+              tooltip={
+                <>
+                  <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-lazy-loading-length-threshold">
+                    Minimal metric name length required before performing a match request on prometheus endpoint
+                  </Trans>{' '}
+                  {docsTip()}
+                </>
+              }
+              interactive={true}
+              disabled={optionsWithDefaults.readOnly}
+            >
+              <>
+                <Input
+                  className="width-20"
+                  value={optionsWithDefaults.jsonData.lazyLoadingLengthThreshold ?? 6}
+                  onChange={onChangeHandler('lazyLoadingLengthThreshold', optionsWithDefaults, onOptionsChange)}
+                  id={selectors.components.DataSource.Prometheus.configPage.lazyLoadingLengthThreshold}
+                />
+              </>
+            </InlineField>
+          </div>
         </div>
       </ConfigSubSection>
 

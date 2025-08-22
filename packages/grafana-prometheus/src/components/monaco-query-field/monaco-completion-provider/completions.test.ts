@@ -13,6 +13,8 @@ const dataProviderSettings = {
   languageProvider: {
     datasource: {
       metricNamesAutocompleteSuggestionLimit: DEFAULT_COMPLETION_LIMIT,
+      lazyLoading: false,
+      lazyLoadingLengthThreshold: 4,
     },
     queryLabelKeys: jest.fn(),
     queryLabelValues: jest.fn(),
@@ -30,6 +32,7 @@ const metrics = {
 };
 
 beforeEach(() => {
+  dataProviderSettings.languageProvider.datasource.lazyLoading = false;
   dataProvider = new DataProvider(dataProviderSettings);
   jest.replaceProperty(config, 'featureToggles', {
     prometheusCodeModeMetricNamesSearch: true,
@@ -38,6 +41,61 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+describe('getCompletions', () => {
+  const emptySituation: Situation = { type: 'EMPTY' };
+  it('should call queryMetricNames when lazy loading disabled', () => {
+    dataProviderSettings.languageProvider.datasource.lazyLoading = false;
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue([]);
+    getCompletions(emptySituation, dataProvider, getMockTimeRange());
+    expect(dataProvider.queryMetricNames).toHaveBeenCalledTimes(1);
+  });
+
+  it('should NOT call queryMetricNames when lazy loading enabled and empty searchTerm', () => {
+    dataProviderSettings.languageProvider.datasource.lazyLoading = true;
+    dataProviderSettings.languageProvider.datasource.lazyLoadingLengthThreshold = 4;
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue([]);
+    getCompletions(emptySituation, dataProvider, getMockTimeRange(), '');
+    expect(dataProvider.queryMetricNames).toHaveBeenCalledTimes(0);
+  });
+
+  it('should NOT call queryMetricNames when lazy loading enabled and undefined searchTerm', () => {
+    dataProviderSettings.languageProvider.datasource.lazyLoading = true;
+    dataProviderSettings.languageProvider.datasource.lazyLoadingLengthThreshold = 4;
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue([]);
+    getCompletions(emptySituation, dataProvider, getMockTimeRange());
+    expect(dataProvider.queryMetricNames).toHaveBeenCalledTimes(0);
+  });
+
+  it('should NOT call queryMetricNames when lazy loading enabled and searchTerm length is lower than threshold', () => {
+    dataProviderSettings.languageProvider.datasource.lazyLoading = true;
+    dataProviderSettings.languageProvider.datasource.lazyLoadingLengthThreshold = 4;
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue([]);
+    getCompletions(emptySituation, dataProvider, getMockTimeRange(), 'go');
+    expect(dataProvider.queryMetricNames).toHaveBeenCalledTimes(0);
+  });
+
+  it('should call queryMetricNames when lazy loading enabled and searchTerm length is greater than threshold', () => {
+    dataProviderSettings.languageProvider.datasource.lazyLoading = true;
+    dataProviderSettings.languageProvider.datasource.lazyLoadingLengthThreshold = 4;
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(['metric1']);
+    getCompletions(emptySituation, dataProvider, getMockTimeRange(), 'metric');
+    expect(dataProvider.queryMetricNames).toHaveBeenCalledTimes(1);
+  });
+
+  it('should return expected results when lazy loading', async () => {
+    dataProviderSettings.languageProvider.datasource.lazyLoading = true;
+    dataProviderSettings.languageProvider.datasource.lazyLoadingLengthThreshold = 4;
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(['metric1']);
+    const results = await getCompletions(emptySituation, dataProvider, getMockTimeRange(), 'metric');
+    expect(results[results.length - 1]['label']).toBe('metric1');
+  });
 });
 
 describe('filterMetricNames', () => {

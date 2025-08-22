@@ -33,6 +33,7 @@ const setupMocks = () => {
   // Mock language provider
   const mockLanguageProvider: PrometheusLanguageProviderInterface = new PrometheusLanguageProvider({
     seriesLimit: DEFAULT_SERIES_LIMIT,
+    lazyLoading: false,
   } as unknown as PrometheusDatasource);
 
   mockLanguageProvider.retrieveMetrics = jest.fn().mockReturnValue(['metric1', 'metric2', 'metric3']);
@@ -81,9 +82,11 @@ const renderHookWithInit = async (mocks: ReturnType<typeof setupMocks>) => {
 
   // Wait for initialization
   await act(async () => {
-    await waitFor(() => {
-      expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalled();
-    });
+    if (!mocks.mockLanguageProvider.datasource.lazyLoading) {
+      await waitFor(() => {
+        expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalled();
+      });
+    }
     // Wait for any additional state updates
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
@@ -125,7 +128,41 @@ describe('useMetricsLabelsValues', () => {
     });
   };
 
+  describe('fetchMetrics', () => {
+    it('should call queryLabelValues when lazy loading enabled and selector', async () => {
+      mocks.mockLanguageProvider.datasource.lazyLoading = true;
+      const { result } = await renderHook(() =>
+        useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider)
+      );
+      await act(async () => {
+        await result.current.fetchMetrics('selector');
+      });
+      expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call queryLabelValues when lazy loading enabled and empty selector', async () => {
+      mocks.mockLanguageProvider.datasource.lazyLoading = true;
+      const { result } = await renderHook(() =>
+        useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider)
+      );
+      await act(async () => {
+        await result.current.fetchMetrics(EMPTY_SELECTOR);
+      });
+      expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalledTimes(0);
+    });
+  });
+
   describe('initialization', () => {
+    it('should set all to empty when lazy loading is enabled', async () => {
+      mocks.mockLanguageProvider.datasource.lazyLoading = true;
+      const hookResult = renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
+
+      expect(hookResult.result.current.metrics.length).toBe(0);
+      expect(hookResult.result.current.labelKeys.length).toBe(0);
+      expect(Object.keys(hookResult.result.current.labelValues).length).toBe(0);
+      expect(hookResult.result.current.selectedLabelKeys.length).toBe(0);
+    });
+
     it('should initialize by fetching metrics', async () => {
       renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
 
@@ -390,8 +427,53 @@ describe('useMetricsLabelsValues', () => {
       expect(result.current.validationStatus).toBe('');
     });
   });
+  describe('handleMetricFilterNameChanged', () => {
+    it('should not call queryLabelValues when lazy loading is enabled and value length less than threshold', async () => {
+      mocks.mockLanguageProvider.datasource.lazyLoading = true;
+      mocks.mockLanguageProvider.datasource.lazyLoadingLengthThreshold = 5;
+      const { result } = await renderHookWithInit(mocks);
+
+      await act(async () => {
+        await result.current.handleMetricFilterNameChanged('123');
+      });
+
+      expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalledTimes(0);
+    });
+
+    it('should call queryLabelValues once (from renderHookWithInit) when lazy loading is disabled', async () => {
+      mocks.mockLanguageProvider.datasource.lazyLoading = false;
+      const { result } = await renderHookWithInit(mocks);
+
+      await act(async () => {
+        await result.current.handleMetricFilterNameChanged('123');
+      });
+
+      expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call queryLabelValues when lazy loading is enabled and input is greater than threshold', async () => {
+      mocks.mockLanguageProvider.datasource.lazyLoading = true;
+      mocks.mockLanguageProvider.datasource.lazyLoadingLengthThreshold = 5;
+      const { result } = await renderHookWithInit(mocks);
+
+      await act(async () => {
+        await result.current.handleMetricFilterNameChanged('123456');
+      });
+
+      expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalledTimes(1);
+    });
+  });
 
   describe('clear functionality', () => {
+    it('should set empty metrics when lazy loading enabled', async () => {
+      mocks.mockLanguageProvider.datasource.lazyLoading = true;
+      const { result } = await renderHookWithInit(mocks);
+
+      await act(async () => {
+        await result.current.handleClear();
+      });
+      expect(result.current.metrics.length).toBe(0);
+    });
     it('should clear all selections', async () => {
       const { result } = await renderHookWithInit(mocks);
 

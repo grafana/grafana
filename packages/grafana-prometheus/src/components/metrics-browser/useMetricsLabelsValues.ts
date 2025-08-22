@@ -4,6 +4,7 @@ import { useDebounce } from 'react-use';
 import { TimeRange } from '@grafana/data';
 
 import { EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
+import { escapeLabelValueInRegexSelector } from '../../escaping';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
 
 import { Metric } from './MetricsBrowserContext';
@@ -89,6 +90,9 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // Transforms raw metric strings into Metric objects with metadata
   const fetchMetrics = useCallback(
     async (safeSelector?: string) => {
+      if ((languageProvider.datasource.lazyLoading && !safeSelector) || safeSelector === EMPTY_SELECTOR) {
+        return [];
+      }
       try {
         const fetchedMetrics = await languageProvider.queryLabelValues(
           timeRangeRef.current,
@@ -156,6 +160,13 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // This is called when "Clear" button clicked.
   const initialize = useCallback(
     async (metric: string, labelValues: Record<string, string[]>) => {
+      if (languageProvider.datasource.lazyLoading) {
+        setMetrics([]);
+        setLabelKeys([]);
+        setSelectedLabelKeys([]);
+        setLabelValues({});
+        return;
+      }
       const selector = buildSelector(metric, labelValues);
       const safeSelector = selector === EMPTY_SELECTOR ? undefined : selector;
 
@@ -176,7 +187,13 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       setSelectedLabelKeys(labelKeysInLocalStorage);
       setLabelValues(transformedLabelValues);
     },
-    [fetchLabelKeys, fetchLabelValues, fetchMetrics, loadSelectedLabelsFromStorage]
+    [
+      fetchLabelKeys,
+      fetchLabelValues,
+      fetchMetrics,
+      loadSelectedLabelsFromStorage,
+      languageProvider.datasource.lazyLoading,
+    ]
   );
 
   // Initialize the hook
@@ -358,9 +375,33 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     }
   };
 
+  const handleMetricFilterNameChanged = async (value: string) => {
+    if (!languageProvider.datasource.lazyLoading) {
+      return;
+    }
+    if (value.length < languageProvider.datasource.lazyLoadingLengthThreshold) {
+      setMetrics([]);
+      return;
+    }
+    const match = `{${METRIC_LABEL}=~".*${escapeLabelValueInRegexSelector(value)}.*"}`;
+    const metricNames = await languageProvider.queryLabelValues(
+      timeRangeRef.current,
+      METRIC_LABEL,
+      match,
+      effectiveLimit
+    );
+    const metrics = metricNames.map((metricName) => {
+      return { name: metricName };
+    });
+    setMetrics(metrics);
+  };
+
   // Clears all the selections even the ones in localStorage
   const handleClear = () => {
     localStorage.setItem(LAST_USED_LABELS_KEY, '[]');
+    if (!languageProvider.datasource.lazyLoading) {
+      setMetrics([]);
+    }
 
     setSelectedMetric('');
     setSelectedLabelKeys([]);
@@ -398,5 +439,6 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     fetchMetrics,
     fetchLabelKeys,
     fetchLabelValues,
+    handleMetricFilterNameChanged,
   };
 };

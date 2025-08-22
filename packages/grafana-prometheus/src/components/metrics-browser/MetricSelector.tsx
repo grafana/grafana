@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import { useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
@@ -13,7 +14,13 @@ import { getStylesMetricSelector } from './styles';
 export function MetricSelector() {
   const styles = useStyles2(getStylesMetricSelector);
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
-  const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
+  const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick, onMetricFilterNameChanged } =
+    useMetricsBrowser();
+
+  const onMetricFilterNameChangedDebounced = useMemo(
+    () => debounce(onMetricFilterNameChanged, 600, { leading: false }),
+    [onMetricFilterNameChanged]
+  );
 
   const filteredMetrics = useMemo(() => {
     return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
@@ -32,7 +39,10 @@ export function MetricSelector() {
         </Label>
         <div>
           <Input
-            onChange={(e) => setMetricSearchTerm(e.currentTarget.value)}
+            onChange={(e) => {
+              onMetricFilterNameChangedDebounced(e.currentTarget.value);
+              setMetricSearchTerm(e.currentTarget.value);
+            }}
             aria-label={t(
               'grafana-prometheus.components.metric-selector.aria-label-filter-expression-for-metric',
               'Filter expression for metric'

@@ -194,6 +194,12 @@ export const versionedComponents = {
         disableMetricLookup: {
           '10.4.0': 'disable-metric-lookup', // id for switch component
         },
+        enableLazyLoading: {
+          '10.4.0': 'enable-lazy-loading', // id for switch component
+        },
+        lazyLoadingLengthThreshold: {
+          '10.4.0': 'lazy-loading-length-threshold"',
+        },
         prometheusType: {
           '10.4.0': 'data-testid prometheus type',
         },

@@ -38,6 +38,8 @@ export interface PromOptions extends DataSourceJsonData {
   httpMethod?: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
+  enableLazyLoading?: boolean;
+  lazyLoadingLengthThreshold?: number;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;

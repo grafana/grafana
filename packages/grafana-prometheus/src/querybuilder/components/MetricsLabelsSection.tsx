@@ -178,6 +178,9 @@ async function getMetrics(
 ): Promise<Array<{ value: string; description?: string }>> {
   // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
+  if (datasource.lazyLoading && query.metric.length < datasource.lazyLoadingLengthThreshold) {
+    return [];
+  }
   const metadata = datasource.languageProvider.retrieveMetricsMetadata();
   if (Object.keys(metadata).length === 0) {
     await datasource.languageProvider.queryMetricsMetadata();

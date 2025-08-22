@@ -62,12 +62,67 @@ describe('MetricCombobox', () => {
   };
 
   beforeEach(() => {
+    mockDatasource.lazyLoading = false;
     jest.clearAllMocks();
   });
 
   it('renders correctly', () => {
     render(<MetricCombobox {...defaultProps} />);
     expect(screen.getByPlaceholderText('Select metric')).toBeInTheDocument();
+  });
+
+  it('should display expected placeholder when lazyloading enabled', async () => {
+    mockDatasource.lazyLoading = true;
+    mockDatasource.lazyLoadingLengthThreshold = 5;
+    render(<MetricCombobox {...defaultProps} />);
+
+    const combobox = screen.getByPlaceholderText('Please type at least 5 characters');
+    expect(combobox).toBeTruthy();
+  });
+
+  it('should display expected placeholder when lazyloading disabled', async () => {
+    mockDatasource.lazyLoading = false;
+    render(<MetricCombobox {...defaultProps} />);
+
+    const combobox = screen.getByPlaceholderText('Select metric');
+    expect(combobox).toBeTruthy();
+  });
+
+  it('should display "No options found." by default when lazyloading enabled', async () => {
+    mockDatasource.lazyLoading = true;
+    mockDatasource.lazyLoadingLengthThreshold = 5;
+    render(<MetricCombobox {...defaultProps} />);
+
+    const combobox = screen.getByPlaceholderText('Please type at least 5 characters');
+    await userEvent.click(combobox);
+    const element = screen.getByText('No options found.');
+    expect(element).toBeInTheDocument();
+  });
+
+  it('should display empty options when input length is lower than threshold', async () => {
+    mockDatasource.languageProvider.queryLabelValues = jest.fn().mockResolvedValue(['unique_metric']);
+    mockDatasource.lazyLoading = true;
+    mockDatasource.lazyLoadingLengthThreshold = 5;
+    render(<MetricCombobox {...defaultProps} />);
+
+    const combobox = screen.getByPlaceholderText('Please type at least 5 characters');
+    await userEvent.click(combobox);
+    userEvent.type(combobox, 'uni');
+    const element = screen.getByText('No options found.');
+    expect(element).toBeInTheDocument();
+  });
+
+  it('should display expected options when input length is greater than threshold', async () => {
+    mockDatasource.languageProvider.queryLabelValues = jest.fn().mockResolvedValue(['unique_metric']);
+    mockDatasource.lazyLoading = true;
+    mockDatasource.lazyLoadingLengthThreshold = 5;
+    render(<MetricCombobox {...defaultProps} />);
+
+    const combobox = screen.getByPlaceholderText('Please type at least 5 characters');
+    await userEvent.click(combobox);
+    await userEvent.type(combobox, 'unique_m');
+    const item = await screen.findByRole('option', { name: 'unique_metric' });
+    expect(item).toBeInTheDocument();
   });
 
   it('fetches top metrics when the combobox is opened ', async () => {

@@ -100,6 +100,8 @@ export class PrometheusDatasource
   ruleMappings: RuleQueryMapping;
   seriesEndpoint: boolean;
   seriesLimit: number;
+  lazyLoading: boolean;
+  lazyLoadingLengthThreshold: number;
   type: string;
   url: string;
   withCredentials: boolean;
@@ -141,6 +143,8 @@ export class PrometheusDatasource
     this.url = instanceSettings.url!;
     this.withCredentials = Boolean(instanceSettings.withCredentials);
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
+    this.lazyLoading = instanceSettings.jsonData.enableLazyLoading ?? false;
+    this.lazyLoadingLengthThreshold = instanceSettings.jsonData.lazyLoadingLengthThreshold ?? 6;
 
     // INHERITED PROPERTIES
     this.annotations = PrometheusAnnotationSupport(this);

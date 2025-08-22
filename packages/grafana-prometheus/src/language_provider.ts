@@ -623,7 +623,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * Some places still relies on deprecated fields. Until we replace them we need _backwardCompatibleStart method
    */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
-    if (this.datasource.lookupsDisabled) {
+    if (this.datasource.lookupsDisabled || this.datasource.lazyLoading) {
       return [];
     }
     await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata(this.datasource.seriesLimit)]);

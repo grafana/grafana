@@ -65,6 +65,9 @@ export function MetricCombobox({
 
   const loadOptions = useCallback(
     async (input: string): Promise<ComboboxOption[]> => {
+      if (datasource.lazyLoading && input.length < datasource.lazyLoadingLengthThreshold) {
+        return [];
+      }
       const metrics = input.length ? await getMetricLabels(input) : await onGetMetrics();
 
       return metrics.map((option) => ({
@@ -72,17 +75,23 @@ export function MetricCombobox({
         value: option.value,
       }));
     },
-    [getMetricLabels, onGetMetrics]
+    [getMetricLabels, onGetMetrics, datasource.lazyLoading, datasource.lazyLoadingLengthThreshold]
   );
+
+  const metricPlaceholder = function (): string {
+    let id = 'grafana-prometheus.querybuilder.metric-combobox.async-select.placeholder-select-metric';
+    let defaultMessage = 'Select metric';
+    if (datasource.lazyLoading) {
+      defaultMessage = `Please type at least ${datasource.lazyLoadingLengthThreshold} characters`;
+    }
+    return t(id, defaultMessage);
+  };
 
   const asyncSelect = () => {
     return (
       <InputGroup>
         <Combobox
-          placeholder={t(
-            'grafana-prometheus.querybuilder.metric-combobox.async-select.placeholder-select-metric',
-            'Select metric'
-          )}
+          placeholder={metricPlaceholder()}
           width="auto"
           minWidth={25}
           options={loadOptions}

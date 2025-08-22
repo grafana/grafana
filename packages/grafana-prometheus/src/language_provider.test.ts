@@ -734,6 +734,27 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(resourceClientStartSpy).toHaveBeenCalled();
       expect(queryMetricsMetadataSpy).toHaveBeenCalledWith(customSeriesLimit);
     });
+
+    it('should return empty array when lazy loading is enabled', async () => {
+      const datasource = {
+        ...defaultDatasource,
+        lazyLoading: true,
+      } as unknown as PrometheusDatasource;
+      const provider = new PrometheusLanguageProvider(datasource);
+      const result = await provider.start();
+      expect(result).toEqual([]);
+    });
+
+    it('should not call metadataRequest when lazy loading is enabled', async () => {
+      const datasource = {
+        ...defaultDatasource,
+        lazyLoading: true,
+      } as unknown as PrometheusDatasource;
+      const provider = new PrometheusLanguageProvider(datasource);
+      await provider.start();
+      const metadataRequest = jest.spyOn(datasource, 'metadataRequest');
+      expect(metadataRequest).toHaveBeenCalledTimes(0);
+    });
   });
 
   describe('queryMetricsMetadata', () => {

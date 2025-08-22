@@ -44,6 +44,7 @@ interface MetricsBrowserContextType {
   onLabelValueClick: (labelKey: string, labelValue: string, isSelected: boolean) => void;
   getSelector: () => string;
   onClearClick: () => void;
+  onMetricFilterNameChanged: (value: string) => void;
 
   // Validation
   validationStatus: string;
@@ -87,6 +88,7 @@ export function MetricsBrowserProvider({
     handleSelectedLabelValueChange,
     handleValidation,
     handleClear,
+    handleMetricFilterNameChanged,
   } = useMetricsLabelsValues(timeRange, languageProvider);
 
   // Build a Prometheus selector string from the current selections
@@ -118,6 +120,7 @@ export function MetricsBrowserProvider({
       onLabelValueClick: handleSelectedLabelValueChange,
       onValidationClick: handleValidation,
       onClearClick: handleClear,
+      onMetricFilterNameChanged: handleMetricFilterNameChanged,
     }),
     [
       err,
@@ -140,6 +143,7 @@ export function MetricsBrowserProvider({
       handleSelectedMetricChange,
       handleValidation,
       handleClear,
+      handleMetricFilterNameChanged,
     ]
   );
 
