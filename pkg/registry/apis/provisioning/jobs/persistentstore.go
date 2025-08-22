@@ -61,8 +61,10 @@ type Queue interface {
 	Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error)
 }
 
-var _ Queue = (*APIClientJobStore)(nil)
-var _ Store = (*APIClientJobStore)(nil)
+var (
+	_ Queue = (*APIClientJobStore)(nil)
+	_ Store = (*APIClientJobStore)(nil)
+)
 
 // APIClientJobStore is a job queue implementation that uses the API client instead of rest.Storage.
 // This provides better type safety and consistency with other parts of the codebase.
@@ -408,8 +410,7 @@ func (s *APIClientJobStore) Insert(ctx context.Context, namespace string, spec p
 	if err := mutateJobAction(job); err != nil {
 		return nil, err
 	}
-	s.generateJobName(job) // Side-effect: updates the job's name.
-
+	generateJobName(job) // Side-effect: updates the job's name.
 	created, err := s.client.Jobs(namespace).Create(ctx, job, metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
@@ -419,48 +420,4 @@ func (s *APIClientJobStore) Insert(ctx context.Context, namespace string, spec p
 	}
 
 	return created, nil
-}
-
-// generateJobName creates and updates the job's name to one that fits it.
-func (s *APIClientJobStore) generateJobName(job *provisioning.Job) {
-	switch job.Spec.Action {
-	case provisioning.JobActionMigrate, provisioning.JobActionPull:
-		// Pull and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
-		job.Name = job.Spec.Repository + "-sync"
-	case provisioning.JobActionPullRequest:
-		var pr int
-		if job.Spec.PullRequest != nil {
-			pr = job.Spec.PullRequest.PR
-		}
-		// There may be multiple pull requests at the same time. They need different names.
-		job.Name = fmt.Sprintf("%s-pr-%d", job.Spec.Repository, pr)
-	default:
-		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
-	}
-}
-
-
-func mutateJobAction(job *provisioning.Job) error {
-	kinds := map[provisioning.JobAction]any{}
-	spec := job.Spec
-	if spec.Migrate != nil {
-		job.Spec.Action = provisioning.JobActionMigrate
-		kinds[provisioning.JobActionMigrate] = spec.Migrate
-	}
-	if spec.Pull != nil {
-		job.Spec.Action = provisioning.JobActionPull
-		kinds[provisioning.JobActionPull] = spec.Pull
-	}
-	if spec.Push != nil {
-		job.Spec.Action = provisioning.JobActionPush
-		kinds[provisioning.JobActionPush] = spec.Push
-	}
-	if spec.PullRequest != nil {
-		job.Spec.Action = provisioning.JobActionPullRequest
-		kinds[provisioning.JobActionPullRequest] = spec.PullRequest
-	}
-	if len(kinds) > 1 {
-		return apierrors.NewBadRequest("multiple job types found")
-	}
-	return nil
 }
