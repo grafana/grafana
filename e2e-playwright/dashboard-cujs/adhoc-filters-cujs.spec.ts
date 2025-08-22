@@ -2,7 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { setScopes } from '../utils/scope-helpers';
 
-import { prepareAPIMocks } from './utils';
 import {
   getAdHocFilterOptionValues,
   getAdHocFilterPills,
@@ -12,6 +11,7 @@ import {
   getScopesSelectorInput,
   waitForAdHocOption,
 } from './cuj-selectors';
+import { prepareAPIMocks } from './utils';
 
 export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 

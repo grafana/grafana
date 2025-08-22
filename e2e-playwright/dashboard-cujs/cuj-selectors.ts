@@ -1,7 +1,6 @@
-import { DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
 import { Page } from '@playwright/test';
 
-import { expect } from '@grafana/plugin-e2e';
+import { expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 export function getAdHocFilterPills(page: Page) {
   return page.getByLabel(/^Edit filter with key/);

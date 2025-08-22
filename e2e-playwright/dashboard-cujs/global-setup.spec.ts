@@ -8,8 +8,8 @@ import { setDashboardUIDs } from './dashboardUidsState';
 
 const dashboards = [cujDashboardOne, cujDashboardTwo, cujDashboardThree];
 
-// should be used with USE_LIVE_DATA flag when the live instance has dashboards
-// that match the test dashboard UIDs
+// should be used with live instances that already have dashboards
+// that match the test dashboard UIDs and format
 const NO_DASHBOARD_IMPORT = Boolean(process.env.NO_DASHBOARD_IMPORT);
 
 test.describe('Dashboard CUJS Global Setup', () => {

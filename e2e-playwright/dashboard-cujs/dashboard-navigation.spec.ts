@@ -1,6 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { setScopes } from '../utils/scope-helpers';
+
 import {
   getAdHocFilterPills,
   getGroupByInput,

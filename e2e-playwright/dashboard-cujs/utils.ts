@@ -2,11 +2,11 @@ import { Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const USE_LIVE_DATA = Boolean(process.env.API_CALLS_CONFIG_PATH);
-const API_CALLS_CONFIG_PATH = process.env.API_CALLS_CONFIG_PATH ?? '../dashboards/cujs/config.json';
+const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
+const API_CONFIG_PATH = process.env.API_CONFIG_PATH ?? '../dashboards/cujs/config.json';
 
-async function loadApiConfig(): Promise<any> {
-  const configPath = path.resolve(__dirname, API_CALLS_CONFIG_PATH);
+async function loadApiConfig() {
+  const configPath = path.resolve(__dirname, API_CONFIG_PATH);
 
   if (configPath.endsWith('.json')) {
     const configContent = await fs.promises.readFile(configPath, 'utf-8');

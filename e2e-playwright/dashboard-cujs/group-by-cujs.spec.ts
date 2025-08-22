@@ -1,6 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { prepareAPIMocks } from './utils';
 import {
   getGroupByInput,
   getGroupByOptions,
@@ -8,6 +7,7 @@ import {
   getGroupByValues,
   getMarkdownHTMLContent,
 } from './cuj-selectors';
+import { prepareAPIMocks } from './utils';
 
 test.use({
   featureToggles: {
