@@ -249,3 +249,4 @@ newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 unifiedStorageSearchAfterWriteExperimentalAPI,experimental,@grafana/search-and-storage,false,true,false
 teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false
+graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false

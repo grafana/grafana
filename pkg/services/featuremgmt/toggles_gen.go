@@ -1006,4 +1006,8 @@ const (
 	// FlagTeamFolders
 	// Enables team folders functionality
 	FlagTeamFolders = "teamFolders"
+
+	// FlagGraphiteBackendMode
+	// Enables the Graphite data source full backend mode
+	FlagGraphiteBackendMode = "graphiteBackendMode"
 )

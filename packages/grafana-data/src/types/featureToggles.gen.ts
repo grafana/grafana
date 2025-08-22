@@ -1113,4 +1113,9 @@ export interface FeatureToggles {
   * @default false
   */
   teamFolders?: boolean;
+  /**
+  * Enables the Graphite data source full backend mode
+  * @default false
+  */
+  graphiteBackendMode?: boolean;
 }

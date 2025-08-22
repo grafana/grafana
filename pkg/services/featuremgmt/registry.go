@@ -1929,6 +1929,14 @@ var (
 			Owner:        grafanaFrontendSearchNavOrganise,
 			Expression:   "false",
 		},
+		{
+			Name:         "graphiteBackendMode",
+			Description:  "Enables the Graphite data source full backend mode",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
 	}
 )
 
