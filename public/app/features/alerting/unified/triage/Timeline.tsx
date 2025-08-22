@@ -1,4 +1,4 @@
-import { scaleUtc } from 'd3-scale';
+import { scaleTime } from 'd3-scale';
 import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -14,7 +14,7 @@ export const TimelineHeader = ({ domain }: TimelineProps) => {
   const [ref, { width }] = useMeasure<HTMLDivElement>();
 
   const ticks = useMemo(() => {
-    const xScale = scaleUtc().domain(domain).range([0, width]).nice(0);
+    const xScale = scaleTime().domain(domain).range([0, width]).nice(0);
     const tickFormatter = xScale.tickFormat();
 
     return xScale.ticks(5).map((value) => ({

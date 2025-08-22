@@ -1,5 +1,4 @@
 import { scaleUtc } from 'd3';
-import { subMinutes } from 'date-fns';
 import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -9,6 +8,7 @@ import { Domain } from './types';
 
 interface StateChartProps {
   domain: Domain;
+  timeline?: Array<[timestamp: string | number, 'firing' | 'pending']>;
 }
 
 const { colors } = config.theme2;
@@ -21,26 +21,6 @@ const STATE_COLORS: Record<state, string> = {
   normal: colors.success.main,
 };
 
-// @TODO dont' use fake data
-const DATA: Array<{ time: Date; state: keyof typeof STATE_COLORS }> = [
-  {
-    time: subMinutes(new Date(), 60),
-    state: 'normal',
-  },
-  {
-    time: subMinutes(new Date(), 45),
-    state: 'pending',
-  },
-  {
-    time: subMinutes(new Date(), 30),
-    state: 'firing',
-  },
-  {
-    time: subMinutes(new Date(), 15),
-    state: 'normal',
-  },
-];
-
 interface StateRectangle {
   x: number;
   width: number;
@@ -50,7 +30,7 @@ interface StateRectangle {
 
 const TIMELINE_HEIGHT = 15;
 
-export function StateChangeChart({ domain }: StateChartProps) {
+export function StateChangeChart({ domain, timeline = [] }: StateChartProps) {
   const [ref, { width }] = useMeasure<HTMLDivElement>();
 
   const stateRectangles = useMemo(() => {
@@ -58,13 +38,51 @@ export function StateChangeChart({ domain }: StateChartProps) {
       return [];
     }
 
-    const xScale = scaleUtc().domain(domain).range([0, width]).nice(0);
+    // Use timeline data if provided, otherwise fall back to fake DATA
+    let data = timeline.map(([timestamp, state]) => ({
+      time: new Date(timestamp),
+      state: state as keyof typeof STATE_COLORS,
+    }));
 
-    // Create rectangles for each state change
+    // Fill gaps in timeline data with 'normal' state
+    if (timeline && timeline.length > 1) {
+      const filledData: Array<{ time: Date; state: keyof typeof STATE_COLORS }> = [];
+
+      // Sort data by time to ensure proper ordering
+      data.sort((a, b) => a.time.getTime() - b.time.getTime());
+
+      for (let i = 0; i < data.length; i++) {
+        const current = data[i];
+        filledData.push(current);
+
+        // Check if there's a next data point and if there's a gap
+        if (i < data.length - 1) {
+          const next = data[i + 1];
+          const currentTime = current.time.getTime();
+          const nextTime = next.time.getTime();
+          const minuteDiff = (nextTime - currentTime) / (1000 * 60); // difference in minutes
+
+          // If gap is more than 1 minute, fill with 'normal' states
+          if (minuteDiff > 1) {
+            for (let minute = 1; minute < minuteDiff; minute++) {
+              filledData.push({
+                time: new Date(currentTime + minute * 60 * 1000),
+                state: 'normal',
+              });
+            }
+          }
+        }
+      }
+
+      data = filledData;
+    }
+
+    const xScale = scaleUtc().domain(domain).range([0, width]);
+
     const rectangles: StateRectangle[] = [];
-    for (let i = 0; i < DATA.length - 1; i++) {
-      const current = DATA[i];
-      const next = DATA[i + 1];
+    for (let i = 0; i < data.length - 1; i++) {
+      const current = data[i];
+      const next = data[i + 1];
 
       rectangles.push({
         x: xScale(current.time),
@@ -75,8 +93,8 @@ export function StateChangeChart({ domain }: StateChartProps) {
     }
 
     // Add the last state extending to the end of the domain
-    if (DATA.length > 0) {
-      const lastState = DATA[DATA.length - 1];
+    if (data.length > 0) {
+      const lastState = data[data.length - 1];
       rectangles.push({
         x: xScale(lastState.time),
         width: xScale(domain[1]) - xScale(lastState.time),
@@ -86,7 +104,7 @@ export function StateChangeChart({ domain }: StateChartProps) {
     }
 
     return rectangles;
-  }, [domain, width]);
+  }, [domain, width, timeline]);
 
   return (
     <div ref={ref} style={{ width: '100%', overflow: 'hidden' }}>

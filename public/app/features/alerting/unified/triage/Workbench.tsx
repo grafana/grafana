@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { times } from 'lodash';
+import React from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, Text, TextLink, useSplitter, useStyles2 } from '@grafana/ui';
 
-import { AlertLabels } from '../components/AlertLabels';
 import { Label } from '../components/Label';
 import { MetaText } from '../components/MetaText';
 import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
@@ -14,10 +13,11 @@ import { EditorColumnHeader } from '../components/contact-points/templates/Edito
 import { GroupRow } from './GroupRow';
 import { StateChangeChart } from './StateChangeChart';
 import { TimelineHeader } from './Timeline';
-import { Domain, Filter } from './types';
+import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
+  data: WorkbenchRow[];
   groupBy?: string[]; // @TODO proper type
   filterBy?: Filter[];
 };
@@ -61,7 +61,7 @@ const initialSize = 1 / 3;
  │                         │ │                                   │
  └─────────────────────────┘ └───────────────────────────────────┘
  */
-export function Workbench({ domain }: WorkbenchProps) {
+export function Workbench({ domain, data }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
   // splitter for template and payload editor
@@ -97,83 +97,62 @@ export function Workbench({ domain }: WorkbenchProps) {
             <TimelineHeader domain={domain} />
           </EditorColumnHeader>
         </div>
-        {/* Render a lot of group items to test the layout */}
-        {times(50, () => (
-          <GroupRow
-            width={leftColumnWidth}
-            title={
-              <TextLink inline={false} href="#">
-                {t('alerting.group-wrapper.label-my-service', 'My Service')}
-              </TextLink>
-            }
-            actions={<Label size="sm" value={'service'} />}
-            content={<StateChangeChart domain={domain} />}
-          >
-            <GroupRow
-              title={'eu-west'}
-              actions={<Label size="sm" value={'region'} />}
-              content={<StateChangeChart domain={domain} />}
-              width={leftColumnWidth}
-            >
-              {times(5, () => (
-                <GroupRow
-                  title={t('alerting.workbench.title-alert-rule-name', 'Alert Rule Name')}
-                  metadata={
-                    <Stack direction="row" gap={0.5} alignItems="center">
-                      <MetaText icon="folder" />
-                      <Text variant="bodySmall" color="secondary">
-                        {t('alerting.group-wrapper.metadata-1', 'Namespace')}
-                      </Text>
-                    </Stack>
-                  }
-                  content={<StateChangeChart domain={domain} />}
-                  width={leftColumnWidth}
-                >
-                  {times(5, () => (
-                    <GroupRow
-                      title={<AlertLabels size="sm" labels={{ foo: 'bar', team: 'operations' }} />}
-                      content={<StateChangeChart domain={domain} />}
-                      width={leftColumnWidth}
-                    />
-                  ))}
-                </GroupRow>
-              ))}
-            </GroupRow>
-            <GroupRow
-              title={'us-east'}
-              actions={<Label size="sm" value={'region'} />}
-              content={<StateChangeChart domain={domain} />}
-              width={leftColumnWidth}
-            >
-              {times(5, () => (
-                <GroupRow
-                  title={t('alerting.workbench.title-alert-rule-name', 'Alert Rule Name')}
-                  metadata={
-                    <Stack direction="row" gap={0.5} alignItems="center">
-                      <MetaText icon="folder" />
-                      <Text variant="bodySmall" color="secondary">
-                        {t('alerting.group-wrapper.metadata-1', 'Namespace')}
-                      </Text>
-                    </Stack>
-                  }
-                  content={<StateChangeChart domain={domain} />}
-                  width={leftColumnWidth}
-                >
-                  {times(5, () => (
-                    <GroupRow
-                      title={<AlertLabels size="sm" labels={{ foo: 'bar', team: 'operations' }} />}
-                      content={<StateChangeChart domain={domain} />}
-                      width={leftColumnWidth}
-                    />
-                  ))}
-                </GroupRow>
-              ))}
-            </GroupRow>
-          </GroupRow>
-        ))}
+        {/* Render actual data */}
+        {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, index))}
       </div>
     </div>
   );
+}
+
+// Helper function to determine if a row is an AlertRuleRow
+function isAlertRuleRow(row: WorkbenchRow): row is AlertRuleRow {
+  return 'timeline' in row;
+}
+
+// Helper function to render a WorkbenchRow
+function renderWorkbenchRow(row: WorkbenchRow, width: number, domain: Domain, key: React.Key): React.ReactElement {
+  if (isAlertRuleRow(row)) {
+    return (
+      <GroupRow
+        key={key}
+        width={width}
+        title={
+          <TextLink inline={false} href="#">
+            {row.metadata.title}
+          </TextLink>
+        }
+        metadata={
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <MetaText icon="folder" />
+            <Text variant="bodySmall" color="secondary">
+              {row.metadata.folder}
+            </Text>
+          </Stack>
+        }
+        content={<StateChangeChart domain={domain} timeline={row.timeline} />}
+      >
+        {row.rows.map(() => (
+          <>{null}</>
+        ))}
+      </GroupRow>
+    );
+  } else {
+    // GenericGroupedRow
+    const groupedRow = row as GenericGroupedRow;
+    return (
+      <GroupRow
+        key={key}
+        width={width}
+        title={groupedRow.metadata.value}
+        actions={<Label size="sm" value={groupedRow.metadata.label} />}
+        content={<StateChangeChart domain={domain} />}
+      >
+        {groupedRow.rows.map((childRow, childIndex) =>
+          renderWorkbenchRow(childRow, width, domain, `${key}-${childIndex}`)
+        )}
+      </GroupRow>
+    );
+  }
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
