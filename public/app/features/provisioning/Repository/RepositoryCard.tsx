@@ -9,7 +9,6 @@ import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 
-import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
 
 interface Props {
@@ -109,9 +108,6 @@ export function RepositoryCard({ repository }: Props) {
           </LinkButton>
         </Stack>
       </Card.Actions>
-      <Card.SecondaryActions>
-        <DeleteRepositoryButton name={name} repository={repository} />
-      </Card.SecondaryActions>
     </Card>
   );
 }

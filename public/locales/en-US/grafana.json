@@ -11254,14 +11254,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Delete",
-      "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep the resources?",
-      "confirm-delete-with-resources": "Are you sure you want to delete the repository and all its resources?",
+      "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
+      "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
       "delete": "Delete",
       "delete-and-keep-resources": "Delete and keep resources",
       "delete-and-remove-resources": "Delete and remove resources (recommended)",
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
-      "title-delete-repository": "Delete repository config"
+      "title-delete-repository-and-resources": "Delete repository configuration and resources",
+      "title-delete-repository-only": "Delete repository configuration only"
     },
     "edit-repository-page": {
       "back-to-repositories": "Back to repositories",

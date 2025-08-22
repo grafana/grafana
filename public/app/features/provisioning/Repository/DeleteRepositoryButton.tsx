@@ -51,12 +51,25 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
     if (selectedAction === 'remove-resources') {
       return t(
         'provisioning.delete-repository-button.confirm-delete-with-resources',
-        'Are you sure you want to delete the repository and all its resources?'
+        'Are you sure you want to delete the repository configuration and all its resources?'
       );
     }
     return t(
       'provisioning.delete-repository-button.confirm-delete-keep-resources',
-      'Are you sure you want to delete the repository configuration but keep the resources?'
+      'Are you sure you want to delete the repository configuration but keep its resources?'
+    );
+  };
+
+  const getModalTitle = () => {
+    if (selectedAction === 'remove-resources') {
+      return t(
+        'provisioning.delete-repository-button.title-delete-repository-and-resources',
+        'Delete repository configuration and resources'
+      );
+    }
+    return t(
+      'provisioning.delete-repository-button.title-delete-repository-only',
+      'Delete repository configuration only'
     );
   };
 
@@ -96,7 +109,7 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
       </Dropdown>
       <ConfirmModal
         isOpen={showModal}
-        title={t('provisioning.delete-repository-button.title-delete-repository', 'Delete repository config')}
+        title={getModalTitle()}
         body={getConfirmationMessage()}
         confirmText={t('provisioning.delete-repository-button.button-delete', 'Delete')}
         onConfirm={onConfirm}
