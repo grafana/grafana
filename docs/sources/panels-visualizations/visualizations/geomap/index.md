@@ -534,7 +534,7 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of Open Street Map Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style Layer
+#### MapLibre Style layer
 
 The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
