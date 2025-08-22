@@ -196,6 +196,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     timeControlStack: css({
       display: 'flex',
+      flexWrap: 'wrap',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginLeft: 'auto',

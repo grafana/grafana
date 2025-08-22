@@ -18,6 +18,8 @@ import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
+const MEDIA_QUERY = '(max-height: 500px), (max-width: 768.05px)';
+
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
@@ -38,13 +40,19 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
 
-  // @ts-expect-error not an efficient approach, extract and conditionally replace styles and pass that separately
-  const modifiedSecondaryProps = cloneDeep(secondaryProps);
+  const noScroll = useMedia(MEDIA_QUERY);
 
-  const noScroll = useMedia('(max-height: 500px)');
   if (noScroll) {
-    modifiedSecondaryProps.style.overflowY = 'visible';
-    modifiedSecondaryProps.style.minHeight = 'max-content';
+    containerProps.className = '';
+
+    secondaryProps.style.overflowY = 'visible';
+    secondaryProps.style.minHeight = 'max-content';
+    secondaryProps.className = '';
+
+    splitterProps.style.display = 'none';
+
+    primaryProps.className = '';
+    primaryProps.style = {};
   }
 
   return (
@@ -59,7 +67,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           <VizAndDataPane model={model} />
         </div>
         <div {...splitterProps} />
-        <div {...modifiedSecondaryProps} className={cx(modifiedSecondaryProps.className, styles.optionsPane)}>
+        <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
           {splitterState.collapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
@@ -105,7 +113,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     primaryProps.style.flexGrow = 1;
   }
 
-  const noScroll = useMedia('(max-height: 500px)');
+  const noScroll = useMedia(MEDIA_QUERY);
 
   if (noScroll) {
     containerProps.className = styles.container;
@@ -182,8 +190,6 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
   );
 }
 
-const MIN_HEIGHT_MEDIA_QUERY = '@media (max-height: 500px)';
-
 function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
@@ -193,6 +199,9 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: `1fr`,
       gridTemplateRows: '1fr',
       height: '100%',
+      ['@media ' + MEDIA_QUERY]: {
+        gridTemplateColumns: `100%`,
+      },
     }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
@@ -218,8 +227,13 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '100%',
       overflow: 'unset',
-      [MIN_HEIGHT_MEDIA_QUERY]: {
+      ['@media ' + MEDIA_QUERY]: {
         height: 'auto',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(470px, 1fr) 330px',
+        gridTemplateRows: '1fr',
+        gap: theme.spacing(1),
+        width: '100%',
       },
     }),
     body: css({
