@@ -1500,15 +1500,14 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 func TestGitHubRepository_OnDelete(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMock     func(m *github.MockClient, mockRepo *github.MockGithubRepository)
+		setupMock     func(m *github.MockClient)
 		config        *provisioning.Repository
 		webhookURL    string
 		expectedError error
 	}{
 		{
 			name: "successfully delete webhook",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository) {
-				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+			setupMock: func(m *github.MockClient) {
 				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
 					Return(nil)
 			},
@@ -1532,10 +1531,8 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "no webhook URL provided",
-			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository) {
-				mockRepo.On("OnDelete", mock.Anything).Return(nil)
-			},
+			name:      "no webhook URL provided",
+			setupMock: func(_ *github.MockClient) {},
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -1551,8 +1548,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		},
 		{
 			name: "webhook not found in status",
-			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository) {
-				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+			setupMock: func(_ *github.MockClient) {
 				// No secrets deletion or webhook deletion mocks needed - method returns early when webhook is nil
 			},
 			config: &provisioning.Repository{
@@ -1572,33 +1568,8 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			expectedError: nil, // No error expected - method returns early when webhook is nil
 		},
 		{
-			name: "error on delete from basic github repository",
-			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository) {
-				mockRepo.On("OnDelete", mock.Anything).Return(fmt.Errorf("failed to delete webhook"))
-			},
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{
-						ID:  123,
-						URL: "https://example.com/webhook",
-					},
-				},
-			},
-			webhookURL:    "https://example.com/webhook",
-			expectedError: fmt.Errorf("on delete from basic github repository: failed to delete webhook"),
-		},
-		{
 			name: "error deleting webhook",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository) {
-				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+			setupMock: func(m *github.MockClient) {
 				// Mock webhook deletion failure
 				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
 					Return(fmt.Errorf("failed to delete webhook"))
@@ -1629,7 +1600,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			// Setup mock GitHub client
 			mockGH := github.NewMockClient(t)
 			mockRepo := github.NewMockGithubRepository(t)
-			tt.setupMock(mockGH, mockRepo)
+			tt.setupMock(mockGH)
 
 			// Create repository with mock
 			repo := &githubWebhookRepository{
