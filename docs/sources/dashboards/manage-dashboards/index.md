@@ -86,7 +86,7 @@ Folders help you organize and group dashboards, which is useful when you have ma
 
    Also, alerts can't be placed in folders with slashes (\ /) in the name. If you want to place alerts in the folder, don't use slashes in the folder name.
 
-1.  Click **Create**
+1. Click **Create**
 
 When you nest folders, you can do so up to four levels deep.
 
