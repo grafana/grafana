@@ -76,7 +76,6 @@ export function TablePanel(props: Props) {
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
-      footerOptions={options.footer}
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
