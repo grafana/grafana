@@ -1290,11 +1290,8 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 }
 
 func (b *APIBuilder) RepositoryFromConfig(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	// Decrypt token if needed
-	secure, err := b.decrypter(ctx, r)
-	if err != nil {
-		return nil, fmt.Errorf("unable to call decrypt: %w", err)
-	}
+	// Prepare a decrypter
+	secure := b.decrypter(r)
 
 	// Try first with any extra
 	for _, extra := range b.extras {
@@ -1310,7 +1307,7 @@ func (b *APIBuilder) RepositoryFromConfig(ctx context.Context, r *provisioning.R
 
 	var token commonMeta.RawSecureValue
 	if r.Secure.Token.IsZero() {
-		t, err := secure.Token()
+		t, err := secure.Token(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decrypt token: %w", err)
 		}

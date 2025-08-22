@@ -9,26 +9,32 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
-type Decrypter = func(ctx context.Context, r *provisioning.Repository) (SecureValues, error)
+type Decrypter = func(r *provisioning.Repository) SecureValues
 
 type SecureValues interface {
-	Token() (common.RawSecureValue, error)
-	WebhookSecret() (common.RawSecureValue, error)
+	Token(ctx context.Context) (common.RawSecureValue, error)
+	WebhookSecret(ctx context.Context) (common.RawSecureValue, error)
 }
 
 type secureValues struct {
-	names   provisioning.SecureValues
-	results map[string]contracts.DecryptResult
+	svc       contracts.DecryptService
+	names     provisioning.SecureValues
+	namespace string
 }
 
-func (s *secureValues) get(sv common.InlineSecureValue) (common.RawSecureValue, error) {
+func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue) (common.RawSecureValue, error) {
 	if !sv.Create.IsZero() {
 		return sv.Create, nil // If this was called before the value is actually saved
 	}
 	if sv.Name == "" {
 		return "", nil
 	}
-	v, found := s.results[sv.Name]
+	results, err := s.svc.Decrypt(ctx, provisioning.GROUP, s.namespace, sv.Name)
+	if err != nil {
+		return "", fmt.Errorf("failed to call decrypt service: %w", err)
+	}
+
+	v, found := results[sv.Name]
 	if !found {
 		return "", fmt.Errorf("not found")
 	}
@@ -38,23 +44,16 @@ func (s *secureValues) get(sv common.InlineSecureValue) (common.RawSecureValue, 
 	return common.RawSecureValue(*v.Value()), nil
 }
 
-func (s *secureValues) Token() (common.RawSecureValue, error) {
-	return s.get(s.names.Token)
+func (s *secureValues) Token(ctx context.Context) (common.RawSecureValue, error) {
+	return s.get(ctx, s.names.Token)
 }
 
-func (s *secureValues) WebhookSecret() (common.RawSecureValue, error) {
-	return s.get(s.names.WebhookSecret)
+func (s *secureValues) WebhookSecret(ctx context.Context) (common.RawSecureValue, error) {
+	return s.get(ctx, s.names.WebhookSecret)
 }
 
 func DecryptService(svc contracts.DecryptService) Decrypter {
-	return func(ctx context.Context, r *provisioning.Repository) (SecureValues, error) {
-		results, err := svc.Decrypt(ctx, provisioning.GROUP, r.Namespace,
-			r.Secure.Token.Name,
-			r.Secure.WebhookSecret.Name,
-		)
-		if err != nil {
-			return nil, err
-		}
-		return &secureValues{names: r.Secure, results: results}, nil
+	return func(r *provisioning.Repository) SecureValues {
+		return &secureValues{svc: svc, names: r.Secure, namespace: r.Namespace}
 	}
 }

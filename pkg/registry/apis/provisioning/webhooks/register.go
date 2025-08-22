@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -179,20 +178,13 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 		}
 
 		// Decrypt GitHub token if needed
-		var err error
-		var ghToken common.RawSecureValue
-		var webhookSecret common.RawSecureValue
-		if !r.Secure.Token.IsZero() {
-			ghToken, err = secure.Token()
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
-			}
+		ghToken, err := secure.Token(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt github token: %w", err)
 		}
-		if !r.Secure.WebhookSecret.IsZero() {
-			webhookSecret, err = secure.WebhookSecret()
-			if err != nil {
-				return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
-			}
+		webhookSecret, err := secure.WebhookSecret(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 		}
 
 		gitCfg := git.RepositoryConfig{
