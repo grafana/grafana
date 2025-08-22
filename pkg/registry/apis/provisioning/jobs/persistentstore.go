@@ -226,28 +226,20 @@ func (s *APIClientJobStore) Update(ctx context.Context, job *provisioning.Job) (
 
 // Get retrieves a job by name for conflict resolution.
 // Note: This searches across all namespaces since the Store interface doesn't provide namespace context.
-func (s *APIClientJobStore) Get(ctx context.Context, name string) (*provisioning.Job, error) {
+func (s *APIClientJobStore) Get(ctx context.Context, namespace, name string) (*provisioning.Job, error) {
 	// Set up provisioning identity to access jobs across all namespaces
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*")
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return nil, apifmt.Errorf("failed to grant provisioning identity for job lookup: %w", err)
 	}
 
-	// Since we don't have namespace context, we need to search across all namespaces
-	// First try to find the job by listing with a name label selector
-	jobs, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
-		FieldSelector: "metadata.name=" + name,
-		Limit:         1,
-	})
+	// Use Get to directly fetch the job by name
+	job, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		return nil, apifmt.Errorf("failed to list jobs by name '%s': %w", name, err)
+		return nil, apifmt.Errorf("failed to get job by name '%s': %w", name, err)
 	}
 
-	if len(jobs.Items) == 0 {
-		return nil, apifmt.Errorf("job '%s' not found", name)
-	}
-
-	return &jobs.Items[0], nil
+	return job, nil
 }
 
 // Complete marks a job as completed and moves it to the historic job store.
