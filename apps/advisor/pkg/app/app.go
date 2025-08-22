@@ -78,24 +78,21 @@ func New(cfg app.Config) (app.App, error) {
 									}
 								}()
 							}
-							if req.Action == resource.AdmissionActionUpdate {
-								// Only run update behavior if annotations have changed
-								if annotationsChanged(req.OldObject, req.Object) {
-									go func() {
-										logger := log.WithContext(ctx).With("check", check.ID())
-										logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
-										requester, err := identity.GetRequester(ctx)
-										if err != nil {
-											logger.Error("Error getting requester", "error", err)
-											return
-										}
-										ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
-										err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
-										if err != nil {
-											logger.Error("Error processing check retry", "error", err)
-										}
-									}()
-								}
+							if req.Action == resource.AdmissionActionUpdate && retryAnnotationChanged(req.OldObject, req.Object) {
+								go func() {
+									logger := log.WithContext(ctx).With("check", check.ID())
+									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
+									requester, err := identity.GetRequester(ctx)
+									if err != nil {
+										logger.Error("Error getting requester", "error", err)
+										return
+									}
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
+									if err != nil {
+										logger.Error("Error processing check retry", "error", err)
+									}
+								}()
 							}
 						}
 						return nil

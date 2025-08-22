@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -16,6 +15,8 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
+
+var retryAnnotationPollingInterval = 1 * time.Second
 
 func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
 	labels := obj.GetLabels()
@@ -171,19 +172,21 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		// Failure not in the list of items to retry, keep it
 		return false
 	})
+	// Wait for the retry annotation to be persisted before patching the object
 	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
 	if err != nil {
 		return err
 	}
+	// Set the status
 	err = checks.SetStatus(ctx, client, obj, c.Status)
-	log.Debug("Set status", "check", obj.GetName(), "status.count", c.Status.Report.Count)
+	log.Debug("Status set", "check", obj.GetName(), "status.count", c.Status.Report.Count)
 	if err != nil {
 		return err
 	}
 	// Delete the retry annotation to mark the check as processed
 	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
 	err = checks.SetAnnotations(ctx, client, obj, annotations)
-	log.Debug("Set annotations", "check", obj.GetName(), "annotations", annotations)
+	log.Debug("Annotations set", "check", obj.GetName(), "annotations", annotations)
 
 	return err
 }
@@ -248,8 +251,8 @@ func filterSteps(checkType resource.Object, steps []checks.Step) ([]checks.Step,
 	return steps, nil
 }
 
-// hasAnnotationsOrStatusChanged compares annotations and status between old and new objects
-func annotationsChanged(oldObj, newObj resource.Object) bool {
+// retryAnnotationChanged compares the retry annotation between old and new objects
+func retryAnnotationChanged(oldObj, newObj resource.Object) bool {
 	if oldObj == nil || newObj == nil {
 		return true // If either is nil, consider it changed
 	}
@@ -257,11 +260,12 @@ func annotationsChanged(oldObj, newObj resource.Object) bool {
 	// Compare annotations
 	oldAnnotations := oldObj.GetAnnotations()
 	newAnnotations := newObj.GetAnnotations()
-	return !reflect.DeepEqual(oldAnnotations, newAnnotations)
+	return newAnnotations[checks.RetryAnnotation] != "" &&
+		oldAnnotations[checks.RetryAnnotation] != newAnnotations[checks.RetryAnnotation]
 }
 
+// waitForRetryAnnotation waits for the retry annotation to match the item to retry
 func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, itemToRetry string) error {
-	// Wait for the retry annotation to have been persisted
 	currentObj, err := client.Get(ctx, resource.Identifier{
 		Namespace: obj.GetNamespace(),
 		Name:      obj.GetName(),
@@ -273,7 +277,7 @@ func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client reso
 	currentRetryAnnotation := checks.GetRetryAnnotation(currentObj)
 	for currentRetryAnnotation != itemToRetry {
 		log.Debug("Waiting for retry annotation to be persisted", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", currentRetryAnnotation)
-		time.Sleep(1 * time.Second)
+		time.Sleep(retryAnnotationPollingInterval)
 		retries++
 		if retries > 5 {
 			return fmt.Errorf("timeout waiting for retry annotation to be persisted")

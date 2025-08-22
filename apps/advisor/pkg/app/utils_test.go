@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -300,6 +301,51 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 	assert.Empty(t, obj.Status.Report.Failures)
 }
 
+func TestProcessCheckRetry_Success_Polling(t *testing.T) {
+	retryAnnotationPollingInterval = 1 * time.Millisecond
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  "item",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+		{
+			ItemID: "item",
+			StepID: "step",
+		},
+	}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	retryCount := 0
+	client := &mockClient{
+		get: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+			if retryCount > 0 {
+				// obj contains the retry annotation
+				return obj, nil
+			}
+			retryCount++
+			oldObject := &advisorv0alpha1.Check{}
+			oldObject.SetAnnotations(map[string]string{
+				checks.RetryAnnotation: "",
+			})
+			return oldObject, nil
+		},
+	}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	check := &mockCheck{
+		items: []any{"item"},
+	}
+
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, retryCount)
+}
+
 func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 	// Create an HTTP request with headers to simulate the real scenario
 	req, err := http.NewRequest("GET", "/test", nil)
@@ -365,6 +411,7 @@ type mockClient struct {
 	resource.Client
 	values []any
 	res    resource.Object
+	get    func(ctx context.Context, id resource.Identifier) (resource.Object, error)
 }
 
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
@@ -374,6 +421,9 @@ func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req 
 }
 
 func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+	if m.get != nil {
+		return m.get(ctx, id)
+	}
 	return m.res, nil
 }
 
