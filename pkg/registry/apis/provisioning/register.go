@@ -500,6 +500,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	if ok {
 		return nil
 	}
+	// FIXME: Do nothing for Jobs for now
+	_, ok = obj.(*provisioning.Job)
+	if ok {
+		return nil
+	}
 
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
@@ -547,6 +552,12 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 
 	// FIXME: Do nothing for HistoryJobs for now
 	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
+		return nil
+	}
+
+	// FIXME: Do nothing for Jobs for now
+	_, ok = obj.(*provisioning.Job)
 	if ok {
 		return nil
 	}
