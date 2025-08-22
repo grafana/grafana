@@ -282,7 +282,7 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 	return nil
 }
 
-func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]any, error) {
+func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
 	if len(r.webhookURL) == 0 {
 		return nil, nil
 	}
@@ -292,7 +292,7 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]an
 	if err != nil {
 		return nil, err
 	}
-	return []map[string]any{
+	return []map[string]interface{}{
 		{
 			"op":   "replace",
 			"path": "/status/webhook",
