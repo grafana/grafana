@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
-import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from 'react-hook-form';
+import { Controller, FormProvider, SubmitHandler, useForm, useFormContext, useWatch } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -240,20 +240,24 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
 
   const defaultValues = searchQueryToDefaultValues(filterState);
 
-  // Fetch namespace and group data from all sources (optimized for filter UI)
-  const { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder } =
-    useNamespaceAndGroupOptions();
-
-  const { labelOptions, isLoadingGrafanaLabels } = useLabelOptions();
-
-  // Create label options for the multi-select dropdown
-  const dataSourceOptions = useAlertingDataSourceOptions();
-
   // turn the filterState into form default values
   const methods = useForm<AdvancedFilters>({
     defaultValues,
   });
   const { handleSubmit, reset } = methods;
+
+  // Reactively watch selected data sources and only query externals when present
+  const selectedDataSourceNamesRaw = useWatch({ control: methods.control, name: 'dataSourceNames' });
+  const selectedDataSourceNames: string[] = Array.isArray(selectedDataSourceNamesRaw) ? selectedDataSourceNamesRaw : [];
+
+  // Fetch namespace and group data from selected sources (optimized for filter UI)
+  const { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder } =
+    useNamespaceAndGroupOptions(selectedDataSourceNames);
+
+  const { labelOptions, isLoadingGrafanaLabels } = useLabelOptions();
+
+  // Create label options for the multi-select dropdown
+  const dataSourceOptions = useAlertingDataSourceOptions();
 
   // Update form values when filterState changes (e.g., when popup reopens)
   useEffect(() => {

@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { ComboboxOption } from '@grafana/ui';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -10,9 +9,13 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { prometheusApi } from '../../../api/prometheusApi';
 import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  getRulesDataSources,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+} from '../../../utils/datasource';
 
-export function useNamespaceAndGroupOptions(): {
+export function useNamespaceAndGroupOptions(selectedDataSourceNames?: string[]): {
   namespaceOptions: Array<ComboboxOption<string>>;
   allGroupNames: string[];
   isLoadingNamespaces: boolean;
@@ -47,14 +50,27 @@ export function useNamespaceAndGroupOptions(): {
     rulerConfig: GRAFANA_RULER_CONFIG,
   });
 
-  const externalDataSources = useMemo(getRulesDataSources, []);
+  // Build a stable list of external datasources (Prometheus-flavored only) captured on first render
+  const ruleSourcesRef = useRef<DataSourceInstanceSettings[]>();
+  if (!ruleSourcesRef.current) {
+    ruleSourcesRef.current = getRulesDataSources().filter((ds) =>
+      isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)
+    );
+  }
+  const allExternalRuleSources = ruleSourcesRef.current;
 
-  const externalPromRulesQueries = externalDataSources.map((ds) =>
-    prometheusApi.endpoints.getGroups.useQuery({
-      ruleSource: { uid: ds.uid },
-      excludeAlerts: true,
-      groupLimit: 500,
-    })
+  // Keep hook call count stable; skip unselected
+  const selectedSet = new Set(selectedDataSourceNames ?? []);
+  const externalPromRulesQueries = allExternalRuleSources.map((ds) =>
+    prometheusApi.endpoints.getGroups.useQuery(
+      {
+        ruleSource: { uid: ds.uid },
+        excludeAlerts: true,
+        groupLimit: 500,
+        notificationOptions: { showErrorAlert: false },
+      },
+      { skip: !selectedSet.has(ds.name) }
+    )
   );
 
   const isLoadingNamespaces = useMemo(() => {
@@ -179,8 +195,16 @@ export function useLabelOptions(): {
 
 export function useAlertingDataSourceOptions(): Array<ComboboxOption<string>> {
   return useMemo(() => {
-    return getDataSourceSrv()
-      .getList({ alerting: true })
+    const selectable = getRulesDataSources()
+      .filter((ds: DataSourceInstanceSettings) => isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type))
       .map((ds: DataSourceInstanceSettings) => ({ label: ds.name, value: ds.name }));
+
+    const infoOption: ComboboxOption<string> = {
+      label: t('alerting.rules-filter.ds-dropdown-info', 'Only Prometheus-compatible data sources are shown.'),
+      value: '__GRAFANA_DS_DROPDOWN_INFO__',
+      infoOption: true,
+    };
+
+    return [...selectable, infoOption];
   }, []);
 }
