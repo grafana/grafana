@@ -222,6 +222,9 @@ For example, in the following image, **Mean**, **Max**, and **Last** have been a
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-1-v12.2.png" max-width="750px" alt="" >}}
 
+The calculations apply to all fields in the table, by default.
+To control which fields have a calculation applied, use the table footer as an override instead.
+
 If you enable a mathematical function for a non-numeric field, nothing for that function is displayed for that field.
 You can see this in the previous image where the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
 Only the **Last** function has been applied to that field.
