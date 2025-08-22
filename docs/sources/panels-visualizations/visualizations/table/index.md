@@ -234,9 +234,6 @@ All calculations are labeled in the footer except **Total**, as shown in the fol
 Calculations applied to cell types like **Markdown + HTML**, might have unexpected results.
 {{< /admonition>}}
 
-Current limitations
-You can’t update the first column
-
 ### Cell options
 
 Cell options allow you to control how data is displayed in a table.
