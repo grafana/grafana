@@ -174,7 +174,7 @@ import (
 //                 {
 //                     "id": "reduce",
 //                     "options": {
-//                         "reducers": ["mean", "max"],
+//                         "reducer": ["mean", "max"],
 //                         "includeTimeField": false
 //                     }
 //                 }
@@ -321,7 +321,7 @@ func migrateTransformations(panel map[string]interface{}, oldOpts map[string]int
 	if transform, ok := oldOpts["transform"].(string); ok {
 		if newTransformID, exists := transformsMap[transform]; exists {
 			opts := map[string]interface{}{
-				"reducers": []interface{}{},
+				"reducer": []interface{}{},
 			}
 
 			// Handle timeseries_aggregations specifically
@@ -340,7 +340,7 @@ func migrateTransformations(panel map[string]interface{}, oldOpts map[string]int
 							}
 						}
 					}
-					opts["reducers"] = reducers
+					opts["reducer"] = reducers
 				}
 			}
 
