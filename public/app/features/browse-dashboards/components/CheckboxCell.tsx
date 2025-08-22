@@ -6,12 +6,12 @@ import { t } from '@grafana/i18n';
 import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { useSelectionRepoValidation } from 'app/features/provisioning/hooks/useSelectionRepoValidation';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
-import { useSelectionRepoValidation } from './BrowseActions/useSelectionRepoValidation';
 import { isSharedWithMe, canEditItemType } from './utils';
 
 export default function CheckboxCell({
