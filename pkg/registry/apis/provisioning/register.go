@@ -99,8 +99,7 @@ type APIBuilder struct {
 		jobs.Store
 	}
 	jobHistoryConfig  *JobHistoryConfig
-	jobHistoryReader  jobs.HistoryReader
-	jobHistoryWriter  jobs.HistoryWriter
+	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
 	repositoryLister  listers.RepositoryLister
 	legacyMigrator    legacy.LegacyMigrator
@@ -443,14 +442,10 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage := map[string]rest.Storage{}
 	// Create job history based on configuration
 	// Default to unified storage if no config provided
-	var (
-		jobHistory       jobs.HistoryReader
-		jobHistoryWriter jobs.HistoryWriter
-	)
-
+	var jobHistory jobs.HistoryReader
 	if b.jobHistoryConfig != nil && b.jobHistoryConfig.Loki != nil {
-		lokiHistory := jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
-		jobHistory, jobHistoryWriter = lokiHistory, lokiHistory
+		b.jobHistoryLoki = jobs.NewLokiJobHistory(*b.jobHistoryConfig.Loki)
+		jobHistory = b.jobHistoryLoki
 	} else {
 		historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
 		if err != nil {
@@ -461,16 +456,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		if err != nil {
 			return fmt.Errorf("create historic job wrapper: %w", err)
 		}
-
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
-		jobHistoryWriter, err = jobs.NewStorageBackedHistoryWriter(historicJobStore)
-		if err != nil {
-			return fmt.Errorf("create historic job writer: %w", err)
-		}
 	}
 
-	b.jobHistoryReader = jobHistory
-	b.jobHistoryWriter = jobHistoryWriter
 	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
 		return fmt.Errorf("create job store: %w", err)
@@ -496,7 +484,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
-		historic:   b.jobHistoryReader,
+		historic:   jobHistory,
 	}
 
 	// Add any extra storage
@@ -754,6 +742,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				workers = append(workers, extra.GetJobWorkers()...)
 			}
 
+			var jobHistoryWriter jobs.HistoryWriter
+			if b.jobHistoryLoki != nil {
+				jobHistoryWriter = b.jobHistoryLoki
+			} else {
+				jobHistoryWriter = jobs.NewAPIClientHistoryWriter(b.GetClient())
+			}
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,              // 3 drivers for now
@@ -761,7 +756,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				time.Minute,    // Cleanup jobs
 				30*time.Second, // Periodically look for new jobs
 				30*time.Second, // Lease renewal interval
-				b.jobs, b, b.jobHistoryWriter,
+				b.jobs, b, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				workers...,
 			)
@@ -794,8 +789,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
 
-			// If Loki not used, start the controller for history jobs
-			if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
+			if b.jobHistoryLoki == nil {
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
 				historyJobExpiration := 30 * time.Second

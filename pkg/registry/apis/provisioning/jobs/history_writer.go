@@ -5,61 +5,64 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 )
 
 // HistoryWriter stores completed jobs
 //
-//go:generate mockery --name History --structname MockHistoryWriter --inpackage --filename history_writer_mock.go --with-expecter
+//go:generate mockery --name=HistoryWriter --structname=MockHistoryWriter --inpackage --filename history_writer_mock.go --with-expecter
 type HistoryWriter interface {
 	// Adds a job to the history
 	WriteJob(ctx context.Context, job *provisioning.Job) error
 }
 
-// TODO: we should store using APIs instead
-// NewStorageBackedHistoryWriter creates a HistoryWriter backed by unified storage.
-// This implementation should be replaced by Loki when running in a cloud environment.
-func NewStorageBackedHistoryWriter(store rest.Storage) (HistoryWriter, error) {
-	var ok bool
-	history := &storageBackedHistoryWriter{}
-	history.creator, ok = store.(rest.Creater)
-	if !ok {
-		return nil, fmt.Errorf("storage does not implement rest.Creater")
+type apiClientHistoryWriter struct {
+	client client.ProvisioningV0alpha1Interface
+}
+
+// NewAPIClientHistoryWriter creates a HistoryWriter backed by the provisioning API client.
+func NewAPIClientHistoryWriter(provisioningClient client.ProvisioningV0alpha1Interface) HistoryWriter {
+	return &apiClientHistoryWriter{
+		client: provisioningClient,
 	}
-
-	return history, nil
 }
 
-type storageBackedHistoryWriter struct {
-	creator rest.Creater
-}
-
-// Write implements History.
-func (s *storageBackedHistoryWriter) WriteJob(ctx context.Context, job *provisioning.Job) error {
+// WriteJob implements HistoryWriter.
+func (w *apiClientHistoryWriter) WriteJob(ctx context.Context, job *provisioning.Job) error {
 	if job.UID == "" {
 		return fmt.Errorf("missing UID in job '%s'", job.GetName())
 	}
-	if job.Labels == nil {
-		job.Labels = make(map[string]string)
+
+	// Create a copy of the job's metadata to avoid modifying the original
+	meta := job.ObjectMeta.DeepCopy()
+
+	// Ensure labels map exists
+	if meta.Labels == nil {
+		meta.Labels = make(map[string]string)
 	}
-	job.Labels[LabelRepository] = job.Spec.Repository
-	job.Labels[LabelJobOriginalUID] = string(job.UID)
+
+	// Add required labels for history tracking
+	meta.Labels[LabelRepository] = job.Spec.Repository
+	meta.Labels[LabelJobOriginalUID] = string(job.UID)
 
 	// Generate a new name based on the input job
-	job.GenerateName = job.Name + "-"
-	job.Name = ""
+	meta.GenerateName = job.Name + "-"
+	meta.Name = ""
 	// We also reset the UID as this is not the same object.
-	job.UID = ""
+	meta.UID = ""
 	// We aren't allowed to write with ResourceVersion set.
-	job.ResourceVersion = ""
+	meta.ResourceVersion = ""
 
-	_, err := s.creator.Create(ctx, &provisioning.HistoricJob{
-		ObjectMeta: job.ObjectMeta,
+	// Create the historic job using the API client
+	historicJob := &provisioning.HistoricJob{
+		ObjectMeta: *meta,
 		Spec:       job.Spec,
 		Status:     job.Status,
-	}, nil, &metav1.CreateOptions{})
+	}
+
+	_, err := w.client.HistoricJobs(job.Namespace).Create(ctx, historicJob, metav1.CreateOptions{})
 
 	return err
 }
