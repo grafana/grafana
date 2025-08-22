@@ -20,7 +20,7 @@ The following table contains a list of calculations you can perform in Grafana. 
 
 | Calculation        | Description                                               |
 | :----------------- | :-------------------------------------------------------- |
-| 1st - 99th %       | 1st - 99th percentile value.                              |
+| 1st % - 99th %     | 1st - 99th percentile value.                              |
 | All nulls          | True when all values are null                             |
 | All unique values  | Array with all unique values                              |
 | All values         | Array with all values                                     |
