@@ -22,7 +22,8 @@ env:
 jobs:
   trigger-search-e2e:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || (github.event_name == 'push' && github.repository == 'grafana/grafana')
     steps:
       - name: Trigger Dashboard Search E2E
         run: echo "Triggered Dashboard Search e2e..."
