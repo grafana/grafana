@@ -83,7 +83,7 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
             <Menu.Item
               label={t(
                 'provisioning.delete-repository-button.delete-and-remove-resources',
-                'Delete and remove resources (recommended)'
+                'Delete and remove resources (default)'
               )}
               onClick={() => {
                 setSelectedAction('remove-resources');

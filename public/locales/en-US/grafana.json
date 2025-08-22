@@ -11258,7 +11258,7 @@
       "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
       "delete": "Delete",
       "delete-and-keep-resources": "Delete and keep resources",
-      "delete-and-remove-resources": "Delete and remove resources (recommended)",
+      "delete-and-remove-resources": "Delete and remove resources (default)",
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
       "title-delete-repository-and-resources": "Delete repository configuration and resources",
