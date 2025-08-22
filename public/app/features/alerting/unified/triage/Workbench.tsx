@@ -14,11 +14,12 @@ import { EditorColumnHeader } from '../components/contact-points/templates/Edito
 import { GroupRow } from './GroupRow';
 import { StateChangeChart } from './StateChangeChart';
 import { TimelineHeader } from './Timeline';
-import { Domain } from './types';
+import { Domain, Filter } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
   groupBy?: string[]; // @TODO proper type
+  filterBy?: Filter[];
 };
 
 const initialSize = 1 / 3;
@@ -108,29 +109,66 @@ export function Workbench({ domain }: WorkbenchProps) {
             actions={<Label size="sm" value={'service'} />}
             content={<StateChangeChart domain={domain} />}
           >
-            {times(5, () => (
-              <GroupRow
-                title={t('alerting.workbench.title-alert-rule-name', 'Alert Rule Name')}
-                metadata={
-                  <Stack direction="row" gap={0.5} alignItems="center">
-                    <MetaText icon="folder" />
-                    <Text variant="bodySmall" color="secondary">
-                      {t('alerting.group-wrapper.metadata-1', 'Namespace')}
-                    </Text>
-                  </Stack>
-                }
-                content={<StateChangeChart domain={domain} />}
-                width={leftColumnWidth}
-              >
-                {times(5, () => (
-                  <GroupRow
-                    title={<AlertLabels size="sm" labels={{ foo: 'bar', team: 'operations' }} />}
-                    content={<StateChangeChart domain={domain} />}
-                    width={leftColumnWidth}
-                  />
-                ))}
-              </GroupRow>
-            ))}
+            <GroupRow
+              title={'eu-west'}
+              actions={<Label size="sm" value={'region'} />}
+              content={<StateChangeChart domain={domain} />}
+              width={leftColumnWidth}
+            >
+              {times(5, () => (
+                <GroupRow
+                  title={t('alerting.workbench.title-alert-rule-name', 'Alert Rule Name')}
+                  metadata={
+                    <Stack direction="row" gap={0.5} alignItems="center">
+                      <MetaText icon="folder" />
+                      <Text variant="bodySmall" color="secondary">
+                        {t('alerting.group-wrapper.metadata-1', 'Namespace')}
+                      </Text>
+                    </Stack>
+                  }
+                  content={<StateChangeChart domain={domain} />}
+                  width={leftColumnWidth}
+                >
+                  {times(5, () => (
+                    <GroupRow
+                      title={<AlertLabels size="sm" labels={{ foo: 'bar', team: 'operations' }} />}
+                      content={<StateChangeChart domain={domain} />}
+                      width={leftColumnWidth}
+                    />
+                  ))}
+                </GroupRow>
+              ))}
+            </GroupRow>
+            <GroupRow
+              title={'us-east'}
+              actions={<Label size="sm" value={'region'} />}
+              content={<StateChangeChart domain={domain} />}
+              width={leftColumnWidth}
+            >
+              {times(5, () => (
+                <GroupRow
+                  title={t('alerting.workbench.title-alert-rule-name', 'Alert Rule Name')}
+                  metadata={
+                    <Stack direction="row" gap={0.5} alignItems="center">
+                      <MetaText icon="folder" />
+                      <Text variant="bodySmall" color="secondary">
+                        {t('alerting.group-wrapper.metadata-1', 'Namespace')}
+                      </Text>
+                    </Stack>
+                  }
+                  content={<StateChangeChart domain={domain} />}
+                  width={leftColumnWidth}
+                >
+                  {times(5, () => (
+                    <GroupRow
+                      title={<AlertLabels size="sm" labels={{ foo: 'bar', team: 'operations' }} />}
+                      content={<StateChangeChart domain={domain} />}
+                      width={leftColumnWidth}
+                    />
+                  ))}
+                </GroupRow>
+              ))}
+            </GroupRow>
           </GroupRow>
         ))}
       </div>

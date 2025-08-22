@@ -1,15 +1,12 @@
-import { subHours } from 'date-fns';
-
 import { t } from '@grafana/i18n';
+import { UrlSyncContextProvider } from '@grafana/scenes';
 import { withErrorBoundary } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 
-import { Workbench } from './Workbench';
+import { TriageScene, triageScene } from './scene/TriageScene';
 
 export const TriagePage = () => {
-  const domain: [Date, Date] = [subHours(new Date(), 1), new Date()];
-
   return (
     <AlertingPageWrapper
       navId="alerting"
@@ -18,7 +15,9 @@ export const TriagePage = () => {
         text: t('alerting.pages.triage.title', 'Triage'),
       }}
     >
-      <Workbench domain={domain} />
+      <UrlSyncContextProvider scene={triageScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+        <TriageScene key={triageScene.state.key} />
+      </UrlSyncContextProvider>
     </AlertingPageWrapper>
   );
 };
