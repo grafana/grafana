@@ -2212,6 +2212,13 @@
       "preview": "Pratinjau",
       "previewCondition": "Pratinjau kondisi aturan peringatan"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Tambahkan integrasi titik kontak",
       "body-attention": "Karena belum ada kebijakan default yang dikonfigurasi, titik kontak ini akan secara otomatis ditetapkan sebagai default.",
@@ -3730,7 +3737,7 @@
         }
       }
     },
-    "category-arrow-direction": "Arah Panah",
+    "category-arrow-direction": "",
     "category-background": "Latar Belakang",
     "category-border": "Bingkai",
     "category-canvas": "Kanvas",
@@ -3762,15 +3769,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Aktifkan pemilihan jenis elemen eksperimental",
     "description-inline-editing": "Aktifkan pengeditan panel secara langsung",
     "description-pan-zoom": "Aktifkan geser dan zoom",
-    "direction-options": {
-      "label-both": "Keduanya",
-      "label-forward": "Teruskan",
-      "label-none": "Tidak ada",
-      "label-reverse": "Balik"
-    },
     "drone-front-item": {
       "category-drone-front": "Bagian Depan Drone",
       "name-roll-angle": "Sudut Putar"
@@ -6643,6 +6652,14 @@
       "label-fixed-color": "Warna tetap",
       "noOptionsMessage-no-fields-found": "Tidak ada bidang yang ditemukan"
     },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Unggah"
     },
@@ -7109,7 +7126,7 @@
     "rich-history-card": {
       "add-comment-form": "Tambahkan formulir komentar",
       "add-comment-tooltip": "Tambah komentar",
-      "add-to-library": "Tambah ke pustaka",
+      "add-to-library": "",
       "cancel": "Batalkan",
       "confirm-delete": "Hapus",
       "copy-query-tooltip": "Salin kueri ke papan klip",
@@ -7221,7 +7238,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Tambahkan kueri dari pustaka",
+      "add-from-query-library": "",
       "query-add-button": "Tambahkan kueri",
       "query-add-button-aria-label": "Tambahkan kueri",
       "query-history-button": "Riwayat kueri",
@@ -9446,6 +9463,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9717,7 +9736,8 @@
       "message-name-required": "Nama wajib diisi",
       "message-reserved-name": "Ini adalah nama yang dicadangkan dan tidak dapat digunakan untuk folder.",
       "message-same-name": "Dasbor atau folder dengan nama yang sama sudah ada",
-      "message-same-name-general": "Folder atau dasbor di folder umum dengan nama yang sama sudah ada"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11856,7 +11876,7 @@
       "expand-row": "Perluas baris kueri",
       "hide-response": "Sembunyikan respons",
       "remove-query": "Hapus kueri",
-      "replace-query-from-library": "Ganti dengan kueri dari pustaka",
+      "replace-query-from-library": "",
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
@@ -12700,6 +12720,9 @@
       "description-title-text": "Teks yang akan ditampilkan saat gambar diarahkan oleh kursor",
       "label-alt-text": "Teks alt",
       "label-title-text": "Teks judul"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
