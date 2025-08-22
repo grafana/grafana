@@ -49,7 +49,7 @@ jobs:
   setup:
     name: setup
     runs-on: github-hosted-ubuntu-x64-small
-    if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, "+security"))
+    if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
