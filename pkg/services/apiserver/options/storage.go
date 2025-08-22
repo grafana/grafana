@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
-	genericoptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -161,7 +160,7 @@ func (o *StorageOptions) Validate() []error {
 	return errs
 }
 
-func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, tracer tracing.Tracer, secureServing *genericoptions.SecureServingOptions) error {
+func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, tracer tracing.Tracer, secureServing *options.SecureServingOptions) error {
 	if o.StorageType != StorageTypeUnifiedGrpc {
 		return nil
 	}

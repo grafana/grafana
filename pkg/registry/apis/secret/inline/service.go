@@ -35,7 +35,6 @@ func NewGRPCSecureValueService(tokenCfg *grpcutils.GrpcClientConfig,
 	tlsCfg TLSConfig,
 	tracer trace.Tracer,
 ) (contracts.InlineSecureValueSupport, error) {
-
 	if address == "" {
 		return nil, fmt.Errorf("grpc_server_address is required when grpc client is enabled")
 	}
