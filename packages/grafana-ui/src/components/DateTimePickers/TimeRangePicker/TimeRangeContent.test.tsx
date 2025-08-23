@@ -65,8 +65,6 @@ function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
 
 describe('TimeRangeForm', () => {
   let user: ReturnType<typeof userEvent.setup>;
-  mockClipboard.writeText.mockClear();
-  mockClipboard.readText.mockClear();
   beforeEach(() => {
     mockClipboard.writeText.mockClear();
     mockClipboard.readText.mockClear();
