@@ -59,6 +59,7 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
+import { DrawStyle } from '@grafana/ui';
 import {
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
@@ -569,6 +570,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   });
 
   if (mightShowValues) {
+    // since bars style doesnt show points in Auto mode, we can't piggyback on series.points.show()
+    // so we make a simple density-based callback to use here
+    const barsShowValues = (u: uPlot) => {
+      let width = u.bbox.width / uPlot.pxRatio;
+      let count = u.data[0].length;
+
+      // render values when each has at least 30px of width available
+      return width / count >= 30;
+    };
+
     builder.addHook('draw', (u: uPlot) => {
       const baseFontSize = 12;
       const font = `${baseFontSize * uPlot.pxRatio}px ${theme.typography.fontFamily}`;
@@ -584,34 +595,32 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         const series = u.series[seriesIdx];
         const field = frame.fields[seriesIdx];
 
-        // TODO: auto showValues for bars
         if (
-          !field.config.custom.showValues ||
+          field.config.custom.showValues &&
           // @ts-ignore points.show() is always callable on the instance (but may be boolean when passed to uPlot as init option)
-          !series.points?.show?.(u, seriesIdx)
+          (series.points?.show?.(u, seriesIdx) ||
+            (field.config.custom.drawStyle === DrawStyle.Bars && barsShowValues(u)))
         ) {
-          continue;
-        }
+          const xData = u.data[0];
+          const yData = u.data[seriesIdx];
+          const yScale = series.scale!;
 
-        const xData = u.data[0];
-        const yData = u.data[seriesIdx];
-        const yScale = series.scale!;
+          for (let dataIdx = 0; dataIdx < yData.length; dataIdx++) {
+            const yVal = yData[dataIdx];
 
-        for (let dataIdx = 0; dataIdx < yData.length; dataIdx++) {
-          const yVal = yData[dataIdx];
+            if (yVal != null) {
+              const text = formattedValueToString(field.display!(yVal));
 
-          if (yVal != null) {
-            const text = formattedValueToString(field.display!(yVal));
+              const isNegative = yVal < 0;
+              const textOffset = isNegative ? 15 : -5;
+              ctx.textBaseline = isNegative ? 'top' : 'bottom';
 
-            const isNegative = yVal < 0;
-            const textOffset = isNegative ? 15 : -5;
-            ctx.textBaseline = isNegative ? 'top' : 'bottom';
+              const xVal = xData[dataIdx];
+              const x = u.valToPos(xVal, 'x', true);
+              const y = u.valToPos(yVal, yScale, true);
 
-            const xVal = xData[dataIdx];
-            const x = u.valToPos(xVal, 'x', true);
-            const y = u.valToPos(yVal, yScale, true);
-
-            ctx.fillText(text, x, y + textOffset);
+              ctx.fillText(text, x, y + textOffset);
+            }
           }
         }
       }
