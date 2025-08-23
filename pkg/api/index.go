@@ -126,11 +126,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		} else if prefs.JSONData.DateStyle != "" {
 			dateStyle = prefs.JSONData.DateStyle
 		} else {
-			dateStyle = "localized" // default value
+			dateStyle = pref.DateStyleDefault
 		}
 	} else {
 		// Set default values when feature flag is disabled
-		dateStyle = "localized"
+		dateStyle = pref.DateStyleDefault
 	}
 
 	appURL := hs.Cfg.AppURL

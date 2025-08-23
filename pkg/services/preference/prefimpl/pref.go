@@ -114,6 +114,11 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
+	// Validate the command
+	if err := cmd.Validate(); err != nil {
+		return err
+	}
+
 	jsonData, err := preferenceData(cmd)
 	if err != nil {
 		return err
@@ -167,6 +172,11 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
+	// Validate the command
+	if err := cmd.Validate(); err != nil {
+		return err
+	}
+
 	var exists bool
 	preference, err := s.store.Get(ctx, &pref.Preference{
 		OrgID:  cmd.OrgID,

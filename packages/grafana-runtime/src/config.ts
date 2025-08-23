@@ -275,7 +275,7 @@ export class GrafanaBootConfig {
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
     this.regionalFormat = options.bootData.user.regionalFormat;
-    this.dateStyle = options.bootData.user.dateStyle || 'international';
+    this.dateStyle = options.bootData.user.dateStyle || 'localized';
   }
 }
 

@@ -17,6 +17,18 @@ var ErrUnknownCookieType = errutil.BadRequest(
 	errutil.WithPublicMessage("Got an unknown cookie preference type. Expected a set containing one or more of 'functional', 'performance', or 'analytics'}"),
 )
 
+// DateStyle constants
+const (
+	DateStyleLocalized     = "localized"
+	DateStyleInternational = "international"
+	DateStyleDefault       = DateStyleLocalized // Default value
+)
+
+var ErrInvalidDateStyle = errutil.BadRequest(
+	"preferences.invalidDateStyle",
+	errutil.WithPublicMessage("Invalid dateStyle value. Must be 'localized' or 'international'"),
+)
+
 type Preference struct {
 	ID      int64   `xorm:"pk autoincr 'id'" db:"id"`
 	OrgID   int64   `xorm:"org_id" db:"org_id"`
@@ -75,6 +87,14 @@ type SavePreferenceCommand struct {
 	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
 }
 
+// Validate validates the SavePreferenceCommand
+func (cmd *SavePreferenceCommand) Validate() error {
+	if cmd.DateStyle != "" && cmd.DateStyle != DateStyleLocalized && cmd.DateStyle != DateStyleInternational {
+		return ErrInvalidDateStyle
+	}
+	return nil
+}
+
 type PatchPreferenceCommand struct {
 	UserID int64
 	OrgID  int64
@@ -92,6 +112,15 @@ type PatchPreferenceCommand struct {
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
+}
+
+// Validate validates the PatchPreferenceCommand
+func (cmd *PatchPreferenceCommand) Validate() error {
+	if cmd.DateStyle != nil && *cmd.DateStyle != "" && 
+		*cmd.DateStyle != DateStyleLocalized && *cmd.DateStyle != DateStyleInternational {
+		return ErrInvalidDateStyle
+	}
+	return nil
 }
 
 type PreferenceJSONData struct {

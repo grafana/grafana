@@ -15,8 +15,6 @@ const createDateTimeFormatter = deepMemoize((locale: string | undefined, options
   // Apply international calendar format when dateStyle is set to 'international'
   const finalOptions = dateStyle === 'international' ? { ...options, calendar: 'iso8601' as const } : options;
 
-  console.log({ locale, options, finalOptions, dateStyle });
-
   return new Intl.DateTimeFormat(locale, finalOptions);
 });
 
@@ -52,7 +50,6 @@ export const formatDateRange = (
 };
 
 export const initRegionalFormat = (regionalFormatArg: string, dateStyleArg?: string) => {
-  console.log('setting date format preferences', { regionalFormatArg, dateStyleArg });
   // We don't expect this to be called with a different locale during the lifetime of the app,
   // so this is mostly here so we can change it during tests and clear out previously memoized values.
   clearMemoizedCache(formatDate);

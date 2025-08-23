@@ -1,4 +1,9 @@
-import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { Preferences as BaseUserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+
+// Extended preferences type with dateStyle
+export interface UserPreferencesDTO extends BaseUserPreferencesDTO {
+  dateStyle?: string; // [FIXME] the type should be generated correctly...
+}
 
 import { backendSrv } from './backend_srv';
 

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { UserPreferencesDTO } from '../../services/PreferencesService';
 
 import SharedPreferences from './SharedPreferences';
 
@@ -80,6 +80,8 @@ const mockPreferences: UserPreferencesDTO = {
     homeTab: '',
   },
   language: '',
+  regionalFormat: 'en',
+  dateStyle: '',
 };
 
 const defaultPreferences: UserPreferencesDTO = {
@@ -91,6 +93,8 @@ const defaultPreferences: UserPreferencesDTO = {
     homeTab: '',
   },
   language: '',
+  regionalFormat: '',
+  dateStyle: '',
 };
 
 const mockPrefsPatch = jest.fn().mockResolvedValue(undefined);
@@ -220,5 +224,61 @@ describe('SharedPreferences', () => {
   it('refreshes the page after saving preferences', async () => {
     await userEvent.click(screen.getByText('Save'));
     expect(mockReload).toHaveBeenCalled();
+  });
+
+  it('renders the date format preference when feature flag is enabled', async () => {
+    // Mock the feature flag to be enabled
+    const originalConfig = (global as any).grafanaBootData;
+    (global as any).grafanaBootData = {
+      ...originalConfig,
+      settings: {
+        ...originalConfig?.settings,
+        featureToggles: {
+          ...originalConfig?.settings?.featureToggles,
+          localeFormatPreference: true,
+        },
+      },
+    };
+
+    render(<SharedPreferences {...props} />);
+    
+    // Check that date format preference is rendered
+    const dateFormatSelect = await screen.findByRole('combobox', { name: /date format/i });
+    expect(dateFormatSelect).toHaveValue('localized');
+
+    // Restore original config
+    (global as any).grafanaBootData = originalConfig;
+  });
+
+  it('saves date format preference changes', async () => {
+    // Mock the feature flag to be enabled
+    const originalConfig = (global as any).grafanaBootData;
+    (global as any).grafanaBootData = {
+      ...originalConfig,
+      settings: {
+        ...originalConfig?.settings,
+        featureToggles: {
+          ...originalConfig?.settings?.featureToggles,
+          localeFormatPreference: true,
+        },
+      },
+    };
+
+    render(<SharedPreferences {...props} />);
+    
+    // Change date format to international
+    const dateFormatSelect = await screen.findByRole('combobox', { name: /date format/i });
+    await selectComboboxOptionInTest(dateFormatSelect, 'International');
+    
+    await userEvent.click(screen.getByText('Save'));
+    
+    expect(mockPrefsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dateStyle: 'international',
+      })
+    );
+
+    // Restore original config
+    (global as any).grafanaBootData = originalConfig;
   });
 });

@@ -6,7 +6,7 @@ import { FeatureState, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { PSEUDO_LOCALE, t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { UserPreferencesDTO } from '../../services/PreferencesService';
 import {
   Button,
   Field,
@@ -40,7 +40,6 @@ export interface Props {
 export type State = UserPreferencesDTO & {
   isLoading: boolean;
   isSubmitting: boolean;
-  dateStyle?: string;
 };
 function getLanguageOptions(): ComboboxOption[] {
   const languageOptions = LANGUAGES.map((v) => ({
@@ -171,7 +170,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: prefs.weekStart,
       language: prefs.language,
       regionalFormat: prefs.regionalFormat,
-      dateStyle: (prefs as any).dateStyle || '',
+      dateStyle: prefs.dateStyle || '',
       queryHistory: prefs.queryHistory,
       navbar: prefs.navbar,
     });
@@ -182,8 +181,17 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      const { homeDashboardUID, theme, timezone, weekStart, language, regionalFormat, dateStyle, queryHistory, navbar } =
-        this.state;
+      const {
+        homeDashboardUID,
+        theme,
+        timezone,
+        weekStart,
+        language,
+        regionalFormat,
+        dateStyle,
+        queryHistory,
+        navbar,
+      } = this.state;
       reportInteraction('grafana_preferences_save_button_clicked', {
         preferenceType: this.props.preferenceType,
         theme,
@@ -264,8 +272,17 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, isSubmitting, regionalFormat, dateStyle } =
-      this.state;
+    const {
+      theme,
+      timezone,
+      weekStart,
+      homeDashboardUID,
+      language,
+      isLoading,
+      isSubmitting,
+      regionalFormat,
+      dateStyle,
+    } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];

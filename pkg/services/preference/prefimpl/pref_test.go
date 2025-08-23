@@ -461,3 +461,126 @@ func newFake() store {
 		nextID:     1,
 	}
 }
+
+// TestSavePreferenceCommand_Validate tests the validation of SavePreferenceCommand
+func TestSavePreferenceCommand_Validate(t *testing.T) {
+	tests := []struct {
+		name      string
+		dateStyle string
+		wantErr   bool
+	}{
+		{
+			name:      "valid localized",
+			dateStyle: pref.DateStyleLocalized,
+			wantErr:   false,
+		},
+		{
+			name:      "valid international",
+			dateStyle: pref.DateStyleInternational,
+			wantErr:   false,
+		},
+		{
+			name:      "empty string is valid",
+			dateStyle: "",
+			wantErr:   false,
+		},
+		{
+			name:      "invalid value",
+			dateStyle: "invalid",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := &pref.SavePreferenceCommand{
+				DateStyle: tt.dateStyle,
+			}
+			err := cmd.Validate()
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Equal(t, pref.ErrInvalidDateStyle, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestPatchPreferenceCommand_Validate tests the validation of PatchPreferenceCommand
+func TestPatchPreferenceCommand_Validate(t *testing.T) {
+	tests := []struct {
+		name      string
+		dateStyle *string
+		wantErr   bool
+	}{
+		{
+			name:      "valid localized",
+			dateStyle: &[]string{pref.DateStyleLocalized}[0],
+			wantErr:   false,
+		},
+		{
+			name:      "valid international",
+			dateStyle: &[]string{pref.DateStyleInternational}[0],
+			wantErr:   false,
+		},
+		{
+			name:      "empty string is valid",
+			dateStyle: &[]string{""}[0],
+			wantErr:   false,
+		},
+		{
+			name:      "nil is valid",
+			dateStyle: nil,
+			wantErr:   false,
+		},
+		{
+			name:      "invalid value",
+			dateStyle: &[]string{"invalid"}[0],
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := &pref.PatchPreferenceCommand{
+				DateStyle: tt.dateStyle,
+			}
+			err := cmd.Validate()
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Equal(t, pref.ErrInvalidDateStyle, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestSave_WithDateStyle tests saving preferences with dateStyle
+func TestSave_WithDateStyle(t *testing.T) {
+	cfg := setting.NewCfg()
+	prefService := &Service{
+		store:    newFake(),
+		defaults: prefsFromConfig(cfg),
+	}
+
+	ctx := context.Background()
+	cmd := &pref.SavePreferenceCommand{
+		UserID:    1,
+		OrgID:     1,
+		DateStyle: pref.DateStyleInternational,
+		Language:  "en",
+	}
+
+	err := prefService.Save(ctx, cmd)
+	require.NoError(t, err)
+
+	// Verify the preference was saved
+	query := &pref.GetPreferenceQuery{UserID: 1, OrgID: 1}
+	saved, err := prefService.Get(ctx, query)
+	require.NoError(t, err)
+	require.NotNil(t, saved.JSONData)
+	assert.Equal(t, pref.DateStyleInternational, saved.JSONData.DateStyle)
+	assert.Equal(t, "en", saved.JSONData.Language)
+}
