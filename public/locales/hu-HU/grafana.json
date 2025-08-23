@@ -6421,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Ha többet szeretne megtudni erről a hibáról, kattintson <2>ide</2>.",
-    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11254,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Törlés",
-      "confirm-delete-repository": "Biztosan törli az adattár konfigurációját?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Az adattár törlése nem sikerült",
       "success-repository-deleted": "Adattár-beállítások felvéve a törlési várólistára",
-      "title-delete-repository": "Az adattár konfigurációjának törlése",
-      "tooltip-delete-this-repository": "Az adattár törlése"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Vissza az adattárakhoz",
