@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,10 +29,11 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
 
 type RESTOptionsGetter struct {
-	client         resource.ResourceClient
-	secrets        secret.InlineSecureValueSupport
-	original       storagebackend.Config
-	configProvider RestConfigProvider
+	client          resource.ResourceClient
+	secrets         secret.InlineSecureValueSupport
+	permissionStore *reconcilers.ZanzanaPermissionStore
+	original        storagebackend.Config
+	configProvider  RestConfigProvider
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
@@ -42,17 +44,23 @@ func NewRESTOptionsGetterForClient(
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
 	configProvider RestConfigProvider,
+	permissionStore *reconcilers.ZanzanaPermissionStore,
 ) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client:         client,
-		secrets:        secrets,
-		original:       original,
-		options:        make(map[string]StorageOptions),
-		configProvider: configProvider,
+		client:          client,
+		secrets:         secrets,
+		permissionStore: permissionStore,
+		original:        original,
+		options:         make(map[string]StorageOptions),
+		configProvider:  configProvider,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(
+	originalStorageConfig storagebackend.Config,
+	secrets secret.InlineSecureValueSupport,
+	// folderService folder.Service,
+) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -69,6 +77,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 		resource.NewLocalResourceClient(server),
 		secrets,
 		originalStorageConfig,
+		nil,
 		nil,
 	), nil
 }
@@ -106,6 +115,7 @@ func NewRESTOptionsGetterForFileXX(path string,
 		resource.NewLocalResourceClient(server),
 		nil, // secrets
 		originalStorageConfig,
+		nil,
 		nil,
 	), nil
 }
@@ -150,7 +160,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			opts := r.options[resource.String()]
 			opts.SecureValues = r.secrets
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-				trigger, indexers, r.configProvider, opts)
+				trigger, indexers, r.configProvider, opts, r.permissionStore)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,

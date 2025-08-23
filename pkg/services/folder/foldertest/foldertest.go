@@ -3,8 +3,11 @@ package foldertest
 import (
 	"context"
 
+	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type FakeService struct {
@@ -22,6 +25,10 @@ func NewFakeService() *FakeService {
 	return &FakeService{
 		foldersByUID: make(map[string]*folder.Folder),
 	}
+}
+
+func (s *FakeService) SetDefaultPermissionsAfterCreate(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	return nil
 }
 
 func (s *FakeService) AddFolder(f *folder.Folder) {

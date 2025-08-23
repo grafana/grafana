@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,6 +88,8 @@ type Storage struct {
 
 	versioner storage.Versioner
 
+	permissionStore *reconcilers.ZanzanaPermissionStore
+
 	// Resource options like large object support
 	opts StorageOptions
 }
@@ -114,6 +117,7 @@ func NewStorage(
 	indexers *cache.Indexers,
 	configProvider RestConfigProvider,
 	opts StorageOptions,
+	permissionStore *reconcilers.ZanzanaPermissionStore,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
 		store:          store,
@@ -131,7 +135,8 @@ func NewStorage(
 
 		versioner: &storage.APIObjectVersioner{},
 
-		opts: opts,
+		opts:            opts,
+		permissionStore: permissionStore,
 	}
 
 	if opts.RequireDeprecatedInternalID {
@@ -198,6 +203,35 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	if err != nil {
 		return err
 	}
+
+	// Option 1: let an authz service figure out what to do with the new thing
+	// someAuthZService.CreatePermissionsForNewObject(ctx, req.Key, obj)
+
+	// Option 2: specific folder logic
+	if obj.GetObjectKind().GroupVersionKind().Kind == "Folder" {
+		val, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return err
+		}
+		// TODO run zanzana so this doesn't error
+		// TODO fix wire generation -- register the zanzana service -- might not work even then because of the pointer
+		// TODO see if the branch i'm on (mihais) has been merged and if so start a new branch from main
+		// folderName = val.GetSpec().(*folderv1.FolderSpec).Title or something like that
+		namespace := val.GetNamespace()
+		folderUid := val.GetName()
+		parentFolderUid := val.GetFolder()
+		folderPermErr := s.permissionStore.SetFolderParent(ctx, namespace, folderUid, parentFolderUid)
+		if folderPermErr != nil {
+			// TODO delete folder?
+			return folderPermErr
+		}
+	}
+
+	// Option 3: piggyback on the existing permissions  -- this still leaves the folder even if permissions fail to be set, is that OK?
+	//if obj.GetObjectKind().GroupVersionKind().Kind == "Folder" {
+	//	v.grantPermissions = utils.AnnoGrantPermissionsDefault
+	//	s.opts.Permissions = s.folderService.SetDefaultPermissionsAfterCreate
+	//}
 
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {

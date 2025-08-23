@@ -11,6 +11,10 @@ import (
 	"sync"
 	"time"
 
+	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -20,6 +24,7 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -62,6 +67,7 @@ type Service struct {
 	k8sclient              client.K8sHandler
 	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
+	permissionStore        reconcilers.PermissionStore
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
 	bus bus.Bus
@@ -90,6 +96,7 @@ func ProvideService(
 	dual dualwrite.Service,
 	sorter sort.Service,
 	restConfig apiserver.RestConfigProvider,
+	zanzanaClient zanzana.Client,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
@@ -104,6 +111,7 @@ func ProvideService(
 		metrics:                newFoldersMetrics(r),
 		tracer:                 tracer,
 		publicDashboardService: publicDashboardService,
+		permissionStore:        reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 	srv.DBMigration(db)
 
@@ -143,6 +151,15 @@ func ProvideService(
 	srv.dashboardK8sClient = dashHandler
 
 	return srv
+}
+
+func (s *Service) SetDefaultPermissionsAfterCreate(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	// TODO run zanzana so this doesn't error
+	// folderName = obj.GetSpec().(*folderv1.FolderSpec).Title or something like that
+	namespace := obj.GetNamespace()
+	folderUid := obj.GetName()
+	parentFolderUid := obj.GetFolder()
+	return s.permissionStore.SetFolderParent(ctx, namespace, folderUid, parentFolderUid)
 }
 
 func (s *Service) DBMigration(db db.DB) {
