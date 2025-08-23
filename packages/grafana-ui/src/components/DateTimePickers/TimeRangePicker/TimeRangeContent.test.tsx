@@ -68,6 +68,8 @@ describe('TimeRangeForm', () => {
   mockClipboard.writeText.mockClear();
   mockClipboard.readText.mockClear();
   beforeEach(() => {
+    mockClipboard.writeText.mockClear();
+    mockClipboard.readText.mockClear();
     user = userEvent.setup();
     Object.defineProperty(global.navigator, 'clipboard', {
       value: mockClipboard,
