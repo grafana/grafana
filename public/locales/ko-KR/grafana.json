@@ -6400,8 +6400,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "이 오류에 대해 자세히 알아보려면 <2>여기</2>를 클릭하세요.",
-    "success-more-details-links": "그런 다음 <2>대시보드를 구축</2>하거나 <5>탐색 보기</5>에서 데이터를 쿼리하여 데이터 시각화를 시작할 수 있습니다.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "그런 다음 <2>대시보드를 구축</2>하거나 <5>탐색 보기</5>에서 데이터를 쿼리하여 데이터 시각화를 시작할 수 있습니다."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11219,11 +11218,15 @@
     },
     "delete-repository-button": {
       "button-delete": "삭제",
-      "confirm-delete-repository": "정말 리포지토리 구성을 삭제하시겠어요?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "리포지토리 삭제 실패",
       "success-repository-deleted": "리포지토리 설정이 삭제 대기열에 추가되었습니다",
-      "title-delete-repository": "리포지토리 구성 삭제",
-      "tooltip-delete-this-repository": "이 리포지토리 삭제"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
