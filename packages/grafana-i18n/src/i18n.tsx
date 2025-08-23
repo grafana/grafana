@@ -187,9 +187,10 @@ export async function changeLanguage(language?: string) {
 
 export async function initializeI18n(
   { language, ns, module }: InitializeI18nOptions,
-  regionalFormat: string
+  regionalFormat: string,
+  dateStyle?: string
 ): Promise<{ language: string | undefined }> {
-  initRegionalFormat(regionalFormat);
+  initRegionalFormat(regionalFormat, dateStyle);
   return initTranslations({ language, ns, module });
 }
 

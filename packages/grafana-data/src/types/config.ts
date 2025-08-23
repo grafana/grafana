@@ -164,6 +164,7 @@ export interface CurrentUserDTO {
   timezone: string;
   weekStart: string;
   regionalFormat: string;
+  dateStyle: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;

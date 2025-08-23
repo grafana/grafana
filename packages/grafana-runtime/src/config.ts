@@ -246,6 +246,11 @@ export class GrafanaBootConfig {
    * This is the regionalFormat that is used for date formatting and other locale-specific features.
    */
   regionalFormat: string;
+  /**
+   * dateStyle preference for date formatting. Can be 'localized' or 'international'.
+   * When set to 'international', uses ISO8601 calendar format.
+   */
+  dateStyle: string;
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
 

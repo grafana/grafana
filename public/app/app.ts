@@ -138,13 +138,18 @@ export class GrafanaApp {
         ? config.regionalFormat
         : contextSrv.user.language;
 
+      const dateStyle = config.featureToggles.localeFormatPreference
+        ? contextSrv.user.dateStyle || 'localized'
+        : 'localized';
+
       const initI18nPromise = initializeI18n(
         {
           language: contextSrv.user.language,
           ns: NAMESPACES,
           module: loadTranslations,
         },
-        regionalFormat
+        regionalFormat,
+        dateStyle
       );
 
       // This is a placeholder so we can put a 'comment' in the message json files.
