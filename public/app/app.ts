@@ -138,9 +138,7 @@ export class GrafanaApp {
         ? config.regionalFormat
         : contextSrv.user.language;
 
-      const dateStyle = config.featureToggles.localeFormatPreference
-        ? contextSrv.user.dateStyle || 'localized'
-        : 'localized';
+      const dateStyle = config.dateStyle;
 
       const initI18nPromise = initializeI18n(
         {
