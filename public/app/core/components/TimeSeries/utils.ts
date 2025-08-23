@@ -561,7 +561,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       return false;
     }
 
-    const customConfig = field.config.custom;
+    const customConfig = field.config.custom ?? {};
 
     return (
       customConfig.showValues &&
@@ -596,10 +596,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         const field = frame.fields[seriesIdx];
 
         if (
-          field.config.custom.showValues &&
+          field.config.custom?.showValues &&
           // @ts-ignore points.show() is always callable on the instance (but may be boolean when passed to uPlot as init option)
           (series.points?.show?.(u, seriesIdx) ||
-            (field.config.custom.drawStyle === DrawStyle.Bars && barsShowValues(u)))
+            (field.config.custom?.drawStyle === DrawStyle.Bars && barsShowValues(u)))
         ) {
           const xData = u.data[0];
           const yData = u.data[seriesIdx];
