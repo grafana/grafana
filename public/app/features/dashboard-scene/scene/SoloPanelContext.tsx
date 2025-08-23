@@ -1,8 +1,8 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
-import { Box, Spinner, useForceUpdate } from '@grafana/ui';
+import { Box, Spinner } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -94,20 +94,23 @@ export interface SoloPanelNotFoundProps {
 
 export function SoloPanelNotFound({ singleMatch, dashboard }: SoloPanelNotFoundProps) {
   const context = useSoloPanelContext()!;
-  const forceUpdate = useForceUpdate();
+  const [state, setState] = useState({ matchFound: false, isLoading: true });
 
   useEffect(() => {
     // This effect fires before any child layout starts rendering and checking if their panels match the solo panel filter
     // We need this polling here to check if any solo panel has matched or if any layout has marked the context as loading (for repeated panels)
-    const cancelTimeout = setInterval(forceUpdate, 500);
-    return () => clearInterval(cancelTimeout);
-  }, [context, forceUpdate]);
+    const cancelTimeout = setInterval(() => {
+      setState({ matchFound: context.matchFound, isLoading: isAnyVariableLoading(dashboard) });
+    }, 500);
 
-  if (context.matchFound) {
+    return () => clearInterval(cancelTimeout);
+  }, [context, dashboard]);
+
+  if (state.matchFound || context.matchFound) {
     return null;
   }
 
-  if (isAnyVariableLoading(dashboard)) {
+  if (state.isLoading) {
     return <Spinner />;
   }
 
