@@ -26,6 +26,7 @@ import (
 type URLPrefs struct {
 	Language       string
 	RegionalFormat string
+	DateStyle      string
 	Theme          string
 }
 
@@ -34,10 +35,12 @@ func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
 	language := c.Query("lang")
 	theme := c.Query("theme")
 	regionalFormat := c.Query("regionalFormat")
+	dateStyle := c.Query("dateStyle")
 
 	return URLPrefs{
 		Language:       language,
 		RegionalFormat: regionalFormat,
+		DateStyle:      dateStyle,
 		Theme:          theme,
 	}
 }
@@ -91,6 +94,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	var regionalFormat string
+	var dateStyle string // Initialize dateStyle variable
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
 		regionalFormat = "en"
 
@@ -112,6 +116,21 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		} else if language != "" {
 			regionalFormat = language
 		}
+
+		// Date style preference order (from most-preferred to least):
+		// 1. URL parameter
+		// 2. dateStyle User preference
+		// 3. Default to "localized"
+		if urlPrefs.DateStyle != "" {
+			dateStyle = urlPrefs.DateStyle
+		} else if prefs.JSONData.DateStyle != "" {
+			dateStyle = prefs.JSONData.DateStyle
+		} else {
+			dateStyle = "localized" // default value
+		}
+	} else {
+		// Set default values when feature flag is disabled
+		dateStyle = "localized"
 	}
 
 	appURL := hs.Cfg.AppURL
@@ -163,6 +182,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			WeekStart:                  weekStart,
 			Locale:                     locale, // << will be removed in favor of RegionalFormat
 			RegionalFormat:             regionalFormat,
+			DateStyle:                  dateStyle,
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,

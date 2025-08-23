@@ -8101,6 +8101,13 @@
             },
             "type": "array"
           },
+          "dateStyle": {
+            "enum": [
+              "localized",
+              "international"
+            ],
+            "type": "string"
+          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -8769,6 +8776,10 @@
         "properties": {
           "cookiePreferences": {
             "$ref": "#/components/schemas/PreferencesCookiePreferences"
+          },
+          "dateStyle": {
+            "description": "Date style preference (localized or international)",
+            "type": "string"
           },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
@@ -12383,6 +12394,13 @@
               "$ref": "#/components/schemas/CookieType"
             },
             "type": "array"
+          },
+          "dateStyle": {
+            "enum": [
+              "localized",
+              "international"
+            ],
+            "type": "string"
           },
           "homeDashboardId": {
             "default": 0,

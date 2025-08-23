@@ -40,6 +40,8 @@ export type PreferencesQueryHistoryPreference = {
 };
 export type PreferencesSpec = {
   cookiePreferences?: PreferencesCookiePreferences;
+  /** Date style preference (localized or international) */
+  dateStyle?: string;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
@@ -78,6 +80,7 @@ export type QueryHistoryPreference = {
 };
 export type PatchPrefsCmd = {
   cookies?: CookieType[];
+  dateStyle?: 'localized' | 'international';
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -91,6 +94,7 @@ export type PatchPrefsCmd = {
 };
 export type UpdatePrefsCmd = {
   cookies?: CookieType[];
+  dateStyle?: 'localized' | 'international';
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;

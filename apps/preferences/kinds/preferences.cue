@@ -26,6 +26,9 @@ preferencesv1alpha1: {
 			// Selected locale (beta)
 			regionalFormat?: string
 
+			// Date style preference (localized or international)
+			dateStyle?: string
+
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
 

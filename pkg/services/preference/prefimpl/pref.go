@@ -76,6 +76,10 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 				res.JSONData.RegionalFormat = p.JSONData.RegionalFormat
 			}
 
+			if p.JSONData.DateStyle != "" {
+				res.JSONData.DateStyle = p.JSONData.DateStyle
+			}
+
 			if p.JSONData.QueryHistory.HomeTab != "" {
 				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
 			}
@@ -199,6 +203,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.RegionalFormat = *cmd.RegionalFormat
 	}
 
+	if cmd.DateStyle != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.DateStyle = *cmd.DateStyle
+	}
+
 	if cmd.Navbar != nil && cmd.Navbar.BookmarkUrls != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -298,6 +309,7 @@ func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, 
 	jsonData := &pref.PreferenceJSONData{
 		Language:       cmd.Language,
 		RegionalFormat: cmd.RegionalFormat,
+		DateStyle:      cmd.DateStyle,
 	}
 	if cmd.Navbar != nil {
 		jsonData.Navbar = *cmd.Navbar

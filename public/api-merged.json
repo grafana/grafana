@@ -18636,6 +18636,13 @@
             "$ref": "#/definitions/CookieType"
           }
         },
+        "dateStyle": {
+          "type": "string",
+          "enum": [
+            "localized",
+            "international"
+          ]
+        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -19304,6 +19311,10 @@
       "properties": {
         "cookiePreferences": {
           "$ref": "#/definitions/PreferencesCookiePreferences"
+        },
+        "dateStyle": {
+          "description": "Date style preference (localized or international)",
+          "type": "string"
         },
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
@@ -22919,6 +22930,13 @@
           "items": {
             "$ref": "#/definitions/CookieType"
           }
+        },
+        "dateStyle": {
+          "type": "string",
+          "enum": [
+            "localized",
+            "international"
+          ]
         },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
