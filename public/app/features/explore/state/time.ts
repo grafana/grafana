@@ -1,14 +1,11 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
-import { isString } from 'lodash';
 
 import {
   AbsoluteTimeRange,
   AppEvents,
-  DateTime,
-  dateTime,
   dateTimeForTimeZone,
-  isDateTime,
   LoadingState,
+  rangeUtil,
   RawTimeRange,
   TimeRange,
 } from '@grafana/data';
@@ -17,7 +14,12 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
-import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import {
+  getCopiedTimeRange,
+  getShiftedTimeRange,
+  getZoomedTimeRange,
+  toUtcDateTimeIfIsoString,
+} from 'app/core/utils/timePicker';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
@@ -183,10 +185,7 @@ export function zoomOut(scale: number): ThunkResult<void> {
 export function copyTimeRangeToClipboard(): ThunkResult<void> {
   return (dispatch, getState) => {
     const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
-    const clipboardPayload = {
-      from: isDateTime(range.from) ? range.from.toISOString() : range.from,
-      to: isDateTime(range.to) ? range.to.toISOString() : range.to,
-    };
+    const clipboardPayload = rangeUtil.formatRawTimeRange(range);
     navigator.clipboard.writeText(JSON.stringify(clipboardPayload));
 
     appEvents.emit(AppEvents.alertSuccess, [
@@ -208,8 +207,8 @@ export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
     }
 
     const utcRange = {
-      from: ensureUtcDateTime(range.from),
-      to: ensureUtcDateTime(range.to),
+      from: toUtcDateTimeIfIsoString(range.from),
+      to: toUtcDateTimeIfIsoString(range.to),
     };
 
     const panesSynced = getState().explore.syncedTimes;
@@ -267,10 +266,3 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
 
   return state;
 };
-
-function ensureUtcDateTime(value: string | DateTime): string | DateTime {
-  if (isString(value) && value.indexOf('Z') >= 0) {
-    value = dateTime(value).utc();
-  }
-  return value;
-}

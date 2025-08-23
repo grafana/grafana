@@ -1,8 +1,7 @@
-import { cloneDeep, extend, isString } from 'lodash';
+import { cloneDeep, extend } from 'lodash';
 
 import {
   dateMath,
-  dateTime,
   getDefaultTimeRange,
   isDateTime,
   rangeUtil,
@@ -12,7 +11,6 @@ import {
   IntervalValues,
   AppEvents,
   dateTimeForTimeZone,
-  DateTime,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -20,7 +18,12 @@ import { sceneGraph } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
-import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import {
+  getCopiedTimeRange,
+  getShiftedTimeRange,
+  getZoomedTimeRange,
+  toUtcDateTimeIfIsoString,
+} from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import {
@@ -98,17 +101,10 @@ export class TimeSrv {
     return this.contextSrv.getValidIntervals(intervals);
   }
 
-  private ensureUtcDateTime(value: string | DateTime) {
-    if (isString(value) && value.indexOf('Z') >= 0) {
-      value = dateTime(value).utc();
-    }
-    return value;
-  }
-
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
-    this.time.from = this.ensureUtcDateTime(this.time.from);
-    this.time.to = this.ensureUtcDateTime(this.time.to);
+    this.time.from = toUtcDateTimeIfIsoString(this.time.from);
+    this.time.to = toUtcDateTimeIfIsoString(this.time.to);
   }
 
   private parseUrlParam(value: string, timeZone?: string) {
@@ -382,10 +378,7 @@ export class TimeSrv {
 
   copyTimeRangeToClipboard() {
     const { raw } = this.timeRange();
-    const clipboardPayload = {
-      from: isDateTime(raw.from) ? raw.from.toISOString() : raw.from,
-      to: isDateTime(raw.to) ? raw.to.toISOString() : raw.to,
-    };
+    const clipboardPayload = rangeUtil.formatRawTimeRange(raw);
     navigator.clipboard.writeText(JSON.stringify(clipboardPayload));
     appEvents.emit(AppEvents.alertSuccess, [
       t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
@@ -406,8 +399,8 @@ export class TimeSrv {
     let { from, to } = range;
 
     // if ISO-8601 UTC string (which include 'Z') is pasted, convert them to DateTime.utc
-    from = this.ensureUtcDateTime(from);
-    to = this.ensureUtcDateTime(to);
+    from = toUtcDateTimeIfIsoString(from);
+    to = toUtcDateTimeIfIsoString(to);
 
     this.setTime({ from, to }, updateUrl);
   }

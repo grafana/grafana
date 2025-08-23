@@ -115,10 +115,7 @@ export const TimeRangeContent = (props: Props) => {
 
   const onCopy = () => {
     const rawSource: RawTimeRange = value.raw;
-    const clipboardPayload = {
-      from: isDateTime(rawSource.from) ? rawSource.from.toISOString() : rawSource.from,
-      to: isDateTime(rawSource.to) ? rawSource.to.toISOString() : rawSource.to,
-    };
+    const clipboardPayload = rangeUtil.formatRawTimeRange(rawSource);
     navigator.clipboard.writeText(JSON.stringify(clipboardPayload));
   };
 
