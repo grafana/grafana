@@ -16,7 +16,6 @@ export const getGraphFieldOptions: () => {
   lineInterpolation: Array<SelectableValue<LineInterpolation>>;
   barAlignment: Array<SelectableValue<BarAlignment>>;
   showPoints: Array<SelectableValue<VisibilityMode>>;
-  showValues: Array<SelectableValue<VisibilityMode>>;
   axisPlacement: Array<SelectableValue<AxisPlacement>>;
   fillGradient: Array<SelectableValue<GraphGradientMode>>;
   stacking: Array<SelectableValue<StackingMode>>;
@@ -105,25 +104,6 @@ export const getGraphFieldOptions: () => {
     },
     {
       label: t('grafana-ui.u-plot.config.get-graph-field-options.show-points.label-never', 'Never'),
-      value: VisibilityMode.Never,
-    },
-  ],
-
-  showValues: [
-    {
-      label: t('grafana-ui.u-plot.config.get-graph-field-options.show-values.label-auto', 'Auto'),
-      value: VisibilityMode.Auto,
-      description: t(
-        'grafana-ui.u-plot.config.get-graph-field-options.show-values.description-auto',
-        'Show values when the density is low'
-      ),
-    },
-    {
-      label: t('grafana-ui.u-plot.config.get-graph-field-options.show-values.label-always', 'Always'),
-      value: VisibilityMode.Always,
-    },
-    {
-      label: t('grafana-ui.u-plot.config.get-graph-field-options.show-values.label-never', 'Never'),
       value: VisibilityMode.Never,
     },
   ],
