@@ -6400,8 +6400,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "このエラーの詳細については、<2>こちら</2>をクリックしてください。",
-    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11219,11 +11218,15 @@
     },
     "delete-repository-button": {
       "button-delete": "削除",
-      "confirm-delete-repository": "リポジトリ設定を削除してもよろしいですか？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "リポジトリの削除に失敗しました",
       "success-repository-deleted": "リポジトリ設定が削除待ちリストに追加されました",
-      "title-delete-repository": "リポジトリ設定を削除",
-      "tooltip-delete-this-repository": "このリポジトリを削除"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "リポジトリに戻る",

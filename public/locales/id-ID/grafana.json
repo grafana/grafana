@@ -6400,8 +6400,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>di sini</2> untuk mempelajari selengkapnya tentang kesalahan ini.",
-    "success-more-details-links": "Selanjutnya, Anda dapat mulai memvisualisasikan data dengan <2>membuat dasbor</2>, atau dengan melakukan kueri data di <5>tampilan Explore</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Selanjutnya, Anda dapat mulai memvisualisasikan data dengan <2>membuat dasbor</2>, atau dengan melakukan kueri data di <5>tampilan Explore</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11219,11 +11218,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Hapus",
-      "confirm-delete-repository": "Anda yakin ingin menghapus konfigurasi repositori?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Gagal menghapus repositori",
       "success-repository-deleted": "Pengaturan repositori diantrekan untuk dihapus",
-      "title-delete-repository": "Hapus konfigurasi repositori",
-      "tooltip-delete-this-repository": "Hapus repositori ini"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Kembali ke repositori",

@@ -6463,8 +6463,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11324,11 +11323,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
-      "confirm-delete-repository": "Opravdu chcete odstranit konfiguraci úložiště?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Úložiště se nepodařilo odstranit",
       "success-repository-deleted": "Odstranění nastavení úložiště bylo zařazeno do fronty",
-      "title-delete-repository": "Odstranit konfiguraci úložiště",
-      "tooltip-delete-this-repository": "Odstranit toto úložiště"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Zpět na úložiště",

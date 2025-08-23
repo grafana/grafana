@@ -6421,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>hier</2> voor meer informatie over deze fout.",
-    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11254,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Verwijderen",
-      "confirm-delete-repository": "Weet je zeker dat je de repository-configuratie wilt verwijderen?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Kan de repository niet verwijderen",
       "success-repository-deleted": "Repository-instellingen in de wachtrij voor verwijdering",
-      "title-delete-repository": "Repository-configuratie verwijderen",
-      "tooltip-delete-this-repository": "Deze repository verwijderen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Terug naar repositories",

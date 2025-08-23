@@ -6400,8 +6400,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "點選<2>此處</2>，了解更多關於此錯誤的資訊。",
-    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11219,11 +11218,15 @@
     },
     "delete-repository-button": {
       "button-delete": "刪除",
-      "confirm-delete-repository": "確定要刪除儲存庫設定嗎？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "無法刪除儲存庫",
       "success-repository-deleted": "儲存庫設定已排入刪除佇列",
-      "title-delete-repository": "刪除儲存庫設定",
-      "tooltip-delete-this-repository": "刪除此儲存庫"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "返回至儲存庫",
