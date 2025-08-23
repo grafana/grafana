@@ -82,7 +82,7 @@ Refer to [Provision the data source](#provision-the-data-source) for next steps.
 You can use these procedures to configure a new Tempo data source or to edit an existing one.
 
 {{< admonition type="note" >}}
-You can't modify a provisioned data source using the Tempo data source settings in Grafana.
+You can't modify a provisioned data source using the Tempo data source settings in Grafana Cloud.
 
 If you want to modify any capabilities of a provisioned data source, you can clone the provisioned data source and then edit the new data source in the Grafana UI.
 Refer to [Clone a provisioned data source for Grafana Cloud](#clone-a-provisioned-data-source-for-grafana-cloud) for more information.
