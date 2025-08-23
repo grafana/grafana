@@ -635,6 +635,7 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
   drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
   insertNulls?: (boolean | number);
+  showValues?: boolean;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   transform?: GraphTransform;
 }
