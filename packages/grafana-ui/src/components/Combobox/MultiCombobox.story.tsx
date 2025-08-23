@@ -66,6 +66,31 @@ export const Basic: Story = {
   },
 };
 
+export const WithInfoOption: Story = {
+  name: 'With infoOption',
+  args: {
+    ...commonArgs,
+    options: [
+      ...commonArgs.options,
+      { label: 'Can’t find your country? Select “Other” or contact an admin', value: '__INFO__', infoOption: true },
+    ],
+  },
+  render: (args) => {
+    const [{ value }, setArgs] = useArgs();
+
+    return (
+      <MultiCombobox
+        {...args}
+        value={value}
+        onChange={(val) => {
+          onChangeAction(val);
+          setArgs({ value: val });
+        }}
+      />
+    );
+  },
+};
+
 export const AutoSize: Story = {
   args: { ...commonArgs, width: 'auto', minWidth: 20 },
   render: (args) => {

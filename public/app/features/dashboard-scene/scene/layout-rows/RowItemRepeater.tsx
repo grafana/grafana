@@ -97,12 +97,17 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
     const rowCloneKey = getCloneKey(row.state.key!, rowIndex);
     const rowClone = isSourceRow
       ? row
-      : row.clone({ repeatByVariable: undefined, repeatedRows: undefined, layout: undefined });
+      : row.clone({
+          key: rowCloneKey,
+          repeatSourceKey: row.state.key,
+          repeatByVariable: undefined,
+          repeatedRows: undefined,
+          layout: undefined,
+        });
 
     const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
 
     rowClone.setState({
-      key: rowCloneKey,
       $variables: getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]),
       layout,
     });

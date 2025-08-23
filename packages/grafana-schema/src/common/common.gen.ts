@@ -111,6 +111,26 @@ export enum ResourceDimensionMode {
   Mapping = 'mapping',
 }
 
+/**
+ * Links to a resource (image/svg path)
+ */
+export interface ResourceDimensionConfig extends BaseDimensionConfig {
+  fixed?: string;
+  mode: ResourceDimensionMode;
+}
+
+export enum ConnectionDirection {
+  Both = 'both',
+  Forward = 'forward',
+  None = 'none',
+  Reverse = 'reverse',
+}
+
+export enum DirectionDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+}
+
 export interface MapLayerOptions {
   /**
    * Custom options depending on the type
@@ -900,12 +920,9 @@ export interface DataSourceRef {
   uid?: string;
 }
 
-/**
- * Links to a resource (image/svg path)
- */
-export interface ResourceDimensionConfig extends BaseDimensionConfig {
-  fixed?: string;
-  mode: ResourceDimensionMode;
+export interface DirectionDimensionConfig extends BaseDimensionConfig {
+  fixed?: ConnectionDirection;
+  mode: DirectionDimensionMode;
 }
 
 export interface FrameGeometrySource {

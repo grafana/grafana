@@ -43,7 +43,7 @@ function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmb
 
   return (
     <ShareEmbed
-      panelId={p.state.key!}
+      panelId={p.getPathId()}
       timeFrom={timeFrom}
       range={timeRangeState.state.value}
       dashboard={{ uid: dashUid ?? '', time: timeRangeState.state.value }}

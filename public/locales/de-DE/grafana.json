@@ -2221,6 +2221,13 @@
       "preview": "Vorschau",
       "previewCondition": "Vorschau der Warnregelbedingung"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Kontaktpunkt-Integration hinzufügen",
       "body-attention": "Da noch keine Standardrichtlinie konfiguriert ist, wird dieser Kontaktpunkt automatisch als Standard festgelegt.",
@@ -3543,7 +3550,6 @@
       "button-cancel": "Abbrechen",
       "button-move": "Verschieben",
       "button-moving": "Wird verschoben ...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3749,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Pfeilrichtung",
+    "category-arrow-direction": "",
     "category-background": "Hintergrund",
     "category-border": "Rahmen",
     "category-canvas": "Leinwand",
@@ -3781,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Auswahl experimenteller Elementtypen aktivieren",
     "description-inline-editing": "Direkte Bearbeitung des Panels aktivieren",
     "description-pan-zoom": "Schwenken und Zoomen aktivieren",
-    "direction-options": {
-      "label-both": "Beides",
-      "label-forward": "Vorwärts",
-      "label-none": "Keine",
-      "label-reverse": "Rückwärts"
-    },
     "drone-front-item": {
       "category-drone-front": "Drohne vorne",
       "name-roll-angle": "Rollwinkel"
@@ -6413,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicken Sie <2>hier</2>, um mehr über diesen Fehler zu erfahren.",
-    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6664,6 +6671,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Feste Farbe",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Hochladen"
@@ -7131,7 +7146,7 @@
     "rich-history-card": {
       "add-comment-form": "Kommentarformular hinzufügen",
       "add-comment-tooltip": "Kommentar hinzufügen",
-      "add-to-library": "Zur Bibliothek hinzufügen",
+      "add-to-library": "",
       "cancel": "Abbrechen",
       "confirm-delete": "Löschen",
       "copy-query-tooltip": "Abfrage in Zwischenablage kopieren",
@@ -7243,7 +7258,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Abfrage aus Bibliothek hinzufügen",
+      "add-from-query-library": "",
       "query-add-button": "Abfrage hinzufügen",
       "query-add-button-aria-label": "Abfrage hinzufügen",
       "query-history-button": "Abfrageverlauf",
@@ -9476,6 +9491,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9747,7 +9764,8 @@
       "message-name-required": "Name ist erforderlich",
       "message-reserved-name": "Dies ist ein reservierter Name und kann nicht für einen Ordner verwendet werden.",
       "message-same-name": "Ein Dashboard oder ein Ordner mit demselben Namen existiert bereits",
-      "message-same-name-general": "Ein Ordner oder Dashboard im allgemeinen Ordner mit demselben Namen existiert bereits"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11235,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Löschen",
-      "confirm-delete-repository": "Sind Sie sicher, dass Sie die Repository-Konfiguration löschen möchten?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Das Repository konnte nicht gelöscht werden",
       "success-repository-deleted": "Repository-Einstellungen zum Löschen in die Warteschlange gestellt",
-      "title-delete-repository": "Repository-Konfiguration löschen",
-      "tooltip-delete-this-repository": "Dieses Repository löschen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
@@ -11886,7 +11908,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
@@ -11894,14 +11915,10 @@
       "expand-row": "Suchzeile erweitern",
       "hide-response": "Antwort ausblenden",
       "remove-query": "Abfrage entfernen",
-      "replace-query-from-library": "Mit Abfrage von Bibliothek ersetzen",
+      "replace-query-from-library": "",
       "show-response": "Antwort anzeigen "
     },
-    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
   "recently-deleted": {
     "buttons": {
@@ -12747,6 +12764,9 @@
       "description-title-text": "Text, der angezeigt wird, wenn über dem Bild der Mauszeiger bewegt wird",
       "label-alt-text": "Alt-Text",
       "label-title-text": "Titeltext"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
