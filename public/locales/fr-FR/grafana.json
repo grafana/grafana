@@ -13059,6 +13059,7 @@
         "name-point-size": "Taille des points",
         "name-show-points": "Afficher les points",
         "name-show-thresholds": "Afficher les seuils",
+        "name-show-values": "",
         "name-style": "Style",
         "name-transform": "Transformer",
         "transform-options": {
