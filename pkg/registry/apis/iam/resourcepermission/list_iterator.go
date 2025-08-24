@@ -58,6 +58,8 @@ type listIterator struct {
 	currentKeyIndex int
 	// Track the highest resource version seen during iteration
 	listRV int64
+	// namespace for the ResourcePermissions
+	namespace string
 }
 
 func (r *listIterator) Close() error {
@@ -89,7 +91,7 @@ func (r *listIterator) Name() string {
 
 // Namespace implements resource.ListIterator.
 func (r *listIterator) Namespace() string {
-	return ""
+	return r.namespace
 }
 
 // Next implements resource.ListIterator.
@@ -103,12 +105,11 @@ func (r *listIterator) Next() bool {
 		key := r.keys[r.currentKeyIndex]
 		perms := r.permissionGroups[key]
 
-		resourcePermission := toV0ResourcePermission(perms)
+		resourcePermission := toV0ResourcePermission(perms, r.namespace)
 		if resourcePermission == nil {
 			r.currentKeyIndex++
 			return r.Next() // Try next group
 		}
-
 		r.row = resourcePermission
 		r.currentKeyIndex++
 
@@ -134,12 +135,20 @@ func (r *listIterator) Next() bool {
 
 // ResourceVersion implements resource.ListIterator.
 func (r *listIterator) ResourceVersion() int64 {
-	// Since ResourcePermissions don't have a version field, we'll use the current timestamp
+	if r.row != nil {
+		return 1
+	}
+
+	// Fallback
 	return 1
 }
 
 // Value implements resource.ListIterator.
 func (r *listIterator) Value() []byte {
+	if r.row == nil {
+		return nil
+	}
+
 	b, err := json.Marshal(r.row)
 	r.err = err
 	return b

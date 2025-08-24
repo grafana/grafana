@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/extensions/licensing"
+
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -35,7 +36,7 @@ type ResourcePermissionSqlBackend struct {
 }
 
 func ProvideStorageBackend(sql legacysql.LegacyDatabaseProvider, token licensing.LicenseToken) *ResourcePermissionSqlBackend {
-	return &ResourcePermissionSqlBackend{
+	backend := &ResourcePermissionSqlBackend{
 		sql:      sql,
 		token:    token,
 		fallback: noopstorage.ProvideStorageBackend(),
@@ -43,6 +44,8 @@ func ProvideStorageBackend(sql legacysql.LegacyDatabaseProvider, token licensing
 		subscribers: make([]chan *resource.WrittenEvent, 0),
 		mutex:       sync.Mutex{},
 	}
+
+	return backend
 }
 
 func (s *ResourcePermissionSqlBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
@@ -54,7 +57,9 @@ func (s *ResourcePermissionSqlBackend) ListHistory(ctx context.Context, req *res
 }
 
 func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	if !s.token.FeatureEnabled(licensing.FeatureAccessControl) {
+	accessControlEnabled := s.token.FeatureEnabled(licensing.FeatureAccessControl)
+
+	if !accessControlEnabled {
 		return s.fallback.ListIterator(ctx, req, cb)
 	}
 
@@ -62,7 +67,6 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 		return 0, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
 	}
 
-	// Parse continue token
 	token, err := readContinueToken(req.NextPageToken)
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse continue token: %w", err)
@@ -93,9 +97,13 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 		return 0, err
 	}
 
-	// Follow the role pattern: start with 0 and get actual version from iterator
 	listRV := int64(0)
-	rows, err := s.newResourcePermissionIterator(ctx, sql, query)
+	namespace := namespaceInfo.Value
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	rows, err := s.newResourcePermissionIterator(ctx, sql, query, namespace)
 	if rows != nil {
 		defer func() {
 			_ = rows.Close()
@@ -127,10 +135,6 @@ func getApiGroupForResource(resourceType string) string {
 }
 
 func (s *ResourcePermissionSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	if !s.token.FeatureEnabled(licensing.FeatureAccessControl) {
-		return s.fallback.ReadResource(ctx, req)
-	}
-
 	version := int64(0)
 	if req.ResourceVersion > 0 {
 		version = req.ResourceVersion
@@ -146,7 +150,7 @@ func (s *ResourcePermissionSqlBackend) ReadResource(ctx context.Context, req *re
 		return rsp
 	}
 
-	resourcePermission, err := s.getResourcePermission(ctx, sql, req.Key.Name)
+	resourcePermission, err := s.getResourcePermission(ctx, sql, req.Key.Name, req.Key.Namespace)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
 		return rsp
@@ -193,9 +197,10 @@ func (s *ResourcePermissionSqlBackend) WatchWriteEvents(ctx context.Context) (<-
 }
 
 func (s *ResourcePermissionSqlBackend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	if !s.token.FeatureEnabled(licensing.FeatureAccessControl) {
-		return s.fallback.WriteEvent(ctx, event)
-	}
+	// Note: Removed licensing check for OSS compatibility - ResourcePermissions should work in OSS like roles do
+	// if !s.token.FeatureEnabled(licensing.FeatureAccessControl) {
+	//     return s.fallback.WriteEvent(ctx, event)
+	// }
 
 	ns, err := types.ParseNamespace(event.Key.Namespace)
 	if err != nil {
@@ -328,59 +333,6 @@ func getResourcePermissionFromEvent(event resource.WriteEvent) (*v0alpha1.Resour
 	resourcePermission := &v0alpha1.ResourcePermission{}
 	err := json.Unmarshal(event.Value, resourcePermission)
 	return resourcePermission, err
-}
-
-func (s *ResourcePermissionSqlBackend) convertToV0Alpha1ResourcePermission(perm accesscontrol.ResourcePermission) *v0alpha1.ResourcePermission {
-	var kind v0alpha1.ResourcePermissionSpecPermissionKind
-	var name string
-
-	if perm.UserID != 0 {
-		kind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		name = perm.UserUID
-	} else if perm.TeamID != 0 {
-		kind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
-		name = perm.TeamUID
-	} else if perm.BuiltInRole != "" {
-		kind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
-		name = perm.BuiltInRole
-	} else {
-		kind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		name = "unknown"
-	}
-
-	permissions := []v0alpha1.ResourcePermissionspecPermission{
-		{
-			Kind:  kind,
-			Name:  name,
-			Verbs: perm.Actions,
-		},
-	}
-
-	resource := "unknown"
-	resourceName := "*"
-	if perm.Scope != "" {
-		parts := strings.Split(perm.Scope, ":")
-		if len(parts) >= 1 {
-			resource = parts[0]
-		}
-		if len(parts) >= 3 {
-			resourceName = parts[2]
-		}
-	}
-
-	return &v0alpha1.ResourcePermission{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("perm-%d", perm.ID),
-		},
-		Spec: v0alpha1.ResourcePermissionSpec{
-			Resource: v0alpha1.ResourcePermissionspecResource{
-				ApiGroup: getApiGroupForResource(resource),
-				Resource: resource,
-				Name:     resourceName,
-			},
-			Permissions: permissions,
-		},
-	}
 }
 
 type listIteratorFromSlice struct {

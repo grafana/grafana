@@ -687,6 +687,7 @@ github.com/bradleyjkemp/cupaloy/v2 v2.6.0 h1:knToPYa2xtfg42U3I6punFEjaGFKWQRXJwj
 github.com/bradleyjkemp/cupaloy/v2 v2.6.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/bsm/sarama-cluster v2.1.13+incompatible h1:bqU3gMJbWZVxLZ9PGWVKP05yOmFXUlfw61RBwuE3PYU=
 github.com/bsm/sarama-cluster v2.1.13+incompatible/go.mod h1:r7ao+4tTNXvWm+VRpRJchr2kQhqxgmAp2iEX5W96gMM=
+github.com/buildkite/yaml v2.1.0+incompatible/go.mod h1:UoU8vbcwu1+vjZq01+KrpSeLBgQQIjL/H7Y6KwikUrI=
 github.com/bwesterb/go-ristretto v1.2.3 h1:1w53tCkGhCQ5djbat3+MH0BAQ5Kfgbt56UZQ/JMzngw=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/bytedance/sonic v1.10.0-rc3 h1:uNSnscRapXTwUgTyOF0GVljYD08p9X/Lbr9MweSV3V0=
@@ -814,10 +815,14 @@ github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81 h1:7/v8q9X
 github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81/go.mod h1:siLfyv2c92W1eN/R4QqG/+RjjX5W2+gCTRjZxBjI3TY=
 github.com/dolthub/swiss v0.2.1 h1:gs2osYs5SJkAaH5/ggVJqXQxRXtWshF6uE0lgR/Y3Gw=
 github.com/dolthub/swiss v0.2.1/go.mod h1:8AhKZZ1HK7g18j7v7k6c5cYIGEZJcPn0ARsai8cUrh0=
+github.com/drone-runners/drone-runner-docker v1.8.3/go.mod h1:JR3pZeVZKKpkbTajiq0YtAx9WutkODdVKZGNR83kEwE=
+github.com/drone/drone-cli v1.8.0/go.mod h1:zu6/7OpQjWBw/5VG0M3K4iJc6kSoTrjnY7CRLBrGH84=
+github.com/drone/drone-go v1.7.1/go.mod h1:fxCf9jAnXDZV1yDr0ckTuWd1intvcQwfJmTRpTZ1mXg=
 github.com/drone/envsubst v1.0.3 h1:PCIBwNDYjs50AsLZPYdfhSATKaRg/FJmDc2D6+C2x8g=
 github.com/drone/envsubst v1.0.3/go.mod h1:N2jZmlMufstn1KEqvbHjw40h1KyTmnVzHcSc9bFiJ2g=
 github.com/drone/funcmap v0.0.0-20220929084810-72602997d16f h1:/jEs7lulqVO2u1+XI5rW4oFwIIusxuDOVKD9PAzlW2E=
 github.com/drone/funcmap v0.0.0-20220929084810-72602997d16f/go.mod h1:nDRkX7PHq+p39AD5/usv3KZMerxZTYU/9rfLS5IDspU=
+github.com/drone/runner-go v1.12.0/go.mod h1:vu4pPPYDoeN6vdYQAY01GGGsAIW4aLganJNaa8Fx8zE=
 github.com/drone/signal v1.0.0 h1:NrnM2M/4yAuU/tXs6RP1a1ZfxnaHwYkd0kJurA1p6uI=
 github.com/dvyukov/go-fuzz v0.0.0-20210103155950-6a8e9d1f2415 h1:q1oJaUPdmpDm/VyXosjgPgr6wS7c5iV2p0PwJD73bUI=
 github.com/dvyukov/go-fuzz v0.0.0-20210103155950-6a8e9d1f2415/go.mod h1:11Gm+ccJnvAhCNLlf5+cS9KjtbaD5I5zaZpFMsTHWTw=
@@ -874,6 +879,7 @@ github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uq
 github.com/gabriel-vasile/mimetype v1.4.3/go.mod h1:d8uq/6HKRL6CGdk+aubisF/M5GcPfT7nKyLpA0lbSSk=
 github.com/getkin/kin-openapi v0.128.0/go.mod h1:OZrfXzUfGrNbsKj+xmFBx6E5c6yH3At/tAKSc2UszXM=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
+github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32/go.mod h1:GIjDIg/heH5DOkXY3YJ/wNhfHsQHoXGjl8G8amsYQ1I=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
 github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm+fLHvGI=
 github.com/gin-gonic/gin v1.9.1 h1:4idEAncQnU5cB7BeOkPtxjfCSye0AAm1R0RVIqJ+Jmg=
@@ -1034,6 +1040,7 @@ github.com/grafana/grafana/apps/preferences v0.0.0-20250805120145-0c5a00302924/g
 github.com/grafana/grafana/apps/preferences v0.0.0-20250805123034-066163d71001 h1:y2AHkdji2I+zXv8rsSC8OjWEzJJjqW5OlmCsZR5+RuU=
 github.com/grafana/grafana/apps/preferences v0.0.0-20250805123034-066163d71001/go.mod h1:NQlHMO5fHhjexw71wVjv522532NRvFg5F4tcjUEktjs=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
+github.com/grafana/grafana/pkg/build v0.0.0-20250816144737-2695ed91d10b/go.mod h1:5IrXFaSLNVBt27CieWQ757Z84sQEyZ+ytxzxUFu0KLE=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d/go.mod h1:CXpwZ3Mkw6xVlGKc0SqUxqXCP3Uv182q6qAQnLaLxRg=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250514132646-acbc7b54ed9e/go.mod h1:xrKQcxQxz+IUF90ybtfENFeEXtlj9nAsX/3Fw0KEIeQ=
@@ -1757,6 +1764,7 @@ go.opentelemetry.io/otel/trace v1.36.0/go.mod h1:gQ+OnDZzrybY4k4seLzPAWNwVBBVlF2
 go.opentelemetry.io/proto/otlp v1.0.0/go.mod h1:Sy6pihPLfYHkr3NkUbEhGHFhINUSI/v80hjKIs5JXpM=
 go.opentelemetry.io/proto/otlp v1.4.0/go.mod h1:PPBWZIP98o2ElSqI35IHfu7hIhSwvc5N38Jw8pXuGFY=
 go.opentelemetry.io/proto/otlp v1.6.0/go.mod h1:cicgGehlFuNdgZkcALOCh3VE6K/u2tAjzlRhDwmVpZc=
+go.starlark.net v0.0.0-20230525235612-a134d8f9ddca/go.mod h1:jxU+3+j+71eXOW14274+SmmuW82qJzl6iZSeqEtTGds=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/automaxprocs v1.6.0 h1:O3y2/QNTOdbF+e/dpXNNW7Rx2hZ4sTIPyybbxyNqTUs=
 go.uber.org/automaxprocs v1.6.0/go.mod h1:ifeIMSnPZuznNm6jmdzmU3/bfk01Fe2fotchwEFJ8r8=
@@ -1959,6 +1967,7 @@ gopkg.in/vmihailenco/msgpack.v2 v2.9.2 h1:gjPqo9orRVlSAH/065qw3MsFCDpH7fa1KpiizX
 gopkg.in/vmihailenco/msgpack.v2 v2.9.2/go.mod h1:/3Dn1Npt9+MYyLpYYXjInO/5jvMLamn+AEGwNEOatn8=
 gotest.tools/v3 v3.5.0 h1:Ljk6PdHdOhAb5aDMWXjDLMMhph+BpztA4v1QdqEW2eY=
 gotest.tools/v3 v3.5.0/go.mod h1:isy3WKz7GK6uNw/sbHzfKBLvlvXwUyV06n6brMxxopU=
+gotest.tools/v3 v3.5.1/go.mod h1:isy3WKz7GK6uNw/sbHzfKBLvlvXwUyV06n6brMxxopU=
 honnef.co/go/tools v0.3.2 h1:ytYb4rOqyp1TSa2EPvNVwtPQJctSELKaMyLfqNP4+34=
 honnef.co/go/tools v0.3.2/go.mod h1:jzwdWgg7Jdq75wlfblQxO4neNaFFSvgc1tD5Wv8U0Yw=
 howett.net/plist v1.0.1 h1:37GdZ8tP09Q35o9ych3ehygcsL+HqKSwzctveSlarvM=

@@ -501,6 +501,12 @@ const (
 	ActionLibraryPanelsWrite  = "library.panels:write"
 	ActionLibraryPanelsDelete = "library.panels:delete"
 
+	// IAM Resource Permissions
+	ActionResourcePermissionsRead   = "resourcepermissions:read"
+	ActionResourcePermissionsWrite  = "resourcepermissions:write"
+	ActionResourcePermissionsCreate = "resourcepermissions:create"
+	ActionResourcePermissionsDelete = "resourcepermissions:delete"
+
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
 )

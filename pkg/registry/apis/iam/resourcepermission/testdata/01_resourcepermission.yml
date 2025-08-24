@@ -1,0 +1,17 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: ResourcePermission
+metadata:
+  name: dashboard.grafana.app_dashboards_dash1
+  namespace: default
+  labels:
+    resource-type: dashboards
+spec:
+  resource:
+    apiGroup: iam.grafana.app
+    resource: dashboards
+    name: dash1
+  permissions:
+  - kind: User
+    name: admin
+    verbs:
+    - admin

@@ -2,7 +2,6 @@ package rbac
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -57,119 +56,6 @@ func (t translation) AllActions() []string {
 
 func (t translation) HasFolderSupport() bool {
 	return t.folderSupport
-}
-
-// resourcePermissionTranslation handles the special case of resource permissions
-// where the name format is "{group}_{resource}_{id}" and needs to be translated
-// to the target resource's permission scope and actions.
-// Supports both dashboards and folders.
-type resourcePermissionTranslation struct{}
-
-// Case 1:
-// Group: iam.grafana.app
-// Resource: resourcepermissions
-// Name: dashboard.grafana.app_dashboards_dash123
-// Verb: create
-
-// This should translate to:
-// dashboards.permissions:write
-// Scope: dashboards:uid:dash123
-
-// Case 2:
-// Group: iam.grafana.app
-// Resource: resourcepermissions
-// Name: folders.grafana.app_folders_fold123
-// Verb: create
-
-// This should translate to:
-// folders.permissions:write
-// Scope: folders:uid:fold123
-
-// Action returns a template action that needs to have the resource type substituted.
-// The caller should extract the resource type from the name and substitute {resource}.
-func (r resourcePermissionTranslation) Action(verb string) (string, bool) {
-	switch verb {
-	case utils.VerbGet, utils.VerbList, utils.VerbWatch:
-		return "{resource}.permissions:read", true
-	case utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch:
-		return "{resource}.permissions:write", true
-	case utils.VerbDelete, utils.VerbDeleteCollection:
-		return "{resource}.permissions:write", true
-	default:
-		return "", false
-	}
-}
-
-// ActionForResource returns the actual action for a specific resource type and verb.
-func (r resourcePermissionTranslation) ActionForResource(resourceType, verb string) (string, bool) {
-	template, ok := r.Action(verb)
-	if !ok {
-		return "", false
-	}
-	return strings.ReplaceAll(template, "{resource}", resourceType), true
-}
-
-// ParseResourcePermissionName extracts the group, resource type, and ID from a resource permission name.
-// Expected format: "{group}_{resource}_{id}"
-// Returns: group, resourceType, id, success
-func (r resourcePermissionTranslation) ParseResourcePermissionName(name string) (string, string, string, bool) {
-	parts := strings.Split(name, "_")
-	if len(parts) < 3 {
-		return "", "", "", false
-	}
-
-	group := parts[0]
-	resourceType := parts[1]
-	id := strings.Join(parts[2:], "_") // Handle IDs that contain underscores
-
-	// Validate known resource types
-	if resourceType != "dashboards" && resourceType != "folders" {
-		return "", "", "", false
-	}
-
-	return group, resourceType, id, true
-}
-
-func (r resourcePermissionTranslation) Scope(name string) string {
-	_, resourceType, id, ok := r.ParseResourcePermissionName(name)
-	if !ok {
-		return ""
-	}
-
-	// Since we can't access the full mapper registry due to circular dependency,
-	// we'll manually construct the scope based on known patterns
-	switch resourceType {
-	case "dashboards":
-		return "dashboards:uid:" + id
-	case "folders":
-		return "folders:uid:" + id
-	default:
-		return ""
-	}
-}
-
-func (r resourcePermissionTranslation) Prefix() string {
-	// Resource permissions can target multiple resource types, so return a generic prefix
-	// The actual scope is determined dynamically in the Scope method
-	return ""
-}
-
-func (r resourcePermissionTranslation) AllActions() []string {
-	return []string{
-		"dashboards.permissions:read",
-		"dashboards.permissions:write",
-		"folders.permissions:read",
-		"folders.permissions:write",
-	}
-}
-
-func (r resourcePermissionTranslation) HasFolderSupport() bool {
-	return true // Resource permissions support both dashboards and folders
-}
-
-func newResourcePermissionTranslation() Mapping {
-	// Return value type since we don't need the mapper field anymore
-	return resourcePermissionTranslation{}
 }
 
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
@@ -263,7 +149,6 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 	if !ok {
 		return nil, false
 	}
-
 	t, ok := resources[resource]
 	if !ok {
 		return nil, false
