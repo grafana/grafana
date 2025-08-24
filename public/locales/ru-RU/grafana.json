@@ -13141,6 +13141,7 @@
         "name-point-size": "Размер точек",
         "name-show-points": "Показывать точки",
         "name-show-thresholds": "Показывать пороговые значения",
+        "name-show-values": "",
         "name-style": "Стиль",
         "name-transform": "Преобразовать",
         "transform-options": {
