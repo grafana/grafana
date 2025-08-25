@@ -1153,9 +1153,4 @@ export interface FeatureToggles {
   * @default false
   */
   dskitBackgroundServices?: boolean;
-  /**
-  * Enables running plugins in containers
-  * @default false
-  */
-  pluginContainers?: boolean;
 }
