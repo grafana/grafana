@@ -11,6 +11,7 @@ export const LeftSideBar = ({ pdcInjected }: LeftSideBarProps) => {
   return (
     <Stack>
       <Box flex={1} marginY={10}>
+        <Box height="75px"></Box>
         <Text element="h4">InfluxDB</Text>
         <Box paddingTop={2}>
           {headers.map((header, index) => (

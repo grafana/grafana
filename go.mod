@@ -85,7 +85,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.2 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250812203446-a38b2187d4e1 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250821181654-10915888e4f0 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -302,7 +302,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.51.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.51.0 // indirect
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect

@@ -2221,6 +2221,13 @@
       "preview": "Aperçu",
       "previewCondition": "Aperçu de la condition de la règle d'alerte"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Ajouter une intégration de point de contact",
       "body-attention": "Comme aucune politique par défaut n’est encore configurée, ce point de contact sera automatiquement défini par défaut.",
@@ -3748,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Direction de la flèche",
+    "category-arrow-direction": "",
     "category-background": "Arrière-plan",
     "category-border": "Bordure",
     "category-canvas": "Canvas",
@@ -3780,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Activer la sélection de types d’éléments expérimentaux",
     "description-inline-editing": "Activer la modification directe du panneau",
     "description-pan-zoom": "Activer le zoom et le déplacement",
-    "direction-options": {
-      "label-both": "Les deux",
-      "label-forward": "Vers l’avant",
-      "label-none": "Aucun",
-      "label-reverse": "Inverse"
-    },
     "drone-front-item": {
       "category-drone-front": "Vue avant du drone",
       "name-roll-angle": "Angle de roulis"
@@ -6412,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Cliquez <2>ici</2> pour en savoir plus sur cette erreur.",
-    "success-more-details-links": "Ensuite, vous pouvez commencer à visualiser les données en <2>créant un tableau de bord</2> ou en interrogeant les données dans la <5>vue Explorer</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Ensuite, vous pouvez commencer à visualiser les données en <2>créant un tableau de bord</2> ou en interrogeant les données dans la <5>vue Explorer</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6663,6 +6671,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Couleur fixe",
       "noOptionsMessage-no-fields-found": "Aucun champ trouvé"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Charger"
@@ -7130,7 +7146,7 @@
     "rich-history-card": {
       "add-comment-form": "Ajouter un formulaire de commentaire",
       "add-comment-tooltip": "Ajouter un commentaire",
-      "add-to-library": "Ajouter dans la bibliothèque",
+      "add-to-library": "",
       "cancel": "Annuler",
       "confirm-delete": "Supprimer",
       "copy-query-tooltip": "Copier la requête dans le presse-papiers",
@@ -7242,7 +7258,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Ajouter une requête à partir de la bibliothèque",
+      "add-from-query-library": "",
       "query-add-button": "Ajouter une requête",
       "query-add-button-aria-label": "Ajouter une requête",
       "query-history-button": "Historique des requêtes",
@@ -9475,6 +9491,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9746,7 +9764,8 @@
       "message-name-required": "Le nom est requis",
       "message-reserved-name": "Ce nom est réservé et ne peut pas être utilisé pour un dossier.",
       "message-same-name": "Un tableau de bord ou un dossier portant le même nom existe déjà",
-      "message-same-name-general": "Un dossier ou un tableau de bord dans le dossier général portant le même nom existe déjà"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11234,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
-      "confirm-delete-repository": "Voulez-vous vraiment supprimer la configuration du référentiel ?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Échec de la suppression du référentiel",
       "success-repository-deleted": "Paramètres du référentiel mis en attente pour suppression",
-      "title-delete-repository": "Supprimer la configuration du référentiel",
-      "tooltip-delete-this-repository": "Supprimer ce référentiel"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Retour aux référentiels",
@@ -11892,7 +11915,7 @@
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
       "remove-query": "Supprimer la requête",
-      "replace-query-from-library": "Remplacer par une requête à partir de la bibliothèque",
+      "replace-query-from-library": "",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -12742,6 +12765,9 @@
       "label-alt-text": "Texte alternatif",
       "label-title-text": "Texte du titre"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -13033,6 +13059,7 @@
         "name-point-size": "Taille des points",
         "name-show-points": "Afficher les points",
         "name-show-thresholds": "Afficher les seuils",
+        "name-show-values": "",
         "name-style": "Style",
         "name-transform": "Transformer",
         "transform-options": {
