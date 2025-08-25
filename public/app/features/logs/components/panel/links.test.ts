@@ -2,9 +2,9 @@ import { FieldType } from '@grafana/data';
 
 import { FieldDef } from '../logParser';
 
-import { getTraceFromLinks } from './links';
+import { getTempoTraceFromLinks } from './links';
 
-describe('getTraceFromLinks', () => {
+describe('getTempoTraceFromLinks', () => {
   let fields: FieldDef[];
   beforeEach(() => {
     fields = [
@@ -35,7 +35,7 @@ describe('getTraceFromLinks', () => {
   });
 
   test('Gets the trace information from a link', () => {
-    expect(getTraceFromLinks(fields)).toEqual({
+    expect(getTempoTraceFromLinks(fields)).toEqual({
       dsUID: 'fetpfiwe8asqoe',
       query: 'abcd1234',
       queryType: 'traceql',
