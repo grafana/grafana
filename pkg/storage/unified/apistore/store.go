@@ -204,10 +204,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	// Option 1: let an authz service figure out what to do with the new thing
-	// someAuthZService.CreatePermissionsForNewObject(ctx, req.Key, obj)
-
-	// Option 2: specific folder logic
 	if obj.GetObjectKind().GroupVersionKind().Kind == "Folder" {
 		val, err := utils.MetaAccessor(obj)
 		if err != nil {
@@ -225,12 +221,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 			return folderPermErr
 		}
 	}
-
-	// Option 3: piggyback on the existing permissions  -- this still leaves the folder even if permissions fail to be set, is that OK?
-	//if obj.GetObjectKind().GroupVersionKind().Kind == "Folder" {
-	//	v.grantPermissions = utils.AnnoGrantPermissionsDefault
-	//	s.opts.Permissions = s.folderService.SetDefaultPermissionsAfterCreate
-	//}
 
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {

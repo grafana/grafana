@@ -3,11 +3,8 @@ package foldertest
 import (
 	"context"
 
-	authtypes "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type FakeService struct {
