@@ -1,43 +1,81 @@
-import { FieldType } from '@grafana/data';
+import { FieldType, getDefaultTimeRange, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { FieldDef } from '../logParser';
+import { createLogLine } from '../mocks/logRow';
 
 import { getTempoTraceFromLinks } from './links';
+import { LogListModel } from './processing';
 
 describe('getTempoTraceFromLinks', () => {
-  let fields: FieldDef[];
+  let log: LogListModel;
+
   beforeEach(() => {
-    fields = [
+    jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
+
+    const getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
+      return getFieldLinksForExplore({ field, rowIndex, range: getDefaultTimeRange(), dataFrame, vars });
+    };
+
+    log = createLogLine(
       {
-        keys: ['test'],
-        values: ['not a trace'],
-        fieldIndex: 0,
-      },
-      {
-        keys: ['traceID'],
-        values: ['abcd1234'],
-        fieldIndex: 1,
-        links: [
-          {
-            href: '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-15m%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22fetpfiwe8asqoe%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22abcd1234%22%2C%22queryType%22%3A%22traceql%22%7D%5D%7D',
-            title: 'tempo',
-            target: '_self',
-            origin: {
-              name: 'traceID',
+        dataFrame: toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1] },
+            {
+              name: 'Line',
               type: FieldType.string,
-              config: {},
-              values: [],
+              values: ['log message 1 traceid=2203801e0171aa8b'],
             },
-          },
-        ],
+            {
+              name: 'labels',
+              type: FieldType.other,
+              values: [
+                { level: 'warn', logger: 'interceptor' },
+                { method: 'POST', status: '200' },
+                { kind: 'Event', stage: 'ResponseComplete' },
+              ],
+            },
+            {
+              name: 'link',
+              type: FieldType.string,
+              config: {
+                links: [
+                  {
+                    internal: {
+                      datasourceName: 'tempo',
+                      datasourceUid: 'test',
+                      query: {
+                        query: '${__value.raw}',
+                        queryType: 'traceql',
+                      },
+                    },
+                    title: '',
+                    url: '',
+                  },
+                ],
+              },
+              values: ['2203801e0171aa8b'],
+            },
+          ],
+        }),
       },
-    ];
+      {
+        escape: false,
+        getFieldLinks,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      }
+    );
   });
 
   test('Gets the trace information from a link', () => {
-    expect(getTempoTraceFromLinks(fields)).toEqual({
-      dsUID: 'fetpfiwe8asqoe',
-      query: 'abcd1234',
+    expect(getTempoTraceFromLinks(log.fields)).toEqual({
+      dsUID: 'test',
+      query: '2203801e0171aa8b',
       queryType: 'traceql',
     });
   });
