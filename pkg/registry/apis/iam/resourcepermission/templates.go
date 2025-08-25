@@ -13,13 +13,21 @@ import (
 
 // Templates setup.
 var (
-	//go:embed *.sql
+	//go:embed *.sql queries/*.sql
 	sqlTemplatesFS embed.FS
 
-	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `*.sql`))
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `*.sql`, `queries/*.sql`))
 
 	resourcePermissionsQueryTplt = mustTemplate("resource_permission_query.sql")
 	resourcePermissionInsertTplt = mustTemplate("resourcepermission_insert.sql")
+
+	// Delete operation templates
+	managedRolesQueryTplt            = mustTemplate("managed_roles_query.sql")
+	permissionsDeleteTplt            = mustTemplate("permissions_delete.sql")
+	roleDeleteTplt                   = mustTemplate("role_delete.sql")
+	builtinRoleAssignmentsDeleteTplt = mustTemplate("builtin_role_assignments_delete.sql")
+	userRoleAssignmentsDeleteTplt    = mustTemplate("user_role_assignments_delete.sql")
+	teamRoleAssignmentsDeleteTplt    = mustTemplate("team_role_assignments_delete.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -111,4 +119,71 @@ func buildResourcePermissionInsertQuery(dbHelper *legacysql.LegacyDatabaseHelper
 	}
 
 	return rawQuery, req.GetArgs(), nil
+}
+
+// Delete operation template structures
+
+type managedRolesQueryTemplate struct {
+	sqltemplate.SQLTemplate
+	RoleTable       string
+	OrgID           int64
+	RoleDescription string
+}
+
+func (r managedRolesQueryTemplate) Validate() error {
+	return nil
+}
+
+type permissionsDeleteTemplate struct {
+	sqltemplate.SQLTemplate
+	PermissionTable string
+	RoleID          int64
+}
+
+func (r permissionsDeleteTemplate) Validate() error {
+	return nil
+}
+
+type roleDeleteTemplate struct {
+	sqltemplate.SQLTemplate
+	RoleTable string
+	RoleID    int64
+	OrgID     int64
+}
+
+func (r roleDeleteTemplate) Validate() error {
+	return nil
+}
+
+type builtinRoleAssignmentsDeleteTemplate struct {
+	sqltemplate.SQLTemplate
+	BuiltinRoleTable string
+	RoleID           int64
+	OrgID            int64
+}
+
+func (r builtinRoleAssignmentsDeleteTemplate) Validate() error {
+	return nil
+}
+
+type userRoleAssignmentsDeleteTemplate struct {
+	sqltemplate.SQLTemplate
+	UserRoleTable string
+	RoleID        int64
+	OrgID         int64
+}
+
+func (r userRoleAssignmentsDeleteTemplate) Validate() error {
+	return nil
+}
+
+type teamRoleAssignmentsDeleteTemplate struct {
+	sqltemplate.SQLTemplate
+	TeamRoleTable string
+	RoleID        int64
+	OrgID         int64
+}
+
+func (r teamRoleAssignmentsDeleteTemplate) Validate() error {
+	return nil
 }

@@ -11,6 +11,6 @@ SELECT
 FROM `grafana`.`permission` p
 INNER JOIN `grafana`.`role` r ON p.role_id = r.id
 WHERE r.description LIKE 'Managed role for ResourcePermission: %'
+AND p.action LIKE 'dashboards'+":%"
 ORDER BY subject_uid, p.scope, p.id
-LIMIT 15
-OFFSET 5
+LIMIT 10

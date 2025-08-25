@@ -8,9 +8,12 @@ SELECT
   'resourcepermission' as subject_type,
   0 as is_service_account,
   r.name as role_name
-FROM `grafana`.`permission` p
-INNER JOIN `grafana`.`role` r ON p.role_id = r.id
+FROM "grafana"."permission" p
+INNER JOIN "grafana"."role" r ON p.role_id = r.id
 WHERE r.description LIKE 'Managed role for ResourcePermission: %'
+AND p.action LIKE 'folders'+":%"
+AND r.org_id = 3
+AND r.description LIKE 'Managed role for ResourcePermission: %' || 'team456' || '%'
 ORDER BY subject_uid, p.scope, p.id
-LIMIT 15
-OFFSET 5
+LIMIT 20
+OFFSET 10

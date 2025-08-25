@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
+	"iter"
 	"sync"
 	"time"
 
@@ -17,9 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -50,6 +48,12 @@ func ProvideStorageBackend(sql legacysql.LegacyDatabaseProvider, token licensing
 
 func (s *ResourcePermissionSqlBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return nil, errors.New("not supported by this storage backend")
+}
+
+func (s *ResourcePermissionSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		yield(nil, errors.New("not supported by this storage backend"))
+	}
 }
 
 func (s *ResourcePermissionSqlBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
@@ -279,9 +283,29 @@ func (s *ResourcePermissionSqlBackend) WriteEvent(ctx context.Context, event res
 			return 0, err
 		}
 	case resourcepb.WatchEvent_DELETED:
-		// TODO: Implement proper deletion logic
-		// For now, just return success with a timestamp
-		rv = int64(time.Now().UnixMilli())
+		// Validate that the resource permission exists before attempting deletion
+		dbHelper, err := s.sql(ctx)
+		if err != nil {
+			return 0, err
+		}
+
+		// Check if the resource permission exists
+		_, err = s.getResourcePermission(ctx, dbHelper, event.Key.Name, event.Key.Namespace)
+		if err != nil {
+			// If it doesn't exist, treat as successful deletion (idempotent)
+			if errors.Is(err, ErrResourcePermissionNotFound) {
+				rv = int64(time.Now().UnixMilli())
+			} else {
+				return 0, fmt.Errorf("failed to check resource permission existence: %w", err)
+			}
+		} else {
+			// Resource permission exists, proceed with deletion
+			err = s.deleteResourcePermission(ctx, dbHelper, ns, event.Key.Name)
+			if err != nil {
+				return 0, fmt.Errorf("failed to delete resource permission %s: %w", event.Key.Name, err)
+			}
+			rv = int64(time.Now().UnixMilli())
+		}
 	default:
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}

@@ -1,15 +1,15 @@
+-- Query to reconstruct ResourcePermissions from managed roles and their permissions
+-- We look for managed roles that were created for ResourcePermissions (those with descriptions indicating ResourcePermission)
+-- and extract the permissions + target resource information from those roles
 SELECT 
   p.id, p.action, p.scope, p.created, p.updated,
-  COALESCE(u.uid, t.uid) as subject_uid,
-  CASE WHEN u.uid IS NOT NULL THEN 'user' ELSE 'team' END as subject_type,
-  COALESCE(u.is_service_account, 0) as is_service_account
+  -- Extract ResourcePermission name from role description
+  SUBSTR(r.description, LENGTH('Managed role for ResourcePermission: ') + 1) as subject_uid,
+  'resourcepermission' as subject_type,
+  0 as is_service_account,
+  r.name as role_name
 FROM `grafana`.`permission` p
 INNER JOIN `grafana`.`role` r ON p.role_id = r.id
-LEFT JOIN user_role ur ON r.id = ur.role_id AND ur.org_id = r.org_id
-LEFT JOIN `user` u ON ur.user_id = u.id
-LEFT JOIN team_role tr ON r.id = tr.role_id AND tr.org_id = r.org_id
-LEFT JOIN team t ON tr.team_id = t.id
-WHERE p.scope LIKE 'dashboards:%'
-AND (u.uid IS NOT NULL OR t.uid IS NOT NULL)
-ORDER BY p.id
+WHERE r.description LIKE 'Managed role for ResourcePermission: %'
+ORDER BY subject_uid, p.scope, p.id
 LIMIT 10

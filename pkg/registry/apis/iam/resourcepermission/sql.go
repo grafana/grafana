@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -174,6 +175,221 @@ func (s *ResourcePermissionSqlBackend) createResourcePermission(ctx context.Cont
 
 	// Return a timestamp as resource version
 	return int64(time.Now().UnixMilli()), nil
+}
+
+// deleteResourcePermission deletes a resource permission and all its associated managed roles
+func (s *ResourcePermissionSqlBackend) deleteResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, resourcePermissionName string) error {
+	return dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		// First, find all managed roles associated with this resource permission
+		roleDescription := fmt.Sprintf("Managed role for ResourcePermission: %s", resourcePermissionName)
+
+		managedRoles, err := s.queryManagedRoles(ctx, tx, dbHelper, ns.OrgID, roleDescription)
+		if err != nil {
+			return fmt.Errorf("failed to find managed roles for resource permission %s: %w", resourcePermissionName, err)
+		}
+
+		// Delete each managed role and its associated data
+		for _, role := range managedRoles {
+			if err := s.deleteManagedRole(ctx, tx, dbHelper, ns.OrgID, role.ID, role.Name); err != nil {
+				return fmt.Errorf("failed to delete managed role %s (ID: %d): %w", role.Name, role.ID, err)
+			}
+		}
+
+		return nil
+	})
+}
+
+// queryManagedRoles finds all managed roles associated with a resource permission
+func (s *ResourcePermissionSqlBackend) queryManagedRoles(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleDescription string) ([]struct {
+	ID   int64
+	Name string
+}, error) {
+	req := managedRolesQueryTemplate{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		RoleTable:       dbHelper.Table("role"),
+		OrgID:           orgID,
+		RoleDescription: roleDescription,
+	}
+
+	query, err := sqltemplate.Execute(managedRolesQueryTplt, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute managed roles query template: %w", err)
+	}
+
+	rows, err := tx.Query(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query managed roles: %w", err)
+	}
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	var managedRoles []struct {
+		ID   int64
+		Name string
+	}
+
+	for rows.Next() {
+		var role struct {
+			ID   int64
+			Name string
+		}
+		if err := rows.Scan(&role.ID, &role.Name); err != nil {
+			return nil, fmt.Errorf("failed to scan managed role: %w", err)
+		}
+		managedRoles = append(managedRoles, role)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating managed roles: %w", err)
+	}
+
+	return managedRoles, nil
+}
+
+// deleteManagedRole deletes a managed role and all its associated permissions and assignments
+func (s *ResourcePermissionSqlBackend) deleteManagedRole(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64, roleName string) error {
+	// 1. Delete permissions associated with this role
+	if err := s.deletePermissions(ctx, tx, dbHelper, roleID); err != nil {
+		return fmt.Errorf("failed to delete permissions for role %d: %w", roleID, err)
+	}
+
+	// 2. Delete role assignments based on the role name pattern
+	if err := s.deleteManagedRoleAssignments(ctx, tx, dbHelper, orgID, roleID, roleName); err != nil {
+		return fmt.Errorf("failed to delete role assignments for role %d: %w", roleID, err)
+	}
+
+	// 3. Delete the role itself
+	if err := s.deleteRole(ctx, tx, dbHelper, orgID, roleID); err != nil {
+		return fmt.Errorf("failed to delete role %d: %w", roleID, err)
+	}
+
+	return nil
+}
+
+// deletePermissions deletes all permissions associated with a role
+func (s *ResourcePermissionSqlBackend) deletePermissions(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, roleID int64) error {
+	req := permissionsDeleteTemplate{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		PermissionTable: dbHelper.Table("permission"),
+		RoleID:          roleID,
+	}
+
+	query, err := sqltemplate.Execute(permissionsDeleteTplt, req)
+	if err != nil {
+		return fmt.Errorf("failed to execute permissions delete template: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("failed to delete permissions: %w", err)
+	}
+
+	return nil
+}
+
+// deleteRole deletes a role
+func (s *ResourcePermissionSqlBackend) deleteRole(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64) error {
+	req := roleDeleteTemplate{
+		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+		RoleTable:   dbHelper.Table("role"),
+		RoleID:      roleID,
+		OrgID:       orgID,
+	}
+
+	query, err := sqltemplate.Execute(roleDeleteTplt, req)
+	if err != nil {
+		return fmt.Errorf("failed to execute role delete template: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("failed to delete role: %w", err)
+	}
+
+	return nil
+}
+
+// deleteManagedRoleAssignments deletes role assignments based on the managed role pattern
+func (s *ResourcePermissionSqlBackend) deleteManagedRoleAssignments(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64, roleName string) error {
+	// Parse the role name to determine what type of assignments to delete
+	if strings.HasPrefix(roleName, "managed:builtins:") {
+		return s.deleteBuiltinRoleAssignments(ctx, tx, dbHelper, orgID, roleID)
+	} else if strings.HasPrefix(roleName, "managed:users:") {
+		return s.deleteUserRoleAssignments(ctx, tx, dbHelper, orgID, roleID)
+	} else if strings.HasPrefix(roleName, "managed:teams:") {
+		return s.deleteTeamRoleAssignments(ctx, tx, dbHelper, orgID, roleID)
+	}
+
+	return nil
+}
+
+// deleteBuiltinRoleAssignments deletes builtin role assignments
+func (s *ResourcePermissionSqlBackend) deleteBuiltinRoleAssignments(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64) error {
+	req := builtinRoleAssignmentsDeleteTemplate{
+		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+		BuiltinRoleTable: dbHelper.Table("builtin_role"),
+		RoleID:           roleID,
+		OrgID:            orgID,
+	}
+
+	query, err := sqltemplate.Execute(builtinRoleAssignmentsDeleteTplt, req)
+	if err != nil {
+		return fmt.Errorf("failed to execute builtin role assignments delete template: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("failed to delete builtin role assignments: %w", err)
+	}
+
+	return nil
+}
+
+// deleteUserRoleAssignments deletes user role assignments
+func (s *ResourcePermissionSqlBackend) deleteUserRoleAssignments(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64) error {
+	req := userRoleAssignmentsDeleteTemplate{
+		SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+		UserRoleTable: dbHelper.Table("user_role"),
+		RoleID:        roleID,
+		OrgID:         orgID,
+	}
+
+	query, err := sqltemplate.Execute(userRoleAssignmentsDeleteTplt, req)
+	if err != nil {
+		return fmt.Errorf("failed to execute user role assignments delete template: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("failed to delete user role assignments: %w", err)
+	}
+
+	return nil
+}
+
+// deleteTeamRoleAssignments deletes team role assignments
+func (s *ResourcePermissionSqlBackend) deleteTeamRoleAssignments(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64) error {
+	req := teamRoleAssignmentsDeleteTemplate{
+		SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+		TeamRoleTable: dbHelper.Table("team_role"),
+		RoleID:        roleID,
+		OrgID:         orgID,
+	}
+
+	query, err := sqltemplate.Execute(teamRoleAssignmentsDeleteTplt, req)
+	if err != nil {
+		return fmt.Errorf("failed to execute team role assignments delete template: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("failed to delete team role assignments: %w", err)
+	}
+
+	return nil
 }
 
 // ManagedRole represents a managed role to be created
