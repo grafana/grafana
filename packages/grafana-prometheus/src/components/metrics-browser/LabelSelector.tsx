@@ -12,7 +12,7 @@ import { getStylesLabelSelector } from './styles';
 export function LabelSelector() {
   const styles = useStyles2(getStylesLabelSelector);
   const [labelSearchTerm, setLabelSearchTerm] = useState('');
-  const { labelKeys, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
+  const { labelKeys, isLoadingLabels, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
 
   const filteredLabelKeys = useMemo(() => {
     return labelKeys.filter(
@@ -49,7 +49,7 @@ export function LabelSelector() {
           <PromLabel
             key={label}
             name={label}
-            loading={false}
+            loading={isLoadingLabels}
             active={selectedLabelKeys.includes(label)}
             hidden={false}
             facets={undefined}

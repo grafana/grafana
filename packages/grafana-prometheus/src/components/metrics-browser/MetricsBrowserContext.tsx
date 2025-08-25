@@ -33,6 +33,7 @@ interface MetricsBrowserContextType {
   // Data and selection state
   metrics: Metric[];
   labelKeys: string[];
+  isLoadingLabels: boolean;
   labelValues: Record<string, string[]>;
   selectedMetric: string;
   selectedLabelKeys: string[];
@@ -78,6 +79,7 @@ export function MetricsBrowserProvider({
     validationStatus,
     metrics,
     labelKeys,
+    isLoadingLabels,
     labelValues,
     selectedMetric,
     selectedLabelKeys,
@@ -109,6 +111,7 @@ export function MetricsBrowserProvider({
       getSelector,
       metrics,
       labelKeys,
+      isLoadingLabels,
       labelValues,
       selectedMetric,
       selectedLabelKeys,
@@ -128,16 +131,17 @@ export function MetricsBrowserProvider({
       setSeriesLimit,
       validationStatus,
       onChange,
-      metrics,
       getSelector,
+      metrics,
       labelKeys,
+      isLoadingLabels,
       labelValues,
       selectedMetric,
       selectedLabelKeys,
       selectedLabelValues,
+      handleSelectedMetricChange,
       handleSelectedLabelKeyChange,
       handleSelectedLabelValueChange,
-      handleSelectedMetricChange,
       handleValidation,
       handleClear,
     ]
@@ -152,6 +156,7 @@ export function MetricsBrowserProvider({
  */
 export function useMetricsBrowser() {
   const context = useContext(MetricsBrowserContext);
+  console.log(context);
   if (context === undefined) {
     throw new Error('useMetricsBrowser must be used within a MetricsBrowserProvider');
   }

@@ -26,6 +26,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const [lastSelectedLabelKey, setLastSelectedLabelKey] = useState('');
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
+  const [isLoadingLabels, setIsLoadingLabels] = useState(false);
 
   // Memoize the effective series limit to use the default when seriesLimit is empty
   const effectiveLimit = useMemo(() => seriesLimit, [seriesLimit]);
@@ -163,6 +164,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       const transformedMetrics: Metric[] = await fetchMetrics(safeSelector);
 
       // Labels
+      setIsLoadingLabels(true);
       const transformedLabelKeys: string[] = await fetchLabelKeys(safeSelector);
 
       // Selected Labels
@@ -173,6 +175,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
       setMetrics(transformedMetrics);
       setLabelKeys(transformedLabelKeys);
+      setIsLoadingLabels(false);
       setSelectedLabelKeys(labelKeysInLocalStorage);
       setLabelValues(transformedLabelValues);
     },
@@ -209,6 +212,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     const selector = buildSafeSelector(newSelectedMetric, selectedLabelValues);
     try {
       const fetchedMetrics = await fetchMetrics(selector);
+      setIsLoadingLabels(true);
       const fetchedLabelKeys = await fetchLabelKeys(selector);
       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
       const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(
@@ -219,6 +223,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       setMetrics(fetchedMetrics);
       setSelectedMetric(newSelectedMetric);
       setLabelKeys(fetchedLabelKeys);
+      setIsLoadingLabels(false);
       setSelectedLabelKeys(newSelectedLabelKeys);
       setLabelValues(transformedLabelValues);
       setSelectedLabelValues(newSelectedLabelValues);
@@ -326,6 +331,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
     // Fetch label keys
     // If there is no metric or label value selected fetch all the keys instead of creating a selector
+    setIsLoadingLabels(true);
     let newLabelKeys: string[] = [];
     if (!safeSelector) {
       newLabelKeys = await fetchLabelKeys(undefined);
@@ -337,6 +343,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
 
     setMetrics(newMetrics);
     setLabelKeys(newLabelKeys);
+    setIsLoadingLabels(false);
     setSelectedLabelKeys(newSelectedLabelKeys);
     setLastSelectedLabelKey(newLastSelectedLabelKey);
     setLabelValues(newLabelValues);
@@ -384,6 +391,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     metrics,
     labelKeys,
     labelValues,
+    isLoadingLabels,
     selectedMetric,
     selectedLabelKeys,
     selectedLabelValues,
