@@ -1,6 +1,10 @@
 import { debounce } from 'lodash';
 import { MapBrowserEvent } from 'ol';
+import { FeatureLike } from 'ol/Feature';
+import { Point } from 'ol/geom';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { toLonLat } from 'ol/proj';
+import VectorSource from 'ol/source/Vector';
 
 import { DataFrame, DataHoverClearEvent } from '@grafana/data/src';
 
@@ -87,7 +91,49 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
           layerLookup.set(s, h);
           layers.push(h);
         }
-        h.features.push(feature);
+
+        // Only add if not already present
+        if (!h.features.some((f) => f === feature)) {
+          h.features.push(feature);
+        }
+
+        // For WebGLPointsLayer, check for additional features at the same coordinates
+        if (layer instanceof WebGLPointsLayer) {
+          const featureGeom = feature.getGeometry();
+          if (featureGeom instanceof Point) {
+            const featureCoords = featureGeom.getCoordinates();
+            const source = layer.getSource() as VectorSource;
+            let addedFeatures = false;
+            source.forEachFeature((otherFeature: FeatureLike) => {
+              // Ignore duplicates
+              if (otherFeature !== feature && !h.features.some((f) => f === otherFeature)) {
+                const otherGeom = otherFeature.getGeometry();
+                if (otherGeom instanceof Point) {
+                  const otherCoords = otherGeom.getCoordinates();
+                  // Check for matching coordinates
+                  if (otherCoords[0] === featureCoords[0] && otherCoords[1] === featureCoords[1]) {
+                    h.features.push(otherFeature);
+                    addedFeatures = true;
+                  }
+                }
+              }
+            });
+            // If we found multiple features at the same coordinates, sort them by rowIndex
+            if (addedFeatures) {
+              h.features.sort((a, b) => {
+                const aIndex =
+                  a.getProperties()['rowIndex'] !== undefined
+                    ? Number(a.getProperties()['rowIndex'])
+                    : Number.MAX_SAFE_INTEGER;
+                const bIndex =
+                  b.getProperties()['rowIndex'] !== undefined
+                    ? Number(b.getProperties()['rowIndex'])
+                    : Number.MAX_SAFE_INTEGER;
+                return aIndex - bIndex;
+              });
+            }
+          }
+        }
       }
     },
     {
