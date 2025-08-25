@@ -65,7 +65,6 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
-import { getViewPanelUrl } from '../utils/urlBuilders';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -81,7 +80,6 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -129,8 +127,10 @@ export interface DashboardSceneState extends SceneObjectState {
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
-  /** Panel to view in fullscreen */
-  viewPanelScene?: ViewPanelScene;
+  /** Panel to inspect */
+  inspectPanelKey?: string;
+  /** Panel key to view in fullscreen */
+  viewPanel?: string;
   /** Edit view */
   editview?: DashboardEditView;
   /** Edit panel */
@@ -427,7 +427,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene, editPanel, title, uid } = this.state;
+    const { meta, viewPanel, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
 
     let pageNav: NavModelItem = {
@@ -456,11 +456,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
     }
 
-    if (viewPanelScene) {
+    if (viewPanel) {
       pageNav = {
         text: t('dashboard-scene.dashboard-scene.text.view-panel', 'View panel'),
         parentItem: pageNav,
-        url: getViewPanelUrl(viewPanelScene.state.panelRef.resolve()),
+        url: locationUtil.getUrlForPartial(locationService.getLocation(), {
+          viewPanel: viewPanel,
+          editPanel: undefined,
+        }),
       };
     }
 
@@ -472,13 +475,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     return pageNav;
-  }
-
-  /**
-   * Returns the body (layout) or the full view panel
-   */
-  public getBodyToRender(): SceneObject {
-    return this.state.viewPanelScene ?? this.state.body;
   }
 
   public getInitialState(): DashboardSceneState | undefined {

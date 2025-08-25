@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
+import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
 import { AutoGridItem } from './AutoGridItem';
@@ -19,11 +20,12 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
     useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
-
+  const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
   const Wrapper = useMemo(
     () =>
+      // eslint-disable-next-line react/display-name
       memo(
         ({
           item,
@@ -75,6 +77,10 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ),
     [conditionalRenderingClass, conditionalRenderingOverlay, isLazy, key, model.containerRef, styles]
   );
+
+  if (soloPanelContext) {
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+  }
 
   if (isConditionallyHidden && !isEditing) {
     return null;

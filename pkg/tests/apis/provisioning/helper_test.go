@@ -316,11 +316,11 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
 	fullPath := path.Join(h.ProvisioningPath, to)
 	t.Logf("Copying file from '%s' to provisioning path '%s'", from, fullPath)
-	err := os.MkdirAll(path.Dir(fullPath), 0750)
+	err := os.MkdirAll(path.Dir(fullPath), 0o750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
 	file := h.LoadFile(from)
-	err = os.WriteFile(fullPath, file, 0600)
+	err = os.WriteFile(fullPath, file, 0o600)
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
@@ -489,14 +489,16 @@ func (h *provisioningTestHelper) validateManagedDashboardsFolderMetadata(t *test
 }
 
 type TestRepo struct {
-	Name               string
-	Target             string
-	Path               string
-	Values             map[string]any
-	Copies             map[string]string
-	ExpectedDashboards int
-	ExpectedFolders    int
-	SkipSync           bool
+	Name                   string
+	Target                 string
+	Path                   string
+	Values                 map[string]any
+	Copies                 map[string]string
+	ExpectedDashboards     int
+	ExpectedFolders        int
+	SkipSync               bool
+	SkipResourceAssertions bool
+	Template               string
 }
 
 func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
@@ -509,7 +511,7 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if repo.Path != "" {
 		repoPath = repo.Path
 		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0750)
+		err := os.MkdirAll(repoPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
 
@@ -521,20 +523,29 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if repo.Path != "" {
 		templateVars["Path"] = repoPath
 	}
+	// Add custom values from TestRepo
+	for key, value := range repo.Values {
+		templateVars[key] = value
+	}
 
-	localTmp := h.RenderObject(t, "testdata/local-write.json.tmpl", templateVars)
+	tmpl := "testdata/local-write.json.tmpl"
+	if repo.Template != "" {
+		tmpl = repo.Template
+	}
+	localTmp := h.RenderObject(t, tmpl, templateVars)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
+	h.WaitForHealthyRepository(t, repo.Name)
 
 	for from, to := range repo.Copies {
 		if repo.Path != "" {
 			// Copy to custom path
 			fullPath := path.Join(repoPath, to)
-			err := os.MkdirAll(path.Dir(fullPath), 0750)
+			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
 			file := h.LoadFile(from)
-			err = os.WriteFile(fullPath, file, 0600)
+			err = os.WriteFile(fullPath, file, 0o600)
 			require.NoError(t, err, "failed to write file to custom path")
 		} else {
 			h.CopyToProvisioningPath(t, from, to)
@@ -550,13 +561,31 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	}
 
 	// Verify initial state
-	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+	if !repo.SkipResourceAssertions {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+	}
+}
 
-	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+// WaitForHealthyRepository waits for a repository to become healthy.
+func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name string) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoStatus, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository status") {
+			return
+		}
+		errType := mustNestedString(repoStatus.Object, "status", "health", "error")
+		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
+		msgs := mustNestedStringSlice(repoStatus.Object, "status", "health", "message")
+		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		assert.True(collect, found, "repository %s does not have health status", name)
+		assert.True(collect, status, "repository %s is not healthy yet", name)
+	}, time.Second*10, time.Millisecond*50, "repository %s should become healthy", name)
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)
@@ -569,17 +598,9 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
-func useAppPlatformSecrets(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
-		featuremgmt.FlagProvisioningSecretsService,
-		featuremgmt.FlagSecretsManagementAppPlatform,
-	)
-}
-
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 		},
@@ -684,6 +705,15 @@ func mustNestedString(obj map[string]interface{}, fields ...string) string {
 		panic(err)
 	}
 	return v
+}
+
+func mustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
+	v, found, err := unstructured.NestedBool(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+
+	return v, found
 }
 
 func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {
