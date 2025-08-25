@@ -1,9 +1,6 @@
-import { Preferences as BaseUserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import type { PreferencesSpec } from '../../features/preferences/api/user/endpoints.gen';
 
-// Extended preferences type with dateStyle
-export interface UserPreferencesDTO extends BaseUserPreferencesDTO {
-  dateStyle?: string; // [FIXME] the type should be generated correctly...
-}
+export type { PreferencesSpec };
 
 import { backendSrv } from './backend_srv';
 
@@ -13,18 +10,18 @@ export class PreferencesService {
   /**
    * Overrides all preferences
    */
-  update(preferences: UserPreferencesDTO) {
+  update(preferences: PreferencesSpec) {
     return backendSrv.put(`/api/${this.resourceUri}/preferences`, preferences);
   }
 
   /**
    * Updates only provided preferences
    */
-  patch(preferences: Partial<UserPreferencesDTO>) {
+  patch(preferences: Partial<PreferencesSpec>) {
     return backendSrv.patch(`/api/${this.resourceUri}/preferences`, preferences);
   }
 
-  load(): Promise<UserPreferencesDTO> {
-    return backendSrv.get<UserPreferencesDTO>(`/api/${this.resourceUri}/preferences`);
+  load(): Promise<PreferencesSpec> {
+    return backendSrv.get<PreferencesSpec>(`/api/${this.resourceUri}/preferences`);
   }
 }

@@ -6,7 +6,6 @@ import { FeatureState, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { PSEUDO_LOCALE, t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { UserPreferencesDTO } from '../../services/PreferencesService';
 import {
   Button,
   Field,
@@ -28,6 +27,7 @@ import { LOCALES } from 'app/core/internationalization/locales';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
+import { PreferencesSpec } from '../../services/PreferencesService';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 export interface Props {
@@ -37,7 +37,7 @@ export interface Props {
   onConfirm?: () => Promise<boolean>;
 }
 
-export type State = UserPreferencesDTO & {
+export type State = PreferencesSpec & {
   isLoading: boolean;
   isSubmitting: boolean;
 };

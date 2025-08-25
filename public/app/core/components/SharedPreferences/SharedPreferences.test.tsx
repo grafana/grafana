@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { UserPreferencesDTO } from '../../services/PreferencesService';
+import { PreferencesSpec } from '../../services/PreferencesService';
 
 import SharedPreferences from './SharedPreferences';
 
@@ -71,7 +71,7 @@ jest.mock('app/core/services/backend_srv', () => {
   };
 });
 
-const mockPreferences: UserPreferencesDTO = {
+const mockPreferences: PreferencesSpec = {
   timezone: 'browser',
   weekStart: 'monday',
   theme: 'light',
@@ -84,7 +84,7 @@ const mockPreferences: UserPreferencesDTO = {
   dateStyle: '',
 };
 
-const defaultPreferences: UserPreferencesDTO = {
+const defaultPreferences: PreferencesSpec = {
   timezone: '',
   weekStart: '',
   theme: '',
@@ -241,7 +241,7 @@ describe('SharedPreferences', () => {
     };
 
     render(<SharedPreferences {...props} />);
-    
+
     // Check that date format preference is rendered
     const dateFormatSelect = await screen.findByRole('combobox', { name: /date format/i });
     expect(dateFormatSelect).toHaveValue('localized');
@@ -265,13 +265,13 @@ describe('SharedPreferences', () => {
     };
 
     render(<SharedPreferences {...props} />);
-    
+
     // Change date format to international
     const dateFormatSelect = await screen.findByRole('combobox', { name: /date format/i });
     await selectComboboxOptionInTest(dateFormatSelect, 'International');
-    
+
     await userEvent.click(screen.getByText('Save'));
-    
+
     expect(mockPrefsUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         dateStyle: 'international',
