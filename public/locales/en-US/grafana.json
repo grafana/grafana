@@ -9537,6 +9537,12 @@
       "show-context": "Show context",
       "show-log-line": "Show log line",
       "sidebar-mode": "Anchor to the right",
+      "trace": {
+        "error-message": "Could not retrieve trace.",
+        "error-tooltip": "The trace could have been sampled or be temporarily unavailable.",
+        "loading-message": "Loading trace..."
+      },
+      "trace-section": "Trace",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
