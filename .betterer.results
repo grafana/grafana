@@ -2562,19 +2562,6 @@ exports[`better eslint`] = {
     "public/app/features/live/centrifuge/channel.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/logs/components/panel/LogLineDetailsFields.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"],
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "1"],
-      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "2"],
-      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "3"],
-      [0, 0, 0, "React Hook \\"useStyles2\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "4"],
-      [0, 0, 0, "React Hook \\"useStyles2\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "5"]
-    ],
-    "public/app/features/logs/components/panel/LogList.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"],
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "2"]
-    ],
     "public/app/features/logs/logsFrame.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2953,9 +2940,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/features/transformers/editors/OrganizeFieldsTransformerEditor.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useStyles2\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
     ],
     "public/app/features/transformers/editors/ReduceTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]

@@ -63,7 +63,7 @@ export const LogLineDetailsComponent = memo(
           .map((label) => ({
             key: label,
             value: log.labels[label],
-            link: extensionLinks?.[label],
+            links: extensionLinks?.[label],
           })),
       [extensionLinks, log.labels]
     );
