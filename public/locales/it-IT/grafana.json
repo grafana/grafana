@@ -2221,6 +2221,13 @@
       "preview": "Anteprima",
       "previewCondition": "Anteprima condizione regola di avviso"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Aggiungi integrazione del punto di contatto",
       "body-attention": "Poiché non è ancora stato configurato un criterio predefinito, questo punto di contatto verrà automaticamente impostato come predefinito.",
@@ -3748,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Direzione della freccia",
+    "category-arrow-direction": "",
     "category-background": "Sfondo",
     "category-border": "Bordo",
     "category-canvas": "Tela",
@@ -3780,15 +3787,17 @@
         "auto": "Automatico"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Abilita la selezione di tipi di elementi sperimentali",
     "description-inline-editing": "Abilita la modifica diretta del pannello",
     "description-pan-zoom": "Abilita panoramica e zoom",
-    "direction-options": {
-      "label-both": "Entrambe",
-      "label-forward": "Inoltra",
-      "label-none": "Nessuno",
-      "label-reverse": "Inverti"
-    },
     "drone-front-item": {
       "category-drone-front": "Parte anteriore del drone",
       "name-roll-angle": "Angolo di rollio"
@@ -6412,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Fai clic <2>qui</2> per saperne di più su questo errore.",
-    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6663,6 +6671,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Colore fisso",
       "noOptionsMessage-no-fields-found": "Nessun campo trovato"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Carica"
@@ -7130,7 +7146,7 @@
     "rich-history-card": {
       "add-comment-form": "Aggiungi modulo di commento",
       "add-comment-tooltip": "Aggiungi commento",
-      "add-to-library": "Aggiungi alla libreria",
+      "add-to-library": "",
       "cancel": "Annulla",
       "confirm-delete": "Elimina",
       "copy-query-tooltip": "Copia la query negli appunti",
@@ -7242,7 +7258,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Aggiungi query dalla libreria",
+      "add-from-query-library": "",
       "query-add-button": "Aggiungi query",
       "query-add-button-aria-label": "Aggiungi query",
       "query-history-button": "Cronologia query",
@@ -9475,6 +9491,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9746,7 +9764,8 @@
       "message-name-required": "Il nome è obbligatorio",
       "message-reserved-name": "Questo è un nome riservato e non può essere utilizzato per una cartella.",
       "message-same-name": "Esiste già una dashboard o una cartella con lo stesso nome",
-      "message-same-name-general": "Esiste già una cartella o una dashboard nella cartella generale con lo stesso nome"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11234,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Elimina",
-      "confirm-delete-repository": "Desideri davvero eliminare la configurazione del repository?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Impossibile eliminare il repository",
       "success-repository-deleted": "Impostazioni del repository in coda per l'eliminazione",
-      "title-delete-repository": "Elimina configurazione repository",
-      "tooltip-delete-this-repository": "Elimina questo repository"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Torna ai repository",
@@ -11892,7 +11915,7 @@
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
       "remove-query": "Rimuovi query",
-      "replace-query-from-library": "Sostituisci con query dalla libreria",
+      "replace-query-from-library": "",
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
@@ -12742,6 +12765,9 @@
       "label-alt-text": "Testo alternativo",
       "label-title-text": "Testo del titolo"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -13033,6 +13059,7 @@
         "name-point-size": "Dimensione punto",
         "name-show-points": "Mostra punti",
         "name-show-thresholds": "Mostra soglie",
+        "name-show-values": "",
         "name-style": "Stile",
         "name-transform": "Trasforma",
         "transform-options": {

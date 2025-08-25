@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Tooltip } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -56,7 +54,6 @@ export function useConditionalRenderingEditor(
   }).addItem(
     new OptionsPaneItemDescriptor({
       title,
-      id: uuidv4(),
       render: () => <conditionalRenderingToRender.Component model={conditionalRenderingToRender} />,
     })
   );
