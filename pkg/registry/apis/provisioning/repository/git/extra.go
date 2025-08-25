@@ -27,7 +27,7 @@ func (e *extra) Type() provisioning.RepositoryType {
 func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	secure := e.decrypter(r)
 	cfg := r.Spec.Git
-	if ghCfg == nil {
+	if cfg == nil {
 		return nil, fmt.Errorf("git configuration is required")
 	}
 
