@@ -482,6 +482,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
+Note that the UID cannot be modified.
+
 **Example Response**:
 
 ```http
