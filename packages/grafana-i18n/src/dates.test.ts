@@ -43,6 +43,7 @@ describe('grafana-i18n dates', () => {
       timeStyle: 'short',
     });
 
-    expect(result).toBe('2025-08-24, 20:34');
+    expect(result).toContain('2025-08-24'); // YYY-MM-DD
+    expect(result).toBe('20:34'); // 24 hour time
   });
 });
