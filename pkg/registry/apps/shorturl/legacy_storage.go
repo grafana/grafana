@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -216,20 +215,18 @@ func convertRequesterToSignedInUser(requester identity.Requester) (*user.SignedI
 		return signedInUser, nil
 	}
 
+	// If it's a StaticRequester (service identity), convert it
+	if staticRequester, ok := requester.(*identity.StaticRequester); ok {
+		return &user.SignedInUser{
+			UserID: staticRequester.UserID, // Used for CreatedBy field
+			OrgID:  staticRequester.OrgID,  // Used in SQL queries
+		}, nil
+	}
+
 	// If it's an authn.Identity, use its SignedInUser method
 	if authnIdentity, ok := requester.(*authn.Identity); ok {
 		return authnIdentity.SignedInUser(), nil
 	}
 
-	// For all other identity types (background services, etc.), create a simple background user
-	orgID := requester.GetOrgID()
-	if orgID <= 0 {
-		orgID = 1 // Default to org 1 for system operations
-	}
-
-	return &user.SignedInUser{
-		OrgID:   orgID,
-		OrgRole: org.RoleAdmin, // Background services need admin access for cleanup operations
-		Login:   "grafana_background_service",
-	}, nil
+	return nil, fmt.Errorf("unsupported identity type")
 }

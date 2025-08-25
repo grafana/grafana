@@ -18,16 +18,19 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -54,12 +57,13 @@ type CleanUpService struct {
 	annotationCleaner         annotations.Cleaner
 	alertRuleService          AlertRuleService
 	clientConfigProvider      grafanaapiserver.RestConfigProvider
+	orgService                org.Service
 }
 
 func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider grafanaapiserver.RestConfigProvider) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider grafanaapiserver.RestConfigProvider, orgService org.Service) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		Features:                  Features,
@@ -76,6 +80,7 @@ func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serve
 		annotationCleaner:         annotationCleaner,
 		alertRuleService:          service,
 		clientConfigProvider:      clientConfigProvider,
+		orgService:                orgService,
 	}
 	return s
 }
@@ -92,7 +97,7 @@ func (j cleanUpJob) String() string {
 func (srv *CleanUpService) Run(ctx context.Context) error {
 	srv.cleanUpTmpFiles(ctx)
 
-	ticker := time.NewTicker(time.Minute * 10)
+	ticker := time.NewTicker(time.Minute * 1)
 	for {
 		select {
 		case <-ticker.C:
@@ -324,40 +329,48 @@ func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 	expirationTimestamp := expirationTime.Unix()
 	deletedCount := 0
 
-	// List all shortURLs across all namespaces
-	// TODO: how to target only this instance namespace in a background process?
-	shortURLs, err := client.Resource(gvr).Namespace("default").List(ctx, v1.ListOptions{Limit: 100})
+	// List and delete expired shortURLs across all namespaces
+	orgs, err := srv.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
-		logger.Error("Failed to list shortURLs", "error", err.Error())
+		logger.Error("Failed to list organizations", "error", err.Error())
 		return
 	}
 
-	// Check each shortURL for expiration
-	for _, item := range shortURLs.Items {
-		// Convert unstructured object to ShortURL struct
-		var shortURL v1alpha1.ShortURL
-		err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &shortURL)
+	for _, o := range orgs {
+		ctx, _ := identity.WithServiceIdentity(ctx, o.ID)
+		namespaceMapper := request.GetNamespaceMapper(srv.Cfg)
+		shortURLs, err := client.Resource(gvr).Namespace(namespaceMapper(o.ID)).List(ctx, v1.ListOptions{})
 		if err != nil {
-			logger.Error("Failed to convert unstructured object to ShortURL", "name", item.GetName(), "namespace", item.GetNamespace(), "error", err.Error())
-			continue
+			logger.Error("Failed to list shortURLs", "error", err.Error())
+			return
 		}
-
-		// Only delete if lastSeenAt is 0 (meaning it has not been accessed) and the creation time is older than the expiration time
-		if shortURL.Status.LastSeenAt == 0 && shortURL.CreationTimestamp.Unix() < expirationTimestamp {
-			namespace := shortURL.Namespace
-			name := shortURL.Name
-
-			err := client.Resource(gvr).Namespace(namespace).Delete(ctx, name, v1.DeleteOptions{})
+		// Check each shortURL for expiration
+		for _, item := range shortURLs.Items {
+			// Convert unstructured object to ShortURL struct
+			var shortURL v1alpha1.ShortURL
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &shortURL)
 			if err != nil {
-				// Check if it's a "not found" error, which is expected if the resource was already deleted
-				if k8serrors.IsNotFound(err) {
-					logger.Debug("ShortURL already deleted", "name", name, "namespace", namespace)
+				logger.Error("Failed to convert unstructured object to ShortURL", "name", item.GetName(), "namespace", item.GetNamespace(), "error", err.Error())
+				continue
+			}
+
+			// Only delete if lastSeenAt is 0 (meaning it has not been accessed) and the creation time is older than the expiration time
+			if shortURL.Status.LastSeenAt == 0 && shortURL.CreationTimestamp.Unix() < expirationTimestamp {
+				namespace := shortURL.Namespace
+				name := shortURL.Name
+
+				err := client.Resource(gvr).Namespace(namespace).Delete(ctx, name, v1.DeleteOptions{})
+				if err != nil {
+					// Check if it's a "not found" error, which is expected if the resource was already deleted
+					if k8serrors.IsNotFound(err) {
+						logger.Debug("ShortURL already deleted", "name", name, "namespace", namespace)
+					} else {
+						logger.Error("Failed to delete expired shortURL", "name", name, "namespace", namespace, "error", err.Error())
+					}
 				} else {
-					logger.Error("Failed to delete expired shortURL", "name", name, "namespace", namespace, "error", err.Error())
+					deletedCount++
+					logger.Debug("Successfully deleted expired shortURL", "name", name, "namespace", namespace, "creationTime", shortURL.CreationTimestamp.Unix(), "expirationTime", expirationTimestamp)
 				}
-			} else {
-				deletedCount++
-				logger.Debug("Successfully deleted expired shortURL", "name", name, "namespace", namespace, "creationTime", shortURL.CreationTimestamp.Unix(), "expirationTime", expirationTimestamp)
 			}
 		}
 	}
