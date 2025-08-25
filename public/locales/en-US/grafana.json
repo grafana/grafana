@@ -7559,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
       "folder-deleted-success": "Folder deleted"
     },
     "get-loading-nav": {
