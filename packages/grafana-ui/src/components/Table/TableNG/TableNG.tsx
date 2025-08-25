@@ -449,7 +449,8 @@ export function TableNG(props: TableNGProps) {
           if (canBeColorized) {
             const value = props.row[props.column.key];
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            style = { ...style, ...getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null) };
+            const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
+            Object.assign(style, cellColorStyles);
           }
 
           return (
@@ -568,11 +569,13 @@ export function TableNG(props: TableNGProps) {
               const tooltipHeight = rowHeightFn(props.row);
               let tooltipStyle: CSSProperties = { ...rowCellStyle };
               if (tooltipCanBeColorized) {
-                const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
-                tooltipStyle = {
-                  ...tooltipStyle,
-                  ...getCellColorInlineStyles(tooltipCellOptions, tooltipDisplayValue, applyToRowBgFn != null),
-                };
+                const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]);
+                const tooltipCellColorStyles = getCellColorInlineStyles(
+                  tooltipCellOptions,
+                  tooltipDisplayValue,
+                  applyToRowBgFn != null
+                );
+                Object.assign(tooltipStyle, tooltipCellColorStyles);
               }
 
               return (
