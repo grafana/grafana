@@ -341,15 +341,3 @@ func TestFactory_Build(t *testing.T) {
 		localExtra.AssertExpectations(t)
 	})
 }
-
-func TestFactory_Implementation(t *testing.T) {
-	t.Run("factory implements Factory interface", func(t *testing.T) {
-		factory, err := ProvideFactory([]Extra{})
-		require.NoError(t, err)
-		var _ Factory = factory
-	})
-
-	t.Run("mockExtra implements Extra interface", func(t *testing.T) {
-		var _ Extra = &MockExtra{}
-	})
-}
