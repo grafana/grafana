@@ -60,6 +60,7 @@ This binary currently wires informers and emits job-create notifications. In the
 #### TLS Configuration Examples
 
 - **Production with proper TLS verification**:
+
   ```bash
   ./bin/job-controller \
     --token-exchange-url=http://localhost:6481/sign/access-token \
@@ -70,6 +71,7 @@ This binary currently wires informers and emits job-create notifications. In the
   ```
 
 - **Mutual TLS authentication**:
+
   ```bash
   ./bin/job-controller \
     --token-exchange-url=http://localhost:6481/sign/access-token \
@@ -82,6 +84,7 @@ This binary currently wires informers and emits job-create notifications. In the
   ```
 
 - **Development with self-signed certificates (insecure)**:
+
   ```bash
   ./bin/job-controller \
     --token-exchange-url=http://localhost:6481/sign/access-token \
