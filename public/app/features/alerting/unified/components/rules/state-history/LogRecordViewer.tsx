@@ -5,12 +5,13 @@ import { Fragment, memo, useEffect } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { Box, Icon, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
 
 import { LogRecord, omitLabels } from './common';
+import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 type LogRecordViewerProps = {
   records: LogRecord[];
@@ -72,26 +73,48 @@ export const LogRecordViewerByTimestamp = memo(
               className={styles.listItemWrapper}
             >
               <Timestamp time={key} />
-              <div className={styles.logsContainer}>
-                {records.map(({ line }) => (
-                  <Fragment key={uniqueId()}>
-                    <AlertStateTag state={line.previous} size="sm" muted />
-                    <Icon name="arrow-right" size="sm" />
-                    <AlertStateTag state={line.current} />
-                    <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
-                    <div>
-                      {line.labels && (
-                        <TagList
-                          tags={omitLabels(Object.entries(line.labels), commonLabels).map(
-                            ([key, value]) => `${key}=${value}`
-                          )}
-                          onClick={onLabelClick}
-                        />
-                      )}
+              {records.map(({ line }, idx) => {
+                const id = line.fingerprint ?? `${key}-${idx}`;
+                return (
+                  <Fragment key={id}>
+                    <div className={styles.logsContainer}>
+                      <AlertStateTag state={line.previous} size="sm" muted />
+                      <Icon name="arrow-right" size="sm" />
+                      <AlertStateTag state={line.current} />
+                      <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                      <div>
+                        {line.labels && (
+                          <TagList
+                            tags={omitLabels(Object.entries(line.labels), commonLabels).map(
+                              ([key, value]) => `${key}=${value}`
+                            )}
+                            onClick={onLabelClick}
+                          />
+                        )}
+                      </div>
                     </div>
+                    {mapStateWithReasonToBaseState(line.current) === GrafanaAlertState.Error &&
+                      (line as any)?.error && (
+                        <div className={styles.errorRow} data-testid="state-history-error">
+                          <Box
+                            display="flex"
+                            borderStyle="solid"
+                            borderColor="error"
+                            backgroundColor="error"
+                            paddingY={1}
+                            paddingX={2}
+                            borderRadius="default"
+                          >
+                            <Text variant="bodySmall">
+                              <strong>{t('alerting.state-history.error-message-prefix', 'Error message:')}</strong>{' '}
+                              {(line as any).error}
+                            </Text>
+                          </Box>
+                        </div>
+                      )}
                   </Fragment>
-                ))}
-              </div>
+                );
+              })}
             </li>
           );
         })}
@@ -180,6 +203,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: 'max-content max-content max-content auto max-content',
     gap: theme.spacing(2, 1),
     alignItems: 'center',
+  }),
+  errorRow: css({
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing(0.5),
+    display: 'block',
+  }),
+  errorBox: css({
+    display: 'contents',
   }),
   logsScrollable: css({
     height: '500px',
