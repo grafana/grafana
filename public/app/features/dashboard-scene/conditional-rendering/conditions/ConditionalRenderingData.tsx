@@ -3,6 +3,7 @@ import { ReactElement, useMemo } from 'react';
 import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  CancelActivationHandler,
   SceneComponentProps,
   SceneDataProvider,
   sceneGraph,
@@ -55,9 +56,16 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
       return;
     }
 
+    // Be sure to activate the data provider so it doesn't get deactivated on item unmount
+    const dpDeactivate: CancelActivationHandler = this._dataProvider.activate();
+
     this._check();
 
     this._subs.add(this._dataProvider.subscribeToState(() => this._check()));
+
+    return () => {
+      dpDeactivate?.();
+    };
   }
 
   private _getObjectDataProvider(): SceneDataProvider | undefined {

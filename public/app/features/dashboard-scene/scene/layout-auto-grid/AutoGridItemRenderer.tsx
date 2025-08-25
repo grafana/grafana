@@ -40,7 +40,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragging: boolean;
           isRepeat?: boolean;
         }) =>
-          isConditionallyHidden && (!isEditing || !renderHidden) ? null : (
+          isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
                 ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: isDragging ? key : undefined }
@@ -48,33 +48,35 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
-              {isLazy ? (
-                <LazyLoader
-                  key={item.state.key!}
-                  className={cx(
-                    conditionalRenderingClass,
-                    styles.wrapper,
-                    isDragged && !isRepeat && styles.draggedWrapper,
-                    isDragged && isRepeat && styles.draggedRepeatWrapper,
-                    isConditionallyHidden && !isEditing && styles.hidden
-                  )}
-                >
-                  <item.Component model={item} />
-                  {conditionalRenderingOverlay}
-                </LazyLoader>
-              ) : (
-                <div
-                  className={cx(
-                    conditionalRenderingClass,
-                    styles.wrapper,
-                    isDragged && !isRepeat && styles.draggedWrapper,
-                    isDragged && isRepeat && styles.draggedRepeatWrapper
-                  )}
-                >
-                  <item.Component model={item} />
-                  {conditionalRenderingOverlay}
-                </div>
-              )}
+              {
+                // The lazy loader causes issues when used with conditional rendering
+                isLazy && (!isConditionallyHidden || !renderHidden) ? (
+                  <LazyLoader
+                    key={item.state.key!}
+                    className={cx(
+                      conditionalRenderingClass,
+                      styles.wrapper,
+                      isDragged && !isRepeat && styles.draggedWrapper,
+                      isDragged && isRepeat && styles.draggedRepeatWrapper
+                    )}
+                  >
+                    <item.Component model={item} />
+                    {conditionalRenderingOverlay}
+                  </LazyLoader>
+                ) : (
+                  <div
+                    className={cx(
+                      conditionalRenderingClass,
+                      styles.wrapper,
+                      isDragged && !isRepeat && styles.draggedWrapper,
+                      isDragged && isRepeat && styles.draggedRepeatWrapper
+                    )}
+                  >
+                    <item.Component model={item} />
+                    {conditionalRenderingOverlay}
+                  </div>
+                )
+              }
             </div>
           )
       ),
@@ -93,10 +95,6 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
   if (soloPanelContext) {
     return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
-  }
-
-  if (isConditionallyHidden && !isEditing) {
-    return null;
   }
 
   const isDragging = !!draggingKey;
