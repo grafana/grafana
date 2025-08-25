@@ -27,7 +27,7 @@ import { LOCALES } from 'app/core/internationalization/locales';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
-import { PreferencesSpec } from '../../services/PreferencesService';
+import { PreferencesSpec as UserPreferencesDTO } from '../../services/PreferencesService';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 export interface Props {
@@ -37,10 +37,6 @@ export interface Props {
   onConfirm?: () => Promise<boolean>;
 }
 
-export type State = PreferencesSpec & {
-  isLoading: boolean;
-  isSubmitting: boolean;
-};
 function getLanguageOptions(): ComboboxOption[] {
   const languageOptions = LANGUAGES.map((v) => ({
     value: v.code,
@@ -93,34 +89,39 @@ function getRegionalFormatOptions(): ComboboxOption[] {
   return options;
 }
 
-function getDateFormatOptions() {
+function getDateStyleOptions() {
   return [
-    { value: '', label: t('common.date_format.default', 'Default') },
+    { value: '', label: t('shared-preferences.date-style.default', 'Default') },
     {
       value: 'localized',
-      label: t('common.date_format.localized', 'Localized'),
+      label: t('shared-preferences.date-style.localized', 'Localized'),
       description: t(
-        'common.date_format.localized_description',
+        'shared-preferences.date-style.localized_description',
         'Dates formatted according to your regional format preference'
       ),
     },
     {
       value: 'international',
-      label: t('common.date_format.international', 'International'),
+      label: t('shared-preferences.date-style.international', 'International'),
       description: t(
-        'common.date_format.international_description',
+        'shared-preferences.date-style.international_description',
         'Dates formatted according to the international format, typically YYYY-MM-DD'
       ),
     },
   ];
 }
 
+export type State = UserPreferencesDTO & {
+  isLoading: boolean;
+  isSubmitting: boolean;
+};
+
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];
   regionalFormatOptions: ComboboxOption[];
-  dateFormatOptions: ComboboxOption[];
+  dateStyleOptions: ComboboxOption[];
 
   constructor(props: Props) {
     super(props);
@@ -150,7 +151,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }));
     this.languageOptions = getLanguageOptions();
     this.regionalFormatOptions = getRegionalFormatOptions();
-    this.dateFormatOptions = getDateFormatOptions();
+    this.dateStyleOptions = getDateStyleOptions();
 
     // Add default option
     this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
@@ -170,7 +171,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: prefs.weekStart,
       language: prefs.language,
       regionalFormat: prefs.regionalFormat,
-      dateStyle: prefs.dateStyle || '',
+      dateStyle: prefs.dateStyle,
       queryHistory: prefs.queryHistory,
       navbar: prefs.navbar,
     });
@@ -179,9 +180,23 @@ export class SharedPreferences extends PureComponent<Props, State> {
   onSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
+    if (!confirmationResult) {
+      return;
+    }
 
-    if (confirmationResult) {
-      const {
+    const { homeDashboardUID, theme, timezone, weekStart, language, regionalFormat, dateStyle, queryHistory, navbar } =
+      this.state;
+
+    reportInteraction('grafana_preferences_save_button_clicked', {
+      preferenceType: this.props.preferenceType,
+      theme,
+      language,
+    });
+
+    this.setState({ isSubmitting: true });
+
+    await this.service
+      .update({
         homeDashboardUID,
         theme,
         timezone,
@@ -191,30 +206,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
         dateStyle,
         queryHistory,
         navbar,
-      } = this.state;
-      reportInteraction('grafana_preferences_save_button_clicked', {
-        preferenceType: this.props.preferenceType,
-        theme,
-        language,
+      })
+      .finally(() => {
+        this.setState({ isSubmitting: false });
       });
-      this.setState({ isSubmitting: true });
-      await this.service
-        .update({
-          homeDashboardUID,
-          theme,
-          timezone,
-          weekStart,
-          language,
-          regionalFormat,
-          queryHistory,
-          navbar,
-          dateStyle,
-        } as any)
-        .finally(() => {
-          this.setState({ isSubmitting: false });
-        });
-      window.location.reload();
-    }
+
+    window.location.reload();
   };
 
   onThemeChanged = (value: ComboboxOption<string>) => {
@@ -411,7 +408,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                   onChange={(locale: ComboboxOption | null) => this.onLocaleChanged(locale?.value ?? '')}
                   options={this.regionalFormatOptions}
                   placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
-                  id="locale-preference-select"
+                  id="locale-preference"
                 />
               </Field>
 
@@ -419,25 +416,25 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 loading={isLoading}
                 disabled={isLoading}
                 label={
-                  <Label htmlFor="date-format-preference">
+                  <Label htmlFor="date-style-preference">
                     <span className={styles.labelText}>
-                      <Trans i18nKey="shared-preferences.fields.date-format-preference-label">Date format</Trans>
+                      <Trans i18nKey="shared-preferences.fields.date-style-label">Date style</Trans>
                     </span>
                     <FeatureBadge featureState={FeatureState.preview} />
                   </Label>
                 }
                 description={t(
-                  'shared-preferences.fields.date-format-preference-description',
-                  'Choose how dates are formatted throughout the interface'
+                  'shared-preferences.fields.date-style-description',
+                  'Select how dates are displayed throughout the interface'
                 )}
-                data-testid="User preferences dateFormat drop down"
+                data-testid="User preferences date format drop down"
               >
                 <Combobox
-                  value={this.dateFormatOptions.find((opt) => opt.value === dateStyle)?.value || ''}
-                  onChange={(option: ComboboxOption | null) => this.onDateStyleChanged(option?.value ?? '')}
-                  options={this.dateFormatOptions}
-                  placeholder={t('shared-preferences.fields.date-format-preference-placeholder', 'Choose date format')}
-                  id="date-format-preference"
+                  value={this.dateStyleOptions.find((loc) => loc.value === dateStyle)?.value || ''}
+                  onChange={(newValue: ComboboxOption | null) => this.onDateStyleChanged(newValue?.value ?? '')}
+                  options={this.dateStyleOptions}
+                  placeholder={t('shared-preferences.fields.date-style-placeholder', 'Choose date format')}
+                  id="date-style-preference"
                 />
               </Field>
             </>

@@ -3,11 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { PreferencesSpec } from '../../services/PreferencesService';
+import { config } from '@grafana/runtime';
+
+import { PreferencesSpec as UserPreferencesDTO } from '../../services/PreferencesService';
 
 import SharedPreferences from './SharedPreferences';
 
-const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: string) => {
+const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: string | RegExp) => {
   await userEvent.click(input);
   const option = await screen.findByRole('option', { name: optionOrOptions });
   await userEvent.click(option);
@@ -71,7 +73,7 @@ jest.mock('app/core/services/backend_srv', () => {
   };
 });
 
-const mockPreferences: PreferencesSpec = {
+const mockPreferences: UserPreferencesDTO = {
   timezone: 'browser',
   weekStart: 'monday',
   theme: 'light',
@@ -80,11 +82,9 @@ const mockPreferences: PreferencesSpec = {
     homeTab: '',
   },
   language: '',
-  regionalFormat: 'en',
-  dateStyle: '',
 };
 
-const defaultPreferences: PreferencesSpec = {
+const defaultPreferences: UserPreferencesDTO = {
   timezone: '',
   weekStart: '',
   theme: '',
@@ -93,8 +93,6 @@ const defaultPreferences: PreferencesSpec = {
     homeTab: '',
   },
   language: '',
-  regionalFormat: '',
-  dateStyle: '',
 };
 
 const mockPrefsPatch = jest.fn().mockResolvedValue(undefined);
@@ -125,47 +123,59 @@ describe('SharedPreferences', () => {
       configurable: true,
       value: { reload: mockReload },
     });
+
     comboboxTestSetup();
   });
 
   afterAll(() => {
     Object.defineProperty(window, 'location', { configurable: true, value: original });
   });
-
-  beforeEach(async () => {
-    render(<SharedPreferences {...props} />);
-
-    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
-  });
-
   it('renders the theme preference', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     const themeSelect = await screen.findByRole('combobox', { name: 'Interface theme' });
     expect(themeSelect).toHaveValue('Light');
   });
 
   it('renders the home dashboard preference', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
     await waitFor(() => {
       expect(dashboardSelect).toHaveTextContent('My Dashboard');
     });
   });
 
-  it('renders the timezone preference', () => {
+  it('renders the timezone preference', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     const tzSelect = getSelectParent(screen.getByLabelText('Timezone'));
     expect(tzSelect).toHaveTextContent('Browser Time');
   });
 
   it('renders the week start preference', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     const weekSelect = await screen.findByRole('combobox', { name: 'Week start' });
     expect(weekSelect).toHaveValue('Monday');
   });
 
   it('renders the default language preference', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     const langSelect = await screen.findByRole('combobox', { name: /language/i });
     expect(langSelect).toHaveValue('Default');
   });
 
   it('does not render the pseudo-locale', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     const langSelect = await screen.findByRole('combobox', { name: /language/i });
 
     // Open the combobox and wait for the options to be rendered
@@ -184,6 +194,9 @@ describe('SharedPreferences', () => {
   });
 
   it('saves the users new preferences', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Dark');
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Saturday');
@@ -204,6 +217,9 @@ describe('SharedPreferences', () => {
   });
 
   it('saves the users default preferences', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Default');
 
     // there's no default option in this dropdown - there's a clear selection button
@@ -222,63 +238,41 @@ describe('SharedPreferences', () => {
   });
 
   it('refreshes the page after saving preferences', async () => {
+    render(<SharedPreferences {...props} />);
+    await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
+
     await userEvent.click(screen.getByText('Save'));
     expect(mockReload).toHaveBeenCalled();
   });
 
-  it('renders the date format preference when feature flag is enabled', async () => {
-    // Mock the feature flag to be enabled
-    const originalConfig = (global as any).grafanaBootData;
-    (global as any).grafanaBootData = {
-      ...originalConfig,
-      settings: {
-        ...originalConfig?.settings,
-        featureToggles: {
-          ...originalConfig?.settings?.featureToggles,
-          localeFormatPreference: true,
-        },
-      },
-    };
+  describe('with the localeFormatPreference toggle enabled', () => {
+    beforeEach(() => {
+      mockPrefsUpdate.mockClear();
+      config.featureToggles.localeFormatPreference = true;
+    });
 
-    render(<SharedPreferences {...props} />);
+    it('renders the date format preference when feature flag is enabled', async () => {
+      render(<SharedPreferences {...props} />);
 
-    // Check that date format preference is rendered
-    const dateFormatSelect = await screen.findByRole('combobox', { name: /date format/i });
-    expect(dateFormatSelect).toHaveValue('localized');
+      // Check that date format preference is rendered
+      const dateFormatSelect = await screen.findByRole('combobox', { name: /date style/i });
+      expect(dateFormatSelect).toBeInTheDocument();
+    });
 
-    // Restore original config
-    (global as any).grafanaBootData = originalConfig;
-  });
+    it('saves date format preference changes', async () => {
+      render(<SharedPreferences {...props} />);
 
-  it('saves date format preference changes', async () => {
-    // Mock the feature flag to be enabled
-    const originalConfig = (global as any).grafanaBootData;
-    (global as any).grafanaBootData = {
-      ...originalConfig,
-      settings: {
-        ...originalConfig?.settings,
-        featureToggles: {
-          ...originalConfig?.settings?.featureToggles,
-          localeFormatPreference: true,
-        },
-      },
-    };
+      // Change date format to international
+      const dateFormatSelect = await screen.findByRole('combobox', { name: /date style/i });
+      selectComboboxOptionInTest(dateFormatSelect, /international/i);
 
-    render(<SharedPreferences {...props} />);
+      await userEvent.click(screen.getByText('Save'));
 
-    // Change date format to international
-    const dateFormatSelect = await screen.findByRole('combobox', { name: /date format/i });
-    await selectComboboxOptionInTest(dateFormatSelect, 'International');
-
-    await userEvent.click(screen.getByText('Save'));
-
-    expect(mockPrefsUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dateStyle: 'international',
-      })
-    );
-
-    // Restore original config
-    (global as any).grafanaBootData = originalConfig;
+      expect(mockPrefsUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dateStyle: 'international',
+        })
+      );
+    });
   });
 });
