@@ -6,12 +6,12 @@ import { Domain } from '../types';
 
 const { colors } = config.theme2;
 
-type state = 'firing' | 'pending' | 'normal';
+type state = 'firing' | 'pending' | 'unknown';
 
 const STATE_COLORS: Record<state, string> = {
   firing: colors.error.main,
   pending: colors.warning.main,
-  normal: colors.success.main,
+  unknown: colors.background.primary,
 };
 
 interface StateRectangle {
@@ -58,7 +58,7 @@ export function processTimelineData(
           for (let minute = 1; minute < minuteDiff; minute++) {
             filledData.push({
               time: new Date(currentTime + minute * 60 * 1000),
-              state: 'normal',
+              state: 'unknown',
             });
           }
         }
