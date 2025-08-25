@@ -79,7 +79,7 @@ func BenchmarkBleveQuery(b *testing.B) {
 	}
 }
 
-func newTestWriter(size int, batchSize int) IndexWriter {
+func newTestWriter(size int, batchSize int) resource.BuildFn {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",

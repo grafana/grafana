@@ -691,3 +691,6 @@ func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRe
 func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
 	return nil, nil
 }
+func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
+	return nil
+}
