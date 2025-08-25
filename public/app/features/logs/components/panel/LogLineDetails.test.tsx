@@ -742,4 +742,26 @@ describe('LogLineDetails', () => {
 
     expect(screen.getByText('Could not retrieve trace.')).toBeInTheDocument();
   });
+
+  test('shows attribute extension links when they are available', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'Open service overview for label',
+          path: 'https://example.com',
+          category: 'label',
+          icon: 'compass',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    setup(undefined, { labels: { label: 'value' } });
+
+    expect(screen.getByText('label')).toBeInTheDocument();
+    expect(screen.getByText('value')).toBeInTheDocument();
+    expect(screen.getByText('Open service overview for label')).toBeInTheDocument();
+  });
 });
