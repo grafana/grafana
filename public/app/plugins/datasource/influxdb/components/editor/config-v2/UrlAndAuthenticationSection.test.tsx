@@ -7,6 +7,7 @@ import { createTestProps } from './helpers';
 
 describe('UrlAndAuthenticationSection', () => {
   const onOptionsChangeMock = jest.fn();
+  let consoleSpy: jest.SpyInstance;
 
   const defaultProps = createTestProps({
     options: {
@@ -24,7 +25,13 @@ describe('UrlAndAuthenticationSection', () => {
   });
 
   beforeEach(() => {
+    // Mock console.error to suppress React act() warnings
+    consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
   });
 
   it('calls onOptionsChange when URL is changed', () => {
@@ -223,6 +230,93 @@ describe('UrlAndAuthenticationSection', () => {
     });
   });
 
+  it('sets product to OSS 1.x when ping returns a match for OSS 1.x', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    mockFetchPing({ ok: true, build: 'OSS', version: '1.8.10' });
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://someinfluxoss1url.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB OSS 1.x',
+            version: undefined, 
+          }),
+        })
+      );
+    });
+  });
+
+  it('sets product to OSS 2.x when ping returns a match for OSS 2.x', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    mockFetchPing({ ok: true, build: 'OSS', version: '2.7.1' });
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://someinfluxoss2url.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: 'InfluxDB OSS 2.x',
+            version: undefined, 
+          }),
+        })
+      );
+    });
+  });
+
+  it('sets product as undefined if ping does not return a match', async () => {
+    const props = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { ...defaultProps.options.jsonData, url: '' },
+      },
+    };
+
+    mockFetchPing({ ok: true, build: undefined, version: undefined });
+
+    render(<UrlAndAuthenticationSection {...props} />);
+    const input = screen.getByTestId('influxdb-v2-config-url-input');
+
+    onOptionsChangeMock.mockClear();
+    fireEvent.blur(input, { target: { value: 'https://no-known-pattern.example.com' } });
+
+    await waitFor(() => {
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jsonData: expect.objectContaining({
+            product: undefined,
+            version: undefined,
+          }),
+        })
+      );
+    });
+  });
+
   it('clears product and version when URL changes to one without a match', async () => {
     const props = {
       ...defaultProps,
@@ -263,5 +357,26 @@ describe('UrlAndAuthenticationSection', () => {
       );
     });
   });
-
 });
+
+export function mockFetchPing(resp: { ok?: boolean; build?: string; version?: string } = {}) {
+  const { ok = true, build, version } = resp;
+
+  global.fetch = jest.fn().mockResolvedValue({
+    ok,
+    headers: {
+      get: (key: string) => {
+        const normalized = key.toLowerCase();
+        if (normalized === 'x-influxdb-build') {
+          return build ?? null;
+        }
+        if (normalized === 'x-influxdb-version') {
+          return version ?? null;
+        }
+        return null;
+      },
+    },
+  });
+};
+
+
