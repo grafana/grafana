@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -18,8 +21,16 @@ export interface Props {
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
 
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+  const provisionedFolders = useMemo(() => {
+    if (!settingsData) {
+      return [];
+    }
+    return settingsData.items.map((repo) => repo.name);
+  }, [settingsData]);
 
   const onMove = async () => {
     if (moveTarget !== undefined) {
@@ -52,7 +63,12 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
       <Space v={3} />
 
       <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
-        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
+        <ProvisioningAwareFolderPicker
+          value={moveTarget}
+          excludeUIDs={[...selectedFolders, ...provisionedFolders]}
+          onChange={setMoveTarget}
+          isNonProvisionedFolder
+        />
       </Field>
 
       <Modal.ButtonRow>

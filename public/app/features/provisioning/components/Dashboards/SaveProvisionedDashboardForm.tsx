@@ -8,7 +8,6 @@ import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
@@ -23,6 +22,7 @@ import {
 
 import { ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedMeta } from '../utils/getProvisionedMeta';
@@ -207,7 +207,8 @@ export function SaveProvisionedDashboardForm({
                   name={'folder'}
                   render={({ field: { ref, value, onChange, ...field } }) => {
                     return (
-                      <FolderPicker
+                      <ProvisioningAwareFolderPicker
+                        // root folder uid
                         onChange={async (uid?: string, title?: string) => {
                           onChange({ uid, title });
                           // Update folderUid URL param
@@ -222,6 +223,7 @@ export function SaveProvisionedDashboardForm({
                         }}
                         value={value.uid}
                         {...field}
+                        repositoryName={repository?.name}
                       />
                     );
                   }}

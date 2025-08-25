@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { FolderPicker, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
@@ -17,6 +17,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { generateTimestamp } from '../utils/timestamp';
@@ -129,12 +130,13 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                 error={errors.targetFolderUID?.message}
                 invalid={!!errors.targetFolderUID}
               >
-                <FolderPicker
+                <ProvisioningAwareFolderPicker
                   value={targetFolderUID}
                   onChange={(uid) => {
                     setTargetFolderUID(uid || '');
                     clearErrors('targetFolderUID');
                   }}
+                  repositoryName={repository.name}
                 />
               </Field>
               <ResourceEditFormSharedFields
