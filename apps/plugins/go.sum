@@ -59,8 +59,8 @@ github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914 h1:qcSGhr691f1mmPHwg
 github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914/go.mod h1:OiN4P4aC6LwLzLbEupH3Ue83VfQoNMfG48rsna8jI/E=
 github.com/grafana/grafana-app-sdk v0.40.3 h1:JFo7uAfbAJUfZ9neD7/4sODKm1xgu9zhckclH/N4DYU=
 github.com/grafana/grafana-app-sdk v0.40.3/go.mod h1:j0KzHo3Sa6kd+lnwSScBNoV9Vobkg/YY9HtEjxpyPrk=
-github.com/grafana/grafana-app-sdk/logging v0.40.2 h1:HQ1+y9Od92iMbWWB54QxiYpNtCvYGUVpyxvxZ7ywB1k=
-github.com/grafana/grafana-app-sdk/logging v0.40.2/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
+github.com/grafana/grafana-app-sdk/logging v0.40.3 h1:2VXsXXEQiqAavRP8wusRDB6rDqf5lufP7A6NfjELqPE=
+github.com/grafana/grafana-app-sdk/logging v0.40.3/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250428110029-a8ea72012bde h1:ydSrBIOCxJQ84+JU+cyYsOLL40QeXrB7rYfsY/ezU4w=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250428110029-a8ea72012bde/go.mod h1:3MwgP0ISxGviTy3ZUJZsNz/56NNtHztMlH+gcxDt6Tw=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 h1:X5VWvz21y3gzm9Nw/kaUeku/1+uBhcekkmy4IkffJww=

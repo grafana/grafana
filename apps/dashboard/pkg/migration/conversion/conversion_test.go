@@ -9,8 +9,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -27,7 +28,7 @@ func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
-	versions := []v1.Object{
+	versions := []metav1.Object{
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
 		&dashv1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
 		&dashv2alpha1.Dashboard{Spec: dashv2alpha1.DashboardSpec{Title: "dashboardV2alpha1"}},
@@ -110,13 +111,13 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			require.True(t, ok, "apiVersion not found or not a string")
 
 			// Parse group and version from apiVersion (format: "group/version")
-			parts := strings.Split(apiVersion, "/")
-			require.Equal(t, 2, len(parts), "apiVersion should be in format 'group/version'")
-			sourceVersion := parts[1]
+			gv, err := schema.ParseGroupVersion(apiVersion)
+			require.NoError(t, err)
+			require.Equal(t, dashv0.GROUP, gv.Group)
 
 			// Create source object based on version
-			var sourceDash v1.Object
-			switch sourceVersion {
+			var sourceDash metav1.Object
+			switch gv.Version {
 			case "v0alpha1":
 				var dash dashv0.Dashboard
 				err = json.Unmarshal(inputData, &dash)
@@ -134,7 +135,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 				err = json.Unmarshal(inputData, &dash)
 				sourceDash = &dash
 			default:
-				t.Fatalf("Unsupported source version: %s", sourceVersion)
+				t.Fatalf("Unsupported source version: %s", gv.Version)
 			}
 			require.NoError(t, err, "Failed to unmarshal dashboard into typed object")
 
@@ -157,22 +158,26 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 				if kind.Kind == "Dashboard" {
 					for _, version := range kind.Versions {
 						// Skip converting to the same version
-						if version.VersionName == sourceVersion {
+						if version.VersionName == gv.Version {
 							continue
 						}
 
 						filename := fmt.Sprintf("%s.%s.json", originalName, version.VersionName)
+						typeMeta := metav1.TypeMeta{
+							APIVersion: fmt.Sprintf("%s/%s", dashv0.APIGroup, version.VersionName),
+							Kind:       kind.Kind, // Dashboard
+						}
 
 						// Create target object based on version
 						switch version.VersionName {
 						case "v0alpha1":
-							targetVersions[filename] = &dashv0.Dashboard{}
+							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
 						case "v1beta1":
-							targetVersions[filename] = &dashv1.Dashboard{}
+							targetVersions[filename] = &dashv1.Dashboard{TypeMeta: typeMeta}
 						case "v2alpha1":
-							targetVersions[filename] = &dashv2alpha1.Dashboard{}
+							targetVersions[filename] = &dashv2alpha1.Dashboard{TypeMeta: typeMeta}
 						case "v2beta1":
-							targetVersions[filename] = &dashv2beta1.Dashboard{}
+							targetVersions[filename] = &dashv2beta1.Dashboard{TypeMeta: typeMeta}
 						default:
 							t.Logf("Unknown version %s, skipping", version.VersionName)
 						}
@@ -192,14 +197,14 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 					require.NoError(t, err, "Conversion failed for %s", filename)
 
 					// Test the changes in the conversion result
-					testConversion(t, target.(v1.Object), filename, outDir)
+					testConversion(t, target.(metav1.Object), filename, outDir)
 				})
 			}
 		})
 	}
 }
 
-func testConversion(t *testing.T, convertedDash v1.Object, filename, outputDir string) {
+func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputDir string) {
 	t.Helper()
 
 	outPath := filepath.Join(outputDir, filename)

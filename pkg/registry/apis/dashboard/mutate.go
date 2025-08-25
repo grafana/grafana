@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/utils/ptr"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -43,6 +44,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			internalID = int64(id)
 		}
 		resourceInfo = dashboardV0.DashboardResourceInfo
+
 	case *dashboardV1.Dashboard:
 		delete(v.Spec.Object, "uid")
 		delete(v.Spec.Object, "version")
@@ -55,7 +57,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		if migrationErr != nil {
 			v.Status.Conversion = &dashboardV1.DashboardConversionStatus{
 				Failed: true,
-				Error:  migrationErr.Error(),
+				Error:  ptr.To(migrationErr.Error()),
 			}
 		}
 
@@ -68,7 +70,6 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
-
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -80,7 +81,6 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
-
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 		// Noop for V2
