@@ -17,7 +17,7 @@ import { LogLineDetailsHeader } from './LogLineDetailsHeader';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { useLogListContext } from './LogListContext';
-import { getTraceFromLinks } from './links';
+import { getTempoTraceFromLinks } from './links';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
@@ -68,7 +68,7 @@ export const LogLineDetailsComponent = memo(
       [extensionLinks, log.labels]
     );
 
-    const trace = useMemo(() => getTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
+    const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
     const groupedLabels = useMemo(
       () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),

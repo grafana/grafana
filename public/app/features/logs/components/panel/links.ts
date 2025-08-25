@@ -2,13 +2,13 @@ import { LinkModel } from '@grafana/data';
 
 import { FieldDef } from '../logParser';
 
-export function getTraceFromLinks(fields: FieldDef[]) {
+export function getTempoTraceFromLinks(fields: FieldDef[]) {
   for (const field of fields) {
     if (!field.links) {
       continue;
     }
     for (const link of field.links) {
-      const trace = getTraceFromLink(link);
+      const trace = getTempoTraceFromLink(link);
       if (trace) {
         return trace;
       }
@@ -17,7 +17,7 @@ export function getTraceFromLinks(fields: FieldDef[]) {
   return null;
 }
 
-function getTraceFromLink(link: LinkModel) {
+function getTempoTraceFromLink(link: LinkModel) {
   const queryData = getDataSourceAndQueryFromLink(link);
   if (!queryData || queryData.queryType !== 'traceql') {
     return null;
