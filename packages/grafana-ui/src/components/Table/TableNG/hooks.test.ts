@@ -477,7 +477,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5, wrappedCount: jest.fn(() => 2) },
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
           sortColumns: [],
         });
       });
@@ -486,7 +486,7 @@ describe('TableNG hooks', () => {
     });
 
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
-      const countFn = jest.fn(() => 1);
+      const heightFn = jest.fn(() => 20);
 
       const { fields } = setupData();
 
@@ -512,13 +512,13 @@ describe('TableNG hooks', () => {
           fields: modifiedFields,
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
           sortColumns: [],
           showTypeIcons: false,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1);
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 22);
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -543,13 +543,27 @@ describe('TableNG hooks', () => {
           fields: modifiedFields,
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
           sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1);
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+    });
+
+    it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields,
+          columnWidths: [100, 100, 100, 100],
+          enabled: true,
+          typographyCtx,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(28);
     });
   });
 
@@ -685,9 +699,9 @@ describe('TableNG hooks', () => {
       });
     });
 
-    // we test the lineCounters and getRowHeight directly to check that all of that
-    // math is working correctly. we mainly want to confirm here that the
-    // cache is clearing and that the local logic in this hook works.
+    // we test the cell height measurerers and getRowHeight directly to check
+    //that all of that  math is working correctly. we mainly want to confirm that
+    // the cache is clearing and that the local logic in this hook works.
     describe('wrapped columns', () => {
       let rows: TableRow[];
       let fieldsWithWrappedText: Field[];
@@ -749,14 +763,14 @@ describe('TableNG hooks', () => {
       it('adjusts the width of the columns based on the cell padding and border', () => {
         fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
 
-        const wrappedCountFn = jest.fn(() => 2);
-        const estimateLinesFn = jest.fn(() => 2);
+        const measureHeightFn = jest.fn(() => 40);
+        const estimateHeightFn = jest.fn(() => 40);
         const { result } = renderHook(() => {
           const rowHeight = useRowHeight({
             fields: fieldsWithWrappedText,
             columnWidths: [100, 100, 100],
             defaultHeight: 40,
-            typographyCtx: { ...typographyCtx, wrappedCount: wrappedCountFn, estimateLines: estimateLinesFn },
+            typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
             hasNestedFrames: false,
             expandedRows: new Set(),
           });
@@ -768,11 +782,12 @@ describe('TableNG hooks', () => {
 
         expect(result.current(rows[0])).toEqual(expect.any(Number));
 
-        expect(estimateLinesFn).toHaveBeenCalledWith(
+        expect(measureHeightFn).toHaveBeenCalledWith(
           'Annie Lennox',
           100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
           fieldsWithWrappedText[0],
-          0
+          0,
+          22
         );
       });
     });

@@ -2221,6 +2221,13 @@
       "preview": "Förhandsgranska",
       "previewCondition": "Förhandsgranska varningsregeltillstånd"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Lägg till kontaktpunktsintegrering",
       "body-attention": "Eftersom det inte finns någon standardpolicy konfigurerad ännu kommer denna kontaktpunkt automatiskt att ställas in som standard.",
@@ -3543,7 +3550,6 @@
       "button-cancel": "Avbryt",
       "button-move": "Flytta",
       "button-moving": "Flyttar …",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3749,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Pilriktning",
+    "category-arrow-direction": "",
     "category-background": "Bakgrund",
     "category-border": "Ram",
     "category-canvas": "Rityta",
@@ -3781,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Aktivera val av experimentella elementtyper",
     "description-inline-editing": "Aktivera direkt redigering av panelen",
     "description-pan-zoom": "Aktivera panorering och zoom",
-    "direction-options": {
-      "label-both": "Båda",
-      "label-forward": "Framåt",
-      "label-none": "Ingen",
-      "label-reverse": "Omvänt"
-    },
     "drone-front-item": {
       "category-drone-front": "Drönare (front)",
       "name-roll-angle": "Rullvinkel"
@@ -6413,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicka <2>här</2> för att läsa mer om detta fel.",
-    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6664,6 +6671,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Fast färg",
       "noOptionsMessage-no-fields-found": "Inga fält hittades"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Ladda upp"
@@ -7131,7 +7146,7 @@
     "rich-history-card": {
       "add-comment-form": "Lägg till kommentarsformulär",
       "add-comment-tooltip": "Lägg till kommentar",
-      "add-to-library": "Lägg till i biblioteket",
+      "add-to-library": "",
       "cancel": "Avbryt",
       "confirm-delete": "Ta bort",
       "copy-query-tooltip": "Kopiera fråga till urklippet",
@@ -7243,7 +7258,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Lägg till fråga från biblioteket",
+      "add-from-query-library": "",
       "query-add-button": "Lägg till fråga",
       "query-add-button-aria-label": "Lägg till fråga",
       "query-history-button": "Frågehistorik",
@@ -9476,6 +9491,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9747,7 +9764,8 @@
       "message-name-required": "Namn är obligatoriskt",
       "message-reserved-name": "Detta är ett reserverat namn och kan inte användas för en mapp.",
       "message-same-name": "En kontrollpanel eller en mapp med samma namn finns redan",
-      "message-same-name-general": "En mapp eller kontrollpanel i den allmänna mappen med samma namn finns redan"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11235,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Ta bort",
-      "confirm-delete-repository": "Är du säker på att du vill radera lagringsplatskonfigurationen?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Det gick inte att radera lagringsplatsen",
       "success-repository-deleted": "Lagringsplatsinställningar köade för radering",
-      "title-delete-repository": "Radera lagringsplatskonfiguration",
-      "tooltip-delete-this-repository": "Radera den här lagringsplatsen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
@@ -11886,7 +11908,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Dölj frågeraden",
       "datasource-help": "Visa hjälp med datakälla",
       "drag-and-drop": "Ändra ordning genom dra och släpp",
@@ -11894,14 +11915,10 @@
       "expand-row": "Expandera frågeraden",
       "hide-response": "Dölj svar",
       "remove-query": "Ta bort fråga",
-      "replace-query-from-library": "Ersätt med fråga från biblioteket",
+      "replace-query-from-library": "",
       "show-response": "Visa svar"
     },
-    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
   },
   "recently-deleted": {
     "buttons": {
@@ -12748,6 +12765,9 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Rubriktext"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -13039,6 +13059,7 @@
         "name-point-size": "Punktstorlek",
         "name-show-points": "Visa poäng",
         "name-show-thresholds": "Visa trösklar",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Omvandla",
         "transform-options": {

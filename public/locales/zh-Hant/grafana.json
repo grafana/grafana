@@ -2212,6 +2212,13 @@
       "preview": "預覽",
       "previewCondition": "預覽警報規則條件"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "新增聯絡點整合",
       "body-attention": "由於尚未設定預設原則，此聯絡點將自動設定為預設。",
@@ -3530,7 +3537,6 @@
       "button-cancel": "取消",
       "button-move": "移動",
       "button-moving": "正在移動…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3731,7 +3737,7 @@
         }
       }
     },
-    "category-arrow-direction": "箭頭方向",
+    "category-arrow-direction": "",
     "category-background": "背景",
     "category-border": "邊框",
     "category-canvas": "畫布",
@@ -3763,15 +3769,17 @@
         "auto": "自動"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "啟用實驗元素類型的選擇",
     "description-inline-editing": "啟用直接編輯面板",
     "description-pan-zoom": "啟用平移和縮放",
-    "direction-options": {
-      "label-both": "兩者",
-      "label-forward": "正向",
-      "label-none": "無",
-      "label-reverse": "反向"
-    },
     "drone-front-item": {
       "category-drone-front": "無人機前面",
       "name-roll-angle": "滾動角度"
@@ -6392,8 +6400,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "點選<2>此處</2>，了解更多關於此錯誤的資訊。",
-    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6643,6 +6650,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "固定色彩",
       "noOptionsMessage-no-fields-found": "未找到欄位"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "上傳"
@@ -7110,7 +7125,7 @@
     "rich-history-card": {
       "add-comment-form": "新增評論表單",
       "add-comment-tooltip": "新增評論",
-      "add-to-library": "新增至資料庫",
+      "add-to-library": "",
       "cancel": "取消",
       "confirm-delete": "刪除",
       "copy-query-tooltip": "將查詢複製到剪貼簿",
@@ -7222,7 +7237,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "從資料庫新增查詢",
+      "add-from-query-library": "",
       "query-add-button": "新增查詢",
       "query-add-button-aria-label": "新增查詢",
       "query-history-button": "查詢歷史記錄",
@@ -9447,6 +9462,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9718,7 +9735,8 @@
       "message-name-required": "名稱為必填",
       "message-reserved-name": "這是保留名稱，無法用於資料夾。",
       "message-same-name": "儀表板或資料夾名稱已存在",
-      "message-same-name-general": "一般資料夾中已存在同名的資料夾或儀表板"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11200,11 +11218,15 @@
     },
     "delete-repository-button": {
       "button-delete": "刪除",
-      "confirm-delete-repository": "確定要刪除儲存庫設定嗎？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "無法刪除儲存庫",
       "success-repository-deleted": "儲存庫設定已排入刪除佇列",
-      "title-delete-repository": "刪除儲存庫設定",
-      "tooltip-delete-this-repository": "刪除此儲存庫"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "返回至儲存庫",
@@ -11850,7 +11872,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "收闔查詢列",
       "datasource-help": "顯示資料來源說明",
       "drag-and-drop": "拖放以重新排序",
@@ -11858,14 +11879,10 @@
       "expand-row": "展開查詢列",
       "hide-response": "隱藏回應",
       "remove-query": "移除查詢",
-      "replace-query-from-library": "替換為來自資料庫的查詢",
+      "replace-query-from-library": "",
       "show-response": "顯示回應"
     },
-    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
   },
   "recently-deleted": {
     "buttons": {
@@ -12707,6 +12724,9 @@
       "label-alt-text": "替代文字",
       "label-title-text": "標題文字"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12998,6 +13018,7 @@
         "name-point-size": "點大小",
         "name-show-points": "顯示點",
         "name-show-thresholds": "顯示閾值",
+        "name-show-values": "",
         "name-style": "樣式",
         "name-transform": "轉變",
         "transform-options": {
