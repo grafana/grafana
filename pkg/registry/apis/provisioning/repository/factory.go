@@ -30,7 +30,7 @@ type factory struct {
 	extras map[provisioning.RepositoryType]Extra
 }
 
-func NewFactory(extras []Extra) Factory {
+func ProvideFactory(extras []Extra) Factory {
 	f := &factory{
 		extras: make(map[provisioning.RepositoryType]Extra, len(extras)),
 	}

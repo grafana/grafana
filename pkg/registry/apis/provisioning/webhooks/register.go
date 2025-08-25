@@ -24,6 +24,27 @@ import (
 // It is used to add additional functionality for webhooks
 type WebhookExtraBuilder struct {
 	provisioningapis.ExtraBuilder
+	isPublic    bool
+	urlProvider func(namespace string) string
+}
+
+func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
+	if !b.isPublic {
+		return ""
+	}
+
+	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+	webhookURL := fmt.Sprintf(
+		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+		b.urlProvider(r.GetNamespace()),
+		gvr.Group,
+		gvr.Version,
+		r.GetNamespace(),
+		gvr.Resource,
+		r.GetName(),
+	)
+
+	return webhookURL
 }
 
 // HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
@@ -41,14 +62,16 @@ func ProvideWebhooks(
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-) WebhookExtraBuilder {
-	return WebhookExtraBuilder{
-		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			urlProvider := func(_ string) string {
-				return cfg.AppURL
-			}
+) *WebhookExtraBuilder {
+	urlProvider := func(_ string) string {
+		return cfg.AppURL
+	}
+	isPublic := isPublicURL(urlProvider(""))
 
-			isPublic := isPublicURL(urlProvider(""))
+	return &WebhookExtraBuilder{
+		isPublic:    isPublic,
+		urlProvider: urlProvider,
+		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients)
 
@@ -69,7 +92,6 @@ func ProvideWebhooks(
 				webhook,
 				urlProvider,
 				[]jobs.Worker{pullRequestWorker},
-				isPublic, // Pass the public URL flag
 			)
 		},
 	}
@@ -78,11 +100,9 @@ func ProvideWebhooks(
 // WebhookExtra implements the Extra interface for webhooks
 // to wrap around
 type WebhookExtra struct {
-	render      *renderConnector
-	webhook     *webhookConnector
-	urlProvider func(namespace string) string
-	workers     []jobs.Worker
-	isPublic    bool // Flag to determine if webhook-enhanced repositories should be created
+	render  *renderConnector
+	webhook *webhookConnector
+	workers []jobs.Worker
 }
 
 func NewWebhookExtra(
@@ -90,14 +110,11 @@ func NewWebhookExtra(
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
 	workers []jobs.Worker,
-	isPublic bool,
 ) *WebhookExtra {
 	return &WebhookExtra{
-		render:      render,
-		webhook:     webhook,
-		urlProvider: urlProvider,
-		workers:     workers,
-		isPublic:    isPublic,
+		render:  render,
+		webhook: webhook,
+		workers: workers,
 	}
 }
 
@@ -132,23 +149,4 @@ func (e *WebhookExtra) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 // GetJobWorkers returns job workers from the webhook connector
 func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
 	return e.workers
-}
-
-func (e *WebhookExtra) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
-	if !e.isPublic {
-		return ""
-	}
-
-	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-	webhookURL := fmt.Sprintf(
-		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-		e.urlProvider(r.GetNamespace()),
-		gvr.Group,
-		gvr.Version,
-		r.GetNamespace(),
-		gvr.Resource,
-		r.GetName(),
-	)
-
-	return webhookURL
 }

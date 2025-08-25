@@ -14,7 +14,7 @@ import (
 
 func TestNewFactory(t *testing.T) {
 	t.Run("creates factory with empty extras", func(t *testing.T) {
-		factory := NewFactory([]Extra{})
+		factory := ProvideFactory([]Extra{})
 
 		require.NotNil(t, factory)
 		types := factory.Types()
@@ -32,7 +32,7 @@ func TestNewFactory(t *testing.T) {
 		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
 		extras := []Extra{localExtra, gitExtra, githubExtra}
-		factory := NewFactory(extras)
+		factory := ProvideFactory(extras)
 
 		require.NotNil(t, factory)
 		types := factory.Types()
@@ -64,7 +64,7 @@ func TestNewFactory(t *testing.T) {
 		secondExtra.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil)
 
 		extras := []Extra{firstExtra, secondExtra}
-		factory := NewFactory(extras)
+		factory := ProvideFactory(extras)
 
 		require.NotNil(t, factory)
 		types := factory.Types()
@@ -91,7 +91,7 @@ func TestNewFactory(t *testing.T) {
 	})
 
 	t.Run("handles nil extras slice", func(t *testing.T) {
-		factory := NewFactory(nil)
+		factory := ProvideFactory(nil)
 
 		require.NotNil(t, factory)
 		types := factory.Types()
@@ -101,7 +101,7 @@ func TestNewFactory(t *testing.T) {
 
 func TestFactory_Types(t *testing.T) {
 	t.Run("returns empty slice for factory with no extras", func(t *testing.T) {
-		factory := NewFactory([]Extra{})
+		factory := ProvideFactory([]Extra{})
 
 		types := factory.Types()
 		assert.Empty(t, types)
@@ -124,7 +124,7 @@ func TestFactory_Types(t *testing.T) {
 		gitlabExtra.On("Type").Return(provisioning.GitLabRepositoryType)
 
 		extras := []Extra{localExtra, gitExtra, githubExtra, bitbucketExtra, gitlabExtra}
-		factory := NewFactory(extras)
+		factory := ProvideFactory(extras)
 
 		types := factory.Types()
 
@@ -157,7 +157,7 @@ func TestFactory_Types(t *testing.T) {
 		secondExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		extras := []Extra{firstExtra, secondExtra}
-		factory := NewFactory(extras)
+		factory := ProvideFactory(extras)
 
 		types := factory.Types()
 
@@ -176,7 +176,7 @@ func TestFactory_Build(t *testing.T) {
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Build", mock.Anything, mock.Anything).Return(expectedRepo, nil)
 
-		factory := NewFactory([]Extra{localExtra})
+		factory := ProvideFactory([]Extra{localExtra})
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -196,7 +196,7 @@ func TestFactory_Build(t *testing.T) {
 		gitExtra := &MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		factory := NewFactory([]Extra{gitExtra})
+		factory := ProvideFactory([]Extra{gitExtra})
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -220,7 +220,7 @@ func TestFactory_Build(t *testing.T) {
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Build", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		factory := NewFactory([]Extra{localExtra})
+		factory := ProvideFactory([]Extra{localExtra})
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -247,7 +247,7 @@ func TestFactory_Build(t *testing.T) {
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 		gitExtra.On("Build", mock.Anything, mock.Anything).Return(gitRepo, nil)
 
-		factory := NewFactory([]Extra{localExtra, gitExtra})
+		factory := ProvideFactory([]Extra{localExtra, gitExtra})
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -269,7 +269,7 @@ func TestFactory_Build(t *testing.T) {
 		localExtra := &MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		factory := NewFactory([]Extra{localExtra})
+		factory := ProvideFactory([]Extra{localExtra})
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -301,7 +301,7 @@ func TestFactory_Build(t *testing.T) {
 			return c.Value(testKey("test")) == "value"
 		}), mock.Anything).Return(localRepo, nil)
 
-		factory := NewFactory([]Extra{localExtra})
+		factory := ProvideFactory([]Extra{localExtra})
 
 		repoConfig := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
@@ -318,7 +318,7 @@ func TestFactory_Build(t *testing.T) {
 
 func TestFactory_Implementation(t *testing.T) {
 	t.Run("factory implements Factory interface", func(t *testing.T) {
-		var _ Factory = NewFactory([]Extra{})
+		var _ Factory = ProvideFactory([]Extra{})
 	})
 
 	t.Run("mockExtra implements Extra interface", func(t *testing.T) {

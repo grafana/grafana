@@ -202,14 +202,14 @@ func RegisterAPIService(
 	usageStats usagestats.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	repoExtras []repository.Extra,
+	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}
 
 	builder := NewAPIBuilder(
-		repository.NewFactory(repoExtras),
+		repoFactory,
 		features,
 		client,
 		configProvider,

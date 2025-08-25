@@ -14,13 +14,13 @@ import (
 )
 
 type extra struct {
-	factory      *Factory
-	decrypter    repository.Decrypter
-	mutate       repository.Mutator
-	webhookExtra *webhooks.WebhookExtra
+	factory        *Factory
+	decrypter      repository.Decrypter
+	mutate         repository.Mutator
+	webhookBuilder *webhooks.WebhookExtraBuilder
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookExtra *webhooks.WebhookExtra) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder *webhooks.WebhookExtraBuilder) repository.Extra {
 	return &extra{
 		decrypter: decrypter,
 		factory:   factory,
@@ -68,7 +68,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("error creating github repository: %w", err)
 	}
 
-	webhookURL := e.webhookExtra.WebhookURL(ctx, r)
+	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
 	if len(webhookURL) == 0 || err != nil {
 		logger.Debug("Skipping webhook setup as no webhooks are not configured")
 		return ghRepo, nil
