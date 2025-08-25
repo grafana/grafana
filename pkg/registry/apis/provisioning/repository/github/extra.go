@@ -35,8 +35,8 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	logger.Info("Instantiating Github repository")
 
 	secure := e.decrypter(r)
-	ghCfg := r.Spec.GitHub
-	if ghCfg == nil {
+	cfg := r.Spec.GitHub
+	if cfg == nil {
 		return nil, fmt.Errorf("github configuration is required for nano git")
 	}
 
@@ -49,14 +49,12 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		token = t
 	}
 
-	gitCfg := git.RepositoryConfig{
-		URL:    ghCfg.URL,
-		Branch: ghCfg.Branch,
-		Path:   ghCfg.Path,
+	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
+		URL:    cfg.URL,
+		Branch: cfg.Branch,
+		Path:   cfg.Path,
 		Token:  token,
-	}
-
-	gitRepo, err := git.NewRepository(ctx, r, gitCfg)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)
 	}

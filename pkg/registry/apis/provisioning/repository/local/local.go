@@ -94,6 +94,7 @@ func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolve
 		config:   config,
 		resolver: resolver,
 	}
+
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
 		if r.path != "" && !safepath.IsDir(r.path) {
