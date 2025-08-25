@@ -138,8 +138,6 @@ export class GrafanaApp {
         ? config.regionalFormat
         : contextSrv.user.language;
 
-      const dateStyle = config.dateStyle;
-
       const initI18nPromise = initializeI18n(
         {
           language: contextSrv.user.language,
@@ -147,7 +145,7 @@ export class GrafanaApp {
           module: loadTranslations,
         },
         regionalFormat,
-        dateStyle
+        config.dateStyle
       );
 
       // This is a placeholder so we can put a 'comment' in the message json files.
