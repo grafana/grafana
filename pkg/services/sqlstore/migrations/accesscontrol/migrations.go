@@ -210,4 +210,8 @@ func AddMigration(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"org_id", "user_id", "role_id"},
 	}))
+
+	mg.AddMigration("add permission role_id action index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Cols: []string{"role_id", "action"},
+	}))
 }
