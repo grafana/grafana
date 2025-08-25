@@ -252,7 +252,7 @@ describe('UrlAndAuthenticationSection', () => {
         expect.objectContaining({
           jsonData: expect.objectContaining({
             product: 'InfluxDB OSS 1.x',
-            version: undefined, 
+            version: undefined,
           }),
         })
       );
@@ -281,7 +281,7 @@ describe('UrlAndAuthenticationSection', () => {
         expect.objectContaining({
           jsonData: expect.objectContaining({
             product: 'InfluxDB OSS 2.x',
-            version: undefined, 
+            version: undefined,
           }),
         })
       );
@@ -377,6 +377,4 @@ export function mockFetchPing(resp: { ok?: boolean; build?: string; version?: st
       },
     },
   });
-};
-
-
+}
