@@ -373,11 +373,6 @@ const LogListComponent = ({
     [initialScrollPosition, permalinkedLogId, processedLogs]
   );
 
-  if (!containerElement || listHeight == null) {
-    // Wait for container to be rendered
-    return null;
-  }
-
   const handleLogLineClick = useCallback(
     (e: MouseEvent<HTMLElement>, log: LogListModel) => {
       if (handleTextSelection(e, log)) {
@@ -403,6 +398,11 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  if (!containerElement || listHeight == null) {
+    // Wait for container to be rendered
+    return null;
+  }
+
   return (
     <div className={styles.logListContainer}>
       {showControls && <LogListControls eventBus={eventBus} />}
@@ -411,6 +411,8 @@ const LogListComponent = ({
           containerElement={containerElement}
           focusLogLine={focusLogLine}
           logs={filteredLogs}
+          timeRange={timeRange}
+          timeZone={timeZone}
           onResize={handleLogDetailsResize}
         />
       )}
