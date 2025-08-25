@@ -18637,11 +18637,7 @@
           }
         },
         "dateStyle": {
-          "type": "string",
-          "enum": [
-            "localized",
-            "international"
-          ]
+          "type": "string"
         },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
@@ -22932,11 +22928,7 @@
           }
         },
         "dateStyle": {
-          "type": "string",
-          "enum": [
-            "localized",
-            "international"
-          ]
+          "type": "string"
         },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",

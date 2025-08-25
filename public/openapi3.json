@@ -8102,10 +8102,6 @@
             "type": "array"
           },
           "dateStyle": {
-            "enum": [
-              "localized",
-              "international"
-            ],
             "type": "string"
           },
           "homeDashboardId": {
@@ -12396,10 +12392,6 @@
             "type": "array"
           },
           "dateStyle": {
-            "enum": [
-              "localized",
-              "international"
-            ],
             "type": "string"
           },
           "homeDashboardId": {
