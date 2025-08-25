@@ -146,7 +146,6 @@ func (h *K8sClientWithFallback) List(
 		attribute.Bool("fallback", false),
 	)
 
-	span.AddEvent("List")
 	initial, err := h.K8sHandler.List(ctx, orgID, options)
 	if err != nil {
 		h.log.Error("failed to fetch initial list", "error", err)
@@ -236,19 +235,11 @@ func (h *K8sClientWithFallback) fetchWithVersion(
 
 	for i, it := range items {
 		g.Go(func() error {
-			ctx, span := tracing.Start(ctx, "K8sClientWithFallback.fetchWithVersion.ConcurrentGet")
-			defer span.End()
-
-			span.SetAttributes(
-				attribute.String("name", it.Name),
-				attribute.String("resourceVersion", it.ResourceVersion),
-			)
-
 			item, err := client.Get(ctx, it.Name, orgID, metav1.GetOptions{
 				ResourceVersion: it.ResourceVersion,
 			})
 			if err != nil {
-				return tracing.Error(span, err)
+				return err
 			}
 
 			// NB: it's important to set via the index,
