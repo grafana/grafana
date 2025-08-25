@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Badge, BadgeColor, IconName } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -11,6 +12,26 @@ interface StatusBadgeProps {
 export function StatusBadge({ repo }: StatusBadgeProps) {
   if (!repo) {
     return null;
+  }
+
+  // TODO: remove after 12.2
+  if (repo.spec?.type !== 'local' && !repo.secure?.token?.name) {
+    return (
+      <Badge
+        color={'red'}
+        icon={'exclamation-triangle'}
+        style={{ cursor: 'pointer' }}
+        text={t('provisioning.warning.re-create-repository-access-tokens', 'Token needs to be saved again')}
+        tooltip={t(
+          'provisioning.warning.re-create-repository-access-tokens-explain',
+          'The method to save the token is to re-enter it in the repository settings.'
+        )}
+        onClick={() => {
+          // navigate to edit page, rather than view page
+          locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/edit`);
+        }}
+      />
+    );
   }
 
   let tooltip: string | undefined = undefined;
