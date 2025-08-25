@@ -40,15 +40,13 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		token = t
 	}
 
-	cfg := RepositoryConfig{
+	return NewRepository(ctx, r, RepositoryConfig{
 		URL:       cfg.URL,
 		Branch:    cfg.Branch,
 		Path:      cfg.Path,
 		TokenUser: cfg.TokenUser,
 		Token:     token,
-	}
-
-	return NewRepository(ctx, r, cfg)
+	})
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
