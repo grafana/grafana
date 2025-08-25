@@ -30,6 +30,47 @@ func TestStorageOptions_Validate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "with secrets manager grpc client and no server address",
+			Opts: StorageOptions{
+				StorageType:                              StorageTypeUnifiedGrpc,
+				Address:                                  "localhost:10000",
+				GrpcClientAuthenticationToken:            "1234",
+				GrpcClientAuthenticationTokenExchangeURL: "http://localhost:8080",
+				GrpcClientAuthenticationTokenNamespace:   "*",
+				SecretsManagerGrpcClientEnable:           true,
+			},
+			wantErr: true,
+		},
+		{
+			name: "with secrets manager grpc client and no server ca file",
+			Opts: StorageOptions{
+				StorageType:                              StorageTypeUnifiedGrpc,
+				Address:                                  "localhost:10000",
+				GrpcClientAuthenticationToken:            "1234",
+				GrpcClientAuthenticationTokenExchangeURL: "http://localhost:8080",
+				GrpcClientAuthenticationTokenNamespace:   "*",
+				SecretsManagerGrpcClientEnable:           true,
+				SecretsManagerGrpcServerAddress:          "localhost:10000",
+				SecretsManagerGrpcServerUseTLS:           true,
+			},
+			wantErr: true,
+		},
+		{
+			name: "with secrets manager grpc client and server ca file",
+			Opts: StorageOptions{
+				StorageType:                              StorageTypeUnifiedGrpc,
+				Address:                                  "localhost:10000",
+				GrpcClientAuthenticationToken:            "1234",
+				GrpcClientAuthenticationTokenExchangeURL: "http://localhost:8080",
+				GrpcClientAuthenticationTokenNamespace:   "*",
+				SecretsManagerGrpcClientEnable:           true,
+				SecretsManagerGrpcServerAddress:          "localhost:10000",
+				SecretsManagerGrpcServerUseTLS:           true,
+				SecretsManagerGrpcServerTLSCAFile:        "ca.crt",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
