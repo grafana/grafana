@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -49,6 +49,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     control,
     formState: { errors, isDirty },
     setValue,
+    setError,
     watch,
     getValues,
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
@@ -65,6 +66,25 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
+
+  // TODO: this should be removed after 12.2 is released
+  const checkTokenMigrationWarning = useCallback(() => {
+    if (data?.spec?.type !== 'local' && !data?.secure?.token) {
+      setTokenConfigured(false);
+      setError(
+        'token',
+        {
+          type: 'manual',
+          message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
+        },
+        { shouldFocus: true }
+      ); // does not seem to focus
+    }
+  }, [data, setTokenConfigured, setError, gitFields]);
+
+  useEffect(() => {
+    checkTokenMigrationWarning();
+  }, [checkTokenMigrationWarning]);
 
   useEffect(() => {
     if (request.isSuccess) {
