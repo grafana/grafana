@@ -9035,6 +9035,7 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "inline-token-warning-badge-tooltip": "The method to save the token is to re-enter it in the repository settings.",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -11436,6 +11437,9 @@
       "title-delete-all-configured-repositories": "Delete all configured repositories",
       "title-legacy-storage-detected": "Legacy storage detected"
     },
+    "inline-secure-values-warning-body": "The method to save secure values has changed. This requires re-saving all secrets.",
+    "inline-secure-values-warning-title": "Access tokens need to be saved again",
+    "inline-token-warning-badge-text": "Token needs to be saved again",
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
