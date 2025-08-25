@@ -6,23 +6,23 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type extra struct {
-	factory *Factory
-	secrets secrets.RepositorySecrets
-	mutate  repository.Mutator
+	factory   *Factory
+	decrypter repository.Decrypter
+	mutate    repository.Mutator
 }
 
-func Extra(secrets secrets.RepositorySecrets, factory *Factory) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory) repository.Extra {
 	return &extra{
-		secrets: secrets,
-		factory: factory,
-		mutate:  Mutator(secrets),
+		decrypter: decrypter,
+		factory:   factory,
+		mutate:    Mutator(),
 	}
 }
 
@@ -34,35 +34,34 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
 	logger.Info("Instantiating Github repository")
 
+	secure := e.decrypter(r)
 	ghCfg := r.Spec.GitHub
 	if ghCfg == nil {
 		return nil, fmt.Errorf("github configuration is required for nano git")
 	}
 
-	// Decrypt GitHub token if needed
-	ghToken := ghCfg.Token
-	if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-		decrypted, err := e.secrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
+	var token commonMeta.RawSecureValue
+	if r.Secure.Token.IsZero() {
+		t, err := secure.Token(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("decrypt github token: %w", err)
+			return nil, fmt.Errorf("unable to decrypt token: %w", err)
 		}
-		ghToken = string(decrypted)
+		token = t
 	}
 
 	gitCfg := git.RepositoryConfig{
-		URL:            ghCfg.URL,
-		Branch:         ghCfg.Branch,
-		Path:           ghCfg.Path,
-		Token:          ghToken,
-		EncryptedToken: ghCfg.EncryptedToken,
+		URL:    ghCfg.URL,
+		Branch: ghCfg.Branch,
+		Path:   ghCfg.Path,
+		Token:  token,
 	}
 
-	gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, e.secrets)
+	gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)
 	}
 
-	ghRepo, err := NewGitHub(ctx, r, gitRepo, e.factory, ghToken, e.secrets)
+	ghRepo, err := NewGitHub(ctx, r, gitRepo, e.factory, token)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github repository: %w", err)
 	}

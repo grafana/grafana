@@ -5,8 +5,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,11 +19,11 @@ func ProvideProvisioningOSSExtras(webhook webhooks.WebhookExtraBuilder) []provis
 
 func ProvideProvisioningOSSRepositoryExtras(
 	cfg *setting.Cfg,
-	secrets secrets.RepositorySecrets,
+	decryptSvc secret.DecryptService,
 	ghFactory *github.Factory,
 ) []repository.Extra {
 	return []repository.Extra{
 		local.Extra(cfg),
-		github.Extra(secrets, ghFactory),
+		github.Extra(repository.DecryptService(decryptSvc), ghFactory),
 	}
 }

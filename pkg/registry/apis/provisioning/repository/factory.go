@@ -15,8 +15,6 @@ type Mutator func(ctx context.Context, obj runtime.Object) error
 //go:generate mockery --name=Extra --structname=MockExtra --inpackage --filename=extra_mock.go --with-expecter
 type Extra interface {
 	Type() provisioning.RepositoryType
-	// TODO: I may need to add a secure values parameter here
-	// secure repository.SecureValues
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
 }

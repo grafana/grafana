@@ -5,20 +5,20 @@ import (
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type extra struct {
-	secrets secrets.RepositorySecrets
-	mutate  repository.Mutator
+	decrypter repository.Decrypter
+	mutate    repository.Mutator
 }
 
-func Extra(secrets secrets.RepositorySecrets) repository.Extra {
+func Extra(decrypter repository.Decrypter) repository.Extra {
 	return &extra{
-		secrets: secrets,
-		mutate:  Mutator(secrets),
+		decrypter: decrypter,
+		mutate:    Mutate,
 	}
 }
 
@@ -27,25 +27,30 @@ func (e *extra) Type() provisioning.RepositoryType {
 }
 
 func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	// Decrypt token if needed
-	token := r.Spec.Git.Token
-	if token == "" && len(r.Spec.Git.EncryptedToken) > 0 {
-		decrypted, err := e.secrets.Decrypt(ctx, r, string(r.Spec.Git.EncryptedToken))
+	secure := e.decrypter(r)
+	ghCfg := r.Spec.GitHub
+	if ghCfg == nil {
+		return nil, fmt.Errorf("github configuration is required for nano git")
+	}
+
+	var token commonMeta.RawSecureValue
+	if r.Secure.Token.IsZero() {
+		t, err := secure.Token(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("decrypt git token: %w", err)
+			return nil, fmt.Errorf("unable to decrypt token: %w", err)
 		}
-		token = string(decrypted)
+		token = t
 	}
 
 	cfg := RepositoryConfig{
-		URL:            r.Spec.Git.URL,
-		Branch:         r.Spec.Git.Branch,
-		Path:           r.Spec.Git.Path,
-		TokenUser:      r.Spec.Git.TokenUser,
-		Token:          token,
-		EncryptedToken: r.Spec.Git.EncryptedToken,
+		URL:       r.Spec.Git.URL,
+		Branch:    r.Spec.Git.Branch,
+		Path:      r.Spec.Git.Path,
+		TokenUser: r.Spec.Git.TokenUser,
+		Token:     token,
 	}
-	return NewGitRepository(ctx, r, cfg, e.secrets)
+
+	return NewGitRepository(ctx, r, cfg)
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
