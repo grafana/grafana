@@ -119,9 +119,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
 
     let saveModel: Dashboard | DashboardV2SpecWithUid;
 
-    const isV2Dashboard =
-      dashboardRef.resolve().serializer.apiVersion === 'v2beta1' ||
-      dashboardRef.resolve().serializer.apiVersion === 'v2alpha1';
+    const apiVersion = dashboardRef.resolve().serializer.apiVersion;
+
+    const isV2Dashboard = apiVersion === 'v2beta1' || apiVersion === 'v2alpha1';
 
     if (isV2Dashboard) {
       saveModel = transformSceneToSaveModelSchemaV2(dashboardRef.resolve(), true);
