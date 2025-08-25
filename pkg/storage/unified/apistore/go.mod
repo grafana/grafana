@@ -207,7 +207,7 @@ require (
 	github.com/googleapis/go-sql-spanner v1.11.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/grafana/alerting v0.0.0-20250411135245-cad0d384d430 // indirect
+	github.com/grafana/alerting v0.0.0-20250821190846-ce29dcf7efd3 // indirect
 	github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
