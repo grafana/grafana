@@ -47,7 +47,7 @@ refs:
   provisioning-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/provision
+    - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
@@ -235,6 +235,7 @@ To use custom queries with the configuration, follow these steps:
 1. Specify a custom query to be used to query metrics data.
 
    Each linked query consists of:
+
    - **Link Label:** _(Optional)_ Descriptive label for the linked query.
    - **Query:** The query ran when navigating from a trace to the metrics data source.
      Interpolate tags using the `$__tags` keyword.
