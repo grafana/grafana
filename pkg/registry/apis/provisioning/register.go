@@ -115,6 +115,7 @@ type APIBuilder struct {
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
+	onlyApiServer bool,
 	repoFactory repository.Factory,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
@@ -132,6 +133,7 @@ func NewAPIBuilder(
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
+		onlyApiServer:       onlyApiServer,
 		tracer:              tracer,
 		usageStats:          usageStats,
 		features:            features,
@@ -209,6 +211,7 @@ func RegisterAPIService(
 	}
 
 	builder := NewAPIBuilder(
+		false, // Run controllers
 		repoFactory,
 		features,
 		client,

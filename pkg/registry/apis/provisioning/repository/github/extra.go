@@ -21,8 +21,9 @@ type extra struct {
 
 func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder *webhooks.WebhookExtraBuilder) repository.Extra {
 	return &extra{
-		decrypter: decrypter,
-		factory:   factory,
+		decrypter:      decrypter,
+		factory:        factory,
+		webhookBuilder: webhookBuilder,
 	}
 }
 
@@ -62,6 +63,10 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	ghRepo, err := NewRepository(ctx, r, gitRepo, e.factory, token)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github repository: %w", err)
+	}
+
+	if e.webhookBuilder == nil {
+		return ghRepo, nil
 	}
 
 	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
