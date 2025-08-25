@@ -314,7 +314,6 @@ func extractQueriesFromPanelsSchemaV2(elements *simplejson.Json, result map[int6
 										// The query object contains the DataQuery with the actual expression
 										panelQueries = append(panelQueries, dataQuerySpec)
 									}
-
 								}
 							}
 						}
@@ -324,7 +323,6 @@ func extractQueriesFromPanelsSchemaV2(elements *simplejson.Json, result map[int6
 		}
 
 		result[element.Get("spec").Get("id").MustInt64()] = panelQueries
-
 	}
 }
 

@@ -402,11 +402,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const rsp = await dashboardLoaderSrv.loadSnapshot(slug);
 
     if (rsp?.dashboard) {
-      isDashboardV2Spec(rsp.dashboard);
-      throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
-    }
+      if (isDashboardV2Spec(rsp.dashboard)) {
+        throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
+      }
 
-    if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
       return scene;
     }
