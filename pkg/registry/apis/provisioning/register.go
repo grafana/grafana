@@ -34,7 +34,6 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -1326,13 +1325,9 @@ func (b *APIBuilder) RepositoryFromConfig(ctx context.Context, r *provisioning.R
 		}
 	}
 
-	var token commonMeta.RawSecureValue
-	if r.Secure.Token.IsZero() {
-		t, err := secure.Token(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decrypt token: %w", err)
-		}
-		token = t
+	token, err := secure.Token(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
 	switch r.Spec.Type {
