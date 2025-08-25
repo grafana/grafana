@@ -10,6 +10,7 @@ import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
@@ -26,6 +27,11 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return <layout.Component model={layout} />;
+  }
 
   const isClone = isRepeatCloneOrChildOf(model);
 
