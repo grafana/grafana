@@ -151,7 +151,40 @@ For the most up-to-date reference of all supported SQL functionality, refer to t
 
 ## Alerting and recording rules
 
-SQL expressions integrates seamlessly with alerting and recording rules, allowing you to define complex conditions and metrics using standard SQL queries. The system processes your query results and automatically creates alert instances or recorded metrics based on the returned data structure.
+SQL expressions integrates alerting and recording rules, allowing you to define complex conditions and metrics using standard SQL queries. The system processes your query results and automatically creates alert instances or recorded metrics based on the returned data structure.
+
+For SQL Expressions to work properly with alerting and recording rules, your query must return:
+
+- One numeric column - **_required_**.  This contains the value that triggers alerts or gets recorded.
+- One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Column names and their row values become labels.
+
+Consider the following query results set:
+
+```sql
+error_count,service,region
+25,auth-service,us-east
+0,payment-service,us-west
+15,user-service,eu-west
+```
+
+This query returns:
+
+- Numeric column: error_count (values: 25, 0, 15)
+- String columns: service and region
+
+For alert rules, this creates three alert instances:
+
+- First instance with labels {service=auth-service, region=us-east} and value 25 (triggers alert - high error count)
+- Second instance with labels {service=payment-service, region=us-west} and value 0 (no alert - zero errors)
+- Third instance with labels {service=user-service, region=eu-west} and value 15 (triggers alert - elevated error count)
+
+For recording rules, creates one metric with three series:
+
+- First series: error_count_total{service=auth-service, region=us-east} 25
+- Second series: error_count_total{service=payment-service, region=us-west} 0
+- Third series: error_count_total{service=user-service, region=eu-west} 15
+
+
 
 
 ## Known limitations
