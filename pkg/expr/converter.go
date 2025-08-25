@@ -23,15 +23,9 @@ type ResultConverter struct {
 func (c *ResultConverter) Convert(ctx context.Context,
 	datasourceType string,
 	frames data.Frames,
-	forSqlInput bool,
 ) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
-	}
-
-	if forSqlInput {
-		results := handleSqlInput(frames)
-		return "sql input", results, nil
 	}
 
 	var dt data.FrameType
@@ -124,73 +118,6 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	return dataType, mathexp.Results{
 		Values: vals,
 	}, nil
-}
-
-// handleSqlInput normalizes input DataFrames into a single dataframe with no labels for use with SQL expressions.
-//
-// It handles three cases:
-//  1. If the input declares a supported time series or numeric kind in the wide or multi format (via FrameMeta.Type), it converts to a full-long formatted table using ConvertToFullLong.
-//  2. If the input is a single frame (no labels, no declared type), it passes through as-is.
-//  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
-func handleSqlInput(dataFrames data.Frames) mathexp.Results {
-	var result mathexp.Results
-
-	// dataframes len > 0 is checked in the caller -- Convert
-	first := dataFrames[0]
-
-	// Single Frame no data case
-	// Note: In the case of a support Frame Type, we may want to return the matching schema
-	// with no rows (e.g. include the `__value__` column). But not sure about this at this time.
-	if len(dataFrames) == 1 && len(first.Fields) == 0 {
-		result.Values = mathexp.Values{
-			mathexp.TableData{Frame: first},
-		}
-
-		return result
-	}
-
-	var metaType data.FrameType
-	if first.Meta != nil {
-		metaType = first.Meta.Type
-	}
-
-	if supportedToLongConversion(metaType) {
-		convertedFrames, err := ConvertToFullLong(dataFrames)
-		if err != nil {
-			result.Error = fmt.Errorf("failed to convert data frames to long format for SQL: %w", err)
-		}
-
-		if len(convertedFrames) == 0 {
-			result.Error = fmt.Errorf("conversion succeeded but returned no frames")
-			return result
-		}
-
-		result.Values = mathexp.Values{
-			mathexp.TableData{Frame: convertedFrames[0]},
-		}
-
-		return result
-	}
-
-	// If Meta.Type is not supported, but there are labels or more than 1 frame, fail fast
-	if len(dataFrames) > 1 {
-		result.Error = fmt.Errorf("response has more than one frame but frame type is missing or unsupported for sql conversion")
-		return result
-	}
-	for _, frame := range dataFrames {
-		for _, field := range frame.Fields {
-			if len(field.Labels) > 0 {
-				result.Error = fmt.Errorf("frame has labels but frame type is missing or unsupported for sql conversion")
-				return result
-			}
-		}
-	}
-
-	// Can pass through as table without conversion
-	result.Values = mathexp.Values{
-		mathexp.TableData{Frame: first},
-	}
-	return result
 }
 
 func getResponseFrame(logger *log.ConcreteLogger, resp *backend.QueryDataResponse, refID string) (data.Frames, error) {

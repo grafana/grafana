@@ -3755,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Arrow Direction",
+    "category-arrow-direction": "Direction",
     "category-background": "Background",
     "category-border": "Border",
     "category-canvas": "Canvas",
@@ -3787,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "Both",
+        "label-forward": "Forward",
+        "label-none": "None",
+        "label-reverse": "Reverse"
+      }
+    },
     "description-experimental-types": "Enable selection of experimental element types",
     "description-inline-editing": "Enable editing the panel directly",
     "description-pan-zoom": "Enable pan and zoom",
-    "direction-options": {
-      "label-both": "Both",
-      "label-forward": "Forward",
-      "label-none": "None",
-      "label-reverse": "Reverse"
-    },
     "drone-front-item": {
       "category-drone-front": "Drone Front",
       "name-roll-angle": "Roll Angle"
@@ -5221,6 +5223,9 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "search-panel": {
+      "no-match": "No panels matching"
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Loading configuration"
     },
@@ -5492,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": "Panel not found"
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
@@ -6133,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
     },
-    "solo-panel-page": {
-      "loading": "Loading"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
@@ -6419,8 +6424,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>.",
-    "success-more-details-links-extensions": "You can also explore data with the following extensions:"
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6670,6 +6674,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Fixed color",
       "noOptionsMessage-no-fields-found": "No fields found"
+    },
+    "direction-dimension-editor": {
+      "description-field": "Direction based on field value",
+      "description-fixed": "Fixed direction value",
+      "label-direction": "Direction",
+      "label-field": "Field",
+      "label-fixed": "Fixed",
+      "label-source": "Source"
     },
     "file-dropzone-custom-children": {
       "upload": "Upload"
@@ -7547,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
       "folder-deleted-success": "Folder deleted"
     },
     "get-loading-nav": {
@@ -9482,6 +9495,8 @@
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
+      "time-window-label": "Context time window",
+      "time-window-tooltip": "Amount of time before and after the referenced log",
       "title-log-context": "Log context",
       "title-log-line": "Referenced log line"
     },
@@ -9522,6 +9537,12 @@
       "show-context": "Show context",
       "show-log-line": "Show log line",
       "sidebar-mode": "Anchor to the right",
+      "trace": {
+        "error-message": "Could not retrieve trace.",
+        "error-tooltip": "The trace could have been sampled or be temporarily unavailable.",
+        "loading-message": "Loading trace..."
+      },
+      "trace-section": "Trace",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
@@ -9753,7 +9774,8 @@
       "message-name-required": "Name is required",
       "message-reserved-name": "This is a reserved name and cannot be used for a folder.",
       "message-same-name": "A dashboard or a folder with the same name already exists",
-      "message-same-name-general": "A folder or dashboard in the general folder with the same name already exists"
+      "message-same-name-current-folder": "A dashboard or a folder with the same name already exists in the current folder",
+      "message-same-name-general": "A folder or dashboard with the same name already exists in the root folder"
     }
   },
   "metric-select": {
@@ -10700,10 +10722,6 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
-  "panel-search": {
-    "no-matches": "No matches found",
-    "unsupported-layout": "Unsupported layout"
-  },
   "panel-type-filter": {
     "clear-button": "Clear types",
     "select-aria-label": "Panel type filter",
@@ -11241,11 +11259,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Delete",
-      "confirm-delete-repository": "Are you sure you want to delete the repository config?",
+      "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
+      "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
+      "delete": "Delete",
+      "delete-and-keep-resources": "Delete and keep resources",
+      "delete-and-remove-resources": "Delete and remove resources (default)",
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
-      "title-delete-repository": "Delete repository config",
-      "tooltip-delete-this-repository": "Delete this repository"
+      "title-delete-repository-and-resources": "Delete repository configuration and resources",
+      "title-delete-repository-only": "Delete repository configuration only"
     },
     "edit-repository-page": {
       "back-to-repositories": "Back to repositories",
@@ -12749,6 +12771,9 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
     },
+    "link-wrapper": {
+      "menu": "view data links and actions"
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "We recommend enabling pagination with this option to avoid performance issues.",
       "label": {
@@ -13040,6 +13065,7 @@
         "name-point-size": "Point size",
         "name-show-points": "Show points",
         "name-show-thresholds": "Show thresholds",
+        "name-show-values": "Show values",
         "name-style": "Style",
         "name-transform": "Transform",
         "transform-options": {

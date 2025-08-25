@@ -23,6 +23,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
+import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
 
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -31,7 +32,6 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
-import { MoveProvisionedDashboardDrawer } from './MoveProvisionedDashboardDrawer';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {

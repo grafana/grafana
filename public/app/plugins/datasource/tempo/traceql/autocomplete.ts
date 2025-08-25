@@ -298,6 +298,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       documentation: 'Groups by arbitrary attributes.',
     },
     {
+      label: 'compare',
+      insertText: 'compare($0)',
+      detail: 'Compare span groups',
+      documentation:
+        'Splits spans into two groups (selection and baseline) and returns time-series for all attributes to highlight differences. First parameter is a spanset filter for the selection group (e.g., {status=error}). Optional parameters: topN limit (default 10), start timestamp, end timestamp.',
+    },
+    {
       label: 'count_over_time',
       insertText: 'count_over_time()$0',
       detail: 'Number of spans over time',
@@ -353,6 +360,41 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     },
   ];
 
+  // Query hints
+  static readonly queryHints: MinimalCompletionItem[] = [
+    {
+      label: 'with',
+      insertText: 'with($0)',
+      detail: 'Query hints',
+      documentation:
+        'Provides query hints to modify search behavior. Use with parameters like most_recent=true to get the latest traces.',
+    },
+  ];
+
+  static readonly withParameters: MinimalCompletionItem[] = [
+    {
+      label: 'most_recent',
+      insertText: 'most_recent=$0',
+      detail: 'Get latest traces',
+      documentation:
+        'Forces Tempo to return the most recent results ordered by time. Use most_recent=true to see the freshest data when troubleshooting incidents.',
+    },
+    // Future parameters can be added here as simple objects
+  ];
+
+  static readonly withValues: MinimalCompletionItem[] = [
+    {
+      label: 'true',
+      insertText: 'true',
+      detail: 'Boolean true',
+    },
+    {
+      label: 'false',
+      insertText: 'false',
+      detail: 'Boolean false',
+    },
+  ];
+
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
@@ -375,6 +417,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
+
     const situation = getSituation(model.getValue(), offset);
     const completionItems = situation != null ? this.getCompletions(situation, this.setAlertText) : Promise.resolve([]);
 
@@ -461,7 +504,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           ...CompletionProvider.comparisonOps,
         ]);
       case 'SPANSET_COMBINING_OPERATORS':
-        return this.getOperatorsCompletions(CompletionProvider.spansetOps);
+        const withKeywords = CompletionProvider.queryHints.map((key) => ({
+          ...key,
+          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          type: 'KEYWORD' as const,
+        }));
+        return [...this.getOperatorsCompletions(CompletionProvider.spansetOps), ...withKeywords];
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
         const functions = CompletionProvider.functions.map((key) => ({
           ...key,
@@ -517,6 +565,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           .concat(this.getTagsCompletions('.'));
       case 'ATTRIBUTE_FOR_FUNCTION':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
+      case 'QUERY_HINT_NAME':
+        return CompletionProvider.withParameters.map((key) => ({
+          ...key,
+          type: 'TAG_NAME' as const,
+          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+        }));
+      case 'QUERY_HINT_VALUE':
+        return CompletionProvider.withValues.map((key) => ({
+          ...key,
+          type: 'TAG_VALUE' as const,
+        }));
       default:
         throw new Error(`Unexpected situation ${situation}`);
     }
