@@ -158,9 +158,9 @@ export class PrometheusDatasource
   }
 
   init = async () => {
-    if (!this.disableRecordingRules) {
-      this.loadRules();
-    }
+    // if (!this.disableRecordingRules) {
+    //   this.loadRules();
+    // }
     this.exemplarsAvailable = await this.areExemplarsAvailable();
   };
 
