@@ -527,9 +527,13 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Enables Query Library feature in Explore
+  * Renamed feature toggle, enables Saved queries feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enables Saved Queries feature
+  */
+  savedQueries?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
