@@ -345,14 +345,14 @@ func (e *DataSourceHandler) newProcessCfgPGX(queryContext context.Context, query
 	qm.TimeRange.From = query.TimeRange.From.UTC()
 	qm.TimeRange.To = query.TimeRange.To.UTC()
 
-	// Default to table if no format is provided
+	// Default to time_series if no format is provided
 	switch queryJSON.Format {
-	case "time_series":
-		qm.Format = dataQueryFormatSeries
 	case "table":
+		qm.Format = dataQueryFormatTable
+	case "time_series":
 		fallthrough
 	default:
-		qm.Format = dataQueryFormatTable
+		qm.Format = dataQueryFormatSeries
 	}
 
 	for i, col := range qm.columnNames {
