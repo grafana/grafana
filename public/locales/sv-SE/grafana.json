@@ -6421,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicka <2>här</2> för att läsa mer om detta fel.",
-    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11254,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Ta bort",
-      "confirm-delete-repository": "Är du säker på att du vill radera lagringsplatskonfigurationen?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Det gick inte att radera lagringsplatsen",
       "success-repository-deleted": "Lagringsplatsinställningar köade för radering",
-      "title-delete-repository": "Radera lagringsplatskonfiguration",
-      "tooltip-delete-this-repository": "Radera den här lagringsplatsen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
@@ -13056,6 +13059,7 @@
         "name-point-size": "Punktstorlek",
         "name-show-points": "Visa poäng",
         "name-show-thresholds": "Visa trösklar",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Omvandla",
         "transform-options": {
