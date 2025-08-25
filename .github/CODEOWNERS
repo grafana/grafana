@@ -397,6 +397,10 @@
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 /pkg/services/plugindashboards/ @grafana/plugins-platform-backend
 
+# LBAC for data sources
+/pkg/extensions/teamlbac @grafana/access-squad
+/pkg/extensions/pluginsintegration/teamhttpheaders @grafana/access-squad
+
 # Backend code docs
 /contribute/backend/ @grafana/grafana-backend-group
 
