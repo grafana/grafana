@@ -27,16 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
-<<<<<<< HEAD
-=======
-type RepoGetter interface {
-	// Given a repository configuration, return it as a repository instance
-	// This will only error for un-recoverable system errors
-	// the repository instance may or may not be valid/healthy
-	RepositoryFromConfig(ctx context.Context, r *provisioning.Repository) (repository.Repository, error)
-}
-
->>>>>>> origin/main
 const loggerName = "provisioning-repository-controller"
 
 const (
