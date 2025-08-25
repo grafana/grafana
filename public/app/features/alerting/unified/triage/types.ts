@@ -109,5 +109,4 @@ export interface AlertRuleQueryData {
       dataProcessingTime: number;
     };
   };
-  _hasFetchedData: boolean;
 }
