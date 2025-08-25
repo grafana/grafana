@@ -1018,4 +1018,8 @@ const (
 	// FlagAzureResourcePickerUpdates
 	// Enables the updated Azure Monitor resource picker
 	FlagAzureResourcePickerUpdates = "azureResourcePickerUpdates"
+
+	// FlagDskitBackgroundServices
+	// Enables dskit background service wrapper
+	FlagDskitBackgroundServices = "dskitBackgroundServices"
 )

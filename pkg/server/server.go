@@ -19,9 +19,12 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/backgroundsvcs/adapter"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,10 +43,11 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
+	tracerProvider *tracing.TracingService,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, promReg)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, tracerProvider, promReg)
 	if err != nil {
 		return nil, err
 	}
@@ -57,27 +61,29 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+	tracerProvider *tracing.TracingService,
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
 	s := &Server{
-		promReg:             promReg,
-		context:             childCtx,
-		childRoutines:       childRoutines,
-		HTTPServer:          httpServer,
-		provisioningService: provisioningService,
-		roleRegistry:        roleRegistry,
-		shutdownFn:          shutdownFn,
-		shutdownFinished:    make(chan struct{}),
-		log:                 log.New("server"),
-		cfg:                 cfg,
-		pidFile:             opts.PidFile,
-		version:             opts.Version,
-		commit:              opts.Commit,
-		buildBranch:         opts.BuildBranch,
-		backgroundServices:  backgroundServiceProvider.GetServices(),
+		promReg:                   promReg,
+		context:                   childCtx,
+		childRoutines:             childRoutines,
+		HTTPServer:                httpServer,
+		provisioningService:       provisioningService,
+		roleRegistry:              roleRegistry,
+		shutdownFn:                shutdownFn,
+		shutdownFinished:          make(chan struct{}),
+		log:                       log.New("server"),
+		cfg:                       cfg,
+		pidFile:                   opts.PidFile,
+		version:                   opts.Version,
+		commit:                    opts.Commit,
+		buildBranch:               opts.BuildBranch,
+		backgroundServiceRegistry: backgroundServiceProvider,
+		tracerProvider:            tracerProvider,
 	}
 
 	return s, nil
@@ -97,11 +103,13 @@ type Server struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 
-	pidFile            string
-	version            string
-	commit             string
-	buildBranch        string
-	backgroundServices []registry.BackgroundService
+	pidFile     string
+	version     string
+	commit      string
+	buildBranch string
+
+	backgroundServiceRegistry registry.BackgroundServiceRegistry
+	tracerProvider            *tracing.TracingService
 
 	HTTPServer          *api.HTTPServer
 	roleRegistry        accesscontrol.RoleRegistry
@@ -134,16 +142,35 @@ func (s *Server) Init() error {
 	return s.provisioningService.RunInitProvisioners(s.context)
 }
 
-// Run initializes and starts services. This will block until all services have
-// exited. To initiate shutdown, call the Shutdown method in another goroutine.
 func (s *Server) Run() error {
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagDskitBackgroundServices) {
+		s.log.Debug("Running background services with dskit wrapper")
+		return s.dskitRun()
+	}
+	s.log.Debug("Running standard background services")
+	return s.backgroundServicesRun()
+}
+
+func (s *Server) dskitRun() error {
+	defer close(s.shutdownFinished)
+
+	if err := s.Init(); err != nil {
+		return err
+	}
+	managerAdapter := adapter.NewManagerAdapter(s.backgroundServiceRegistry)
+	s.notifySystemd("READY=1")
+
+	return managerAdapter.Run(s.context)
+}
+
+func (s *Server) backgroundServicesRun() error {
 	defer close(s.shutdownFinished)
 
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	services := s.backgroundServices
+	services := s.backgroundServiceRegistry.GetServices()
 
 	// Start background services.
 	for _, svc := range services {
