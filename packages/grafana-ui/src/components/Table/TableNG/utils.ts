@@ -501,6 +501,7 @@ const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
  * Returns the text and background colors for a table cell based on its options and display value.
  */
 export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
+  console.log('isDark', theme.isDark);
   const bgCellTextColor = memoize((color: string) => getTextColorForAlphaBackground(color, theme.isDark), {
     maxSize: 1000,
   });
@@ -513,8 +514,9 @@ export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
         .toRgbString(),
     { maxSize: 1000 }
   );
+  const isTransparent = memoize((color: string) => tinycolor(color).getAlpha() === 0, { maxSize: 1000 });
 
-  return (cellOptions: TableCellOptions, displayValue: DisplayValue): CSSProperties => {
+  return (cellOptions: TableCellOptions, displayValue: DisplayValue, hasApplyToRow: boolean): CSSProperties => {
     const result: CSSProperties = {};
     const displayValueColor = displayValue.color;
 
@@ -525,6 +527,12 @@ export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
     if (cellOptions.type === TableCellDisplayMode.ColorText) {
       result.color = displayValueColor;
     } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
+      // return without setting anything if the bg is transparent. this allows
+      // the cell to inherit the row bg color if `applyToRow` is set.
+      if (hasApplyToRow && isTransparent(displayValueColor)) {
+        return result;
+      }
+
       const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
       result.color = bgCellTextColor(displayValueColor);
       result.background =
@@ -899,7 +907,7 @@ export function getApplyToRowBgFn(
       cellOptions.type === TableCellDisplayMode.ColorBackground &&
       cellOptions.applyToRow === true
     ) {
-      return (rowIndex: number) => getCellColorInlineStyles(cellOptions, fieldDisplay(field.values[rowIndex]));
+      return (rowIndex: number) => getCellColorInlineStyles(cellOptions, fieldDisplay(field.values[rowIndex]), true);
     }
   }
 }
