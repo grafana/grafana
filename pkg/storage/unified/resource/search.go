@@ -819,7 +819,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return listRV, err
 	}
 
-	updaterFn := func(context context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
+	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", documentStatsRV)))
 

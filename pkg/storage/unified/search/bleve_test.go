@@ -1264,7 +1264,6 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				case <-ctx.Done():
 					return
 				case <-time.After(time.Duration(i) * time.Millisecond): // introduce small jitter
-					break
 				}
 
 				idx, err := be.GetIndex(ctx, ns)
