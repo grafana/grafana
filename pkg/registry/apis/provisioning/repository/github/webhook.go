@@ -1,4 +1,4 @@
-package webhooks
+package github
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
 
 var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
@@ -26,24 +25,24 @@ type WebhookRepository interface {
 }
 
 type GithubWebhookRepository interface {
-	pgh.GithubRepository
+	GithubRepository
 	repository.Hooks
 
 	WebhookRepository
 }
 
 type githubWebhookRepository struct {
-	pgh.GithubRepository
+	GithubRepository
 	config     *provisioning.Repository
 	owner      string
 	repo       string
 	secret     common.RawSecureValue
-	gh         pgh.Client
+	gh         Client
 	webhookURL string
 }
 
 func NewGithubWebhookRepository(
-	basic pgh.GithubRepository,
+	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
 ) GithubWebhookRepository {
@@ -187,13 +186,13 @@ func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumb
 	return r.gh.CreatePullRequestComment(ctx, r.owner, r.repo, prNumber, comment)
 }
 
-func (r *githubWebhookRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig, error) {
+func (r *githubWebhookRepository) createWebhook(ctx context.Context) (WebhookConfig, error) {
 	secret, err := uuid.NewRandom()
 	if err != nil {
-		return pgh.WebhookConfig{}, fmt.Errorf("could not generate secret: %w", err)
+		return WebhookConfig{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
-	cfg := pgh.WebhookConfig{
+	cfg := WebhookConfig{
 		URL:         r.webhookURL,
 		Secret:      secret.String(),
 		ContentType: "json",
@@ -203,7 +202,7 @@ func (r *githubWebhookRepository) createWebhook(ctx context.Context) (pgh.Webhoo
 
 	hook, err := r.gh.CreateWebhook(ctx, r.owner, r.repo, cfg)
 	if err != nil {
-		return pgh.WebhookConfig{}, err
+		return WebhookConfig{}, err
 	}
 
 	// HACK: GitHub does not return the secret, so we need to update it manually
@@ -215,25 +214,25 @@ func (r *githubWebhookRepository) createWebhook(ctx context.Context) (pgh.Webhoo
 
 // updateWebhook checks if the webhook needs to be updated and updates it if necessary.
 // if the webhook does not exist, it will create it.
-func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig, bool, error) {
+func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (WebhookConfig, bool, error) {
 	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
 		hook, err := r.createWebhook(ctx)
 		if err != nil {
-			return pgh.WebhookConfig{}, false, err
+			return WebhookConfig{}, false, err
 		}
 		return hook, true, nil
 	}
 
 	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
 	switch {
-	case errors.Is(err, pgh.ErrResourceNotFound):
+	case errors.Is(err, ErrResourceNotFound):
 		hook, err := r.createWebhook(ctx)
 		if err != nil {
-			return pgh.WebhookConfig{}, false, err
+			return WebhookConfig{}, false, err
 		}
 		return hook, true, nil
 	case err != nil:
-		return pgh.WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
+		return WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
 	var mustUpdate bool
@@ -256,11 +255,11 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (pgh.Webhoo
 	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
 	secret, err := uuid.NewRandom()
 	if err != nil {
-		return pgh.WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
+		return WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
 	}
 	hook.Secret = secret.String()
 	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
-		return pgh.WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
+		return WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
 	return hook, true, nil
