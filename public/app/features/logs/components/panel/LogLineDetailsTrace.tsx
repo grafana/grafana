@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
-import { DataFrame, DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DataFrame, DataQueryRequest, DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
-import { SearchTableType } from 'app/plugins/datasource/tempo/dataquery.gen';
+import { SearchTableType, TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';
 
 import { useLogListContext } from './LogListContext';
 import { EmbeddedInternalLink } from './links';
@@ -26,6 +26,7 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
+    setDataSource(null);
     getDataSourceSrv()
       .get(traceRef.dsUID)
       .then((dataSource) => {
@@ -41,12 +42,12 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
     if (!dataSource) {
       return;
     }
-    const query = dataSource.query({
+    setDataFrames(undefined);
+    const request: DataQueryRequest<TempoQuery> = {
       app,
       requestId: `log-details-trace-${traceRef.query}`,
       targets: [
         {
-          // @ts-expect-error
           query: traceRef.query,
           queryType: 'traceql',
           refId: `log-details-trace-${traceRef.query}`,
@@ -60,7 +61,8 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
       scopedVars: {},
       timezone: timeZone,
       startTime: Date.now(),
-    });
+    };
+    const query = dataSource.query(request);
     if (isObservable(query)) {
       lastValueFrom(query)
         .then((response) => {
