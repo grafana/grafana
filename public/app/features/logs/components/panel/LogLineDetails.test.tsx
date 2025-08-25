@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { of } from 'rxjs';
 
 import {
   Field,
@@ -13,8 +14,10 @@ import {
   LogsSortOrder,
   DataFrame,
   ScopedVars,
+  getDefaultTimeRange,
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
+import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
@@ -30,13 +33,25 @@ jest.mock('@grafana/assistant', () => {
   };
 });
 
+const tempoDS = createTempoDatasource();
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(tempoDS),
+    }),
   };
 });
 jest.mock('./LogListContext');
+jest.mock('app/features/explore/TraceView/TraceView', () => ({
+  TraceView: () => <div>Trace view</div>,
+}));
+
+afterAll(() => {
+  jest.unmock('app/features/explore/TraceView/TraceView');
+});
 
 const setup = (
   propOverrides?: Partial<Props>,
@@ -50,6 +65,8 @@ const setup = (
     focusLogLine: jest.fn(),
     logs,
     onResize: jest.fn(),
+    timeRange: getDefaultTimeRange(),
+    timeZone: 'browser',
     ...(propOverrides || {}),
   };
 
@@ -559,6 +576,8 @@ describe('LogLineDetails', () => {
         containerElement: document.createElement('div'),
         focusLogLine: jest.fn(),
         logs: [logs[0]],
+        timeRange: getDefaultTimeRange(),
+        timeZone: 'browser',
         onResize: jest.fn(),
       };
 
@@ -605,5 +624,122 @@ describe('LogLineDetails', () => {
       // Tab not displayed, only line body
       expect(screen.getAllByText('Second log')).toHaveLength(1);
     });
+  });
+
+  test('Requests and shows an embedded trace', async () => {
+    const entry = 'traceId=1234 msg="some message"';
+    const dataFrame = toDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'entry', values: [entry] },
+        // As we have traceId in message already this will shadow it.
+        {
+          name: 'traceId',
+          values: ['1234'],
+          config: { links: [{ title: 'link title', url: 'localhost:3210/${__value.text}' }] },
+        },
+        { name: 'userId', values: ['5678'] },
+      ],
+    });
+    const log = createLogLine(
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0 },
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        virtualization: undefined,
+        wrapLogMessage: true,
+        getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame, vars: ScopedVars) => {
+          if (field.config && field.config.links) {
+            return field.config.links.map((link) => {
+              return {
+                href: '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-15m%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22fetpfiwe8asqoe%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22abcd1234%22%2C%22queryType%22%3A%22traceql%22%7D%5D%7D',
+                title: 'tempo',
+                target: '_blank',
+                origin: field,
+              };
+            });
+          }
+          return [];
+        },
+      }
+    );
+
+    jest.spyOn(tempoDS, 'query').mockReturnValueOnce(
+      of({
+        data: [
+          createDataFrame({
+            fields: [
+              { name: 'traceID', values: ['5d5d850e24d89509'], type: FieldType.string },
+              { name: 'spanID', values: ['5d5d850e24d89509'], type: FieldType.string },
+            ],
+          }),
+        ],
+      })
+    );
+
+    setup({ logs: [log] }, undefined, { showDetails: [log] });
+
+    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.getByText('Trace')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Trace'));
+
+    expect(screen.getByText('Trace view')).toBeInTheDocument();
+  });
+
+  test('Shows a message if the trace cannot be retrieved', async () => {
+    const entry = 'traceId=1234 msg="some message"';
+    const dataFrame = toDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'entry', values: [entry] },
+        // As we have traceId in message already this will shadow it.
+        {
+          name: 'traceId',
+          values: ['1234'],
+          config: { links: [{ title: 'link title', url: 'localhost:3210/${__value.text}' }] },
+        },
+        { name: 'userId', values: ['5678'] },
+      ],
+    });
+    const log = createLogLine(
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0 },
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        virtualization: undefined,
+        wrapLogMessage: true,
+        getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame, vars: ScopedVars) => {
+          if (field.config && field.config.links) {
+            return field.config.links.map((link) => {
+              return {
+                href: '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-15m%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22fetpfiwe8asqoe%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22abcd1234%22%2C%22queryType%22%3A%22traceql%22%7D%5D%7D',
+                title: 'tempo',
+                target: '_blank',
+                origin: field,
+              };
+            });
+          }
+          return [];
+        },
+      }
+    );
+
+    jest.spyOn(tempoDS, 'query').mockReturnValueOnce(
+      of({
+        data: [],
+      })
+    );
+
+    setup({ logs: [log] }, undefined, { showDetails: [log] });
+
+    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.getByText('Trace')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Trace'));
+
+    expect(screen.getByText('Could not retrieve trace.')).toBeInTheDocument();
   });
 });
