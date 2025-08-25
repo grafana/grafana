@@ -47,7 +47,6 @@ import {
   getDisplayName,
   predicateByName,
 } from './utils';
-import { background } from '@storybook/theming';
 
 describe('TableNG utils', () => {
   describe('alignment', () => {
