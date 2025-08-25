@@ -6,6 +6,7 @@ import { config, getBackendSrv, isFetchError, locationService } from '@grafana/r
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
+import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -26,12 +27,17 @@ import { DashboardTreeSelection } from '../types';
 import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
-interface DeleteItemsArgs {
-  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
+interface DeleteFoldersArgs {
+  folderUIDs: string[];
 }
 
-interface MoveItemsArgs extends DeleteItemsArgs {
+interface DeleteDashboardsArgs {
+  dashboardUIDs: string[];
+}
+
+interface MoveItemsArgs {
   destinationUID: string;
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
 }
 
 export interface ImportInputs {
@@ -281,27 +287,16 @@ export const browseDashboardsAPI = createApi({
       },
     }),
 
-    // delete *multiple* items (folders and dashboards). used in the delete modal.
-    deleteItems: builder.mutation<void, DeleteItemsArgs>({
+    // delete *multiple* folders. used in the delete modal.
+    deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
       invalidatesTags: ['getFolder'],
-      queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-        const pageStateManager = getDashboardScenePageStateManager();
+      queryFn: async ({ folderUIDs }, _api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
-        for (const folderUID of selectedFolders) {
-          if (config.featureToggles.provisioning) {
-            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
-            if (isProvisionedFolder(folder.data)) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: [
-                  'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.',
-                ],
-              });
-              continue;
-            }
+        for (const folderUID of folderUIDs) {
+          // This also shows warning alert
+          if (await isProvisionedFolderCheck(dispatch, folderUID)) {
+            continue;
           }
           await baseQuery({
             url: `/folders/${folderUID}`,
@@ -313,9 +308,23 @@ export const browseDashboardsAPI = createApi({
             },
           });
         }
+        return { data: undefined };
+      },
+      onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(refreshParents(folderUIDs));
+        });
+      },
+    }),
+
+    // delete *multiple* dashboards. used in the delete modal.
+    deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
+      invalidatesTags: ['getFolder'],
+      queryFn: async ({ dashboardUIDs }, _api, _extraOptions, baseQuery) => {
+        const pageStateManager = getDashboardScenePageStateManager();
         // Delete all the dashboards sequentially
         // TODO error handling here
-        for (const dashboardUID of selectedDashboards) {
+        for (const dashboardUID of dashboardUIDs) {
           if (config.featureToggles.provisioning) {
             const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
             if (isProvisionedDashboard(dto)) {
@@ -346,11 +355,9 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+      onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
+          dispatch(refreshParents(dashboardUIDs));
         });
       },
     }),
@@ -487,7 +494,8 @@ export const browseDashboardsAPI = createApi({
 export const {
   endpoints,
   useDeleteFolderMutation,
-  useDeleteItemsMutation,
+  useDeleteFoldersMutation,
+  useDeleteDashboardsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
   useLazyGetFolderQuery,

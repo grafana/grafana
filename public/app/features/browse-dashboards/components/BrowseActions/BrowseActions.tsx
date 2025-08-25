@@ -13,7 +13,8 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
-import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
+import { useDeleteMultipleFoldersMutationFacade } from '../../../../api/clients/folder/v1beta1/hooks';
+import { useDeleteDashboardsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
@@ -32,7 +33,8 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
-  const [deleteItems] = useDeleteItemsMutation();
+  const [deleteDashboards] = useDeleteDashboardsMutation();
+  const deleteFolders = useDeleteMultipleFoldersMutationFacade();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
   const provisioningEnabled = config.featureToggles.provisioning;
@@ -54,7 +56,10 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const onDelete = async () => {
-    await deleteItems({ selectedItems });
+    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+    await deleteDashboards({ dashboardUIDs: selectedDashboards });
+    await deleteFolders({ folderUIDs: selectedFolders });
     trackAction('delete', selectedItems);
     onActionComplete();
   };
