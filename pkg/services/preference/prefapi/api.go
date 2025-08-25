@@ -66,7 +66,6 @@ func UpdatePreferencesFor(ctx context.Context,
 		saveCmd.DateStyle = dtoCmd.DateStyle
 	}
 
-	// Validate the command
 	if err := saveCmd.Validate(); err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid preferences", err)
 	}
