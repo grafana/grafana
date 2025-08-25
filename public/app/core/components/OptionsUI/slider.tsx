@@ -11,7 +11,7 @@ import { NumberInput } from './NumberInput';
 
 type Props = StandardEditorProps<number, SliderFieldConfigSettings>;
 
-export const SliderValueEditor = ({ value, onChange, item, id }: Props) => {
+export const SliderValueEditor = ({ value, onChange, item }: Props) => {
   // Input reference
   const inputRef = useRef<HTMLSpanElement>(null);
 
@@ -109,7 +109,7 @@ export const SliderValueEditor = ({ value, onChange, item, id }: Props) => {
           included={included}
         />
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
-          <NumberInput id={id} value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
+          <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
         </span>
       </div>
     </div>

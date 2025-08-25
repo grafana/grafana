@@ -477,7 +477,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 38) },
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
           sortColumns: [],
         });
       });
@@ -518,7 +518,7 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 6);
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 22);
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -549,7 +549,21 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 6);
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+    });
+
+    it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields,
+          columnWidths: [100, 100, 100, 100],
+          enabled: true,
+          typographyCtx,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(28);
     });
   });
 

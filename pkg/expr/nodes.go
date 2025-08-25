@@ -32,8 +32,9 @@ var (
 
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
-	id    int64
-	refID string
+	id        int64
+	refID     string
+	isInputTo map[string]struct{}
 }
 
 type rawNode struct {
@@ -89,6 +90,17 @@ func (b *baseNode) ID() int64 {
 // RefID returns the refId of the node.
 func (b *baseNode) RefID() string {
 	return b.refID
+}
+
+func (b *baseNode) SetInputTo(refID string) {
+	if b.isInputTo == nil {
+		b.isInputTo = make(map[string]struct{})
+	}
+	b.isInputTo[refID] = struct{}{}
+}
+
+func (b *baseNode) IsInputTo() map[string]struct{} {
+	return b.isInputTo
 }
 
 // NodeType returns the data pipeline node type.
@@ -274,31 +286,23 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 		func() {
 			ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 			defer span.End()
-			firstNode := nodeGroup[0]
-			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
-			if err != nil {
-				for _, dn := range nodeGroup {
-					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
-				}
-				return
-			}
 
+			firstNode := nodeGroup[0]
 			logger := logger.FromContext(ctx).New("datasourceType", firstNode.datasource.Type,
 				"queryRefId", firstNode.refID,
 				"datasourceUid", firstNode.datasource.UID,
 				"datasourceVersion", firstNode.datasource.Version,
 			)
-
 			span.SetAttributes(
 				attribute.String("datasource.type", firstNode.datasource.Type),
 				attribute.String("datasource.uid", firstNode.datasource.UID),
 			)
 
 			req := &backend.QueryDataRequest{
-				PluginContext: pCtx,
-				Headers:       firstNode.request.Headers,
+				Headers: firstNode.request.Headers,
 			}
 
+			// add all the queries from the node group to the request
 			for _, dn := range nodeGroup {
 				req.Queries = append(req.Queries, backend.DataQuery{
 					RefID:         dn.refID,
@@ -324,15 +328,48 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
 			}
 
-			resp, err := s.dataService.QueryData(ctx, req)
+			var resp *backend.QueryDataResponse
+
+			// get the new client if it exists
+			qsDSClient, ok, err := s.qsDatasourceClientBuilder.BuildClient(firstNode.datasource.Type, firstNode.datasource.UID)
 			if err != nil {
 				for _, dn := range nodeGroup {
-					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, err)}
+					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
 				}
 				instrument(err, "")
 				return
 			}
 
+			var queryErr error
+			if !ok { // legacy flow
+				pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
+				if err != nil {
+					for _, dn := range nodeGroup {
+						vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
+					}
+					return
+				}
+				req.PluginContext = pCtx
+				resp, queryErr = s.dataService.QueryData(ctx, req)
+			} else { // new query service flow
+				k8sReq, err := ConvertBackendRequestToDataRequest(req)
+				if err != nil {
+					for _, dn := range nodeGroup {
+						vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
+					}
+					return
+				}
+
+				resp, queryErr = qsDSClient.QueryData(ctx, *k8sReq)
+			}
+
+			if queryErr != nil {
+				for _, dn := range nodeGroup {
+					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, queryErr)}
+				}
+				instrument(queryErr, "")
+				return
+			}
 			for _, dn := range nodeGroup {
 				dataFrames, err := getResponseFrame(logger, resp, dn.refID)
 				if err != nil {
@@ -342,7 +379,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
@@ -432,10 +469,22 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	var result mathexp.Results
 
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+	if dn.isInputToSQLExpr {
+		var converted bool
+		dataType := categorizeFrameInputType(dataFrames)
 
-	if err != nil {
-		err = makeConversionError(dn.refID, err)
+		result, converted = handleSqlInput(ctx, s.tracer, dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
+		status := "ok"
+		if result.Error != nil {
+			status = "error"
+		}
+		s.metrics.SqlCommandInputCount.WithLabelValues(status, fmt.Sprintf("%t", converted), dn.datasource.Type, dataType).Inc()
+	} else {
+		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
+		if err != nil {
+			err = makeConversionError(dn.refID, err)
+		}
 	}
+
 	return result, err
 }
