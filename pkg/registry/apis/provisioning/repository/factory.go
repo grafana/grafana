@@ -66,7 +66,9 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 
 func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
 	for _, e := range f.extras {
-		return e.Mutate(ctx, obj)
+		if err := e.Mutate(ctx, obj); err != nil {
+			return err
+		}
 	}
 
 	return nil
