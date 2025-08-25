@@ -71,6 +71,28 @@ func TestNewFactory(t *testing.T) {
 		secondExtra.AssertExpectations(t)
 	})
 
+	t.Run("returns error for duplicate among multiple different types", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+
+		gitExtra := &MockExtra{}
+		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
+
+		duplicateGitExtra := &MockExtra{}
+		duplicateGitExtra.On("Type").Return(provisioning.GitRepositoryType)
+
+		extras := []Extra{localExtra, gitExtra, duplicateGitExtra}
+		factory, err := ProvideFactory(extras)
+
+		assert.Error(t, err)
+		assert.Nil(t, factory)
+		assert.Contains(t, err.Error(), "repository type \"git\" is already registered")
+
+		localExtra.AssertExpectations(t)
+		gitExtra.AssertExpectations(t)
+		duplicateGitExtra.AssertExpectations(t)
+	})
+
 	t.Run("handles nil extras slice", func(t *testing.T) {
 		factory, err := ProvideFactory(nil)
 
@@ -174,7 +196,8 @@ func TestFactory_Build(t *testing.T) {
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Build", mock.Anything, mock.Anything).Return(expectedRepo, nil)
 
-		factory := ProvideFactory([]Extra{localExtra})
+		factory, err := ProvideFactory([]Extra{localExtra})
+		require.NoError(t, err)
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -194,7 +217,8 @@ func TestFactory_Build(t *testing.T) {
 		gitExtra := &MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		factory := ProvideFactory([]Extra{gitExtra})
+		factory, err := ProvideFactory([]Extra{gitExtra})
+		require.NoError(t, err)
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -218,7 +242,8 @@ func TestFactory_Build(t *testing.T) {
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Build", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		factory := ProvideFactory([]Extra{localExtra})
+		factory, err := ProvideFactory([]Extra{localExtra})
+		require.NoError(t, err)
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -245,7 +270,8 @@ func TestFactory_Build(t *testing.T) {
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 		gitExtra.On("Build", mock.Anything, mock.Anything).Return(gitRepo, nil)
 
-		factory := ProvideFactory([]Extra{localExtra, gitExtra})
+		factory, err := ProvideFactory([]Extra{localExtra, gitExtra})
+		require.NoError(t, err)
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -267,7 +293,8 @@ func TestFactory_Build(t *testing.T) {
 		localExtra := &MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		factory := ProvideFactory([]Extra{localExtra})
+		factory, err := ProvideFactory([]Extra{localExtra})
+		require.NoError(t, err)
 
 		ctx := context.Background()
 		repoConfig := &provisioning.Repository{
@@ -299,7 +326,8 @@ func TestFactory_Build(t *testing.T) {
 			return c.Value(testKey("test")) == "value"
 		}), mock.Anything).Return(localRepo, nil)
 
-		factory := ProvideFactory([]Extra{localExtra})
+		factory, err := ProvideFactory([]Extra{localExtra})
+		require.NoError(t, err)
 
 		repoConfig := &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
@@ -307,7 +335,7 @@ func TestFactory_Build(t *testing.T) {
 			},
 		}
 
-		_, err := factory.Build(ctx, repoConfig)
+		_, err = factory.Build(ctx, repoConfig)
 
 		require.NoError(t, err)
 		localExtra.AssertExpectations(t)
@@ -316,7 +344,9 @@ func TestFactory_Build(t *testing.T) {
 
 func TestFactory_Implementation(t *testing.T) {
 	t.Run("factory implements Factory interface", func(t *testing.T) {
-		var _ Factory = ProvideFactory([]Extra{})
+		factory, err := ProvideFactory([]Extra{})
+		require.NoError(t, err)
+		var _ Factory = factory
 	})
 
 	t.Run("mockExtra implements Extra interface", func(t *testing.T) {
