@@ -42,6 +42,8 @@ composableKinds: DataQuery: {
 					serviceMapQuery?: string | [...string]
 					// Use service.namespace in addition to service.name to uniquely identify a service.
 					serviceMapIncludeNamespace?: bool
+					// Whether to use native histograms for service map queries
+					serviceMapUseNativeHistograms?: bool
 					// Defines the maximum number of traces that are returned from Tempo
 					limit?: int64
 					// Defines the maximum number of spans per spanset that are returned from Tempo
