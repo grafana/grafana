@@ -42,6 +42,10 @@ export function useFavoriteDatasources(): FavoriteDatasources {
 
   // Load favorites from storage on mount
   useEffect(() => {
+    if (!config.featureToggles.favoriteDatasources) {
+      return;
+    }
+
     const loadFavorites = async () => {
       setIsLoading(true);
       const stored = await userStorage.getItem(FAVORITE_DATASOURCES_KEY);
@@ -54,7 +58,7 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     };
 
     loadFavorites();
-  }, []);
+  }, [config.featureToggles.favoriteDatasources]);
 
   // Helper function to save favorites to storage
   const saveFavorites = useCallback(async (newFavorites: string[]) => {
