@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 import { SceneDataQuery, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-export const DS_UID = 'deeqciobdjj0gf';
+export const DS_UID = 'gdev-prometheus';
 export const METRIC_NAME = 'GRAFANA_ALERTS';
 export const DEFAULT_FIELDS = ['alertname', 'grafana_folder', 'grafana_rule_uid', 'alertstate'];
 
