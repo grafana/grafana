@@ -6,6 +6,7 @@ Important notes:
 
 - We generally store all element identifiers ([CSS selectors](https://mdn.io/docs/Web/CSS/CSS_Selectors)) within the framework for reuse and maintainability.
 - We generally do not use stubs or mocks as to fully simulate a real user.
+- We also use Playwright for the [plugins' end-to-end tests](contribute/style-guides/e2e-plugins.md).
 
 ## Framework structure
 
@@ -16,7 +17,9 @@ Our framework structure is inspired by [Martin Fowler's Page Object](https://mar
 - **`Component`**: An abstraction for an object that contains one or more `Selector` identifiers but without the `visit` function
 - **`Flow`**: An abstraction that contains a sequence of actions on one or more `Page` abstractions that can be reused and shared between tests
 
-## Basic example
+## How to create an end-to-end Playwright test
+
+### Basic example
 
 Let's start with a simple [JSX](https://reactjs.org/docs/introducing-jsx.html) example containing a single input field that we want to populate during our E2E test:
 
@@ -98,7 +101,7 @@ test(
 );
 ```
 
-## Advanced example
+### Advanced example
 
 Let's take a look at an example that uses the same selector for multiple items in a list for instance. In this example app, there's a list of data sources that we want to click on during an E2E test.
 
@@ -128,6 +131,7 @@ export const versionedPages = {
     },
   },
 [...]
+};
 ```
 
 You might have noticed that instead of a simple string as the selector, there's a function that takes a string parameter as an argument and returns a formatted string using the argument.
@@ -161,22 +165,21 @@ When this list is rendered with the data sources with names `A`, `B` and `C` ,th
 Now we can write our test. The one thing that differs from the previous [basic example](#basic-example) is that we pass in which data source we want to click as an argument to the selector function:
 
 ```typescript
-test.describe(
-  'List test',
+test(
+  'List test clicks on data source named B',
   {
     tag: ['@datasources'],
   },
-  () => {
-    test('clicks on data source named B', async ({ selectors, page }) => {
-      await page.goto(selectors.pages.Datasources.url)
+  async ({ selectors, page }) => {
+    await page.goto(selectors.pages.Datasources.url);
     // Select datasource
-      const dataSource = 'B';
-      await page.getByTextId(dataSource).click();
-    }
-  });
+    const dataSource = 'B';
+    await page.getByTextId(dataSource).click();
+  }
+);
 ```
 
-## aria-label versus data-testid
+### aria-label versus data-testid
 
 Our selectors are set up to work with both `aria-label` attributes and `data-testid` attributes. The `aria-label` attributes help assistive technologies such as screen readers identify interactive elements of a page for our users.
 
@@ -226,6 +229,7 @@ export const versionedComponents = {
                 '10.4.0': 'data-testid drawer subtitle',
             },
         },
+    },
 [...]
 };
 ```
@@ -235,3 +239,61 @@ and in your component, import the selectors and add the `data-testid`:
 ```
 <button data-testid={selectors.components.drawer.general.close}>
 ```
+
+## How to run the Playwright tests:
+
+**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to use reports to analyze failing tests, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
+
+Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers.
+
+```
+yarn playwright install chromium
+```
+
+The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in CI) on port 3001 and runs all the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
+
+```
+yarn e2e:playwright
+```
+
+You can run against an arbitrary instance by setting the `GRAFANA_URL` environment variable:
+
+```
+GRAFANA_URL=http://localhost:3000 yarn e2e:playwright
+```
+
+Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
+
+### Commands commonly used:
+
+1 - **To open Playwright in UI**. It boosts the Grafana server and then Playwright, which runs against this server.
+
+```
+yarn e2e:playwright --ui
+```
+
+2 - **To run an individual test**. It will run the test that matches the string passed to _grep_. Playwright will run all of them if you use a string that matches multiple tests.
+
+```
+yarn e2e:playwright --grep <testname>
+```
+
+3 - **To run a project**. It will run the entire project, also known as '_suite_'. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
+
+```
+yarn e2e:playwright --project <projectname>
+```
+
+4 - **To run tests with a specific tagname**. The tagnames are specified in each test, like you can see here in [lokiEditor.spec.ts](https://github.com/grafana/grafana/blob/main/e2e-playwright/plugin-e2e/plugin-e2e-api-tests/as-admin-user/lokiEditor.spec.ts#L7)
+
+```
+yarn e2e:playwright --grep @<tagname>
+```
+
+5- **To open the last HTML report**. It will open a Chrome window with the test list and the related info (success/error, name, time, steps, ...).
+
+```
+yarn playwright show-report
+```
+
+You can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options) if you are curious about other commands.
