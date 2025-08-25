@@ -382,7 +382,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 		buildEmptyIndexCalls: []buildEmptyIndexCall{},
 
 		cache: map[NamespacedResource]ResourceIndex{
-			{Namespace: "ns", Group: "group", Resource: "bad"}: &MockResourceIndex{
+			NamespacedResource{Namespace: "ns", Group: "group", Resource: "bad"}: &MockResourceIndex{
 				updateIndexError: failedErr,
 			},
 		},
