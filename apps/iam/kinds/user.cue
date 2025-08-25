@@ -8,28 +8,40 @@ userKind: {
 	kind:       "User"
 	pluralName: "Users"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 
 userv0alpha1: userKind & {
-	validation: {
-		operations: [
-			"CREATE",
-			"UPDATE",
-		]
-	}
+	// TODO: Uncomment this when User will be added to ManagedKinds 
+	// validation: {
+	// 	operations: [
+	// 		"CREATE",
+	// 		"UPDATE",
+	// 	]
+	// }
+	// mutation: {
+	// 	operations: [
+	// 		"CREATE",
+	// 		"UPDATE",
+	// 	]
+	// }
 	schema: {
 		spec: v0alpha1.UserSpec
 	}
-	// routes: {
-	// 	"/teams": {
-	// 		"GET": {
-	// 			response: {
-	// 				name: string
-	// 			}
-	// 		}
-	// 	}
-	// }
+	routes: {
+		"/teams": {
+			"GET": {
+				response: {
+					#UserTeam: {
+						title: string
+						teamRef: v0alpha1.TeamRef
+						permission: v0alpha1.TeamPermission
+					}
+					items: [...#UserTeam]
+				}
+			}
+		}
+	}
 }

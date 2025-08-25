@@ -11,6 +11,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
@@ -72,11 +74,41 @@ var appManifestData = app.ManifestData{
 					Plural:     "Users",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Admission: &app.AdmissionCapabilities{
-						Validation: &app.ValidationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
+					Routes: map[string]spec3.PathProps{
+						"/teams": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "GetTeams",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"items": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"array"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"items",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
 							},
 						},
 					},
@@ -135,7 +167,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v0alpha1|User|teams|GET": v0alpha1.GetTeams{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
