@@ -21,9 +21,9 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
         color={'red'}
         icon={'exclamation-triangle'}
         style={{ cursor: 'pointer' }}
-        text={t('provisioning.warning.re-create-repository-access-tokens', 'Token needs to be saved again')}
+        text={t('provisioning.inline-token-warning-badge-text', 'Token needs to be saved again')}
         tooltip={t(
-          'provisioning.warning.re-create-repository-access-tokens-explain',
+          'inline-token-warning-badge-tooltip',
           'The method to save the token is to re-enter it in the repository settings.'
         )}
         onClick={() => {

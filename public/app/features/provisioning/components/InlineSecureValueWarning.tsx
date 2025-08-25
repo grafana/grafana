@@ -29,10 +29,12 @@ export function InlineSecureValueWarning({ repo, items }: Props) {
 
   return (
     <Alert
-      title={t('provisioning.warning.re-create-repository-access-tokens', 'Access tokens need to be saved again')}
+      title={t('provisioning.inline-secure-values-warning-title', 'Access tokens need to be saved again')}
       severity="warning"
     >
-      <Trans i18nKey="provisioning.warning.re-create-repository-access-tokens-explain">The method to save</Trans>
+      <Trans i18nKey="provisioning.inline-secure-values-warning-body">
+        The method to save secure values has changed. This requires re-saving all secrets.
+      </Trans>
     </Alert>
   );
 }
