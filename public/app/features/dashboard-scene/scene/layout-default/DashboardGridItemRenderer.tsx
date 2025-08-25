@@ -5,16 +5,23 @@ import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
+import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
+
 import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
 
 export function DashboardGridItemRenderer({ model }: SceneComponentProps<DashboardGridItem>) {
   const { repeatedPanels = [], itemHeight, variableName, body } = model.useState();
+  const soloPanelContext = useSoloPanelContext();
   const layoutStyle = useLayoutStyle(
     model.getRepeatDirection(),
     model.getPanelCount(),
     model.getMaxPerRow(),
     itemHeight ?? 10
   );
+
+  if (soloPanelContext) {
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+  }
 
   if (!variableName) {
     return (

@@ -9,7 +9,6 @@ import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -99,7 +98,6 @@ export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, co
   const clonedTabs = createTabRepeats({ values, texts, variable, tab });
 
   tab.setState({ repeatedTabs: clonedTabs });
-  tab.publishEvent(new DashboardRepeatsProcessedEvent({ source: tab }), true);
 }
 
 /**

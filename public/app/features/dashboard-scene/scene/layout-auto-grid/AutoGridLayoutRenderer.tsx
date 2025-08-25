@@ -6,6 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
@@ -18,12 +19,17 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   const { layoutOrchestrator, isEditing } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen } = layoutManager.useState();
+  const soloPanelContext = useSoloPanelContext();
 
   if (isHidden || !layoutOrchestrator) {
     return null;
   }
 
   const showCanvasActions = !isRepeatCloneOrChildOf(model) && isEditing;
+
+  if (soloPanelContext) {
+    return children.map((item) => <item.Component key={item.state.key} model={item} />);
+  }
 
   return (
     <div
