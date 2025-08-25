@@ -5,7 +5,6 @@
 WIRE_TAGS = "oss"
 
 -include local/Makefile
-include .bingo/Variables.mk
 include .citools/Variables.mk
 
 GO = go
@@ -200,7 +199,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
-	@echo "generatng Wire graph"
+	@echo "generating Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: fix-cue
@@ -421,7 +420,6 @@ build-docker-full: ## Build Docker image for development.
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
@@ -439,7 +437,6 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
