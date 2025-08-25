@@ -19,7 +19,7 @@ refs:
 
 # SQL expressions
 
-{{< docs/private-preview product="SQL expressions" >}}
+{{< docs/public-preview product="SQL expressions" >}}
 
 SQL Expressions are server-side expressions that manipulate and transform the results of data source queries using MySQL-like syntax. They allow you to easily query and transform your data after it has been queried, using SQL, which provides a familiar and powerful syntax that can handle everything from simple filters to highly complex, multi-step transformations.
 
@@ -134,8 +134,6 @@ The SQL expression workflow in Grafana is designed with the following behaviors:
 
 - **Non-tabular or incorrectly shaped data will not render in certain panels.** Visualizations such as graphs or gauges require properly structured data. Mismatched formats will result in rendering issues or missing data.
 
-For data to be used in SQL expressions, it must be in a **tabular format**, specifically the **FullLong format**. This means all relevant data is contained within a single table, with values such as metric labels stored as columns and individual cells. Because not all data sources return results in this format by default, Grafana will automatically convert compatible query results to FullLong format when they are referenced in a SQL expression.
-
 ## SQL conversion rules
 
 When a RefID is referenced within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
@@ -144,6 +142,17 @@ The SQL conversion path:
 
 - The query result is treated as a single data frame, without labels, and is mapped directly to a tabular format.
 - If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example, labeled formats), Grafana automatically converts the data into a table structure.
+
+## Supported functions
+
+A complete list of supported SQL keywords, operators, and functions is maintained in the SQL expressions query validator implementation.
+
+For the most up-to-date reference of all supported SQL functionality, refer to the `allowedNode` and `allowedFunction` definitions in the Grafana [codebase](https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go).
+
+## Alerting and recording rules
+
+SQL expressions integrates seamlessly with alerting and recording rules, allowing you to define complex conditions and metrics using standard SQL queries. The system processes your query results and automatically creates alert instances or recorded metrics based on the returned data structure.
+
 
 ## Known limitations
 
