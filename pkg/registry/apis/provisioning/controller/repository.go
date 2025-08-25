@@ -215,11 +215,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-<<<<<<< HEAD
 		repo, err := rc.repoFactory.Build(ctx, obj)
-=======
-		repo, err := rc.repoGetter.RepositoryFromConfig(ctx, obj)
->>>>>>> origin/main
 		if err != nil {
 			logger.Warn("unable to get repository for cleanup")
 		} else {
@@ -434,11 +430,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
-<<<<<<< HEAD
 	repo, err := rc.repoFactory.Build(ctx, obj)
-=======
-	repo, err := rc.repoGetter.RepositoryFromConfig(ctx, obj)
->>>>>>> origin/main
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
