@@ -131,7 +131,48 @@ func TestNewStagedGitRepository(t *testing.T) {
 			opts: repository.StageOptions{
 				Mode: repository.StageModeCommitOnEach,
 			},
-			wantError: errors.New("ref not found"),
+			wantError: errors.New("ensure branch exists: check branch exists: ref not found"),
+		},
+		{
+			name: "creates branch when it doesn't exist",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// First call to GetRef for feature-branch returns not found
+				// Second call to GetRef for main branch (source) returns success
+				// Third call to CreateRef creates the feature branch
+				// Fourth call to GetRef for feature-branch returns the created branch
+				callCount := 0
+				mockClient.GetRefStub = func(ctx context.Context, ref string) (nanogit.Ref, error) {
+					callCount++
+					switch callCount {
+					case 1:
+						// First call: feature-branch doesn't exist
+						if ref == "refs/heads/feature-branch" {
+							return nanogit.Ref{}, nanogit.ErrObjectNotFound
+						}
+					case 2:
+						// Second call: get source branch (main)
+						if ref == "refs/heads/main" {
+							return nanogit.Ref{
+								Name: "refs/heads/main",
+								Hash: hash.Hash{1, 2, 3},
+							}, nil
+						}
+					}
+					return nanogit.Ref{}, errors.New("unexpected call")
+				}
+
+				// CreateRef should be called to create the new branch
+				mockClient.CreateRefReturns(nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			opts: repository.StageOptions{
+				Ref:  "feature-branch",
+				Mode: repository.StageModeCommitOnEach,
+			},
+			expectedRef: "refs/heads/feature-branch",
+			wantError:   nil,
 		},
 		{
 			name: "fails with NewStagedWriter error",

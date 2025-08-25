@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
+import { Button, Drawer, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
+import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
+import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -14,13 +17,10 @@ import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDa
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
-import { BulkDeleteProvisionedResource } from '../BulkActions/BulkDeleteProvisionedResource';
-import { BulkMoveProvisionedResource } from '../BulkActions/BulkMoveProvisionedResource';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
 import { SelectedMixResourcesMsgModal } from './SelectedMixResourcesMsgModal';
-import { useSelectionProvisioningStatus } from './useSelectionProvisioningStatus';
 
 export interface Props {
   folderDTO?: FolderDTO;
@@ -41,9 +41,6 @@ export function BrowseActions({ folderDTO }: Props) {
     selectedItems,
     folderDTO?.managedBy === ManagerKind.Repo
   );
-
-  // Folders can only be moved if nested folders is enabled
-  const moveIsInvalid = useMemo(() => Object.values(selectedItems.folder).some((v) => v), [selectedItems]);
 
   const isSearching = stateManager.hasSearchFilters();
 
@@ -125,7 +122,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const moveButton = (
-    <Button onClick={showMoveModal} variant="secondary" disabled={moveIsInvalid}>
+    <Button onClick={showMoveModal} variant="secondary">
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
     </Button>
   );
@@ -133,13 +130,7 @@ export function BrowseActions({ folderDTO }: Props) {
   return (
     <>
       <Stack gap={1} data-testid="manage-actions">
-        {moveIsInvalid ? (
-          <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
-            {moveButton}
-          </Tooltip>
-        ) : (
-          moveButton
-        )}
+        {moveButton}
 
         <Button onClick={showDeleteModal} variant="destructive">
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
@@ -157,7 +148,6 @@ export function BrowseActions({ folderDTO }: Props) {
             folderUid={folderDTO?.uid || ''}
             onDismiss={() => {
               setShowBulkDeleteProvisionedResource(false);
-              onActionComplete();
             }}
           />
         </Drawer>
@@ -175,7 +165,6 @@ export function BrowseActions({ folderDTO }: Props) {
             folderUid={folderDTO?.uid}
             onDismiss={() => {
               setShowBulkMoveProvisionedResource(false);
-              onActionComplete();
             }}
           />
         </Drawer>

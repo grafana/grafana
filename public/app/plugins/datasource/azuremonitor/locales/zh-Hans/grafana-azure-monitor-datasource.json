@@ -52,7 +52,7 @@
       "button-use-query": "使用此查询",
       "label-categories": "类别",
       "label-query-results": "查询结果：{{numResults}}",
-      "noOptionsMessage-unable-to-list-categories": "",
+      "noOptionsMessage-unable-to-list-categories": "无法列出所有类别",
       "placeholder-all-categories": "所有类别",
       "placeholder-search-logs": "在日志查询中搜索",
       "text-loading": "加载中..."
@@ -72,10 +72,8 @@
       "label-enable-basic-logs": "启用基本日志"
     },
     "config-editor": {
-      "description-additional-settings": "附加设置是可选设置，可通过配置对数据源进行更多控制。其中包括安全 Socks 代理。",
-      "description-request-timeout": "以秒为单位设置请求超时。默认为 30 秒。",
-      "title-additional-settings": "附加设置",
-      "title-request-timeout": "请求超时"
+      "description-additional-settings": "",
+      "title-additional-settings": "附加设置"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "后备凭证已禁用。由于基于用户的身份验证本质上只支持用户范围内的请求，因此提醒、记录查询或报告等功能将无法按预期运行。请查看<2>文档</2>，了解更多详情。",
@@ -168,8 +166,8 @@
       "tooltip-limit": "限制返回的行数（默认为 1000）。"
     },
     "logs-management": {
-      "body-basic-logs-queries": "",
-      "confirmText-confirm": "",
+      "body-basic-logs-queries": "您确定要切换到基本日志吗？",
+      "confirmText-confirm": "确认",
       "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
       "label-logs": "日志",
       "title-basic-logs-queries": "基本日志查询",
@@ -205,14 +203,14 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 日志启动查询按钮",
-      "body-switching-to-builder": "",
-      "body-switching-to-kql": "",
+      "body-switching-to-builder": "切换到构建器将丢弃当前的 KQL 查询并清除 KQL 编辑器。您确定吗？",
+      "body-switching-to-kql": "切换到 KQL 将丢弃当前的构建器设置。您确定吗？",
       "button-kick-start-your-query": "启动您的查询",
       "button-run-query": "运行查询",
-      "confirmText-switch-to": "",
+      "confirmText-switch-to": "切换到 {{newMode}}",
       "editor-modes": {
-        "label-builder": "",
-        "label-kql": ""
+        "label-builder": "构建器",
+        "label-kql": "KQL"
       },
       "label-service": "服务",
       "placeholder-service": "服务...",
