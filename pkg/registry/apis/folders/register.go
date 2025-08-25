@@ -162,8 +162,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 
 	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true,
-	})
+		RequireDeprecatedInternalID: true})
 
 	folderStore := &folderStorage{
 		tableConverter:       resourceInfo.TableConverter(),
