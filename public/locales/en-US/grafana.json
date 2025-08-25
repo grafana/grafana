@@ -5223,6 +5223,9 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "search-panel": {
+      "no-match": "No panels matching"
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Loading configuration"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": "Panel not found"
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
@@ -6134,9 +6140,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
-    },
-    "solo-panel-page": {
-      "loading": "Loading"
     },
     "support-snapshot-service": {
       "description": {
@@ -10711,10 +10714,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Could not find anything matching your query"
     }
-  },
-  "panel-search": {
-    "no-matches": "No matches found",
-    "unsupported-layout": "Unsupported layout"
   },
   "panel-type-filter": {
     "clear-button": "Clear types",
