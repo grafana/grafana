@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -137,7 +138,8 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Properties = q
 			// TODO: Cascade limit from Grafana config in this (new Expression Parser) branch of the code
 			cellLimit := 0 // zero means no limit
-			eq.Command, err = NewSQLCommand(ctx, common.RefID, q.Format, q.Expression, int64(cellLimit), 0, 0)
+			sqlLogger := backend.NewLoggerWith("logger", SQLLoggerName).FromContext(ctx)
+			eq.Command, err = NewSQLCommand(ctx, sqlLogger, common.RefID, q.Format, q.Expression, int64(cellLimit), 0, 0)
 		}
 
 	case QueryTypeThreshold:
