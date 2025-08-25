@@ -549,7 +549,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "id":1,
-  "uid": "updated UID",
+  "uid": "uid",
   "orgId":1,
   "name":"test_datasource",
   "type":"graphite",
@@ -567,6 +567,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "jsonData":null
 }
 ```
+
+Note that the UID cannot be modified.
 
 **Example Response**:
 
