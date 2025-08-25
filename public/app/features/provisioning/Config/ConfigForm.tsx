@@ -67,24 +67,20 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
 
+useEffect(() => {
   // TODO: this should be removed after 12.2 is released
-  const checkTokenMigrationWarning = useCallback(() => {
-    if (data?.spec?.type !== 'local' && !data?.secure?.token) {
-      setTokenConfigured(false);
-      setError(
-        'token',
-        {
-          type: 'manual',
-          message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
-        },
-        { shouldFocus: true }
-      ); // does not seem to focus
-    }
-  }, [data, setTokenConfigured, setError, gitFields]);
-
-  useEffect(() => {
-    checkTokenMigrationWarning();
-  }, [checkTokenMigrationWarning]);
+  if (data?.spec?.type !== 'local' && !data?.secure?.token) {
+    setTokenConfigured(false);
+    setError(
+      'token',
+      {
+        type: 'manual',
+        message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
+      },
+      { shouldFocus: true }
+    ); // does not seem to focus
+  }
+}, [data, gitFields, setTokenConfigured, setError]);
 
   useEffect(() => {
     if (request.isSuccess) {
