@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "ミュート、グループ化、タイミング"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
     "alert-menu": {
@@ -2457,6 +2462,7 @@
       },
       "empty-data-source": "ルールが見つかりません",
       "error-button": "エラー",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -3524,7 +3530,6 @@
       "button-cancel": "キャンセル",
       "button-move": "移動",
       "button-moving": "移動中…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -4153,7 +4158,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "データソース",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "クエリに一致する結果が見つかりませんでした",
       "request-data-source": "新しいデータソースをリクエストする",
       "roadmap": "ロードマップを表示"
@@ -6524,9 +6530,11 @@
       "explore": "探検"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "ダッシュボードを作成",
       "explore-data": "データを調査",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "エラーの詳細"
@@ -11841,7 +11849,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "クエリ行を折りたたむ",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
@@ -11852,11 +11859,7 @@
       "replace-query-from-library": "ライブラリからのクエリに置き換え",
       "show-response": "応答の表示"
     },
-    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
   },
   "recently-deleted": {
     "buttons": {

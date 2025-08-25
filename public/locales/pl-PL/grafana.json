@@ -501,6 +501,11 @@
       "title-muting-grouping-and-timings": "Wyciszanie, grupowanie i harmonogramy"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nie znaleziono źródeł danych"
     },
     "alert-menu": {
@@ -2487,6 +2492,7 @@
       },
       "empty-data-source": "Nie znaleziono reguł",
       "error-button": "Błąd",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -3563,7 +3569,6 @@
       "button-cancel": "Anuluj",
       "button-move": "Przenieś",
       "button-moving": "Przenoszenie…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -4207,7 +4212,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Źródła danych",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nie znaleziono wyników pasujących do Twojego zapytania",
       "request-data-source": "Poproś o nowe źródło danych",
       "roadmap": "Widok etapów"
@@ -6587,9 +6593,11 @@
       "explore": "Eksploruj"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Utwórz pulpit",
       "explore-data": "Przeglądaj dane",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Więcej informacji o błędzie"
@@ -11949,7 +11957,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Zwiń wiersz zapytania",
       "datasource-help": "Pokaż pomoc dotyczącą źródła danych",
       "drag-and-drop": "Przeciągnij i upuść, aby zmienić kolejność",
@@ -11960,11 +11967,7 @@
       "replace-query-from-library": "Zastąp zapytanie z biblioteki",
       "show-response": "Pokaż odpowiedź"
     },
-    "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
   },
   "recently-deleted": {
     "buttons": {

@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
@@ -25,14 +25,15 @@ import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
-const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
-const INTERACTION_ITEM = {
+export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+export const INTERACTION_ITEM = {
   SEARCH: 'search',
   OPEN_DROPDOWN: 'open_dspicker',
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
+  TOGGLE_FAVORITE: 'toggle_favorite',
 };
 
 export interface DataSourcePickerProps {
@@ -114,6 +115,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     type: props.type,
     variables: props.variables,
   });
+  const favoriteDataSources = useFavoriteDatasources();
 
   // the order of middleware is important!
   const middleware = [
@@ -298,6 +300,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.SELECT_DS,
                     ds_type: ds.type,
+                    is_favorite: favoriteDataSources.enabled
+                      ? favoriteDataSources.isFavoriteDatasource(ds.uid)
+                      : undefined,
                   });
                 }
               }}

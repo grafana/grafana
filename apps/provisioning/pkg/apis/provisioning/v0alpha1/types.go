@@ -17,7 +17,21 @@ type Repository struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
+	Secure SecureValues     `json:"secure,omitzero,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
+}
+
+// NOT YET USED FOR REAL -- testing secure value workflow
+type SecureValues struct {
+	// Token used to connect the configured repository
+	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
+
+	// Some webhooks (github) require a secret key value
+	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+}
+
+func (v SecureValues) IsZero() bool {
+	return v.Token.IsZero() && v.WebhookSecret.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -228,9 +242,21 @@ type RepositoryStatus struct {
 	Webhook *WebhookStatus `json:"webhook"`
 }
 
+// HealthFailureType represents different types of repository failures
+// +enum
+type HealthFailureType string
+
+const (
+	HealthFailureHook   HealthFailureType = "hook"
+	HealthFailureHealth HealthFailureType = "health"
+)
+
 type HealthStatus struct {
 	// When not healthy, requests will not be executed
 	Healthy bool `json:"healthy"`
+
+	// The type of the error
+	Error HealthFailureType `json:"error,omitempty"`
 
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`

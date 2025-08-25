@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Silenciamento, agrupamento e cronogramas"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
     "alert-menu": {
@@ -2467,6 +2472,7 @@
       },
       "empty-data-source": "Nenhuma regra encontrada",
       "error-button": "Erro",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não há mais resultados. Foram encontradas {{numberOfRules}} regras",
@@ -3537,7 +3543,6 @@
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "Movendo…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -4171,7 +4176,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Fontes de dados",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nenhum resultado foi encontrado para a sua consulta",
       "request-data-source": "Solicitar uma nova fonte de dados",
       "roadmap": "Ver roteiro"
@@ -6545,9 +6551,11 @@
       "explore": "Explorar"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Criar um painel",
       "explore-data": "Explorar dados",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mais detalhes sobre o erro"
@@ -11877,7 +11885,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Recolher linha de consulta",
       "datasource-help": "Mostrar ajuda da fonte de dados",
       "drag-and-drop": "Arraste e solte para reordenar",
@@ -11888,11 +11895,7 @@
       "replace-query-from-library": "Substituir por consulta da biblioteca",
       "show-response": "Mostrar resposta"
     },
-    "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
   },
   "recently-deleted": {
     "buttons": {

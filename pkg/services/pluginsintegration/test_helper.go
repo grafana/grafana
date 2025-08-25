@@ -47,9 +47,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	require.NoError(t, err)
 
 	cdn := pluginscdn.ProvideService(pCfg)
-	installRegistry := registry.ProvideInstallAPIRegistry()
-	inMemoryRegistry := registry.ProvideInMemory()
-	reg := registry.ProvideService(installRegistry, inMemoryRegistry)
+	reg := registry.ProvideService()
 	angularInspector := angularinspector.NewStaticInspector()
 	proc := process.ProvideService()
 

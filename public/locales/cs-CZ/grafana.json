@@ -501,6 +501,11 @@
       "title-muting-grouping-and-timings": "Ztlumení, seskupení a časování"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nebyly nalezeny žádné zdroje dat"
     },
     "alert-menu": {
@@ -2487,6 +2492,7 @@
       },
       "empty-data-source": "Nebyla nalezena žádná pravidla",
       "error-button": "Chyba",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
@@ -3563,7 +3569,6 @@
       "button-cancel": "Zrušit",
       "button-move": "Přesunout",
       "button-moving": "Probíhá přesouvání…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -4207,7 +4212,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Zdroje dat",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nebyly nalezeny žádné výsledky odpovídající vašemu dotazu",
       "request-data-source": "Požádat o nový zdroj dat",
       "roadmap": "Zobrazit plán"
@@ -6587,9 +6593,11 @@
       "explore": "Prozkoumat"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Vytvořit nástěnku",
       "explore-data": "Prozkoumat data",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Další podrobnosti o chybě"
@@ -11949,7 +11957,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Sbalit řádek dotazu",
       "datasource-help": "Zobrazit nápovědu pro zdroj dat",
       "drag-and-drop": "Přetažením změníte pořadí",
@@ -11960,11 +11967,7 @@
       "replace-query-from-library": "Nahradit dotazem z knihovny",
       "show-response": "Zobrazit odpověď"
     },
-    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
   },
   "recently-deleted": {
     "buttons": {
