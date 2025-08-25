@@ -38,7 +38,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	secure := e.decrypter(r)
 	cfg := r.Spec.GitHub
 	if cfg == nil {
-		return nil, fmt.Errorf("github configuration is required for nano git")
+		return nil, fmt.Errorf("github configuration is required")
 	}
 
 	var token commonMeta.RawSecureValue

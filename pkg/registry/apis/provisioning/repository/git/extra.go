@@ -26,9 +26,9 @@ func (e *extra) Type() provisioning.RepositoryType {
 
 func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	secure := e.decrypter(r)
-	ghCfg := r.Spec.GitHub
+	cfg := r.Spec.Git
 	if ghCfg == nil {
-		return nil, fmt.Errorf("github configuration is required for nano git")
+		return nil, fmt.Errorf("git configuration is required")
 	}
 
 	var token commonMeta.RawSecureValue
@@ -41,10 +41,10 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	cfg := RepositoryConfig{
-		URL:       r.Spec.Git.URL,
-		Branch:    r.Spec.Git.Branch,
-		Path:      r.Spec.Git.Path,
-		TokenUser: r.Spec.Git.TokenUser,
+		URL:       cfg.URL,
+		Branch:    cfg.Branch,
+		Path:      cfg.Path,
+		TokenUser: cfg.TokenUser,
 		Token:     token,
 	}
 
