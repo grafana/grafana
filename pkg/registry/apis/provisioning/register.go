@@ -37,7 +37,6 @@ import (
 	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -429,7 +428,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
-	realJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
+	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
@@ -454,14 +453,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
-	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
-	if err != nil {
-		return fmt.Errorf("create job store: %w", err)
-	}
-
-	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
-	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
-
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
@@ -476,11 +468,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
-		historic:   jobHistory,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, jobHistory)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -503,6 +491,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 	// FIXME: Do nothing for HistoryJobs for now
 	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
+		return nil
+	}
+	// FIXME: Do nothing for Jobs for now
+	_, ok = obj.(*provisioning.Job)
 	if ok {
 		return nil
 	}
@@ -553,6 +546,12 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 
 	// FIXME: Do nothing for HistoryJobs for now
 	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
+		return nil
+	}
+
+	// FIXME: Do nothing for Jobs for now
+	_, ok = obj.(*provisioning.Job)
 	if ok {
 		return nil
 	}
@@ -660,6 +659,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			b.client = c.ProvisioningV0alpha1()
 			b.repositoryLister = repoInformer.Lister()
+
+			// Initialize the API client-based job store
+			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second)
+			if err != nil {
+				return fmt.Errorf("create API client job store: %w", err)
+			}
 
 			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
 			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
