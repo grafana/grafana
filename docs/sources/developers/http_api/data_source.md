@@ -579,7 +579,7 @@ Content-Type: application/json
 {
   "datasource": {
     "id": 1,
-    "uid": "updated UID",
+    "uid": "uid",
     "orgId": 1,
     "name": "test_datasource",
     "type": "graphite",
