@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -34,7 +33,6 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -42,9 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -58,7 +53,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -109,7 +103,6 @@ type APIBuilder struct {
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	repoFactory      repository.Factory
-	decrypter        repository.Decrypter
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
 	statusPatcher    *controller.RepositoryStatusPatcher
@@ -129,7 +122,6 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
-	decryptSvc secret.DecryptService,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -151,7 +143,6 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
-		decrypter:           repository.DecryptService(decryptSvc),
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
 	}
@@ -209,7 +200,6 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
-	decryptSvc secret.DecryptService,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 	repoExtras []repository.Extra,
@@ -225,7 +215,6 @@ func RegisterAPIService(
 		configProvider,
 		legacyMigrator, storageStatus,
 		usageStats,
-		decryptSvc,
 		access,
 		tracer,
 		extraBuilders,
@@ -1285,81 +1274,6 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 	}
 
 	return b.repoFactory.Build(ctx, r)
-}
-
-// TODO: Move this to factory
-func (b *APIBuilder) RepositoryFromConfig(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	// Prepare a decrypter
-	secure := b.decrypter(r)
-
-	// Try first with any extra
-	for _, extra := range b.extras {
-		r, err := extra.AsRepository(ctx, r, secure)
-		if err != nil {
-			return nil, fmt.Errorf("convert repository for extra %T: %w", extra, err)
-		}
-
-		if r != nil {
-			return r, nil
-		}
-	}
-
-	var token commonMeta.RawSecureValue
-	if r.Secure.Token.IsZero() {
-		t, err := secure.Token(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decrypt token: %w", err)
-		}
-		token = t
-	}
-
-	switch r.Spec.Type {
-	case provisioning.BitbucketRepositoryType:
-		return nil, errors.New("repository type bitbucket is not available")
-	case provisioning.GitLabRepositoryType:
-		return nil, errors.New("repository type gitlab is not available")
-	case provisioning.LocalRepositoryType:
-		return local.NewLocal(r, b.localFileResolver), nil
-	case provisioning.GitRepositoryType:
-		cfg := git.RepositoryConfig{
-			URL:       r.Spec.Git.URL,
-			Branch:    r.Spec.Git.Branch,
-			Path:      r.Spec.Git.Path,
-			TokenUser: r.Spec.Git.TokenUser,
-			Token:     token,
-		}
-
-		return git.NewGitRepository(ctx, r, cfg)
-	case provisioning.GitHubRepositoryType:
-		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
-		logger.Info("Instantiating Github repository")
-
-		ghCfg := r.Spec.GitHub
-		if ghCfg == nil {
-			return nil, fmt.Errorf("github configuration is required for nano git")
-		}
-
-		gitCfg := git.RepositoryConfig{
-			URL:    ghCfg.URL,
-			Branch: ghCfg.Branch,
-			Path:   ghCfg.Path,
-			Token:  token,
-		}
-
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
-		if err != nil {
-			return nil, fmt.Errorf("error creating git repository: %w", err)
-		}
-
-		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, token)
-		if err != nil {
-			return nil, fmt.Errorf("error creating github repository: %w", err)
-		}
-
-		return ghRepo, nil
-	default:
-		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
-	}
 }
 
 func getJSONResponse(ref string) *spec3.Responses {
