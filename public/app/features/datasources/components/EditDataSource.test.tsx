@@ -1,4 +1,5 @@
 import { screen, render } from '@testing-library/react';
+import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
@@ -368,8 +369,11 @@ describe('<EditDataSource>', () => {
   it('should be possible to update the `jsonData` first and `secureJsonData` directly afterwards from the extension component', () => {
     const message = "I'm a UI extension component!";
     const component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
-      context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
-      context.setSecureJsonData({ test: 'test' });
+      useEffect(() => {
+        context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
+        context.setSecureJsonData({ test: 'test' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
 
       return <div>{message}</div>;
     };
@@ -410,8 +414,11 @@ describe('<EditDataSource>', () => {
   it('should be possible to update the `secureJsonData` first and `jsonData` directly afterwards from the extension component', () => {
     const message = "I'm a UI extension component!";
     const component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
-      context.setSecureJsonData({ test: 'test' });
-      context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
+      useEffect(() => {
+        context.setSecureJsonData({ test: 'test' });
+        context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
 
       return <div>{message}</div>;
     };
