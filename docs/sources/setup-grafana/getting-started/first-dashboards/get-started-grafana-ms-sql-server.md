@@ -2,7 +2,8 @@
 aliases:
   - ../guides/getting_started/
   - ../guides/gettingstarted/
-  - getting-started-sql/
+  - ../getting-started-sql/
+  - getting-started/get-started-grafana-ms-sql-server/
 description: Learn how to build your first MS SQL Server dashboard in Grafana.
 labels:
   products:

@@ -1,13 +1,14 @@
 ---
 aliases:
   - guides/what-is-grafana/
+  - getting-started/
 description: Learn how build your first dashboard after you have installed Grafana.
 labels:
   products:
     - enterprise
     - oss
 title: Get started with Grafana Open Source
-weight: 9
+weight: 2000
 ---
 
 # Get started with Grafana Open Source
