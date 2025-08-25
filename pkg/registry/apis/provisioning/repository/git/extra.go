@@ -12,13 +12,11 @@ import (
 
 type extra struct {
 	decrypter repository.Decrypter
-	mutate    repository.Mutator
 }
 
 func Extra(decrypter repository.Decrypter) repository.Extra {
 	return &extra{
 		decrypter: decrypter,
-		mutate:    Mutate,
 	}
 }
 
@@ -54,5 +52,5 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
-	return e.mutate(ctx, obj)
+	return Mutate(ctx, obj)
 }
