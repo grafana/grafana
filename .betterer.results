@@ -2941,9 +2941,6 @@ exports[`better eslint`] = {
     "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
-    "public/app/features/transformers/editors/OrganizeFieldsTransformerEditor.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useStyles2\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
-    ],
     "public/app/features/transformers/editors/ReduceTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

@@ -243,6 +243,8 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [options, onChange, uiOrderByItems]
   );
 
+  const styles = useStyles2(getDraggableStyles);
+
   // Show warning that we only apply the first frame
   if (input.length > 1) {
     return (
@@ -254,8 +256,6 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
       </FieldValidationMessage>
     );
   }
-
-  const styles = useStyles2(getDraggableStyles);
 
   return (
     <>
