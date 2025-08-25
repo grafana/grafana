@@ -47,6 +47,7 @@ import {
   getDisplayName,
   predicateByName,
 } from './utils';
+import { background } from '@storybook/theming';
 
 describe('TableNG utils', () => {
   describe('alignment', () => {
@@ -115,7 +116,7 @@ describe('TableNG utils', () => {
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
       const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
-      const colors = getCellColorInlineStyles(cellOptions, displayValue);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
       expect(colors.color).toBe('#ff0000');
       expect(colors).not.toHaveProperty('background');
     });
@@ -129,7 +130,7 @@ describe('TableNG utils', () => {
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
       const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
-      const colors = getCellColorInlineStyles(cellOptions, displayValue);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
       expect(colors.background).toBe('#ff0000');
       expect(colors.color).toBe('rgb(247, 248, 250)');
     });
@@ -143,7 +144,7 @@ describe('TableNG utils', () => {
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
       const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
-      const colors = getCellColorInlineStyles(cellOptions, displayValue);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
       expect(colors.background).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
       expect(colors.color).toBe('rgb(247, 248, 250)');
     });
@@ -154,9 +155,56 @@ describe('TableNG utils', () => {
       const displayValue = { text: '100', numeric: 100, color: '#ff0000' };
 
       const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
-      const colors = getCellColorInlineStyles(cellOptions, displayValue);
+      const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
 
       expect(colors).toEqual({});
+    });
+
+    describe('applyToRow', () => {
+      it.each([
+        ['hex', '#ffffff00'],
+        ['rgba', 'rgba(255,255,255,0)'],
+        ['hsla', 'hsla(0,100%,100%,0)'],
+      ])(
+        'should not apply background color if the display value is transparent (%s) and applyToRow is on',
+        (_format, colorDisplayValue) => {
+          const cellOptions = {
+            type: TableCellDisplayMode.ColorBackground as const,
+            mode: TableCellBackgroundDisplayMode.Basic,
+          };
+
+          const displayValue = { text: '100', numeric: 100, color: colorDisplayValue };
+
+          const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+          const colors = getCellColorInlineStyles(cellOptions, displayValue, true);
+
+          expect(colors).toEqual({});
+        }
+      );
+
+      it.each([
+        ['hex', '#ffffff00'],
+        ['rgba', 'rgba(255,255,255,0)'],
+        ['hsla', 'hsla(0,100%,100%,0)'],
+      ])(
+        'should apply background color if the display value is transparent (%s) and applyToRow is off',
+        (_format, colorDisplayValue) => {
+          const cellOptions = {
+            type: TableCellDisplayMode.ColorBackground as const,
+            mode: TableCellBackgroundDisplayMode.Basic,
+          };
+
+          const displayValue = { text: '100', numeric: 100, color: colorDisplayValue };
+
+          const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+          const colors = getCellColorInlineStyles(cellOptions, displayValue, false);
+
+          expect(colors).toEqual({
+            background: colorDisplayValue,
+            color: 'rgb(32, 34, 38)',
+          });
+        }
+      );
     });
   });
 

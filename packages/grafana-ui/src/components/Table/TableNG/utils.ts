@@ -501,7 +501,6 @@ const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
  * Returns the text and background colors for a table cell based on its options and display value.
  */
 export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
-  console.log('isDark', theme.isDark);
   const bgCellTextColor = memoize((color: string) => getTextColorForAlphaBackground(color, theme.isDark), {
     maxSize: 1000,
   });
@@ -514,7 +513,17 @@ export function getCellColorInlineStylesFactory(theme: GrafanaTheme2) {
         .toRgbString(),
     { maxSize: 1000 }
   );
-  const isTransparent = memoize((color: string) => tinycolor(color).getAlpha() === 0, { maxSize: 1000 });
+  const isTransparent = memoize(
+    (color: string) => {
+      // if hex, do the simple thing.
+      if (color[0] === '#') {
+        return color.length === 9 && color.endsWith('00');
+      }
+      // if not hex, just use tinycolor to avoid extra logic.
+      return tinycolor(color).getAlpha() === 0;
+    },
+    { maxSize: 1000 }
+  );
 
   return (cellOptions: TableCellOptions, displayValue: DisplayValue, hasApplyToRow: boolean): CSSProperties => {
     const result: CSSProperties = {};
