@@ -89,7 +89,7 @@ type localRepository struct {
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
 	r := &localRepository{
 		config:   config,
 		resolver: resolver,

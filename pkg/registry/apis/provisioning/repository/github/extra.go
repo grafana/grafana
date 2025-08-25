@@ -61,7 +61,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("error creating git repository: %w", err)
 	}
 
-	ghRepo, err := NewGitHub(ctx, r, gitRepo, e.factory, token)
+	ghRepo, err := NewRepository(ctx, r, gitRepo, e.factory, token)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github repository: %w", err)
 	}

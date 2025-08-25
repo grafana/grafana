@@ -28,7 +28,7 @@ func (e *extra) Type() provisioning.RepositoryType {
 }
 
 func (e *extra) Build(_ context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	return NewLocal(r, e.resolver), nil
+	return NewRepository(r, e.resolver), nil
 }
 
 func (e *extra) Mutate(_ context.Context, _ runtime.Object) error {
