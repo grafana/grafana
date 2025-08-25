@@ -23,10 +23,6 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
-  if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
-  }
-
   const Wrapper = useMemo(
     () =>
       memo(
@@ -80,6 +76,10 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ),
     [conditionalRenderingClass, conditionalRenderingOverlay, isLazy, key, model.containerRef, styles]
   );
+
+  if (soloPanelContext) {
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+  }
 
   if (isConditionallyHidden && !isEditing) {
     return null;
