@@ -11,11 +11,20 @@ function clearMemoizedCache(fn: Memoized<AnyFn>) {
 let regionalFormat: string | undefined;
 let dateStyle: string | undefined;
 
-const createDateTimeFormatter = deepMemoize((locale: string | undefined, options: Intl.DateTimeFormatOptions) => {
-  // Apply international calendar format when dateStyle is set to 'international'
-  const finalOptions = dateStyle === 'international' ? { ...options, calendar: 'iso8601' as const } : options;
+function applyDateStyle(inputOptions: Intl.DateTimeFormatOptions): Intl.DateTimeFormatOptions {
+  if (dateStyle === 'international') {
+    return {
+      ...inputOptions,
+      calendar: 'iso8601',
+      hour12: false,
+    };
+  }
 
-  return new Intl.DateTimeFormat(locale, finalOptions);
+  return inputOptions;
+}
+
+const createDateTimeFormatter = deepMemoize((locale: string | undefined, options: Intl.DateTimeFormatOptions) => {
+  return new Intl.DateTimeFormat(locale, options);
 });
 
 const createDurationFormatter = deepMemoize((locale: string | undefined, options: Intl.DurationFormatOptions) => {
@@ -25,7 +34,7 @@ const createDurationFormatter = deepMemoize((locale: string | undefined, options
 export const formatDate = deepMemoize(
   (_value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
     const value = typeof _value === 'string' ? new Date(_value) : _value;
-    const dateFormatter = createDateTimeFormatter(regionalFormat, format);
+    const dateFormatter = createDateTimeFormatter(regionalFormat, applyDateStyle(format));
     return dateFormatter.format(value);
   }
 );
@@ -45,7 +54,7 @@ export const formatDateRange = (
   const from = typeof _from === 'string' ? new Date(_from) : _from;
   const to = typeof _to === 'string' ? new Date(_to) : _to;
 
-  const dateFormatter = createDateTimeFormatter(regionalFormat, format);
+  const dateFormatter = createDateTimeFormatter(regionalFormat, applyDateStyle(format));
   return dateFormatter.formatRange(from, to);
 };
 
