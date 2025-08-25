@@ -411,6 +411,8 @@ const LogListComponent = ({
           containerElement={containerElement}
           focusLogLine={focusLogLine}
           logs={filteredLogs}
+          timeRange={timeRange}
+          timeZone={timeZone}
           onResize={handleLogDetailsResize}
         />
       )}
