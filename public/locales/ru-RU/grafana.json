@@ -6463,8 +6463,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Чтобы узнать больше об этой ошибке, нажмите <2>здесь</2>.",
-    "success-more-details-links": "Затем вы можете начать визуализировать данные, <2>создав панель</2> или запросив данные в <5>представлении Explore</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Затем вы можете начать визуализировать данные, <2>создав панель</2> или запросив данные в <5>представлении Explore</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11324,11 +11323,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Удалить",
-      "confirm-delete-repository": "Действительно удалить конфигурацию репозитория?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Не удалось удалить репозиторий",
       "success-repository-deleted": "Параметры репозитория в очереди на удаление",
-      "title-delete-repository": "Удаление конфигурации репозитория",
-      "tooltip-delete-this-repository": "Удалить репозиторий"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Назад к репозиториям",
@@ -13138,6 +13141,7 @@
         "name-point-size": "Размер точек",
         "name-show-points": "Показывать точки",
         "name-show-thresholds": "Показывать пороговые значения",
+        "name-show-values": "",
         "name-style": "Стиль",
         "name-transform": "Преобразовать",
         "transform-options": {

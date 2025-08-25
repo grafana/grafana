@@ -6421,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Fai clic <2>qui</2> per saperne di più su questo errore.",
-    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11254,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Elimina",
-      "confirm-delete-repository": "Desideri davvero eliminare la configurazione del repository?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Impossibile eliminare il repository",
       "success-repository-deleted": "Impostazioni del repository in coda per l'eliminazione",
-      "title-delete-repository": "Elimina configurazione repository",
-      "tooltip-delete-this-repository": "Elimina questo repository"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Torna ai repository",
@@ -13056,6 +13059,7 @@
         "name-point-size": "Dimensione punto",
         "name-show-points": "Mostra punti",
         "name-show-thresholds": "Mostra soglie",
+        "name-show-values": "",
         "name-style": "Stile",
         "name-transform": "Trasforma",
         "transform-options": {
