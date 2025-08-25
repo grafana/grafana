@@ -67,7 +67,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
-	if len(webhookURL) == 0 || err != nil {
+	if len(webhookURL) == 0 {
 		logger.Debug("Skipping webhook setup as no webhooks are not configured")
 		return ghRepo, nil
 	}

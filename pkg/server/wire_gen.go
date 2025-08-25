@@ -59,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	provisioning2 "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	query2 "github.com/grafana/grafana/pkg/registry/apis/query"
@@ -801,25 +802,22 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
+	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, renderingService, resourceClient, eventualRestConfigProvider)
+	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	v3, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	v4, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
 	if err != nil {
 		return nil, err
 	}
-	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-<<<<<<< HEAD
-	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, repositorySecrets, factory)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4, v5)
-=======
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, tracingService, v4)
->>>>>>> origin/main
+	factory := github.ProvideFactory()
+	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, v4, factory, webhookExtraBuilder)
+	repositoryFactory := repository.ProvideFactory(v5)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -1382,25 +1380,22 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, dashboardPermissionsService, accessControl, featureToggles)
+	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, renderingService, resourceClient, eventualRestConfigProvider)
+	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	v3, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	v4, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
 	if err != nil {
 		return nil, err
 	}
-	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-<<<<<<< HEAD
-	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, repositorySecrets, factory)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, repositorySecrets, tracingService, v4, v5)
-=======
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, v3, tracingService, v4)
->>>>>>> origin/main
+	factory := github.ProvideFactory()
+	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, v4, factory, webhookExtraBuilder)
+	repositoryFactory := repository.ProvideFactory(v5)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -1435,7 +1430,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, v3)
+	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, v4)
 	if err != nil {
 		return nil, err
 	}
