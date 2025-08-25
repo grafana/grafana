@@ -9,16 +9,18 @@ import (
 	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type extra struct {
-	factory   *Factory
-	decrypter repository.Decrypter
-	mutate    repository.Mutator
+	factory      *Factory
+	decrypter    repository.Decrypter
+	mutate       repository.Mutator
+	webhookExtra *webhooks.WebhookExtra
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookExtra *webhooks.WebhookExtra) repository.Extra {
 	return &extra{
 		decrypter: decrypter,
 		factory:   factory,
@@ -66,7 +68,18 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("error creating github repository: %w", err)
 	}
 
-	return ghRepo, nil
+	webhookURL := e.webhookExtra.WebhookURL(ctx, r)
+	if len(webhookURL) == 0 || err != nil {
+		logger.Debug("Skipping webhook setup as no webhooks are not configured")
+		return ghRepo, nil
+	}
+
+	webhookSecret, err := secure.WebhookSecret(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
+	}
+
+	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {

@@ -21,6 +21,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 	cfg *setting.Cfg,
 	decryptSvc secret.DecryptService,
 	ghFactory *github.Factory,
+	// TODO: We need the webhook
 ) []repository.Extra {
 	return []repository.Extra{
 		local.Extra(cfg),
