@@ -7559,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
       "folder-deleted-success": "Folder deleted"
     },
     "get-loading-nav": {
@@ -9537,6 +9538,12 @@
       "show-context": "Show context",
       "show-log-line": "Show log line",
       "sidebar-mode": "Anchor to the right",
+      "trace": {
+        "error-message": "Could not retrieve trace.",
+        "error-tooltip": "The trace could have been sampled or be temporarily unavailable.",
+        "loading-message": "Loading trace..."
+      },
+      "trace-section": "Trace",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
