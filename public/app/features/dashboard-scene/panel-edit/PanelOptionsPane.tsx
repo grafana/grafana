@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
-import { useMedia, useToggle } from 'react-use';
+import { useToggle } from 'react-use';
 
 import {
   FieldConfigSource,
@@ -23,7 +23,7 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field, useTheme2 } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -32,6 +32,7 @@ import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
+import { useScrollReflowLimit } from './useScrollReflowLimit';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
@@ -130,8 +131,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const [isSearchingOptions, setIsSearchingOptions] = useToggle(false);
     const onlyOverrides = listMode === OptionFilter.Overrides;
 
-    // @ts-expect-error no magic numbers!
-    const noScroll = useMedia('(max-height: 500px)');
+    const isScrollingLayout = useScrollReflowLimit();
 
     return (
       <>
@@ -178,7 +178,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 />
               )}
             </div>
-            <ScrollContainer minHeight={noScroll ? 'max-content' : 0}>
+            <ScrollContainer minHeight={isScrollingLayout ? 'max-content' : 0}>
               <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
             </ScrollContainer>
           </>

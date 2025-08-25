@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
+import { Global, css as cssReact } from '@emotion/react';
 import { useEffect } from 'react';
-import { useMedia } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -16,14 +16,13 @@ import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
-
-const MEDIA_QUERY = '(max-height: 500px), (max-width: 768.05px)';
+import { getScrollReflowMediaQuery, useScrollReflowLimit } from './useScrollReflowLimit';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
   const styles = useStyles2(getStyles);
-  const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
@@ -31,7 +30,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       dragPosition: 'end',
       initialSize: 330,
       usePixels: true,
-      collapsed: isCollapsed,
+      collapsed: isInitiallyCollapsed,
       collapseBelowPixels: 250,
     });
 
@@ -39,9 +38,13 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
 
-  const noScroll = useMedia(MEDIA_QUERY);
+  const isScrollingLayout = useScrollReflowLimit();
 
-  if (noScroll) {
+  const isCollapsed = isScrollingLayout ? false : splitterState.collapsed;
+
+  if (isScrollingLayout) {
+    // disable splitter when the screen is too small
+
     containerProps.className = '';
 
     secondaryProps.style.overflowY = 'visible';
@@ -56,6 +59,25 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
   return (
     <>
+      {isScrollingLayout && (
+        <Global
+          styles={cssReact({
+            // we need to override top level styles for the screen to scroll
+
+            '.main-view': {
+              // the main view needs to be what scrolls, otherwise modals don't block scrolling the screen
+              // behind them.
+              overflow: 'auto',
+
+              '> header': {
+                // the header is normally fixed, so we can just change it to absolute and that's all we need
+                // since the inset and width/height properties are already set.
+                position: 'absolute',
+              },
+            },
+          })}
+        />
+      )}
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}
@@ -67,7 +89,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
         </div>
         <div {...splitterProps} />
         <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
-          {splitterState.collapsed && (
+          {isCollapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
                 tooltip={t('dashboard-scene.panel-editor-renderer.tooltip-open-options-pane', 'Open options pane')}
@@ -82,8 +104,8 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
               />
             </div>
           )}
-          {!splitterState.collapsed && optionsPane && <optionsPane.Component model={optionsPane} />}
-          {!splitterState.collapsed && !optionsPane && <Spinner />}
+          {!isCollapsed && optionsPane && <optionsPane.Component model={optionsPane} />}
+          {!isCollapsed && !optionsPane && <Spinner />}
         </div>
       </div>
     </>
@@ -112,11 +134,13 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     primaryProps.style.flexGrow = 1;
   }
 
-  const noScroll = useMedia(MEDIA_QUERY);
+  const isScrollingLayout = useScrollReflowLimit();
 
-  const collapsed = noScroll ? false : splitterState.collapsed;
+  const collapsed = isScrollingLayout ? false : splitterState.collapsed;
 
-  if (noScroll) {
+  if (isScrollingLayout) {
+    // disable splitter when the screen is too small
+
     containerProps.className = styles.container;
     primaryProps.className = styles.fixedSizePanel;
     secondaryProps.className = styles.fixedSizePanel;
@@ -192,6 +216,7 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const scrollReflowMediaQuery = '@media ' + getScrollReflowMediaQuery(theme);
   return {
     pageContainer: css({
       display: 'grid',
@@ -200,7 +225,7 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: `1fr`,
       gridTemplateRows: '1fr',
       height: '100%',
-      ['@media ' + MEDIA_QUERY]: {
+      [scrollReflowMediaQuery]: {
         gridTemplateColumns: `100%`,
       },
     }),
@@ -228,7 +253,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '100%',
       overflow: 'unset',
-      ['@media ' + MEDIA_QUERY]: {
+      [scrollReflowMediaQuery]: {
         height: 'auto',
         display: 'grid',
         gridTemplateColumns: 'minmax(470px, 1fr) 330px',
