@@ -159,6 +159,12 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
 func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelID int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+	isV2 := dashboard.Data.Get("elements").Interface() != nil
+
+	if isV2 {
+		return pd.buildMetricRequestV2(dashboard, publicDashboard, panelID, reqDTO)
+	}
+
 	// group queries by panel
 	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelID]
@@ -183,10 +189,43 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.D
 	}, nil
 }
 
+func (pd *PublicDashboardServiceImpl) buildMetricRequestV2(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelID int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+	// group queries by panel for V2
+	queriesByPanel := groupQueriesByPanelIdV2(dashboard.Data)
+	queries, ok := queriesByPanel[panelID]
+	if !ok {
+		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequestV2: public dashboard panel not found")
+	}
+
+	ts := buildTimeSettingsV2(dashboard, reqDTO, publicDashboard, panelID)
+
+	// determine safe resolution to query data at
+	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
+	for i := range queries {
+		queries[i].Set("intervalMs", safeInterval)
+		queries[i].Set("maxDataPoints", safeResolution)
+		queries[i].Set("queryCachingTTL", reqDTO.QueryCachingTTL)
+	}
+
+	return dtos.MetricRequest{
+		From:    ts.From,
+		To:      ts.To,
+		Queries: queries,
+	}, nil
+}
+
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
 	extractQueriesFromPanels(dashboard.Get("panels").MustArray(), result)
+
+	return result
+}
+
+func groupQueriesByPanelIdV2(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
+	result := make(map[int64][]*simplejson.Json)
+
+	extractQueriesFromPanelsSchemaV2(dashboard.Get("elements"), result)
 
 	return result
 }
@@ -231,6 +270,64 @@ func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json)
 	}
 }
 
+func extractQueriesFromPanelsSchemaV2(elements *simplejson.Json, result map[int64][]*simplejson.Json) {
+	// elements is a map, so we need to iterate over its values
+	elementsMap := elements.MustMap()
+	for _, element := range elementsMap {
+		element := simplejson.NewFromAny(element)
+
+		var panelQueries []*simplejson.Json
+		hasExpression := panelHasAnExpressionSchemaV2(element)
+
+		// For schema v2, queries are nested in element.spec.data.spec.queries
+		if spec := element.Get("spec"); spec.Interface() != nil {
+			if data := spec.Get("data"); data.Interface() != nil {
+				if dataSpec := data.Get("spec"); dataSpec.Interface() != nil {
+					if queries := dataSpec.Get("queries"); queries.Interface() != nil {
+						for _, queryObj := range queries.MustArray() {
+							query := simplejson.NewFromAny(queryObj)
+
+							// Check if query is hidden (PanelQuery.spec.hidden)
+							if panelQuerySpec := query.Get("spec"); panelQuerySpec.Interface() != nil {
+								if !hasExpression && panelQuerySpec.Get("hidden").MustBool() {
+									continue
+								}
+
+								// Extract the actual query from PanelQuery.spec.query
+								if dataQueryKind := panelQuerySpec.Get("query"); dataQueryKind.Interface() != nil {
+									if dataQuerySpec := dataQueryKind.Get("spec"); dataQuerySpec.Interface() != nil {
+										dataQuerySpec.Del("exemplar")
+
+										group := dataQueryKind.Get("group").MustString()
+
+										// if query target has no datasource, set it to have the datasource on the panel
+										if _, ok := dataQuerySpec.CheckGet("datasource"); !ok {
+											uid := getDataSourceUidFromJsonSchemaV2(dataQueryKind)
+											datasource := map[string]any{"type": group, "uid": uid}
+											dataQuerySpec.Set("datasource", datasource)
+											dataQuerySpec.Set("refId", "A")
+										}
+
+										// We don't support exemplars for public dashboards currently
+										dataQuerySpec.Del("exemplar")
+
+										// The query object contains the DataQuery with the actual expression
+										panelQueries = append(panelQueries, dataQuerySpec)
+									}
+
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		result[element.Get("spec").Get("id").MustInt64()] = panelQueries
+
+	}
+}
+
 func panelHasAnExpression(panel *simplejson.Json) bool {
 	var hasExpression bool
 	for _, queryObj := range panel.Get("targets").MustArray() {
@@ -242,8 +339,50 @@ func panelHasAnExpression(panel *simplejson.Json) bool {
 	return hasExpression
 }
 
+func panelHasAnExpressionSchemaV2(panel *simplejson.Json) bool {
+	var hasExpression bool
+
+	// For schema v2, check the nested structure: spec.data.spec.queries[].spec.query
+	if spec := panel.Get("spec"); spec.Interface() != nil {
+		if data := spec.Get("data"); data.Interface() != nil {
+			if dataSpec := data.Get("spec"); dataSpec.Interface() != nil {
+				if queries := dataSpec.Get("queries"); queries.Interface() != nil {
+					for _, queryObj := range queries.MustArray() {
+						query := simplejson.NewFromAny(queryObj)
+
+						// Navigate to the actual query object
+						if querySpec := query.Get("spec"); querySpec.Interface() != nil {
+							if queryData := querySpec.Get("query"); queryData.Interface() != nil {
+								// Check if this query is an expression
+								if expr.NodeTypeFromDatasourceUID(getDataSourceUidFromJsonSchemaV2(queryData)) == expr.TypeCMDNode {
+									hasExpression = true
+									break
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return hasExpression
+}
+
 func getDataSourceUidFromJson(query *simplejson.Json) string {
 	uid := query.Get("datasource").Get("uid").MustString()
+
+	// before 8.3 special types could be sent as datasource (expr)
+	if uid == "" {
+		uid = query.Get("datasource").MustString()
+	}
+
+	return uid
+}
+
+func getDataSourceUidFromJsonSchemaV2(query *simplejson.Json) string {
+	// For schema v2, datasource info is in query.datasource
+	uid := query.Get("datasource").Get("name").MustString()
 
 	// before 8.3 special types could be sent as datasource (expr)
 	if uid == "" {
@@ -310,6 +449,28 @@ func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQue
 	}
 }
 
+// buildTimeSettingsV2 builds time settings for V2 dashboards
+func buildTimeSettingsV2(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard, panelID int64) models.TimeSettings {
+	from, to, timezone := getTimeRangeValuesOrDefaultV2(d, reqDTO, pd.TimeSelectionEnabled, panelID)
+
+	timeRange := NewTimeRange(from, to)
+
+	timeFrom, _ := timeRange.ParseFrom(
+		gtime.WithLocation(timezone),
+	)
+	timeTo, _ := timeRange.ParseTo(
+		gtime.WithLocation(timezone),
+	)
+	timeToAsEpoch := timeTo.UnixMilli()
+	timeFromAsEpoch := timeFrom.UnixMilli()
+
+	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which want the time range in epoch milliseconds.
+	return models.TimeSettings{
+		From: strconv.FormatInt(timeFromAsEpoch, 10),
+		To:   strconv.FormatInt(timeToAsEpoch, 10),
+	}
+}
+
 // returns from, to and timezone from the request if the timeSelection is enabled or the dashboard default values
 func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashboards.Dashboard, timeSelectionEnabled bool, panelID int64) (string, string, *time.Location) {
 	from := d.Data.GetPath("time", "from").MustString()
@@ -344,12 +505,78 @@ func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashb
 	return from, to, timezone
 }
 
+// getTimeRangeValuesOrDefaultV2 returns from, to and timezone from the request if the timeSelection is enabled or the dashboard default values for V2
+func getTimeRangeValuesOrDefaultV2(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, timeSelectionEnabled bool, panelID int64) (string, string, *time.Location) {
+	// In V2, time settings are in dashboard.timeSettings
+	timeSettings := d.Data.Get("timeSettings")
+	from := timeSettings.Get("from").MustString()
+	to := timeSettings.Get("to").MustString()
+	dashboardTimezone := timeSettings.Get("timezone").MustString()
+
+	// Check for panel-specific time override in V2 structure
+	panelRelativeTime := getPanelRelativeTimeRangeV2(d.Data, panelID)
+	if panelRelativeTime != "" {
+		from = panelRelativeTime
+	}
+
+	// we use the values from the request if the time selection is enabled and the values are valid
+	if timeSelectionEnabled {
+		if reqDTO.TimeRange.From != "" && reqDTO.TimeRange.To != "" {
+			from = reqDTO.TimeRange.From
+			to = reqDTO.TimeRange.To
+		}
+
+		if reqDTO.TimeRange.Timezone != "" {
+			if userTimezone, err := time.LoadLocation(reqDTO.TimeRange.Timezone); err == nil {
+				return from, to, userTimezone
+			}
+		}
+	}
+
+	// if the dashboardTimezone is blank or there is an error default is UTC
+	timezone, err := time.LoadLocation(dashboardTimezone)
+	if err != nil {
+		return from, to, time.UTC
+	}
+
+	return from, to, timezone
+}
+
 func getPanelRelativeTimeRange(dashboard *simplejson.Json, panelID int64) string {
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
 
 		if panel.Get("id").MustInt64() == panelID {
 			return panel.Get("timeFrom").MustString()
+		}
+	}
+
+	return ""
+}
+
+func getPanelRelativeTimeRangeV2(dashboard *simplejson.Json, panelID int64) string {
+	// In V2, check elements for panel-specific time settings
+	if elements := dashboard.Get("elements"); elements.Interface() != nil {
+		elementsMap := elements.MustMap()
+		for _, element := range elementsMap {
+			element := simplejson.NewFromAny(element)
+
+			// Check if this is the panel we're looking for
+			if element.Get("spec").Get("id").MustInt64() == panelID {
+				// Check for time override in data.spec.queryOptions.timeFrom
+				if spec := element.Get("spec"); spec.Interface() != nil {
+					if data := spec.Get("data"); data.Interface() != nil {
+						if dataSpec := data.Get("spec"); dataSpec.Interface() != nil {
+							if queryOptions := dataSpec.Get("queryOptions"); queryOptions.Interface() != nil {
+								if timeFrom := queryOptions.Get("timeFrom"); timeFrom.Interface() != nil {
+									return timeFrom.MustString()
+								}
+							}
+						}
+					}
+				}
+				break
+			}
 		}
 	}
 
