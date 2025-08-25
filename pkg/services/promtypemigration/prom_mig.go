@@ -2,80 +2,64 @@ package promtypemigration
 
 import (
 	"context"
+	"runtime"
 
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-type PromMigrationService struct {
+type PromMigrationHandler interface {
+	Migrate(context.Context, *promMigrationService) error
+	getPrometheusDataSources(ctx context.Context, dataSourcesService datasources.DataSourceService) ([]*datasources.DataSource, error)
+}
+
+type promMigrationService struct {
+	cfg                *setting.Cfg
 	dataSourcesService datasources.DataSourceService
-	features           featuremgmt.FeatureToggles
+	pluginStore        pluginstore.Store
+	pluginRepo         repo.Service
+	pluginInstaller    plugins.Installer
 }
 
-func ProvidePromMigrationService(
-	dataSourcesService datasources.DataSourceService,
-	features featuremgmt.FeatureToggles,
-) *PromMigrationService {
-	return &PromMigrationService{
-		dataSourcesService: dataSourcesService,
-		features:           features,
-	}
-}
-
-func (s *PromMigrationService) Migrate(ctx context.Context) error {
-	//feature flag check
-	//if stuiff
-
-	//check to see if azure/aws is available
-	//s.dataSourcesService
-	const azurePromExists = false
-	const amazonPromExists = false
-	if !azurePromExists && !amazonPromExists {
+func (s *promMigrationService) applyMigration(ctx context.Context, pluginID string, promDataSources []*datasources.DataSource) error {
+	if len(promDataSources) == 0 {
 		return nil
 	}
 
-	logger.Debug("performing prometheus data source type migration")
-
-	query := &datasources.GetDataSourcesByTypeQuery{
-		Type: datasources.DS_PROMETHEUS,
-	}
-	dsList, err := s.dataSourcesService.GetDataSourcesByType(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	for _, ds := range dsList {
-		if _, found := ds.JsonData.CheckGet("azureCredentials"); azurePromExists && found {
-			err = updateDataSourceType(ctx, s.dataSourcesService, ds, "grafana-azureprometheus-datasource")
-			if err != nil {
-				return err
-			}
-			continue
-		}
-		if sigV4Auth, found := ds.JsonData.CheckGet("sigV4Auth"); amazonPromExists && found {
-			if enabled, err := sigV4Auth.Bool(); err != nil || !enabled {
-				continue
-			}
-			err = updateDataSourceType(ctx, s.dataSourcesService, ds, "grafana-amazonprometheus-datasource")
-			if err != nil {
-				return err
-			}
-			continue
+	// check to see if prom is installed, if not install it
+	if _, installed := s.pluginStore.Plugin(ctx, pluginID); !installed {
+		//install prom
+		compatOpts := plugins.NewAddOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, "")
+		err := s.pluginInstaller.Add(ctx, pluginID, "", compatOpts)
+		if err != nil {
+			return err
 		}
 	}
 
-	logger.Debug("prometheus data source type migration complete")
+	logger.Debug("performing prometheus data source type migration", "plugin", pluginID)
+
+	for _, ds := range promDataSources {
+		err := s.updateDataSourceType(ctx, ds, pluginID)
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.Debug("prometheus data source type migration complete", "plugin", pluginID)
 
 	return nil
 }
 
-func updateDataSourceType(ctx context.Context, service datasources.DataSourceService, ds *datasources.DataSource, newType string) error {
-	secureJsonData, err := service.DecryptedValues(ctx, ds)
+func (s *promMigrationService) updateDataSourceType(ctx context.Context, ds *datasources.DataSource, newType string) error {
+	secureJsonData, err := s.dataSourcesService.DecryptedValues(ctx, ds)
 	if err != nil {
 		return err
 	}
 	ds.JsonData.Set("prometheus-type-migration", true)
-	_, err = service.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
+	_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
 		ID:             ds.ID,
 		Type:           newType,
 		OrgID:          ds.OrgID,

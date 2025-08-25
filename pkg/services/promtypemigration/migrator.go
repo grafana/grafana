@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var logger = log.New("promds.migration")
 
-const actionName = "prom type migration task "
+const actionName = "prom type migration task"
 
 type PromTypeMigrationService interface {
 	Migrate(ctx context.Context) error
@@ -24,27 +25,33 @@ type PromTypeMigrationProvider interface {
 
 type PromTypeMigrationProviderImpl struct {
 	services          []PromTypeMigrationService
+	features          featuremgmt.FeatureToggles
 	ServerLockService *serverlock.ServerLockService
 }
 
 func ProvidePromTypeMigrationProvider(
 	serverLockService *serverlock.ServerLockService,
-	promMigrationService *PromMigrationService,
+	features featuremgmt.FeatureToggles,
+	promAzureAuthMigrationService *AzurePromMigrationService,
+	promAmazonAuthMigrationService *AmazonPromMigrationService,
 ) *PromTypeMigrationProviderImpl {
 	return &PromTypeMigrationProviderImpl{
 		ServerLockService: serverLockService,
-		services:          []PromTypeMigrationService{promMigrationService},
+		features:          features,
+		services:          []PromTypeMigrationService{promAzureAuthMigrationService, promAmazonAuthMigrationService},
 	}
 }
 
 func (s *PromTypeMigrationProviderImpl) Run(ctx context.Context) error {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagPrometheusTypeMigration) {
+		return nil
+	}
 	return s.Migrate(ctx)
 }
 
 // Migrate Run migration services. This will block until all services have exited.
 // This should only be called once at startup
 func (s *PromTypeMigrationProviderImpl) Migrate(ctx context.Context) error {
-	// Start migration services.
 	err := s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
 		for _, service := range s.services {
 			serviceName := reflect.TypeOf(service).String()
