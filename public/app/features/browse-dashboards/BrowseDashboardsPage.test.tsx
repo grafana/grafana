@@ -17,7 +17,7 @@ import BrowseDashboardsPage from './BrowseDashboardsPage';
 import * as permissions from './permissions';
 
 setupMockServer();
-const [mockTree, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
+const [_, { dashbdD, folderA, folderA_folderA }] = getFolderFixtures();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -88,29 +88,6 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
     rerender: wrappedRerender,
   };
 }
-
-jest.mock('app/features/browse-dashboards/api/services', () => {
-  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
-
-  return {
-    ...orig,
-    listFolders(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-
-    listDashboards(parentUID?: string) {
-      const childrenForUID = mockTree
-        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
-
-      return Promise.resolve(childrenForUID);
-    },
-  };
-});
 
 describe('browse-dashboards BrowseDashboardsPage', () => {
   const mockPermissions = {

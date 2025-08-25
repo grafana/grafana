@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,6 +37,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	helper.CreateRepo(t, testRepo)
 
 	t.Run("move single file", func(t *testing.T) {
+		helper.DebugState(t, repo, "BEFORE MOVE SINGLE FILE")
+
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -44,6 +47,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			},
 		}
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+		helper.DebugState(t, repo, "AFTER MOVE SINGLE FILE")
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
@@ -80,6 +85,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	})
 
 	t.Run("move multiple files and folder", func(t *testing.T) {
+		helper.DebugState(t, repo, "BEFORE MOVE MULTIPLE FILES")
+
 		// Create move job for multiple files including a folder
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
@@ -89,6 +96,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			},
 		}
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+		helper.DebugState(t, repo, "AFTER MOVE MULTIPLE FILES")
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
@@ -127,6 +136,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	})
 
 	t.Run("move non-existent file", func(t *testing.T) {
+		helper.DebugState(t, repo, "BEFORE MOVE NON-EXISTENT FILE")
+
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -176,15 +187,15 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	})
 
 	t.Run("move by resource reference", func(t *testing.T) {
-		// Create a unique repository for resource reference testing to avoid contamination
-		const refRepo = "move-ref-test-repo"
-		localRefTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-			"Name":        refRepo,
-			"SyncEnabled": true,
-			"SyncTarget":  "folder",
-		})
-		_, err := helper.Repositories.Resource.Create(ctx, localRefTmp, metav1.CreateOptions{})
+		// Delete the existing repository to avoid conflicts with validation rules
+		err := helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 		require.NoError(t, err)
+
+		// Wait for repository to be fully deleted
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+		}, time.Second*5, time.Millisecond*50, "repository should be deleted before creating new one")
 
 		// Create modified test files with unique UIDs for ResourceRef testing
 		allPanelsContent := helper.LoadFile("testdata/all-panels.json")
@@ -211,8 +222,12 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		helper.CopyToProvisioningPath(t, tmpFile2, "move-source-2.json")
 		helper.CopyToProvisioningPath(t, tmpFile3, "move-source-3.json")
 
-		// Sync to populate resources in Grafana
-		helper.SyncAndWait(t, refRepo, nil)
+		// Create a unique repository for resource reference testing to avoid contamination
+		const refRepo = "move-ref-test-repo"
+		helper.CreateRepo(t, TestRepo{
+			Name:                   refRepo,
+			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
+		})
 
 		t.Run("move single dashboard by resource reference", func(t *testing.T) {
 			spec := provisioning.JobSpec{

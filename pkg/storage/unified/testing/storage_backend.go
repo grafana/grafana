@@ -35,6 +35,7 @@ const (
 	TestGetResourceStats          = "get resource stats"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
+	TestListModifiedSince         = "list events since rv"
 	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 )
@@ -78,6 +79,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
+		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 	}
 
 	for _, tc := range cases {
@@ -175,8 +177,8 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		require.NoError(t, err)
 		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 2)
-		require.Contains(t, string(resp.Items[0].Value), "item3 ADDED")
-		require.Contains(t, string(resp.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(resp.Items[0].Value), "item2 MODIFIED")
+		require.Contains(t, string(resp.Items[1].Value), "item3 ADDED")
 		require.GreaterOrEqual(t, resp.ResourceVersion, rv5) // rv5 is the latest resource version
 	})
 
@@ -372,11 +374,11 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 5)
-		// should be sorted by resource_version ASC
+		// should be sorted by key ASC
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item4 ADDED")
-		require.Contains(t, string(res.Items[2].Value), "item5 ADDED")
-		require.Contains(t, string(res.Items[3].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[3].Value), "item5 ADDED")
 		require.Contains(t, string(res.Items[4].Value), "item6 ADDED")
 
 		require.Empty(t, res.NextPageToken)
@@ -399,8 +401,8 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item4 ADDED")
-		require.Contains(t, string(res.Items[2].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
 		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
 	})
 
@@ -438,12 +440,13 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 			},
 		})
 		require.NoError(t, err)
+		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
 		t.Log(res.Items)
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item4 ADDED")
-		require.Contains(t, string(res.Items[2].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
 
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
@@ -470,83 +473,85 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
-		require.Contains(t, string(res.Items[0].Value), "item5 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		t.Log(res.Items)
+		require.Contains(t, string(res.Items[0].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item5 ADDED")
 
 		continueToken, err = resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
+}
 
-	t.Run("Paginate through latest items one by one", func(t *testing.T) {
-		baseKey := &resourcepb.ResourceKey{
+func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	ns := nsPrefix + "-history-ns"
+	rvCreated, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.Greater(t, rvCreated, int64(0))
+	rvUpdated, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvUpdated, rvCreated)
+	rvDeleted, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDeleted, rvUpdated)
+
+	t.Run("will list latest modified event when resource has multiple events", func(t *testing.T) {
+		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
-		expectedItems := []string{"item1 ADDED", "item4 ADDED", "item5 ADDED", "item2 MODIFIED", "item6 ADDED"}
-		var allItems []*resourcepb.ResourceWrapper
-		var nextPageToken string
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		require.Greater(t, latestRv, rvCreated)
 
-		for i, expectedValue := range expectedItems {
-			req := &resourcepb.ListRequest{
-				Limit:         1,
-				NextPageToken: nextPageToken,
-				Options: &resourcepb.ListOptions{
-					Key: baseKey,
-				},
-			}
-
-			res, err := server.List(ctx, req)
+		counter := 0
+		for res, err := range seq {
 			require.NoError(t, err)
-			require.Nil(t, res.Error)
-			require.Len(t, res.Items, 1)
-			require.Contains(t, string(res.Items[0].Value), expectedValue)
-			allItems = append(allItems, res.Items[0])
-
-			if i < len(expectedItems)-1 {
-				require.NotEmpty(t, res.NextPageToken, "should have a continue token for page %d", i+1)
-				nextPageToken = res.NextPageToken
-			} else {
-				require.Empty(t, res.NextPageToken, "should not have a continue token on the last page")
-			}
+			require.Equal(t, rvDeleted, res.ResourceVersion)
+			counter++
 		}
-		require.Len(t, allItems, len(expectedItems))
+		require.Equal(t, 1, counter) // only one event should be returned
 	})
 
-	t.Run("Paginate latest with a limit larger than remaining items", func(t *testing.T) {
-		baseKey := &resourcepb.ResourceKey{
+	t.Run("no events if none after the given resource version", func(t *testing.T) {
+		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
-		// Request first 3 items (out of 5 total)
-		req := &resourcepb.ListRequest{
-			Limit: 3,
-			Options: &resourcepb.ListOptions{
-				Key: baseKey,
-			},
-		}
-		res1, err := server.List(ctx, req)
-		require.NoError(t, err)
-		require.Nil(t, res1.Error)
-		require.Len(t, res1.Items, 3)
-		require.NotEmpty(t, res1.NextPageToken)
-		require.Contains(t, string(res1.Items[0].Value), "item1 ADDED")
-		require.Contains(t, string(res1.Items[1].Value), "item4 ADDED")
-		require.Contains(t, string(res1.Items[2].Value), "item5 ADDED")
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
-		// Request next page with a large limit
-		req.Limit = 10 // Larger than the 2 remaining items
-		req.NextPageToken = res1.NextPageToken
-		res2, err := server.List(ctx, req)
+		counter := 0
+		for range seq {
+			counter++
+		}
+		require.Equal(t, 0, counter) // no events should be returned
+	})
+
+	t.Run("will only return modified events for the given key", func(t *testing.T) {
+		key := resource.NamespacedResource{
+			Namespace: "other-ns",
+			Group:     "group",
+			Resource:  "resource",
+		}
+
+		// Write an event for another tenant for the same resource
+		rvCreatedOtherTenant, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
 		require.NoError(t, err)
-		require.Nil(t, res2.Error)
-		require.Len(t, res2.Items, 2) // Should only get the 2 remaining items
-		require.Contains(t, string(res2.Items[0].Value), "item2 MODIFIED")
-		require.Contains(t, string(res2.Items[1].Value), "item6 ADDED")
-		require.Empty(t, res2.NextPageToken, "should be no continue token on the last page")
+
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		require.Greater(t, latestRv, rvCreated)
+
+		counter := 0
+		for res, err := range seq {
+			require.NoError(t, err)
+			require.Equal(t, rvCreatedOtherTenant, res.ResourceVersion)
+			require.Equal(t, key.Namespace, res.Key.Namespace)
+			counter++
+		}
+		require.Equal(t, 1, counter) // only one event should be returned
 	})
 }
 
@@ -727,6 +732,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
+		t.Log(res.Items)
 		require.Contains(t, string(res.Items[0].Value), "item1 MODIFIED")
 		require.Equal(t, rvHistory2, res.Items[0].ResourceVersion)
 		require.Contains(t, string(res.Items[1].Value), "item1 MODIFIED")

@@ -42,6 +42,8 @@ export interface TabItemState extends SceneObjectState {
   conditionalRendering?: ConditionalRendering;
   repeatByVariable?: string;
   repeatedTabs?: TabItem[];
+  /** Marks object as a repeated object and a key pointer to source object */
+  repeatSourceKey?: string;
 }
 
 export class TabItem

@@ -869,16 +869,18 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 	if ok {
 		vals = make(common.InlineSecureValues, len(u))
 		for k, v := range u {
-			sv, ok := v.(map[string]any)
+			inline, ok := v.(common.InlineSecureValue)
 			if !ok {
-				return nil, fmt.Errorf("unsupported nested secure value: %t", v)
-			}
-			inline := common.InlineSecureValue{}
-			inline.Name, _, _ = unstructured.NestedString(sv, "name")
-			inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
-			create, _, _ := unstructured.NestedString(sv, "create")
-			if create != "" {
-				inline.Create = common.NewSecretValue(create)
+				sv, ok := v.(map[string]any)
+				if !ok {
+					return nil, fmt.Errorf("unsupported nested secure value: %t", v)
+				}
+				inline.Name, _, _ = unstructured.NestedString(sv, "name")
+				inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
+				create, _, _ := unstructured.NestedString(sv, "create")
+				if create != "" {
+					inline.Create = common.NewSecretValue(create)
+				}
 			}
 			vals[k] = inline
 		}

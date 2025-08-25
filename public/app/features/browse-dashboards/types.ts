@@ -71,4 +71,5 @@ export interface BrowseDashboardsPermissions {
   canEditDashboards: boolean;
   canDeleteFolders?: boolean;
   canDeleteDashboards?: boolean;
+  isReadOnlyRepo?: boolean;
 }

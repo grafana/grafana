@@ -194,13 +194,13 @@ export function useDeleteFolderMutationFacade() {
 }
 
 export function useDeleteMultipleFoldersMutationFacade() {
-  if (!config.featureToggles.foldersAppPlatformAPI) {
-    const [deleteFolders] = useDeleteFoldersMutationLegacy();
-    return deleteFolders;
-  }
-
+  const [deleteFolders] = useDeleteFoldersMutationLegacy();
   const [deleteFolder] = useDeleteFolderMutation();
   const dispatch = useDispatch();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return deleteFolders;
+  }
 
   return async function deleteFolders({ folderUIDs }: { folderUIDs: string[] }) {
     // Delete all the folders sequentially
