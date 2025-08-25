@@ -94,7 +94,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	var regionalFormat string
-	var dateStyle string // Initialize dateStyle variable
+	var dateStyle string
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
 		regionalFormat = "en"
 
