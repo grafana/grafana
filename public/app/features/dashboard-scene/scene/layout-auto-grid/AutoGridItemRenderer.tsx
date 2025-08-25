@@ -21,12 +21,11 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
     useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
+  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
   if (soloPanelContext) {
     return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
   }
-
-  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
   const Wrapper = useMemo(
     () =>
