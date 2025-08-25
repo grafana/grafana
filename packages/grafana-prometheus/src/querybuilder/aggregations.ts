@@ -18,6 +18,7 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperation(PromOperationId.Count),
     ...createAggregationOperation(PromOperationId.Group),
     ...createAggregationOperation(PromOperationId.Stddev),
+    ...createAggregationOperation(PromOperationId.Stdvar),
     ...createAggregationOperationWithParam(PromOperationId.TopK, {
       params: [{ name: 'K-value', type: 'number' }],
       defaultParams: [5],
@@ -32,6 +33,14 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     }),
     ...createAggregationOperationWithParam(PromOperationId.Quantile, {
       params: [{ name: 'Value', type: 'number' }],
+      defaultParams: [1],
+    }),
+    ...createAggregationOperationWithParam(PromOperationId.LimitK, {
+      params: [{ name: 'K-value', type: 'number' }],
+      defaultParams: [5],
+    }),
+    ...createAggregationOperationWithParam(PromOperationId.LimitRatio, {
+      params: [{ name: 'Ratio', type: 'number' }],
       defaultParams: [1],
     }),
     createAggregationOverTime(PromOperationId.SumOverTime),
