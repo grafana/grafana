@@ -234,7 +234,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 
 		// config.type is a deprecated place for this value. We will default it to "query" for legacy purposes but non-query correlations should have type outside of config
 		if config.Type != "" && config.Type != correlations.CorrelationType("query") {
-			return correlations.CreateCorrelationCommand{}, correlations.ErrInvalidConfigType
+			return correlations.CreateCorrelationCommand{}, correlations.ErrConfigTypeDeprecated
 		}
 
 		createCommand.Config = config
