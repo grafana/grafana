@@ -21,7 +21,7 @@ func Extra(decrypter repository.Decrypter) repository.Extra {
 }
 
 func (e *extra) Type() provisioning.RepositoryType {
-	return provisioning.GitHubRepositoryType
+	return provisioning.GitRepositoryType
 }
 
 func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
