@@ -70,6 +70,15 @@ jest.mock('@grafana/runtime', () => ({
     getList: getListMock,
     getInstanceSettings: getInstanceSettingsMock,
   }),
+  useFavoriteDatasources: () => ({
+    enabled: false,
+    isLoading: false,
+    favoriteDatasources: [],
+    initialFavoriteDataSources: [],
+    addFavoriteDatasource: jest.fn(),
+    removeFavoriteDatasource: jest.fn(),
+    isFavoriteDatasource: jest.fn(() => false),
+  }),
 }));
 
 locationUtil.initialize({
