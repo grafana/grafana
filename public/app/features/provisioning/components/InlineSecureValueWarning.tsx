@@ -14,9 +14,9 @@ export function InlineSecureValueWarning({ repo, items }: Props) {
   }
 
   // When a list is passed in, show an error if anything is missing
-if (items?.every(r => r.spec?.type === 'local' || !!r.secure?.token?.name)) {
-  return null; // all items are valid
-}
+  if (items?.every((r) => r.spec?.type === 'local' || !!r.secure?.token?.name)) {
+    return null; // all items are valid
+  }
 
   return (
     <Alert
