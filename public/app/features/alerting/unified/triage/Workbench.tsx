@@ -11,8 +11,8 @@ import { MetaText } from '../components/MetaText';
 import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
 
 import { GroupRow } from './GroupRow';
-import { StateChangeChart } from './StateChangeChart';
 import { TimelineHeader } from './Timeline';
+import { StateChangeChart } from './stateChangeChart/StateChangeChart';
 import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
 
 type WorkbenchProps = {
