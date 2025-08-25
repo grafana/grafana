@@ -34,6 +34,13 @@ This binary currently wires informers and emits job-create notifications. In the
 - `--provisioning-server-url` (string): Base URL to the provisioning API server (e.g., `https://localhost:6446`).
 - `--history-expiration` (duration): If greater than zero, enables HistoricJobs cleanup and sets the retention window (e.g., `30s`, `15m`, `24h`). If `0`, cleanup is disabled.
 
+#### TLS Configuration
+
+- `--tls-insecure` (bool): Skip TLS certificate verification. Default: `true` (for development/testing).
+- `--tls-cert-file` (string): Path to TLS client certificate file for mutual TLS authentication.
+- `--tls-key-file` (string): Path to TLS client private key file for mutual TLS authentication.
+- `--tls-ca-file` (string): Path to TLS CA certificate file for server certificate verification.
+
 ### How to run
 
 1. Build from this folder:
@@ -49,6 +56,39 @@ This binary currently wires informers and emits job-create notifications. In the
        - `./bin/job-controller --token-exchange-url=http://localhost:6481/sign/access-token --token=ProvisioningAdminToken --provisioning-server-url=https://localhost:6446`
      - Or enable local HistoricJobs cleanup with a retention window:
        - `./bin/job-controller --token-exchange-url=http://localhost:6481/sign/access-token --token=ProvisioningAdminToken --provisioning-server-url=https://localhost:6446 --history-expiration=30s`
+
+#### TLS Configuration Examples
+
+- **Production with proper TLS verification**:
+  ```bash
+  ./bin/job-controller \
+    --token-exchange-url=http://localhost:6481/sign/access-token \
+    --token=ProvisioningAdminToken \
+    --provisioning-server-url=https://provisioning.example.com:6446 \
+    --tls-insecure=false \
+    --tls-ca-file=/path/to/ca-cert.pem
+  ```
+
+- **Mutual TLS authentication**:
+  ```bash
+  ./bin/job-controller \
+    --token-exchange-url=http://localhost:6481/sign/access-token \
+    --token=ProvisioningAdminToken \
+    --provisioning-server-url=https://provisioning.example.com:6446 \
+    --tls-insecure=false \
+    --tls-ca-file=/path/to/ca-cert.pem \
+    --tls-cert-file=/path/to/client-cert.pem \
+    --tls-key-file=/path/to/client-key.pem
+  ```
+
+- **Development with self-signed certificates (insecure)**:
+  ```bash
+  ./bin/job-controller \
+    --token-exchange-url=http://localhost:6481/sign/access-token \
+    --token=ProvisioningAdminToken \
+    --provisioning-server-url=https://localhost:6446 \
+    --tls-insecure=true
+  ```
 
 ### Expected behavior
 

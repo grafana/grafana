@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -28,6 +30,10 @@ var (
 	token                 = flag.String("token", "", "Token to use for authentication")
 	tokenExchangeURL      = flag.String("token-exchange-url", "", "Token exchange URL")
 	provisioningServerURL = flag.String("provisioning-server-url", "", "Provisioning server URL")
+	tlsInsecure           = flag.Bool("tls-insecure", true, "Skip TLS certificate verification")
+	tlsCertFile           = flag.String("tls-cert-file", "", "Path to TLS certificate file")
+	tlsKeyFile            = flag.String("tls-key-file", "", "Path to TLS private key file")
+	tlsCAFile             = flag.String("tls-ca-file", "", "Path to TLS CA certificate file")
 )
 
 func main() {
@@ -52,6 +58,30 @@ func main() {
 				Usage:       "Provisioning server URL",
 				Value:       "",
 				Destination: provisioningServerURL,
+			},
+			&cli.BoolFlag{
+				Name:        "tls-insecure",
+				Usage:       "Skip TLS certificate verification",
+				Value:       true,
+				Destination: tlsInsecure,
+			},
+			&cli.StringFlag{
+				Name:        "tls-cert-file",
+				Usage:       "Path to TLS certificate file",
+				Value:       "",
+				Destination: tlsCertFile,
+			},
+			&cli.StringFlag{
+				Name:        "tls-key-file",
+				Usage:       "Path to TLS private key file",
+				Value:       "",
+				Destination: tlsKeyFile,
+			},
+			&cli.StringFlag{
+				Name:        "tls-ca-file",
+				Usage:       "Path to TLS CA certificate file",
+				Value:       "",
+				Destination: tlsCAFile,
 			},
 			&cli.DurationFlag{
 				Name:  "history-expiration",
@@ -84,15 +114,18 @@ func runJobController(c *cli.Context) error {
 		return fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
+	tlsConfig, err := buildTLSConfig()
+	if err != nil {
+		return fmt.Errorf("failed to build TLS configuration: %w", err)
+	}
+
 	config := &rest.Config{
 		APIPath: "/apis",
 		Host:    *provisioningServerURL,
 		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
 			return authrt.NewRoundTripper(tokenExchangeClient, rt)
 		}),
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: true, // TODO: make this configurable
-		},
+		TLSClientConfig: tlsConfig,
 	}
 
 	provisioningClient, err := client.NewForConfig(config)
@@ -170,4 +203,33 @@ func runJobController(c *cli.Context) error {
 
 	<-ctx.Done()
 	return nil
+}
+
+func buildTLSConfig() (rest.TLSClientConfig, error) {
+	tlsConfig := rest.TLSClientConfig{
+		Insecure: *tlsInsecure,
+	}
+
+	// If client certificate and key are provided
+	if *tlsCertFile != "" && *tlsKeyFile != "" {
+		tlsConfig.CertFile = *tlsCertFile
+		tlsConfig.KeyFile = *tlsKeyFile
+	}
+
+	// If CA certificate is provided
+	if *tlsCAFile != "" {
+		caCert, err := os.ReadFile(*tlsCAFile)
+		if err != nil {
+			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
+		}
+
+		tlsConfig.CAData = caCert
+	}
+
+	return tlsConfig, nil
 }
