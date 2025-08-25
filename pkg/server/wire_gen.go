@@ -816,7 +816,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	factory := github.ProvideFactory()
 	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, v4, factory, webhookExtraBuilder)
-	repositoryFactory := repository.ProvideFactory(v5)
+	repositoryFactory, err := repository.ProvideFactory(v5)
+	if err != nil {
+		return nil, err
+	}
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
 	if err != nil {
 		return nil, err
@@ -1394,7 +1397,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	factory := github.ProvideFactory()
 	v5 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, v4, factory, webhookExtraBuilder)
-	repositoryFactory := repository.ProvideFactory(v5)
+	repositoryFactory, err := repository.ProvideFactory(v5)
+	if err != nil {
+		return nil, err
+	}
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, legacyMigrator, dualwriteService, usageStats, tracingService, v3, repositoryFactory)
 	if err != nil {
 		return nil, err

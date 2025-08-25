@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"sort"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,20 +31,27 @@ type factory struct {
 	extras map[provisioning.RepositoryType]Extra
 }
 
-func ProvideFactory(extras []Extra) Factory {
+func ProvideFactory(extras []Extra) (Factory, error) {
 	f := &factory{
 		extras: make(map[provisioning.RepositoryType]Extra, len(extras)),
 	}
 
 	for _, e := range extras {
+		if _, exists := f.extras[e.Type()]; exists {
+			return nil, fmt.Errorf("repository type %q is already registered", e.Type())
+		}
 		f.extras[e.Type()] = e
 	}
 
-	return f
+	return f, nil
 }
 
 func (f *factory) Types() []provisioning.RepositoryType {
-	return slices.Collect(maps.Keys(f.extras))
+	types := slices.Collect(maps.Keys(f.extras))
+	sort.Slice(types, func(i, j int) bool {
+		return string(types[i]) < string(types[j])
+	})
+	return types
 }
 
 func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Repository, error) {

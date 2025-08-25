@@ -14,8 +14,9 @@ import (
 
 func TestNewFactory(t *testing.T) {
 	t.Run("creates factory with empty extras", func(t *testing.T) {
-		factory := ProvideFactory([]Extra{})
+		factory, err := ProvideFactory([]Extra{})
 
+		require.NoError(t, err)
 		require.NotNil(t, factory)
 		types := factory.Types()
 		assert.Empty(t, types)
@@ -32,67 +33,48 @@ func TestNewFactory(t *testing.T) {
 		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
 		extras := []Extra{localExtra, gitExtra, githubExtra}
-		factory := ProvideFactory(extras)
+		factory, err := ProvideFactory(extras)
 
+		require.NoError(t, err)
 		require.NotNil(t, factory)
 		types := factory.Types()
 		assert.Len(t, types, 3)
 
-		// Convert to set for easier comparison since order is not guaranteed
-		typeSet := make(map[provisioning.RepositoryType]bool)
-		for _, t := range types {
-			typeSet[t] = true
+		// Verify stable ordering - types should be sorted alphabetically
+		expectedTypes := []provisioning.RepositoryType{
+			provisioning.GitRepositoryType,
+			provisioning.GitHubRepositoryType,
+			provisioning.LocalRepositoryType,
 		}
-
-		assert.True(t, typeSet[provisioning.LocalRepositoryType])
-		assert.True(t, typeSet[provisioning.GitRepositoryType])
-		assert.True(t, typeSet[provisioning.GitHubRepositoryType])
+		assert.Equal(t, expectedTypes, types)
 
 		localExtra.AssertExpectations(t)
 		gitExtra.AssertExpectations(t)
 		githubExtra.AssertExpectations(t)
 	})
 
-	t.Run("overwrites duplicate repository types", func(t *testing.T) {
-		mockRepo := &MockConfigRepository{}
-
+	t.Run("returns error for duplicate repository types", func(t *testing.T) {
 		firstExtra := &MockExtra{}
 		firstExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		secondExtra := &MockExtra{}
 		secondExtra.On("Type").Return(provisioning.LocalRepositoryType)
-		secondExtra.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil)
 
 		extras := []Extra{firstExtra, secondExtra}
-		factory := ProvideFactory(extras)
+		factory, err := ProvideFactory(extras)
 
-		require.NotNil(t, factory)
-		types := factory.Types()
-		assert.Len(t, types, 1)
-		assert.Equal(t, provisioning.LocalRepositoryType, types[0])
-
-		// Test that the factory uses the last added extra by building a repository
-		ctx := context.Background()
-		repoConfig := &provisioning.Repository{
-			Spec: provisioning.RepositorySpec{
-				Type: provisioning.LocalRepositoryType,
-			},
-		}
-
-		result, err := factory.Build(ctx, repoConfig)
-		require.NoError(t, err)
-		assert.Equal(t, mockRepo, result)
-
-		// The secondExtra should have been called (since it overwrites firstExtra)
-		secondExtra.AssertExpectations(t)
-		firstExtra.AssertNotCalled(t, "Build")
+		assert.Error(t, err)
+		assert.Nil(t, factory)
+		assert.Contains(t, err.Error(), "repository type \"local\" is already registered")
 
 		firstExtra.AssertExpectations(t)
+		secondExtra.AssertExpectations(t)
 	})
 
 	t.Run("handles nil extras slice", func(t *testing.T) {
-		factory := ProvideFactory(nil)
+		factory, err := ProvideFactory(nil)
 
+		require.NoError(t, err)
 		require.NotNil(t, factory)
 		types := factory.Types()
 		assert.Empty(t, types)
@@ -101,13 +83,14 @@ func TestNewFactory(t *testing.T) {
 
 func TestFactory_Types(t *testing.T) {
 	t.Run("returns empty slice for factory with no extras", func(t *testing.T) {
-		factory := ProvideFactory([]Extra{})
+		factory, err := ProvideFactory([]Extra{})
 
+		require.NoError(t, err)
 		types := factory.Types()
 		assert.Empty(t, types)
 	})
 
-	t.Run("returns all registered repository types", func(t *testing.T) {
+	t.Run("returns all registered repository types in stable order", func(t *testing.T) {
 		localExtra := &MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
@@ -124,23 +107,22 @@ func TestFactory_Types(t *testing.T) {
 		gitlabExtra.On("Type").Return(provisioning.GitLabRepositoryType)
 
 		extras := []Extra{localExtra, gitExtra, githubExtra, bitbucketExtra, gitlabExtra}
-		factory := ProvideFactory(extras)
+		factory, err := ProvideFactory(extras)
 
+		require.NoError(t, err)
 		types := factory.Types()
 
 		assert.Len(t, types, 5)
 
-		// Convert to set for easier comparison since order is not guaranteed
-		typeSet := make(map[provisioning.RepositoryType]bool)
-		for _, t := range types {
-			typeSet[t] = true
+		// Verify stable ordering - types should be sorted alphabetically
+		expectedTypes := []provisioning.RepositoryType{
+			provisioning.BitbucketRepositoryType,
+			provisioning.GitRepositoryType,
+			provisioning.GitHubRepositoryType,
+			provisioning.GitLabRepositoryType,
+			provisioning.LocalRepositoryType,
 		}
-
-		assert.True(t, typeSet[provisioning.LocalRepositoryType])
-		assert.True(t, typeSet[provisioning.GitRepositoryType])
-		assert.True(t, typeSet[provisioning.GitHubRepositoryType])
-		assert.True(t, typeSet[provisioning.BitbucketRepositoryType])
-		assert.True(t, typeSet[provisioning.GitLabRepositoryType])
+		assert.Equal(t, expectedTypes, types)
 
 		localExtra.AssertExpectations(t)
 		gitExtra.AssertExpectations(t)
@@ -149,23 +131,39 @@ func TestFactory_Types(t *testing.T) {
 		gitlabExtra.AssertExpectations(t)
 	})
 
-	t.Run("returns unique types even with duplicate extras", func(t *testing.T) {
-		firstExtra := &MockExtra{}
-		firstExtra.On("Type").Return(provisioning.LocalRepositoryType)
+	t.Run("returns consistent order across multiple calls", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		secondExtra := &MockExtra{}
-		secondExtra.On("Type").Return(provisioning.LocalRepositoryType)
+		gitExtra := &MockExtra{}
+		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		extras := []Extra{firstExtra, secondExtra}
-		factory := ProvideFactory(extras)
+		githubExtra := &MockExtra{}
+		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
-		types := factory.Types()
+		extras := []Extra{githubExtra, localExtra, gitExtra} // Intentionally unordered
+		factory, err := ProvideFactory(extras)
 
-		assert.Len(t, types, 1)
-		assert.Equal(t, provisioning.LocalRepositoryType, types[0])
+		require.NoError(t, err)
+		types1 := factory.Types()
+		types2 := factory.Types()
+		types3 := factory.Types()
 
-		firstExtra.AssertExpectations(t)
-		secondExtra.AssertExpectations(t)
+		// All calls should return the same order
+		assert.Equal(t, types1, types2)
+		assert.Equal(t, types2, types3)
+
+		// Verify the order is alphabetical
+		expectedTypes := []provisioning.RepositoryType{
+			provisioning.GitRepositoryType,
+			provisioning.GitHubRepositoryType,
+			provisioning.LocalRepositoryType,
+		}
+		assert.Equal(t, expectedTypes, types1)
+
+		localExtra.AssertExpectations(t)
+		gitExtra.AssertExpectations(t)
+		githubExtra.AssertExpectations(t)
 	})
 }
 
