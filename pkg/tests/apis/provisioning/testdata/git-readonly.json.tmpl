@@ -11,7 +11,6 @@
         "git": {
             "url": "{{ or .URL "https://github.com/grafana/grafana-git-sync-demo" }}",
             "branch": "{{ or .Branch "integration-test" }}",
-            "token": "{{ or .Token "" }}",
             "path": "{{ or .Path "grafana/" }}"
         },
         "sync": {
@@ -20,5 +19,8 @@
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
         },
         "workflows": []
+    },
+    "secure": {
+        "token": { "create": "{{ or .Token "" }}" }
     }
 }

@@ -9,10 +9,9 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
-func Mutator(secrets secrets.RepositorySecrets) repository.Mutator {
+func Mutator() repository.Mutator {
 	return func(ctx context.Context, obj runtime.Object) error {
 		repo, ok := obj.(*provisioning.Repository)
 		if !ok {
@@ -38,16 +37,6 @@ func Mutator(secrets secrets.RepositorySecrets) repository.Mutator {
 				}
 				repo.Spec.Git.URL = url
 			}
-		}
-
-		if repo.Spec.Git.Token != "" {
-			secretName := repo.Name + gitTokenSecretSuffix
-			nameOrValue, err := secrets.Encrypt(ctx, repo, secretName, repo.Spec.Git.Token)
-			if err != nil {
-				return err
-			}
-			repo.Spec.Git.EncryptedToken = nameOrValue
-			repo.Spec.Git.Token = ""
 		}
 
 		return nil

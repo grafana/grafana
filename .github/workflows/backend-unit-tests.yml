@@ -16,6 +16,8 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
