@@ -80,7 +80,6 @@ func (s *folderStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	// TODO add something here?
 	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		statusErr := apierrors.ToFolderStatusError(err)

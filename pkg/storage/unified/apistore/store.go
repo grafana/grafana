@@ -215,7 +215,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		}
 		// TODO run zanzana so this doesn't error
 		// TODO fix wire generation -- register the zanzana service -- might not work even then because of the pointer
-		// TODO see if the branch i'm on (mihais) has been merged and if so start a new branch from main
 		// folderName = val.GetSpec().(*folderv1.FolderSpec).Title or something like that
 		namespace := val.GetNamespace()
 		folderUid := val.GetName()

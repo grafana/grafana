@@ -153,15 +153,6 @@ func ProvideService(
 	return srv
 }
 
-func (s *Service) SetDefaultPermissionsAfterCreate(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	// TODO run zanzana so this doesn't error
-	// folderName = obj.GetSpec().(*folderv1.FolderSpec).Title or something like that
-	namespace := obj.GetNamespace()
-	folderUid := obj.GetName()
-	parentFolderUid := obj.GetFolder()
-	return s.permissionStore.SetFolderParent(ctx, namespace, folderUid, parentFolderUid)
-}
-
 func (s *Service) DBMigration(db db.DB) {
 	s.log.Debug("syncing dashboard and folder tables started")
 

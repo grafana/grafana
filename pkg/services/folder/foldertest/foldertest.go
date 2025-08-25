@@ -27,10 +27,6 @@ func NewFakeService() *FakeService {
 	}
 }
 
-func (s *FakeService) SetDefaultPermissionsAfterCreate(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	return nil
-}
-
 func (s *FakeService) AddFolder(f *folder.Folder) {
 	if s.foldersByUID == nil {
 		s.foldersByUID = make(map[string]*folder.Folder)

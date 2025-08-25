@@ -3,14 +3,10 @@ package folder
 import (
 	"context"
 
-	authtypes "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type Service interface {
-	PermissionsRegistrationService
 	RegisterService(service RegistryService) error
 
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
@@ -62,11 +58,6 @@ type Service interface {
 	GetDescendantCountsLegacy(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
 
 	CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error)
-}
-
-type PermissionsRegistrationService interface {
-	// Used to apply default permissions in unified storage after create
-	SetDefaultPermissionsAfterCreate(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 }
 
 // FolderStore is a folder store.
