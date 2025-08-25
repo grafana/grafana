@@ -56,7 +56,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		Token:  token,
 	}
 
-	gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
+	gitRepo, err := git.NewRepository(ctx, r, gitCfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)
 	}

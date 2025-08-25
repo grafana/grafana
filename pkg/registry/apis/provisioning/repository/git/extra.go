@@ -48,7 +48,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		Token:     token,
 	}
 
-	return NewGitRepository(ctx, r, cfg)
+	return NewRepository(ctx, r, cfg)
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
