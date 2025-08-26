@@ -18,6 +18,56 @@ import { getEditableVariableDefinition, validateVariableName } from '../../setti
 
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
+// TODO fix conditional hook usage here...
+function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+  const variable = this.variable;
+
+  if (variable instanceof LocalValueVariable) {
+    return useLocalVariableOptions(variable);
+  }
+
+  const basicOptions = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-options' })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          skipField: true,
+          render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.edit-pane.variable.label', 'Label'),
+          description: t('dashboard.edit-pane.variable.label-description', 'Optional display name'),
+          render: () => <VariableLabelInput variable={variable} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.edit-pane.variable.description', 'Description'),
+          render: () => <VariableDescriptionTextArea variable={variable} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          skipField: true,
+          render: () => <VariableHideInput variable={variable} />,
+        })
+      );
+  }, [variable, isNewElement]);
+
+  const categories = [basicOptions];
+  const typeCategory = useVariableTypeCategory(variable);
+  categories.push(typeCategory);
+
+  if (variable instanceof MultiValueVariable) {
+    categories.push(useVariableSelectionOptionsCategory(variable));
+  }
+
+  return categories;
+}
+
 export class VariableEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Variable';
@@ -44,54 +94,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    const variable = this.variable;
-
-    if (variable instanceof LocalValueVariable) {
-      return useLocalVariableOptions(variable);
-    }
-
-    const basicOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-options' })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: '',
-            skipField: true,
-            render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.edit-pane.variable.label', 'Label'),
-            description: t('dashboard.edit-pane.variable.label-description', 'Optional display name'),
-            render: () => <VariableLabelInput variable={variable} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.edit-pane.variable.description', 'Description'),
-            render: () => <VariableDescriptionTextArea variable={variable} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: '',
-            skipField: true,
-            render: () => <VariableHideInput variable={variable} />,
-          })
-        );
-    }, [variable, isNewElement]);
-
-    const categories = [basicOptions];
-    const typeCategory = useVariableTypeCategory(variable);
-    categories.push(typeCategory);
-
-    if (variable instanceof MultiValueVariable) {
-      categories.push(useVariableSelectionOptionsCategory(variable));
-    }
-
-    return categories;
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public onDelete() {
     const set = this.variable.parent!;

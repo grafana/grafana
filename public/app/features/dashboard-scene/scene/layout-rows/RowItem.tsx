@@ -108,9 +108,7 @@ export class RowItem
     this.setState({ layout });
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    return useEditOptions(this, isNewElement);
-  }
+  public useEditPaneOptions = useEditOptions.bind(this);
 
   public onDelete() {
     this.getParentLayout().removeRow(this);

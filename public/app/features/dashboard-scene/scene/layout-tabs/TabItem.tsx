@@ -106,9 +106,7 @@ export class TabItem
     this.setState({ layout });
   }
 
-  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
-    return useEditOptions(this, isNewElement);
-  }
+  public useEditPaneOptions = useEditOptions.bind(this);
 
   public onDelete() {
     const layout = this.getParentLayout();

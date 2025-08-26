@@ -13,6 +13,40 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene
 
 import { dashboardEditActions, undoRedoWasClicked } from './shared';
 
+function useEditPaneOptions(
+  this: DashboardEditableElement,
+  dashboard: DashboardScene
+): OptionsPaneCategoryDescriptor[] {
+  // When layout changes we need to update options list
+  const { body } = dashboard.useState();
+
+  const dashboardOptions = useMemo(() => {
+    const dashboardTitleInputId = 'dashboard-title-input';
+    const dashboardDescriptionInputId = 'dashboard-description-input';
+    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.options.title-option', 'Title'),
+          id: dashboardTitleInputId,
+          render: () => <DashboardTitleInput id={dashboardTitleInputId} dashboard={dashboard} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.options.description', 'Description'),
+          id: dashboardDescriptionInputId,
+          render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
+        })
+      );
+
+    return editPaneHeaderOptions;
+  }, [dashboard]);
+
+  const layoutCategory = useLayoutCategory(body);
+
+  return [dashboardOptions, ...layoutCategory];
+}
+
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
 
@@ -31,38 +65,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return [$variables!, ...body.getOutlineChildren()];
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const dashboard = this.dashboard;
-
-    // When layout changes we need to update options list
-    const { body } = dashboard.useState();
-
-    const dashboardOptions = useMemo(() => {
-      const dashboardTitleInputId = 'dashboard-title-input';
-      const dashboardDescriptionInputId = 'dashboard-description-input';
-      const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.options.title-option', 'Title'),
-            id: dashboardTitleInputId,
-            render: () => <DashboardTitleInput id={dashboardTitleInputId} dashboard={dashboard} />,
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.options.description', 'Description'),
-            id: dashboardDescriptionInputId,
-            render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
-          })
-        );
-
-      return editPaneHeaderOptions;
-    }, [dashboard]);
-
-    const layoutCategory = useLayoutCategory(body);
-
-    return [dashboardOptions, ...layoutCategory];
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
 
   public renderActions(): ReactNode {
     return (

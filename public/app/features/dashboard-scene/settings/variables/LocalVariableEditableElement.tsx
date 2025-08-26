@@ -8,6 +8,39 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 
+function useEditPaneOptions(this: LocalVariableEditableElement): OptionsPaneCategoryDescriptor[] {
+  const variable = this.variable;
+
+  return useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: '',
+      id: 'local-variable-options',
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        skipField: true,
+        render: () => {
+          return (
+            <Box paddingBottom={1}>
+              <Stack>
+                <Stack>
+                  <span>${variable.state.name}</span>
+                  <span>=</span>
+                  <span>{variable.getValueText()}</span>
+                </Stack>
+              </Stack>
+            </Box>
+          );
+        },
+      })
+    );
+
+    return [category];
+  }, [variable]);
+}
+
 export class LocalVariableEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
 
@@ -22,36 +55,5 @@ export class LocalVariableEditableElement implements EditableDashboardElement {
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const variable = this.variable;
-
-    return useMemo(() => {
-      const category = new OptionsPaneCategoryDescriptor({
-        title: '',
-        id: 'local-variable-options',
-      });
-
-      category.addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          skipField: true,
-          render: () => {
-            return (
-              <Box paddingBottom={1}>
-                <Stack>
-                  <Stack>
-                    <span>${variable.state.name}</span>
-                    <span>=</span>
-                    <span>{variable.getValueText()}</span>
-                  </Stack>
-                </Stack>
-              </Box>
-            );
-          },
-        })
-      );
-
-      return [category];
-    }, [variable]);
-  }
+  public useEditPaneOptions = useEditPaneOptions.bind(this);
 }
