@@ -50,6 +50,7 @@ import (
 	secretmutator "github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
+	secretclock "github.com/grafana/grafana/pkg//apis/secret/clock/clock"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -442,7 +443,9 @@ var wireBasicSet = wire.NewSet(
 	secretmutator.ProvideSecureValueMutator,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
+	secretclock.ProvideClock,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
+	wire.Bind(new(secretcontracts.Clock), new(secretclock.Clock))
 	encryptionManager.ProvideEncryptionManager,
 	cipher.ProvideAESGCMCipherService,
 	// Unified storage
