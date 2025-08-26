@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
-
 import { RepoType } from '../Wizard/types';
 
 interface BranchInfo {
   name: string;
   isDefault?: boolean;
+}
+
+interface HttpError extends Error {
+  status?: number;
+}
+
+function isHttpError(err: unknown): err is HttpError {
+  return err instanceof Error && 'status' in err;
 }
 
 interface UseBranchFetchingProps {
@@ -127,17 +133,20 @@ export function useBranchFetching({
           throw new Error(`Unsupported repository type: ${repositoryType}`);
       }
 
-      const backendSrv = getBackendSrv();
-      const data = await backendSrv.get(
-        apiUrl,
-        undefined, // no query params
-        undefined, // no requestId
-        {
-          headers,
-          showErrorAlert: false, // Handle errors manually
-          hideFromInspector: true, // Hide external API calls from inspector
-        }
-      );
+      const response = await window.fetch(apiUrl, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error Response:', errorData);
+        const error: HttpError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      const data = await response.json();
       let branchData: BranchInfo[] = [];
 
       if (repositoryType === 'github') {
@@ -168,15 +177,15 @@ export function useBranchFetching({
       console.error('Failed to fetch branches:', err);
       let errorMessage = 'Failed to fetch branches';
 
-      if (isFetchError(err)) {
+      if (isHttpError(err)) {
         if (err.status === 401) {
           errorMessage = 'Authentication failed. Please check your access token.';
         } else if (err.status === 404) {
           errorMessage = 'Repository not found. Please check the repository URL.';
         } else if (err.status === 403) {
           errorMessage = 'Access denied. Please check your token permissions.';
-        } else if (err.data?.message) {
-          errorMessage = err.data.message;
+        } else if (err.message) {
+          errorMessage = err.message;
         }
       }
 
