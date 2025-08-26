@@ -289,6 +289,9 @@ func TestRunInQueue(t *testing.T) {
 		}
 		err := q.Enqueue(context.Background(), testTenantID, blockingRunnable)
 		require.NoError(t, err)
+		for q.Len() > 0 {
+			time.Sleep(100 * time.Millisecond)
+		}
 		err = q.Enqueue(context.Background(), testTenantID, blockingRunnable)
 		require.NoError(t, err)
 
