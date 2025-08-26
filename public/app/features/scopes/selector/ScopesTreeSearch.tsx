@@ -13,9 +13,18 @@ export interface ScopesTreeSearchProps {
   searchArea: string;
   treeNode: TreeNode;
   onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  onFocus: () => void;
+  onBlur: () => void;
 }
 
-export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate, searchArea }: ScopesTreeSearchProps) {
+export function ScopesTreeSearch({
+  anyChildExpanded,
+  treeNode,
+  onNodeUpdate,
+  searchArea,
+  onFocus,
+  onBlur,
+}: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
   const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({
@@ -60,6 +69,8 @@ export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate, sea
       onChange={(value) => {
         setInputState({ value, dirty: true });
       }}
+      onFocus={onFocus}
+      onBlur={onBlur}
     />
   );
 }

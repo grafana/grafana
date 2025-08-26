@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -9,6 +10,7 @@ import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useKeyboardInteraction } from './useKeyboardInteractions';
 
 export interface ScopesTreeProps {
   tree: TreeNode;
@@ -63,6 +65,28 @@ export function ScopesTree({
     }
   }
 
+  // Only enable keyboard interaction when the search field is focused
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  // Use the same hightoighing for the two different lists
+  const { highlightedIndex } = useKeyboardInteraction(
+    searchFocused ? selectedNodesToShow.length + childrenArray.length : 0,
+    (index: number) => {
+      // Toggle selection
+      if (selectedScopes.some((s) => s.scopeNodeId === childrenArray[index - selectedNodesToShow.length].scopeNodeId)) {
+        deselectScope(childrenArray[index - selectedNodesToShow.length].scopeNodeId);
+      } else {
+        selectScope(childrenArray[index - selectedNodesToShow.length].scopeNodeId);
+      }
+
+      if (index >= selectedNodesToShow.length) {
+        selectScope(childrenArray[index - selectedNodesToShow.length].scopeNodeId);
+      } else {
+        selectScope(selectedNodesToShow[index].scopeNodeId);
+      }
+    }
+  );
+
   // Used as a label and placeholder for search field
   const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
   const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
@@ -76,6 +100,8 @@ export function ScopesTree({
         searchArea={searchArea}
         onNodeUpdate={onNodeUpdate}
         treeNode={tree}
+        onFocus={() => setSearchFocused(true)}
+        onBlur={() => setSearchFocused(false)}
       />
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
@@ -99,6 +125,7 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
+            highlightedIndex={highlightedIndex}
           />
 
           <ScopesTreeHeadline
@@ -119,6 +146,7 @@ export function ScopesTree({
             selectScope={selectScope}
             deselectScope={deselectScope}
             maxHeight={'100%'}
+            highlightedIndex={highlightedIndex - selectedNodesToShow.length}
           />
         </>
       )}

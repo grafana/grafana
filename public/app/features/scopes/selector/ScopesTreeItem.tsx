@@ -15,6 +15,7 @@ export interface ScopesTreeItemProps {
   scopeNodes: NodesMap;
   selected: boolean;
   selectedScopes: SelectedScope[];
+  highlighted: boolean;
 
   onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
   selectScope: (scopeNodeId: string) => void;
@@ -31,6 +32,7 @@ export function ScopesTreeItem({
   selectedScopes,
   selectScope,
   deselectScope,
+  highlighted,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -56,7 +58,13 @@ export function ScopesTreeItem({
       aria-selected={treeNode.expanded}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
     >
-      <div className={cx(styles.title, isSelectable && !treeNode.expanded && styles.titlePadding)}>
+      <div
+        className={cx(
+          styles.title,
+          isSelectable && !treeNode.expanded && styles.titlePadding,
+          highlighted && styles.highlighted
+        )}
+      >
         {isSelectable && !treeNode.expanded ? (
           disableMultiSelect ? (
             <RadioButtonDot
@@ -71,6 +79,7 @@ export function ScopesTreeItem({
             />
           ) : (
             <Checkbox
+              id={treeNode.scopeNodeId}
               checked={selected}
               data-testid={`scopes-tree-${treeNode.scopeNodeId}-checkbox`}
               label={isExpandable ? '' : scopeNode.spec.title}
@@ -116,6 +125,9 @@ export function ScopesTreeItem({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    highlighted: css({
+      textDecoration: 'underline',
+    }),
     expandedContainer: css({
       display: 'flex',
       flexDirection: 'column',
