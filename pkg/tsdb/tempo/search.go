@@ -170,7 +170,7 @@ func transformSearchResponse(pCtx backend.PluginContext, response *SearchRespons
 	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("startTime", nil, []time.Time{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Start time"}))
 	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceService", nil, []string{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Service"}))
 	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Name"}))
-	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceDuration", nil, []float64{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Duration"}))
+	tracesFrame.Fields = append(tracesFrame.Fields, data.NewField("traceDuration", nil, []*float64{}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "Duration", Unit: "ms", NoValue: "<1 ms"}))
 
 	tracesFrame.Meta = &data.FrameMeta{
 		PreferredVisualization: data.VisTypeTable,
@@ -206,10 +206,19 @@ func transformSearchResponse(pCtx backend.PluginContext, response *SearchRespons
 			tracesFrame.Fields[1].Append(time.Unix(0, startTimeUnixNano))
 		}
 
+		var traceDurationMs *float64
+		if trace.DurationMs >= 1 {
+			val := float64(trace.DurationMs)
+			traceDurationMs = &val
+		} else {
+			traceDurationMs = nil
+		}
+
+		backend.Logger.Error("NEW WITH NIL?")
 		tracesFrame.Fields[0].Append(trace.TraceID)
 		tracesFrame.Fields[2].Append(trace.RootServiceName)
 		tracesFrame.Fields[3].Append(trace.RootTraceName)
-		tracesFrame.Fields[4].Append(float64(trace.DurationMs))
+		tracesFrame.Fields[4].Append(traceDurationMs)
 	}
 
 	return []*data.Frame{tracesFrame}, nil
