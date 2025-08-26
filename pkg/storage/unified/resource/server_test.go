@@ -323,7 +323,8 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 	err := services.StartAndAwaitRunning(context.Background(), q)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		services.StopAndAwaitTerminated(context.Background(), q)
+		err := services.StopAndAwaitTerminated(context.Background(), q)
+		require.NoError(t, err)
 	})
 
 	// Create a worker to consume from the queue
@@ -335,7 +336,8 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 	err = services.StartAndAwaitRunning(context.Background(), worker)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		services.StopAndAwaitTerminated(context.Background(), worker)
+		err := services.StopAndAwaitTerminated(context.Background(), worker)
+		require.NoError(t, err)
 	})
 
 	s := &server{
