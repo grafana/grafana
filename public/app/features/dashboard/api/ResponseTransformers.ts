@@ -42,6 +42,7 @@ import {
   GridLayoutKind,
   defaultDashboardLinkType,
   defaultDashboardLink,
+  defaultFieldConfigSource,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -515,12 +516,7 @@ export function buildPanelKind(p: Panel): PanelKind {
         group: p.type,
         version: p.pluginVersion ?? '',
         spec: {
-          fieldConfig: {
-            defaults: {
-              custom: (p.fieldConfig as any) || {},
-            },
-            overrides: [],
-          },
+          fieldConfig: defaultFieldConfigSource(),
           options: p.options as any,
         },
       },
