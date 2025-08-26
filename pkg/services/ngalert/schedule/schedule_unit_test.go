@@ -85,6 +85,12 @@ func TestProcessTicks(t *testing.T) {
 	}
 
 	schedCfg := SchedulerCfg{
+		RetryConfig: RetryConfig{
+			MaxAttempts:         1,
+			InitialRetryDelay:   time.Second,
+			MaxRetryDelay:       time.Second * 10,
+			RandomizationFactor: 0,
+		},
 		BaseInterval:      cfg.BaseInterval,
 		C:                 mockedClock,
 		AppURL:            appUrl,
@@ -1189,11 +1195,35 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory, ruleStopReasonProvider AlertRuleStopReasonProvider) *schedule {
+type schedulerOpts struct {
+	clock clock.Clock
+}
+
+func withSchedulerClock(clock clock.Clock) func(opts *schedulerOpts) {
+	return func(opts *schedulerOpts) {
+		opts.clock = clock
+	}
+}
+
+func setupScheduler(
+	t *testing.T,
+	rs *fakeRulesStore,
+	is *state.FakeInstanceStore,
+	registry *prometheus.Registry,
+	senderMock *SyncAlertsSenderMock,
+	evalMock eval.EvaluatorFactory,
+	ruleStopReasonProvider AlertRuleStopReasonProvider,
+	options ...func(opts *schedulerOpts),
+) *schedule {
 	t.Helper()
 	testTracer := tracing.InitializeTracerForTest()
 
-	mockedClock := clock.NewMock()
+	opts := &schedulerOpts{
+		clock: clock.NewMock(),
+	}
+	for _, o := range options {
+		o(opts)
+	}
 
 	if rs == nil {
 		rs = newFakeRulesStore()
@@ -1236,8 +1266,11 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	cfg := setting.UnifiedAlertingSettings{
-		BaseInterval: time.Second,
-		MaxAttempts:  1,
+		BaseInterval:        time.Second,
+		MaxAttempts:         1,
+		InitialRetryDelay:   time.Second * 1,
+		MaxRetryDelay:       time.Second * 10,
+		RandomizationFactor: 0,
 		RecordingRules: setting.RecordingRuleSettings{
 			Enabled: true,
 		},
@@ -1246,9 +1279,14 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	fakeRecordingWriter := writer.FakeWriter{}
 
 	schedCfg := SchedulerCfg{
+		RetryConfig: RetryConfig{
+			MaxAttempts:         cfg.MaxAttempts,
+			InitialRetryDelay:   cfg.InitialRetryDelay,
+			MaxRetryDelay:       cfg.MaxRetryDelay,
+			RandomizationFactor: cfg.RandomizationFactor,
+		},
 		BaseInterval:           cfg.BaseInterval,
-		MaxAttempts:            cfg.MaxAttempts,
-		C:                      mockedClock,
+		C:                      opts.clock,
 		AppURL:                 appUrl,
 		EvaluatorFactory:       evaluator,
 		RuleStore:              rs,
@@ -1266,7 +1304,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		ExternalURL:             nil,
 		InstanceStore:           is,
 		Images:                  &state.NoopImageService{},
-		Clock:                   mockedClock,
+		Clock:                   opts.clock,
 		Historian:               &state.FakeHistorian{},
 		Tracer:                  testTracer,
 		Log:                     log.New("ngalert.state.manager"),
