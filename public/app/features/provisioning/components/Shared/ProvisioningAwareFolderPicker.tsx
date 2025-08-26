@@ -1,8 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { NestedFolderPickerProps } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
@@ -19,35 +18,8 @@ export function ProvisioningAwareFolderPicker({ repositoryName, isNonProvisioned
   const provisioningEnabled = config.featureToggles.provisioning;
   const { data: settingsData } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
 
-  const rootFolderUID = useMemo(() => {
-    if (isProvisionedInstance) {
-      // when whole instance is provisioned, root folder is not restricted
-      return undefined;
-    }
-
-    if (provisioningEnabled && repositoryName) {
-      // when whole instance is not provisioned, root folder is restricted
-      return repositoryName;
-    }
-
-    return undefined;
-  }, [isProvisionedInstance, provisioningEnabled, repositoryName]);
-
-  const excludeUIDs = useMemo(() => {
-    if (isProvisionedInstance) {
-      // when all instance is provisioned, don't exclude any folders
-      return [];
-    }
-    if (isNonProvisionedFolder) {
-      if (!provisioningEnabled) {
-        // if provisioning is not enabled, don't exclude any folders
-        return [];
-      }
-      // exclude all provisioned folders
-      return settingsData?.items.map((repo) => repo.name) || [];
-    }
-    return [];
-  }, [isNonProvisionedFolder, settingsData, isProvisionedInstance, provisioningEnabled]);
+  const rootFolderUID = getRootFolderUID(isProvisionedInstance, provisioningEnabled, repositoryName);
+  const excludeUIDs = getExcludeUIDs(isProvisionedInstance, isNonProvisionedFolder, provisioningEnabled, settingsData);
 
   return (
     <FolderPicker
@@ -56,4 +28,36 @@ export function ProvisioningAwareFolderPicker({ repositoryName, isNonProvisioned
       excludeUIDs={[...excludeUIDs, ...(props.excludeUIDs || [])]}
     />
   );
+}
+
+function getRootFolderUID(isProvisionedInstance?: boolean, provisioningEnabled?: boolean, repositoryName?: string) {
+  if (isProvisionedInstance) {
+    return undefined;
+  }
+
+  if (provisioningEnabled && repositoryName) {
+    return repositoryName;
+  }
+
+  return undefined;
+}
+
+function getExcludeUIDs(
+  isProvisionedInstance?: boolean,
+  isNonProvisionedFolder?: boolean,
+  provisioningEnabled?: boolean,
+  settingsData?: RepositoryViewList
+) {
+  if (isProvisionedInstance) {
+    return [];
+  }
+
+  if (isNonProvisionedFolder) {
+    if (!provisioningEnabled) {
+      return [];
+    }
+    return settingsData?.items.map((repo) => repo.name) || [];
+  }
+
+  return [];
 }
