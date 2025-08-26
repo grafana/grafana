@@ -1,13 +1,6 @@
 import { uniq, without } from 'lodash';
 
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneVariableSetState,
-  sceneGraph,
-  sceneUtils,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
 
 import { Workbench } from '../Workbench';
 import { AlertRuleQueryData, AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from '../types';
