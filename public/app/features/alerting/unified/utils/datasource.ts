@@ -342,7 +342,7 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 }
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
-  return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+  return ds.jsonData?.manageAlerts !== false; // if this prop is undefined it defaults to true
 }
 
 export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {

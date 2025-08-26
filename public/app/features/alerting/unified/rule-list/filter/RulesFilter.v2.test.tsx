@@ -199,6 +199,44 @@ describe('RulesFilterV2', () => {
     expect(ui.searchInput.get()).toHaveValue('test search');
   });
 
+  it('GMA query datasource picker is disabled until Grafana is selected in DMA picker', async () => {
+    const { user } = render(<RulesFilterV2 />);
+    await user.click(ui.filterButton.get());
+
+    // Initially disabled
+    const gmaPicker = screen.getByTestId('gma-datasource-picker');
+    expect(gmaPicker).toBeDisabled();
+
+    // Select Grafana in DMA picker
+    const dmaPicker = screen.getByTestId('dma-datasource-picker');
+    expect(dmaPicker).toBeInTheDocument();
+
+    // Simulate selecting Grafana through updateFilters
+    mockFilterState = {
+      ...mockFilterState,
+      dataSourceNames: ['grafana'],
+      freeFormWords: [],
+      labels: [],
+    } as RulesFilterType;
+
+    useRulesFilterMock.mockReturnValue({
+      searchQuery: mockSearchQuery,
+      filterState: mockFilterState,
+      updateFilters: mockUpdateFilters,
+      setSearchQuery: mockSetSearchQuery,
+      clearAll: mockClearAll,
+      hasActiveFilters: false,
+      activeFilters: [],
+    });
+
+    // Re-open popup to re-render form with updated state
+    await user.click(document.body);
+    await user.click(ui.filterButton.get());
+
+    const gmaPickerEnabled = screen.getByTestId('gma-datasource-picker');
+    expect(gmaPickerEnabled).toBeEnabled();
+  });
+
   it('Should open filter popup when filter button is clicked', async () => {
     const { user } = render(<RulesFilterV2 />);
     await user.click(ui.filterButton.get());
@@ -269,6 +307,7 @@ describe('RulesFilterV2', () => {
     expect(mockUpdateFilters).toHaveBeenCalledWith({
       dataSourceNames: [],
       freeFormWords: [],
+      gmaQueryDataSourceNames: [],
       labels: [],
       ruleName: 'test',
       ruleState: 'firing',

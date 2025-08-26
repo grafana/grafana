@@ -199,22 +199,53 @@ describe('ruleFilter', () => {
       expect(ruleFilter(ruleWithMatchingDatasource, getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
     });
 
-    it("should filter out rules that don't use the filtered datasource", () => {
+    it('should not filter Grafana rules by dataSourceNames (handled via gmaQueryDataSourceNames)', () => {
       // Create a Grafana rule without the target datasource
       const ruleWithoutMatchingDatasource = mockGrafanaPromAlertingRule({
         queriedDatasourceUIDs: ['datasource-uid-1', 'datasource-uid-2'],
       });
 
       // 'loki' resolves to 'datasource-uid-3' which is not in the rule
-      expect(ruleFilter(ruleWithoutMatchingDatasource, getFilter({ dataSourceNames: ['loki'] }))).toBe(false);
+      // dataSourceNames no longer applies to Grafana rules; expect pass-through
+      expect(ruleFilter(ruleWithoutMatchingDatasource, getFilter({ dataSourceNames: ['loki'] }))).toBe(true);
     });
 
-    it('should return false when there is an error parsing the query', () => {
+    it('should ignore invalid Grafana rule queries for dataSourceNames (filter not applied)', () => {
       const ruleWithInvalidQuery = mockGrafanaPromAlertingRule({
         query: 'not-valid-json',
       });
 
-      expect(ruleFilter(ruleWithInvalidQuery, getFilter({ dataSourceNames: ['prometheus'] }))).toBe(false);
+      expect(ruleFilter(ruleWithInvalidQuery, getFilter({ dataSourceNames: ['prometheus'] }))).toBe(true);
+    });
+  });
+
+  describe('gmaQueryDataSourceNames filter (Grafana-managed rules)', () => {
+    let getDataSourceUIDSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      getDataSourceUIDSpy = jest.spyOn(datasourceUtils, 'getDatasourceAPIUid').mockImplementation((ruleSourceName) => {
+        if (ruleSourceName === 'prometheus') {
+          return 'datasource-uid-1';
+        }
+        if (ruleSourceName === 'loki') {
+          return 'datasource-uid-3';
+        }
+        throw new Error(`Unknown datasource name: ${ruleSourceName}`);
+      });
+    });
+
+    afterEach(() => {
+      getDataSourceUIDSpy.mockRestore();
+    });
+
+    it('should match Grafana rules that use the filtered query datasource', () => {
+      const grafanaRule = mockGrafanaPromAlertingRule({ queriedDatasourceUIDs: ['datasource-uid-1'] });
+      expect(ruleFilter(grafanaRule, getFilter({ gmaQueryDataSourceNames: ['prometheus'] }))).toBe(true);
+    });
+
+    it('should filter out Grafana rules that do not use the filtered query datasource', () => {
+      const grafanaRule = mockGrafanaPromAlertingRule({ queriedDatasourceUIDs: ['datasource-uid-1'] });
+      expect(ruleFilter(grafanaRule, getFilter({ gmaQueryDataSourceNames: ['loki'] }))).toBe(false);
     });
   });
 

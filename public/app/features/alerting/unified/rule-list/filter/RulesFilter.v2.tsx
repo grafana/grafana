@@ -513,6 +513,7 @@ function DmaRulesSourceField({
         control={control}
         render={({ field }) => (
           <MultiCombobox
+            data-testid="dma-datasource-picker"
             options={dataSourceOptions}
             value={field.value}
             onChange={(selections) => field.onChange(selections.map((s) => s.value))}
@@ -538,8 +539,8 @@ function GmaQueryDataSourceField({
   dependentOnGrafanaSelection?: boolean;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
-  const selectedDataSources = useWatch({ control, name: 'dataSourceNames' }) as string[] | undefined;
-  const grafanaSelected = (selectedDataSources || []).includes('grafana');
+  const selectedDataSources = useWatch<AdvancedFilters, 'dataSourceNames'>({ control, name: 'dataSourceNames' }) ?? [];
+  const grafanaSelected = selectedDataSources.includes('grafana');
   const disabled = dependentOnGrafanaSelection && !grafanaSelected;
 
   return (
@@ -552,6 +553,7 @@ function GmaQueryDataSourceField({
         control={control}
         render={({ field }) => (
           <MultiCombobox
+            data-testid="gma-datasource-picker"
             options={dataSourceOptions}
             value={field.value || []}
             onChange={(selections) => field.onChange(selections.map((s) => s.value))}
