@@ -763,9 +763,9 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 	metrics := resource.ProvideIndexMetrics(reg)
 
 	backend, err := NewBleveBackend(BleveOptions{
-		Root:          dir,
-		FileThreshold: int64(fileThreshold),
-		IndexCacheTTL: cacheTTL,
+		Root:             dir,
+		FileThreshold:    int64(fileThreshold),
+		IndexCacheTTL:    cacheTTL,
 		SearchAfterWrite: searchAfterWrite,
 	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), metrics)
 	require.NoError(t, err)
