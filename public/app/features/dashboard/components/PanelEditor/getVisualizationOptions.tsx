@@ -131,8 +131,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
-
+    const htmlId = `${plugin.meta.id}-${fieldOption.path}`;
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
@@ -169,7 +168,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-library-viz-panel-options-category.title.name', 'Name'),
-        id: uuiv4(),
+        id: 'library-panel-name',
         value: libraryPanel,
         popularRank: 1,
         render: function renderName(descriptor) {
@@ -187,6 +186,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-library-viz-panel-options-category.title.information', 'Information'),
+        id: 'library-panel-information',
         render: function renderLibraryPanelInformation() {
           return <LibraryVizPanelInfo libraryPanel={libraryPanel} />;
         },
@@ -269,8 +269,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = uuiv4();
-
+    const htmlId = `${plugin.meta.id}-${fieldOption.path}`;
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
