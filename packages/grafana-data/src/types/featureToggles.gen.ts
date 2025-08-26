@@ -756,10 +756,10 @@ export interface FeatureToggles {
   */
   alertingAIGenTemplates?: boolean;
   /**
-  * Enable rule notification message section extension.
+  * Enable enrichment per rule in the alerting UI.
   * @default false
   */
-  alertingRuleNotificationMessageSectionExtension?: boolean;
+  alertingEnrichmentPerRule?: boolean;
   /**
   * Enable AI-analyze central state history.
   * @default false

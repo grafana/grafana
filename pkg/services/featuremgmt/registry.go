@@ -1298,8 +1298,8 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "alertingRuleNotificationMessageSectionExtension",
-			Description:       "Enable rule notification message section extension.",
+			Name:              "alertingEnrichmentPerRule",
+			Description:       "Enable enrichment per rule in the alerting UI.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
