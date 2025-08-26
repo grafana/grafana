@@ -150,7 +150,7 @@ func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string
 			Name:    ds.UID,
 		},
 	}
-	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server
+	v.UID = gapiutil.CalculateClusterWideUID(v) // UID is unique across all groups
 	if !ds.Updated.IsZero() {
 		meta, err := utils.MetaAccessor(v)
 		if err != nil {
