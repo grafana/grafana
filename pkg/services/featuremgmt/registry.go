@@ -834,13 +834,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:            "expressionParser",
-			Description:     "Enable new expression parser",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:              "groupByVariable",
 			Description:       "Enable groupBy variable support in scenes dashboards",
 			Stage:             FeatureStageExperimental,
@@ -905,7 +898,15 @@ var (
 		},
 		{
 			Name:           "queryLibrary",
-			Description:    "Enables Query Library feature in Explore",
+			Description:    "Renamed feature toggle, enables Saved queries feature",
+			Stage:          FeatureStagePrivatePreview,
+			Owner:          grafanaSharingSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
+		},
+		{
+			Name:           "savedQueries",
+			Description:    "Enables Saved Queries feature",
 			Stage:          FeatureStagePrivatePreview,
 			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,

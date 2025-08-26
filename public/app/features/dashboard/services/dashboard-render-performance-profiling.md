@@ -234,6 +234,84 @@ if (frameLength > TAB_INACTIVE_THRESHOLD) {
 
 This fallback catches cases where visibility events might be missed and prevents recording of artificially long frame times (hours instead of milliseconds) that occur when `requestAnimationFrame` callbacks resume after tab reactivation.
 
+### Profile Isolation and Overlapping Interactions
+
+To ensure accurate performance measurements, the `SceneRenderProfiler` implements profile isolation to handle rapid user interactions:
+
+#### Understanding Trailing Frame Recording
+
+After the main interaction completes, the profiler continues to record "trailing frames" for 2 seconds (POST_STORM_WINDOW) to capture any delayed rendering effects. This ensures complete performance measurement including:
+
+- Delayed DOM updates
+- Asynchronous rendering operations
+- Secondary effects from the initial interaction
+
+#### Problem: Mixed Performance Data
+
+When users perform rapid interactions during this 2-second trailing frame window (e.g., quickly changing time ranges or triggering a refresh), the performance data from multiple actions could be mixed into a single profile. This led to:
+
+- Inaccurate performance measurements
+- Profile events that never completed
+- Crumbs from different interactions being combined
+- Trailing frames from one interaction being attributed to another
+
+#### Solution: Automatic Profile Cancellation
+
+Starting with `@grafana/scenes` v6.30.4, the profiler automatically cancels the current profile when a new interaction begins while trailing frames are still being recorded:
+
+```javascript
+// When new profile is requested while still recording trailing frames
+if (this.#trailAnimationFrameId) {
+  this.cancelProfile();
+  this._startNewProfile(name, true); // true = forced profile
+} else {
+  this.addCrumb(name);
+}
+```
+
+This ensures:
+
+- Each interaction gets its own isolated measurement
+- No mixing of performance data between different user actions
+- Clean separation of interaction metrics
+
+#### Profile Start Types
+
+The profiler now distinguishes between two types of profile starts:
+
+1. **Clean Start**: Profile started when no other profile is active
+2. **Forced Start (Interrupted)**: Profile started by cancelling a previous active profile
+
+This information is logged in debug mode:
+
+```
+SceneRenderProfiler: Profile started[forced]: {origin: "refresh", crumbs: []} <timestamp>
+SceneRenderProfiler: Profile started[clean]: {origin: "dashboard_view", crumbs: []} <timestamp>
+```
+
+Additionally, when a profile is cancelled due to overlapping interactions:
+
+```
+SceneRenderProfiler: Cancelled recording frames, new profile started
+```
+
+#### Example Scenario
+
+1. User changes time range (profile starts)
+2. Dashboard finishes loading after 500ms (main profile complete)
+3. Profiler continues recording trailing frames to capture delayed effects
+4. At 1 second, user clicks refresh button
+5. Without this fix: Refresh would be added as a crumb to the time range profile
+6. With this fix: Time range profile is cancelled, new refresh profile starts cleanly
+
+This fix is particularly important for dashboards with:
+
+- Auto-refresh enabled
+- Slow API responses
+- Rapid user interactions
+
+Without profile isolation, these scenarios could result in profiles that never complete and mix data from multiple unrelated interactions.
+
 ## Related Documentation
 
 - [PR #858 - Add SceneRenderProfiler to scenes](https://github.com/grafana/scenes/pull/858)
@@ -246,3 +324,4 @@ This fallback catches cases where visibility events might be missed and prevents
 - [PR #1209 - SceneRenderProfiler: Only capture network requests within measurement window](https://github.com/grafana/scenes/pull/1209)
 - [PR #1211 - SceneRenderProfiler: Improve profiler accuracy by adding cancellation and skipping inactive tabs](https://github.com/grafana/scenes/pull/1211)
 - [PR #1212 - SceneQueryController: Fix profiler query controller registration on scene re-activation](https://github.com/grafana/scenes/pull/1212)
+- [PR #1225 - SceneRenderProfiler: Handle overlapping profiles by cancelling previous profile](https://github.com/grafana/scenes/pull/1225)

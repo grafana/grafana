@@ -5204,6 +5204,9 @@
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "구성 로딩 중"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "시각화 변경",
@@ -6114,9 +6120,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "공유 메뉴 토글"
     },
-    "solo-panel-page": {
-      "loading": "로딩 중"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "시각화 문제 해결에 사용되는 대시보드 JSON"
@@ -6400,8 +6403,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "이 오류에 대해 자세히 알아보려면 <2>여기</2>를 클릭하세요.",
-    "success-more-details-links": "그런 다음 <2>대시보드를 구축</2>하거나 <5>탐색 보기</5>에서 데이터를 쿼리하여 데이터 시각화를 시작할 수 있습니다.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "그런 다음 <2>대시보드를 구축</2>하거나 <5>탐색 보기</5>에서 데이터를 쿼리하여 데이터 시각화를 시작할 수 있습니다."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7536,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9505,6 +9508,12 @@
       "show-context": "맥락 보기",
       "show-log-line": "로그 라인 표시",
       "sidebar-mode": "오른쪽에 고정",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "로그 고정 해제"
     },
     "log-line-menu": {
@@ -10681,10 +10690,6 @@
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
   },
-  "panel-search": {
-    "no-matches": "일치하는 항목 찾을 수 없음",
-    "unsupported-layout": "지원되지 않는 레이아웃"
-  },
   "panel-type-filter": {
     "clear-button": "유형 초기화",
     "select-aria-label": "패널 유형 필터",
@@ -11219,11 +11224,15 @@
     },
     "delete-repository-button": {
       "button-delete": "삭제",
-      "confirm-delete-repository": "정말 리포지토리 구성을 삭제하시겠어요?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "리포지토리 삭제 실패",
       "success-repository-deleted": "리포지토리 설정이 삭제 대기열에 추가되었습니다",
-      "title-delete-repository": "리포지토리 구성 삭제",
-      "tooltip-delete-this-repository": "이 리포지토리 삭제"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
@@ -13015,6 +13024,7 @@
         "name-point-size": "포인트 크기",
         "name-show-points": "포인트 표시",
         "name-show-thresholds": "임계값 표시",
+        "name-show-values": "",
         "name-style": "스타일",
         "name-transform": "변환",
         "transform-options": {

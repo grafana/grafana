@@ -5261,6 +5261,9 @@
       "save-json-to-file": "Zapisz JSON w pliku",
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Wczytywanie konfiguracji"
     },
@@ -5532,6 +5535,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Zmień wizualizację",
@@ -6177,9 +6183,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Przełącz menu udostępniania"
     },
-    "solo-panel-page": {
-      "loading": "Ładowanie"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Plik JSON pulpitu używany do rozwiązywania problemów z wizualizacją"
@@ -6463,8 +6466,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Kliknij <2>tutaj</2>, aby dowiedzieć się więcej o tym błędzie.",
-    "success-more-details-links": "Następnie możesz rozpocząć wizualizację danych, <2>tworząc pulpit</2> lub tworząc zapytanie dotyczące danych w widoku <5>Eksploruj</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Następnie możesz rozpocząć wizualizację danych, <2>tworząc pulpit</2> lub tworząc zapytanie dotyczące danych w widoku <5>Eksploruj</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7599,6 +7601,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9592,6 +9595,12 @@
       "show-context": "Pokaż kontekst",
       "show-log-line": "Pokaż wiersz logu",
       "sidebar-mode": "Zakotwicz po prawej",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Odepnij log"
     },
     "log-line-menu": {
@@ -10777,10 +10786,6 @@
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
     }
   },
-  "panel-search": {
-    "no-matches": "Brak wyników",
-    "unsupported-layout": "Nieobsługiwany układ"
-  },
   "panel-type-filter": {
     "clear-button": "Wyczyść typy",
     "select-aria-label": "Filtr typu panelu",
@@ -11324,11 +11329,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Usuń",
-      "confirm-delete-repository": "Czy na pewno chcesz usunąć konfigurację repozytorium?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Nie udało się usunąć repozytorium",
       "success-repository-deleted": "Ustawienia repozytorium zostały dodane do kolejki do usunięcia",
-      "title-delete-repository": "Usuń konfigurację repozytorium",
-      "tooltip-delete-this-repository": "Usuń to repozytorium"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Wróć do repozytoriów",
@@ -13138,6 +13147,7 @@
         "name-point-size": "Rozmiar punktu",
         "name-show-points": "Pokaż punkty",
         "name-show-thresholds": "Pokaż progi",
+        "name-show-values": "",
         "name-style": "Styl",
         "name-transform": "Przekształć",
         "transform-options": {
