@@ -14,7 +14,6 @@ import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';

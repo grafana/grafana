@@ -14,7 +14,6 @@ import appEvents from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
