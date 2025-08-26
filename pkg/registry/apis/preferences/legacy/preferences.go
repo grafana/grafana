@@ -3,6 +3,7 @@ package legacy
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -73,11 +74,7 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 	ns := requestK8s.NamespaceValue(ctx)
-	userID := user.GetUID()
-	if user.GetIsGrafanaAdmin() {
-		userID = "" // everything in the namespace
-	}
-	return s.sql.ListPreferences(ctx, ns, userID, true)
+	return s.sql.ListPreferences(ctx, ns, user, true)
 }
 
 func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -85,7 +82,10 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	if err != nil {
 		return nil, err
 	}
-
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
 	owner, ok := utils.ParseOwnerFromName(name)
 	if !ok {
 		return nil, preferences.PreferencesResourceInfo.NewNotFound(name)
@@ -94,14 +94,30 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 	found, _, err := s.sql.listPreferences(ctx, ns.Value, ns.OrgID, func(req *preferencesQuery) (bool, error) {
 		switch owner.Owner {
 		case utils.UserResourceOwner:
+			if !user.GetIsGrafanaAdmin() && name != user.GetUID() {
+				return false, fmt.Errorf("you may only fetch your own preferences")
+			}
 			req.UserUID = owner.Name
 			return false, nil
 		case utils.TeamResourceOwner:
+			if !user.GetIsGrafanaAdmin() {
+				teams, err := s.sql.GetTeams(ctx, ns.OrgID, user.GetRawIdentifier(), false)
+				if err != nil {
+					return false, err
+				}
+				if !slices.Contains(teams, owner.Name) {
+					return false, fmt.Errorf("you may only fetch teams you belong to")
+				}
+			}
 			req.TeamUID = owner.Name
+			return false, nil
+		case utils.NamespaceResourceOwner:
 			return false, nil
 		default:
 			return false, fmt.Errorf("unsupported name")
 		}
+	}, func(p *preferenceModel) bool {
+		return true
 	})
 	if err != nil {
 		return nil, err

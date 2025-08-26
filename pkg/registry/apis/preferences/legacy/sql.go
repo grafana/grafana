@@ -9,6 +9,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -122,6 +123,7 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 func (s *LegacySQL) listPreferences(ctx context.Context,
 	ns string, orgId int64,
 	cb func(req *preferencesQuery) (bool, error),
+	access func(p *preferenceModel) bool,
 ) ([]preferences.Preferences, int64, error) {
 	var results []preferences.Preferences
 	var rv sql.NullTime
@@ -200,19 +202,32 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 	return results, rv.Time.UnixMilli(), err
 }
 
-func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user string, needsRV bool) (*preferences.PreferencesList, error) {
+func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identity.Requester, needsRV bool) (*preferences.PreferencesList, error) {
 	info, err := authlib.ParseNamespace(ns)
 	if err != nil {
 		return nil, err
 	}
 
-	found, rv, err := s.listPreferences(ctx, ns, info.OrgID, func(req *preferencesQuery) (bool, error) {
-		if req.UserUID != "" {
-			req.UserUID = user
-			req.UserTeams, err = s.GetTeams(ctx, info.OrgID, user, false)
-		}
-		return needsRV, err
-	})
+	// when the user is nil, it is actually admin and can see everything
+	userUID := user.GetRawIdentifier()
+	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
+		func(req *preferencesQuery) (bool, error) {
+			if user != nil {
+				req.UserUID = userUID
+				req.UserTeams, err = s.GetTeams(ctx, info.OrgID, userUID, false)
+			}
+			return needsRV, err
+		},
+		func(p *preferenceModel) bool {
+			if user == nil || user.GetIsGrafanaAdmin() {
+				return true
+			}
+			if p.UserUID.String != "" && p.UserUID.String != userUID {
+				return false // belongs to a different user
+			}
+			return true // can see everything
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

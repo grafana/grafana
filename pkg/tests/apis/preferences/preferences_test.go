@@ -35,19 +35,23 @@ func TestIntegrationPreferences(t *testing.T) {
 
 	t.Run("preferences", func(t *testing.T) {
 		ctx := context.Background()
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
+		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
+			GVR:  preferences.PreferencesResourceInfo.GroupVersionResource(),
+		})
+		clientViewer := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Viewer,
 			GVR:  preferences.PreferencesResourceInfo.GroupVersionResource(),
 		})
 
 		// List is empty when we start
-		rsp, err := client.Resource.List(ctx, metav1.ListOptions{})
+		rsp, err := clientAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Empty(t, rsp.Items, "no preferences saved yet")
 
 		raw := make(map[string]any)
 		legacyResponse := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
+			User:   clientAdmin.Args.User,
 			Method: http.MethodPut,
 			Path:   "/api/user/preferences",
 			Body: []byte(`{
@@ -61,7 +65,7 @@ func TestIntegrationPreferences(t *testing.T) {
 
 		// http://localhost:3000/api/teams/1/preferences
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
+			User:   clientAdmin.Args.User,
 			Method: http.MethodPut,
 			Path:   fmt.Sprintf("/api/teams/%d/preferences", helper.Org1.Staff.ID),
 			Body: []byte(`{
@@ -73,7 +77,7 @@ func TestIntegrationPreferences(t *testing.T) {
 
 		// http://localhost:3000/api/org/preferences
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
+			User:   clientAdmin.Args.User,
 			Method: http.MethodPut,
 			Path:   "/api/org/preferences",
 			Body: []byte(`{
@@ -83,8 +87,26 @@ func TestIntegrationPreferences(t *testing.T) {
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
 
-		rsp, err = client.Resource.List(ctx, metav1.ListOptions{})
+		// Admin has access to all three (namespace, team, and user)
+		rsp, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		require.Len(t, rsp.Items, 3)
+		names := []string{}
+		for _, item := range rsp.Items {
+			names = append(names, item.GetName())
+		}
+		require.Equal(t, []string{
+			"namespace",
+			fmt.Sprintf("team:%s", helper.Org1.Staff.UID),
+			clientAdmin.Args.User.Identity.GetUID(),
+		}, names)
+
+		// The viewer should only have namespace (eg org level) permissions
+		rsp, err = clientViewer.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		names = []string{}
+		for _, item := range rsp.Items {
+			names = append(names, item.GetName())
+		}
+		require.Equal(t, []string{"namespace"}, names)
 	})
 }
