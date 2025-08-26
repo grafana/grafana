@@ -174,7 +174,7 @@ import (
 //                 {
 //                     "id": "reduce",
 //                     "options": {
-//                         "reducer": ["mean", "max"],
+//                         "reducers": ["mean", "max"],
 //                         "includeTimeField": false
 //                     }
 //                 }
@@ -271,6 +271,9 @@ func tablePanelChangedHandler(panel map[string]interface{}) error {
 		"showHeader": true,
 	}
 
+	// ensure that footer is migrated to v2
+	migrateFooterV2(panel)
+
 	// Remove deprecated properties
 	delete(panel, "styles")
 	delete(panel, "transform")
@@ -321,7 +324,7 @@ func migrateTransformations(panel map[string]interface{}, oldOpts map[string]int
 	if transform, ok := oldOpts["transform"].(string); ok {
 		if newTransformID, exists := transformsMap[transform]; exists {
 			opts := map[string]interface{}{
-				"reducer": []interface{}{},
+				"reducers": []interface{}{},
 			}
 
 			// Handle timeseries_aggregations specifically
@@ -340,7 +343,7 @@ func migrateTransformations(panel map[string]interface{}, oldOpts map[string]int
 							}
 						}
 					}
-					opts["reducer"] = reducers
+					opts["reducers"] = reducers
 				}
 			}
 
@@ -510,6 +513,9 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 				"type": "auto",
 			},
 			"inspect": false,
+			"footer": map[string]interface{}{
+				"reducer": []interface{}{},
+			},
 		},
 		"mappings": []interface{}{},
 	}
@@ -622,6 +628,81 @@ func generateThresholds(thresholds []interface{}, colors []interface{}) []interf
 	}
 
 	return steps
+}
+
+// port of the frontend footer migration
+func migrateFooterV2(panel map[string]interface{}) {
+	options, ok := panel["options"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	oldFooter := options["footer"]
+
+	if oldFooter != nil {
+		footerMap, ok := oldFooter.(map[string]interface{})
+		if ok && footerMap["show"] == true {
+			reducers, _ := footerMap["reducer"].([]interface{})
+
+			// Set footer reducer in defaults.custom
+			fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
+			if !ok {
+				return
+			}
+			defaults, ok := fieldConfig["defaults"].(map[string]interface{})
+			if !ok {
+				return
+			}
+			custom, ok := defaults["custom"].(map[string]interface{})
+			if !ok {
+				custom = map[string]interface{}{}
+				defaults["custom"] = custom
+			}
+			custom["footer"] = map[string]interface{}{
+				"reducer": reducers,
+			}
+
+			// If countRows and reducer is ["count"], set to ["countAll"]
+			if footerMap["countRows"] == true && len(reducers) > 0 && reducers[0] == "count" {
+				custom["footer"] = map[string]interface{}{
+					"reducer": []string{"countAll"},
+				}
+			}
+
+			// If fields present, add override and remove footer from defaults.custom
+			if fields, ok := footerMap["fields"].([]interface{}); ok && len(fields) > 0 {
+				delete(custom, "footer")
+
+				names := make([]string, len(fields))
+				for i, f := range fields {
+					names[i], _ = f.(string)
+				}
+
+				override := map[string]interface{}{
+					"matcher": map[string]interface{}{
+						"id": "byNames", // FieldMatcherID.byNames
+						"options": map[string]interface{}{
+							"mode":  "include", // ByNamesMatcherMode.include
+							"names": names,
+						},
+					},
+					"properties": []map[string]interface{}{
+						{
+							"id":    "custom.footer.reducer",
+							"value": reducers,
+						},
+					},
+				}
+				overrides, ok := fieldConfig["overrides"].([]interface{})
+				if !ok {
+					overrides = []interface{}{}
+				}
+				fieldConfig["overrides"] = append(overrides, override)
+			}
+
+			// Remove footer from options
+			delete(options, "footer")
+		}
+	}
 }
 
 var colorModeMap = map[string]string{
