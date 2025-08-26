@@ -226,13 +226,13 @@ export function useDeleteMultipleFoldersMutationFacade() {
 }
 
 export function useMoveMultipleFoldersMutationFacade() {
-  if (!config.featureToggles.foldersAppPlatformAPI) {
-    const [moveFolders] = useMoveFoldersMutationLegacy();
-    return moveFolders;
-  }
-
+  const [moveFolders] = useMoveFoldersMutationLegacy();
   const [updateFolder] = useUpdateFolderMutation();
   const dispatch = useDispatch();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return moveFolders;
+  }
 
   return async function moveFolders({ folderUIDs, destinationUID }: { folderUIDs: string[]; destinationUID: string }) {
     // Move all the folders sequentially
