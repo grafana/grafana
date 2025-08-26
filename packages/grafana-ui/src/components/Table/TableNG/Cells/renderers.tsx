@@ -110,7 +110,12 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
   [TableCellDisplayMode.Pill]: {
     // eslint-disable-next-line react/display-name
     renderer: memo((props: TableCellRendererProps) => (
-      <PillCell rowIdx={props.rowIdx} field={props.field} theme={props.theme} />
+      <PillCell
+        rowIdx={props.rowIdx}
+        field={props.field}
+        theme={props.theme}
+        getTextColorForBackground={props.getTextColorForBackground}
+      />
     )),
     getStyles: getPillStyles,
     testField: (field: Field) => field.type === FieldType.string,

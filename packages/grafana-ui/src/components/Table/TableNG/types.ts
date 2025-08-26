@@ -167,6 +167,7 @@ export interface TableCellRendererProps {
   showFilters: boolean;
   getActions?: GetActionsFunctionLocal;
   disableSanitizeHtml?: boolean;
+  getTextColorForBackground: (color: string) => string;
 }
 
 export type InspectCellProps = {
@@ -250,6 +251,7 @@ export interface PillCellProps {
   theme: GrafanaTheme2;
   field: Field;
   rowIdx: number;
+  getTextColorForBackground: (color: string) => string;
 }
 
 export interface TableCellStyleOptions {
