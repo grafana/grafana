@@ -1,5 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { useEffect } from 'react';
+import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,6 +10,7 @@ import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectStat
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
@@ -17,6 +20,7 @@ import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { TabItem } from './TabItem';
 import { TabItemRepeater } from './TabItemRepeater';
 import { TabsLayoutManager } from './TabsLayoutManager';
+import { performTabRepeats } from './utils';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
@@ -28,6 +32,36 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { hasCopiedTab } = useClipboardState();
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
   const soloPanelContext = useSoloPanelContext();
+
+  // Subscribe to variable state changes and perform repeats when the variable changes
+  useEffect(() => {
+    const variableChangeSubs: Unsubscribable[] = [];
+    const editEventSubs: Unsubscribable[] = [];
+
+    tabs.forEach((tab) => {
+      const { repeatByVariable } = tab.state;
+
+      if (repeatByVariable) {
+        const variable = sceneGraph.lookupVariable(repeatByVariable, model);
+
+        if (variable instanceof MultiValueVariable) {
+          performTabRepeats(variable, tab, false);
+          const variableChangeSub = variable.subscribeToState(() => performTabRepeats(variable, tab, false));
+          const editEventSub = tab.subscribeToEvent(DashboardStateChangedEvent, () =>
+            performTabRepeats(variable, tab, true)
+          );
+
+          variableChangeSubs.push(variableChangeSub);
+          editEventSubs.push(editEventSub);
+        }
+      }
+    });
+
+    return () => {
+      editEventSubs.forEach((sub) => sub.unsubscribe());
+      variableChangeSubs.forEach((sub) => sub.unsubscribe());
+    };
+  }, [tabs, model]);
 
   if (soloPanelContext) {
     return <layout.Component model={layout} />;
