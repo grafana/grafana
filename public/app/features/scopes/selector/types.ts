@@ -33,9 +33,9 @@ export const ScopeSpecFilterSchema = z.object({
 
 export const ScopeSpecSchema = z.object({
   title: z.string(),
-  type: z.string(),
-  description: z.string(),
-  category: z.string(),
+  type: z.string().optional(),
+  description: z.string().optional(),
+  category: z.string().optional(),
   filters: z.array(ScopeSpecFilterSchema),
 });
 

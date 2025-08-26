@@ -5,19 +5,18 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/authlib/authn"
-	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type LocalInlineSecureValueService struct {
@@ -119,10 +118,7 @@ func (s *LocalInlineSecureValueService) isSecureValueOwnedByResource(ctx context
 			return true, nil // The secure value is owned by the same owner reference, pass!
 		}
 
-		return false, fmt.Errorf(
-			"secure value %s is not owned by %s/%s/%s/%s but by %s/%s/%s",
-			name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name, actualOwner.APIVersion, actualOwner.Kind, actualOwner.Name,
-		)
+		return false, fmt.Errorf("secure value %s is not owned by %s/%s/%s/%s", name, owner.APIGroup, owner.APIVersion, owner.Kind, owner.Name)
 	}
 
 	// not owned
@@ -158,6 +154,25 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 	return nil
 }
 
+func (s *LocalInlineSecureValueService) verifyOwnerAndAuth(ctx context.Context, owner common.ObjectReference) (authlib.AuthInfo, error) {
+	// Any valid identity can create inline secure values
+	authInfo, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	// Make sure the owner matches the identity when it is not global
+	if owner.Namespace == "" || !authlib.NamespaceMatches(authInfo.GetNamespace(), owner.Namespace) {
+		return nil, fmt.Errorf("owner namespace %s does not match auth info namespace %s", owner.Namespace, authInfo.GetNamespace())
+	}
+
+	if owner.Namespace == "" || owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
+		return nil, fmt.Errorf("owner reference must have a valid API group, API version, kind, namespace and name")
+	}
+
+	return authInfo, nil
+}
+
 func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue) (string, error) {
 	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.CreateInline", trace.WithAttributes(
 		attribute.String("owner.namespace", owner.Namespace),
@@ -168,27 +183,9 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	))
 	defer span.End()
 
-	authInfo, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return "", fmt.Errorf("missing auth info in context")
-	}
-
-	if authInfo.GetIdentityType() != authlib.TypeUser && authInfo.GetIdentityType() != authlib.TypeServiceAccount {
-		return "", fmt.Errorf("identity type %s not allowed, expected either %s or %s", authInfo.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount)
-	}
-
-	serviceIdentityList, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
-	if !ok || len(serviceIdentityList) != 1 {
-		return "", fmt.Errorf("expected exactly one service identity, found %d", len(serviceIdentityList))
-	}
-	serviceIdentity := serviceIdentityList[0]
-
-	if owner.Namespace == "" || !authlib.NamespaceMatches(authInfo.GetNamespace(), owner.Namespace) {
-		return "", fmt.Errorf("owner namespace %s does not match auth info namespace %s", owner.Namespace, authInfo.GetNamespace())
-	}
-
-	if owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
-		return "", fmt.Errorf("owner reference must have a valid API group, API version, kind and name")
+	authInfo, err := s.verifyOwnerAndAuth(ctx, owner)
+	if err != nil {
+		return "", err
 	}
 
 	if value.IsZero() {
@@ -198,14 +195,17 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	// TODO(2025-07-31): when we migrate to using the common type, we don't need this conversion.
 	secret := secretv1beta1.ExposedSecureValue(value)
 
-	decrypters := []string{serviceIdentity}
-	if owner.APIGroup != serviceIdentity {
-		decrypters = append(decrypters, owner.APIGroup)
+	// The owner group can always decrypt
+	decrypters := []string{owner.APIGroup}
+
+	serviceIdentity, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
+	if ok && len(serviceIdentity) > 0 && serviceIdentity[0] != owner.APIGroup {
+		decrypters = append(decrypters, serviceIdentity[0])
 	}
 
-	spec := &secretv1beta1.SecureValue{
+	obj := &secretv1beta1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            "sv-" + util.GenerateShortUID(),
+			GenerateName:    "inline-",
 			Namespace:       owner.Namespace,
 			OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
 		},
@@ -216,9 +216,9 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 		},
 	}
 
-	createdSv, err := s.secureValueService.Create(ctx, spec, authInfo.GetUID())
+	createdSv, err := s.secureValueService.Create(ctx, obj, authInfo.GetUID())
 	if err != nil {
-		return "", fmt.Errorf("error creating secure value %s for owner %v: %w", spec.Name, owner, err)
+		return "", fmt.Errorf("error creating secure value for owner %v: %w", owner, err)
 	}
 
 	return createdSv.GetName(), nil
@@ -235,17 +235,8 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 	))
 	defer span.End()
 
-	authInfo, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-
-	if owner.Namespace == "" || !authlib.NamespaceMatches(authInfo.GetNamespace(), owner.Namespace) {
-		return fmt.Errorf("owner namespace %s does not match auth info namespace %s", owner.Namespace, authInfo.GetNamespace())
-	}
-
-	if owner.APIGroup == "" || owner.APIVersion == "" || owner.Kind == "" || owner.Name == "" {
-		return fmt.Errorf("owner reference must have a valid API group, API version, kind and name")
+	if _, err := s.verifyOwnerAndAuth(ctx, owner); err != nil {
+		return err
 	}
 
 	for _, name := range names {

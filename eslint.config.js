@@ -58,13 +58,10 @@ module.exports = [
       'public/build-swagger', // swagger build output
     ],
   },
-  // Conditionally run the betterer rules if enabled in dev's config
-  ...(enableBettererRules ? bettererConfig : []),
-  grafanaConfig,
+  ...grafanaConfig,
   {
-    name: 'react/jsx-runtime',
-    // @ts-ignore - not sure why but flat config is typed as a maybe?
-    ...reactPlugin.configs.flat['jsx-runtime'],
+    name: 'react/jsx-runtime-rules',
+    rules: reactPlugin.configs.flat['jsx-runtime'].rules,
   },
   {
     name: 'grafana/defaults',
@@ -157,6 +154,18 @@ module.exports = [
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          // value regex is to filter out whitespace-only text nodes (e.g. new lines and spaces in the JSX)
+          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
+          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
+        },
+      ],
+      // FIXME: Fix these in follow up PR
+      'react/no-unescaped-entities': 'off',
+      // Turn off react-hooks/rules-of-hooks whilst present in betterer
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {
@@ -359,6 +368,14 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/test-disables',
+    files: ['**/*.{spec,test}.{ts,tsx}'],
+    rules: {
+      'react/display-name': 'off',
+      'react/no-children-prop': 'off',
+    },
+  },
+  {
     name: 'grafana/explore-traceview-overrides',
     files: ['public/app/features/explore/TraceView/components/demo/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -428,4 +445,7 @@ module.exports = [
       ],
     },
   },
+  // Conditionally run the betterer rules if enabled in dev's config
+  // Should be last in the config so it can override any temporary disables in here
+  ...(enableBettererRules ? bettererConfig : []),
 ];
