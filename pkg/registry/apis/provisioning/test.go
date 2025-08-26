@@ -29,12 +29,19 @@ type HealthCheckerProvider interface {
 
 type testConnector struct {
 	getter         RepoGetter
+	factory        repository.Factory
 	tester         controller.RepositoryTester
 	healthProvider HealthCheckerProvider
 }
 
-func NewTestConnector(getter RepoGetter, tester controller.RepositoryTester, healthProvider HealthCheckerProvider) *testConnector {
+func NewTestConnector(
+	getter RepoGetter,
+	factory repository.Factory,
+	tester controller.RepositoryTester,
+	healthProvider HealthCheckerProvider,
+) *testConnector {
 	return &testConnector{
+		factory:        factory,
 		getter:         getter,
 		tester:         tester,
 		healthProvider: healthProvider,
@@ -113,7 +120,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				}
 
 				// Create a temporary repository
-				tmp, err := s.getter.RepositoryFromConfig(ctx, &cfg)
+				tmp, err := s.factory.Build(ctx, &cfg)
 				if err != nil {
 					responder.Error(err)
 					return
