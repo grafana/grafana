@@ -66,6 +66,13 @@ func TestStarsQueries(t *testing.T) {
 					Data: getPreferencesQuery(1, func(q *preferencesQuery) {}),
 				},
 				{
+					Name: "user-no-teams",
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.UserUID = "uuu"
+						q.UserTeams = []string{}
+					}),
+				},
+				{
 					Name: "current", // user + user teams
 					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
 						q.UserUID = "uuu"

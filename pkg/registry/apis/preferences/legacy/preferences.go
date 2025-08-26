@@ -74,6 +74,9 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 	ns := requestK8s.NamespaceValue(ctx)
+	if user.GetIsGrafanaAdmin() {
+		user = nil // nill user can see everything
+	}
 	return s.sql.ListPreferences(ctx, ns, user, true)
 }
 

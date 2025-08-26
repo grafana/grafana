@@ -15,9 +15,11 @@ WHERE p.org_id = {{ .Arg .OrgID }}
   AND t.uid = {{ .Arg .TeamUID }}
 {{ else if .UserUID }}
   AND (u.uid = {{ .Arg .UserUID }}
-  {{ if .UserTeams }}
-    OR t.uid IN ({{ .ArgList .UserTeams }})
-    OR p.user_id = 0
+  {{ if .CheckTeams }}
+   {{ if .HasTeams }} 
+   OR t.uid IN ({{ .ArgList .UserTeams }})
+   {{ end }}
+   OR p.user_id = 0
   {{ end }}
   )
 {{ end }}

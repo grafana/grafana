@@ -75,6 +75,14 @@ type preferencesQuery struct {
 	PreferencesTable string
 }
 
+func (r preferencesQuery) CheckTeams() bool {
+	return r.UserTeams != nil
+}
+
+func (r preferencesQuery) HasTeams() bool {
+	return len(r.UserTeams) > 0
+}
+
 func (r preferencesQuery) Validate() error {
 	if r.OrgID < 1 {
 		return fmt.Errorf("must include an orgID")

@@ -2,6 +2,7 @@ package preferences
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -30,6 +31,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+			featuremgmt.FlagMultiTenantFrontend, // So we can compare to boot-data preferences
 		},
 	})
 
@@ -55,10 +57,7 @@ func TestIntegrationPreferences(t *testing.T) {
 			Method: http.MethodPut,
 			Path:   "/api/user/preferences",
 			Body: []byte(`{
-				"theme": "dark",
-				"timezone": "Africa/Addis_Ababa",
-				"weekStart": "saturday",
-				"language": "it-IT"
+				"weekStart": "saturday"
 			}`),
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
@@ -70,7 +69,8 @@ func TestIntegrationPreferences(t *testing.T) {
 			Path:   fmt.Sprintf("/api/teams/%d/preferences", helper.Org1.Staff.ID),
 			Body: []byte(`{
 				"theme": "light",
-				"weekStart": "sunday"
+				"weekStart": "sunday",
+				"timezone": "africa"
 			}`),
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
@@ -81,8 +81,9 @@ func TestIntegrationPreferences(t *testing.T) {
 			Method: http.MethodPut,
 			Path:   "/api/org/preferences",
 			Body: []byte(`{
-				"theme": "light",
-				"weekStart": "monday"
+				"weekStart": "monday",
+				"timezone": "africa",
+				"language": "kiswahili"
 			}`),
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
@@ -108,5 +109,35 @@ func TestIntegrationPreferences(t *testing.T) {
 			names = append(names, item.GetName())
 		}
 		require.Equal(t, []string{"namespace"}, names)
+
+		// Pull the preferences out of bootdata (many other things are included!)
+		type shim struct {
+			User preferences.PreferencesSpec `json:"user"` // pretend
+		}
+		bootdata := apis.DoRequest(helper, apis.RequestParams{
+			User:   clientAdmin.Args.User,
+			Method: http.MethodGet,
+			Path:   "/bootdata",
+		}, &shim{})
+		require.Equal(t, http.StatusOK, bootdata.Response.StatusCode, "get bootdata preferences")
+
+		jj, _ := json.Marshal(bootdata.Result.User)
+		require.JSONEq(t, `{
+			"timezone":"africa",
+			"weekStart":"saturday",
+			"theme":"light",
+			"language":"kiswahili",
+			"regionalFormat":""
+		}`, string(jj))
+
+		current := apis.DoRequest(helper, apis.RequestParams{
+			User:   clientAdmin.Args.User,
+			Method: http.MethodGet,
+			Path:   "/apis/preferences.grafana.app/v1alpha1/namespaces/default/current",
+		}, &preferences.Preferences{})
+		require.Equal(t, http.StatusOK, current.Response.StatusCode, "get current preferences")
+		require.Equal(t, "kiswahili", *current.Result.Spec.Language) // from org
+		require.Equal(t, "light", *current.Result.Spec.Theme)        // from team
+		require.Equal(t, "saturday", *current.Result.Spec.WeekStart) // from user
 	})
 }

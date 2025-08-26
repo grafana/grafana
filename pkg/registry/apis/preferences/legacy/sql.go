@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -179,7 +180,9 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 		if pref.Updated.After(rv.Time) {
 			rv.Time = pref.Updated
 		}
-
+		if !access(&pref) {
+			continue // user does not have access
+		}
 		results = append(results, asPreferencesResource(ns, &pref))
 	}
 
@@ -209,12 +212,13 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 	}
 
 	// when the user is nil, it is actually admin and can see everything
-	userUID := user.GetRawIdentifier()
+	var teams []string
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
 			if user != nil {
-				req.UserUID = userUID
-				req.UserTeams, err = s.GetTeams(ctx, info.OrgID, userUID, false)
+				req.UserUID = user.GetRawIdentifier()
+				teams, err = s.GetTeams(ctx, info.OrgID, req.UserUID, false)
+				req.UserTeams = teams
 			}
 			return needsRV, err
 		},
@@ -222,10 +226,13 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 			if user == nil || user.GetIsGrafanaAdmin() {
 				return true
 			}
-			if p.UserUID.String != "" && p.UserUID.String != userUID {
-				return false // belongs to a different user
+			if p.UserUID.String != "" {
+				return user.GetRawIdentifier() == p.UserUID.String
 			}
-			return true // can see everything
+			if p.TeamUID.String != "" {
+				return slices.Contains(teams, p.TeamUID.String)
+			}
+			return true
 		},
 	)
 	if err != nil {
@@ -246,14 +253,14 @@ func (s *LegacySQL) GetTeams(ctx context.Context, orgId int64, user string, admi
 		return nil, err
 	}
 
-	var teams []string
 	req := newTeamsQueryReq(sql, orgId, user, admin)
 
 	q, err := sqltemplate.Execute(sqlTeams, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlTeams.Name(), err)
 	}
+	teams := []string{}
 	sess := sql.DB.GetSqlxSession()
-	err = sess.Select(ctx, &teams, q)
+	err = sess.Select(ctx, &teams, q, req.GetArgs()...)
 	return teams, err
 }
