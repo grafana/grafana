@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -6,6 +7,7 @@ import { t } from '@grafana/i18n';
 import {
   Button,
   Checkbox,
+  Combobox,
   ControlledCollapse,
   Field,
   Input,
@@ -14,7 +16,7 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { Repository, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -40,7 +42,8 @@ export interface ConfigFormProps {
   data?: Repository;
 }
 export function ConfigForm({ data }: ConfigFormProps) {
-  const [submitData, request] = useCreateOrUpdateRepository(data?.metadata?.name);
+  const repositoryName = data?.metadata?.name;
+  const [submitData, request] = useCreateOrUpdateRepository(repositoryName);
   const {
     register,
     handleSubmit,
@@ -52,13 +55,30 @@ export function ConfigForm({ data }: ConfigFormProps) {
     getValues,
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
 
-  const isEdit = Boolean(data?.metadata?.name);
+  const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
   const targetOptions = useMemo(() => getTargetOptions(), []);
   const isGitBased = isGitProvider(type);
+
+  const {
+    data: refsData,
+    isLoading: refsLoading,
+    error: refsError,
+  } = useGetRepositoryRefsQuery(!repositoryName || !isGitBased ? skipToken : { name: repositoryName });
+
+  const branchOptions = useMemo(() => {
+    if (!refsData?.items) {
+      return [];
+    }
+
+    return refsData.items.map((ref) => ({
+      label: ref.name,
+      value: ref.name,
+    }));
+  }, [refsData?.items]);
 
   // Get field configurations based on provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -172,8 +192,32 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 placeholder={gitFields.urlConfig.placeholder}
               />
             </Field>
-            <Field noMargin label={gitFields.branchConfig.label} description={gitFields.branchConfig.description}>
-              <Input {...register('branch')} placeholder={gitFields.branchConfig.placeholder} />
+            <Field
+              noMargin
+              label={gitFields.branchConfig.label}
+              description={gitFields.branchConfig.description}
+              error={
+                errors?.branch?.message ||
+                (refsError ? t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches') : undefined)
+              }
+              invalid={Boolean(errors?.branch?.message || refsError)}
+            >
+              <Controller
+                name="branch"
+                control={control}
+                rules={gitFields.branchConfig.validation}
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <Combobox
+                    invalid={Boolean(errors?.branch?.message || refsError)}
+                    onChange={(option) => onChange(option?.value || '')}
+                    placeholder={gitFields.branchConfig.placeholder}
+                    options={branchOptions}
+                    loading={refsLoading}
+                    isClearable
+                    {...field}
+                  />
+                )}
+              />
             </Field>
             <Field noMargin label={gitFields.pathConfig.label} description={gitFields.pathConfig.description}>
               <Input {...register('path')} />

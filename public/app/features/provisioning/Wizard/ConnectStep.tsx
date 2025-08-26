@@ -30,7 +30,6 @@ export function ConnectStep() {
   const repositoryToken = watch('repository.token') || '';
   const isGitBased = isGitProvider(type);
 
-  // Fetch repositories for Git providers
   const {
     repositories,
     loading: repositoriesLoading,
@@ -40,7 +39,6 @@ export function ConnectStep() {
     repositoryToken,
   });
 
-  // Fetch branches for Git providers
   const {
     branches,
     loading: branchesLoading,
@@ -51,7 +49,6 @@ export function ConnectStep() {
     repositoryToken,
   });
 
-  // Create options for repository selector
   const repositoryOptions = useMemo(() => {
     return repositories.map((repo) => ({
       label: repo.fullName,
@@ -59,7 +56,6 @@ export function ConnectStep() {
     }));
   }, [repositories]);
 
-  // Create options for branch selector
   const branchOptions = useMemo(() => {
     return branches.map((branch) => ({
       label: branch.name,
@@ -141,7 +137,6 @@ export function ConnectStep() {
                   placeholder={gitFields.urlConfig.placeholder}
                   options={repositoryOptions}
                   loading={repositoriesLoading}
-                  createCustomValue={true}
                   isClearable
                   {...field}
                 />
@@ -168,7 +163,7 @@ export function ConnectStep() {
                   placeholder={gitFields.branchConfig.placeholder}
                   options={branchOptions}
                   loading={branchesLoading}
-                  createCustomValue={true}
+                  createCustomValue={!isGitBased}
                   isClearable
                   {...field}
                 />

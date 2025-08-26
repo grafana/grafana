@@ -11216,10 +11216,6 @@
       "placeholder-my-repository-connection": "My repository connection",
       "text-loading-resource-information": "Loading resource information..."
     },
-    "branch-selector": {
-      "default-branch": "Default branch",
-      "fetching": "Fetching branches..."
-    },
     "check-repository": {
       "check": "Check"
     },
@@ -11234,6 +11230,7 @@
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
