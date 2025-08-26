@@ -315,6 +315,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		ps.resourcePermissions,
 		ps.tracer,
+		false,
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)

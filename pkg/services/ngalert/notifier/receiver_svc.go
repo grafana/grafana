@@ -50,6 +50,7 @@ type ReceiverService struct {
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
+	mergeExtraConfigs      bool
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -103,6 +104,7 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	mergeExtraConfigs bool,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -115,6 +117,7 @@ func NewReceiverService(
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
+		mergeExtraConfigs:      mergeExtraConfigs,
 	}
 }
 
@@ -720,11 +723,13 @@ func (rs *ReceiverService) readReceivers(ctx context.Context, orgID int64, revis
 		grafanaReceivers[r.GetName()] = struct{}{}
 	}
 
-	merged, err := revision.Config.GetMergedAlertmanagerConfig()
-	if err != nil {
-		rs.log.FromContext(ctx).Warn("Failed to get merged alertmanager config. Bypassing", "error", err)
-	} else {
-		postables = merged.Config.Receivers
+	if rs.mergeExtraConfigs {
+		merged, err := revision.Config.GetMergedAlertmanagerConfig()
+		if err != nil {
+			rs.log.FromContext(ctx).Warn("Failed to get merged alertmanager config. Bypassing", "error", err)
+		} else {
+			postables = merged.Config.Receivers
+		}
 	}
 
 	if len(uids) > 0 {
@@ -741,12 +746,14 @@ func (rs *ReceiverService) readReceivers(ctx context.Context, orgID int64, revis
 		postables = filtered
 	}
 
+	// Set the provenance type for receivers. If the receiver is from an extra configuration, use ProvenanceConvertedPrometheus.
 	result := make([]*models.Receiver, 0, len(postables))
 	var storedProvenances map[string]models.Provenance
 	for _, p := range postables {
 		var provenance models.Provenance
 		if _, ok := grafanaReceivers[p.Name]; ok {
 			if storedProvenances == nil {
+				var err error
 				storedProvenances, err = rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 				if err != nil {
 					return nil, err

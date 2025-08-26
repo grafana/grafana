@@ -2194,6 +2194,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
 		tracer,
+		false,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
