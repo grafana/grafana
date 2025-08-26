@@ -225,7 +225,82 @@ func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 func groupQueriesByPanelIdV2(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
-	extractQueriesFromPanelsSchemaV2(dashboard.Get("elements"), result)
+	elementsMap := dashboard.Get("elements").MustMap()
+	for _, element := range elementsMap {
+		element := simplejson.NewFromAny(element)
+
+		var panelQueries []*simplejson.Json
+		hasExpression := panelHasAnExpressionSchemaV2(element)
+
+		// For schema v2, queries are nested in element.spec.data.spec.queries
+		spec := element.Get("spec")
+		if spec.Interface() == nil {
+			result[element.Get("spec").Get("id").MustInt64()] = panelQueries
+			continue
+		}
+
+		data := spec.Get("data")
+		if data.Interface() == nil {
+			result[element.Get("spec").Get("id").MustInt64()] = panelQueries
+			continue
+		}
+
+		dataSpec := data.Get("spec")
+		if dataSpec.Interface() == nil {
+			result[element.Get("spec").Get("id").MustInt64()] = panelQueries
+			continue
+		}
+
+		queries := dataSpec.Get("queries")
+		if queries.Interface() == nil {
+			result[element.Get("spec").Get("id").MustInt64()] = panelQueries
+			continue
+		}
+
+		for _, queryObj := range queries.MustArray() {
+			query := simplejson.NewFromAny(queryObj)
+
+			// Check if query is hidden (PanelQuery.spec.hidden)
+			panelQuerySpec := query.Get("spec")
+			if panelQuerySpec.Interface() == nil {
+				continue
+			}
+
+			if !hasExpression && panelQuerySpec.Get("hidden").MustBool() {
+				continue
+			}
+
+			// Extract the actual query from PanelQuery.spec.query
+			dataQueryKind := panelQuerySpec.Get("query")
+			if dataQueryKind.Interface() == nil {
+				continue
+			}
+
+			dataQuerySpec := dataQueryKind.Get("spec")
+			if dataQuerySpec.Interface() == nil {
+				continue
+			}
+
+			dataQuerySpec.Del("exemplar")
+
+			group := dataQueryKind.Get("group").MustString()
+
+			// if query target has no datasource, set it to have the datasource on the panel
+			if _, ok := dataQuerySpec.CheckGet("datasource"); !ok {
+				uid := getDataSourceUidFromJsonSchemaV2(dataQueryKind)
+				datasource := map[string]any{"type": group, "uid": uid}
+				dataQuerySpec.Set("datasource", datasource)
+			}
+
+			// We don't support exemplars for public dashboards currently
+			dataQuerySpec.Del("exemplar")
+
+			// The query object contains the DataQuery with the actual expression
+			panelQueries = append(panelQueries, dataQuerySpec)
+		}
+
+		result[element.Get("spec").Get("id").MustInt64()] = panelQueries
+	}
 
 	return result
 }
@@ -259,7 +334,7 @@ func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json)
 
 			// if query target has no datasource, set it to have the datasource on the panel
 			if _, ok := query.CheckGet("datasource"); !ok {
-				uid := getDataSourceUidFromJson(panel)
+				uid := getDataSourceUidFromJson(query)
 				datasource := map[string]any{"type": "public-ds", "uid": uid}
 				query.Set("datasource", datasource)
 			}
@@ -267,62 +342,6 @@ func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json)
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
-	}
-}
-
-func extractQueriesFromPanelsSchemaV2(elements *simplejson.Json, result map[int64][]*simplejson.Json) {
-	// elements is a map, so we need to iterate over its values
-	elementsMap := elements.MustMap()
-	for _, element := range elementsMap {
-		element := simplejson.NewFromAny(element)
-
-		var panelQueries []*simplejson.Json
-		hasExpression := panelHasAnExpressionSchemaV2(element)
-
-		// For schema v2, queries are nested in element.spec.data.spec.queries
-		if spec := element.Get("spec"); spec.Interface() != nil {
-			if data := spec.Get("data"); data.Interface() != nil {
-				if dataSpec := data.Get("spec"); dataSpec.Interface() != nil {
-					if queries := dataSpec.Get("queries"); queries.Interface() != nil {
-						for _, queryObj := range queries.MustArray() {
-							query := simplejson.NewFromAny(queryObj)
-
-							// Check if query is hidden (PanelQuery.spec.hidden)
-							if panelQuerySpec := query.Get("spec"); panelQuerySpec.Interface() != nil {
-								if !hasExpression && panelQuerySpec.Get("hidden").MustBool() {
-									continue
-								}
-
-								// Extract the actual query from PanelQuery.spec.query
-								if dataQueryKind := panelQuerySpec.Get("query"); dataQueryKind.Interface() != nil {
-									if dataQuerySpec := dataQueryKind.Get("spec"); dataQuerySpec.Interface() != nil {
-										dataQuerySpec.Del("exemplar")
-
-										group := dataQueryKind.Get("group").MustString()
-
-										// if query target has no datasource, set it to have the datasource on the panel
-										if _, ok := dataQuerySpec.CheckGet("datasource"); !ok {
-											uid := getDataSourceUidFromJsonSchemaV2(dataQueryKind)
-											datasource := map[string]any{"type": group, "uid": uid}
-											dataQuerySpec.Set("datasource", datasource)
-											dataQuerySpec.Set("refId", "A")
-										}
-
-										// We don't support exemplars for public dashboards currently
-										dataQuerySpec.Del("exemplar")
-
-										// The query object contains the DataQuery with the actual expression
-										panelQueries = append(panelQueries, dataQuerySpec)
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		result[element.Get("spec").Get("id").MustInt64()] = panelQueries
 	}
 }
 
@@ -341,26 +360,44 @@ func panelHasAnExpressionSchemaV2(panel *simplejson.Json) bool {
 	var hasExpression bool
 
 	// For schema v2, check the nested structure: spec.data.spec.queries[].spec.query
-	if spec := panel.Get("spec"); spec.Interface() != nil {
-		if data := spec.Get("data"); data.Interface() != nil {
-			if dataSpec := data.Get("spec"); dataSpec.Interface() != nil {
-				if queries := dataSpec.Get("queries"); queries.Interface() != nil {
-					for _, queryObj := range queries.MustArray() {
-						query := simplejson.NewFromAny(queryObj)
+	spec := panel.Get("spec")
+	if spec.Interface() == nil {
+		return hasExpression
+	}
 
-						// Navigate to the actual query object
-						if querySpec := query.Get("spec"); querySpec.Interface() != nil {
-							if queryData := querySpec.Get("query"); queryData.Interface() != nil {
-								// Check if this query is an expression
-								if expr.NodeTypeFromDatasourceUID(getDataSourceUidFromJsonSchemaV2(queryData)) == expr.TypeCMDNode {
-									hasExpression = true
-									break
-								}
-							}
-						}
-					}
-				}
-			}
+	data := spec.Get("data")
+	if data.Interface() == nil {
+		return hasExpression
+	}
+
+	dataSpec := data.Get("spec")
+	if dataSpec.Interface() == nil {
+		return hasExpression
+	}
+
+	queries := dataSpec.Get("queries")
+	if queries.Interface() == nil {
+		return hasExpression
+	}
+
+	for _, queryObj := range queries.MustArray() {
+		query := simplejson.NewFromAny(queryObj)
+
+		// Navigate to the actual query object
+		querySpec := query.Get("spec")
+		if querySpec.Interface() == nil {
+			continue
+		}
+
+		queryData := querySpec.Get("query")
+		if queryData.Interface() == nil {
+			continue
+		}
+
+		// Check if this query is an expression
+		if expr.NodeTypeFromDatasourceUID(getDataSourceUidFromJsonSchemaV2(queryData)) == expr.TypeCMDNode {
+			hasExpression = true
+			break
 		}
 	}
 
