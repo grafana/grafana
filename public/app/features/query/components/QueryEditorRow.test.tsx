@@ -456,12 +456,12 @@ describe('QueryEditorRow', () => {
       expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();
     });
 
-    it('should not render query library buttons when app is unified alerting', async () => {
+    it('should not render saved queries buttons when app is unified alerting', async () => {
       render(<QueryEditorRow {...props(testData)} app={CoreApp.UnifiedAlerting} />);
 
       await waitFor(() => {
         expect(screen.queryByText('Save query')).not.toBeInTheDocument();
-        expect(screen.queryByText('Add query from library')).not.toBeInTheDocument();
+        expect(screen.queryByText('Replace with saved query')).not.toBeInTheDocument();
       });
     });
   });
