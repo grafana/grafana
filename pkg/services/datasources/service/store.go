@@ -341,12 +341,6 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
-		if cmd.Type == "prometheus" {
-			if _, found := cmd.JsonData.CheckGet("azureCredentials"); found {
-				cmd.Type = "grafana-azureprometheus-datasource"
-			}
-		}
-
 		ds = &datasources.DataSource{
 			ID:              cmd.ID,
 			OrgID:           cmd.OrgID,
