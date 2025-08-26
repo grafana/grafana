@@ -70,5 +70,5 @@ For additional information, refer to [Grafana-managed recording rules](https://g
 
 ## Best practices
 
-- Always include a delay (at least 2 minutes) in the query range to avoid incomplete spans.
+- Always include a delay of at least 2 minutes in the query range to avoid incomplete spans.
 - Align the evaluation interval with your query window size.
