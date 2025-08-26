@@ -338,6 +338,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
+		queueConfig:      opts.QOSConfig,
 	}
 
 	if opts.Search.Resources != nil {
