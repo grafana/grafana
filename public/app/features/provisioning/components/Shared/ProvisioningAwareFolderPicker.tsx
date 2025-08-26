@@ -8,8 +8,9 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
 
 interface Props extends NestedFolderPickerProps {
-  /* repo name (uid) or undefined (when it's non-provisioned folder)*/
+  /* repo name (uid) or undefined (when it's non-provisioned folder). This decides when to show only one provision folder*/
   repositoryName?: string;
+  /* this decides when to exclude provisioned folders*/
   isNonProvisionedFolder?: boolean;
 }
 
