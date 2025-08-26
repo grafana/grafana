@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -45,7 +44,6 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	secrets.ProvideRepositorySecrets,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
