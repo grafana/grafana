@@ -2239,6 +2239,13 @@
       "preview": "Náhled",
       "previewCondition": "Podmínka pravidla náhledu výstrahy"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Přidat integraci kontaktního bodu",
       "body-attention": "Protože nejsou zatím nakonfigurované žádné výchozí zásady, tento kontaktní bod se automaticky nastaví jako výchozí.",
@@ -3784,7 +3791,7 @@
         }
       }
     },
-    "category-arrow-direction": "Směr šipky",
+    "category-arrow-direction": "",
     "category-background": "Pozadí",
     "category-border": "Okraj",
     "category-canvas": "Plátno",
@@ -3816,15 +3823,17 @@
         "auto": "Automaticky"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Povolit výběr experimentálních typů prvků",
     "description-inline-editing": "Povolit přímé úpravy panelu",
     "description-pan-zoom": "Povolit posouvání a přiblížení",
-    "direction-options": {
-      "label-both": "Oba",
-      "label-forward": "Dopředu",
-      "label-none": "Žádné",
-      "label-reverse": "Dozadu"
-    },
     "drone-front-item": {
       "category-drone-front": "Přední strana dronu",
       "name-roll-angle": "Úhel příčného sklonu"
@@ -5252,6 +5261,9 @@
       "save-json-to-file": "Uložit JSON do souboru",
       "see-docs": "Další informace o zajištění najdete v <2>dokumentaci</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Načítání konfigurace"
     },
@@ -5523,6 +5535,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Změnit vizualizaci",
@@ -6168,9 +6183,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Přepnout nabídku sdílení"
     },
-    "solo-panel-page": {
-      "loading": "Načítání"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Nástěnka JSON používaná k řešení problémů s vizualizací"
@@ -6454,8 +6466,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6705,6 +6716,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Pevná barva",
       "noOptionsMessage-no-fields-found": "Nebyla nalezena žádná pole"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Nahrát"
@@ -7172,7 +7191,7 @@
     "rich-history-card": {
       "add-comment-form": "Přidat formulář komentáře",
       "add-comment-tooltip": "Přidat komentář",
-      "add-to-library": "Přidat do knihovny",
+      "add-to-library": "",
       "cancel": "Zrušit",
       "confirm-delete": "Odstranit",
       "copy-query-tooltip": "Kopírovat dotaz do schránky",
@@ -7284,7 +7303,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Přidat dotaz z knihovny",
+      "add-from-query-library": "",
       "query-add-button": "Přidat dotaz",
       "query-add-button-aria-label": "Přidat dotaz",
       "query-history-button": "Historie dotazů",
@@ -7582,6 +7601,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9553,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9573,6 +9595,12 @@
       "show-context": "Zobrazit kontext",
       "show-log-line": "Zobrazit řádek protokolu",
       "sidebar-mode": "Ukotvit vpravo",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Odepnout protokol"
     },
     "log-line-menu": {
@@ -9804,7 +9832,8 @@
       "message-name-required": "Název je povinný",
       "message-reserved-name": "Toto je vyhrazený název a nelze jej použít pro složku.",
       "message-same-name": "Nástěnka nebo složka se stejným názvem už existuje",
-      "message-same-name-general": "Ve všeobecné složce už existuje složka nebo nástěnka se stejným názvem"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10757,10 +10786,6 @@
       "could-anything-matching-query": "Nenašly jsme žádnou shodu s vaším dotazem"
     }
   },
-  "panel-search": {
-    "no-matches": "Nebyla nalezena žádná shoda",
-    "unsupported-layout": "Nepodporované rozvržení"
-  },
   "panel-type-filter": {
     "clear-button": "Vymazat typy",
     "select-aria-label": "Filtr typu panelu",
@@ -11304,11 +11329,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
-      "confirm-delete-repository": "Opravdu chcete odstranit konfiguraci úložiště?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Úložiště se nepodařilo odstranit",
       "success-repository-deleted": "Odstranění nastavení úložiště bylo zařazeno do fronty",
-      "title-delete-repository": "Odstranit konfiguraci úložiště",
-      "tooltip-delete-this-repository": "Odstranit toto úložiště"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Zpět na úložiště",
@@ -11964,7 +11993,7 @@
       "expand-row": "Rozbalit řádek dotazu",
       "hide-response": "Skrýt odpověď",
       "remove-query": "Odebrat dotaz",
-      "replace-query-from-library": "Nahradit dotazem z knihovny",
+      "replace-query-from-library": "",
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
@@ -12824,6 +12853,9 @@
       "label-alt-text": "Alternativní text",
       "label-title-text": "Text názvu"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -13115,6 +13147,7 @@
         "name-point-size": "Velikost bodu",
         "name-show-points": "Zobrazit body",
         "name-show-thresholds": "Zobrazit prahové hodnoty",
+        "name-show-values": "",
         "name-style": "Styl",
         "name-transform": "Transformovat",
         "transform-options": {

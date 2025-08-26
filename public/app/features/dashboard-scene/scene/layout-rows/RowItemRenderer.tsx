@@ -12,6 +12,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/useIsCondi
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
+import { useSoloPanelContext } from '../SoloPanelContext';
 
 import { RowItem } from './RowItem';
 
@@ -28,6 +29,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const clearStyles = useStyles2(clearButtonStyles);
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
+  const soloPanelContext = useSoloPanelContext();
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -43,6 +45,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
   if (isHidden) {
     return null;
+  }
+
+  if (soloPanelContext) {
+    return <layout.Component model={layout} />;
   }
 
   return (

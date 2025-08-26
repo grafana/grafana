@@ -19,6 +19,7 @@ export interface TableCellTooltipProps {
   disableSanitizeHtml?: boolean;
   field: Field;
   getActions: (field: Field, rowIdx: number) => ActionModel[];
+  getTextColorForBackground: (bgColor: string) => string;
   gridRef: RefObject<DataGridHandle>;
   height: number;
   placement?: TableCellTooltipPlacement;
@@ -40,6 +41,7 @@ export const TableCellTooltip = memo(
     disableSanitizeHtml,
     field,
     getActions,
+    getTextColorForBackground,
     gridRef,
     height,
     placement,
@@ -100,6 +102,7 @@ export const TableCellTooltip = memo(
           field,
           frame: data,
           getActions,
+          getTextColorForBackground,
           height,
           rowIdx,
           showFilters: false,
@@ -107,7 +110,19 @@ export const TableCellTooltip = memo(
           value: rawValue,
           width,
         }) satisfies TableCellRendererProps,
-      [cellOptions, data, disableSanitizeHtml, field, getActions, height, rawValue, rowIdx, theme, width]
+      [
+        cellOptions,
+        data,
+        disableSanitizeHtml,
+        field,
+        getActions,
+        getTextColorForBackground,
+        height,
+        rawValue,
+        rowIdx,
+        theme,
+        width,
+      ]
     );
 
     const cellElement = tooltipCaretRef.current?.closest<HTMLElement>('.rdg-cell');
@@ -157,3 +172,4 @@ export const TableCellTooltip = memo(
     );
   }
 );
+TableCellTooltip.displayName = 'TableCellTooltip';

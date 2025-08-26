@@ -2221,6 +2221,13 @@
       "preview": "Visualizar",
       "previewCondition": "Visualizar condição de regra de alerta"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Adicionar integração de ponto de contato",
       "body-attention": "Como ainda não há uma política padrão configurada, este ponto de contato será definido automaticamente como padrão.",
@@ -3748,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Direção da seta",
+    "category-arrow-direction": "",
     "category-background": "Fundo",
     "category-border": "Borda",
     "category-canvas": "Tela",
@@ -3780,15 +3787,17 @@
         "auto": "Automático"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Ativar seleção de tipos de elementos experimentais",
     "description-inline-editing": "Ativar a edição do painel diretamente",
     "description-pan-zoom": "Ativar navegação e zoom",
-    "direction-options": {
-      "label-both": "Ambos",
-      "label-forward": "Para frente",
-      "label-none": "Nenhum",
-      "label-reverse": "Reverso"
-    },
     "drone-front-item": {
       "category-drone-front": "Frente do drone",
       "name-roll-angle": "Ângulo de rolagem"
@@ -5214,6 +5223,9 @@
       "save-json-to-file": "Salvar JSON no arquivo",
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre provisionamento."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Carregando configuração"
     },
@@ -5485,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Alterar visualização",
@@ -6126,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menu de compartilhamento"
     },
-    "solo-panel-page": {
-      "loading": "Carregando"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON do painel usado para ajudar a solucionar problemas de visualização"
@@ -6412,8 +6424,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Clique <2>aqui</2> para saber mais sobre esse erro.",
-    "success-more-details-links": "Em seguida, você pode começar a visualizar os dados <2>criando um painel de controle</2> ou consultando os dados na <5>Visualização de exploração</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Em seguida, você pode começar a visualizar os dados <2>criando um painel de controle</2> ou consultando os dados na <5>Visualização de exploração</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6663,6 +6674,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Cor fixa",
       "noOptionsMessage-no-fields-found": "Nenhum campo encontrado"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Carregar"
@@ -7130,7 +7149,7 @@
     "rich-history-card": {
       "add-comment-form": "Adicionar formulário de comentários",
       "add-comment-tooltip": "Adicionar comentário",
-      "add-to-library": "Adicionar à biblioteca",
+      "add-to-library": "",
       "cancel": "Cancelar",
       "confirm-delete": "Excluir",
       "copy-query-tooltip": "Copiar consulta para a área de transferência",
@@ -7242,7 +7261,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Adicionar consulta da biblioteca",
+      "add-from-query-library": "",
       "query-add-button": "Adicionar consulta",
       "query-add-button-aria-label": "Adicionar consulta",
       "query-history-button": "Histórico de consultas",
@@ -7540,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9475,6 +9495,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9515,6 +9537,12 @@
       "show-context": "Exibir contexto",
       "show-log-line": "Exibir linha de log",
       "sidebar-mode": "Fixar à direita",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Desafixar log"
     },
     "log-line-menu": {
@@ -9746,7 +9774,8 @@
       "message-name-required": "O nome é obrigatório",
       "message-reserved-name": "Este é um nome reservado e não pode ser usado para uma pasta.",
       "message-same-name": "Já existe um painel de controle ou uma pasta com o mesmo nome",
-      "message-same-name-general": "Já existe uma pasta ou painel de controle na pasta geral com o mesmo nome"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10693,10 +10722,6 @@
       "could-anything-matching-query": "Não foi possível encontrar nada que corresponda à sua consulta"
     }
   },
-  "panel-search": {
-    "no-matches": "Nenhuma ocorrência encontrada",
-    "unsupported-layout": "Layout incompatível"
-  },
   "panel-type-filter": {
     "clear-button": "Limpar tipos",
     "select-aria-label": "Filtro de tipo de painel",
@@ -11234,11 +11259,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Excluir",
-      "confirm-delete-repository": "Tem certeza de que deseja excluir a configuração do repositório?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Falha ao excluir o repositório",
       "success-repository-deleted": "Configurações do repositório na fila para exclusão",
-      "title-delete-repository": "Excluir configuração do repositório",
-      "tooltip-delete-this-repository": "Excluir este repositório"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Voltar para os repositórios",
@@ -11892,7 +11921,7 @@
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
       "remove-query": "Remover consulta",
-      "replace-query-from-library": "Substituir por consulta da biblioteca",
+      "replace-query-from-library": "",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
@@ -12742,6 +12771,9 @@
       "label-alt-text": "Texto alternativo",
       "label-title-text": "Texto do título"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -13033,6 +13065,7 @@
         "name-point-size": "Tamanho do ponto",
         "name-show-points": "Exibir pontos",
         "name-show-thresholds": "Mostrar limites",
+        "name-show-values": "",
         "name-style": "Estilo",
         "name-transform": "Transformar",
         "transform-options": {
