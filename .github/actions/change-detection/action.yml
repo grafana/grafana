@@ -42,6 +42,8 @@ runs:
           self:
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
+          dockerfile:
+            - 'Dockerfile'
           backend:
             - '!*.md'
             - '!docs/**'
