@@ -441,49 +441,15 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	// scheme := opts.Scheme
-	// optsGetter := opts.OptsGetter
-	//dualWriteBuilder := opts.DualWriteBuilder
-	storage := map[string]rest.Storage{}
-
-	if b.ignoreLegacy {
-		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv0.DashboardResourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		storage[dashv0.DashboardResourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[dashv0.DashboardResourceInfo.GroupVersion().Version] = storage
-
-		store, err = grafanaregistry.NewRegistryStore(opts.Scheme, dashv1.DashboardResourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		storage[dashv1.DashboardResourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[dashv1.DashboardResourceInfo.GroupVersion().Version] = storage
-
-		store, err = grafanaregistry.NewRegistryStore(opts.Scheme, dashv2alpha1.DashboardResourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		storage[dashv2alpha1.DashboardResourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[dashv2alpha1.DashboardResourceInfo.GroupVersion().Version] = storage
-
-		store, err = grafanaregistry.NewRegistryStore(opts.Scheme, dashv2alpha2.DashboardResourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		storage[dashv2alpha2.DashboardResourceInfo.StoragePath()] = store
-		apiGroupInfo.VersionedResourcesStorageMap[dashv2alpha2.DashboardResourceInfo.GroupVersion().Version] = storage
-
-		return nil
-	}
-
 	storageOpts := apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
+	}
 
+	// this is for ignoreLegacy
+	if b.dashboardPermissions != nil {
 		// Sets default root permissions
-		Permissions: b.dashboardPermissions.SetDefaultPermissionsAfterCreate,
+		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
 	// Split dashboards when they are large
