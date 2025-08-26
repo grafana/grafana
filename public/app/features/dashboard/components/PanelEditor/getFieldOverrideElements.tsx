@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   FieldConfigOptionsRegistry,
@@ -123,7 +122,7 @@ export function getFieldOverrideCategories(
     /**
      * Add override matcher UI element
      */
-    const htmlId = uuidv4();
+    const htmlId = `${overrideId}-matcher`;
     category.addItem(
       new OptionsPaneItemDescriptor({
         id: htmlId,
@@ -170,7 +169,7 @@ export function getFieldOverrideCategories(
         onOverrideChange(idx, { ...override, properties: override.properties.filter((_, i) => i !== propIdx) });
       };
 
-      const htmlId = `${overrideId}-${property.id}`;
+      const htmlId = `${overrideId}-property-${property.id}`;
 
       /**
        * Add override property item
