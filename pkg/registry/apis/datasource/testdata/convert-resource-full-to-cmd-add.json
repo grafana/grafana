@@ -1,6 +1,6 @@
 {
   "name": "Hello testdata",
-  "type": "test-datasource",
+  "type": "grafana-testdata-datasource",
   "access": "proxy",
   "url": "http://something/",
   "user": "",
@@ -15,6 +15,7 @@
     "ccc": 1.234
   },
   "secureJsonData": {
+    "extra": "",
     "password": "XXXX"
   },
   "uid": "cejobd88i85j4d"

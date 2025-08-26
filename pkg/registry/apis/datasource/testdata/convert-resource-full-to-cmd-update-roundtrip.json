@@ -22,8 +22,11 @@
     "withCredentials": true
   },
   "secure": {
+    "extra": {
+      "name": "ds-bb8b5d8b32"
+    },
     "password": {
-      "name": "ds-fdb9f6717d"
+      "name": "ds-973a1eb29d"
     }
   }
 }

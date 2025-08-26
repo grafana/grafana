@@ -77,7 +77,8 @@ func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSO
 		contextProvider: q.contextProvider,
 		converter: &converter{
 			mapper: q.converter.mapper,
-			dstype: pluginJson.ID,
+			plugin: pluginJson.ID,
+			alias:  pluginJson.AliasIDs,
 			group:  group,
 		},
 	}

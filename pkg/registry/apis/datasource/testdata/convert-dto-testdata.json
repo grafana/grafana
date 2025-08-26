@@ -3,7 +3,7 @@
   "version": 2,
   "name": "Hello",
   "uid": "unique-identifier",
-  "type": "grafana-test-datasource",
+  "type": "grafana-testdata-datasource",
   "access": "proxy",
   "url": "http://something/",
   "user": "A",

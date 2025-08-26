@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"iter"
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -24,11 +25,16 @@ import (
 
 type converter struct {
 	mapper request.NamespaceMapper
-	group  string // the expected group
-	dstype string // the expected pluginId
+	group  string   // the expected group
+	plugin string   // the expected pluginId
+	alias  []string // optional alias for the pluginId
 }
 
 func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.DataSource, error) {
+	if !(ds.Type == r.plugin || slices.Contains(r.alias, ds.Type)) {
+		return nil, fmt.Errorf("expected datasource type: %s %v // not: %s", r.plugin, r.alias, ds.Type)
+	}
+
 	obj := &datasourceV0.DataSource{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       ds.UID,
@@ -109,7 +115,7 @@ func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
 		OrgID: info.OrgID,
-		Type:  r.dstype,
+		Type:  r.plugin,
 
 		Access:          datasources.DsAccess(ds.Spec.Access()),
 		URL:             ds.Spec.URL(),
@@ -127,8 +133,8 @@ func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		cmd.JsonData = simplejson.NewFromAny(jsonData)
 	}
 
-	cmd.SecureJsonData, err = toSecureJsonData(ds)
-	return cmd, err
+	cmd.SecureJsonData = toSecureJsonData(ds)
+	return cmd, nil
 }
 
 func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
@@ -144,7 +150,7 @@ func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
 		OrgID: info.OrgID,
-		Type:  r.dstype,
+		Type:  r.plugin,
 
 		Access:          datasources.DsAccess(ds.Spec.Access()),
 		URL:             ds.Spec.URL(),
@@ -164,13 +170,13 @@ func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 	if jsonData != nil {
 		cmd.JsonData = simplejson.NewFromAny(jsonData)
 	}
-	cmd.SecureJsonData, err = toSecureJsonData(ds)
+	cmd.SecureJsonData = toSecureJsonData(ds)
 	return cmd, err
 }
 
-func toSecureJsonData(ds *datasourceV0.DataSource) (map[string]string, error) {
+func toSecureJsonData(ds *datasourceV0.DataSource) map[string]string {
 	if ds == nil || len(ds.Secure) < 1 {
-		return nil, nil
+		return nil
 	}
 
 	secure := map[string]string{}
@@ -182,5 +188,5 @@ func toSecureJsonData(ds *datasourceV0.DataSource) (map[string]string, error) {
 			secure[k] = "" // Weirdly, this is the best we can do with the legacy API :(
 		}
 	}
-	return secure, nil
+	return secure
 }

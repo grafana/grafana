@@ -27,6 +27,7 @@
     }
   },
   "secure": {
-    "password": { "create": "XXXX" }
+    "password": { "create": "XXXX" },
+    "extra": { "remove": true }
   }
 }
