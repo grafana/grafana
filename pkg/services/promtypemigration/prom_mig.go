@@ -2,6 +2,7 @@ package promtypemigration
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -16,9 +17,15 @@ type PromMigrationHandler interface {
 	getPrometheusDataSources(ctx context.Context, dataSourcesService datasources.DataSourceService) ([]*datasources.DataSource, error)
 }
 
+type dataSourceService interface {
+	DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error)
+	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
+	GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
+}
+
 type promMigrationService struct {
 	cfg                *setting.Cfg
-	dataSourcesService datasources.DataSourceService
+	dataSourcesService dataSourceService
 	pluginStore        pluginstore.Store
 	pluginRepo         repo.Service
 	pluginInstaller    plugins.Installer
@@ -31,7 +38,6 @@ func (s *promMigrationService) applyMigration(ctx context.Context, pluginID stri
 
 	// check to see if prom is installed, if not install it
 	if _, installed := s.pluginStore.Plugin(ctx, pluginID); !installed {
-		//install prom
 		compatOpts := plugins.NewAddOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, "")
 		err := s.pluginInstaller.Add(ctx, pluginID, "", compatOpts)
 		if err != nil {
@@ -57,6 +63,9 @@ func (s *promMigrationService) updateDataSourceType(ctx context.Context, ds *dat
 	secureJsonData, err := s.dataSourcesService.DecryptedValues(ctx, ds)
 	if err != nil {
 		return err
+	}
+	if ds.JsonData == nil {
+		return fmt.Errorf("no JsonData found for data source ID %d", ds.ID)
 	}
 	ds.JsonData.Set("prometheus-type-migration", true)
 	_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{

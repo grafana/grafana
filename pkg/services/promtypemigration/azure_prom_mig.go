@@ -42,7 +42,11 @@ func (s *AzurePromMigrationService) getPrometheusDataSources(ctx context.Context
 		return nil, err
 	}
 	for _, ds := range dsList {
-		if _, found := ds.JsonData.CheckGet("azureCredentials"); found {
+		if azureAuth, found := ds.JsonData.CheckGet("azureCredentials"); found {
+			var val any
+			if val, err = azureAuth.Value(); err != nil || val == nil {
+				continue
+			}
 			azurePromDs = append(azurePromDs, ds)
 			continue
 		}
