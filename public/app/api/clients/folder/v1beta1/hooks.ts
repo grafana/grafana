@@ -40,7 +40,8 @@ import {
   Folder,
   CreateFolderApiArg,
 } from './index';
-/** Trigger necessary actions to ensure legacy folder stores are updated*/
+
+/** Trigger necessary actions to ensure legacy folder stores are updated */
 function dispatchRefetchChildren(parentUID?: string) {
   dispatch(
     refetchChildren({
