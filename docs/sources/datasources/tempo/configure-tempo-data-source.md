@@ -439,7 +439,7 @@ If you have a data source that is provisioned by a configuration file in Grafana
 
 For example, let's say you want to edit the **Trace to log**s settings in your Tempo data source that is provisioned on Grafana Cloud.
 You'd like to enable traceID and spanID but you can't because the data source is provisioned.
-You could enable these capabilities in a cloned data source.
+By cloning the data source, you'd be able to edit these capabilities.
 
 To clone a provisioned data source, follow these steps:
 
