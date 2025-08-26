@@ -6373,7 +6373,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Add query from library"
+      "add-from-saved-queries": "Add from saved queries"
     },
     "settings": {
       "variables": {
