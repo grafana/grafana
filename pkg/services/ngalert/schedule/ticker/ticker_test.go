@@ -13,6 +13,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
 func TestTicker(t *testing.T) {
@@ -51,7 +53,7 @@ func TestTicker(t *testing.T) {
 		interval := time.Duration(rand.Int63n(100)+10) * time.Second
 		clk := clock.NewMock()
 		clk.Add(interval) // align clock with the start tick
-		ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
+		ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
 
 		ticks := rand.Intn(9) + 1
 		jitter := rand.Int63n(int64(interval) - 1)
@@ -85,7 +87,7 @@ func TestTicker(t *testing.T) {
 	t.Run("should not put anything to channel until it's time", func(t *testing.T) {
 		clk := clock.NewMock()
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
+		ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
 		expectedTick := clk.Now().Add(interval)
 		for {
 			require.Empty(t, ticker.C)
@@ -102,7 +104,7 @@ func TestTicker(t *testing.T) {
 	t.Run("should put the tick in the channel immediately if it is behind", func(t *testing.T) {
 		clk := clock.NewMock()
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
+		ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
 
 		//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
 		expectedTick := clk.Now().Add(interval)
@@ -131,7 +133,7 @@ func TestTicker(t *testing.T) {
 		clk.Set(time.Now())
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
 		registry := prometheus.NewPedanticRegistry()
-		ticker := New(clk, interval, NewMetrics(registry, "test"))
+		ticker := New(clk, interval, NewMetrics(registry, "test"), &logtest.Fake{})
 		expectedTick := getStartTick(clk, interval).Add(interval)
 
 		expectedMetricFmt := `# HELP grafana_test_ticker_interval_seconds Interval at which the ticker is meant to tick.
@@ -174,7 +176,7 @@ func TestTicker(t *testing.T) {
 		t.Run("when it waits for the next tick", func(t *testing.T) {
 			clk := clock.NewMock()
 			interval := time.Duration(rand.Int63n(9)+1) * time.Second
-			ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
+			ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
 			clk.Add(interval)
 			readChanOrFail(t, ticker.C)
 			ticker.Stop()
@@ -185,7 +187,7 @@ func TestTicker(t *testing.T) {
 		t.Run("when it waits for the tick to be consumed", func(t *testing.T) {
 			clk := clock.NewMock()
 			interval := time.Duration(rand.Int63n(9)+1) * time.Second
-			ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
+			ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
 			clk.Add(interval)
 			ticker.Stop()
 			require.Empty(t, ticker.C)
@@ -194,7 +196,7 @@ func TestTicker(t *testing.T) {
 		t.Run("multiple times", func(t *testing.T) {
 			clk := clock.NewMock()
 			interval := time.Duration(rand.Int63n(9)+1) * time.Second
-			ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
+			ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
 			ticker.Stop()
 			ticker.Stop()
 			ticker.Stop()
