@@ -6,7 +6,6 @@ import (
 
 	"dario.cat/mergo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -96,32 +95,39 @@ func (s *calculator) Current(w http.ResponseWriter, r *http.Request) {
 		errhttp.Write(ctx, err, w)
 		return
 	}
-
-	ns := request.NamespaceValue(ctx)
-	p := preferences.Preferences{
-		TypeMeta: preferences.PreferencesResourceInfo.TypeMeta(),
-		ObjectMeta: v1.ObjectMeta{
-			CreationTimestamp: v1.Now(),
-			Namespace:         ns,
-		},
-		Spec: s.defaults,
-	}
-
+	ns := user.GetNamespace() // namespace not in context!
 	list, err := s.sql.ListPreferences(ctx, ns, user, false)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	// Iterate in reverse order (least relevant to most relevant)
-	for i := len(list.Items) - 1; i >= 0; i-- {
-		v := list.Items[i]
-		if err := mergo.Merge(&p.Spec, &v.Spec); err != nil {
-			errhttp.Write(ctx, err, w)
-			return
-		}
+	p, err := merge(s.defaults, list.Items)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
 	}
+	p.Namespace = ns
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(p)
+}
+
+// items should be in ascending order of importance
+func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences) (*preferences.Preferences, error) {
+	p := &preferences.Preferences{
+		TypeMeta: preferences.PreferencesResourceInfo.TypeMeta(),
+		ObjectMeta: v1.ObjectMeta{
+			CreationTimestamp: v1.Now(),
+		},
+		Spec: defaults,
+	}
+
+	// Iterate in reverse order (least relevant to most relevant)
+	for _, v := range items {
+		if err := mergo.Merge(&p.Spec, &v.Spec, mergo.WithOverride); err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }

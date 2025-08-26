@@ -206,6 +206,10 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 }
 
 func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identity.Requester, needsRV bool) (*preferences.PreferencesList, error) {
+	if ns == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+
 	info, err := authlib.ParseNamespace(ns)
 	if err != nil {
 		return nil, err

@@ -68,7 +68,6 @@ func TestIntegrationPreferences(t *testing.T) {
 			Method: http.MethodPut,
 			Path:   fmt.Sprintf("/api/teams/%d/preferences", helper.Org1.Staff.ID),
 			Body: []byte(`{
-				"theme": "light",
 				"weekStart": "sunday",
 				"timezone": "africa"
 			}`),
@@ -81,9 +80,9 @@ func TestIntegrationPreferences(t *testing.T) {
 			Method: http.MethodPut,
 			Path:   "/api/org/preferences",
 			Body: []byte(`{
-				"weekStart": "monday",
+				"weekStart": "sunday",
 				"timezone": "africa",
-				"language": "kiswahili"
+				"theme": "dark"
 			}`),
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
@@ -125,9 +124,9 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.JSONEq(t, `{
 			"timezone":"africa",
 			"weekStart":"saturday",
-			"theme":"light",
-			"language":"kiswahili",
-			"regionalFormat":""
+			"theme":"dark",
+			"language":"en-US", `+ // FROM global default!
+			`"regionalFormat":""
 		}`, string(jj))
 
 		current := apis.DoRequest(helper, apis.RequestParams{
@@ -136,8 +135,9 @@ func TestIntegrationPreferences(t *testing.T) {
 			Path:   "/apis/preferences.grafana.app/v1alpha1/namespaces/default/current",
 		}, &preferences.Preferences{})
 		require.Equal(t, http.StatusOK, current.Response.StatusCode, "get current preferences")
-		require.Equal(t, "kiswahili", *current.Result.Spec.Language) // from org
-		require.Equal(t, "light", *current.Result.Spec.Theme)        // from team
 		require.Equal(t, "saturday", *current.Result.Spec.WeekStart) // from user
+		require.Equal(t, "africa", *current.Result.Spec.Timezone)    // from team
+		require.Equal(t, "dark", *current.Result.Spec.Theme)         // from org
+		require.Equal(t, "en-US", *current.Result.Spec.Language)     // settings.ini
 	})
 }
