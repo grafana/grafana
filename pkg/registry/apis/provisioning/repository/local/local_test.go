@@ -69,7 +69,7 @@ func TestLocalResolver(t *testing.T) {
 	}
 
 	// Test repository with the temp directory
-	repo := NewLocal(&provisioning.Repository{
+	repo := NewRepository(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Local: &provisioning.LocalRepositoryConfig{
 				Path: tempDir,
@@ -126,7 +126,7 @@ func TestLocal(t *testing.T) {
 		{"absolute path with multiple prefixes", "/devenv/test", []string{"/home/grafana", "/devenv"}, "/devenv/test/"},
 	} {
 		t.Run("valid: "+tc.Name, func(t *testing.T) {
-			r := NewLocal(&provisioning.Repository{
+			r := NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Local: &provisioning.LocalRepositoryConfig{
 						Path: tc.Path,
@@ -152,7 +152,7 @@ func TestLocal(t *testing.T) {
 		{"unconfigured prefix", "invalid/path", []string{"devenv", "/tmp", "test"}},
 	} {
 		t.Run("invalid: "+tc.Name, func(t *testing.T) {
-			r := NewLocal(&provisioning.Repository{
+			r := NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Local: &provisioning.LocalRepositoryConfig{
 						Path: tc.Path,
@@ -238,7 +238,7 @@ func TestLocalRepository_Test(t *testing.T) {
 			}
 
 			// Create the repository with the test path
-			repo := NewLocal(&provisioning.Repository{
+			repo := NewRepository(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Local: &provisioning.LocalRepositoryConfig{
 						Path: tc.path,
@@ -353,7 +353,7 @@ func TestLocalRepository_Validate(t *testing.T) {
 			}
 
 			// Create the repository
-			repo := NewLocal(repoConfig, resolver)
+			repo := NewRepository(repoConfig, resolver)
 
 			// Call the Validate method
 			errors := repo.Validate()
