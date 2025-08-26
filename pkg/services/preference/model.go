@@ -116,7 +116,7 @@ type PatchPreferenceCommand struct {
 
 // Validate validates the PatchPreferenceCommand
 func (cmd *PatchPreferenceCommand) Validate() error {
-	if cmd.DateStyle != nil && *cmd.DateStyle != "" && 
+	if cmd.DateStyle != nil && *cmd.DateStyle != "" &&
 		*cmd.DateStyle != DateStyleLocalized && *cmd.DateStyle != DateStyleInternational {
 		return ErrInvalidDateStyle
 	}

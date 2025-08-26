@@ -12461,7 +12461,17 @@
     }
   },
   "shared-preferences": {
+    "date-style": {
+      "default": "Default",
+      "international": "International",
+      "international_description": "Dates formatted according to the international format, typically YYYY-MM-DD",
+      "localized": "Localized",
+      "localized_description": "Dates formatted according to your regional format preference"
+    },
     "fields": {
+      "date-style-description": "Select how dates are displayed throughout the interface",
+      "date-style-label": "Date style",
+      "date-style-placeholder": "Choose date format",
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",
