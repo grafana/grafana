@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../guides/getting_started/
-  - ../../../guides/gettingstarted/
+  - ../../../guides/getting_started/ # /docs/grafana/latest/guides/getting_started
+  - ../../../guides/gettingstarted/ # /docs/grafana/latest/guides/gettingstarted
   - ../../getting-started-prometheus/
   - ../getting-started/get-started-grafana-prometheus/
 description: Learn how to build your first Prometheus dashboard in Grafana.
