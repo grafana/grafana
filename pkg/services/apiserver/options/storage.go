@@ -204,10 +204,6 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 			ServerName:         o.SecretsManagerGrpcServerTLSServerName,
 			InsecureSkipVerify: o.SecretsManagerGrpcServerTLSSkipVerify,
 		}
-		if o.SecretsManagerGrpcServerUseTLS && secureServing != nil {
-			tlsCfg.CertFile = secureServing.ServerCert.CertKey.CertFile
-			tlsCfg.KeyFile = secureServing.ServerCert.CertKey.KeyFile
-		}
 		inlineSecureValueService, err := inlinesecurevalue.NewGRPCSecureValueService(
 			&grpcutils.GrpcClientConfig{
 				Token:            o.GrpcClientAuthenticationToken,
