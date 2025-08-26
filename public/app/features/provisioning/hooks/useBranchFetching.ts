@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { isSupportedGitProvider } from '../guards';
-import { BranchInfo, RepositoryInfo, UseBranchFetchingProps, UseBranchFetchingResult } from '../types/repository';
+import { BranchInfo, RepositoryInfo, UseBranchFetchingProps } from '../types/repository';
 import { createApiRequest, getErrorMessage, makeApiRequest } from '../utils/httpUtils';
 
 const GITHUB_URL_REGEX = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
 const GITLAB_URL_REGEX = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
 const BITBUCKET_URL_REGEX = /^https:\/\/bitbucket\.org\/([^\/]+)\/([^\/]+)\/?$/;
 
-export function parseRepositoryUrl(url: string, type: string): RepositoryInfo | null {
+function parseRepositoryUrl(url: string, type: string): RepositoryInfo | null {
   let match: RegExpMatchArray | null = null;
 
   switch (type) {
@@ -37,32 +37,33 @@ export function parseRepositoryUrl(url: string, type: string): RepositoryInfo | 
 
 export function useBranchFetching({
   repositoryType,
-  repositoryUrl,
-  repositoryToken,
-}: UseBranchFetchingProps): UseBranchFetchingResult {
+  repositoryUrl = '',
+  repositoryToken = '',
+}: UseBranchFetchingProps) {
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const trimmedUrl = repositoryUrl.trim();
+  const trimmedToken = repositoryToken.trim();
 
   const hasRequiredData = useMemo(() => {
     if (!isSupportedGitProvider(repositoryType)) {
       return false;
     }
 
-    const hasUrl = repositoryUrl && repositoryUrl.trim().length > 0;
-    const hasToken = repositoryToken && repositoryToken.trim().length > 0;
-    const repoInfo = hasUrl ? parseRepositoryUrl(repositoryUrl.trim(), repositoryType) : null;
+    const hasUrl = trimmedUrl.length > 0;
+    const hasToken = trimmedToken.length > 0;
+    const repoInfo = hasUrl ? parseRepositoryUrl(trimmedUrl, repositoryType) : null;
 
     return hasUrl && hasToken && repoInfo !== null;
-  }, [repositoryUrl, repositoryToken, repositoryType]);
+  }, [trimmedUrl, trimmedToken, repositoryType]);
 
   const fetchBranches = useCallback(async () => {
     if (!hasRequiredData) {
       return;
     }
 
-    const trimmedUrl = repositoryUrl.trim();
-    const trimmedToken = repositoryToken.trim();
     const repoInfo = parseRepositoryUrl(trimmedUrl, repositoryType);
 
     if (!repoInfo) {
@@ -109,7 +110,7 @@ export function useBranchFetching({
     } finally {
       setLoading(false);
     }
-  }, [hasRequiredData, repositoryUrl, repositoryToken, repositoryType]);
+  }, [hasRequiredData, trimmedUrl, trimmedToken, repositoryType]);
 
   useEffect(() => {
     if (hasRequiredData) {
@@ -122,7 +123,7 @@ export function useBranchFetching({
       setLoading(false);
       return undefined;
     }
-  }, [hasRequiredData, fetchBranches, repositoryType, repositoryUrl, repositoryToken]);
+  }, [hasRequiredData, fetchBranches]);
 
   return {
     branches,

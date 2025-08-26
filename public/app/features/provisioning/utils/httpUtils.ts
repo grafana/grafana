@@ -13,47 +13,51 @@ export function createApiRequest(
   repositories: ApiRequest;
   branches: (owner: string, repo: string) => ApiRequest;
 } {
-  const trimmedToken = token.trim();
-
   switch (repositoryType) {
-    case 'github':
+    case 'github': {
+      const headers = { Authorization: `Bearer ${token}` };
       return {
         repositories: {
           url: 'https://api.github.com/user/repos?sort=updated&per_page=100',
-          headers: { Authorization: `Bearer ${trimmedToken}` },
+          headers,
         },
         branches: (owner, repo) => ({
           url: `https://api.github.com/repos/${owner}/${repo}/branches`,
-          headers: { Authorization: `Bearer ${trimmedToken}` },
+          headers,
         }),
       };
+    }
 
-    case 'gitlab':
+    case 'gitlab': {
+      const headers = { 'Private-Token': token };
       return {
         repositories: {
           url: 'https://gitlab.com/api/v4/projects?membership=true&order_by=last_activity_at&sort=desc&per_page=100',
-          headers: { 'Private-Token': trimmedToken },
+          headers,
         },
         branches: (owner, repo) => {
           const encodedPath = encodeURIComponent(`${owner}/${repo}`);
           return {
             url: `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches`,
-            headers: { 'Private-Token': trimmedToken },
+            headers,
           };
         },
       };
+    }
 
-    case 'bitbucket':
+    case 'bitbucket': {
+      const headers = { Authorization: `Bearer ${token}` };
       return {
         repositories: {
           url: 'https://api.bitbucket.org/2.0/repositories?role=member&sort=-updated_on&pagelen=100',
-          headers: { Authorization: `Bearer ${trimmedToken}` },
+          headers,
         },
         branches: (owner, repo) => ({
           url: `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches`,
-          headers: { Authorization: `Bearer ${trimmedToken}` },
+          headers,
         }),
       };
+    }
 
     default:
       throw new Error(`Unsupported repository type: ${repositoryType}`);

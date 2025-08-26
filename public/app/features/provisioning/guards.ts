@@ -1,4 +1,3 @@
-import { SUPPORTED_GIT_PROVIDERS } from './constants';
 import {
   BitbucketResponse,
   GitHubRepository,
@@ -21,7 +20,7 @@ export function isBitbucketResponse(data: GitProviderApiResponse): data is Bitbu
 }
 
 export function isSupportedGitProvider(provider: string): provider is 'github' | 'gitlab' | 'bitbucket' {
-  return SUPPORTED_GIT_PROVIDERS.includes(provider);
+  return ['github', 'gitlab', 'bitbucket'].includes(provider);
 }
 
 export function isHttpError(err: unknown): err is HttpError {

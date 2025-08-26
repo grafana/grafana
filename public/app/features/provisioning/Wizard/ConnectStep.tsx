@@ -26,8 +26,7 @@ export function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const repositoryUrl = watch('repository.url') || '';
-  const repositoryToken = watch('repository.token') || '';
+  const [repositoryUrl = '', repositoryToken = ''] = watch(['repository.url', 'repository.token']);
   const isGitBased = isGitProvider(type);
 
   const {
@@ -63,7 +62,6 @@ export function ConnectStep() {
     }));
   }, [branches]);
 
-  // Get field configurations based on a provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
