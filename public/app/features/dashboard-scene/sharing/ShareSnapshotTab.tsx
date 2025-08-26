@@ -63,8 +63,6 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
 
 // this is a hacky way to pass the uid with the dashboard to the backend so the dashboard can be found
 // and snapshot can be created
-// TODO: figure out if we should update the legacy snapshots api, or require users that have v2 dashboards enabled
-// to also have kubernetesSnapshots feature flag enabled
 interface DashboardV2SpecWithUid extends DashboardV2Spec {
   uid?: string;
 }
@@ -132,9 +130,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
         saveModel,
         panelRef?.resolve()
       );
-    } else {
-      saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
     }
+
+    saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
 
     return trimDashboardForSnapshot(
       this.state.snapshotName.trim() || '',
