@@ -5204,6 +5204,9 @@
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "구성 로딩 중"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "시각화 변경",
@@ -6113,9 +6119,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "공유 메뉴 토글"
-    },
-    "solo-panel-page": {
-      "loading": "로딩 중"
     },
     "support-snapshot-service": {
       "description": {
@@ -7535,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9504,6 +9508,12 @@
       "show-context": "맥락 보기",
       "show-log-line": "로그 라인 표시",
       "sidebar-mode": "오른쪽에 고정",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "로그 고정 해제"
     },
     "log-line-menu": {
@@ -10679,10 +10689,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
-  },
-  "panel-search": {
-    "no-matches": "일치하는 항목 찾을 수 없음",
-    "unsupported-layout": "지원되지 않는 레이아웃"
   },
   "panel-type-filter": {
     "clear-button": "유형 초기화",
