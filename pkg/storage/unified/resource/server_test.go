@@ -4,20 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 func TestSimpleServer(t *testing.T) {
@@ -241,4 +247,97 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
 	})
+}
+
+func TestRunInQueue(t *testing.T) {
+	const testTenantID = "test-tenant"
+	t.Run("should execute successfully when queue has capacity", func(t *testing.T) {
+		s, _ := newTestServerWithQueue(t, 1, 1)
+		executed := make(chan bool, 1)
+
+		runnable := func(ctx context.Context) {
+			executed <- true
+		}
+
+		err := s.runInQueue(context.Background(), testTenantID, runnable)
+		require.NoError(t, err)
+		assert.True(t, <-executed, "runnable should have been executed")
+	})
+
+	t.Run("should time out if a task is sitting in the queue beyond the timeout", func(t *testing.T) {
+		s, _ := newTestServerWithQueue(t, 1, 1)
+		executed := make(chan bool, 1)
+		runnable := func(ctx context.Context) {
+			time.Sleep(1 * time.Second)
+			executed <- true
+		}
+
+		err := s.runInQueue(context.Background(), testTenantID, runnable)
+		require.Error(t, err)
+		assert.Equal(t, context.DeadlineExceeded, err)
+	})
+
+	t.Run("should return an error if queue is consistently full after retrying", func(t *testing.T) {
+		s, q := newTestServerWithQueue(t, 1, 1)
+		// Task 1: This will be picked up by the worker and block it.
+		blocker := make(chan struct{})
+		blockingRunnable := func() {
+			<-blocker
+		}
+		err := q.Enqueue(context.Background(), testTenantID, blockingRunnable)
+		require.NoError(t, err)
+		err = q.Enqueue(context.Background(), testTenantID, blockingRunnable)
+		require.NoError(t, err)
+		defer close(blocker)
+
+		// Task 2: This runnable should never execute because the queue is full.
+		executed := false
+		runnable := func(ctx context.Context) {
+			executed = true
+		}
+
+		err = s.runInQueue(context.Background(), testTenantID, runnable)
+		require.Error(t, err)
+		require.ErrorIs(t, err, scheduler.ErrTenantQueueFull)
+		assert.False(t, executed, "runnable should not have been executed")
+	})
+}
+
+// newTestServerWithQueue creates a server with a real scheduler.Queue for testing.
+// It also sets up a worker to consume items from the queue.
+func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) (*server, *scheduler.Queue) {
+	t.Helper()
+	q := scheduler.NewQueue(&scheduler.QueueOptions{
+		MaxSizePerTenant: maxSizePerTenant,
+		Registerer:       prometheus.NewRegistry(),
+		Logger:           log.NewNopLogger(),
+	})
+	err := services.StartAndAwaitRunning(context.Background(), q)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		q.StopAsync()
+	})
+
+	// Create a worker to consume from the queue
+	worker, err := scheduler.NewScheduler(q, &scheduler.Config{
+		Logger:     log.NewNopLogger(),
+		NumWorkers: numWorkers,
+	})
+	require.NoError(t, err)
+	err = services.StartAndAwaitRunning(context.Background(), worker)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		worker.StopAsync()
+	})
+
+	s := &server{
+		queue: q,
+		queueConfig: QueueConfig{
+			Timeout:    500 * time.Millisecond,
+			MaxRetries: 2,
+			MinBackoff: 10 * time.Millisecond,
+		},
+		log: slog.Default(),
+	}
+	return s, q
 }
