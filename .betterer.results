@@ -548,16 +548,6 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/utils/queryResponse.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-runtime/src/utils/useFavoriteDatasources.ts:5381": [
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"],
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "2"],
-      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "3"],
-      [0, 0, 0, "React Hook \\"useEffect\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "4"],
-      [0, 0, 0, "React Hook \\"useState\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "5"],
-      [0, 0, 0, "React Hook \\"useState\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "6"],
-      [0, 0, 0, "React Hook \\"useState\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "7"]
-    ],
     "packages/grafana-runtime/src/utils/userStorage.tsx:5381": [
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "0"],
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "1"],
@@ -2358,10 +2348,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
-    "public/app/features/datasources/components/EditDataSource.test.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useEffect\\" is called in function \\"component\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
-      [0, 0, 0, "React Hook \\"useEffect\\" is called in function \\"component\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"]
-    ],
     "public/app/features/datasources/components/picker/DataSourceCard.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -2940,9 +2926,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/features/transformers/editors/OrganizeFieldsTransformerEditor.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useStyles2\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
     ],
     "public/app/features/transformers/editors/ReduceTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
