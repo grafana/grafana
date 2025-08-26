@@ -2781,6 +2781,7 @@
           "time": "Time"
         }
       },
+      "error-message-prefix": "Error message:",
       "filter-group": "Filter group",
       "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
@@ -12479,6 +12480,8 @@
     },
     "title": "Preferences"
   },
+  "show-less": "Show less",
+  "show-more": "Show more",
   "sign-up": {
     "back-button": "Back to login",
     "confirm-password-label": "Confirm password",
