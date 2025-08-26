@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -18,29 +18,31 @@ import { TabItem } from './TabItem';
 
 export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
+  const titleId = useId();
+  const repeatId = useId();
 
   const tabCategory = useMemo(
     () =>
       new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-          id: 'tab-options-title',
+          id: titleId,
           render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
         })
       ),
-    [model, isNewElement]
+    [model, titleId, isNewElement]
   );
 
   const repeatCategory = useMemo(
     () =>
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.tabs-layout.tab-options.repeat.title', 'Repeat options'),
-        id: 'repeat-options',
+        id: repeatId + '-category',
         isOpenDefault: false,
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.repeat.variable.title', 'Repeat by variable'),
-          id: 'tab-options-repeat-variable',
+          id: repeatId + '-variable',
           description: t(
             'dashboard.tabs-layout.tab-options.repeat.variable.description',
             'Repeat this tab for each value in the selected variable.'
@@ -48,7 +50,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
           render: (descriptor) => <TabRepeatSelect id={descriptor.props.id} tab={model} />,
         })
       ),
-    [model]
+    [model, repeatId]
   );
 
   const layoutCategory = useLayoutCategory(layout);

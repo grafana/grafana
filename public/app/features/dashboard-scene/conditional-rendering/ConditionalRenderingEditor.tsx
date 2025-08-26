@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Tooltip } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -25,6 +27,8 @@ export function useConditionalRenderingEditor(
   disabledText?: string
 ): OptionsPaneCategoryDescriptor {
   const title = t('dashboard.conditional-rendering.root.title', 'Show / hide rules');
+  const categoryId = useId();
+  const itemId = useId();
 
   const conditionalRenderingToRender = conditionalRendering ?? getPlaceholderConditionalRendering();
 
@@ -37,7 +41,7 @@ export function useConditionalRenderingEditor(
           'dashboard.conditional-rendering.editor.unsupported-item-type',
           'Conditional rendering not supported for this item type'
         )),
-    id: 'conditional-rendering-options',
+    id: categoryId,
     renderTitle: () => (
       <Stack direction="row" gap={1} alignItems="center">
         <div>{title}</div>
@@ -54,7 +58,7 @@ export function useConditionalRenderingEditor(
   }).addItem(
     new OptionsPaneItemDescriptor({
       title,
-      id: 'conditional-rendering-options-item',
+      id: itemId,
       render: () => <conditionalRenderingToRender.Component model={conditionalRenderingToRender} />,
     })
   );

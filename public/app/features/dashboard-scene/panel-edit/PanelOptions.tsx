@@ -13,7 +13,7 @@ import {
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
-import { getPanelFrameOptions } from './getPanelFrameOptions';
+import { usePanelFrameOptions } from './getPanelFrameOptions';
 
 interface Props {
   panel: VizPanel;
@@ -25,7 +25,7 @@ interface Props {
 export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
-  const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
+  const panelFrameOptions = usePanelFrameOptions(panel);
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
