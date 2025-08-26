@@ -30,7 +30,7 @@ For additional information, refer to [Grafana-managed recording rules](https://g
 1. In Grafana, go to **Alerts & IRM** > **Alerting** > **Alert rules**. 
 1. From the **More+** menu, select **New Grafana recording rule**.
 
-1. Enter recording rule and metric name.
+1. Enter a recording rule and metric name.
 
     - In the **New recording rule** window, configure the following:
 
