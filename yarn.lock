@@ -3056,9 +3056,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.0.14":
-  version: 0.0.14
-  resolution: "@grafana/assistant@npm:0.0.14"
+"@grafana/assistant@npm:0.0.16":
+  version: 0.0.16
+  resolution: "@grafana/assistant@npm:0.0.16"
   peerDependencies:
     "@grafana/data": ">=12.1.0"
     "@grafana/runtime": ">=12.1.0"
@@ -3066,7 +3066,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/3e85effd69494b023d395940f5f926da1d2868850db613581d7b2f398e8f00fe07339fdb6fa12b3029603cd394d012104f187f2fd2fcb85196dac72cd6e072df
+  checksum: 10/8482e09d3e86a865a8cf90908ae1438317b994798b5bf5d1a2369154b786e1ba20f30e208d48bed249c8427f11f87307b338c5307a8cb5143cffb2ef02050847
   languageName: node
   linkType: hard
 
@@ -3171,9 +3171,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:8.0.0":
-  version: 8.0.0
-  resolution: "@grafana/eslint-config@npm:8.0.0"
+"@grafana/eslint-config@npm:8.2.0":
+  version: 8.2.0
+  resolution: "@grafana/eslint-config@npm:8.2.0"
   peerDependencies:
     "@stylistic/eslint-plugin-ts": ">=2.9.0"
     "@typescript-eslint/eslint-plugin": ">=6.18.0"
@@ -3184,7 +3184,7 @@ __metadata:
     eslint-plugin-react: ">=7.33.0"
     eslint-plugin-react-hooks: ">=4.6.0"
     typescript: ">=5.2.0"
-  checksum: 10/b9a875d9e157eff1212cbd2648f18a1b04ebdd2bbea7d13ecb63d5b441fb3f550aa452eccdbf3ccadedd25996e6fb33cba615e3dfdd21ce9e00b505287a51dc4
+  checksum: 10/ba006bf69401678be446901d1e35e121f0a220181798bc873b123112206b5544dc86c2f69fd401a57d38ba5427926ceaea651d7e3025e41a497787cacbb4ec0b
   languageName: node
   linkType: hard
 
@@ -3586,11 +3586,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.30.0":
-  version: 6.30.1
-  resolution: "@grafana/scenes-react@npm:6.30.1"
+"@grafana/scenes-react@npm:6.30.4":
+  version: 6.30.4
+  resolution: "@grafana/scenes-react@npm:6.30.4"
   dependencies:
-    "@grafana/scenes": "npm:6.30.1"
+    "@grafana/scenes": "npm:6.30.4"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3602,13 +3602,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/695c61665f38f09f6b49552a32caf1fbe6a3209d9df7039fd9110dcbda9e2031e41d53b7e471021e779bee78f8f27a3978fed96f9e70a07f2157e25f96a81937
+  checksum: 10/47a447459e0e432db40ebb8cbe9dbae24d4f94d6c558e53bc0ef79f21f91d219650af97fa7c9f5bcbf5ef09f34de900d6db69f22bd897465371ec9fc696f68b1
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.30.1, @grafana/scenes@npm:^6.30.0":
-  version: 6.30.1
-  resolution: "@grafana/scenes@npm:6.30.1"
+"@grafana/scenes@npm:6.30.4":
+  version: 6.30.4
+  resolution: "@grafana/scenes@npm:6.30.4"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3628,7 +3628,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/6c50a31330ecb674de6664d6e119e54dee7ecee50925a71870c0a08562e4b3d5614e56e34008d6710e65ef03a8220ba2e9d811804b8a001392de46ef745a2e75
+  checksum: 10/7a05dc8e8a01cc3b92e0a02b0a8d3fd0af2cf420840dd25daf5939d22669212cd96a7d91bf1caf7fbae3a5530ace519c730141664fac17220869117d4ccbec0a
   languageName: node
   linkType: hard
 
@@ -16344,12 +16344,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-hooks@npm:5.1.0":
-  version: 5.1.0
-  resolution: "eslint-plugin-react-hooks@npm:5.1.0"
+"eslint-plugin-react-hooks@npm:5.2.0":
+  version: 5.2.0
+  resolution: "eslint-plugin-react-hooks@npm:5.2.0"
   peerDependencies:
     eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
-  checksum: 10/b6778fd9e1940b06868921309e8b269426e17eda555816d4b71def4dcf0572de1199fdb627ac09ce42160b9569a93cd9b0fd81b740ab4df98205461c53997a43
+  checksum: 10/ebb79e9cf69ae06e3a7876536653c5e556b5fd8cd9dc49577f10a6e728360e7b6f5ce91f4339b33e93b26e3bb23805418f8b5e75db80baddd617b1dffe73bed1
   languageName: node
   linkType: hard
 
@@ -18299,12 +18299,12 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/assistant": "npm:0.0.14"
+    "@grafana/assistant": "npm:0.0.16"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": "npm:8.0.0"
+    "@grafana/eslint-config": "npm:8.2.0"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/faro-core": "npm:^1.19.0"
     "@grafana/faro-web-sdk": "npm:^1.19.0"
@@ -18320,8 +18320,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.9"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.30.0"
-    "@grafana/scenes-react": "npm:^6.30.0"
+    "@grafana/scenes": "npm:6.30.4"
+    "@grafana/scenes-react": "npm:6.30.4"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18471,7 +18471,7 @@ __metadata:
     eslint-plugin-lodash: "npm:8.0.0"
     eslint-plugin-no-barrel-files: "npm:^1.1.1"
     eslint-plugin-react: "npm:7.37.5"
-    eslint-plugin-react-hooks: "npm:5.1.0"
+    eslint-plugin-react-hooks: "npm:5.2.0"
     eslint-plugin-testing-library: "npm:^7.0.0"
     eslint-plugin-unicorn: "npm:^56.0.0"
     eslint-scope: "npm:^8.1.0"

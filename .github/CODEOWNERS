@@ -58,7 +58,6 @@
 /go.sum @grafana/grafana-backend-group
 /go.work @grafana/grafana-app-platform-squad
 /go.work.sum @grafana/grafana-app-platform-squad
-/.bingo/ @grafana/grafana-backend-group
 /.citools @grafana/grafana-developer-enablement-squad
 /pkg/README.md @grafana/grafana-backend-group
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
@@ -677,7 +676,6 @@
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /packages/grafana-schema/src/**/parca @grafana/oss-big-tent
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
-/packages/grafana-schema/src/**/publicdashboard @grafana/grafana-operator-experience-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad

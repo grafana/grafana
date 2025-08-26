@@ -3,8 +3,11 @@ package webhooks
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
+
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -15,16 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -34,10 +33,19 @@ type WebhookExtraBuilder struct {
 	provisioningapis.ExtraBuilder
 }
 
+// HACK: assume that the URL is public if it starts with "https://" and does not contain any local IP ranges
+func isPublicURL(url string) bool {
+	return strings.HasPrefix(url, "https://") &&
+		!strings.Contains(url, "localhost") &&
+		!strings.HasPrefix(url, "https://127.") &&
+		!strings.HasPrefix(url, "https://192.") &&
+		!strings.HasPrefix(url, "https://10.") &&
+		!strings.HasPrefix(url, "https://172.16.")
+}
+
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	repositorySecrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -48,8 +56,8 @@ func ProvideWebhooks(
 			urlProvider := func(_ string) string {
 				return cfg.AppURL
 			}
-			// HACK: Assume is only public if it is HTTPS
-			isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
+			isPublic := isPublicURL(urlProvider(""))
 			clients := resources.NewClientFactory(configProvider)
 			parsers := resources.NewParserFactory(clients)
 
@@ -69,11 +77,10 @@ func ProvideWebhooks(
 				render,
 				webhook,
 				urlProvider,
-				repositorySecrets,
 				ghFactory,
-				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
 				[]jobs.Worker{pullRequestWorker},
+				isPublic, // Pass the public URL flag
 			)
 		},
 	}
@@ -85,32 +92,29 @@ type WebhookExtra struct {
 	render      *renderConnector
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
-	secrets     secrets.RepositorySecrets
 	ghFactory   *github.Factory
-	clonedir    string
 	parsers     resources.ParserFactory
 	workers     []jobs.Worker
+	isPublic    bool // Flag to determine if webhook-enhanced repositories should be created
 }
 
 func NewWebhookExtra(
 	render *renderConnector,
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
-	secrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
-	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
+	isPublic bool,
 ) *WebhookExtra {
 	return &WebhookExtra{
 		render:      render,
 		webhook:     webhook,
 		urlProvider: urlProvider,
-		secrets:     secrets,
 		ghFactory:   ghFactory,
-		clonedir:    clonedir,
 		parsers:     parsers,
 		workers:     workers,
+		isPublic:    isPublic,
 	}
 }
 
@@ -126,9 +130,7 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 
 // Mutators returns the mutators for the webhook extra
 func (e *WebhookExtra) Mutators() []controller.Mutator {
-	return []controller.Mutator{
-		Mutator(e.secrets),
-	}
+	return nil
 }
 
 // UpdateStorage updates the storage with both render and webhook connectors
@@ -154,8 +156,9 @@ func (e *WebhookExtra) GetJobWorkers() []jobs.Worker {
 }
 
 // AsRepository delegates repository creation to the webhook connector
-func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	if r.Spec.Type == provisioning.GitHubRepositoryType {
+func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Repository, secure repository.SecureValues) (repository.Repository, error) {
+	// Only handle GitHub repositories with webhooks if URL is public
+	if r.Spec.Type == provisioning.GitHubRepositoryType && e.isPublic {
 		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 		webhookURL := fmt.Sprintf(
 			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
@@ -175,41 +178,44 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 		}
 
 		// Decrypt GitHub token if needed
-		ghToken := ghCfg.Token
-		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := e.secrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
-			}
-			ghToken = string(decrypted)
+		ghToken, err := secure.Token(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt github token: %w", err)
+		}
+		webhookSecret, err := secure.WebhookSecret(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 		}
 
 		gitCfg := git.RepositoryConfig{
-			URL:            ghCfg.URL,
-			Branch:         ghCfg.Branch,
-			Path:           ghCfg.Path,
-			Token:          ghToken,
-			EncryptedToken: ghCfg.EncryptedToken,
+			URL:    ghCfg.URL,
+			Branch: ghCfg.Branch,
+			Path:   ghCfg.Path,
+			Token:  ghToken,
 		}
 
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, e.secrets)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken, e.secrets)
+		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}
 
-		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets), nil
+		return NewGithubWebhookRepository(basicRepo, webhookURL, webhookSecret), nil
 	}
 
 	return nil, nil
 }
 
 func (e *WebhookExtra) RepositoryTypes() []provisioning.RepositoryType {
-	return []provisioning.RepositoryType{
-		provisioning.GitHubRepositoryType,
+	// Only claim to handle GitHub repositories if URL is public
+	if e.isPublic {
+		return []provisioning.RepositoryType{
+			provisioning.GitHubRepositoryType,
+		}
 	}
+	return []provisioning.RepositoryType{}
 }

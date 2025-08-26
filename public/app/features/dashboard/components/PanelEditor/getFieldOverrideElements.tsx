@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   FieldConfigOptionsRegistry,
@@ -60,7 +59,13 @@ export function getFieldOverrideCategories(
       ...currentFieldConfig,
       overrides: [
         ...currentFieldConfig.overrides,
-        { matcher: { id: info.id, options: info.defaultOptions }, properties: [] },
+        {
+          matcher: {
+            id: info.id,
+            options: info.defaultOptions,
+          },
+          properties: [],
+        },
       ],
     });
   };
@@ -104,12 +109,18 @@ export function getFieldOverrideCategories(
     });
 
     const onMatcherConfigChange = (options: unknown) => {
-      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, options } });
+      onOverrideChange(idx, {
+        ...override,
+        matcher: { ...override.matcher, options },
+      });
     };
 
     const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {
       const registryItem = registry.get(value.value!);
-      const propertyConfig: DynamicConfigValue = { id: registryItem.id, value: registryItem.defaultValue };
+      const propertyConfig: DynamicConfigValue = {
+        id: registryItem.id,
+        value: registryItem.defaultValue,
+      };
 
       const properties = override.properties ?? [];
       properties.push(propertyConfig);
@@ -120,15 +131,13 @@ export function getFieldOverrideCategories(
     /**
      * Add override matcher UI element
      */
-    const htmlId = uuidv4();
     category.addItem(
       new OptionsPaneItemDescriptor({
-        id: htmlId,
         title: matcherUi.name,
         render: function renderMatcherUI() {
           return (
             <matcherUi.component
-              id={htmlId}
+              id={`${matcherUi.matcher.id}-${idx}`}
               matcher={matcherUi.matcher}
               data={data ?? []}
               options={override.matcher.options}
@@ -164,7 +173,10 @@ export function getFieldOverrideCategories(
       };
 
       const onPropertyRemove = () => {
-        onOverrideChange(idx, { ...override, properties: override.properties.filter((_, i) => i !== propIdx) });
+        onOverrideChange(idx, {
+          ...override,
+          properties: override.properties.filter((_, i) => i !== propIdx),
+        });
       };
 
       /**
@@ -172,6 +184,7 @@ export function getFieldOverrideCategories(
        */
       category.addItem(
         new OptionsPaneItemDescriptor({
+          title: registryItemForProperty.name,
           skipField: true,
           render: function renderPropertyEditor() {
             return (
@@ -197,6 +210,7 @@ export function getFieldOverrideCategories(
     if (!isSystemOverride && override.matcher.options) {
       category.addItem(
         new OptionsPaneItemDescriptor({
+          title: '----------',
           skipField: true,
           render: function renderAddPropertyButton() {
             return (
@@ -260,7 +274,11 @@ function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
       if (item.category) {
         label = [...item.category, item.name].join(' > ');
       }
-      return { label, value: item.id, description: item.description };
+      return {
+        label,
+        value: item.id,
+        description: item.description,
+      };
     });
 }
 
@@ -270,5 +288,9 @@ function AddOverrideButtonContainer({ children }: { children: React.ReactNode })
 }
 
 function getBorderTopStyles(theme: GrafanaTheme2) {
-  return css({ borderTop: `1px solid ${theme.colors.border.weak}`, padding: `${theme.spacing(2)}`, display: 'flex' });
+  return css({
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    padding: `${theme.spacing(2)}`,
+    display: 'flex',
+  });
 }

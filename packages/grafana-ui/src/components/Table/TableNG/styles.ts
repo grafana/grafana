@@ -7,10 +7,7 @@ import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
 import { getJustifyContent, TextAlign } from './utils';
 
-export const getGridStyles = (
-  theme: GrafanaTheme2,
-  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
-) => {
+export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
@@ -91,19 +88,6 @@ export const getGridStyles = (
       color: theme.colors.text.secondary,
       fontSize: theme.typography.h4.fontSize,
     }),
-    cellActions: css({
-      display: 'none',
-      position: 'absolute',
-      top: 0,
-      margin: 'auto',
-      height: '100%',
-      color: theme.colors.text.primary,
-      background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-      padding: theme.spacing.x0_5,
-      paddingInlineStart: theme.spacing.x1,
-    }),
-    cellActionsEnd: css({ left: 0 }),
-    cellActionsStart: css({ right: 0 }),
     headerRow: css({
       paddingBlockStart: 0,
       fontWeight: 'normal',
@@ -159,6 +143,20 @@ export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, should
         minWidth: 'fit-content',
       }),
     },
+  });
+
+export const getCellActionStyles = (theme: GrafanaTheme2, textAlign: TextAlign) =>
+  css({
+    display: 'none',
+    position: 'absolute',
+    top: 0,
+    margin: 'auto',
+    height: '100%',
+    color: theme.colors.text.primary,
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    padding: theme.spacing.x0_5,
+    paddingInlineStart: theme.spacing.x1,
+    [textAlign === 'right' ? 'left' : 'right']: 0,
   });
 
 export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>

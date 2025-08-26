@@ -9,7 +9,7 @@ replace github.com/docker/docker => github.com/moby/moby v27.5.1+incompatible
 
 require (
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
-	github.com/urfave/cli/v2 v2.27.6 // @grafana/grafana-backend-group
+	github.com/urfave/cli/v2 v2.27.7 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel v1.37.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.37.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect; @grafana/grafana-backend-group
@@ -21,7 +21,7 @@ require (
 )
 
 require (
-	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/go-logr/logr v1.4.3 // indirect; @grafana/grafana-app-platform-squad
 	github.com/go-logr/stdr v1.2.2 // indirect

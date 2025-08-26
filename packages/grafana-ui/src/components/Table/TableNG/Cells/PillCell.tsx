@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import {
   GrafanaTheme2,
   classicColors,
-  colorManipulator,
   Field,
   getColorByStringHash,
   FALLBACK_COLOR,
@@ -14,12 +13,23 @@ import { FieldColorModeId } from '@grafana/schema';
 
 import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
 
-export function PillCell({ rowIdx, field, theme }: PillCellProps) {
+export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
   const value = field.values[rowIdx];
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
-    return pillValues.length > 0 ? createPills(pillValues, field, theme) : [];
-  }, [value, field, theme]);
+    return pillValues.length > 0
+      ? pillValues.map((pill, index) => {
+          const bgColor = getPillColor(pill, field, theme);
+          const textColor = getTextColorForBackground(bgColor);
+          return {
+            value: String(pill),
+            key: `${pill}-${index}`,
+            bgColor,
+            color: textColor,
+          };
+        })
+      : [];
+  }, [value, field, theme, getTextColorForBackground]);
 
   if (pills.length === 0) {
     return null;
@@ -49,20 +59,7 @@ interface Pill {
 const SPLIT_RE = /\s*,\s*/;
 const TRANSPARENT = 'rgba(0,0,0,0)';
 
-function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): Pill[] {
-  return pillValues.map((pill, index) => {
-    const bgColor = getPillColor(pill, field, theme);
-    const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
-    return {
-      value: pill,
-      key: `${pill}-${index}`,
-      bgColor,
-      color: textColor,
-    };
-  });
-}
-
-export function inferPills(rawValue: TableCellValue): string[] {
+export function inferPills(rawValue: TableCellValue): unknown[] {
   if (rawValue === '' || rawValue == null) {
     return [];
   }
@@ -81,7 +78,7 @@ export function inferPills(rawValue: TableCellValue): string[] {
 }
 
 // FIXME: this does not yet support "shades of a color"
-function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string {
+function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): string {
   const cfg = field.config;
 
   if (cfg.mappings?.length ?? 0 > 0) {
@@ -101,7 +98,7 @@ function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string
     }
   }
 
-  return getColorByStringHash(colors, value);
+  return getColorByStringHash(colors, String(value));
 }
 
 export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow }) =>
