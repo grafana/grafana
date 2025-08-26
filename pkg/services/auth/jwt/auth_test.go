@@ -15,6 +15,7 @@ import (
 
 	jose "github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -165,6 +166,201 @@ func TestIntegrationVerifyUsingJWKSetURL(t *testing.T) {
 	jwkHTTPScenario(t, "rejects a token signed with a key not from the set", func(t *testing.T, sc scenarioContext) {
 		token := sign(t, jwKeys[2], jwt.Claims{Subject: subject}, nil)
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.Error(t, err)
+	})
+}
+
+// test that caCert and bearer token files have been read and configured and an error is thrown when the file does not exist or is empty
+func TestIntegrationCustomRootCAJWKHTTPSClient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	urlConfigure := func(t *testing.T, cfg *setting.Cfg) {
+		cfg.JWTAuth.JWKSetURL = "https://example.com/.well-known/jwks.json"
+	}
+
+	t.Run("tls_client_ca being empty returns nil RootCAs", func(t *testing.T) {
+		s, err := initAuthService(t, urlConfigure)
+		require.NoError(t, err)
+
+		ks := s.keySet.(*keySetHTTP)
+		assert.Nil(t, ks.client.Transport.(*http.Transport).TLSClientConfig.RootCAs)
+	})
+
+	t.Run("tls_client_ca path is read and added to client.RootCAs", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			caFilename := createTestRootCAFile(t)
+			t.Cleanup(func() {
+				if err := os.Remove(caFilename); err != nil {
+					panic(err)
+				}
+			})
+
+			cfg.JWTAuth.TlsClientCa = caFilename
+		}
+
+		s, err := initAuthService(t, urlConfigure, configure)
+		require.NoError(t, err)
+
+		ks := s.keySet.(*keySetHTTP)
+		rootCAs := ks.client.Transport.(*http.Transport).TLSClientConfig.RootCAs
+		assert.NotNil(t, rootCAs)
+	})
+
+	t.Run("error when tls_client_ca file does not exist", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			// Create and remove tmp file to guarantee the path does not exist
+			file, err := os.CreateTemp(os.TempDir(), "ca-*.crt")
+			require.NoError(t, err)
+			require.NoError(t, os.Remove(file.Name()))
+
+			cfg.JWTAuth.TlsClientCa = file.Name()
+		}
+
+		_, err := initAuthService(t, urlConfigure, configure)
+		require.Error(t, err)
+	})
+
+	t.Run("error when tls_client_ca path does not contain PEM certs", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			file, err := os.CreateTemp(os.TempDir(), "ca-*.crt")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				if err := os.Remove(file.Name()); err != nil {
+					panic(err)
+				}
+			})
+
+			cfg.JWTAuth.TlsClientCa = file.Name()
+		}
+
+		_, err := initAuthService(t, urlConfigure, configure)
+		require.Error(t, err)
+	})
+}
+
+func TestIntegrationAuthorizationHeaderJWKHTTPSClient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	urlConfigure := func(t *testing.T, cfg *setting.Cfg) {
+		cfg.JWTAuth.JWKSetURL = "https://example.com/.well-known/jwks.json"
+	}
+
+	t.Run("jwk_set_bearer_token_file being empty returns no token", func(t *testing.T) {
+		_, err := initAuthService(t, urlConfigure)
+		require.NoError(t, err)
+
+		token, err := getBearerToken("")
+		assert.Empty(t, token)
+		assert.Error(t, err) // Error is expected as getBearerToken is only invoked when bearer token file is configured
+	})
+
+	t.Run("jwk_set_bearer_token_file is read and added to headers", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			file, err := os.CreateTemp(os.TempDir(), "token-*")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				if err := os.Remove(file.Name()); err != nil {
+					panic(err)
+				}
+			})
+
+			_, err = file.WriteString("fake_token_string")
+			require.NoError(t, err)
+
+			cfg.JWTAuth.JWKSetBearerTokenFile = file.Name()
+		}
+
+		s, err := initAuthService(t, urlConfigure, configure)
+		require.NoError(t, err)
+
+		token, err := getBearerToken(s.keySet.(*keySetHTTP).bearerTokenPath)
+		assert.Equal(t, "Bearer fake_token_string", token, "Token should have been prefixed with 'Bearer '")
+		assert.NoError(t, err)
+	})
+
+	t.Run("jwk_set_bearer_token_file prefix is not doubled", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			file, err := os.CreateTemp(os.TempDir(), "token-*")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				if err := os.Remove(file.Name()); err != nil {
+					panic(err)
+				}
+			})
+
+			_, err = file.WriteString("Bearer fake_token_string")
+			require.NoError(t, err)
+
+			cfg.JWTAuth.JWKSetBearerTokenFile = file.Name()
+		}
+
+		s, err := initAuthService(t, urlConfigure, configure)
+		require.NoError(t, err)
+
+		token, err := getBearerToken(s.keySet.(*keySetHTTP).bearerTokenPath)
+		assert.Equal(t, "Bearer fake_token_string", token, "Token should have kept existing prefix")
+		assert.NoError(t, err)
+	})
+
+	t.Run("jwk_set_bearer_token_file file is just spaces", func(t *testing.T) {
+		// Create file outside 'configure' as getBearerToken needs to know the path
+		// As initAuthService returns an error when token is missing
+		file, err := os.CreateTemp(os.TempDir(), "token-*")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			if err := os.Remove(file.Name()); err != nil {
+				panic(err)
+			}
+		})
+
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			_, err = file.WriteString("       ")
+			require.NoError(t, err)
+
+			cfg.JWTAuth.JWKSetBearerTokenFile = file.Name()
+		}
+
+		s, err := initAuthService(t, urlConfigure, configure)
+		require.Nil(t, s.keySet)
+		require.Error(t, err)
+
+		token, err := getBearerToken(file.Name())
+		assert.Equal(t, "", token, "Should return an empty token")
+		assert.Error(t, err)
+	})
+
+	t.Run("error when jwk_set_bearer_token_file does not exist", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			// Create and remove tmp file to guarantee the path does not exist
+			file, err := os.CreateTemp(os.TempDir(), "token-*")
+			require.NoError(t, err)
+			require.NoError(t, os.Remove(file.Name()))
+
+			cfg.JWTAuth.JWKSetBearerTokenFile = file.Name()
+		}
+
+		_, err := initAuthService(t, urlConfigure, configure)
+		require.Error(t, err)
+	})
+
+	t.Run("error when jwk_set_bearer_token_file does not contain a token", func(t *testing.T) {
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			file, err := os.CreateTemp(os.TempDir(), "token-*")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				if err := os.Remove(file.Name()); err != nil {
+					panic(err)
+				}
+			})
+
+			cfg.JWTAuth.JWKSetBearerTokenFile = file.Name()
+		}
+
+		_, err := initAuthService(t, urlConfigure, configure)
 		require.Error(t, err)
 	})
 }
@@ -464,4 +660,16 @@ func configurePKIXPublicKeyFile(t *testing.T, cfg *setting.Cfg) {
 	require.NoError(t, file.Close())
 
 	cfg.JWTAuth.KeyFile = file.Name()
+}
+
+func createTestRootCAFile(t *testing.T) (filename string) {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+	ca := testcerts.NewCA()
+
+	caCertFile, _, err := ca.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	return caCertFile.Name()
 }

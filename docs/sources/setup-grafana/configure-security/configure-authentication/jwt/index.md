@@ -157,12 +157,23 @@ For more information on JWKS endpoints, refer to [Auth0 docs](https://auth0.com/
 
 jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
 
-# Cache TTL for data loaded from http endpoint.
+# When the JWKS url requires an 'Authorization: Bearer <TOKEN>' header
+# jwk_set_bearer_token_file = /path/to/bearer_token
+
+# Cache duration for https endpoint response.
 cache_ttl = 60m
+
+# Path to file containing one or more custom PEM-encoded CA certificates.
+# Used with jwk_set_url when the JWKS endpoint uses a certificate that is not
+# trusted by the default CA bundle (e.g. self-signed certificates).
+# tls_client_ca = /path/to/ca.crt
+
+# Skip CA Verification entirely
+# tls_skip_verify_insecure = false
 ```
 
 {{< admonition type="note" >}}
-If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the `cache_ttl` is not set, no caching is performed. `no-store` and `no-cache` cache control headers are ignored.
+If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the `cache_ttl` is not set, the default of `60m` is used. `no-store` and `no-cache` cache control headers are ignored. To disable JWKS caching, set `cache_ttl = 0s`
 {{< /admonition >}}
 
 ### Verify token using a JSON Web Key Set loaded from JSON file
