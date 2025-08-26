@@ -108,6 +108,13 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     [query, onUpdateQuery]
   );
 
+  const onAdHocFiltersToggle = useCallback(() => {
+    onUpdateQuery({
+      ...query,
+      useAdHocFilters: !query.useAdHocFilters,
+    });
+  }, [query, onUpdateQuery]);
+
   const isMixedDSWithDashboardQueries = (panel: PanelModel) => {
     return (
       panel.datasource?.uid === MIXED_DATASOURCE_NAME &&
@@ -195,6 +202,12 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
           {showTransforms && (
             <Field label="Transform" description="Apply transformations from the source panel">
               <InlineSwitch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
+            </Field>
+          )}
+
+          {config.featureToggles.dashboardDsAdHocFiltering && (
+            <Field label="AdHoc Filters" description="Allow dashboard adhoc filters to affect this panel">
+              <InlineSwitch value={Boolean(query.useAdHocFilters)} onChange={onAdHocFiltersToggle} />
             </Field>
           )}
         </Stack>
