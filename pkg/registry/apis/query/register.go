@@ -179,9 +179,11 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	storage := map[string]rest.Storage{}
 
 	// Get a list of all datasource instances
-	// Eventually this would be backed either by search or reconciler pattern
-	storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
-		connections: b.connections,
+	if b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		// Eventually this would be backed either by search or reconciler pattern
+		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
+			connections: b.connections,
+		}
 	}
 
 	plugins := newPluginsStorage(b.registry)
