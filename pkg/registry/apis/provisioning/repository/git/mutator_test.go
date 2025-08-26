@@ -11,7 +11,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-func TestMutator(t *testing.T) {
+func TestMutate(t *testing.T) {
 	tests := []struct {
 		name          string
 		obj           runtime.Object
@@ -147,9 +147,7 @@ func TestMutator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mutator := Mutator()
-			err := mutator(context.Background(), tt.obj)
-
+			err := Mutate(context.Background(), tt.obj)
 			if tt.expectedError != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)

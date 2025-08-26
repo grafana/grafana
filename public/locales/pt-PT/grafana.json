@@ -5223,6 +5223,9 @@
       "save-json-to-file": "Guardar JSON no ficheiro",
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre aprovisionamento."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "A carregar a configuração"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Alterar a visualização",
@@ -6134,9 +6140,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menu de partilha"
-    },
-    "solo-panel-page": {
-      "loading": "A carregar"
     },
     "support-snapshot-service": {
       "description": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "Mostrar contexto",
       "show-log-line": "Mostrar linha de registo",
       "sidebar-mode": "Ancorar à direita",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Retirar registo"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Não foi possível encontrar nada que corresponda à sua consulta"
     }
-  },
-  "panel-search": {
-    "no-matches": "Nenhuma correspondência encontrada",
-    "unsupported-layout": "Layout não suportado"
   },
   "panel-type-filter": {
     "clear-button": "Limpar tipos",

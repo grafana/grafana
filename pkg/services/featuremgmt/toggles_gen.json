@@ -1259,7 +1259,8 @@
       "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-02-17T00:59:11Z"
+        "creationTimestamp": "2024-02-17T00:59:11Z",
+        "deletionTimestamp": "2025-08-25T16:14:10Z"
       },
       "spec": {
         "description": "Enable new expression parser",
@@ -2667,12 +2668,15 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1753448760331",
+        "resourceVersion": "1755721444487",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-08-20 20:24:04.487598 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables Query Library feature in Explore",
+        "description": "Renamed feature toggle, enables Saved queries feature",
         "stage": "privatePreview",
         "codeowner": "@grafana/sharing-squad"
       }
@@ -2847,6 +2851,18 @@
         "description": "Enables the new role picker drawer design",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "savedQueries",
+        "resourceVersion": "1755721444487",
+        "creationTimestamp": "2025-08-20T20:24:04Z"
+      },
+      "spec": {
+        "description": "Enables Saved Queries feature",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {

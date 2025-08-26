@@ -34,8 +34,6 @@ var _ contracts.DecryptService = &GRPCDecryptClient{}
 
 type TLSConfig struct {
 	UseTLS             bool
-	CertFile           string
-	KeyFile            string
 	CAFile             string
 	ServerName         string
 	InsecureSkipVerify bool
@@ -89,14 +87,6 @@ func createTLSCredentials(config TLSConfig) (credentials.TransportCredentials, e
 			return nil, fmt.Errorf("failed to append CA")
 		}
 		tlsConfig.RootCAs = caCertPool
-	}
-
-	if config.CertFile != "" && config.KeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load client certificate: %w", err)
-		}
-		tlsConfig.Certificates = []tls.Certificate{cert}
 	}
 
 	if config.ServerName != "" {
