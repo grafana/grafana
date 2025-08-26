@@ -260,7 +260,7 @@ const ResourcePicker = ({
     async (filters: ResourceGraphFilters) => {
       try {
         setIsLoading(true);
-        const filteredRows = await resourcePickerData.fetchFiltered(queryType, filters);
+        const filteredRows = await resourcePickerData.fetchInitialRows(queryType, undefined, filters);
         setRows(filteredRows);
       } catch (error) {
         setErrorMessage(messageFromError(error));
