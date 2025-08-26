@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
-import { Fragment, memo, useEffect } from 'react';
+import { Fragment, memo, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -50,10 +50,32 @@ export const LogRecordViewerByTimestamp = memo(
 
     const groupedLines = groupRecordsByTimestamp(records);
 
-    const timestampRefs = new Map<number, HTMLElement>();
+    const [expandedErrorIds, setExpandedErrorIds] = useState<Record<string, boolean>>({});
+    const [isTruncatedById, setIsTruncatedById] = useState<Record<string, boolean>>({});
+    const errorMessageRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+    const timestampRefs = useRef<Map<number, HTMLElement>>(new Map());
     useEffect(() => {
-      onRecordsRendered && onRecordsRendered(timestampRefs);
-    });
+      onRecordsRendered && onRecordsRendered(timestampRefs.current);
+    }, [onRecordsRendered, records]);
+
+    // Re-measure truncation on resize
+    useEffect(() => {
+      const handleResize = () => {
+        const updates: Record<string, boolean> = {};
+        errorMessageRefs.current.forEach((el, id) => {
+          const truncated = el.scrollWidth > el.clientWidth;
+          updates[id] = truncated;
+        });
+        if (Object.keys(updates).length) {
+          setIsTruncatedById((prev) => ({ ...prev, ...updates }));
+        }
+      };
+      window.addEventListener('resize', handleResize);
+      // initial measure
+      handleResize();
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
       <ul
@@ -69,12 +91,25 @@ export const LogRecordViewerByTimestamp = memo(
               id={key.toString(10)}
               key={key}
               data-testid={key}
-              ref={(element) => element && timestampRefs.set(key, element)}
+              ref={(element) => {
+                if (element) {
+                  timestampRefs.current.set(key, element);
+                } else {
+                  timestampRefs.current.delete(key);
+                }
+              }}
               className={styles.listItemWrapper}
             >
               <Timestamp time={key} />
               {records.map(({ line }, idx) => {
                 const id = line.fingerprint ?? `${key}-${idx}`;
+                const errorText = line.error ?? '';
+                const isMultiline = errorText.includes('\n');
+                const isTruncated = Boolean(isTruncatedById[id]);
+                const isExpanded = Boolean(expandedErrorIds[id]);
+                const shouldShowToggle = isMultiline || isTruncated || isExpanded;
+                const isErrorRow =
+                  mapStateWithReasonToBaseState(line.current) === GrafanaAlertState.Error && Boolean(line.error);
                 return (
                   <Fragment key={id}>
                     <div className={styles.logsContainer}>
@@ -93,21 +128,49 @@ export const LogRecordViewerByTimestamp = memo(
                         )}
                       </div>
                     </div>
-                    {mapStateWithReasonToBaseState(line.current) === GrafanaAlertState.Error && line.error && (
+                    {isErrorRow && (
                       <div className={styles.errorRow} data-testid="state-history-error">
                         <Box
                           display="flex"
                           borderStyle="solid"
-                          borderColor="error"
-                          backgroundColor="error"
+                          borderColor="info"
+                          backgroundColor="info"
                           paddingY={1}
                           paddingX={2}
                           borderRadius="default"
                         >
-                          <Text variant="bodySmall">
-                            <strong>{t('alerting.state-history.error-message-prefix', 'Error message:')}</strong>{' '}
-                            {line.error}
-                          </Text>
+                          <div
+                            className={isExpanded ? styles.errorMessageExpanded : styles.errorMessageCollapsed}
+                            ref={(el) => {
+                              if (el) {
+                                errorMessageRefs.current.set(id, el);
+                                const truncated = el.scrollWidth > el.clientWidth;
+                                setIsTruncatedById((prev) =>
+                                  prev[id] === truncated ? prev : { ...prev, [id]: truncated }
+                                );
+                              } else {
+                                errorMessageRefs.current.delete(id);
+                              }
+                            }}
+                          >
+                            <Text variant="bodySmall">
+                              <strong>{t('alerting.state-history.error-message-prefix', 'Error message:')}</strong>{' '}
+                              {isExpanded ? errorText : (errorText.split('\n')[0] ?? '')}
+                            </Text>
+                          </div>
+                          {shouldShowToggle && (
+                            <div className={styles.errorToggleWrapper}>
+                              <button
+                                className={styles.errorToggleButton}
+                                onClick={() => setExpandedErrorIds((prev) => ({ ...prev, [id]: !prev[id] }))}
+                                aria-label={isExpanded ? t('show-less', 'Show less') : t('show-more', 'Show more')}
+                                aria-expanded={isExpanded}
+                                type="button"
+                              >
+                                {isExpanded ? t('show-less', 'Show less') : t('show-more', 'Show more')}
+                              </button>
+                            </div>
+                          )}
                         </Box>
                       </div>
                     )}
@@ -207,6 +270,41 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     marginTop: theme.spacing(0.5),
     display: 'block',
+  }),
+  errorMessageCollapsed: css({
+    // default wrapping for single-line
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '100%',
+    minWidth: 0,
+    flexGrow: 1,
+  }),
+  errorMessageExpanded: css({
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    minWidth: 0,
+    flexGrow: 1,
+  }),
+  errorToggleWrapper: css({
+    marginLeft: 'auto',
+    alignSelf: 'flex-start',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+  }),
+  errorToggleButton: css({
+    background: 'transparent',
+    border: 0,
+    padding: 0,
+    margin: 0,
+    color: theme.colors.text.link,
+    cursor: 'pointer',
+    ...theme.typography.bodySmall,
+    whiteSpace: 'nowrap',
+    display: 'inline-flex',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
   }),
   errorBox: css({
     display: 'contents',
