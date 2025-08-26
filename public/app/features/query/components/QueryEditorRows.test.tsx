@@ -185,7 +185,7 @@ describe('QueryEditorRows', () => {
 
     await waitFor(() => expect(onQueriesChangeMock).toHaveBeenCalled());
 
-    const updatedQueries = onQueriesChangeMock.mock.calls[0][0] as any[] as any[];
+    const updatedQueries = onQueriesChangeMock.mock.calls[0][0] as any[];
     expect(updatedQueries[0].defaultFromDS).toBe('yes');
     expect(getDefaultQuery).toHaveBeenCalledTimes(1);
   });
