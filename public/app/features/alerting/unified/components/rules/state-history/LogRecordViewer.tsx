@@ -6,12 +6,12 @@ import { Fragment, memo, useEffect } from 'react';
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Icon, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
 
 import { LogRecord, omitLabels } from './common';
-import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 type LogRecordViewerProps = {
   records: LogRecord[];
@@ -93,25 +93,24 @@ export const LogRecordViewerByTimestamp = memo(
                         )}
                       </div>
                     </div>
-                    {mapStateWithReasonToBaseState(line.current) === GrafanaAlertState.Error &&
-                      (line as any)?.error && (
-                        <div className={styles.errorRow} data-testid="state-history-error">
-                          <Box
-                            display="flex"
-                            borderStyle="solid"
-                            borderColor="error"
-                            backgroundColor="error"
-                            paddingY={1}
-                            paddingX={2}
-                            borderRadius="default"
-                          >
-                            <Text variant="bodySmall">
-                              <strong>{t('alerting.state-history.error-message-prefix', 'Error message:')}</strong>{' '}
-                              {(line as any).error}
-                            </Text>
-                          </Box>
-                        </div>
-                      )}
+                    {mapStateWithReasonToBaseState(line.current) === GrafanaAlertState.Error && line.error && (
+                      <div className={styles.errorRow} data-testid="state-history-error">
+                        <Box
+                          display="flex"
+                          borderStyle="solid"
+                          borderColor="error"
+                          backgroundColor="error"
+                          paddingY={1}
+                          paddingX={2}
+                          borderRadius="default"
+                        >
+                          <Text variant="bodySmall">
+                            <strong>{t('alerting.state-history.error-message-prefix', 'Error message:')}</strong>{' '}
+                            {line.error}
+                          </Text>
+                        </Box>
+                      </div>
+                    )}
                   </Fragment>
                 );
               })}

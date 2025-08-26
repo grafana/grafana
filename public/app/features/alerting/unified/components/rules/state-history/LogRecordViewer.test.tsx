@@ -37,7 +37,7 @@ describe('LogRecordViewerByTimestamp', () => {
     const records: LogRecord[] = [
       {
         timestamp: ts,
-        line: { current: 'Error (timeout)', previous: 'Pending', labels: { foo: 'bar' }, error: 'timeout' } as any,
+        line: { current: 'Error (timeout)', previous: 'Pending', labels: { foo: 'bar' }, error: 'timeout' },
       },
       { timestamp: ts, line: { current: 'Normal', previous: 'Alerting', labels: { foo: 'baz' } } },
       {
@@ -47,7 +47,7 @@ describe('LogRecordViewerByTimestamp', () => {
           previous: 'Pending',
           labels: { error: 'explicit message' },
           error: 'explicit message',
-        } as any,
+        },
       },
     ];
 
