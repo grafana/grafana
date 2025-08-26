@@ -355,7 +355,6 @@ func validRuleV1(t *testing.T) AlertRuleV1 {
 	}
 }
 
-
 func validRecordingRuleV1(t *testing.T) AlertRuleV1 {
 	t.Helper()
 	var (
@@ -376,14 +375,14 @@ func validRecordingRuleV1(t *testing.T) AlertRuleV1 {
 	err = yaml.Unmarshal([]byte("A"), &from)
 	require.NoError(t, err)
 	return AlertRuleV1{
-		Title:     title,
-		UID:       uid,
-		For:       forDuration,
-		Record:    &RecordV1{
+		Title: title,
+		UID:   uid,
+		For:   forDuration,
+		Record: &RecordV1{
 			Metric: metric,
-			From: from,
+			From:   from,
 		},
-		Data:      []QueryV1{{}},
+		Data: []QueryV1{{}},
 	}
 }
 
