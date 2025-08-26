@@ -1,5 +1,4 @@
 import { useId, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -19,13 +18,19 @@ import { RowItem } from './RowItem';
 
 export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
+  const rowCategoryId = useId();
+  const repeatCategoryId = useId();
+  const rowTitleId = useId();
+  const fillScreenId = useId();
+  const hideRowHeaderId = useId();
 
   const rowCategory = useMemo(
     () =>
-      new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
+      new OptionsPaneCategoryDescriptor({ title: '', id: rowCategoryId })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: rowTitleId,
             skipField: true,
             render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
@@ -33,30 +38,30 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
-            id: uuidv4(),
+            id: fillScreenId,
             render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
-            id: uuidv4(),
+            id: hideRowHeaderId,
             render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
           })
         ),
-    [model, isNewElement]
+    [rowCategoryId, rowTitleId, fillScreenId, hideRowHeaderId, model, isNewElement]
   );
 
   const repeatCategory = useMemo(
     () =>
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
-        id: 'repeat-options',
+        id: repeatCategoryId,
         isOpenDefault: false,
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
-          id: uuidv4(),
+          id: `${repeatCategoryId}-repeat-by-variable`,
           description: t(
             'dashboard.rows-layout.row-options.repeat.variable.description',
             'Repeat this row for each value in the selected variable.'
@@ -64,7 +69,7 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
           render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={model} />,
         })
       ),
-    [model]
+    [model, repeatCategoryId]
   );
 
   const layoutCategory = useLayoutCategory(layout);

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { RadioButtonGroup, Box } from '@grafana/ui';
@@ -45,24 +45,30 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   );
 }
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
+  const groupLayoutCategoryId = useId();
+  const groupLayoutId = useId();
+  const gridLayoutCategoryId = useId();
+  const gridLayoutId = useId();
+
   return useMemo(() => {
     const isGridLayout = layoutManager.descriptor.isGridLayout;
 
     const groupLayout = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.layout.common.group-layout', 'Group layout'),
-      id: 'group-layout-category',
+      id: groupLayoutCategoryId,
       isOpenDefault: false,
     });
 
     const gridLayout = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.layout.common.panel-layout', 'Panel layout'),
-      id: 'grid-layout-category',
+      id: gridLayoutCategoryId,
       isOpenDefault: false,
     });
 
     gridLayout.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
+        id: gridLayoutId,
         skipField: true,
         render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
       })
@@ -77,6 +83,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       groupLayout.addItem(
         new OptionsPaneItemDescriptor({
           title: '',
+          id: groupLayoutId,
           skipField: true,
           render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
         })
@@ -95,5 +102,5 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
     }
 
     return [groupLayout, gridLayout];
-  }, [layoutManager]);
+  }, [gridLayoutCategoryId, gridLayoutId, groupLayoutCategoryId, groupLayoutId, layoutManager]);
 }
