@@ -58,7 +58,7 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     };
 
     loadFavorites();
-  }, [config.featureToggles.favoriteDatasources]);
+  }, []);
 
   // Helper function to save favorites to storage
   const saveFavorites = useCallback(async (newFavorites: string[]) => {
