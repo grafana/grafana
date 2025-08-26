@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, IconButton, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { getModKey } from 'app/core/utils/browser';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
@@ -53,6 +55,18 @@ export const ScopesSelector = () => {
     deselectScope,
     getRecentScopes,
   } = scopesSelectorService;
+
+  // Keyboard shortcut for closing and applying
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // ctrl/cmd + enter
+      if (event.key === 'Enter' && event.metaKey) {
+        closeAndApply();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [closeAndApply]);
 
   const recentScopes = getRecentScopes();
 
@@ -116,7 +130,8 @@ export const ScopesSelector = () => {
 
             <div className={styles.buttonsContainer}>
               <Button variant="primary" data-testid="scopes-selector-apply" onClick={closeAndApply}>
-                <Trans i18nKey="scopes.selector.apply">Apply</Trans>
+                <Trans i18nKey="scopes.selector.apply">Apply</Trans>&nbsp;
+                <Text variant="bodySmall">{`${getModKey()}+↵`}</Text>
               </Button>
               <Button variant="secondary" data-testid="scopes-selector-cancel" onClick={closeAndReset}>
                 <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>
