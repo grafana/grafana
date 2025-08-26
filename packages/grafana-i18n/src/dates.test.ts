@@ -44,6 +44,6 @@ describe('grafana-i18n dates', () => {
     });
 
     expect(result).toContain('2025-08-24'); // YYY-MM-DD
-    expect(result).toBe('20:34'); // 24 hour time
+    expect(result).toContain('20:34'); // 24 hour time
   });
 });
