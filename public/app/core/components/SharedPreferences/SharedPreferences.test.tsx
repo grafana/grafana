@@ -5,7 +5,7 @@ import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionIn
 
 import { config } from '@grafana/runtime';
 
-import { PreferencesSpec as UserPreferencesDTO } from '../../services/PreferencesService';
+import { PreferencesSpec as UserPreferencesDTO } from '../../../features/preferences/api/user/endpoints.gen';
 
 import SharedPreferences from './SharedPreferences';
 

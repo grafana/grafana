@@ -1,6 +1,4 @@
-import type { PreferencesSpec } from '../../features/preferences/api/user/endpoints.gen';
-
-export type { PreferencesSpec };
+import { PreferencesSpec } from '../../features/preferences/api/user/endpoints.gen';
 
 import { backendSrv } from './backend_srv';
 

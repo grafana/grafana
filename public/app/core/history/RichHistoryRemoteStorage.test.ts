@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { PreferencesSpec } from '../services/PreferencesService';
+import { PreferencesSpec as UserPreferencesDTO } from '../../features/preferences/api/user/endpoints.gen';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
@@ -188,7 +188,7 @@ describe('RichHistoryRemoteStorage', () => {
       queryHistory: {
         homeTab: 'starred',
       },
-    } as PreferencesSpec);
+    } as UserPreferencesDTO);
     const settings = await storage.getSettings();
     expect(settings).toMatchObject({
       activeDatasourcesOnly: false,
@@ -203,7 +203,7 @@ describe('RichHistoryRemoteStorage', () => {
       queryHistory: {
         homeTab: '',
       },
-    } as PreferencesSpec);
+    } as UserPreferencesDTO);
     const settings = await storage.getSettings();
     expect(settings).toMatchObject({
       activeDatasourcesOnly: false,
@@ -222,7 +222,7 @@ describe('RichHistoryRemoteStorage', () => {
     });
     expect(preferencesServiceMock.patch).toHaveBeenCalledWith({
       queryHistory: { homeTab: 'query' },
-    } as Partial<PreferencesSpec>);
+    } as Partial<UserPreferencesDTO>);
 
     await storage.updateSettings({
       activeDatasourcesOnly: false,
@@ -232,7 +232,7 @@ describe('RichHistoryRemoteStorage', () => {
     });
     expect(preferencesServiceMock.patch).toHaveBeenCalledWith({
       queryHistory: { homeTab: 'starred' },
-    } as Partial<PreferencesSpec>);
+    } as Partial<UserPreferencesDTO>);
   });
 
   it('stars query history items', async () => {

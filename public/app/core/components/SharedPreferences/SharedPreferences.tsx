@@ -27,7 +27,7 @@ import { LOCALES } from 'app/core/internationalization/locales';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
-import { PreferencesSpec as UserPreferencesDTO } from '../../services/PreferencesService';
+import { PreferencesSpec as UserPreferencesDTO } from '../../../features/preferences/api/user/endpoints.gen';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 export interface Props {
@@ -50,6 +50,8 @@ function getLanguageOptions(): ComboboxOption[] {
       return -1;
     }
 
+    // just a handfull of options, called once on mount. this is fine
+    // eslint-disable-next-line no-restricted-syntax
     return a.label.localeCompare(b.label);
   });
 
@@ -76,6 +78,8 @@ function getRegionalFormatOptions(): ComboboxOption[] {
     value: v.code,
     label: v.name,
   })).sort((a, b) => {
+    // just a handfull of options, called once on mount. this is fine
+    // eslint-disable-next-line no-restricted-syntax
     return a.label.localeCompare(b.label);
   });
 
