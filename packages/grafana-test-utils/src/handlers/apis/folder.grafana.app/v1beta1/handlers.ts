@@ -2,6 +2,7 @@ import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
+import { getErrorResponse } from '../../../helpers';
 
 const [mockTree] = wellFormedTree();
 
@@ -9,6 +10,8 @@ const baseResponse = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
 };
+
+const folderNotFoundError = getErrorResponse('folder not found', 404);
 
 const getFolderHandler = () =>
   http.get<{ folderUid: string; namespace: string }>(
@@ -20,17 +23,7 @@ const getFolderHandler = () =>
       });
 
       if (!response) {
-        return HttpResponse.json(
-          {
-            kind: 'Status',
-            apiVersion: 'v1',
-            metadata: {},
-            status: 'Failure',
-            message: 'folder not found',
-            code: 404,
-          },
-          { status: 404 }
-        );
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
       }
 
       return HttpResponse.json({
@@ -68,14 +61,7 @@ const getFolderParentsHandler = () =>
         return item.kind === 'folder' && item.uid === folderUid;
       });
       if (!folder || folder.item.kind !== 'folder') {
-        return HttpResponse.json({
-          kind: 'Status',
-          apiVersion: 'v1',
-          metadata: {},
-          status: 'Failure',
-          message: 'folder not found',
-          code: 404,
-        });
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
       }
 
       const findParents = (parents: Array<(typeof mockTree)[number]>, folderUid?: string) => {
@@ -130,7 +116,7 @@ const createFolderHandler = () =>
       const body = await request.json();
       const title = body?.spec?.title;
       if (!body || !title) {
-        return HttpResponse.json({ message: 'folder title cannot be empty' }, { status: 400 });
+        return HttpResponse.json(getErrorResponse('folder title cannot be empty', 400), { status: 400 });
       }
 
       const parentUid = body?.metadata?.annotations?.['grafana.app/folder'];
