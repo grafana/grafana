@@ -8,7 +8,7 @@ import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
   useGetFolderQuery as useGetFolderQueryLegacy,
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
-  useNewFolderMutation as useNewFolderMutationLegacy,
+  useNewFolderMutation as useLegacyNewFolderMutation,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { dispatch } from 'app/store/store';
 import { FolderDTO, NewFolder } from 'app/types/folders';
@@ -226,7 +226,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
 
 export function useCreateFolder() {
   const [trigger, result] = useCreateFolderMutation();
-  const legacyHook = useNewFolderMutationLegacy();
+  const legacyHook = useLegacyNewFolderMutation();
 
   if (!config.featureToggles.foldersAppPlatformAPI) {
     return legacyHook;
