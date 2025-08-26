@@ -13,6 +13,7 @@ use (
 	./apps/investigations
 	./apps/playlist
 	./apps/plugins
+	./apps/preferences
 	./apps/provisioning
 	./apps/secret
 	./apps/shorturl
