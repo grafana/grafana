@@ -48,7 +48,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/provision
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+      destination: /docs/grafana/next/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
@@ -80,6 +80,13 @@ Refer to [Provision the data source](#provision-the-data-source) for next steps.
 ## Add or modify a data source
 
 You can use these procedures to configure a new Tempo data source or to edit an existing one.
+
+{{< admonition type="note" >}}
+You can't modify a provisioned data source using the Tempo data source settings in Grafana Cloud.
+
+If you want to modify any capabilities of a provisioned data source, you can clone the provisioned data source and then edit the new data source in the Grafana UI.
+Refer to [Clone a provisioned data source for Grafana Cloud](#clone-a-provisioned-data-source-for-grafana-cloud) for more information.
+{{< /admonition >}}
 
 ### Add a new data source
 
@@ -425,3 +432,21 @@ datasources:
       streamingEnabled:
         search: true
 ```
+
+### Clone a provisioned data source for Grafana Cloud
+
+If you have a data source that is provisioned by a configuration file in Grafana Cloud, you can clone that provisioned data source and then edit the new data source in the Grafana UI.
+
+For example, let's say you want to edit the **Trace to log**s settings in your Tempo data source that is provisioned on Grafana Cloud.
+You'd like to enable traceID and spanID but you can't because the data source is provisioned.
+By cloning the data source, you'd be able to edit these capabilities.
+
+To clone a provisioned data source, follow these steps:
+
+1. Create a viewer [Cloud Access Policy token](https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/) in the Grafana Cloud Portal, making sure it has read permissions at least for the data types you are trying to clone.
+1. [Create a new data source](#add-a-new-data-source) of the same type you want to clone.
+1. Copy all of the settings from the existing provisioned data source into the new data source while replacing the password with the API key you created.
+
+The easiest way to do this is to open separate browser windows with the provisioned data source in one and the newly created data source in another.
+
+Of course, after copying the HTTP and Auth section details, pasting the Cloud Access Policy token into the Password field, and changing any of the other options that you want, you can save and test the data source.
