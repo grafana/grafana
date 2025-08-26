@@ -24,6 +24,8 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 
+// [FIXME] Is there something else we need to do in here?
+
 export function getFieldOverrideCategories(
   fieldConfig: FieldConfigSource,
   registry: FieldConfigOptionsRegistry,
@@ -79,6 +81,7 @@ export function getFieldOverrideCategories(
     const overrideName = t('dashboard.get-field-override-categories.override-name', 'Override {{overrideNum}}', {
       overrideNum: idx + 1,
     });
+    const overrideId = `override-${idx}`;
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
     const configPropertiesOptions = getOverrideProperties(registry);
     const isSystemOverride = isSystemOverrideGuard(override);
@@ -87,7 +90,7 @@ export function getFieldOverrideCategories(
 
     const category = new OptionsPaneCategoryDescriptor({
       title: overrideName,
-      id: overrideName,
+      id: overrideId,
       forceOpen,
       renderTitle: function renderOverrideTitle(isExpanded: boolean) {
         return (
@@ -167,16 +170,19 @@ export function getFieldOverrideCategories(
         onOverrideChange(idx, { ...override, properties: override.properties.filter((_, i) => i !== propIdx) });
       };
 
+      const htmlId = `${overrideId}-${property.id}`;
+
       /**
        * Add override property item
        */
       category.addItem(
         new OptionsPaneItemDescriptor({
           skipField: true,
+          id: htmlId,
           render: function renderPropertyEditor() {
             return (
               <DynamicConfigValueEditor
-                key={`${property.id}/${propIdx}`}
+                key={htmlId}
                 isSystemOverride={isSystemOverride}
                 onChange={onPropertyChange}
                 onRemove={onPropertyRemove}
@@ -198,6 +204,7 @@ export function getFieldOverrideCategories(
       category.addItem(
         new OptionsPaneItemDescriptor({
           skipField: true,
+          id: `${overrideId}-add-button`,
           render: function renderAddPropertyButton() {
             return (
               <ValuePicker
