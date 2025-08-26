@@ -386,6 +386,7 @@
         "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
+        "notification-message-section-extension": "Notification Message Section Extension failed to load",
         "template-button": "AI Template Button failed to load",
         "triage-button": "AI Triage Button failed to load"
       }
