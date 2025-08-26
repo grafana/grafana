@@ -1,19 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
+
 import { RepoType } from '../Wizard/types';
 
 interface BranchInfo {
   name: string;
   isDefault?: boolean;
-}
-
-interface HttpError {
-  status?: number;
-  message?: string;
-}
-
-function isHttpError(err: unknown): err is HttpError {
-  return err !== null && typeof err === 'object' && ('status' in err || 'message' in err);
 }
 
 interface UseBranchFetchingProps {
@@ -120,7 +113,6 @@ export function useBranchFetching({
           apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/branches`;
           headers['Authorization'] = `Bearer ${trimmedToken}`;
           headers['Accept'] = 'application/vnd.github+json';
-          headers['X-GitHub-Api-Version'] = '2022-11-28';
           break;
         case 'gitlab':
           const encodedPath = encodeURIComponent(`${repoInfo.owner}/${repoInfo.repo}`);
@@ -135,20 +127,17 @@ export function useBranchFetching({
           throw new Error(`Unsupported repository type: ${repositoryType}`);
       }
 
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('API Error Response:', errorData);
-        const error = new Error(`HTTP ${response.status}: ${response.statusText}`) as Error & { status: number };
-        error.status = response.status;
-        throw error;
-      }
-
-      const data = await response.json();
+      const backendSrv = getBackendSrv();
+      const data = await backendSrv.get(
+        apiUrl,
+        undefined, // no query params
+        undefined, // no requestId
+        {
+          headers,
+          showErrorAlert: false, // Handle errors manually
+          hideFromInspector: true, // Hide external API calls from inspector
+        }
+      );
       let branchData: BranchInfo[] = [];
 
       if (repositoryType === 'github') {
@@ -179,15 +168,15 @@ export function useBranchFetching({
       console.error('Failed to fetch branches:', err);
       let errorMessage = 'Failed to fetch branches';
 
-      if (isHttpError(err)) {
+      if (isFetchError(err)) {
         if (err.status === 401) {
           errorMessage = 'Authentication failed. Please check your access token.';
         } else if (err.status === 404) {
           errorMessage = 'Repository not found. Please check the repository URL.';
         } else if (err.status === 403) {
           errorMessage = 'Access denied. Please check your token permissions.';
-        } else if (err.message) {
-          errorMessage = err.message;
+        } else if (err.data?.message) {
+          errorMessage = err.data.message;
         }
       }
 
