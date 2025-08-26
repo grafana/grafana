@@ -22,7 +22,7 @@ describe('VersionList', () => {
       },
     ];
 
-    renderWithStore(<VersionList pluginId={''} versions={versions} />);
+    renderWithStore(<VersionList pluginId={''} versions={versions} disableInstallation={false} />);
     const installElements = screen.getAllByText('Install');
     expect(installElements).toHaveLength(versions.length);
   });
@@ -52,7 +52,12 @@ describe('VersionList', () => {
     const installedVersionIndex = 1;
 
     renderWithStore(
-      <VersionList pluginId={''} versions={versions} installedVersion={versions[installedVersionIndex].version} />
+      <VersionList
+        pluginId={''}
+        versions={versions}
+        installedVersion={versions[installedVersionIndex].version}
+        disableInstallation={false}
+      />
     );
     expect(screen.getAllByText('Installed')).toHaveLength(1);
     expect(screen.getAllByText('Downgrade')).toHaveLength(1);

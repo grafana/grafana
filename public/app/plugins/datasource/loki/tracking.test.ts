@@ -1,5 +1,5 @@
 import { CoreApp, DashboardLoadedEvent, DataQueryRequest, dateTime } from '@grafana/data';
-import { QueryEditorMode } from '@grafana/experimental';
+import { QueryEditorMode } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';
@@ -85,7 +85,6 @@ describe('Tracks queries', () => {
       time_range_from: '2023-02-08T05:00:00.000Z',
       time_range_to: '2023-02-10T06:00:00.000Z',
       time_taken: 0,
-      predefined_operations_applied: 'n/a',
     });
   });
 
@@ -97,31 +96,6 @@ describe('Tracks queries', () => {
   it('should not track queries if no app', () => {
     trackQuery({ data: [] }, { ...originalRequest, app: '' }, new Date());
     expect(reportInteraction).not.toHaveBeenCalled();
-  });
-});
-
-test('Tracks predefined operations', () => {
-  trackQuery({ data: [] }, originalRequest, new Date(), { predefinedOperations: 'count_over_time' });
-
-  expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
-    bytes_processed: 0,
-    editor_mode: 'builder',
-    grafana_version: '1.0',
-    has_data: false,
-    has_error: false,
-    is_split: false,
-    legend: undefined,
-    line_limit: undefined,
-    obfuscated_query: 'count_over_time({Identifier=String}[1m])',
-    query_type: 'metric',
-    query_vector_type: undefined,
-    resolution: 1,
-    simultaneously_executed_query_count: 2,
-    simultaneously_hidden_query_count: 1,
-    time_range_from: '2023-02-08T05:00:00.000Z',
-    time_range_to: '2023-02-10T06:00:00.000Z',
-    time_taken: 0,
-    predefined_operations_applied: true,
   });
 });
 
@@ -150,7 +124,6 @@ test('Tracks grouped queries', () => {
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
-    predefined_operations_applied: 'n/a',
   });
 
   expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
@@ -175,7 +148,6 @@ test('Tracks grouped queries', () => {
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
-    predefined_operations_applied: 'n/a',
   });
 });
 

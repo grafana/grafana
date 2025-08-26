@@ -10,6 +10,7 @@ import {
   FetchTransport,
   type Instrumentation,
   getWebInstrumentations,
+  Config,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
@@ -37,9 +38,8 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   ignoreUrls: RegExp[];
 }
 
-const TRACKING_URLS = [
-  /.*.google-analytics.com*.*/,
-  /.*.googletagmanager.com*.*/,
+export const TRACKING_URLS = [
+  /\.(google-analytics|googletagmanager)\.com/,
   /frontend-metrics/,
   /\/collect(?:\/[\w]*)?$/,
 ];
@@ -61,6 +61,12 @@ export class GrafanaJavascriptAgentBackend
     ];
 
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
+    const consoleInstrumentationOptions: Config['consoleInstrumentation'] =
+      options.allInstrumentationsEnabled || options.consoleInstrumentalizationEnabled
+        ? {
+            serializeErrors: true,
+          }
+        : {};
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
@@ -93,8 +99,10 @@ export class GrafanaJavascriptAgentBackend
         environment: options.buildInfo.env,
       },
       instrumentations: options.allInstrumentationsEnabled
-        ? instrumentations
-        : [...getWebInstrumentations(), new TracingInstrumentation()],
+        ? [...getWebInstrumentations(), new TracingInstrumentation()]
+        : instrumentations,
+      consoleInstrumentation: consoleInstrumentationOptions,
+      trackWebVitalsAttribution: options.webVitalsInstrumentalizationEnabled || options.allInstrumentationsEnabled,
       transports,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',

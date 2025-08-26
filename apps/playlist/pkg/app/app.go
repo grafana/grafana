@@ -2,34 +2,47 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/apps/playlist/pkg/watchers"
+	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 )
 
 type PlaylistConfig struct {
-	EnableWatchers bool
+	EnableReconcilers bool
+}
+
+func getPatchClient(restConfig rest.Config, playlistKind resource.Kind) (operator.PatchClient, error) {
+	clientGenerator := k8s.NewClientRegistry(restConfig, k8s.ClientConfig{})
+	return clientGenerator.ClientFor(playlistKind)
 }
 
 func New(cfg app.Config) (app.App, error) {
 	var (
-		playlistWatcher operator.ResourceWatcher
-		err             error
+		playlistReconciler operator.Reconciler
+		err                error
 	)
 
 	playlistConfig, ok := cfg.SpecificConfig.(*PlaylistConfig)
-	if ok && playlistConfig.EnableWatchers {
-		playlistWatcher, err = watchers.NewPlaylistWatcher()
+	if ok && playlistConfig.EnableReconcilers {
+		patchClient, err := getPatchClient(cfg.KubeConfig, playlistv0alpha1.PlaylistKind())
 		if err != nil {
-			return nil, fmt.Errorf("unable to create PlaylistWatcher: %w", err)
+			klog.ErrorS(err, "Error getting patch client for use with opinionated reconciler")
+			return nil, err
+		}
+
+		playlistReconciler, err = reconcilers.NewPlaylistReconciler(patchClient)
+		if err != nil {
+			klog.ErrorS(err, "Error creating playlist reconciler")
+			return nil, err
 		}
 	}
 
@@ -43,8 +56,8 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind:    playlistv0alpha1.PlaylistKind(),
-				Watcher: playlistWatcher,
+				Kind:       playlistv0alpha1.PlaylistKind(),
+				Reconciler: playlistReconciler,
 				Mutator: &simple.Mutator{
 					MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
 						// modify req.Object if needed
@@ -76,12 +89,12 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-func GetKinds() map[schema.GroupVersion]resource.Kind {
+func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
 		Group:   playlistv0alpha1.PlaylistKind().Group(),
 		Version: playlistv0alpha1.PlaylistKind().Version(),
 	}
-	return map[schema.GroupVersion]resource.Kind{
-		gv: playlistv0alpha1.PlaylistKind(),
+	return map[schema.GroupVersion][]resource.Kind{
+		gv: {playlistv0alpha1.PlaylistKind()},
 	}
 }

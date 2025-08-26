@@ -19,7 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,7 +33,8 @@ import (
 	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -58,7 +60,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDataSourceProxy_routeRule(t *testing.T) {
+func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	cfg := &setting.Cfg{}
 
 	t.Run("Plugin with routes", func(t *testing.T) {
@@ -116,6 +121,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			{
 				Path:      "api/rbac-restricted",
 				ReqAction: "test-app.settings:read",
+			},
+			{
+				Path: "encodedPath",
+				URL:  "http://encoded.com",
 			},
 		}
 
@@ -233,6 +242,16 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			assert.Equal(t, "https://example.com/api/v1/some-route/", req.URL.String())
 		})
 
+		t.Run("When matching proxy path is already encoded", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/our%20devices")
+			require.NoError(t, err)
+			proxy.matchedRoute = routes[9]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.cfg)
+
+			assert.Equal(t, "http://encoded.com/our%20devices", req.URL.String())
+		})
+
 		t.Run("Validating request", func(t *testing.T) {
 			t.Run("plugin route with valid role", func(t *testing.T) {
 				ctx, _ := setUp()
@@ -252,19 +271,27 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("plugin route with admin role and user is admin", func(t *testing.T) {
 				ctx, _ := setUp()
-				ctx.SignedInUser.OrgRole = org.RoleAdmin
+				ctx.OrgRole = org.RoleAdmin
 				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/admin")
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.NoError(t, err)
 			})
+
+			t.Run("path with slashes and user is editor", func(t *testing.T) {
+				ctx, _ := setUp()
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "//api//admin")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.Error(t, err)
+			})
 		})
 
 		t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
-			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = identity.RoleNone
-			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
+			ctx.OrgID = int64(1)
+			ctx.OrgRole = identity.RoleNone
+			ctx.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
@@ -273,9 +300,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("plugin route with RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
-			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = identity.RoleNone
-			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"test-app:read": nil}}
+			ctx.OrgID = int64(1)
+			ctx.OrgRole = identity.RoleNone
+			ctx.Permissions = map[int64]map[string][]string{1: {"test-app:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
@@ -284,9 +311,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("plugin route with dynamic RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
-			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = identity.RoleNone
-			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:dsUID"}}}
+			ctx.OrgID = int64(1)
+			ctx.OrgRole = identity.RoleNone
+			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:dsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
@@ -295,10 +322,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		t.Run("plugin route with dynamic RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
-			ctx.SignedInUser.OrgID = int64(1)
-			ctx.SignedInUser.OrgRole = identity.RoleNone
+			ctx.OrgID = int64(1)
+			ctx.OrgRole = identity.RoleNone
 			// Has access but to another app
-			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
+			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
@@ -557,7 +584,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		var routes []*plugins.Route
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/to/folder/", func(proxy *DataSourceProxy) {
 			proxy.oAuthTokenService = &oauthtokentest.MockOauthTokenService{
-				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) *oauth2.Token {
 					return (&oauth2.Token{
 						AccessToken:  "testtoken",
 						RefreshToken: "testrefreshtoken",
@@ -573,6 +600,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 
 		req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+		req = req.WithContext(context.WithValue(req.Context(), ctxkey.Key{}, &contextmodel.ReqContext{UserToken: nil}))
 		require.NoError(t, err)
 
 		proxy.director(req)
@@ -900,7 +928,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, cfg
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
@@ -1022,7 +1050,7 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secrets
 	var routes []*plugins.Route
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
@@ -1077,8 +1105,8 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	cfg := setting.NewCfg()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
-	features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
+	features := featuremgmt.WithFeatures()
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
 		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)

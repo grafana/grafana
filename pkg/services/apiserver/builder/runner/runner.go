@@ -12,7 +12,7 @@ import (
 )
 
 type RunnerConfig struct {
-	RestConfigGetter func(context.Context) *rest.Config
+	RestConfigGetter func(context.Context) (*rest.Config, error)
 	APIRegistrar     builder.APIRegistrar
 }
 
@@ -49,9 +49,9 @@ func (r *APIGroupRunner) Run(ctx context.Context) error {
 
 func (r *APIGroupRunner) Init(ctx context.Context) error {
 	defer close(r.initialized)
-	restConfig := r.config.RestConfigGetter(ctx)
-	if restConfig == nil {
-		return fmt.Errorf("rest config is nil")
+	restConfig, err := r.config.RestConfigGetter(ctx)
+	if err != nil {
+		return err
 	}
 	for i := range r.groups {
 		appConfig := app.Config{
@@ -101,11 +101,11 @@ func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGrou
 
 	for gv, kinds := range appBuilderConfig.ManagedKinds {
 		confCopy := *appBuilderConfig
-		confCopy.ManagedKinds = map[schema.GroupVersion]resource.Kind{
+		confCopy.ManagedKinds = map[schema.GroupVersion][]resource.Kind{
 			gv: kinds,
 		}
 		confCopy.groupVersion = gv
-		if confCopy.CustomConfig == nil {
+		if confCopy.CustomConfig != nil {
 			group.customConfig = confCopy.CustomConfig
 		}
 		b, err := NewAppBuilder(confCopy)

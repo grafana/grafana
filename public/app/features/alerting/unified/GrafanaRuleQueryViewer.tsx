@@ -1,21 +1,22 @@
 import { css, cx } from '@emotion/css';
-import { keyBy, startCase } from 'lodash';
+import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
-import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
-import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
+import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
-import { Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
-  downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
+  downsamplingTypes,
   reducerModes,
   reducerTypes,
   thresholdFunctions,
@@ -26,7 +27,7 @@ import alertDef, { EvalFunction } from '../state/alertDef';
 import { Spacer } from './components/Spacer';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
-import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
+import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
@@ -122,7 +123,12 @@ export function QueryPreview({
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
-        {secondsToHms(relativeTimeRange.from)} to now
+        <Trans
+          i18nKey="alerting.query-preview.relative-time-range"
+          values={{ from: rangeUtil.secondsToHms(relativeTimeRange.from) }}
+        >
+          <code>{'{{from}}'}</code> to now
+        </Trans>
       </Text>
     );
   }
@@ -188,9 +194,6 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
   contentBox: css({
     flex: '1 0 100%',
   }),
-  visualization: css({
-    padding: theme.spacing(1),
-  }),
   dataSource: css({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
@@ -208,6 +211,8 @@ interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
 }
 
 function ExpressionPreview({ refId, model, evalData, isAlertCondition }: ExpressionPreviewProps) {
+  const styles = useStyles2(getQueryBoxStyles);
+
   function renderPreview() {
     switch (model.type) {
       case ExpressionQueryType.math:
@@ -229,7 +234,11 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
         return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
-        return <>Expression not supported: {model.type}</>;
+        return (
+          <Trans i18nKey="alerting.expression-preview.expression-not-supported" values={{ type: model.type }}>
+            Expression not supported: {'{{type}}'}
+          </Trans>
+        );
     }
   }
 
@@ -243,7 +252,19 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
       ]}
       isAlertCondition={isAlertCondition}
     >
-      {renderPreview()}
+      <div className={styles.previewWrapper}>
+        {evalData?.errors?.map((error) => (
+          <Alert
+            key={uniqueId()}
+            title={t('alerting.expression-preview.title-expression-failed', 'Expression failed')}
+            severity="error"
+            bottomSpacing={1}
+          >
+            {error.message}
+          </Alert>
+        ))}
+        {renderPreview()}
+      </div>
       <Spacer />
       {evalData && <ExpressionResult series={evalData.series} isAlertCondition={isAlertCondition} />}
     </QueryBox>
@@ -266,12 +287,14 @@ function QueryBox({ refId, headerItems = [], children, isAlertCondition, explore
         <span className={styles.refId}>{refId}</span>
         {headerItems}
         <Spacer />
-        {isAlertCondition && <Badge color="green" icon="check" text="Alert condition" />}
+        {isAlertCondition && (
+          <Badge color="green" icon="check" text={t('alerting.query-box.text-alert-condition', 'Alert condition')} />
+        )}
         {exploreLink && (
           <WithReturnButton
             component={
               <LinkButton size="md" variant="secondary" icon="compass" href={exploreLink}>
-                View in Explore
+                <Trans i18nKey="alerting.query-box.view-in-explore">View in Explore</Trans>
               </LinkButton>
             }
           />
@@ -310,6 +333,9 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
   }),
+  previewWrapper: css({
+    padding: theme.spacing(1),
+  }),
 });
 
 function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
@@ -327,10 +353,14 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
         return (
           <React.Fragment key={index}>
             <div className={styles.blue}>
-              {index === 0 ? 'WHEN' : !!operator?.type && evalOperators[operator?.type]?.text}
+              {index === 0
+                ? t('alerting.classic-condition-viewer.when', 'WHEN')
+                : !!operator?.type && evalOperators[operator?.type]?.text}
             </div>
             <div className={styles.bold}>{reducer?.type && reducerFunctions[reducer.type]?.text}</div>
-            <div className={styles.blue}>OF</div>
+            <div className={styles.blue}>
+              <Trans i18nKey="alerting.classic-condition-viewer.of">OF</Trans>
+            </div>
             <div className={styles.bold}>{query.params[0]}</div>
             <div className={styles.blue}>{evalFunctions[evaluator.type].text}</div>
             <div className={styles.bold}>
@@ -345,7 +375,6 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
 
 const getClassicConditionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    padding: theme.spacing(1),
     display: 'grid',
     gridTemplateColumns: 'repeat(6, max-content)',
     gap: theme.spacing(0, 1),
@@ -364,13 +393,19 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>Function</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.reduce-condition-viewer.function">Function</Trans>
+      </div>
       <div className={styles.value}>{reducerType?.label}</div>
 
-      <div className={styles.label}>Input</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.reduce-condition-viewer.input">Input</Trans>
+      </div>
       <div className={styles.value}>{expression}</div>
 
-      <div className={styles.label}>Mode</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.reduce-condition-viewer.mode">Mode</Trans>
+      </div>
       <div className={styles.value}>{modeName?.label}</div>
     </div>
   );
@@ -378,7 +413,6 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 
 const getReduceConditionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    padding: theme.spacing(1),
     display: 'grid',
     gap: theme.spacing(0.5),
     gridTemplateRows: '1fr 1fr',
@@ -400,16 +434,24 @@ function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>Input</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.input">Input</Trans>
+      </div>
       <div className={styles.value}>{expression}</div>
 
-      <div className={styles.label}>Resample to</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.resample-to">Resample to</Trans>
+      </div>
       <div className={styles.value}>{window}</div>
 
-      <div className={styles.label}>Downsample</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.downsample">Downsample</Trans>
+      </div>
       <div className={styles.value}>{downsamplerType?.label}</div>
 
-      <div className={styles.label}>Upsample</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.upsample">Upsample</Trans>
+      </div>
       <div className={styles.value}>{upsamplerType?.label}</div>
     </div>
   );
@@ -417,7 +459,6 @@ function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
 
 const getResampleExpressionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    padding: theme.spacing(1),
     display: 'grid',
     gap: theme.spacing(0.5),
     gridTemplateColumns: 'repeat(4, 1fr)',
@@ -444,7 +485,9 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
   return (
     <>
       <div className={styles.container}>
-        <div className={styles.label}>Input</div>
+        <div className={styles.label}>
+          <Trans i18nKey="alerting.threshold-expression-viewer.input">Input</Trans>
+        </div>
         <div className={styles.value}>{expression}</div>
 
         {evaluator && (
@@ -459,7 +502,11 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
       <div className={styles.container}>
         {unloadEvaluator && (
           <>
-            <div className={styles.label}>Stop alerting when </div>
+            <div className={styles.label}>
+              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">
+                Stop alerting (or pending state) when{' '}
+              </Trans>
+            </div>
             <div className={styles.value}>{expression}</div>
 
             <>
@@ -486,7 +533,6 @@ const getExpressionViewerStyles = (theme: GrafanaTheme2) => {
       maxWidth: '100%',
     }),
     container: css({
-      padding: theme.spacing(1),
       display: 'flex',
       gap: theme.spacing(0.5),
     }),
@@ -502,7 +548,9 @@ function MathExpressionViewer({ model }: { model: ExpressionQuery }) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>Input</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.math-expression-viewer.input">Input</Trans>
+      </div>
       <div className={styles.value}>{expression}</div>
     </div>
   );
@@ -533,5 +581,10 @@ const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
 });
 
 function isRangeEvaluator(evaluator: { params: number[]; type: EvalFunction }) {
-  return evaluator.type === EvalFunction.IsWithinRange || evaluator.type === EvalFunction.IsOutsideRange;
+  return (
+    evaluator.type === EvalFunction.IsWithinRange ||
+    evaluator.type === EvalFunction.IsOutsideRange ||
+    evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    evaluator.type === EvalFunction.IsWithinRangeIncluded
+  );
 }

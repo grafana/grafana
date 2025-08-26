@@ -1,7 +1,9 @@
-import { Preview, ArgTypes } from '@storybook/blocks';
-import { Layout, HorizontalGroup, VerticalGroup } from './Layout';
-import { Button } from '../Button';
-import { Select } from '../index';
+import { Canvas, ArgTypes } from '@storybook/blocks';
+import { Layout, HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { Button } from '../Button/Button';
+import { Select } from '../Select/Select';
+import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
+import * as LayoutStories from './Layout.story';
 
 # Layout
 
@@ -19,78 +21,10 @@ Expects multiple elements as `children` prop. This is the base for more speciali
 
 Used for horizontally aligning several elements (e.g. Button, Select) with a predefined spacing between them.
 
-<Preview>
-  <HorizontalGroup>
-    <Button>Button 1</Button>
-    <Button>Button 2</Button>
-    <Button>Button 3</Button>
-  </HorizontalGroup>
-</Preview>
-<Preview>
-  <HorizontalGroup>
-    <Select
-      width={25}
-      onChange={() => {}}
-      options={[
-        { value: 1, label: 'Option 1' },
-        { value: 2, label: 'Option 2' },
-      ]}
-    />
-    <Select
-      width={25}
-      onChange={() => {}}
-      options={[
-        { value: 1, label: 'Option 1' },
-        { value: 2, label: 'Option 2' },
-      ]}
-    />
-    <Select
-      width={25}
-      onChange={() => {}}
-      options={[
-        { value: 1, label: 'Option 1' },
-        { value: 2, label: 'Option 2' },
-      ]}
-    />
-  </HorizontalGroup>
-</Preview>
+<Canvas of={LayoutStories.Horizontal} />
 
 ## Vertical
 
 Used for vertically aligning several elements (e.g. Button, Select) with a predefined spacing between them.
 
-<Preview>
-  <VerticalGroup>
-    <Button>Button 1</Button>
-    <Button>Button 2</Button>
-    <Button>Button 3</Button>
-  </VerticalGroup>
-</Preview>
-<Preview>
-  <VerticalGroup justify="center">
-    <Select
-      width={25}
-      onChange={() => {}}
-      options={[
-        { value: 1, label: 'Option 1' },
-        { value: 2, label: 'Option 2' },
-      ]}
-    />
-    <Select
-      width={25}
-      onChange={() => {}}
-      options={[
-        { value: 1, label: 'Option 1' },
-        { value: 2, label: 'Option 2' },
-      ]}
-    />
-    <Select
-      width={25}
-      onChange={() => {}}
-      options={[
-        { value: 1, label: 'Option 1' },
-        { value: 2, label: 'Option 2' },
-      ]}
-    />
-  </VerticalGroup>
-</Preview>
+<Canvas of={LayoutStories.Vertical} />

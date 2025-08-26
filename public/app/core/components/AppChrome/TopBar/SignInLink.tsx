@@ -1,42 +1,46 @@
 import { css } from '@emotion/css';
+import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export function SignInLink() {
+  const femt = Boolean(config.featureToggles.multiTenantFrontend);
   const location = useLocation();
   const styles = useStyles2(getStyles);
-  let loginUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
+  let loginUrl = femt
+    ? locationUtil.assureBaseUrl('/login')
+    : textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
 
   // Fix for loginUrl starting with "//" which is a scheme relative URL
   if (loginUrl.startsWith('//')) {
     loginUrl = loginUrl.replace(/\/+/g, '/');
   }
 
+  const handleOnClick = useCallback(() => {
+    contextSrv.setRedirectToUrl();
+  }, []);
+
   return (
-    <a className={styles.link} href={loginUrl} target="_self">
+    <a className={styles.link} onClick={handleOnClick} href={loginUrl} target={femt ? undefined : '_self'}>
       <Trans i18nKey="app-chrome.top-bar.sign-in">Sign in</Trans>
     </a>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const isSingleTopNav = config.featureToggles.singleTopNav;
   return {
-    link: css(
-      {
-        paddingRight: theme.spacing(1),
-        whiteSpace: 'nowrap',
-        '&:hover': {
-          textDecoration: 'underline',
-        },
+    link: css({
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+      whiteSpace: 'nowrap',
+      '&:hover': {
+        textDecoration: 'underline',
       },
-      isSingleTopNav && {
-        paddingLeft: theme.spacing(1),
-      }
-    ),
+    }),
   };
 };

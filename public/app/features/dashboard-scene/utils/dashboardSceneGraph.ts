@@ -1,8 +1,10 @@
-import { VizPanel, sceneGraph, behaviors } from '@grafana/scenes';
+import { VizPanel, sceneGraph, behaviors, SceneObject, SceneGridRow } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
+
+import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -26,6 +28,28 @@ function getVizPanels(scene: DashboardScene): VizPanel[] {
   return scene.state.body.getVizPanels();
 }
 
+/**
+ * Will look for all panels in the entire scene starting from root
+ * and find the next free panel id
+ */
+export function getNextPanelId(scene: SceneObject): number {
+  let max = 0;
+
+  sceneGraph
+    .findAllObjects(
+      scene.getRoot(),
+      (obj) => (obj instanceof VizPanel || obj instanceof SceneGridRow) && !obj.state.repeatSourceKey
+    )
+    .forEach((panel) => {
+      const panelId = getPanelIdForVizPanel(panel);
+      if (panelId > max) {
+        max = panelId;
+      }
+    });
+
+  return max + 1;
+}
+
 function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   const data = sceneGraph.getData(scene);
 
@@ -34,6 +58,14 @@ function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   }
 
   return data;
+}
+
+function getAllSelectedObjects(scene: SceneObject): SceneObject[] {
+  return (
+    getDashboardSceneFor(scene)
+      .state.editPane.state.selection?.getSelectionEntries()
+      .map(([, ref]) => ref.resolve()) ?? []
+  );
 }
 
 export function getCursorSync(scene: DashboardScene) {
@@ -45,6 +77,18 @@ export function getCursorSync(scene: DashboardScene) {
 
   return;
 }
+// Functions to manage the lookup table in dashboard scene that will hold element_identifer : panel_id
+export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
+  const scene = getDashboardSceneFor(vizPanel);
+  const panelId = getPanelIdForVizPanel(vizPanel);
+  let elementKey = scene.serializer.getElementIdForPanel(panelId);
+
+  if (!elementKey) {
+    // assign a panel-id key
+    elementKey = getVizPanelKeyForPanelId(panelId);
+  }
+  return elementKey;
+}
 
 export const dashboardSceneGraph = {
   getTimePicker,
@@ -52,5 +96,9 @@ export const dashboardSceneGraph = {
   getPanelLinks,
   getVizPanels,
   getDataLayers,
+  getAllSelectedObjects,
   getCursorSync,
+  getLayoutManagerFor,
+  getNextPanelId,
+  getElementIdentifierForVizPanel,
 };

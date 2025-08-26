@@ -34,6 +34,11 @@ export interface ThemeColorsBase<TColor> {
     primary: string;
     /** Cards and elements that need to stand out on the primary background */
     secondary: string;
+    /**
+     * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
+     * themes it has a brighter shade to help give it contrast against the primary background.
+     **/
+    elevated: string;
   };
 
   border: {
@@ -95,7 +100,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   border = {
     weak: `rgba(${this.whiteBase}, 0.12)`,
-    medium: `rgba(${this.whiteBase}, 0.20)`,
+    medium: `rgba(${this.whiteBase}, 0.2)`,
     strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
@@ -143,6 +148,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     canvas: palette.gray05,
     primary: palette.gray10,
     secondary: palette.gray15,
+    elevated: palette.gray15,
   };
 
   action = {
@@ -180,15 +186,15 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   text = {
     primary: `rgba(${this.blackBase}, 1)`,
     secondary: `rgba(${this.blackBase}, 0.75)`,
-    disabled: `rgba(${this.blackBase}, 0.64)`,
+    disabled: `rgba(${this.blackBase}, 0.65)`,
     link: this.primary.text,
     maxContrast: palette.black,
   };
 
   border = {
     weak: `rgba(${this.blackBase}, 0.12)`,
-    medium: `rgba(${this.blackBase}, 0.30)`,
-    strong: `rgba(${this.blackBase}, 0.40)`,
+    medium: `rgba(${this.blackBase}, 0.3)`,
+    strong: `rgba(${this.blackBase}, 0.4)`,
   };
 
   secondary = {
@@ -225,6 +231,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     canvas: palette.gray90,
     primary: palette.white,
     secondary: palette.gray100,
+    elevated: palette.white,
   };
 
   action = {
@@ -277,7 +284,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
     color = { ...color, name };
     if (!color.main) {
-      throw new Error(`Missing main color for ${name}`);
+      color.main = base[name].main;
     }
     if (!color.text) {
       color.text = color.main;
@@ -318,7 +325,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   );
 }
 
+type RichColorNames = 'primary' | 'secondary' | 'info' | 'error' | 'success' | 'warning';
+
 interface GetRichColorProps {
   color: Partial<ThemeRichColor>;
-  name: string;
+  name: RichColorNames;
 }

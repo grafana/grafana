@@ -4,13 +4,14 @@ import { DraggableProvided } from '@hello-pangea/dnd';
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
+import { t } from '@grafana/i18n';
+import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Select, useStyles2 } from '@grafana/ui';
 
 import { OperationInfoButton } from './OperationInfoButton';
 import { QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
 
-export interface Props {
+interface Props {
   operation: QueryBuilderOperation;
   def: QueryBuilderOperationDef;
   index: number;
@@ -54,7 +55,10 @@ export const OperationHeader = memo<Props>(
                 onClick={onToggleSwitcher}
                 fill="text"
                 variant="secondary"
-                title="Click to view alternative operations"
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.operation-header.title-click-to-view-alternative-operations',
+                  'Click to view alternative operations'
+                )}
               />
               <OperationInfoButton def={def} operation={operation} />
               <Button
@@ -63,7 +67,10 @@ export const OperationHeader = memo<Props>(
                 onClick={() => onRemove(index)}
                 fill="text"
                 variant="secondary"
-                title="Remove operation"
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.operation-header.title-remove-operation',
+                  'Remove operation'
+                )}
               />
             </div>
           </>
@@ -73,7 +80,10 @@ export const OperationHeader = memo<Props>(
             <Select
               autoFocus
               openMenuOnFocus
-              placeholder="Replace with"
+              placeholder={t(
+                'grafana-prometheus.querybuilder.operation-header.placeholder-replace-with',
+                'Replace with'
+              )}
               options={state.alternatives}
               isOpen={true}
               onCloseMenu={onToggleSwitcher}

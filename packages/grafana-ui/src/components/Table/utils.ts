@@ -5,10 +5,12 @@ import { HeaderGroup, Row } from 'react-table';
 import tinycolor from 'tinycolor2';
 
 import {
+  ActionModel,
   DataFrame,
   DisplayValue,
   DisplayValueAlignmentFactors,
   Field,
+  FieldConfigSource,
   fieldReducers,
   FieldType,
   formattedValueToString,
@@ -18,6 +20,7 @@ import {
   isDataFrame,
   isDataFrameWithValue,
   isTimeSeriesFrame,
+  LinkModel,
   reduceField,
   SelectableValue,
 } from '@grafana/data';
@@ -28,19 +31,18 @@ import {
   TableCellDisplayMode,
 } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
 
 import { ActionsCell } from './ActionsCell';
-import { BarGaugeCell } from './BarGaugeCell';
-import { DataLinksCell } from './DataLinksCell';
-import { DefaultCell } from './DefaultCell';
-import { getFooterValue } from './FooterRow';
-import { GeoCell } from './GeoCell';
-import { ImageCell } from './ImageCell';
-import { JSONViewCell } from './JSONViewCell';
-import { RowExpander } from './RowExpander';
-import { SparklineCell } from './SparklineCell';
-import { TableStyles } from './styles';
+import { BarGaugeCell } from './Cells/BarGaugeCell';
+import { DataLinksCell } from './Cells/DataLinksCell';
+import { DefaultCell } from './Cells/DefaultCell';
+import { GeoCell } from './Cells/GeoCell';
+import { ImageCell } from './Cells/ImageCell';
+import { JSONViewCell } from './Cells/JSONViewCell';
+import { SparklineCell } from './Cells/SparklineCell';
+import { getFooterValue } from './TableRT/FooterRow';
+import { RowExpander } from './TableRT/RowExpander';
 import {
   CellColors,
   CellComponent,
@@ -194,6 +196,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DataLinksCell;
     case TableCellDisplayMode.Actions:
       return ActionsCell;
+    case TableCellDisplayMode.Pill:
+      return DefaultCell; // Legacy table doesn't support pill cells, fallback to default
   }
 
   if (field.type === FieldType.geo) {
@@ -603,12 +607,12 @@ export function calculateAroundPointThreshold(timeField: Field): number {
  * @returns CellColors
  */
 export function getCellColors(
-  tableStyles: TableStyles,
+  theme: GrafanaTheme2,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
   // How much to darken elements depends upon if we're in dark mode
-  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
+  const darkeningFactor = theme.isDark ? 1 : -0.7;
 
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -621,7 +625,7 @@ export function getCellColors(
     const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
 
     if (mode === TableCellBackgroundDisplayMode.Basic) {
-      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
       bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
@@ -629,7 +633,7 @@ export function getCellColors(
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);
-      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
       bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
     }
@@ -713,31 +717,25 @@ export function guessTextBoundingBox(
  * To do this we either select a single record if there aren't many records
  * or we select records at random and sample their size.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function guessLongestField(fieldConfig: any, data: DataFrame) {
+export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFrame) {
   let longestField = undefined;
   const SAMPLE_SIZE = 3;
 
   // If the default field option is set to allow text wrapping
   // we determine the field to wrap text with here and then
   // pass it to the RowsList
-  if (
-    fieldConfig !== undefined &&
-    fieldConfig.defaults.custom !== undefined &&
-    fieldConfig.defaults.custom.cellOptions.wrapText
-  ) {
+  if (fieldConfig.defaults.custom?.cellOptions?.wrapText) {
     const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
 
     if (stringFields.length >= 1 && stringFields[0].values.length > 0) {
       const numValues = stringFields[0].values.length;
       let longestLength = 0;
 
-      // If we have less than 30 values we assume
-      // that the first record is representative
-      // of the overall data
+      // If we have less than 30 values we assume that the first
+      // non-null record is representative of the overall data
       if (numValues <= 30) {
         for (const field of stringFields) {
-          const fieldLength = field.values[0].length;
+          const fieldLength = field.values.find((v) => v != null)?.length ?? 0;
           if (fieldLength > longestLength) {
             longestLength = fieldLength;
             longestField = field;
@@ -767,3 +765,39 @@ export function guessLongestField(fieldConfig: any, data: DataFrame) {
 
   return longestField;
 }
+
+export interface DataLinksActionsTooltipState {
+  coords: DataLinksActionsTooltipCoords;
+  links?: LinkModel[];
+  actions?: ActionModel[];
+}
+
+export interface DataLinksActionsTooltipCoords {
+  clientX: number;
+  clientY: number;
+}
+
+export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: ActionModel[]) => {
+  const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
+  const shouldShowLink = links.length === 1 && !Boolean(actions?.length);
+
+  return { shouldShowLink, hasMultipleLinksOrActions };
+};
+
+const shouldTriggerTooltip = (event: React.MouseEvent<HTMLElement>): boolean => {
+  return event.target === event.currentTarget;
+};
+
+/**
+ * Creates an onClick handler for table cells that only triggers tooltip when clicking directly on the cell
+ * @param setTooltipCoords - function to set tooltip coordinates
+ * @returns onClick handler
+ */
+export const tooltipOnClickHandler = (setTooltipCoords: (coords: DataLinksActionsTooltipCoords) => void) => {
+  return (event: React.MouseEvent<HTMLElement>) => {
+    if (shouldTriggerTooltip(event)) {
+      const { clientX, clientY } = event;
+      setTooltipCoords({ clientX, clientY });
+    }
+  };
+};

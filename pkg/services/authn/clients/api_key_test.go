@@ -9,9 +9,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -35,7 +36,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 
 	tests := []TestCase{
 		{
-			desc: "should success for valid token that is not connected to a service account",
+			desc: "should fail for valid token that is not connected to a service account",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{
 					"Authorization": {"Bearer " + secret},
@@ -47,16 +48,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Key:   hash,
 				Role:  org.RoleAdmin,
 			},
-			expectedIdentity: &authn.Identity{
-				ID:       "1",
-				Type:     claims.TypeAPIKey,
-				OrgID:    1,
-				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
-				ClientParams: authn.ClientParams{
-					SyncPermissions: true,
-				},
-				AuthenticatedBy: login.APIKeyAuthModule,
-			},
+			expectedErr: errAPIKeyInvalid,
 		},
 		{
 			desc: "should success for valid token that is connected to service account",
@@ -115,7 +107,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{ExpectedAPIKey: tt.expectedKey})
+			c := ProvideAPIKey(&apikeytest.Service{ExpectedAPIKey: tt.expectedKey}, tracing.InitializeTracerForTest())
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
@@ -182,111 +174,8 @@ func TestAPIKey_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{})
+			c := ProvideAPIKey(&apikeytest.Service{}, tracing.InitializeTracerForTest())
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
-		})
-	}
-}
-
-func TestAPIKey_ResolveIdentity(t *testing.T) {
-	type testCase struct {
-		desc string
-		typ  claims.IdentityType
-		id   string
-
-		exptedApiKey *apikey.APIKey
-
-		expectedIdenity *authn.Identity
-		expectedErr     error
-	}
-
-	tests := []testCase{
-		{
-			desc:        "should return error for invalid type",
-			id:          "1",
-			typ:         claims.TypeUser,
-			expectedErr: errAPIKeyInvalidType,
-		},
-		{
-			desc: "should return error when api key has expired",
-			id:   "1",
-			typ:  claims.TypeAPIKey,
-			exptedApiKey: &apikey.APIKey{
-				ID:      1,
-				OrgID:   1,
-				Expires: intPtr(0),
-			},
-			expectedErr: errAPIKeyExpired,
-		},
-		{
-			desc: "should return error when api key is revoked",
-			id:   "1",
-			typ:  claims.TypeAPIKey,
-			exptedApiKey: &apikey.APIKey{
-				ID:        1,
-				OrgID:     1,
-				IsRevoked: boolPtr(true),
-			},
-			expectedErr: errAPIKeyRevoked,
-		},
-		{
-			desc: "should return error when api key is connected to service account",
-			id:   "1",
-			typ:  claims.TypeAPIKey,
-
-			exptedApiKey: &apikey.APIKey{
-				ID:               1,
-				OrgID:            1,
-				ServiceAccountId: intPtr(1),
-			},
-			expectedErr: errAPIKeyInvalidType,
-		},
-		{
-			desc: "should return error when api key is belongs to different org",
-			id:   "1",
-			typ:  claims.TypeAPIKey,
-			exptedApiKey: &apikey.APIKey{
-				ID:               1,
-				OrgID:            2,
-				ServiceAccountId: intPtr(1),
-			},
-			expectedErr: errAPIKeyOrgMismatch,
-		},
-		{
-			desc: "should return valid idenitty",
-			id:   "1",
-			typ:  claims.TypeAPIKey,
-			exptedApiKey: &apikey.APIKey{
-				ID:    1,
-				OrgID: 1,
-				Role:  org.RoleEditor,
-			},
-			expectedIdenity: &authn.Identity{
-				OrgID:           1,
-				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
-				ID:              "1",
-				Type:            claims.TypeAPIKey,
-				AuthenticatedBy: login.APIKeyAuthModule,
-				ClientParams:    authn.ClientParams{SyncPermissions: true},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{
-				ExpectedAPIKey: tt.exptedApiKey,
-			})
-
-			identity, err := c.ResolveIdentity(context.Background(), 1, tt.typ, tt.id)
-			if tt.expectedErr != nil {
-				assert.Nil(t, identity)
-				assert.ErrorIs(t, err, tt.expectedErr)
-				return
-			}
-
-			assert.NoError(t, err)
-			assert.EqualValues(t, *tt.expectedIdenity, *identity)
 		})
 	}
 }

@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import saveAs from 'file-saver';
 import { ComponentProps } from 'react';
 
-import { FieldType, LogLevel, LogsDedupStrategy, standardTransformersRegistry, toDataFrame } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { FieldType, LogLevel, LogsDedupStrategy, LogsMetaItem, LogsMetaKind, store, toDataFrame } from '@grafana/data';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
 
-import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { logRowsToReadableJson } from '../../logs/utils';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
@@ -25,18 +25,16 @@ const defaultProps: LogsMetaRowProps = {
   dedupStrategy: LogsDedupStrategy.none,
   dedupCount: 0,
   displayedFields: [],
-  hasUnescapedContent: false,
-  forceEscape: false,
   logRows: [],
-  onEscapeNewlines: jest.fn(),
   clearDetectedFields: jest.fn(),
 };
 
-const setup = (propOverrides?: object) => {
+const setup = (propOverrides?: object, disableDownload = false) => {
   const props = {
     ...defaultProps,
     ...propOverrides,
   };
+  config.exploreHideLogsDownload = disableDownload;
 
   return render(<LogsMetaRow {...props} />);
 };
@@ -45,13 +43,6 @@ describe('LogsMetaRow', () => {
   it('renders the dedupe number', async () => {
     setup({ dedupStrategy: LogsDedupStrategy.numbers, dedupCount: 1234 });
     expect(await screen.findByText('1234')).toBeInTheDocument();
-  });
-
-  it('renders a highlighting warning', async () => {
-    setup({ logRows: [{ entry: 'A'.repeat(MAX_CHARACTERS + 1) }] });
-    expect(
-      await screen.findByText('Logs with more than 100,000 characters could not be parsed and highlighted')
-    ).toBeInTheDocument();
   });
 
   it('renders the show original line button', () => {
@@ -63,7 +54,7 @@ describe('LogsMetaRow', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the displayedfield', async () => {
+  it('renders the displayed fields', async () => {
     setup({ displayedFields: ['testField1234'] });
     expect(await screen.findByText('testField1234')).toBeInTheDocument();
   });
@@ -83,42 +74,14 @@ describe('LogsMetaRow', () => {
     expect(clearSpy).toBeCalled();
   });
 
-  it('renders a button to remove escaping', () => {
-    setup({ hasUnescapedContent: true, forceEscape: true });
-    expect(
-      screen.getByRole('button', {
-        name: 'Remove escaping',
-      })
-    ).toBeInTheDocument();
-  });
-
-  it('renders a button to remove escaping', () => {
-    setup({ hasUnescapedContent: true, forceEscape: false });
-    expect(
-      screen.getByRole('button', {
-        name: 'Escape newlines',
-      })
-    ).toBeInTheDocument();
-  });
-
-  it('renders a button to remove escaping', () => {
-    const escapeSpy = jest.fn();
-    setup({ hasUnescapedContent: true, forceEscape: false, onEscapeNewlines: escapeSpy });
-    fireEvent(
-      screen.getByRole('button', {
-        name: 'Escape newlines',
-      }),
-      new MouseEvent('click', {
-        bubbles: true,
-        cancelable: true,
-      })
-    );
-    expect(escapeSpy).toBeCalled();
-  });
-
   it('renders a button to show the download menu', () => {
     setup();
     expect(screen.getByText('Download').closest('button')).toBeInTheDocument();
+  });
+
+  it('does not render a button to show the download menu if disabled', async () => {
+    setup({}, true);
+    expect(screen.queryByText('Download')).toBeNull();
   });
 
   it('renders a button to show the download menu', async () => {
@@ -205,18 +168,7 @@ describe('LogsMetaRow', () => {
 
   it('renders a button to download CSV', async () => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    standardTransformersRegistry.setInit(() => {
-      return transformers.map((t) => {
-        return {
-          id: t.id,
-          aliasIds: t.aliasIds,
-          name: t.name,
-          transformation: t,
-          description: t.description,
-          editor: () => null,
-        };
-      });
-    });
+    mockTransformationsRegistry(transformers);
 
     const rows = [
       {
@@ -266,7 +218,7 @@ describe('LogsMetaRow', () => {
             {
               name: 'time',
               type: FieldType.time,
-              values: ['1970-01-02T00:00:00Z'],
+              values: [1],
             },
             {
               name: 'message',
@@ -308,6 +260,64 @@ describe('LogsMetaRow', () => {
     const blob = (saveAs as unknown as jest.Mock).mock.lastCall[0];
     expect(blob.type).toBe('text/csv;charset=utf-8');
     const text = await blob.text();
-    expect(text).toBe(`"time","message bar"\r\n1970-01-02T00:00:00Z,INFO 1`);
+    expect(text).toBe(`"Date","time","message bar"\r\n1970-01-01T00:00:00.001Z,1,INFO 1`);
+  });
+
+  it('renders common labels', async () => {
+    const meta: LogsMetaItem[] = [
+      {
+        label: 'Common labels',
+        value: {
+          exporter: 'OTLP',
+          job: 'cicd-o11y/grafana-deployment-tools',
+        },
+        kind: LogsMetaKind.LabelsMap,
+      },
+    ];
+    setup({ meta });
+    expect(await screen.findByText(/Common labels/)).toBeInTheDocument();
+    expect(await screen.findByText('exporter=OTLP')).toBeInTheDocument();
+    expect(await screen.findByText('job=cicd-o11y/grafana-deployment-tools')).toBeInTheDocument();
+  });
+
+  it('renders collapsed common labels', async () => {
+    const meta: LogsMetaItem[] = [
+      {
+        label: 'Common labels',
+        value: {
+          exporter: 'OTLP',
+          job: 'cicd-o11y/grafana-deployment-tools',
+          service_name: 'grafana',
+          service_namespace: 'cicd-o11y',
+        },
+        kind: LogsMetaKind.LabelsMap,
+      },
+    ];
+    setup({ meta });
+    expect(await screen.findByText(/Common labels/)).toBeInTheDocument();
+    expect(await screen.findByText('exporter=OTLP')).toBeInTheDocument();
+    expect(await screen.findByText('job=cicd-o11y/grafana-deployment-tools')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Expand labels')).toBeInTheDocument();
+  });
+
+  it('renders expanded common labels', async () => {
+    jest.spyOn(store, 'getBool').mockReturnValue(true);
+    const meta: LogsMetaItem[] = [
+      {
+        label: 'Common labels',
+        value: {
+          exporter: 'OTLP',
+          job: 'cicd-o11y/grafana-deployment-tools',
+          service_name: 'grafana',
+          service_namespace: 'cicd-o11y',
+        },
+        kind: LogsMetaKind.LabelsMap,
+      },
+    ];
+    setup({ meta });
+    expect(await screen.findByText(/Common labels/)).toBeInTheDocument();
+    expect(await screen.findByText('exporter=OTLP')).toBeInTheDocument();
+    expect(await screen.findByText('job=cicd-o11y/grafana-deployment-tools')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Collapse labels')).toBeInTheDocument();
   });
 });

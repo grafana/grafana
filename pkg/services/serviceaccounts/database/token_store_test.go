@@ -11,7 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )
 
-func TestStore_AddServiceAccountToken(t *testing.T) {
+func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	user := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
@@ -73,7 +76,10 @@ func TestStore_AddServiceAccountToken(t *testing.T) {
 	}
 }
 
-func TestStore_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
+func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, saToCreate)
@@ -93,7 +99,10 @@ func TestStore_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
 	require.Error(t, err, "It should not be possible to add token to non-existing service account")
 }
 
-func TestStore_RevokeServiceAccountToken(t *testing.T) {
+func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
@@ -133,7 +142,10 @@ func TestStore_RevokeServiceAccountToken(t *testing.T) {
 	require.Fail(t, "Key not found")
 }
 
-func TestStore_DeleteServiceAccountToken(t *testing.T) {
+func TestIntegration_Store_DeleteServiceAccountToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)

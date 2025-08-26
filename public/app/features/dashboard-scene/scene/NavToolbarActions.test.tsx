@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
@@ -151,7 +151,7 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Share')).toBeInTheDocument();
       const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).not.toBeInTheDocument();
-      const newExportButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      const newExportButton = screen.queryByRole('button', { name: /export dashboard/i });
       expect(newExportButton).not.toBeInTheDocument();
     });
     it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
@@ -165,7 +165,7 @@ describe('NavToolbarActions', () => {
     it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
       setup();
-      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      const newExportButton = screen.getByRole('button', { name: /export dashboard/i });
       expect(newExportButton).toBeInTheDocument();
     });
   });
@@ -177,14 +177,6 @@ describe('NavToolbarActions', () => {
       });
 
       expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
-    });
-    it('should not show link button when is not found dashboard', () => {
-      setup({
-        isSnapshot: true,
-        dashboardNotFound: true,
-      });
-
-      expect(screen.queryByTestId('button-snapshot')).not.toBeInTheDocument();
     });
   });
 });

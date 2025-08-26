@@ -17,23 +17,24 @@ weight: 200
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-The following table shows all supported authentication methods and the features available for them. [Team sync]({{< relref "../configure-team-sync" >}}) and [active sync]({{< relref "./enhanced-ldap#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
+The following table shows all supported authentication methods and the features available for them. [Team sync](../configure-team-sync/) and [active sync](enhanced-ldap/#active-ldap-synchronization) are only available in Grafana Enterprise.
 
-| Authentication method                                 | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
-| :---------------------------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
-| [Anonymous access]({{< relref "./anonymous-auth" >}}) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
-| [Auth Proxy]({{< relref "./auth-proxy" >}})           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
-| [Azure AD OAuth]({{< relref "./azuread" >}})          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Basic auth]({{< relref "./grafana" >}})              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
-| [Generic OAuth]({{< relref "./generic-oauth" >}})     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
-| [GitHub OAuth]({{< relref "./github" >}})             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [GitLab OAuth]({{< relref "./gitlab" >}})             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Google OAuth]({{< relref "./google" >}})             | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
-| [Grafana.com OAuth]({{< relref "./grafana-cloud" >}}) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           |
-| [Okta OAuth]({{< relref "./okta" >}})                 | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [SAML]({{< relref "./saml" >}}) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [LDAP]({{< relref "./ldap" >}})                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
-| [JWT Proxy]({{< relref "./jwt" >}})                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
+| Authentication method               | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout | SCIM support |
+| :---------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ | :----------- |
+| [Anonymous access](anonymous-auth/) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
+| [Auth Proxy](auth-proxy/)           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           | N/A          |
+| [Azure AD OAuth](azuread/)          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [Basic auth](grafana/)              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
+| [Passwordless auth](passwordless/)  | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
+| [Generic OAuth](generic-oauth/)     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           | N/A          |
+| [GitHub OAuth](github/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [GitLab OAuth](gitlab/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [Google OAuth](google/)             | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           | N/A          |
+| [Grafana.com OAuth](grafana-cloud/) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           | N/A          |
+| [Okta OAuth](okta/)                 | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [SAML](saml/) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | yes          |
+| [LDAP](ldap/)                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           | N/A          |
+| [JWT Proxy](jwt/)                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           | N/A          |
 
 Fields explanation:
 
@@ -57,10 +58,12 @@ Fields explanation:
 
 **Single Logout:** Logging out from Grafana also logs you out of provider session
 
+**SCIM support:** Support for SCIM provisioning. Supported Identity Providers are Azure AD and Okta.
+
 ## Configuring multiple identity providers
 
 Grafana allows you to configure more than one authentication provider, however it is not possible to configure the same type of authentication provider twice.
-For example, you can have [SAML]({{< relref "./saml" >}}) (Enterprise only) and [Generic OAuth]({{< relref "./generic-oauth" >}}) configured, but you can not have two different [Generic OAuth]({{< relref "./generic-oauth" >}}) configurations.
+For example, you can have [SAML](saml/) (Enterprise only) and [Generic OAuth](generic-oauth/) configured, but you can not have two different [Generic OAuth](generic-oauth/) configurations.
 
 > Note: Grafana does not support multiple identity providers resolving the same user. Ensure there are no user account overlaps between the different providers
 
@@ -68,7 +71,7 @@ In scenarios where you have multiple identity providers of the same type, there 
 
 - Use different Grafana instances each configured with a given identity provider.
 - Check if the identity provider supports account federation. In such cases, you can configure it once and let your identity provider federate the accounts from different providers.
-- If SAML is supported by the identity provider, you can configure one [Generic OAuth]({{< relref "./generic-oauth" >}}) and one [SAML]({{< relref "./saml" >}}) (Enterprise only).
+- If SAML is supported by the identity provider, you can configure one [Generic OAuth](generic-oauth/) and one [SAML](saml/) (Enterprise only).
 
 ## Using the same email address to login with different identity providers
 
@@ -92,6 +95,25 @@ These short-lived tokens are rotated on an interval specified by `token_rotation
 Inactive authenticated users will remain logged in for a duration specified by `login_maximum_inactive_lifetime_duration`.
 This means that a user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
 This is true as long as the time since last user login is less than `login_maximum_lifetime_duration`.
+
+## Session handling with SSO
+
+When using SSO (Single Sign-On) authentication methods, Grafana handles sessions differently based on the configuration:
+
+### OAuth/OpenID Connect
+
+- Without refresh tokens (default):
+  - Grafana creates a session valid for up to `login_maximum_lifetime_duration` (default: 30 days).
+  - During this time, the session remains valid even if the user loses access at the IdP.
+- With refresh tokens enabled:
+  - The user receives a JWT refresh token. When the JWT expires and the refresh token is used to obtain a new token, Grafana will revalidate access with the IdP.
+  - If the user has been removed from required groups or access has been revoked, the refresh will fail and the session will be invalidated.
+
+### SAML
+
+- After successful SAML authentication, Grafana creates a session with the default session lifetime.
+- If SAML Single Logout (SLO) is properly configured, the session will be revoked when the user's access is revoked on the IdP side.
+- If SAML Single Logout (SLO) is properly configured, the session will be revoked when the user's access is revoked on the IdP side. For more information on configuring SAML and SLO, refer to the [SAML configuration documentation](./saml/#configure-single-logout).
 
 ## Settings
 
@@ -140,9 +162,9 @@ oauth_allow_insecure_email_lookup = true
 
 You can also enable email lookup using the API:
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../introduction/grafana-cloud" >}}) since Grafana v10.4.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](../../../introduction/grafana-cloud/) since Grafana v10.4.
+{{< /admonition >}}
 
 ```
 curl --request PUT \
@@ -206,9 +228,9 @@ a Grafana admin user, you can also do the same for any user from the Server Admi
 
 ### Protected roles
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../introduction/grafana-cloud" >}}).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](../../../introduction/grafana-cloud/).
+{{< /admonition >}}
 
 By default, after you configure an authorization provider, Grafana will adopt existing users into the new authentication scheme. For example, if you have created a user with basic authentication having the login `jsmith@example.com`, then set up SAML authentication where `jsmith@example.com` is an account, the user's authentication type will be changed to SAML if they perform a SAML sign-in.
 

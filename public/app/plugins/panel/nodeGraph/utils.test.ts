@@ -19,7 +19,7 @@ describe('processNodes', () => {
 
   it('returns proper nodes and edges', async () => {
     const { nodes, edges, legend } = processNodes(
-      makeNodesDataFrame(3),
+      makeNodesDataFrame(3, [{ isinstrumented: false }]),
       makeEdgesDataFrame([
         { source: '0', target: '1' },
         { source: '0', target: '2' },
@@ -28,7 +28,7 @@ describe('processNodes', () => {
     );
 
     expect(nodes).toEqual([
-      makeNodeDatum(),
+      makeNodeDatum({ isInstrumented: false }),
       makeNodeDatum({ dataFrameRowIndex: 1, id: '1', incoming: 1, title: 'service:1' }),
       makeNodeDatum({ dataFrameRowIndex: 2, id: '2', incoming: 2, title: 'service:2' }),
     ]);
@@ -366,6 +366,7 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
       type: 'number',
       values: [40, 40, 40],
     },
+    isInstrumented: true,
     ...options,
   };
 }

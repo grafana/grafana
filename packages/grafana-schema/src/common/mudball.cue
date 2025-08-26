@@ -206,6 +206,8 @@ VizTextDisplayOptions: {
 	titleSize?: number
 	// Explicit value text size
 	valueSize?: number
+	// Explicit percent text size
+	percentSize?: number
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -227,6 +229,7 @@ GraphFieldConfig: {
 	gradientMode?:    GraphGradientMode
 	thresholdsStyle?: GraphThresholdsStyleConfig
 	transform?:       GraphTransform
+	showValues?:      bool
 	insertNulls?:     bool | number
 } @cuetsy(kind="interface")
 
@@ -262,6 +265,7 @@ VizTooltipOptions: {
 	sort: SortOrder
 	maxWidth?: number
 	maxHeight?: number
+	hideZeros?: bool
 } @cuetsy(kind="interface")
 
 Labels: {

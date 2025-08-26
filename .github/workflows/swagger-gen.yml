@@ -1,0 +1,72 @@
+name: Swagger generated code
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/swagger-gen.yml
+
+  verify:
+    name: Verify committed API specs match
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.changed == 'true'
+    permissions:
+      contents: read # clone the repository
+      id-token: write # required for Vault access
+    steps:
+      # Set up repository clone
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5.5.0
+        with:
+          go-version-file: go.mod
+      - name: Setup Enterprise
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+
+      - name: Generate Swagger specs
+        run: make swagger-clean && make openapi3-gen
+      - name: Check for changes
+        run: |
+          git add -f public/api-merged.json public/openapi3.json
+          if [ -z "$(git diff --name-only --cached)" ]; then
+            echo "No changes detected in API specs."
+          else
+            echo "Changes detected in API specs. Please review the changes."
+            echo "You can regenerate them locally with: make swagger-clean && make openapi3-gen"
+            exit 1
+          fi

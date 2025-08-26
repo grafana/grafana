@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 
 import { locationService, HistoryWrapper, useLocationService, LocationServiceProvider } from './LocationService';
 
@@ -36,6 +36,13 @@ describe('LocationService', () => {
       locationService.partial({ servers: ['A', 'B', 'C'] });
 
       expect(locationService.getLocation().search).toBe('?servers=A&servers=B&servers=C');
+    });
+
+    it('should handle boolean string values', () => {
+      locationService.push('/?query1=false&query2=true&query3');
+      locationService.partial({ newProp: 'a' });
+
+      expect(locationService.getLocation().search).toBe('?query1=false&query2=true&query3=true&newProp=a');
     });
 
     it('persist state', () => {

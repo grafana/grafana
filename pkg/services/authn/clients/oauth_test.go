@@ -14,10 +14,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -295,7 +297,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider, featuremgmt.WithFeatures(tt.features...))
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider, featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -375,7 +377,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 
 			cfg := setting.NewCfg()
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg}, featuremgmt.WithFeatures())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -469,7 +471,7 @@ func TestOAuth_Logout(t *testing.T) {
 			)
 
 			mockService := &oauthtokentest.MockOauthTokenService{
-				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) *oauth2.Token {
 					getTokenCalled = true
 					token := &oauth2.Token{
 						AccessToken: "some.access.token",
@@ -479,7 +481,7 @@ func TestOAuth_Logout(t *testing.T) {
 						"id_token": "some.id.token",
 					})
 				},
-				InvalidateOAuthTokensFunc: func(_ context.Context, _ identity.Requester) error {
+				InvalidateOAuthTokensFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) error {
 					invalidateTokenCalled = true
 					return nil
 				},
@@ -488,9 +490,9 @@ func TestOAuth_Logout(t *testing.T) {
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
 			}
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, nil)
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {
@@ -548,7 +550,8 @@ func TestIsEnabled(t *testing.T) {
 				nil,
 				fakeSocialSvc,
 				&setting.OSSImpl{Cfg: cfg},
-				featuremgmt.WithFeatures())
+				featuremgmt.WithFeatures(),
+				tracing.InitializeTracerForTest())
 			assert.Equal(t, tt.expected, c.IsEnabled())
 		})
 	}

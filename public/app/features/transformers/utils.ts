@@ -1,28 +1,52 @@
 import { useMemo } from 'react';
 
-import { DataFrame, getFieldDisplayName, TransformerCategory, SelectableValue, getTimeZones } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import {
+  DataFrame,
+  getFieldDisplayName,
+  TransformerCategory,
+  SelectableValue,
+  getTimeZones,
+  VariableOrigin,
+  VariableSuggestion,
+  SpecialValue,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { getTemplateSrv } from '@grafana/runtime';
 
-export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
-  return useMemo(() => {
-    if (!Array.isArray(input)) {
-      return [];
-    }
+import { variableRegex } from '../variables/utils';
 
-    return Object.keys(
-      input.reduce<Record<string, boolean>>((names, frame) => {
-        if (!frame || !Array.isArray(frame.fields)) {
-          return names;
-        }
+export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
+  // get full names
+  let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
 
-        return frame.fields.reduce((names, field) => {
-          const t = getFieldDisplayName(field, frame, input);
-          names[t] = true;
-          return names;
-        }, names);
-      }, {})
+  if (withBaseFieldNames) {
+    // only add base names of fields that have same field.name
+    let baseNameCounts = new Map<string, number>();
+
+    frames.forEach((frame) =>
+      frame.fields.forEach((field) => {
+        let count = baseNameCounts.get(field.name) ?? 0;
+        baseNameCounts.set(field.name, count + 1);
+      })
     );
-  }, [input]);
+
+    let baseNames: string[] = [];
+
+    baseNameCounts.forEach((count, name) => {
+      if (count > 1) {
+        baseNames.push(name);
+      }
+    });
+
+    // prepend base names + uniquify
+    names = [...new Set(baseNames.concat(names))];
+  }
+
+  return names;
+};
+
+export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
+  return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
 }
 
 export function getDistinctLabels(input: DataFrame[]): Set<string> {
@@ -39,15 +63,21 @@ export function getDistinctLabels(input: DataFrame[]): Set<string> {
   return distinct;
 }
 
-export const categoriesLabels: { [K in TransformerCategory]: string } = {
-  combine: 'Combine',
-  calculateNewFields: 'Calculate new fields',
-  createNewVisualization: 'Create new visualization',
-  filter: 'Filter',
-  performSpatialOperations: 'Perform spatial operations',
-  reformat: 'Reformat',
-  reorderAndRename: 'Reorder and rename',
-};
+export const getCategoriesLabels: () => { [K in TransformerCategory]: string } = () => ({
+  combine: t('transformers.utils.get-categories-labels.combine', 'Combine'),
+  calculateNewFields: t('transformers.utils.get-categories-labels.calculate-new-fields', 'Calculate new fields'),
+  createNewVisualization: t(
+    'transformers.utils.get-categories-labels.create-new-visualization',
+    'Create new visualization'
+  ),
+  filter: t('transformers.utils.get-categories-labels.filter', 'Filter'),
+  performSpatialOperations: t(
+    'transformers.utils.get-categories-labels.perform-spatial-operations',
+    'Perform spatial operations'
+  ),
+  reformat: t('transformers.utils.get-categories-labels.reformat', 'Reformat'),
+  reorderAndRename: t('transformers.utils.get-categories-labels.reorder-and-rename', 'Reorder and rename'),
+});
 
 export const numberOrVariableValidator = (value: string | number) => {
   if (typeof value === 'number') {
@@ -56,7 +86,9 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value) && config.featureToggles.transformationsVariableSupport) {
+  const variableFound = variableRegex.test(value);
+  variableRegex.lastIndex = 0;
+  if (variableFound) {
     return true;
   }
   return false;
@@ -69,8 +101,8 @@ export function getTimezoneOptions(includeInternal: boolean) {
   // Browser and UTC. We add the manually to avoid
   // funky string manipulation.
   if (includeInternal) {
-    timeZoneOptions.push({ label: 'Browser', value: 'browser' });
-    timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.browser', 'Browser'), value: 'browser' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.utc', 'UTC'), value: 'utc' });
   }
 
   // Add all other timezones
@@ -80,4 +112,40 @@ export function getTimezoneOptions(includeInternal: boolean) {
   }
 
   return timeZoneOptions;
+}
+
+export function getVariableSuggestions(): VariableSuggestion[] {
+  return getTemplateSrv()
+    .getVariables()
+    .map((v) => ({ value: v.name, label: v.label || v.name, origin: VariableOrigin.Template }));
+}
+
+export function getEmptyOptions(): Array<SelectableValue<SpecialValue>> {
+  return [
+    {
+      label: t('transformers.utils.special-value-options.label.null-value', 'Null'),
+      description: t('transformers.utils.special-value-options.description.null-value', 'Null value'),
+      value: SpecialValue.Null,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.boolean-true', 'True'),
+      description: t('transformers.utils.special-value-options.description.boolean-true', 'Boolean true value'),
+      value: SpecialValue.True,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.boolean-false', 'False'),
+      description: t('transformers.utils.special-value-options.description.boolean-false', 'Boolean false value'),
+      value: SpecialValue.False,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.number-value', 'Zero'),
+      description: t('transformers.utils.special-value-options.description.number-value', 'Number 0 value'),
+      value: SpecialValue.Zero,
+    },
+    {
+      label: t('transformers.utils.special-value-options.label.empty-string', 'Empty'),
+      description: t('transformers.utils.special-value-options.description.empty-string', 'Empty String'),
+      value: SpecialValue.Empty,
+    },
+  ];
 }

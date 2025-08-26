@@ -181,12 +181,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	// mode 1
 	for _, tt := range tests {
 		t.Run("Mode-1-"+tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 			lm := &mock.Mock{}
 			um := &mock.Mock{}
 
-			ls := legacyStoreMock{lm, l}
+			ls := storageMock{lm, l}
 			us := storageMock{um, s}
 
 			if tt.setupLegacyFn != nil {
@@ -196,7 +196,17 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				tt.setupStorageFn(um)
 			}
 
-			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode1, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
+			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), &SyncerConfig{
+				Mode:              Mode1,
+				LegacyStorage:     ls,
+				Storage:           us,
+				Kind:              "test.kind",
+				ServerLockService: &fakeServerLock{},
+				RequestInfo:       &request.RequestInfo{},
+
+				DataSyncerRecordsLimit: 1000,
+				DataSyncerInterval:     time.Hour,
+			}, NewDualWriterMetrics(nil))
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -210,12 +220,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	// mode 2
 	for _, tt := range tests {
 		t.Run("Mode-2-"+tt.name, func(t *testing.T) {
-			l := (LegacyStorage)(nil)
+			l := (Storage)(nil)
 			s := (Storage)(nil)
 			lm := &mock.Mock{}
 			um := &mock.Mock{}
 
-			ls := legacyStoreMock{lm, l}
+			ls := storageMock{lm, l}
 			us := storageMock{um, s}
 
 			if tt.setupLegacyFn != nil {
@@ -225,7 +235,17 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				tt.setupStorageFn(um)
 			}
 
-			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode2, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
+			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), &SyncerConfig{
+				Mode:              Mode2,
+				LegacyStorage:     ls,
+				Storage:           us,
+				Kind:              "test.kind",
+				ServerLockService: &fakeServerLock{},
+				RequestInfo:       &request.RequestInfo{},
+
+				DataSyncerRecordsLimit: 1000,
+				DataSyncerInterval:     time.Hour,
+			}, NewDualWriterMetrics(nil))
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

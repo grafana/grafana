@@ -2,7 +2,9 @@ import { lastValueFrom, map } from 'rxjs';
 
 import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+
+import { getAPINamespace } from '../../../api/utils';
 
 // Used in the snapshot list
 export interface Snapshot {
@@ -47,9 +49,13 @@ const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
   getSnapshot: async (key: string) => {
-    const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
-    dto.meta.canShare = false;
-    return dto;
+    try {
+      const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
+      dto.meta.canShare = false;
+      return dto;
+    } catch (e) {
+      throw e;
+    }
   },
 };
 
@@ -87,7 +93,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   readonly url: string;
 
   constructor() {
-    this.url = `/apis/${this.apiVersion}/namespaces/${config.namespace}/dashboardsnapshots`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${getAPINamespace()}/dashboardsnapshots`;
   }
 
   async create(cmd: SnapshotCreateCommand) {

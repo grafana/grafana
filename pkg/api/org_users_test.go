@@ -9,6 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -41,7 +44,9 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
@@ -62,7 +67,10 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	require.NoError(t, err)
 }
 
-func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
@@ -258,9 +266,17 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
-				if tt.AuthModule == login.LDAPAuthModule {
+				switch tt.AuthModule {
+				case login.LDAPAuthModule:
 					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
+				case login.GrafanaComAuthModule:
+					hs.authnService = &authntest.FakeService{
+						EnabledClients: []string{authn.ClientWithPrefix("grafana_com")},
+						ExpectedClientConfig: &authntest.FakeSSOClientConfig{
+							ExpectedIsSkipOrgRoleSyncEnabled: tt.SkipOrgRoleSync,
+						},
+					}
 				}
 				// AuthModule empty means basic auth
 

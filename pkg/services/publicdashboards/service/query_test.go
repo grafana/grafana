@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -102,161 +101,6 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "B"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    }
-  ],
-  "schemaVersion": 35
-}`
-
-	dashboardWithMixedDatasource = `
-{
-  "panels": [
-    {
-	  "datasource": {
-		"type": "datasource",
-		"uid": "-- Mixed --"
-	  },
-      "id": 1,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "abc123"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        },
-        {
-          "datasource": "6SOeCRrVk",
-          "exemplar": true,
-          "expr": "test{id=\"f0dd9b69-ad04-4342-8e79-ced8c245683b\", name=\"test\"}",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "",
-          "refId": "B"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-	  "datasource": {
-		"type": "prometheus",
-		"uid": "_yxMP8Ynk"
-	  },
-      "id": 2,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "_yxMP8Ynk"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-	  "datasource": {
-		"type": "prometheus",
-		"uid": "_yxMP8Ynk"
-	  },
-      "id": 3,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "_yxMP8Ynk"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    }
-  ],
-  "schemaVersion": 35
-}`
-
-	dashboardWithDuplicateDatasources = `
-{
-  "panels": [
-    {
-	  "datasource": {
-		"type": "prometheus",
-		"uid": "abc123"
-	  },
-      "id": 1,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "abc123"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-	  "datasource": {
-		"type": "prometheus",
-		"uid": "_yxMP8Ynk"
-	  },
-      "id": 2,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "_yxMP8Ynk"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-	  "datasource": {
-		"type": "prometheus",
-		"uid": "_yxMP8Ynk"
-	  },
-      "id": 3,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "_yxMP8Ynk"
-          },
-          "exemplar": true,
-          "expr": "go_goroutines{job=\"$job\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
         }
       ],
       "title": "Panel Title",
@@ -461,228 +305,19 @@ const (
   ],
   "schemaVersion": 35
 }`
-
-	dashboardWithCollapsedRows = `
-{
-"panels": [
-    {
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 12,
-      "title": "Row title",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "qCbTUC37k"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
-      "id": 11,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "qCbTUC37k"
-          },
-          "editorMode": "builder",
-          "expr": "access_evaluation_duration_bucket",
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": true,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "id": 10,
-      "panels": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "P49A45DF074423DFB"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 10
-          },
-          "id": 8,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "9.4.0-pre",
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "P49A45DF074423DFB"
-              },
-              "query": "// v.bucket, v.timeRangeStart, and v.timeRange stop are all variables supported by the flux plugin and influxdb\nfrom(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_value\"] >= 10 and r[\"_value\"] <= 20)",
-              "refId": "A"
-            }
-          ],
-          "title": "Panel Title",
-          "type": "timeseries"
-        }
-      ],
-      "title": "Row title 1",
-      "type": "row"
-    }
-  ]
-}`
 )
 
-func TestGetQueryDataResponse(t *testing.T) {
+func TestIntegrationGetQueryDataResponse(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
+	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
 	service.QueryDataService = fakeQueryService
 
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, service.cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, service.cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{
@@ -729,17 +364,19 @@ func TestGetQueryDataResponse(t *testing.T) {
 	})
 }
 
-func TestFindAnnotations(t *testing.T) {
+func TestIntegrationFindAnnotations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	color := "red"
 	name := "annoName"
-	features := featuremgmt.WithFeatures(featuremgmt.FlagAnnotationPermissionUpdate)
-	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
+	t.Run("service identity has correct permissions to get annotations dashboards and query datasources", func(t *testing.T) {
 		fakeStore := &FakePublicDashboardStore{}
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboards.NewDashboard("dash1"), nil)
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
 
 		reqDTO := AnnotationsQueryDTO{
 			From: 1,
@@ -747,11 +384,14 @@ func TestFindAnnotations(t *testing.T) {
 		}
 		dash := dashboards.NewDashboard("testDashboard")
 
-		items, _ := service.FindAnnotations(context.Background(), reqDTO, "abc123")
-		anonUser := buildAnonymousUser(context.Background(), dash, features)
-
-		assert.Equal(t, "dashboards:*", anonUser.Permissions[0]["dashboards:read"][0])
+		items, err := service.FindAnnotations(context.Background(), reqDTO, "abc123")
+		require.NoError(t, err)
 		assert.Len(t, items, 0)
+
+		_, svcIdent := identity.WithServiceIdentity(context.Background(), dash.OrgID)
+		require.Equal(t, "*", svcIdent.GetPermissions()["datasources:query"][0])
+		require.Equal(t, "*", svcIdent.GetPermissions()["dashboards:read"][0])
+		require.Equal(t, "*", svcIdent.GetPermissions()["annotations:read"][0])
 	})
 
 	t.Run("Test events from tag queries overwrite built-in annotation queries and duplicate events are not returned", func(t *testing.T) {
@@ -792,7 +432,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -849,7 +489,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -918,7 +558,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -958,7 +598,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -988,7 +628,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -1020,7 +660,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -1061,7 +701,7 @@ func TestFindAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -1083,9 +723,12 @@ func TestFindAnnotations(t *testing.T) {
 	})
 }
 
-func TestGetMetricRequest(t *testing.T) {
-	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+func TestIntegrationGetMetricRequest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 
@@ -1122,52 +765,14 @@ func TestGetMetricRequest(t *testing.T) {
 	})
 }
 
-func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
-	t.Run("can get unique datasource ids from dashboard", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithDuplicateDatasources))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 2)
-		require.Equal(t, "abc123", uids[0])
-		require.Equal(t, "_yxMP8Ynk", uids[1])
-	})
-
-	t.Run("can get unique datasource ids from dashboard with a mixed datasource", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithMixedDatasource))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 3)
-		require.Equal(t, "abc123", uids[0])
-		require.Equal(t, "6SOeCRrVk", uids[1])
-		require.Equal(t, "_yxMP8Ynk", uids[2])
-	})
-
-	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 0)
-	})
-
-	t.Run("can get unique datasource ids from dashboard with rows", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithCollapsedRows))
-		require.NoError(t, err)
-
-		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 2)
-		require.Equal(t, "qCbTUC37k", uids[0])
-		require.Equal(t, "P49A45DF074423DFB", uids[1])
-	})
-}
-
-func TestBuildMetricRequest(t *testing.T) {
+func TestIntegrationBuildMetricRequest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
+	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
@@ -1316,39 +921,6 @@ func TestBuildMetricRequest(t *testing.T) {
 			simplejson.NewFromAny(nonHiddenQuery),
 			reqDTO.Queries[0],
 		)
-	})
-}
-
-func TestBuildAnonymousUser(t *testing.T) {
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
-	require.NoError(t, err)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
-	features := featuremgmt.WithFeatures()
-
-	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
-		user := buildAnonymousUser(context.Background(), dashboard, features)
-
-		require.Equal(t, dashboard.OrgID, user.OrgID)
-		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
-		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:query"][1])
-		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:read"][0])
-		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:read"][1])
-	})
-	t.Run("will add dashboard and annotation permissions needed for getting annotations", func(t *testing.T) {
-		user := buildAnonymousUser(context.Background(), dashboard, features)
-
-		require.Equal(t, dashboard.OrgID, user.OrgID)
-		require.Equal(t, "annotations:type:dashboard", user.Permissions[user.OrgID]["annotations:read"][0])
-		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
-	})
-	t.Run("will add dashboard and annotation permissions needed for getting annotations when FlagAnnotationPermissionUpdate is enabled", func(t *testing.T) {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagAnnotationPermissionUpdate)
-		user := buildAnonymousUser(context.Background(), dashboard, features)
-
-		require.Equal(t, dashboard.OrgID, user.OrgID)
-		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["annotations:read"][0])
-		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
 	})
 }
 

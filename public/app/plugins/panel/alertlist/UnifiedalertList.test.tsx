@@ -108,11 +108,12 @@ const defaultOptions: UnifiedAlertListOptions = {
   groupBy: [''],
   alertName: 'test',
   showInstances: false,
-  folder: { id: 1, title: 'test folder' },
-  stateFilter: { firing: true, pending: false, noData: false, normal: true, error: false },
+  folder: { uid: 'abc', title: 'test folder' },
+  stateFilter: { firing: true, pending: false, noData: false, normal: true, error: false, recovering: false },
   alertInstanceLabelFilter: '',
   datasource: 'grafana',
   viewMode: ViewMode.List,
+  showInactiveAlerts: false,
 };
 
 const defaultProps: PanelProps<UnifiedAlertListOptions> = {

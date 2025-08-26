@@ -1,5 +1,5 @@
-import { PanelModel } from 'app/features/dashboard/state';
-import { StoreState } from 'app/types';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { StoreState } from 'app/types/store';
 
 import { PanelState } from './reducers';
 

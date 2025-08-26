@@ -60,7 +60,7 @@ func RegisterAPIService(
 	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
 
 	// This requires devmode!
-	if !(explictPluginList || features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+	if !explictPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
@@ -78,7 +78,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		if !ds.JSONData.Backend {
+		if !ds.Backend {
 			continue // skip frontend only plugins
 		}
 
@@ -195,6 +195,10 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
+
 func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
 	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {
@@ -260,9 +264,6 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// The root api URL
 	root := "/apis/" + b.connectionResourceInfo.GroupVersion().String() + "/"
 
-	// Hide the ability to list all connections across tenants
-	delete(oas.Paths.Paths, root+b.connectionResourceInfo.GroupResource().Resource)
-
 	// Add queries to the request properties
 	// Add queries to the request properties
 	err := queryschema.AddQueriesToOpenAPI(queryschema.OASQueryOptions{
@@ -274,15 +275,5 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		QueryDescription: fmt.Sprintf("Query the %s datasources", b.pluginJSON.Name),
 	})
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, err
-}
-
-// Register additional routes with the server
-func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }

@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
@@ -33,7 +33,7 @@ jest.mock('react-use', () => {
   };
 });
 
-beforeAll(() => {
+beforeEach(() => {
   server.use(
     http.get('/api/v1/rules/history', () =>
       HttpResponse.json<DataFrameJSON>({

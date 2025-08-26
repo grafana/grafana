@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
@@ -30,6 +30,8 @@ const (
 	ClientProxy        = "auth.client.proxy"
 	ClientSAML         = "auth.client.saml"
 	ClientPasswordless = "auth.client.passwordless"
+	ClientLDAP         = "ldap"
+	ClientProvisioning = "auth.client.apiserver.provisioning"
 )
 
 const (
@@ -71,9 +73,11 @@ type FetchPermissionsParams struct {
 	RestrictedActions []string
 	// AllowedActions will be added to the identity permissions
 	AllowedActions []string
-	// Note: Kept for backwards compatibility, use AllowedActions instead
+	// Note: Kept for backwards compatibility, use K8s style instead
 	// Roles permissions will be directly added to the identity permissions
 	Roles []string
+	// K8s stores Kubernetes-style permissions in the format "resource:action"
+	K8s []string
 }
 
 type (
@@ -94,6 +98,10 @@ type SSOClientConfig interface {
 	IsAutoLoginEnabled() bool
 	// IsSingleLogoutEnabled returns true if the client has single logout enabled
 	IsSingleLogoutEnabled() bool
+	// IsSkipOrgRoleSyncEnabled returns true if the client has enabled skipping org role sync
+	IsSkipOrgRoleSyncEnabled() bool
+	// IsAllowAssignGrafanaAdminEnabled returns true if the client has enabled assigning grafana admin
+	IsAllowAssignGrafanaAdminEnabled() bool
 }
 
 type Service interface {
@@ -178,7 +186,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, bool)
 }
 
 type SSOSettingsAwareClient interface {
@@ -278,7 +286,7 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
 			if err == nil {
 				redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
-				if redirectTo != "" && validator(redirectTo) == nil {
+				if redirectTo != "" && validator(cfg.AppSubURL+redirectTo) == nil {
 					redirectURL = cfg.AppSubURL + redirectTo
 				}
 				cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))

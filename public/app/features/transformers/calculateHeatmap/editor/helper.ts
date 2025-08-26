@@ -1,6 +1,7 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ScaleDistribution, HeatmapCalculationMode, HeatmapCalculationOptions } from '@grafana/schema';
-import { ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
+import { ScaleDistributionEditor } from '@grafana/ui/internal';
 
 import { AxisEditor } from './AxisEditor';
 
@@ -13,18 +14,21 @@ export function addHeatmapCalculationOptions(
   builder.addCustomEditor({
     id: 'xBuckets',
     path: `${prefix}xBuckets`,
-    name: 'X Bucket',
+    name: t('transformers.calculate-heatmap.add-heatmap-calculation-options.name-x-bucket', 'X Bucket'),
     editor: AxisEditor,
     category,
     defaultValue: {
       mode: HeatmapCalculationMode.Size,
+    },
+    settings: {
+      allowInterval: true,
     },
   });
 
   builder.addCustomEditor({
     id: 'yBuckets',
     path: `${prefix}yBuckets`,
-    name: 'Y Bucket',
+    name: t('transformers.calculate-heatmap.add-heatmap-calculation-options.name-y-bucket', 'Y Bucket'),
     editor: AxisEditor,
     category,
     defaultValue: {
@@ -35,7 +39,7 @@ export function addHeatmapCalculationOptions(
   builder.addCustomEditor({
     id: 'yBuckets-scale',
     path: `${prefix}yBuckets.scale`,
-    name: 'Y Bucket scale',
+    name: t('transformers.calculate-heatmap.add-heatmap-calculation-options.name-y-bucket-scale', 'Y Bucket scale'),
     category,
     editor: ScaleDistributionEditor,
     defaultValue: { type: ScaleDistribution.Linear },

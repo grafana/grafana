@@ -1,15 +1,20 @@
 {
   "key": {
     "namespace": "default",
-    "group": "dashboard.grafana.app",
-    "resource": "dashboards",
+    "group": "folder.grafana.app",
+    "resource": "folders",
     "name": "bbb"
   },
+  "name": "bbb",
   "rv": 1234,
-  "title": "bbb",
+  "title": "test-bbb",
+  "title_ngram": "test-bbb",
+  "title_phrase": "test-bbb",
   "created": 1730490142000,
   "createdBy": "user:1",
-  "repository": {
-    "name": "SQL"
-  }
+  "manager": {
+    "kind": "repo",
+    "id": "MyGIT"
+  },
+  "managedBy": "repo:MyGIT"
 }

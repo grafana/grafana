@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -18,6 +18,7 @@ export interface Props {
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
+
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const onMove = async () => {

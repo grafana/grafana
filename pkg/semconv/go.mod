@@ -1,8 +1,8 @@
 module github.com/grafana/grafana/pkg/semconv
 
-go 1.23.1
+go 1.24.6
 
-require go.opentelemetry.io/otel v1.32.0
+require go.opentelemetry.io/otel v1.37.0
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

@@ -1,14 +1,22 @@
+import { useMemo } from 'react';
+
 import { NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { t } from 'app/core/internationalization';
+import {
+  shouldRenderInviteUserButton,
+  performInviteUserClick,
+} from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
+import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
+import { useSelector } from 'app/types/store';
 
 import { CommandPaletteAction } from '../types';
 import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
 // TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
-  return 'navModel.' + navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle;
+  return 'navModel.' + (navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle);
 }
 
 function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = []): CommandPaletteAction[] {
@@ -70,11 +78,11 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   return navActions;
 }
 
-export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteAction[]): CommandPaletteAction[] => {
-  const globalActions: CommandPaletteAction[] = [
+function getGlobalActions(): CommandPaletteAction[] {
+  const actions: CommandPaletteAction[] = [
     {
       id: 'preferences/theme',
-      name: t('command-palette.action.change-theme', 'Change theme...'),
+      name: t('command-palette.action.change-theme', 'Change theme'),
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
       priority: PREFERENCES_PRIORITY,
@@ -97,7 +105,54 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
     },
   ];
 
-  const navBarActions = navTreeToActions(navBarTree);
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable @grafana/i18n/no-untranslated-strings
+    const section = 'Dev tooling';
+    const currentState = currentMockApiState();
+    const mockApiAction = currentState ? 'Disable' : 'Enable';
+    actions.push({
+      id: 'preferences/dev/toggle-mock-api',
+      section,
+      name: `${mockApiAction} Mock API worker and reload`,
+      subtitle: 'Intercepts requests and returns mock data using MSW',
+      keywords: 'mock api',
+      priority: PREFERENCES_PRIORITY,
+      perform: toggleMockApiAndReload,
+    });
 
-  return [...globalActions, ...extensionActions, ...navBarActions];
-};
+    actions.push({
+      id: 'preferences/dev/pseudo-locale',
+      section,
+      name: 'Toggle pseudo locale',
+      subtitle: 'Toggles between default language and pseudo locale',
+      keywords: 'pseudo locale',
+      priority: PREFERENCES_PRIORITY,
+      perform: () => {
+        togglePseudoLocale();
+      },
+    });
+    // eslint-enable @grafana/i18n/no-untranslated-strings
+  }
+
+  return actions;
+}
+
+export function useStaticActions(): CommandPaletteAction[] {
+  const navBarTree = useSelector((state) => state.navBarTree);
+  return useMemo(() => {
+    const navBarActions = navTreeToActions(navBarTree);
+
+    if (shouldRenderInviteUserButton()) {
+      navBarActions.push({
+        id: 'invite-user',
+        name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
+        section: t('command-palette.section.actions', 'Actions'),
+        priority: ACTIONS_PRIORITY,
+        perform: () => {
+          performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
+        },
+      });
+    }
+    return [...getGlobalActions(), ...navBarActions];
+  }, [navBarTree]);
+}

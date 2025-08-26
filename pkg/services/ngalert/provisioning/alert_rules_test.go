@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,33 +17,33 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestAlertRuleService(t *testing.T) {
+// note: additional integration tests are in /pkg/tests/api/alerting/api_provisioning_test.go
+
+func TestIntegrationAlertRuleService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
+		UserUID: util.GenerateShortUID(),
+		UserID:  1,
+		OrgID:   orgID,
 	}
 
 	t.Run("group creation should set the right provenance", func(t *testing.T) {
@@ -196,7 +197,7 @@ func TestAlertRuleService(t *testing.T) {
 			},
 		}
 		rule.Metadata = ruleMetadata
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
@@ -225,6 +226,97 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, ruleMetadata, readGroup.Rules[0].Metadata)
 	})
 
+	t.Run("updating a group with editor settings should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the editor settings in the metadata to check that the existing setting is not overridden
+		rule.Metadata = models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "new",
+			},
+		}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the editor settings are still there
+		require.True(t, readGroup.Rules[0].Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		// check the new prometheus rule definition
+		require.Equal(t, "new", readGroup.Rules[0].Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
+
+	t.Run("updating a group should override its prometheus rule definition", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// make the metadata empty
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the prometheus rule definition is empty
+		require.Nil(t, readGroup.Rules[0].Metadata.PrometheusStyleRule)
+	})
+
 	t.Run("updating a rule should not override its editor settings", func(t *testing.T) {
 		rule := createTestRule(util.GenerateShortUID(), "my-group", orgID, "my-folder")
 		ruleMetadata := models.AlertRuleMetadata{
@@ -233,7 +325,7 @@ func TestAlertRuleService(t *testing.T) {
 			},
 		}
 		rule.Metadata = ruleMetadata
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
@@ -579,6 +671,42 @@ func TestAlertRuleService(t *testing.T) {
 				to:     models.ProvenanceNone,
 				errNil: false,
 			},
+			{
+				name:   "should be able to update from provenance none to 'converted prometheus'",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: true,
+			},
+			{
+				name:   "should be able to update from provenance 'converted prometheus' to none",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceNone,
+				errNil: true,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to api",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceAPI,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to file",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceFile,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance api to 'converted prometheus'",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to 'converted prometheus'",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: false,
+			},
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
@@ -622,9 +750,12 @@ func TestAlertRuleService(t *testing.T) {
 	})
 }
 
-func TestCreateAlertRule(t *testing.T) {
+func TestIntegrationCreateAlertRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	orgID := rand.Int63()
-	u := &user.SignedInUser{OrgID: orgID}
+	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
 	gen := models.RuleGen
@@ -1000,6 +1131,30 @@ func TestUpdateAlertRule(t *testing.T) {
 			})
 			require.Empty(t, updates)
 		})
+
+		t.Run("when there are no changes it should be successful", func(t *testing.T) {
+			// For this test we will not change the rule, and we will not use "admin" (CanWriteAllRulesFunc)
+			// permissions. The response of the service should still be successful.
+			service, ruleStore, _, ac := initServiceWithData(t)
+
+			rule := models.CopyRule(rules[0])
+
+			_, err := service.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{*rule})
+			require.NoError(t, err)
+
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+
+			_, err = service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			require.NoError(t, err)
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				a, ok := cmd.([]models.UpdateRule)
+				return a, ok
+			})
+			require.Empty(t, updates)
+		})
 	})
 }
 
@@ -1268,6 +1423,99 @@ func TestGetRuleGroup(t *testing.T) {
 	})
 }
 
+func TestListAlertRules(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey1 := models.GenerateGroupKey(orgID)
+	groupKey2 := models.GenerateGroupKey(orgID)
+	gen := models.RuleGen
+	rules1 := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
+	models.RulesGroup(rules1).SortByGroupIndex()
+	rules2 := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(4)
+	models.RulesGroup(rules2).SortByGroupIndex()
+	allRules := append(rules1, rules2...)
+
+	fs := foldertest.NewFakeService()
+	fs.AddFolder(&folder.Folder{
+		OrgID: orgID,
+		UID:   groupKey1.NamespaceUID,
+		Title: "folder1",
+	})
+	fs.AddFolder(&folder.Folder{
+		OrgID: orgID,
+		UID:   groupKey2.NamespaceUID,
+		Title: "folder2",
+	})
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		service.folderService = fs
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID: allRules,
+		}
+		ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+			return true, nil
+		}
+
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	t.Run("when user can read all rules", func(t *testing.T) {
+		t.Run("should skip AuthorizeRuleGroupRead and return all rules", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			require.NoError(t, err)
+			// check that rules contain all uids from allRules
+			ruleUIDs := make(map[string]bool)
+			for _, r := range rules {
+				ruleUIDs[r.UID] = true
+			}
+			for _, r := range allRules {
+				assert.True(t, ruleUIDs[r.UID])
+			}
+			require.Len(t, ruleUIDs, len(allRules))
+			require.Empty(t, token)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+		})
+	})
+
+	t.Run("when user cannot read all rules", func(t *testing.T) {
+		t.Run("should return only rules in accessible folders", func(t *testing.T) {
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanReadAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
+			}
+
+			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			require.NoError(t, err)
+			// check that rules contain all uids from rules1
+			ruleUIDs := make(map[string]bool)
+			for _, r := range rules {
+				ruleUIDs[r.UID] = true
+			}
+			for _, r := range rules2 {
+				assert.True(t, ruleUIDs[r.UID])
+			}
+			require.Len(t, ruleUIDs, len(rules2))
+			require.Empty(t, token)
+
+			assert.Len(t, ac.Calls, 3)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].Method)
+			assert.Equal(t, "HasAccessInFolder", ac.Calls[1].Method)
+			assert.Equal(t, "HasAccessInFolder", ac.Calls[2].Method)
+		})
+	})
+}
+
 func TestGetAlertRules(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
@@ -1480,6 +1728,40 @@ func TestReplaceGroup(t *testing.T) {
 			require.Len(t, updates, 1)
 		})
 	})
+
+	t.Run("alert rule metadata should be updated correctly", func(t *testing.T) {
+		service, _, _, _ := initServiceWithData(t)
+
+		rule := dummyRule("test#3", orgID)
+		// the rule must have a UID to be updated, otherwise it will be created as new
+		// and the previous version will be deleted
+		rule.UID = util.GenerateShortUID()
+		rule.Metadata = models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+			PrometheusStyleRule: &models.PrometheusStyleRule{
+				OriginalRuleDefinition: "old",
+			},
+		}
+		group := models.AlertRuleGroup{
+			Title:     rule.RuleGroup,
+			Interval:  rule.IntervalSeconds,
+			FolderUID: rule.NamespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition = "new"
+		err = service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, "new", rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
 }
 
 func TestDeleteRuleGroup(t *testing.T) {
@@ -1550,7 +1832,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
-				assert.EqualValues(t, rules, change.AffectedGroups[groupKey])
+				assert.ElementsMatch(t, rules, change.AffectedGroups[groupKey])
 				assert.Empty(t, change.Update)
 				assert.Empty(t, change.New)
 				assert.Len(t, change.Delete, len(rules))
@@ -1570,86 +1852,226 @@ func TestDeleteRuleGroup(t *testing.T) {
 	})
 }
 
-func TestProvisiongWithFullpath(t *testing.T) {
-	tracer := tracing.InitializeTracerForTest()
-	inProcBus := bus.ProvideBus(tracer)
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
-	ac := acmock.New()
-	folderPermissions := acmock.NewMockedPermissionsService()
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	fStore := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(fStore, ac, inProcBus, dashboardStore, folderStore, sqlStore,
-		features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-	ruleService := createAlertRuleService(t, folderService)
-	var orgID int64 = 1
+func TestDeleteRuleGroups(t *testing.T) {
+	orgID1 := rand.Int63()
+	orgID2 := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID1, UserUID: "test-test"}
 
-	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {
-			dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
-			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
-			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
-	}}
-	namespaceUID := "my-namespace"
-	namespaceTitle := namespaceUID
-	rootFolder, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          namespaceUID,
-		Title:        namespaceTitle,
-		OrgID:        orgID,
-		SignedInUser: &signedInUser,
+	// Create groups across different orgs and namespaces
+	groupKey1 := models.AlertRuleGroupKey{
+		OrgID:        orgID1,
+		NamespaceUID: "namespace1",
+		RuleGroup:    "group1",
+	}
+	groupKey2 := models.AlertRuleGroupKey{
+		OrgID:        orgID1,
+		NamespaceUID: "namespace2",
+		RuleGroup:    "group2",
+	}
+	groupKey3 := models.AlertRuleGroupKey{
+		OrgID:        orgID1,
+		NamespaceUID: "namespace3",
+		RuleGroup:    "group3",
+	}
+	groupKey4 := models.AlertRuleGroupKey{
+		OrgID:        orgID2, // Different org
+		NamespaceUID: "namespace1",
+		RuleGroup:    "group1",
+	}
+
+	gen := models.RuleGen
+	// Create rules for each group
+	rules1 := gen.With(gen.WithGroupKey(groupKey1)).GenerateManyRef(2)
+	rules2 := gen.With(gen.WithGroupKey(groupKey2)).GenerateManyRef(3)
+	rules3 := gen.With(gen.WithGroupKey(groupKey3)).GenerateManyRef(2)
+	rules4 := gen.With(gen.WithGroupKey(groupKey4)).GenerateManyRef(2)
+
+	org1Rules := slices.Concat(rules1, rules2, rules3)
+	org2Rules := rules4
+
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ruleStore.Rules = map[int64][]*models.AlertRule{
+			orgID1: org1Rules,
+			orgID2: org2Rules,
+		}
+		// Set provenance for all rules
+		for _, rules := range []([]*models.AlertRule){org1Rules, org2Rules} {
+			for _, rule := range rules {
+				err := provenanceStore.SetProvenance(context.Background(), rule, rule.OrgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+			}
+		}
+		return service, ruleStore, provenanceStore, ac
+	}
+
+	getUIDs := func(rules []*models.AlertRule) []string {
+		uids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			uids = append(uids, rule.UID)
+		}
+		return uids
+	}
+
+	t.Run("when deleting specific groups", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"namespace1"},
+			RuleGroups:    []string{"group1"},
+		}
+
+		t.Run("when user can write all rules", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.NoError(t, err)
+
+			require.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+
+			// Verify only rules from group1 in org1 were deleted
+			deletes := getDeletedRules(t, ruleStore)
+			require.Len(t, deletes, 1)
+			require.Equal(t, "test-test", deletes[0].userID)
+			require.ElementsMatch(t, getUIDs(rules1), deletes[0].uids)
+		})
+
+		t.Run("when user cannot write all rules", func(t *testing.T) {
+			t.Run("should not delete if not authorized", func(t *testing.T) {
+				service, ruleStore, _, ac := initServiceWithData(t)
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				expectedErr := errors.New("test error")
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+					return expectedErr
+				}
+
+				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+				require.ErrorIs(t, err, expectedErr)
+
+				require.Len(t, ac.Calls, 2)
+				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+				assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
+
+				deletes := getDeletedRules(t, ruleStore)
+				require.Empty(t, deletes)
+			})
+
+			t.Run("should delete group1 when authorized", func(t *testing.T) {
+				service, ruleStore, _, ac := initServiceWithData(t)
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return false, nil
+				}
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+					assert.Equal(t, u, user)
+					assert.Equal(t, groupKey1, change.GroupKey)
+					assert.ElementsMatch(t, rules1, change.AffectedGroups[groupKey1])
+					assert.Empty(t, change.Update)
+					assert.Empty(t, change.New)
+					assert.Len(t, change.Delete, len(rules1))
+					return nil
+				}
+
+				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+				require.NoError(t, err)
+
+				require.Len(t, ac.Calls, 2)
+				assert.Equal(t, "CanWriteAllRules", ac.Calls[0].Method)
+				assert.Equal(t, "AuthorizeRuleGroupWrite", ac.Calls[1].Method)
+
+				deletes := getDeletedRules(t, ruleStore)
+				require.Len(t, deletes, 1)
+				require.ElementsMatch(t, getUIDs(rules1), deletes[0].uids)
+			})
+		})
 	})
-	require.NoError(t, err)
 
-	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
-			createTestRule("my-cool-group", "my-cool-group", orgID, namespaceUID),
+	t.Run("when deleting multiple groups from multiple namespaces", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"namespace1", "namespace2"},
+			RuleGroups:    []string{"group1", "group2"},
+		}
+
+		t.Run("should delete all matching groups from correct org", func(t *testing.T) {
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.NoError(t, err)
+
+			deletes := getDeletedRules(t, ruleStore)
+			require.Len(t, deletes, 2)
+			require.ElementsMatch(
+				t,
+				slices.Concat(getUIDs(rules1), getUIDs(rules2)),
+				slices.Concat(deletes[0].uids, deletes[1].uids),
+			)
 		})
-		require.NoError(t, err)
-		require.Len(t, r, 1)
-
-		res, err := ruleService.GetAlertRuleWithFolderFullpath(context.Background(), &signedInUser, r[0].UID)
-		require.NoError(t, err)
-		assert.Equal(t, namespaceTitle, res.FolderFullpath)
-
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(context.Background(), &signedInUser, namespaceUID, "my-cool-group")
-		require.NoError(t, err)
-		assert.Equal(t, namespaceTitle, res2.FolderFullpath)
-
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{namespaceUID})
-		require.NoError(t, err)
-		assert.Equal(t, namespaceTitle, res3[0].FolderFullpath)
 	})
 
-	t.Run("for a rule under a subfolder should set the right fullpath", func(t *testing.T) {
-		otherNamespaceUID := "my-other-namespace"
-		otherNamespaceTitle := "my-other-namespace containing multiple //"
-		_, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          otherNamespaceUID,
-			Title:        otherNamespaceTitle,
-			OrgID:        orgID,
-			ParentUID:    rootFolder.UID,
-			SignedInUser: &signedInUser,
+	t.Run("when filtering by imported Prometheus rules", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			HasPrometheusRuleDefinition: util.Pointer(true),
+			NamespaceUIDs:               []string{"namespace1"},
+		}
+
+		t.Run("when the group is not imported", func(t *testing.T) {
+			filterOpts.RuleGroups = []string{groupKey1.RuleGroup}
+			service, _, _, ac := initServiceWithData(t)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
 		})
-		require.NoError(t, err)
 
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
-			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespaceUID),
+		t.Run("when the group is imported", func(t *testing.T) {
+			importedGroup := models.AlertRuleGroupKey{
+				OrgID:        orgID1,
+				NamespaceUID: "namespace1",
+				RuleGroup:    "newgroup",
+			}
+			importedRules := gen.With(
+				gen.WithGroupKey(importedGroup),
+				gen.WithPrometheusOriginalRuleDefinition("something"),
+			).GenerateManyRef(2)
+			filterOpts.RuleGroups = []string{importedGroup.RuleGroup}
+			service, ruleStore, _, ac := initServiceWithData(t)
+			ruleStore.Rules[orgID1] = append(ruleStore.Rules[orgID1], importedRules...)
+			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+				return true, nil
+			}
+
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			require.NoError(t, err)
+			deletes := getDeletedRules(t, ruleStore)
+			require.Len(t, deletes, 1)
+			require.ElementsMatch(t, getUIDs(importedRules), deletes[0].uids)
 		})
-		require.NoError(t, err)
-		require.Len(t, r, 1)
+	})
 
-		res, err := ruleService.GetAlertRuleWithFolderFullpath(context.Background(), &signedInUser, r[0].UID)
-		require.NoError(t, err)
-		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res.FolderFullpath)
+	t.Run("with no matching rule groups", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"non-existent"},
+			RuleGroups:    []string{"non-existent"},
+		}
 
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(context.Background(), &signedInUser, otherNamespaceUID, "my-cool-group-2")
-		require.NoError(t, err)
-		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res2.FolderFullpath)
+		service, ruleStore, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), &signedInUser, []string{otherNamespaceUID})
-		require.NoError(t, err)
-		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res3[0].FolderFullpath)
+		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
+
+		deletes := getDeletedRules(t, ruleStore)
+		require.Empty(t, deletes)
 	})
 }
 
@@ -1668,6 +2090,40 @@ func getDeleteQueries(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
 	return result
 }
 
+type deleteRuleOperation struct {
+	orgID  int64
+	userID string
+	uids   []string
+}
+
+func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOperation {
+	t.Helper()
+
+	queries := getDeleteQueries(ruleStore)
+	operations := make([]deleteRuleOperation, 0, len(queries))
+	for _, q := range queries {
+		orgID, ok := q.Params[0].(int64)
+		require.True(t, ok, "orgID parameter should be int64")
+
+		uid := ""
+		userUID, ok := q.Params[1].(*models.UserUID)
+		require.True(t, ok, "parameter should be UserUID")
+		if userUID != nil {
+			uid = string(*userUID)
+		}
+
+		uids, ok := q.Params[3].([]string)
+		require.True(t, ok, "uids parameter should be []string")
+
+		operations = append(operations, deleteRuleOperation{
+			orgID:  orgID,
+			userID: uid,
+			uids:   uids,
+		})
+	}
+	return operations
+}
+
 func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRuleService {
 	t.Helper()
 	sqlStore := db.InitTestDB(t)
@@ -1676,9 +2132,10 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
-		Logger:        log.NewNopLogger(),
-		FolderService: folderService,
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		Logger:         log.NewNopLogger(),
+		FolderService:  folderService,
+		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}

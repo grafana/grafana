@@ -67,7 +67,7 @@ If you enable `Match Exact`, you must also specify all dimensions of the metric 
 If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. With `Match Exact` disabled the query returns any metrics that match the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
 The data source returns up to 100 metrics matching your filter criteria.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+You can also augment queries by using [template variables](../template-variables/).
 
 #### Create dynamic queries with dimension wildcards
 
@@ -111,9 +111,9 @@ For details on the available functions, refer to [AWS Metric Math](https://docs.
 
 For example, to apply arithmetic operations to a metric, apply a unique string id to the raw metric, then use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Period macro
 
@@ -157,7 +157,7 @@ For details about the Metrics Insights syntax, refer to the [AWS reference docum
 
 For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
 
-You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+You can also augment queries by using [template variables](../template-variables/).
 
 #### Use Metrics Insights keywords
 
@@ -192,9 +192,9 @@ The suggestions appear after typing a space, comma, or dollar (`$`) character, o
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.png" max-width="500px" class="docs-image--right" caption="Code editor autocomplete" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Template variables in the code editor can interfere with autocompletion.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To run the query, click **Run query** above the code editor.
 
@@ -226,16 +226,39 @@ The label field allows you to override the default name of the metric legend usi
 ## Query CloudWatch Logs
 
 The logs query editor helps you write CloudWatch Logs Query Language queries across defined regions and log groups.
+It supports querying CloudWatch logs with Logs Insights Query Language, OpenSearch PPL and OpenSearch SQL.
 
 ### Create a CloudWatch Logs query
 
+1. Select the query language you would like to use in the Query Language dropdown.
 1. Select the region and up to 20 log groups to query.
-1. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html).
+
+   {{< admonition type="note" >}}
+   Region and log groups are mandatory fields when querying with Logs Insights QL and OpenSearch PPL. Log group selection is not necessary when querying with OpenSearch SQL. However, selecting log groups simplifies writing logs queries by populating syntax suggestions with discovered log group fields.
+   {{< /admonition >}}
+
+1. Use the main input area to write your logs query. AWS CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
+
+   #### Querying Log groups with OpenSearch SQL
+
+   When querying log groups with OpenSearch SQL, the log group identifier or ARN _must_ be explicitly stated in the `FROM` clause:
+
+   ```sql
+   SELECT window.start, COUNT(*) AS exceptionCount
+   FROM `log_group`
+   WHERE `@message` LIKE '%Exception%'
+   ```
+
+   or, when querying multiple log groups:
+
+   ```sql
+   SELECT window.start, COUNT(*) AS exceptionCount
+   FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
+   WHERE `@message` LIKE '%Exception%'
+   ```
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
 When making `stats` queries in [Explore](ref:explore), make sure you are in Metrics Explore mode.
-
-{{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
 ## Cross-account observability
 
@@ -247,11 +270,10 @@ To enable cross-account observability, complete the following steps:
 
 1. Go to the [Amazon CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions on enabling cross-account observability.
 
-1. Add [two API actions]({{< relref "../../aws-cloudwatch#cross-account-observability-permissions" >}}) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions](../#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the **Logs**, **Metric search**, and **Metric Insights** modes.
 After you have it configured, you'll see a **Monitoring account** badge in the query editor header.
-To support cross-account query building in the **Metric Insight** builder mode, the `cloudwatchMetricInsightsCrossAccount` feature toggle should be enabled.
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-monitoring-badge-9.3.0.png" max-width="1200px" caption="Monitoring account badge" >}}
 

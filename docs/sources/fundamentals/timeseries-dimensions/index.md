@@ -100,14 +100,14 @@ If the query is updated to select and group by more than just one string column,
 
 In this case the labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 More than one dimension is currently only supported in the Logs queries within the Azure Monitor service as of version 7.1.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert.
 For more information, see the documentation on [creating alerts with multiple series](ref:create-grafana-managed-rule).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Multiple values
 

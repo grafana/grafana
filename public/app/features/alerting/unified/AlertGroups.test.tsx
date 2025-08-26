@@ -2,18 +2,12 @@ import { render, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
-import {
-  grantUserPermissions,
-  mockAlertGroup,
-  mockAlertmanagerAlert,
-  mockDataSource,
-  MockDataSourceSrv,
-} from './mocks';
+import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert, mockDataSource } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';
 
@@ -63,7 +57,7 @@ describe('AlertGroups', () => {
   });
 
   beforeEach(() => {
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    setupDataSources(dataSources.am);
   });
 
   afterEach(() => {

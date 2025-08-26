@@ -5,10 +5,10 @@
 package v0alpha1
 
 import (
-	"net/http"
+	http "net/http"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/generated/clientset/versioned/scheme"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	scheme "github.com/grafana/grafana/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -31,9 +31,7 @@ func (c *ServiceV0alpha1Client) ExternalNames(namespace string) ExternalNameInte
 // where httpClient was generated with rest.HTTPClientFor(c).
 func NewForConfig(c *rest.Config) (*ServiceV0alpha1Client, error) {
 	config := *c
-	if err := setConfigDefaults(&config); err != nil {
-		return nil, err
-	}
+	setConfigDefaults(&config)
 	httpClient, err := rest.HTTPClientFor(&config)
 	if err != nil {
 		return nil, err
@@ -45,9 +43,7 @@ func NewForConfig(c *rest.Config) (*ServiceV0alpha1Client, error) {
 // Note the http client provided takes precedence over the configured transport values.
 func NewForConfigAndClient(c *rest.Config, h *http.Client) (*ServiceV0alpha1Client, error) {
 	config := *c
-	if err := setConfigDefaults(&config); err != nil {
-		return nil, err
-	}
+	setConfigDefaults(&config)
 	client, err := rest.RESTClientForConfigAndClient(&config, h)
 	if err != nil {
 		return nil, err
@@ -70,17 +66,15 @@ func New(c rest.Interface) *ServiceV0alpha1Client {
 	return &ServiceV0alpha1Client{c}
 }
 
-func setConfigDefaults(config *rest.Config) error {
-	gv := v0alpha1.SchemeGroupVersion
+func setConfigDefaults(config *rest.Config) {
+	gv := servicev0alpha1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	config.NegotiatedSerializer = rest.CodecFactoryForGeneratedClient(scheme.Scheme, scheme.Codecs).WithoutConversion()
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
-
-	return nil
 }
 
 // RESTClient returns a RESTClient that is used to communicate

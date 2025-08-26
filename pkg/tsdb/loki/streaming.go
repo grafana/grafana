@@ -16,6 +16,12 @@ import (
 )
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if !isFeatureEnabled(ctx, flagLokiExperimentalStreaming) {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusPermissionDenied,
+		}, fmt.Errorf("streaming is not supported")
+	}
+
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.SubscribeStreamResponse{
@@ -34,7 +40,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 	if err != nil {
 		return nil, err
 	}
-	if query.Expr != nil {
+	if query.Expr == "" {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, fmt.Errorf("missing expr in channel (subscribe)")
@@ -69,7 +75,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	if err != nil {
 		return err
 	}
-	if query.Expr != nil {
+	if query.Expr == "" {
 		return fmt.Errorf("missing expr in cuannel")
 	}
 
@@ -80,7 +86,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	signal.Notify(interrupt, os.Interrupt)
 
 	params := url.Values{}
-	params.Add("query", *query.Expr)
+	params.Add("query", query.Expr)
 
 	wsurl, _ := url.Parse(dsInfo.URL)
 

@@ -45,10 +45,19 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	logger := slog.New(handler)
 	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
 		string(genericfeatures.APIServerTracing): false,
+		string(genericfeatures.WatchList):        true,
 	}); err != nil {
 		return err
 	}
+	// if verbosity is 8+, response bodies will be logged. versboity of 7 should then be the max
+	if o.Verbosity > 7 {
+		o.Verbosity = 7
+	}
 	klog.SetSlogLogger(logger)
+	// at this point, the slog will be the background logger. set it as the default logger, as setting solely slog above
+	// won't update the verbosity because it is set as a contextual logger, and that function says "such a logger cannot
+	// rely on verbosity checking in klog"
+	klog.SetLogger(klog.Background())
 	if _, err := logs.GlogSetter(strconv.Itoa(o.Verbosity)); err != nil {
 		logger.Error("failed to set log level", "error", err)
 	}

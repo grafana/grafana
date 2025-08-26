@@ -5,9 +5,12 @@ import * as React from 'react';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 
 import { IconButton } from '../../components/IconButton/IconButton';
-import { TabsBar, Tab, TabContent } from '../../components/Tabs';
-import { useStyles2, useTheme2 } from '../../themes';
+import { Tab } from '../../components/Tabs/Tab';
+import { TabContent } from '../../components/Tabs/TabContent';
+import { TabsBar } from '../../components/Tabs/TabsBar';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
+import { Box } from '../Layout/Box/Box';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 export interface TabConfig {
@@ -28,13 +31,10 @@ export interface TabbedContainerProps {
 export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, testId }: TabbedContainerProps) {
   const [activeTab, setActiveTab] = useState(tabs.some((tab) => tab.value === defaultTab) ? defaultTab : tabs[0].value);
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
 
   const onSelectTab = (item: SelectableValue<string>) => {
     setActiveTab(item.value!);
   };
-
-  const autoHeight = `calc(100% - (${theme.components.menuTabs.height}px + ${theme.spacing(1)}))`;
 
   return (
     <div className={styles.container} data-testid={testId}>
@@ -48,9 +48,11 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, t
             icon={t.icon}
           />
         ))}
-        <IconButton className={styles.close} onClick={onClose} name="times" tooltip={closeIconTooltip ?? 'Close'} />
+        <Box grow={1} display="flex" justifyContent="flex-end" paddingRight={1}>
+          <IconButton size="lg" onClick={onClose} name="times" tooltip={closeIconTooltip ?? 'Close'} />
+        </Box>
       </TabsBar>
-      <ScrollContainer height={autoHeight}>
+      <ScrollContainer>
         <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>
       </ScrollContainer>
     </div>
@@ -60,21 +62,18 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, t
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 0',
+    minHeight: 0,
   }),
   tabContent: css({
     padding: theme.spacing(2),
     backgroundColor: theme.colors.background.primary,
-    height: `100%`,
-  }),
-  close: css({
-    position: 'absolute',
-    right: '16px',
-    top: '5px',
-    cursor: 'pointer',
-    fontSize: theme.typography.size.lg,
+    flex: 1,
   }),
   tabs: css({
-    paddingTop: theme.spacing(1),
+    paddingTop: theme.spacing(0.5),
     borderColor: theme.colors.border.weak,
     ul: {
       marginLeft: theme.spacing(2),

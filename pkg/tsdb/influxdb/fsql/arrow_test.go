@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/v15/arrow"
-	"github.com/apache/arrow/go/v15/arrow/array"
-	"github.com/apache/arrow/go/v15/arrow/memory"
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -467,6 +467,43 @@ func TestCopyData_Float64(t *testing.T) {
 	assert.Equal(t, float64(1.1), *field.CopyAt(0).(*float64))
 	assert.Equal(t, (*float64)(nil), field.CopyAt(1))
 	assert.Equal(t, float64(3.3), *field.CopyAt(2).(*float64))
+}
+
+func TestCopyData_StringView(t *testing.T) {
+	// Non-nullable StringView
+	field := data.NewField("field", nil, []string{})
+	builder := array.NewStringViewBuilder(memory.DefaultAllocator)
+	builder.Append("apple")
+	builder.Append("banana")
+	builder.Append("cherry")
+	arr := builder.NewArray()
+	defer arr.Release()
+
+	svArr := array.NewStringViewData(arr.Data())
+	defer svArr.Release()
+
+	err := copyData(field, svArr)
+	assert.NoError(t, err)
+	assert.Equal(t, "apple", field.CopyAt(0))
+	assert.Equal(t, "banana", field.CopyAt(1))
+	assert.Equal(t, "cherry", field.CopyAt(2))
+
+	// Nullable StringView
+	field = data.NewField("field", nil, []*string{})
+	builder = array.NewStringViewBuilder(memory.DefaultAllocator)
+	builder.Append("dog")
+	builder.AppendNull()
+	builder.Append("cat")
+	arr2 := builder.NewArray()
+	defer arr2.Release()
+	svArr2 := array.NewStringViewData(arr2.Data())
+	defer svArr2.Release()
+
+	err = copyData(field, svArr2)
+	assert.NoError(t, err)
+	assert.Equal(t, "dog", *(field.CopyAt(0).(*string)))
+	assert.Nil(t, field.CopyAt(1))
+	assert.Equal(t, "cat", *(field.CopyAt(2).(*string)))
 }
 
 func TestCustomMetadata(t *testing.T) {

@@ -13,10 +13,7 @@ type Props = {
 };
 
 export function GetStartedWithPlugin({ plugin }: Props): ReactElement | null {
-  const isInstalled =
-    config.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled
-      ? plugin.isFullyInstalled
-      : plugin.isInstalled;
+  const isInstalled = config.pluginAdminExternalManageEnabled ? plugin.isFullyInstalled : plugin.isInstalled;
 
   if (!isInstalled || plugin.isDisabled) {
     return null;

@@ -3,7 +3,6 @@ import { map } from 'rxjs/operators';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
-import { transformationsVariableSupport } from './utils';
 
 export interface LimitTransformerOptions {
   limitField?: number | string;
@@ -25,11 +24,7 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
         let limit = DEFAULT_LIMIT_FIELD;
         if (options.limitField !== undefined) {
           if (typeof options.limitField === 'string') {
-            if (transformationsVariableSupport()) {
-              limit = parseInt(ctx.interpolate(options.limitField), 10);
-            } else {
-              limit = parseInt(options.limitField, 10);
-            }
+            limit = parseInt(options.limitField, 10);
           } else {
             limit = options.limitField;
           }
@@ -42,6 +37,12 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
               fields: frame.fields.map((f) => {
                 return {
                   ...f,
+                  // Clear cached field calculations since applying a limit changes the dataset
+                  // and previously computed stats (min, max, mean, etc.) are no longer valid
+                  state: {
+                    ...f.state,
+                    calcs: undefined,
+                  },
                   values:
                     limit >= 0 ? f.values.slice(0, limit) : f.values.slice(f.values.length + limit, f.values.length),
                 };

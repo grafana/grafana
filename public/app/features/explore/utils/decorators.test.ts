@@ -10,10 +10,10 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
 } from '@grafana/data';
+import { CorrelationData } from '@grafana/runtime';
 import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
-import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { ExplorePanelData } from 'app/types';
+import { ExplorePanelData } from 'app/types/explore';
 
 import {
   decorateWithCorrelations,

@@ -30,7 +30,7 @@ type RuleStatus struct {
 }
 
 type recordingRule struct {
-	key ngmodels.AlertRuleKey
+	key ngmodels.AlertRuleKeyWithGroup
 
 	ctx                 context.Context
 	evalCh              chan *Evaluation
@@ -56,8 +56,8 @@ type recordingRule struct {
 	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, cfg setting.RecordingRuleSettings, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
-	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
+func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKeyWithGroup, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, cfg setting.RecordingRuleSettings, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
+	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	return &recordingRule{
 		key:                 key,
 		ctx:                 ctx,
@@ -78,6 +78,10 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAtte
 		tracer:              tracer,
 		writer:              writer,
 	}
+}
+
+func (r *recordingRule) Identifier() ngmodels.AlertRuleKeyWithGroup {
+	return r.key
 }
 
 func (r *recordingRule) Type() ngmodels.RuleType {
@@ -109,7 +113,7 @@ func (r *recordingRule) Eval(eval *Evaluation) (bool, *Evaluation) {
 	}
 }
 
-func (r *recordingRule) Update(lastVersion RuleVersionAndPauseStatus) bool {
+func (r *recordingRule) Update(_ *Evaluation) bool {
 	return true
 }
 
@@ -140,6 +144,10 @@ func (r *recordingRule) Run() error {
 			// TODO: Either implement me or remove from alert rules once investigated.
 
 			r.doEvaluate(ctx, eval)
+			// Call afterEval callback if it exists
+			if eval.afterEval != nil {
+				eval.afterEval()
+			}
 		case <-ctx.Done():
 			r.logger.Debug("Stopping recording rule routine")
 			return nil
@@ -264,8 +272,9 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		return nil
 	}
 
+	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, ev.rule.Labels)
+	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
@@ -301,7 +310,7 @@ func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
 		return
 	}
 
-	r.evalAppliedHook(r.key, ev.scheduledAt)
+	r.evalAppliedHook(r.key.AlertRuleKey, ev.scheduledAt)
 }
 
 // frameRef gets frames from a QueryDataResponse for a particular refID. It returns an error if the frames do not exist or have no data.
@@ -328,5 +337,5 @@ func (r *recordingRule) stopApplied() {
 		return
 	}
 
-	r.stopAppliedHook(r.key)
+	r.stopAppliedHook(r.key.AlertRuleKey)
 }

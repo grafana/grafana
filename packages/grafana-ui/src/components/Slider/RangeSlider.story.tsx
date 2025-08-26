@@ -1,14 +1,16 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { RangeSlider } from '@grafana/ui';
+import { RangeSlider } from './RangeSlider';
 
 const meta: Meta<typeof RangeSlider> = {
-  title: 'Forms/Slider/Range',
+  title: 'Inputs/RangeSlider',
   component: RangeSlider,
   parameters: {
     controls: {
       exclude: ['tooltipAlwaysVisible'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },

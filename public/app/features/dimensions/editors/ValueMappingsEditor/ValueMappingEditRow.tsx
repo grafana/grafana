@@ -4,15 +4,16 @@ import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
-import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, Input, Button } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
-  from?: number;
-  to?: number;
+  from?: number | null;
+  to?: number | null;
   pattern?: string;
   key?: string;
   isNew?: boolean;
@@ -119,12 +120,59 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   };
 
   const specialMatchOptions: Array<SelectableValue<SpecialValueMatch>> = [
-    { label: 'Null', value: SpecialValueMatch.Null, description: 'Matches null and undefined values' },
-    { label: 'NaN', value: SpecialValueMatch.NaN, description: 'Matches against Number.NaN (not a number)' },
-    { label: 'Null + NaN', value: SpecialValueMatch.NullAndNaN, description: 'Matches null, undefined and NaN' },
-    { label: 'True', value: SpecialValueMatch.True, description: 'Boolean true values' },
-    { label: 'False', value: SpecialValueMatch.False, description: 'Boolean false values' },
-    { label: 'Empty', value: SpecialValueMatch.Empty, description: 'Empty string' },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'Null',
+      value: SpecialValueMatch.Null,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-and-undefined-values',
+        'Matches null and undefined values'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'NaN',
+      value: SpecialValueMatch.NaN,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-against-number-na-n-not-a-number',
+        'Matches against Number.NaN (not a number)'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'Null + NaN',
+      value: SpecialValueMatch.NullAndNaN,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-undefined-and-na-n',
+        'Matches null, undefined and NaN'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'True',
+      value: SpecialValueMatch.True,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.boolean-true-values',
+        'Boolean true values'
+      ),
+    },
+    {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: 'False',
+      value: SpecialValueMatch.False,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.boolean-false-values',
+        'Boolean false values'
+      ),
+    },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.empty', 'Empty'),
+      value: SpecialValueMatch.Empty,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.empty-string',
+        'Empty string'
+      ),
+    },
   ];
 
   return (
@@ -144,7 +192,10 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 type="text"
                 value={key ?? ''}
                 onChange={onUpdateMatchValue}
-                placeholder="Exact value to match"
+                placeholder={t(
+                  'dimensions.value-mapping-edit-row.placeholder-exact-value-to-match',
+                  'Exact value to match'
+                )}
               />
             )}
             {mapping.type === MappingType.RangeToText && (
@@ -152,16 +203,14 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 <Input
                   type="number"
                   value={mapping.from ?? ''}
-                  placeholder="Range start"
+                  placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
                   onChange={onChangeFrom}
-                  prefix="From"
                 />
                 <Input
                   type="number"
                   value={mapping.to ?? ''}
-                  placeholder="Range end"
+                  placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
                   onChange={onChangeTo}
-                  prefix="To"
                 />
               </div>
             )}
@@ -169,7 +218,10 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
               <Input
                 type="text"
                 value={mapping.pattern ?? ''}
-                placeholder="Regular expression"
+                placeholder={t(
+                  'dimensions.value-mapping-edit-row.placeholder-regular-expression',
+                  'Regular expression'
+                )}
                 onChange={onChangePattern}
               />
             )}
@@ -182,20 +234,33 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             )}
           </td>
           <td>
-            <Input type="text" value={result.text ?? ''} onChange={onChangeText} placeholder="Optional display text" />
+            <Input
+              type="text"
+              value={result.text ?? ''}
+              onChange={onChangeText}
+              placeholder={t(
+                'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
+                'Optional display text'
+              )}
+            />
           </td>
           <td className={styles.textAlignCenter}>
             {result.color && (
-              <HorizontalGroup spacing="sm" justify="center">
+              <Stack gap={1} justifyContent="center">
                 <ColorPicker color={result.color} onChange={onChangeColor} enableNamedColors={true} />
-                <IconButton name="times" onClick={onClearColor} tooltip="Remove color" tooltipPlacement="top" />
-              </HorizontalGroup>
+                <IconButton
+                  name="times"
+                  onClick={onClearColor}
+                  tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-color', 'Remove color')}
+                  tooltipPlacement="top"
+                />
+              </Stack>
             )}
             {!result.color && (
               <ColorPicker color={'gray'} onChange={onChangeColor} enableNamedColors={true}>
                 {(props) => (
                   <Button variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
-                    Set color
+                    <Trans i18nKey="dimensions.value-mapping-edit-row.set-color">Set color</Trans>
                   </Button>
                 )}
               </ColorPicker>
@@ -203,7 +268,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
           </td>
           {showIconPicker && (
             <td className={styles.textAlignCenter}>
-              <HorizontalGroup spacing="sm" justify="center">
+              <Stack gap={1} justifyContent="center">
                 <ResourcePicker
                   onChange={onChangeIcon}
                   onClear={onClearIcon}
@@ -214,28 +279,39 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                   color={result.color}
                 />
                 {result.icon && (
-                  <IconButton name="times" onClick={onClearIcon} tooltip="Remove icon" tooltipPlacement="top" />
+                  <IconButton
+                    name="times"
+                    onClick={onClearIcon}
+                    tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-icon', 'Remove icon')}
+                    tooltipPlacement="top"
+                  />
                 )}
-              </HorizontalGroup>
+              </Stack>
             </td>
           )}
           <td className={styles.textAlignCenter}>
-            <HorizontalGroup spacing="sm">
+            <Stack gap={1}>
               <IconButton
                 name="copy"
                 onClick={() => onDuplicate(index)}
                 data-testid="duplicate-value-mapping"
-                aria-label="Duplicate value mapping"
-                tooltip="Duplicate"
+                aria-label={t(
+                  'dimensions.value-mapping-edit-row.duplicate-value-mapping-aria-label-duplicate-value-mapping',
+                  'Duplicate value mapping'
+                )}
+                tooltip={t('dimensions.value-mapping-edit-row.duplicate-value-mapping-tooltip-duplicate', 'Duplicate')}
               />
               <IconButton
                 name="trash-alt"
                 onClick={() => onRemove(index)}
                 data-testid="remove-value-mapping"
-                aria-label="Delete value mapping"
-                tooltip="Delete"
+                aria-label={t(
+                  'dimensions.value-mapping-edit-row.remove-value-mapping-aria-label-delete-value-mapping',
+                  'Delete value mapping'
+                )}
+                tooltip={t('dimensions.value-mapping-edit-row.remove-value-mapping-tooltip-delete', 'Delete')}
               />
-            </HorizontalGroup>
+            </Stack>
           </td>
         </tr>
       )}

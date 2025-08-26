@@ -39,9 +39,9 @@ To view the JSON of a dashboard:
 
 When a user creates a new dashboard, a new dashboard JSON object is initialized with the following fields:
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```json
 {
@@ -136,6 +136,18 @@ The grid has a negative gravity that moves panels up if there is empty space abo
     "now": true,
     "hidden": false,
     "nowDelay": "",
+    "quick_ranges": [
+      {
+        "display": "Last 6 hours",
+        "from": "now-6h",
+        "to": "now"
+      },
+      {
+        "display": "Last 7 days",
+        "from": "now-7d",
+        "to": "now"
+      }
+    ],
     "refresh_intervals": [
       "5s",
       "10s",
@@ -163,6 +175,7 @@ Usage of the fields is explained below:
 | **now**               |                                                                                                                                       |
 | **hidden**            | whether timepicker is hidden or not                                                                                                   |
 | **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. |
+| **quick_ranges**      | custom quick ranges                                                                                                                   |
 | **refresh_intervals** | interval options available in the refresh picker dropdown                                                                             |
 | **status**            |                                                                                                                                       |
 | **type**              |                                                                                                                                       |

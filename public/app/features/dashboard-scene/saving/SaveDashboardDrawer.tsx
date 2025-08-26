@@ -1,13 +1,15 @@
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
+import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
+import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
-import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -21,7 +23,13 @@ interface SaveDashboardDrawerState extends SceneObjectState {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   public onClose = () => {
-    this.state.dashboardRef.resolve().setState({ overlay: undefined });
+    const dashboard = this.state.dashboardRef.resolve();
+    const changeInfo = dashboard.getDashboardChanges();
+    dashboard.setState({
+      overlay: undefined,
+      // Reset meta to initial state if it's a new dashboard to remove provisioned fields
+      meta: changeInfo.isNew ? dashboard.getInitialState()?.meta : dashboard.state.meta,
+    });
   };
 
   public onToggleSaveTimeRange = () => {
@@ -38,24 +46,29 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
     const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
-    const changeInfo = getDashboardChangesFromScene(
-      model.state.dashboardRef.resolve(),
-      saveTimeRange,
-      saveVariables,
-      saveRefresh
-    );
-    const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
+
+    const changeInfo = model.state.dashboardRef
+      .resolve()
+      .getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
+
+    const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges, hasMigratedToV2 } = changeInfo;
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
+    const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
+    const isProvisionedNG = useIsProvisionedNG(dashboard);
 
     const tabs = (
       <TabsBar>
-        <Tab label={'Details'} active={!showDiff} onChangeTab={() => model.setState({ showDiff: false })} />
-        {changesCount > 0 && (
+        <Tab
+          label={t('dashboard-scene.save-dashboard-drawer.tabs.label-details', 'Details')}
+          active={!showDiff}
+          onChangeTab={() => model.setState({ showDiff: false })}
+        />
+        {changesCount > 0 && !managedResourceCannotBeEdited && (
           <Tab
-            label={'Changes'}
+            label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
             active={showDiff}
             onChangeTab={() => model.setState({ showDiff: true })}
             counter={changesCount}
@@ -64,11 +77,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       </TabsBar>
     );
 
-    let title = 'Save dashboard';
+    let title = t('dashboard-scene.save-dashboard-drawer.tabs.title', 'Save dashboard');
     if (saveAsCopy) {
-      title = 'Save dashboard copy';
-    } else if (isProvisioned) {
-      title = 'Provisioned dashboard';
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
+    } else if (isProvisioned || isProvisionedNG) {
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
     }
 
     const renderBody = () => {
@@ -79,17 +92,22 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
             oldValue={initialSaveModel}
             newValue={changedSaveModel}
             hasFolderChanges={hasFolderChanges}
+            hasMigratedToV2={hasMigratedToV2}
             oldFolder={dashboard.getInitialState()?.meta.folderTitle}
             newFolder={folderTitle}
           />
         );
       }
 
+      if (isProvisionedNG) {
+        return <SaveProvisionedDashboard dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      }
+
       if (saveAsCopy || changeInfo.isNew) {
         return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
       }
 
-      if (isProvisioned) {
+      if (isProvisioned || managedResourceCannotBeEdited) {
         return <SaveProvisionedDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 

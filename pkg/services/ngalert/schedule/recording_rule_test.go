@@ -12,13 +12,23 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/atomic"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
@@ -116,7 +126,10 @@ func TestRecordingRule(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.Update(RuleVersionAndPauseStatus{fingerprint(rand.Uint64()), false})
+						r.Update(&Evaluation{
+							rule:        gen.GenerateRef(),
+							folderTitle: util.GenerateShortUID(),
+						})
 					case 2:
 						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
@@ -152,26 +165,279 @@ func TestRecordingRule(t *testing.T) {
 	})
 }
 
+func TestRecordingRuleIdentifier(t *testing.T) {
+	t.Run("should return correct identifier", func(t *testing.T) {
+		key := models.GenerateRuleKeyWithGroup(1)
+		r := blankRecordingRuleForTests(context.Background())
+		r.key = key
+		require.Equal(t, key, r.Identifier())
+	})
+}
+
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	st := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
-	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
+	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
+	t.Run("with datasource writer", func(t *testing.T) {
+		writeTarget := writer.NewTestRemoteWriteTarget(t)
+		defer writeTarget.Close()
+		writerReg := prometheus.NewPedanticRegistry()
+		writer := setupDatasourceWriter(t, writeTarget, writerReg, "ds-uid")
+		testRecordingRule_Integration(t, writeTarget, writer, writerReg, "ds-uid")
+	})
+}
+
+func TestRecordingRuleAfterEval(t *testing.T) {
+	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
+
+	type testContext struct {
+		rule         *models.AlertRule
+		process      Rule
+		evalDoneChan chan time.Time
+		afterEvalCh  chan struct{}
+		callCount    *atomic.Int32
+		mutex        *sync.Mutex
+		scheduler    *schedule
+		ruleStore    *fakeRulesStore // Use the concrete type for access to getNamespaceTitle
+	}
+
+	// Configuration struct for test setup
+	type setupConfig struct {
+		queryHealth          string
+		enableRecordingRules bool
+		isPaused             bool
+		// Add any other configurable parameters here
+	}
+
+	// Default configuration
+	defaultSetupConfig := setupConfig{
+		queryHealth:          "ok",
+		enableRecordingRules: true,
+		isPaused:             false,
+	}
+
+	setup := func(t *testing.T, cfg setupConfig) *testContext {
+		t.Helper()
+		ruleStore := newFakeRulesStore()
+		reg := prometheus.NewPedanticRegistry()
+		sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+		sch.recordingWriter = writer.FakeWriter{}
+
+		if !cfg.enableRecordingRules {
+			sch.rrCfg.Enabled = false
+		}
+
+		rule := gen.With(withQueryForHealth(cfg.queryHealth)).GenerateRef()
+		if cfg.isPaused {
+			rule.IsPaused = true
+		}
+		ruleStore.PutRule(context.Background(), rule)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+
+		evalDoneChan := make(chan time.Time, 1) // Buffer to avoid blocking
+		afterEvalCh := make(chan struct{}, 1)   // Buffer to avoid blocking
+		callCount := atomic.NewInt32(0)
+		mutex := &sync.Mutex{}
+
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+
+		// Start the rule processing goroutine
+		go func() {
+			_ = process.Run()
+		}()
+
+		return &testContext{
+			rule:         rule,
+			process:      process,
+			evalDoneChan: evalDoneChan,
+			afterEvalCh:  afterEvalCh,
+			callCount:    callCount,
+			mutex:        mutex,
+			scheduler:    sch,
+			ruleStore:    ruleStore,
+		}
+	}
+
+	runTest := func(t *testing.T, ctx *testContext, expectCallbackCalled bool) {
+		t.Helper()
+
+		now := time.Now()
+
+		folderTitle := ctx.ruleStore.getNamespaceTitle(ctx.rule.NamespaceUID)
+
+		eval := &Evaluation{
+			scheduledAt: now,
+			rule:        ctx.rule,
+			folderTitle: folderTitle,
+			afterEval: func() {
+				ctx.callCount.Inc()
+				select {
+				case ctx.afterEvalCh <- struct{}{}:
+				default:
+					// Channel is full, which is fine for tests
+				}
+			},
+		}
+
+		// Send the evaluation
+		ctx.process.Eval(eval)
+
+		// For enabled rules that are not paused, we should see the evaluation complete
+		if ctx.scheduler.rrCfg.Enabled && !ctx.rule.IsPaused {
+			select {
+			case <-ctx.evalDoneChan:
+				// Evaluation was completed
+			case <-time.After(5 * time.Second):
+				t.Fatal("Evaluation was not completed in time")
+			}
+		}
+
+		// Wait for potential afterEval execution
+		waitDuration := 500 * time.Millisecond
+		if expectCallbackCalled {
+			select {
+			case <-ctx.afterEvalCh:
+				// Success - afterEval was called
+			case <-time.After(5 * time.Second):
+				t.Fatal("afterEval callback was not called")
+			}
+		} else {
+			// Just wait a bit to make sure callback isn't called
+			time.Sleep(waitDuration)
+		}
+
+		// Verify callback count
+		count := ctx.callCount.Load()
+		if expectCallbackCalled {
+			require.Equal(t, int32(1), count, "afterEval callback should have been called exactly once")
+		} else {
+			require.Equal(t, int32(0), count, "afterEval callback should not have been called")
+		}
+	}
+
+	t.Run("afterEval callback is called after successful evaluation", func(t *testing.T) {
+		ctx := setup(t, defaultSetupConfig)
+		runTest(t, ctx, true)
+	})
+
+	t.Run("afterEval callback is called even when evaluation fails", func(t *testing.T) {
+		ctx := setup(t, setupConfig{
+			queryHealth:          "error",
+			enableRecordingRules: true,
+			isPaused:             false,
+		})
+		runTest(t, ctx, true)
+
+		// Verify that the rule evaluation did indeed fail
+		status := ctx.process.(*recordingRule).Status()
+		require.Equal(t, "error", status.Health)
+		require.NotNil(t, status.LastError)
+	})
+
+	t.Run("afterEval callback is not called when recording rule feature is disabled", func(t *testing.T) {
+		ctx := setup(t, setupConfig{
+			queryHealth:          "ok",
+			enableRecordingRules: false,
+			isPaused:             false,
+		})
+		runTest(t, ctx, false)
+	})
+
+	t.Run("afterEval callback is called before stopping rule evaluation", func(t *testing.T) {
+		ctx := setup(t, defaultSetupConfig)
+
+		// Create a channel to signal when Stop is called
+		stopSignalCh := make(chan struct{})
+
+		// Send an evaluation that will be pending when we stop the rule
+		now := time.Now()
+		folderTitle := ctx.ruleStore.getNamespaceTitle(ctx.rule.NamespaceUID)
+		eval := &Evaluation{
+			scheduledAt: now,
+			rule:        ctx.rule,
+			folderTitle: folderTitle,
+			afterEval: func() {
+				// Wait until we know Stop has been called
+				select {
+				case <-stopSignalCh:
+					// Stop was called before this callback executed
+				case <-time.After(100 * time.Millisecond):
+					t.Error("afterEval callback executed but Stop signal wasn't received")
+				}
+
+				ctx.callCount.Inc()
+				select {
+				case ctx.afterEvalCh <- struct{}{}:
+				default:
+					// Channel is full, which is fine for tests
+				}
+			},
+		}
+		ctx.process.Eval(eval)
+
+		// Create a stopChan to verify rule stopping
+		stopChan := make(chan struct{})
+		go func() {
+			// Signal that we're about to call Stop
+			close(stopSignalCh)
+			ctx.process.Stop(nil)
+			close(stopChan)
+		}()
+
+		// Verify afterEval was called during stopping
+		select {
+		case <-ctx.afterEvalCh:
+			// Success - afterEval was called during stopping
+		case <-time.After(5 * time.Second):
+			t.Fatal("afterEval callback was not called during rule stopping")
+		}
+
+		// Verify the rule stopped properly
+		select {
+		case <-stopChan:
+			// Success - the rule stopped
+		case <-time.After(5 * time.Second):
+			t.Fatal("Rule did not stop in time")
+		}
+
+		// Verify callback count
+		count := ctx.callCount.Load()
+		require.Equal(t, int32(1), count, "afterEval callback should have been called exactly once during stopping")
+	})
+
+	t.Run("afterEval callback is still called when rule is paused", func(t *testing.T) {
+		ctx := setup(t, setupConfig{
+			queryHealth:          "ok",
+			enableRecordingRules: true,
+			isPaused:             true,
+		})
+		runTest(t, ctx, true)
+
+		// Verify the rule status
+		status := ctx.process.(*recordingRule).Status()
+		require.Equal(t, "unknown", status.Health, "Paused rule should have 'unknown' health since it's not evaluated")
+	})
+}
+
+func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteWriteTarget, writer RecordingWriter, writerReg *prometheus.Registry, dsUID string) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
-	writeTarget := writer.NewTestRemoteWriteTarget(t)
-	defer writeTarget.Close()
-	writerReg := prometheus.NewPedanticRegistry()
-	sch.recordingWriter = setupWriter(t, writeTarget, writerReg)
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+	sch.recordingWriter = writer
 
 	t.Run("rule that succeeds", func(t *testing.T) {
 		writeTarget.Reset()
 		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
+		rule.Record.TargetDatasourceUID = dsUID
 		ruleStore.PutRule(context.Background(), rule)
 		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 		ruleFactory := ruleFactoryFromScheduler(sch)
@@ -483,8 +749,71 @@ func TestRecordingRule_Integration(t *testing.T) {
 		t.Run("status shows evaluation", func(t *testing.T) {
 			status := process.(*recordingRule).Status()
 
-			//TODO: assert "error" to fix test, update to "nodata" in the future
+			// TODO: assert "error" to fix test, update to "nodata" in the future
 			require.Equal(t, "error", status.Health)
+		})
+	})
+
+	t.Run("rule with private labels filtered", func(t *testing.T) {
+		writeTarget.Reset()
+		rule := gen.With(withQueryForHealth("ok")).GenerateRef()
+		rule.Record.TargetDatasourceUID = dsUID
+		rule.Labels = map[string]string{
+			"normal_label":                             "not_filtered_1",
+			"another_label":                            "not_filtered_2",
+			models.AutogeneratedRouteLabel:             "filtered",
+			models.AutogeneratedRouteReceiverNameLabel: "filtered",
+			"__user_custom__":                          "not_filtered_3",
+			"only_end__":                               "not_filtered_4",
+		}
+
+		ruleStore.PutRule(context.Background(), rule)
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		ruleFactory := ruleFactoryFromScheduler(sch)
+
+		process := ruleFactory.new(context.Background(), rule)
+		evalDoneChan := make(chan time.Time)
+		process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+			evalDoneChan <- t
+		}
+		now := time.Now()
+
+		go func() {
+			_ = process.Run()
+		}()
+
+		process.Eval(&Evaluation{
+			scheduledAt: now,
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+		_ = waitForTimeChannel(t, evalDoneChan)
+
+		t.Run("write was performed with filtered labels", func(t *testing.T) {
+			require.Equal(t, 1, writeTarget.RequestsCount)
+			require.NotEmpty(t, writeTarget.LastRequestBody)
+
+			writeReq := decodePrometheusWriteRequest(t, writeTarget.LastRequestBody)
+
+			// Check that the private labels are filtered out
+			for _, label := range []string{
+				models.AutogeneratedRouteLabel,
+				models.AutogeneratedRouteReceiverNameLabel,
+			} {
+				_, found := getLabel(writeReq, label)
+				require.False(t, found, "Label %s should not be present in the write request", label)
+			}
+
+			// Check that user-defined labels are preserved
+			for _, label := range []string{
+				"normal_label",
+				"another_label",
+				"__user_custom__",
+				"only_end__",
+			} {
+				value, _ := getLabel(writeReq, label)
+				require.Equal(t, rule.Labels[label], value, "Label %s=%s should be present in the write request", label, rule.Labels[label])
+			}
 		})
 	})
 }
@@ -530,16 +859,61 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 	}
 }
 
-func setupWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
+func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer, dsUID string) *writer.DatasourceWriter {
 	provider := testClientProvider{}
 	m := metrics.NewNGAlert(reg)
-	wr, err := writer.NewPrometheusWriter(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
-	require.NoError(t, err)
-	return wr
+
+	dss := &dsfakes.FakeDataSourceService{}
+	p1, _ := dss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		UID:      dsUID,
+		Type:     datasources.DS_PROMETHEUS,
+		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
+	})
+	p1.URL = target.DatasourceURL()
+
+	cfg := writer.DatasourceWriterConfig{
+		Timeout:              time.Second * 5,
+		DefaultDatasourceUID: "",
+	}
+
+	mockPluginConfig := &mockPluginContextProvider{}
+	return writer.NewDatasourceWriter(cfg, dss, provider, mockPluginConfig, clock.NewMock(),
+		log.New("test"), m.GetRemoteWriterMetrics())
 }
 
 type testClientProvider struct{}
 
 func (t testClientProvider) New(options ...httpclient.Options) (*http.Client, error) {
 	return &http.Client{}, nil
+}
+
+type mockPluginContextProvider struct{}
+
+func (m *mockPluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
+	return backend.PluginContext{}, nil
+}
+
+func decodePrometheusWriteRequest(t *testing.T, data string) *prompb.WriteRequest {
+	t.Helper()
+
+	decompressed, err := snappy.Decode(nil, []byte(data))
+	require.NoError(t, err)
+
+	var writeReq prompb.WriteRequest
+	err = proto.Unmarshal(decompressed, &writeReq)
+	require.NoError(t, err)
+
+	return &writeReq
+}
+
+func getLabel(req *prompb.WriteRequest, labelName string) (string, bool) {
+	for _, ts := range req.Timeseries {
+		for _, label := range ts.Labels {
+			if label.Name == labelName {
+				return label.Value, true
+			}
+		}
+	}
+
+	return "", false
 }

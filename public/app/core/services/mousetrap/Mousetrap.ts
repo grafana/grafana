@@ -862,6 +862,7 @@ export class Mousetrap {
    * correct key ends up getting bound (the last key in the pattern)
    */
   bind = (keys: string | string[], callback: MousetrapCallback, action?: string) => {
+    let self = this;
     keys = keys instanceof Array ? keys : [keys];
     this._bindMultiple(keys, callback, action);
     return self;

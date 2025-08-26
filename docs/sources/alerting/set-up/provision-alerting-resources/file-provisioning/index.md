@@ -511,6 +511,8 @@ settings:
   # <string>
   endpointUrl: https://custom_url/api/chat.postMessage
   # <string>
+  color: {{ if eq .Status "firing" }}#D63232{{ else }}#36a64f{{ end }}
+  # <string>
   title: |
     {{ template "slack.default.title" . }}
   text: |
@@ -626,6 +628,13 @@ settings:
     clientKey: key in PEM format
     # <string>
     caCertificate: CA certificate in PEM format
+  hmacConfig:
+    #<string>
+    secret: secret-key
+    #<string>
+    header: X-Grafana-Alerting-Signature
+    #<string>
+    timestampHeader: X-Grafana-Alerting-Signature-Timestamp
 ```
 
 {{< /collapse >}}
@@ -700,11 +709,7 @@ Create or reset the notification policy tree using provisioning files in your Gr
 
 In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
 
-{{% admonition type="warning" %}}
-
-Since the policy tree is a single resource, provisioning it will overwrite a policy tree created through any other means.
-
-{{< /admonition >}}
+{{< docs/shared lookup="alerts/warning-provisioning-tree.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 1. Find the notification policy tree in Grafana.
 1. [Export](ref:export_policies) and download a provisioning file for your notification policy tree.

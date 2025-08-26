@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 
 interface Props {
@@ -47,18 +48,24 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
       label={
         <Label>
           <Stack gap={0.5} alignItems="center">
-            <span>Search by label</span>
+            <span>
+              <Trans i18nKey="alerting.matcher-filter.search-by-label">Search by label</Trans>
+            </span>
             <Tooltip
               content={
                 <div>
-                  Filter alerts using label querying without spaces, ex:
+                  <Trans i18nKey="alerting.matcher-filter.filter-alerts-using-label-querying-without-spaces">
+                    Filter alerts using label querying without spaces, ex:
+                  </Trans>
                   <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
-                  Invalid use of spaces:
+                  <Trans i18nKey="alerting.matcher-filter.invalid-use-of-spaces">Invalid use of spaces:</Trans>
                   <pre>{`{severity= "critical"}`}</pre>
                   <pre>{`{severity ="critical"}`}</pre>
-                  Valid use of spaces:
+                  <Trans i18nKey="alerting.matcher-filter.valid-use-of-spaces">Valid use of spaces:</Trans>
                   <pre>{`{severity=" critical"}`}</pre>
-                  Filter alerts using label querying without braces, ex:
+                  <Trans i18nKey="alerting.matcher-filter.filter-alerts-using-label-querying-without-braces">
+                    Filter alerts using label querying without braces, ex:
+                  </Trans>
                   <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
                 </div>
               }
@@ -70,7 +77,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
       }
     >
       <Input
-        placeholder="Search"
+        placeholder={t('alerting.matcher-filter.search-query-input-placeholder-search', 'Search')}
         value={filterQuery}
         onChange={(e) => setFilterQuery(e.currentTarget.value)}
         data-testid="search-query-input"

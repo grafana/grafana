@@ -1,11 +1,13 @@
 package folder
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -20,6 +22,7 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
 const (
 	GeneralFolderUID      = "general"
@@ -53,6 +56,23 @@ type Folder struct {
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
+
+	// The folder is managed by an external process
+	// NOTE: this is only populated when folders are managed by unified storage
+	// This is not ever used by xorm, but the translation functions flow through this type
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
+}
+
+type FolderReference struct {
+	// Deprecated: use UID instead
+	ID        int64  `xorm:"pk autoincr 'id'"`
+	UID       string `xorm:"uid"`
+	Title     string
+	ParentUID string `xorm:"parent_uid"`
+
+	// When the folder belongs to a repository
+	// NOTE: this is only populated when folders are managed by unified storage
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -79,6 +99,16 @@ func (f *Folder) WithURL() *Folder {
 	// copy of dashboards.GetFolderURL()
 	f.URL = fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, f.UID, slugify.Slugify(f.Title))
 	return f
+}
+
+func (f *Folder) ToFolderReference() *FolderReference {
+	return &FolderReference{
+		ID:        f.ID,
+		UID:       f.UID,
+		Title:     f.Title,
+		ParentUID: f.ParentUID,
+		ManagedBy: f.ManagedBy,
+	}
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -140,7 +170,8 @@ type DeleteFolderCommand struct {
 	OrgID            int64  `json:"orgId" xorm:"org_id"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser      identity.Requester `json:"-"`
+	RemovePermissions bool               `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -167,10 +198,23 @@ type GetFoldersQuery struct {
 	WithFullpathUIDs bool
 	BatchSize        uint64
 
+	// Pagination options
+	Limit int64
+	Page  int64
+
 	// OrderByTitle is used to sort the folders by title
 	// Set to true when ordering is meaningful (used for listing folders)
 	// otherwise better to keep it false since ordering can have a performance impact
 	OrderByTitle bool
+	SignedInUser identity.Requester `json:"-"`
+}
+
+type SearchFoldersQuery struct {
+	OrgID        int64
+	UIDs         []string
+	IDs          []int64
+	Title        string
+	Limit        int64
 	SignedInUser identity.Requester `json:"-"`
 }
 

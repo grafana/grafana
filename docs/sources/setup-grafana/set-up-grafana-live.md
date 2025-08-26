@@ -23,15 +23,15 @@ Grafana Live is a real-time messaging engine you can use to push event data to a
 
 This could be notifications about dashboard changes, new frames for rendered data, and so on. Live features can help eliminate a page reload or polling in many places, it can stream Internet of things (IoT) sensors or any other real-time data to panels.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 By `real-time`, we indicate a soft real-time. Due to network latencies, garbage collection cycles, and so on, the delay of a delivered message can be up to several hundred milliseconds or higher.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Concepts
 
-Grafana Live sends data to clients over persistent WebSocket connection. Grafana frontend subscribes on channels to receive data which was published into that channel – in other words PUB/SUB mechanics is used. All subscriptions on a page multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Grafana Live channel]({{< relref "#grafana-live-channel" >}}).
+Grafana Live sends data to clients over persistent WebSocket connections, based on a Pub/Sub model. The Grafana frontend subscribes on each channel to receive data that has been published in that channel. All subscriptions on a page are multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Grafana Live channel](#grafana-live-channel).
 
-Handling persistent connections like WebSocket in scale may require operating system and infrastructure tuning. That's why by default Grafana Live supports 100 simultaneous connections max. For more details on how to tune this limit, refer to [Live configuration section]({{< relref "#configure-grafana-live" >}}).
+Handling persistent connections like WebSocket in scale may require operating system and infrastructure tuning. That's why by default Grafana Live supports 100 simultaneous connections max. For more details on how to tune this limit, refer to [Live configuration section](#configure-grafana-live).
 
 ## Features
 
@@ -99,7 +99,7 @@ Grafana Live uses persistent connections (WebSocket at the moment) to deliver re
 
 WebSocket is a persistent connection that starts with an HTTP Upgrade request (using the same HTTP port as the rest of Grafana) and then switches to a TCP mode where WebSocket frames can travel in both directions between a client and a server. Each logged-in user opens a WebSocket connection – one per browser tab.
 
-The number of maximum WebSocket connections users can establish with Grafana is limited to 100 by default. See [max_connections]({{< relref "./configure-grafana#max_connections" >}}) option.
+The number of maximum WebSocket connections users can establish with Grafana is limited to 100 by default. See [max_connections](../configure-grafana/#max_connections) option.
 
 In case you want to increase this limit, ensure that your server and infrastructure allow handling more connections. The following sections discuss several common problems which could happen when managing persistent connections, in particular WebSocket connections.
 
@@ -107,9 +107,9 @@ In case you want to increase this limit, ensure that your server and infrastruct
 
 To avoid hijacking of WebSocket connection Grafana Live checks the Origin request header sent by a client in an HTTP Upgrade request. Requests without Origin header pass through without any origin check.
 
-By default, Live accepts connections with Origin header that matches configured [root_url]({{< relref "./configure-grafana#root_url" >}}) (which is a public Grafana URL).
+By default, Live accepts connections with Origin header that matches configured [root_url](../configure-grafana/#root_url) (which is a public Grafana URL).
 
-It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins]({{< relref "./configure-grafana#allowed_origins" >}}) option of Grafana Live configuration.
+It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins](../configure-grafana/#allowed_origins) option of Grafana Live configuration.
 
 #### Resource usage
 
@@ -201,7 +201,7 @@ In a high availability Grafana setup involving several Grafana server instances 
 - Streaming from Telegraf will deliver data only to clients connected to the same instance which received Telegraf data, active stream cache is not shared between different Grafana instances.
 - A separate unidirectional stream between Grafana and backend data source may be opened on different Grafana servers for the same channel.
 
-To bypass these limitations, Grafana v8.1 has an experimental Live HA engine that requires Redis to work.
+To bypass these limitations, Grafana has a Live HA engine that requires Redis to work.
 
 ### Configure Redis Live engine
 
@@ -215,7 +215,7 @@ ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
 
-For additional information, refer to the [ha_engine]({{< relref "./configure-grafana#ha_engine" >}}) and [ha_engine_address]({{< relref "./configure-grafana#ha_engine_address" >}}) options.
+For additional information, refer to the [ha_engine](../configure-grafana/#ha_engine) and [ha_engine_address](../configure-grafana/#ha_engine_address) options.
 
 After running:
 
@@ -223,26 +223,19 @@ After running:
 - Streaming from Telegraf delivers messages to all subscribers.
 - A separate unidirectional stream between Grafana and backend data source opens on different Grafana servers. Publishing data to a channel delivers messages to instance subscribers, as a result, publications from different instances on different machines do not produce duplicate data on panels.
 
-At the moment we only support single Redis node.
+{{< admonition type="note" >}}
+Live currently does not support Redis Sentinel. We recommend using a Redis Cluster for high-availability via a k8s helm chart such as the Bitnami Redis chart which has values to provision a Redis Cluster. Grafana Live can then be pointed to the `redis-headless` service.
 
-> **Note:** It's possible to use Redis Sentinel and Haproxy to achieve a highly available Redis setup. Redis nodes should be managed by [Redis Sentinel](https://redis.io/topics/sentinel) to achieve automatic failover. Haproxy configuration example:
->
-> ```
-> listen redis
->   server redis-01 127.0.0.1:6380 check port 6380 check inter 2s weight 1 inter 2s downinter 5s rise 10 fall 2 on-marked-down shutdown-sessions on-marked-up shutdown-backup-sessions
->   server redis-02 127.0.0.1:6381 check port 6381 check inter 2s weight 1 inter 2s downinter 5s rise 10 fall 2 backup
->   bind *:6379
->   mode tcp
->   option tcpka
->   option tcplog
->   option tcp-check
->   tcp-check send PING\r\n
->   tcp-check expect string +PONG
->   tcp-check send info\ replication\r\n
->   tcp-check expect string role:master
->   tcp-check send QUIT\r\n
->   tcp-check expect string +OK
->   balance roundrobin
-> ```
->
-> Next, point Grafana Live to Haproxy address:port.
+```
+ live:
+   ha_engine: redis
+   ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
+   ha_engine_password: $__file{/your/redis/password/secret/mount}
+```
+
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The Redis Live HA engine does not currently support TLS.
+
+{{< /admonition >}}

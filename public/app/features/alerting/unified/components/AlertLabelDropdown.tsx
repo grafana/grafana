@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { forwardRef, FC } from 'react';
-import { createFilter, GroupBase, OptionsOrGroups } from 'react-select';
+import { FC, forwardRef } from 'react';
+import { GroupBase, OptionsOrGroups, createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 
 export interface AlertLabelDropdownProps {
@@ -42,7 +43,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElemen
       <div ref={ref}>
         <Field disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>
           <Select<string>
-            placeholder={`Choose ${type}`}
+            placeholder={t('alerting.alert-label-dropdown.placeholder-select', 'Choose {{type}}', { type })}
             width={29}
             className="ds-picker select-container"
             backspaceRemovesValue={false}
@@ -52,7 +53,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElemen
             isValidNewOption={handleIsValidNewOption}
             options={options}
             maxMenuHeight={500}
-            noOptionsMessage="No labels found"
+            noOptionsMessage={t('alerting.label-picker.no-options-message', 'No labels found')}
             defaultValue={defaultValue}
             allowCustomValue
           />

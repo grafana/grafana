@@ -13,21 +13,21 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { DashboardDataDTO } from 'app/types';
+import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -46,7 +46,7 @@ import {
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
 
-standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
+standardTransformersRegistry.setInit(() => [getReduceTransformRegistryItem()]);
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
@@ -149,7 +149,10 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(),
 }));
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  setWeekStart: jest.fn(),
+}));
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
@@ -160,11 +163,6 @@ jest.mock('@grafana/scenes', () => ({
 }));
 
 describe('transformSceneToSaveModel', () => {
-  beforeEach(() => {
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
-  });
-
   describe('Given a simple scene with custom settings', () => {
     it('Should transform back to persisted model', () => {
       const dashboardWithCustomSettings = {
@@ -180,7 +178,6 @@ describe('transformSceneToSaveModel', () => {
         timepicker: {
           ...dashboard_to_load1.timepicker,
           refresh_intervals: ['5m', '15m', '30m', '1h'],
-          time_options: ['5m', '15m', '30m'],
           hidden: true,
         },
         links: [{ ...NEW_LINK, title: 'Link 1' }],
@@ -350,7 +347,6 @@ describe('transformSceneToSaveModel', () => {
         $behaviors: [
           new LibraryPanelBehavior({
             name: 'Some lib panel panel',
-            title: 'A panel',
             uid: 'lib-panel-uid',
           }),
         ],
@@ -394,7 +390,7 @@ describe('transformSceneToSaveModel', () => {
         x: 0,
         y: 0,
       });
-      expect(result.title).toBe('A panel');
+      expect(result.title).toBe('Panel blahh blah');
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
       expect(result.options).toBeUndefined();
@@ -796,7 +792,7 @@ describe('transformSceneToSaveModel', () => {
 
         activateFullSceneTree(scene);
 
-        expect(repeater.state.repeatedPanels?.length).toBe(2);
+        expect(repeater.state.repeatedPanels?.length).toBe(1);
         const result = panelRepeaterToPanels(repeater, true);
 
         expect(result).toHaveLength(2);
@@ -846,7 +842,6 @@ describe('transformSceneToSaveModel', () => {
             $behaviors: [
               new LibraryPanelBehavior({
                 name: 'Some lib panel panel',
-                title: 'A panel',
                 uid: 'lib-panel-uid',
               }),
             ],
@@ -860,7 +855,7 @@ describe('transformSceneToSaveModel', () => {
 
         expect(result[0]).toMatchObject({
           id: 4,
-          title: 'A panel',
+          title: 'Panel blahh blah',
           libraryPanel: {
             name: 'Some lib panel panel',
             uid: 'lib-panel-uid',
@@ -1052,6 +1047,33 @@ describe('transformSceneToSaveModel', () => {
       saveModel = transformSceneToSaveModel(scene);
       expect(saveModel.panels?.[1].gridPos?.h).toBe(34);
     });
+  });
+});
+
+describe('Given a scene with custom quick ranges', () => {
+  it('should save quick ranges to save model', () => {
+    const dashboardWithCustomSettings = {
+      ...dashboard_to_load1,
+      timepicker: {
+        ...dashboard_to_load1.timepicker,
+        quick_ranges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
+      },
+    };
+    const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+    const saveModel = transformSceneToSaveModel(scene);
+
+    expect(saveModel).toMatchSnapshot();
   });
 });
 

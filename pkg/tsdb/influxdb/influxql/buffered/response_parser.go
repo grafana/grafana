@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/influxdata/influxql"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
@@ -29,7 +30,10 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 		if errorStr == "" {
 			errorStr = response.Message
 		}
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", errorStr)}
+		return &backend.DataResponse{
+			Error:       fmt.Errorf("InfluxDB returned error: %s", errorStr),
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(statusCode),
+		}
 	}
 
 	if jsonErr != nil {
@@ -37,12 +41,18 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	}
 
 	if response.Error != "" {
-		return &backend.DataResponse{Error: errors.New(response.Error)}
+		return &backend.DataResponse{
+			Error:       errors.New(response.Error),
+			ErrorSource: backend.ErrorSourceDownstream,
+		}
 	}
 
 	result := response.Results[0]
 	if result.Error != "" {
-		return &backend.DataResponse{Error: errors.New(result.Error)}
+		return &backend.DataResponse{
+			Error:       errors.New(result.Error),
+			ErrorSource: backend.ErrorSourceDownstream,
+		}
 	}
 
 	if query.ResultFormat == "table" {
@@ -346,23 +356,38 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	var values []*string
 
-	for _, valuePair := range row.Values {
-		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("CARDINALITY")) {
-			values = append(values, util.ParseString(valuePair[0]))
-		} else {
-			if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-				if len(valuePair) >= 2 {
-					values = append(values, util.ParseString(valuePair[1]))
-				}
-			} else if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW DIAGNOSTICS")) {
-				// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
-				for _, vp := range valuePair {
-					values = append(values, util.ParseString(vp))
-				}
-			} else {
-				if len(valuePair) >= 1 {
-					values = append(values, util.ParseString(valuePair[0]))
-				}
+	switch query.Statement.(type) {
+	case *influxql.ShowMeasurementCardinalityStatement,
+		*influxql.ShowSeriesCardinalityStatement,
+		*influxql.ShowFieldKeyCardinalityStatement,
+		*influxql.ShowTagValuesCardinalityStatement,
+		*influxql.ShowTagKeyCardinalityStatement:
+		// Handle all CARDINALITY queries
+		for _, valuePair := range row.Values {
+			if len(valuePair) >= 1 {
+				values = append(values, util.ParseString(valuePair[0]))
+			}
+		}
+	case *influxql.ShowDiagnosticsStatement:
+		// Handle SHOW DIAGNOSTICS
+		// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
+		for _, valuePair := range row.Values {
+			for _, vp := range valuePair {
+				values = append(values, util.ParseString(vp))
+			}
+		}
+	case *influxql.ShowTagValuesStatement:
+		// Handle SHOW TAG VALUES (non-CARDINALITY)
+		for _, valuePair := range row.Values {
+			if len(valuePair) >= 2 {
+				values = append(values, util.ParseString(valuePair[1]))
+			}
+		}
+	default:
+		// Handle other queries
+		for _, valuePair := range row.Values {
+			if len(valuePair) >= 1 {
+				values = append(values, util.ParseString(valuePair[0]))
 			}
 		}
 	}

@@ -2,8 +2,6 @@ import { BettererFileTest } from '@betterer/betterer';
 import { ESLint } from 'eslint';
 import { promises as fs } from 'fs';
 
-import config from './.betterer.eslint.config';
-
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
@@ -11,7 +9,6 @@ const eslintPathsToIgnore = [
   'public/app/angular', // will be removed in Grafana 12
   'public/app/plugins/panel/graph', // will be removed alongside angular in Grafana 12
   'public/app/plugins/panel/table-old', // will be removed alongside angular in Grafana 12
-  'e2e/test-plugins',
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
@@ -20,12 +17,34 @@ export default {
     countEslintErrors()
       .include('**/*.{ts,tsx}')
       .exclude(new RegExp(eslintPathsToIgnore.join('|'))),
-  'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
+  'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
+  'no skipping a11y tests in stories': () => countSkippedA11yTestStories().include('**/*.story.tsx'),
   'no gf-form usage': () =>
     regexp(/gf-form/gm, 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.')
       .include('**/*.{ts,tsx,html}')
       .exclude(new RegExp('packages/grafana-ui/src/themes/GlobalStyles')),
 };
+
+function countSkippedA11yTestStories() {
+  return new BettererFileTest(async (filePaths, fileTestResult) => {
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        // look for skipped a11y tests
+        const skipRegex = new RegExp("a11y: { test: 'off' }", 'gm');
+
+        const fileText = await fs.readFile(filePath, 'utf8');
+
+        const hasSkip = skipRegex.test(fileText);
+        if (hasSkip) {
+          // In this case the file contents don't matter:
+          const file = fileTestResult.addFile(filePath, '');
+          // Add the issue to the first character of the file:
+          file.addIssue(0, 0, 'No skipping of a11y tests in stories. Please fix the component or story instead.');
+        }
+      })
+    );
+  });
+}
 
 function countUndocumentedStories() {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
@@ -75,17 +94,14 @@ function regexp(pattern: RegExp, issueMessage: string) {
 }
 
 function countEslintErrors() {
-  return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
+  return new BettererFileTest(async (filePaths, fileTestResult) => {
     // Just bail early if there's no files to test. Prevents trying to get the base config from failing
     if (filePaths.length === 0) {
       return;
     }
 
-    const { baseDirectory } = resolver;
-
     const runner = new ESLint({
-      overrideConfig: config,
-      cwd: baseDirectory,
+      overrideConfigFile: './.betterer.eslint.config.js',
       warnIgnored: false,
     });
 
@@ -93,9 +109,11 @@ function countEslintErrors() {
 
     lintResults.forEach(({ messages, filePath }) => {
       const file = fileTestResult.addFile(filePath, '');
-      messages.forEach((message, index) => {
-        file.addIssue(0, 0, message.message, `${index}`);
-      });
+      messages
+        .sort((a, b) => (a.message > b.message ? 1 : -1))
+        .forEach((message, index) => {
+          file.addIssue(0, 0, message.message, `${index}`);
+        });
     });
   });
 }

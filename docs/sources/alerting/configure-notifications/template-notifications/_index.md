@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Template notifications
-weight: 430
+weight: 450
 refs:
   template-annotations-and-labels:
     - pattern: /docs/grafana/
@@ -85,11 +85,11 @@ The notification message would look like this:
   Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Avoid adding extra information about alert instances in notification templates, as this information will only be visible in the notification message.
 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Select a notification template for a contact point
 
@@ -108,3 +108,7 @@ For further details on how to write notification templates, refer to:
 - [Select, create, and preview a notification template](ref:manage-notification-templates)
 - [Notification template reference](ref:reference)
 - [Notification template examples](ref:examples)
+
+{{< admonition type="tip" >}}
+For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).
+{{< /admonition  >}}

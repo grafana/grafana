@@ -1,7 +1,0 @@
-apiVersion: peakq.grafana.app/v0alpha1
-kind: QueryTemplate
-metadata:
-  generateName: x # anything is ok here... except yes or true -- they become boolean!
-spec:
-  title: Generated query template
-  description: A description from here

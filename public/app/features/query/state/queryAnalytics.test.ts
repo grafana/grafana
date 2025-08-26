@@ -118,6 +118,7 @@ describe('emitDataRequestEvent', () => {
     it('Should report meta analytics', () => {
       const data = getTestData({
         panelId: 2,
+        panelName: 'Panel Name2',
       });
       emitDataRequestEvent(datasource)(data);
 
@@ -130,6 +131,7 @@ describe('emitDataRequestEvent', () => {
           datasourceType: datasource.type,
           source: CoreApp.Dashboard,
           panelId: 2,
+          panelName: 'Panel Name2',
           dashboardUid: 'test', // from dashboard srv
           dataSize: 0,
           duration: 1,
@@ -144,6 +146,7 @@ describe('emitDataRequestEvent', () => {
       const data = getTestData(
         {
           panelId: 2,
+          panelName: 'Panel Name2',
         },
         partiallyCachedSeries
       );
@@ -158,6 +161,7 @@ describe('emitDataRequestEvent', () => {
           datasourceType: datasource.type,
           source: CoreApp.Dashboard,
           panelId: 2,
+          panelName: 'Panel Name2',
           dashboardUid: 'test',
           dataSize: 2,
           duration: 1,
@@ -172,6 +176,7 @@ describe('emitDataRequestEvent', () => {
       const data = getTestData(
         {
           panelId: 2,
+          panelName: 'Panel Name2',
         },
         multipleDataframesWithSameRefId
       );
@@ -186,6 +191,7 @@ describe('emitDataRequestEvent', () => {
           datasourceType: datasource.type,
           source: CoreApp.Dashboard,
           panelId: 2,
+          panelName: 'Panel Name2',
           dashboardUid: 'test', // from dashboard srv
           dataSize: 2,
           duration: 1,
@@ -211,6 +217,30 @@ describe('emitDataRequestEvent', () => {
       const data = getTestData();
       emitDataRequestEvent(datasource)(data);
       expect(reportMetaAnalytics).not.toBeCalled();
+    });
+
+    it('Should not report errors when there are none', () => {
+      const data = getTestData({
+        panelId: 2,
+      });
+      emitDataRequestEvent(datasource)(data);
+
+      expect(reportMetaAnalytics).toBeCalledTimes(1);
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(expect.not.objectContaining({ error: expect.any(String) }));
+    });
+
+    it('Should report errors if they exist', () => {
+      const data = getTestData(
+        {
+          panelId: 2,
+        },
+        undefined,
+        [{ message: 'message A' }, { message: 'message B' }]
+      );
+      emitDataRequestEvent(datasource)(data);
+
+      expect(reportMetaAnalytics).toBeCalledTimes(1);
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(expect.objectContaining({ error: 'message A, message B' }));
     });
   });
 

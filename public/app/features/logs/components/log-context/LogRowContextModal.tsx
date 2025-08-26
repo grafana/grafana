@@ -17,13 +17,14 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Modal, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
@@ -495,7 +496,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   return (
     <Modal
       isOpen={open}
-      title="Log context"
+      title={t('logs.log-row-context-modal.title-log-context', 'Log context')}
       contentClassName={styles.flexColumn}
       className={styles.modal}
       onDismiss={onClose}
@@ -522,8 +523,18 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     <LoadingIndicator adjective="newer" />
                   </div>
                 )}
-                {loadingStateAbove === LoadingState.Error && <div>Error loading log more logs.</div>}
-                {loadingStateAbove === LoadingState.Done && <div>No more logs available.</div>}
+                {loadingStateAbove === LoadingState.Error && (
+                  <div>
+                    <Trans i18nKey="logs.log-row-context-modal.error-loading-log-more-logs">
+                      Error loading more logs.
+                    </Trans>
+                  </div>
+                )}
+                {loadingStateAbove === LoadingState.Done && (
+                  <div>
+                    <Trans i18nKey="logs.log-row-context-modal.no-more-logs-available">No more logs available.</Trans>
+                  </div>
+                )}
               </td>
             </tr>
             <tr>
@@ -540,6 +551,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   displayedFields={displayedFields}
                   onClickShowField={showField}
                   onClickHideField={hideField}
+                  scrollElement={null}
                 />
               </td>
             </tr>
@@ -560,8 +572,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onClickHideField={hideField}
                   onUnpinLine={() => setSticky(false)}
                   onPinLine={() => setSticky(true)}
-                  pinnedRowId={sticky ? row.uid : undefined}
+                  pinnedLogs={sticky ? [row.uid] : undefined}
                   overflowingContent={true}
+                  scrollElement={null}
                 />
               </td>
             </tr>
@@ -580,6 +593,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     displayedFields={displayedFields}
                     onClickShowField={showField}
                     onClickHideField={hideField}
+                    scrollElement={null}
                   />
                 </>
               </td>
@@ -591,8 +605,18 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     <LoadingIndicator adjective="older" />
                   </div>
                 )}
-                {loadingStateBelow === LoadingState.Error && <div>Error loading log more logs.</div>}
-                {loadingStateBelow === LoadingState.Done && <div>No more logs available.</div>}
+                {loadingStateBelow === LoadingState.Error && (
+                  <div>
+                    <Trans i18nKey="logs.log-row-context-modal.error-loading-log-more-logs">
+                      Error loading more logs.
+                    </Trans>
+                  </div>
+                )}
+                {loadingStateBelow === LoadingState.Done && (
+                  <div>
+                    <Trans i18nKey="logs.log-row-context-modal.no-more-logs-available">No more logs available.</Trans>
+                  </div>
+                )}
               </td>
             </tr>
           </tbody>
@@ -629,7 +653,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               });
             }}
           >
-            Open in split view
+            <Trans i18nKey="logs.log-row-context-modal.open-in-split-view">Open in split view</Trans>
           </Button>
         )}
       </Modal.ButtonRow>

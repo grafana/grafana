@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -21,7 +22,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		cfg:      setting.NewCfg(),
 		features: featuremgmt.WithFeatures(),
 		tracer:   tracing.InitializeTracerForTest(),
-		metrics:  newMetrics(nil),
+		metrics:  metrics.NewSSEMetrics(nil),
 	}
 	converter := &ResultConverter{Features: s.features, Tracer: s.tracer}
 
@@ -40,7 +41,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
+						resultType, res, err := converter.Convert(context.Background(), dtype, frames)
 						require.NoError(t, err)
 						assert.Equal(t, "single frame series", resultType)
 						require.Len(t, res.Values, 2)
@@ -68,7 +69,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
+						resultType, res, err := converter.Convert(context.Background(), dtype, frames)
 						require.NoError(t, err)
 						assert.Equal(t, "multi frame series", resultType)
 						require.Len(t, res.Values, 2)
@@ -101,7 +102,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 			for _, dtype := range supported {
 				t.Run(dtype, func(t *testing.T) {
-					resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
+					resultType, res, err := converter.Convert(context.Background(), dtype, frames)
 					require.NoError(t, err)
 					assert.Equal(t, "multi frame series", resultType)
 					require.Len(t, res.Values, 2)

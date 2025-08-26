@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
-import { EditorList, AccessoryButton } from '@grafana/experimental';
-import { Select, HorizontalGroup, MultiSelect } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { EditorList, AccessoryButton } from '@grafana/plugin-ui';
+import { Select, Stack, MultiSelect } from '@grafana/ui';
 
-import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
+import { AzureMetricDimension, AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types/types';
 import { Field } from '../shared/Field';
 
 import { setDimensionFilters } from './setQueryValue';
@@ -147,17 +149,17 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
     onDelete: () => void
   ) => {
     return (
-      <HorizontalGroup spacing="none">
+      <Stack gap={0}>
         <Select
           menuShouldPortal
-          placeholder="Field"
+          placeholder={t('components.dimension-fields.placeholder-field', 'Field')}
           value={item.dimension}
           options={getValidDimensionOptions(item.dimension || '')}
           onChange={(e) => onFieldChange('dimension', item, e.value ?? '', onChange)}
         />
         <Select
           menuShouldPortal
-          placeholder="Operation"
+          placeholder={t('components.dimension-fields.placeholder-operation', 'Operation')}
           value={item.operator}
           options={getValidOperators(item.operator || 'eq')}
           onChange={(e) => onFieldChange('operator', item, e.value ?? '', onChange)}
@@ -166,7 +168,7 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
         {item.operator === 'eq' || item.operator === 'ne' ? (
           <MultiSelect
             menuShouldPortal
-            placeholder="Select value(s)"
+            placeholder={t('components.dimension-fields.placeholder-select-values', 'Select value(s)')}
             value={item.filters}
             options={getValidMultiSelectOptions(item.filters, item.dimension ?? '')}
             onChange={(e) =>
@@ -177,14 +179,14 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
                 onChange
               )
             }
-            aria-label={'dimension-labels-select'}
+            data-testid="dimension-labels-select"
             allowCustomValue
           />
         ) : (
           // The API does not currently allow for multiple "starts with" clauses to be used.
           <Select
             menuShouldPortal
-            placeholder="Select value"
+            placeholder={t('components.dimension-fields.placeholder-select-value', 'Select value')}
             value={item.filters ? item.filters[0] : ''}
             allowCustomValue
             options={getValidFilterOptions(item.filters ? item.filters[0] : '', item.dimension ?? '')}
@@ -192,13 +194,19 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
             isClearable
           />
         )}
-        <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
-      </HorizontalGroup>
+        <AccessoryButton
+          aria-label={t('components.dimension-fields.aria-label-remove', 'Remove')}
+          icon="times"
+          variant="secondary"
+          onClick={onDelete}
+          type="button"
+        />
+      </Stack>
     );
   };
 
   return (
-    <Field label="Dimensions">
+    <Field label={t('components.dimension-fields.label-dimensions', 'Dimensions')}>
       <EditorList items={dimensionFilters} onChange={changedFunc} renderItem={renderFilters} />
     </Field>
   );

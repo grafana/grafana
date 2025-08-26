@@ -73,7 +73,7 @@ type IndexPattern interface {
 	GetIndices(timeRange backend.TimeRange) ([]string, error)
 }
 
-var newIndexPattern = func(interval string, pattern string) (IndexPattern, error) {
+var NewIndexPattern = func(interval string, pattern string) (IndexPattern, error) {
 	if interval == noInterval {
 		return &staticIndexPattern{indexName: pattern}, nil
 	}
@@ -136,7 +136,12 @@ func (ip *dynamicIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string
 	indices := make([]string, 0)
 
 	for _, t := range intervals {
-		indices = append(indices, formatDate(t, ip.pattern))
+		index, err := formatDate(t, ip.pattern)
+		if err != nil {
+			return []string{}, err
+		} else {
+			indices = append(indices, index)
+		}
 	}
 
 	return indices, nil
@@ -251,13 +256,16 @@ func (i *yearlyInterval) Generate(from, to time.Time) []time.Time {
 	return intervals
 }
 
-func formatDate(t time.Time, pattern string) string {
+func formatDate(t time.Time, pattern string) (string, error) {
 	var formattedDatePatterns []string
 	var bases []string
 	base := ""
 	isBaseFirst := false
 
 	baseStart := strings.Index(pattern, "[")
+	if baseStart == -1 {
+		return "", fmt.Errorf("invalid index pattern %s. Specify an index with a time pattern or select 'No pattern'", pattern)
+	}
 	for baseStart != -1 {
 		var datePattern string
 
@@ -344,7 +352,7 @@ func formatDate(t time.Time, pattern string) string {
 		fullPattern = append(fullPattern, bases...)
 	}
 
-	return strings.Join(fullPattern, "")
+	return strings.Join(fullPattern, ""), nil
 }
 
 func patternToLayout(pattern string) string {

@@ -4,6 +4,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, PanelData, PanelModel, VisualizationSuggestion } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { getAllSuggestions } from '../../state/getAllSuggestions';
@@ -47,7 +48,9 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
           return (
             <div>
               <div className={styles.filterRow}>
-                <div className={styles.infoText}>Based on current data</div>
+                <div className={styles.infoText}>
+                  <Trans i18nKey="panel.visualization-suggestions.based-on-current-data">Based on current data</Trans>
+                </div>
               </div>
               <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
                 {filteredSuggestions.map((suggestion, index) => (
@@ -60,7 +63,11 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel, t
                   />
                 ))}
                 {searchQuery && filteredSuggestions.length === 0 && (
-                  <div className={styles.infoText}>No results matched your query</div>
+                  <div className={styles.infoText}>
+                    <Trans i18nKey="panel.visualization-suggestions.no-results-matched-your-query">
+                      No results matched your query
+                    </Trans>
+                  </div>
                 )}
               </div>
             </div>

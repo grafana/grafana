@@ -1,4 +1,9 @@
-import { config } from '@grafana/runtime';
+import { waitFor } from '@testing-library/dom';
+
+import { config, locationService } from '@grafana/runtime';
+
+import { ScopesService } from '../ScopesService';
+import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 
 import {
   clearNotFound,
@@ -21,7 +26,18 @@ import {
   expectNoDashboardsNoScopes,
   expectNoDashboardsSearch,
 } from './utils/assertions';
-import { fetchDashboardsSpy, getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import {
+  alternativeDashboardWithRootFolder,
+  alternativeDashboardWithTwoFolders,
+  dashboardWithOneFolder,
+  dashboardWithoutFolder,
+  dashboardWithRootFolder,
+  dashboardWithRootFolderAndOtherFolder,
+  dashboardWithTwoFolders,
+  getDatasource,
+  getInstanceSettings,
+  getMock,
+} from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
@@ -34,50 +50,58 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Dashboards list', () => {
+  let fetchDashboardsSpy: jest.SpyInstance;
+  let scopesService: ScopesService;
+  let scopesDashboardsService: ScopesDashboardsService;
+
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    renderDashboard();
+  beforeEach(async () => {
+    const result = await renderDashboard();
+    scopesService = result.scopesService;
+    scopesDashboardsService = result.scopesDashboardsService;
+    fetchDashboardsSpy = jest.spyOn(result.client, 'fetchDashboards');
   });
 
   afterEach(async () => {
-    await resetScenes();
+    locationService.replace('');
+    await resetScenes([fetchDashboardsSpy]);
   });
 
   it('Opens container and fetches dashboards list when a scope is selected', async () => {
     expectDashboardsClosed();
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     expectDashboardsOpen();
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Closes container when no scopes are selected', async () => {
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     expectDashboardsOpen();
-    await updateScopes(['mimir', 'loki']);
+    await updateScopes(scopesService, ['mimir', 'loki']);
     expectDashboardsOpen();
-    await updateScopes([]);
+    await updateScopes(scopesService, []);
     expectDashboardsClosed();
   });
 
   it('Fetches dashboards list when the list is expanded', async () => {
     await toggleDashboards();
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Fetches dashboards list when the list is expanded after scope selection', async () => {
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     await toggleDashboards();
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Shows dashboards for multiple scopes', async () => {
     await toggleDashboards();
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -102,7 +126,7 @@ describe('Dashboards list', () => {
     expectDashboardNotInDocument('multiple2-compacter');
     expectDashboardNotInDocument('another-stats');
 
-    await updateScopes(['grafana', 'mimir']);
+    await updateScopes(scopesService, ['grafana', 'mimir']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -127,7 +151,7 @@ describe('Dashboards list', () => {
     expectDashboardLength('multiple2-compacter', 2);
     expectDashboardInDocument('another-stats');
 
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -155,7 +179,7 @@ describe('Dashboards list', () => {
 
   it('Filters the dashboards list for dashboards', async () => {
     await toggleDashboards();
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -189,7 +213,7 @@ describe('Dashboards list', () => {
 
   it('Filters the dashboards list for folders', async () => {
     await toggleDashboards();
-    await updateScopes(['grafana']);
+    await updateScopes(scopesService, ['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -223,7 +247,7 @@ describe('Dashboards list', () => {
 
   it('Deduplicates the dashboards list', async () => {
     await toggleDashboards();
-    await updateScopes(['dev', 'ops']);
+    await updateScopes(scopesService, ['dev', 'ops']);
     await expandDashboardFolder('Cardinality Management');
     await expandDashboardFolder('Usage Insights');
     expectDashboardLength('cardinality-management-labels', 1);
@@ -244,20 +268,372 @@ describe('Dashboards list', () => {
   });
 
   it('Does not show the input when there are no dashboards found for scope', async () => {
+    await updateScopes(scopesService, ['cloud']);
     await toggleDashboards();
-    await updateScopes(['cloud']);
     expectNoDashboardsForScope();
     expectNoDashboardsSearch();
   });
 
   it('Shows the input and a message when there are no dashboards found for filter', async () => {
-    await toggleDashboards();
-    await updateScopes(['mimir']);
+    await updateScopes(scopesService, ['mimir']);
     await searchDashboards('unknown');
     expectDashboardsSearch();
-    expectNoDashboardsForFilter();
+    await waitFor(() => expectNoDashboardsForFilter());
 
     await clearNotFound();
     expectDashboardSearchValue('');
+  });
+
+  describe('groupDashboards', () => {
+    it('Assigns dashboards without groups to root folder', () => {
+      expect(scopesDashboardsService.groupSuggestedItems([dashboardWithoutFolder])).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {},
+          suggestedNavigations: {
+            [dashboardWithoutFolder.spec.dashboard]: {
+              url: '/d/' + dashboardWithoutFolder.spec.dashboard,
+              title: dashboardWithoutFolder.status.dashboardTitle,
+              id: dashboardWithoutFolder.spec.dashboard,
+            },
+          },
+        },
+      });
+    });
+
+    it('Assigns dashboards with root group to root folder', () => {
+      expect(scopesDashboardsService.groupSuggestedItems([dashboardWithRootFolder])).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {},
+          suggestedNavigations: {
+            [dashboardWithRootFolder.spec.dashboard]: {
+              url: '/d/' + dashboardWithRootFolder.spec.dashboard,
+              title: dashboardWithRootFolder.status.dashboardTitle,
+              id: dashboardWithRootFolder.spec.dashboard,
+            },
+          },
+        },
+      });
+    });
+
+    it('Merges folders from multiple dashboards', () => {
+      expect(scopesDashboardsService.groupSuggestedItems([dashboardWithOneFolder, dashboardWithTwoFolders])).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: false,
+              folders: {},
+              suggestedNavigations: {
+                [dashboardWithOneFolder.spec.dashboard]: {
+                  url: '/d/' + dashboardWithOneFolder.spec.dashboard,
+                  title: dashboardWithOneFolder.status.dashboardTitle,
+                  id: dashboardWithOneFolder.spec.dashboard,
+                },
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
+                  title: dashboardWithTwoFolders.status.dashboardTitle,
+                  id: dashboardWithTwoFolders.spec.dashboard,
+                },
+              },
+            },
+            'Folder 2': {
+              title: 'Folder 2',
+              expanded: false,
+              folders: {},
+              suggestedNavigations: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
+                  title: dashboardWithTwoFolders.status.dashboardTitle,
+                  id: dashboardWithTwoFolders.spec.dashboard,
+                },
+              },
+            },
+          },
+          suggestedNavigations: {},
+        },
+      });
+    });
+
+    it('Merges scopes from multiple dashboards', () => {
+      expect(
+        scopesDashboardsService.groupSuggestedItems([dashboardWithTwoFolders, alternativeDashboardWithTwoFolders])
+      ).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: false,
+              folders: {},
+              suggestedNavigations: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
+                  title: dashboardWithTwoFolders.status.dashboardTitle,
+                  id: dashboardWithTwoFolders.spec.dashboard,
+                },
+              },
+            },
+            'Folder 2': {
+              title: 'Folder 2',
+              expanded: false,
+              folders: {},
+              suggestedNavigations: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
+                  title: dashboardWithTwoFolders.status.dashboardTitle,
+                  id: dashboardWithTwoFolders.spec.dashboard,
+                },
+              },
+            },
+          },
+          suggestedNavigations: {},
+        },
+      });
+    });
+
+    it('Matches snapshot', () => {
+      expect(
+        scopesDashboardsService.groupSuggestedItems([
+          dashboardWithoutFolder,
+          dashboardWithOneFolder,
+          dashboardWithTwoFolders,
+          alternativeDashboardWithTwoFolders,
+          dashboardWithRootFolder,
+          alternativeDashboardWithRootFolder,
+          dashboardWithRootFolderAndOtherFolder,
+        ])
+      ).toEqual({
+        '': {
+          suggestedNavigations: {
+            [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
+              url: '/d/' + dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+              title: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
+              id: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+            },
+            [dashboardWithRootFolder.spec.dashboard]: {
+              url: '/d/' + dashboardWithRootFolder.spec.dashboard,
+              title: dashboardWithRootFolder.status.dashboardTitle,
+              id: dashboardWithRootFolder.spec.dashboard,
+            },
+            [dashboardWithoutFolder.spec.dashboard]: {
+              url: '/d/' + dashboardWithoutFolder.spec.dashboard,
+              title: dashboardWithoutFolder.status.dashboardTitle,
+              id: dashboardWithoutFolder.spec.dashboard,
+            },
+          },
+          folders: {
+            'Folder 1': {
+              suggestedNavigations: {
+                [dashboardWithOneFolder.spec.dashboard]: {
+                  url: '/d/' + dashboardWithOneFolder.spec.dashboard,
+                  title: dashboardWithOneFolder.status.dashboardTitle,
+                  id: dashboardWithOneFolder.spec.dashboard,
+                },
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
+                  title: dashboardWithTwoFolders.status.dashboardTitle,
+                  id: dashboardWithTwoFolders.spec.dashboard,
+                },
+              },
+              folders: {},
+              expanded: false,
+              title: 'Folder 1',
+            },
+            'Folder 2': {
+              suggestedNavigations: {
+                [dashboardWithTwoFolders.spec.dashboard]: {
+                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
+                  title: dashboardWithTwoFolders.status.dashboardTitle,
+                  id: dashboardWithTwoFolders.spec.dashboard,
+                },
+              },
+              folders: {},
+              expanded: false,
+              title: 'Folder 2',
+            },
+            'Folder 3': {
+              suggestedNavigations: {
+                [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
+                  url: '/d/' + dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+                  title: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
+                  id: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+                },
+              },
+              folders: {},
+              expanded: false,
+              title: 'Folder 3',
+            },
+          },
+          expanded: true,
+          title: '',
+        },
+      });
+    });
+  });
+
+  describe('filterFolders', () => {
+    it('Shows folders matching criteria', () => {
+      expect(
+        scopesDashboardsService.filterFolders(
+          {
+            '': {
+              title: '',
+              expanded: true,
+              folders: {
+                'Folder 1': {
+                  title: 'Folder 1',
+                  expanded: false,
+                  folders: {},
+                  suggestedNavigations: {
+                    'Dashboard ID': {
+                      url: '/d/Dashboard ID',
+                      title: 'Dashboard Title',
+                      id: 'Dashboard ID',
+                    },
+                  },
+                },
+                'Folder 2': {
+                  title: 'Folder 2',
+                  expanded: true,
+                  folders: {},
+                  suggestedNavigations: {
+                    'Dashboard ID': {
+                      url: '/d/Dashboard ID',
+                      title: 'Dashboard Title',
+                      id: 'Dashboard ID',
+                    },
+                  },
+                },
+              },
+              suggestedNavigations: {
+                'Dashboard ID': {
+                  url: '/d/Dashboard ID',
+                  title: 'Dashboard Title',
+                  id: 'Dashboard ID',
+                },
+              },
+            },
+          },
+          'Folder'
+        )
+      ).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: true,
+              folders: {},
+              suggestedNavigations: {
+                'Dashboard ID': {
+                  url: '/d/Dashboard ID',
+                  title: 'Dashboard Title',
+                  id: 'Dashboard ID',
+                },
+              },
+            },
+            'Folder 2': {
+              title: 'Folder 2',
+              expanded: true,
+              folders: {},
+              suggestedNavigations: {
+                'Dashboard ID': {
+                  url: '/d/Dashboard ID',
+                  title: 'Dashboard Title',
+                  id: 'Dashboard ID',
+                },
+              },
+            },
+          },
+          suggestedNavigations: {},
+        },
+      });
+    });
+
+    it('Shows dashboards matching criteria', () => {
+      expect(
+        scopesDashboardsService.filterFolders(
+          {
+            '': {
+              title: '',
+              expanded: true,
+              folders: {
+                'Folder 1': {
+                  title: 'Folder 1',
+                  expanded: false,
+                  folders: {},
+                  suggestedNavigations: {
+                    'Dashboard ID': {
+                      url: '/d/Dashboard ID',
+                      title: 'Dashboard Title',
+                      id: 'Dashboard ID',
+                    },
+                  },
+                },
+                'Folder 2': {
+                  title: 'Folder 2',
+                  expanded: true,
+                  folders: {},
+                  suggestedNavigations: {
+                    'Random ID': {
+                      url: '/d/Random ID',
+                      title: 'Random Title',
+                      id: 'Random ID',
+                    },
+                  },
+                },
+              },
+              suggestedNavigations: {
+                'Dashboard ID': {
+                  url: '/d/Dashboard ID',
+                  title: 'Dashboard Title',
+                  id: 'Dashboard ID',
+                },
+                'Random ID': {
+                  url: '/d/Random ID',
+                  title: 'Random Title',
+                  id: 'Random ID',
+                },
+              },
+            },
+          },
+          'dash'
+        )
+      ).toEqual({
+        '': {
+          title: '',
+          expanded: true,
+          folders: {
+            'Folder 1': {
+              title: 'Folder 1',
+              expanded: true,
+              folders: {},
+              suggestedNavigations: {
+                'Dashboard ID': {
+                  url: '/d/Dashboard ID',
+                  title: 'Dashboard Title',
+                  id: 'Dashboard ID',
+                },
+              },
+            },
+          },
+          suggestedNavigations: {
+            'Dashboard ID': {
+              url: '/d/Dashboard ID',
+              title: 'Dashboard Title',
+              id: 'Dashboard ID',
+            },
+          },
+        },
+      });
+    });
   });
 });

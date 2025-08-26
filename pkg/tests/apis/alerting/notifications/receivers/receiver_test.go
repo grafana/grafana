@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,19 +21,20 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
+
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
+
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	notificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
@@ -58,11 +58,7 @@ func TestMain(m *testing.M) {
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingApiServer,
-		},
-	})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
@@ -72,22 +68,19 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	client := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	client := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	newResource := &v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
 		Spec: v0alpha1.ReceiverSpec{
 			Title:        "Test-Receiver",
-			Integrations: nil,
+			Integrations: []v0alpha1.ReceiverIntegration{},
 		},
 	}
 
 	t.Run("create should fail if object name is specified", func(t *testing.T) {
-		resource := newResource.DeepCopy()
+		resource := newResource.Copy().(*v0alpha1.Receiver)
 		resource.Name = "new-receiver"
 		_, err := client.Create(ctx, resource, v1.CreateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
@@ -113,7 +106,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		existing, err := client.Get(ctx, resourceID, v1.GetOptions{})
 		require.NoError(t, err)
 
-		updated := existing.DeepCopy()
+		updated := existing.Copy().(*v0alpha1.Receiver)
 		updated.Spec.Title = "another-newReceiver"
 
 		actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
@@ -150,16 +143,10 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 		),
 	})
 
-	newClient := func(t *testing.T, user apis.User) notificationsv0alpha1.ReceiverInterface {
-		k8sClient, err := versioned.NewForConfig(user.NewRestConfig())
-		require.NoError(t, err)
-		return k8sClient.NotificationsV0alpha1().Receivers("default")
-	}
-
 	admin := org1.Admin
 	viewer := org1.Viewer
 	editor := org1.Editor
-	adminClient := newClient(t, admin)
+	adminClient := test_common.NewReceiverClient(t, admin)
 
 	writeACMetadata := []string{"canWrite", "canDelete"}
 	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin"}
@@ -311,8 +298,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			createClient := newClient(t, tc.creatingUser)
-			client := newClient(t, tc.testUser)
+			createClient := test_common.NewReceiverClient(t, tc.creatingUser)
+			client := test_common.NewReceiverClient(t, tc.testUser)
 
 			var created = &v0alpha1.Receiver{
 				ObjectMeta: v1.ObjectMeta{
@@ -320,7 +307,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				},
 				Spec: v0alpha1.ReceiverSpec{
 					Title:        "receiver-1",
-					Integrations: nil,
+					Integrations: []v0alpha1.ReceiverIntegration{},
 				},
 			}
 			d, err := json.Marshal(created)
@@ -349,7 +336,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				extractReceiverFromList := func(list *v0alpha1.ReceiverList, name string) *v0alpha1.Receiver {
 					for i := range list.Items {
 						if list.Items[i].Name == name {
-							return list.Items[i].DeepCopy()
+							return list.Items[i].Copy().(*v0alpha1.Receiver)
 						}
 					}
 					return nil
@@ -362,7 +349,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 					require.NotNil(t, expectedGet)
 
 					// Set expected metadata.
-					expectedGetWithMetadata := expectedGet.DeepCopy()
+					expectedGetWithMetadata := expectedGet.Copy().(*v0alpha1.Receiver)
 					// Clear any existing access control metadata.
 					for _, k := range allACMetadata {
 						delete(expectedGetWithMetadata.Annotations, v0alpha1.AccessControlAnnotation(k))
@@ -375,7 +362,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 					require.NoError(t, err)
 					expectedListWithMetadata := extractReceiverFromList(expectedList, created.Name)
 					require.NotNil(t, expectedListWithMetadata)
-					expectedListWithMetadata = expectedListWithMetadata.DeepCopy()
+					expectedListWithMetadata = expectedListWithMetadata.Copy().(*v0alpha1.Receiver)
 					// Clear any existing access control metadata.
 					for _, k := range allACMetadata {
 						delete(expectedListWithMetadata.Annotations, v0alpha1.AccessControlAnnotation(k))
@@ -575,16 +562,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	admin := org1.Admin
-	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			k8sClient, err := versioned.NewForConfig(tc.user.NewRestConfig())
-			require.NoError(t, err)
-			client := k8sClient.NotificationsV0alpha1().Receivers("default")
+			client := test_common.NewReceiverClient(t, tc.user)
 
 			var expected = &v0alpha1.Receiver{
 				ObjectMeta: v1.ObjectMeta{
@@ -592,13 +573,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 				},
 				Spec: v0alpha1.ReceiverSpec{
 					Title:        fmt.Sprintf("receiver-1-%s", tc.user.Identity.GetLogin()),
-					Integrations: nil,
+					Integrations: []v0alpha1.ReceiverIntegration{},
 				},
 			}
 			d, err := json.Marshal(expected)
 			require.NoError(t, err)
 
-			newReceiver := expected.DeepCopy()
+			newReceiver := expected.Copy().(*v0alpha1.Receiver)
 			newReceiver.Spec.Title = fmt.Sprintf("receiver-2-%s", tc.user.Identity.GetLogin())
 			if tc.canCreate {
 				t.Run("should be able to create receiver", func(t *testing.T) {
@@ -630,7 +611,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 			if tc.canRead {
 				// Set expected metadata.
-				expectedWithMetadata := expected.DeepCopy()
+				expectedWithMetadata := expected.Copy().(*v0alpha1.Receiver)
 				expectedWithMetadata.SetInUse(0, nil)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
@@ -678,7 +659,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				})
 			}
 
-			updatedExpected := expected.DeepCopy()
+			updatedExpected := expected.Copy().(*v0alpha1.Receiver)
 			updatedExpected.Spec.Integrations = append(updatedExpected.Spec.Integrations, createIntegration(t, "email"))
 
 			d, err = json.Marshal(updatedExpected)
@@ -692,7 +673,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					expected = updated
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						up := updatedExpected.DeepCopy()
+						up := updatedExpected.Copy().(*v0alpha1.Receiver)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, v1.UpdateOptions{})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
@@ -704,7 +685,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
-						up := updatedExpected.DeepCopy()
+						up := updatedExpected.Copy().(*v0alpha1.Receiver)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, v1.UpdateOptions{})
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
@@ -759,10 +740,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
@@ -777,7 +755,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	parentRoute.Routes = []*definitions.Route{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
-	persistInitialConfig(t, amConfig, adminClient, legacyCli)
+	persistInitialConfig(t, amConfig)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -804,7 +782,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	folderUID := "test-folder"
 	legacyCli.CreateFolder(t, folderUID, "TEST")
-	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	requestReceivers := func(t *testing.T, title string) (v0alpha1.Receiver, v0alpha1.Receiver) {
@@ -840,15 +818,18 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	require.NoError(t, err)
+	routeAdminClient := test_common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	_, err = routeAdminClient.Update(ctx, v1Route, v1.UpdateOptions{})
+	require.NoError(t, err)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
 	checkInUse(t, receiverListed, receiverGet, 1, 2)
 
 	// Remove the extra rules.
 	ruleGroup.Rules = ruleGroup.Rules[:1]
-	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -857,13 +838,16 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
 	checkInUse(t, receiverListed, receiverGet, 1, 0)
 
-	// Remove the rest.
+	// Remove the remaining routes.
 	amConfig.AlertmanagerConfig.Route.Routes = nil
-	success, err = legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	v1route, err := routingtree.ConvertToK8sResource(1, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	require.NoError(t, err)
+	_, err = routeAdminClient.Update(ctx, v1route, v1.UpdateOptions{})
+	require.NoError(t, err)
 
+	// Remove the remaining rules.
 	ruleGroup.Rules = nil
-	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -884,12 +868,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -899,7 +880,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		},
 		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -920,7 +901,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	t.Run("should not let update if provisioned", func(t *testing.T) {
 		got, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
 		require.NoError(t, err)
-		updated := got.DeepCopy()
+		updated := got.Copy().(*v0alpha1.Receiver)
 		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
 
 		_, err = adminClient.Update(ctx, updated, v1.UpdateOptions{})
@@ -941,17 +922,14 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	receiver := v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
 		Spec: v0alpha1.ReceiverSpec{
 			Title:        "receiver-1",
-			Integrations: nil,
+			Integrations: []v0alpha1.ReceiverIntegration{},
 		},
 	}
 
@@ -961,13 +939,13 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	require.NotEmpty(t, created.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
-		updated := created.DeepCopy()
+		updated := created.Copy().(*v0alpha1.Receiver)
 		updated.ResourceVersion = "test"
 		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
-		updated := created.DeepCopy()
+		updated := created.Copy().(*v0alpha1.Receiver)
 		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -978,7 +956,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should fail to update if version is empty", func(t *testing.T) {
-		updated := created.DeepCopy()
+		updated := created.Copy().(*v0alpha1.Receiver)
 		updated.ResourceVersion = ""
 		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "webhook"))
 		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
@@ -1027,17 +1005,14 @@ func TestIntegrationPatch(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	receiver := v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
 		Spec: v0alpha1.ReceiverSpec{
 			Title: "receiver",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 				createIntegration(t, "webhook"),
 				createIntegration(t, "sns"),
@@ -1053,7 +1028,7 @@ func TestIntegrationPatch(t *testing.T) {
 		current, err := adminClient.Get(ctx, current.Name, v1.GetOptions{})
 		require.NoError(t, err)
 
-		index := slices.IndexFunc(current.Spec.Integrations, func(t v0alpha1.Integration) bool {
+		index := slices.IndexFunc(current.Spec.Integrations, func(t v0alpha1.ReceiverIntegration) bool {
 			return t.Type == "webhook"
 		})
 
@@ -1083,9 +1058,9 @@ func TestIntegrationPatch(t *testing.T) {
 		}
 
 		expected := current.Spec.Integrations[index]
-		expected.Settings.Remove("username")
-		expected.Settings.Remove("password")
-		expected.Settings.Set("authorization_scheme", "bearer")
+		delete(expected.Settings, "username")
+		delete(expected.Settings, "password")
+		expected.Settings["authorization_scheme"] = "bearer"
 		delete(expected.SecureFields, "password")
 		expected.SecureFields["authorization_credentials"] = true
 
@@ -1118,77 +1093,6 @@ func TestIntegrationPatch(t *testing.T) {
 	})
 }
 
-func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	helper := getTestHelper(t)
-
-	cliCfg := helper.Org1.Admin.NewRestConfig()
-	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
-
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
-	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
-	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
-	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
-
-	persistInitialConfig(t, amConfig, adminClient, legacyCli)
-
-	// We modify the receiver, this should cause the POST to be rejected.
-	userDefinedReceiver := amConfig.AlertmanagerConfig.Receivers[slices.IndexFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
-		return receiver.Receiver.Name == "user-defined"
-	})]
-	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %t", success)
-	require.ErrorContainsf(t, err, "alertingApiServer", "Expected error message to contain 'alertingApiServer', but got %s", err)
-
-	// Revert the change.
-	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
-
-	// We add a receiver, this should be accepted.
-	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, &definitions.PostableApiReceiver{
-		Receiver: config.Receiver{
-			Name: "new receiver",
-		},
-		PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
-				{
-					Name:     "new receiver",
-					Type:     "email",
-					Settings: []byte(`{"addresses": "<some@email.com>"}`),
-				},
-			},
-		},
-	})
-	success, err = legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Expected receiver modification to be accepted, but got %s", err)
-	require.NoError(t, err)
-
-	// Sanity check.
-	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
-	require.Equalf(t, http.StatusOK, status, body)
-	require.Lenf(t, gettable.AlertmanagerConfig.Receivers, 3, "Expected 3 receivers, got %d", len(gettable.AlertmanagerConfig.Receivers))
-
-	// We remove the receiver, this should be accepted.
-	amConfig.AlertmanagerConfig.Receivers = slices.DeleteFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
-		return receiver.GrafanaManagedReceivers[0].Name == "new receiver"
-	})
-	success, err = legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Expected receiver modification to be accepted, but got %s", err)
-	require.NoError(t, err)
-
-	// Sanity check.
-	gettable, status, body = legacyCli.GetAlertmanagerConfigWithStatus(t)
-	require.Equalf(t, http.StatusOK, status, body)
-	require.Lenf(t, gettable.AlertmanagerConfig.Receivers, 2, "Expected 2 receivers, got %d", len(gettable.AlertmanagerConfig.Receivers))
-}
-
 func TestIntegrationReferentialIntegrity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -1197,7 +1101,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
@@ -1205,17 +1109,14 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	persistInitialConfig(t, amConfig, adminClient, legacyCli)
+	persistInitialConfig(t, amConfig)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -1224,7 +1125,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 	folderUID := "test-folder"
 	legacyCli.CreateFolder(t, folderUID, "TEST")
-	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})
@@ -1236,18 +1137,20 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	receiver := receivers.Items[idx]
 
 	currentRoute := legacyCli.GetRoute(t)
-	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	currentRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	require.Equal(t, http.StatusAccepted, status)
 
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should rename all references if name changes", func(t *testing.T) {
-			renamed := receiver.DeepCopy()
+			renamed := receiver.Copy().(*v0alpha1.Receiver)
 			expectedTitle := renamed.Spec.Title + "-new"
 			renamed.Spec.Title = expectedTitle
 
 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
 			require.NoError(t, err)
 
-			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			require.Equal(t, http.StatusAccepted, status)
 			for idx, rule := range updatedRuleGroup.Rules {
 				assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
 			}
@@ -1265,7 +1168,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 		t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
 			require.NoError(t, err)
-			renamed := receiver.DeepCopy()
+			renamed := receiver.Copy().(*v0alpha1.Receiver)
 			renamed.Spec.Title += util.GenerateShortUID()
 
 			t.Run("provisioned route", func(t *testing.T) {
@@ -1318,10 +1221,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	var defaultReceiver *v0alpha1.Receiver
 	t.Run("should list the default receiver", func(t *testing.T) {
 		items, err := adminClient.List(ctx, v1.ListOptions{})
@@ -1343,19 +1243,19 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	t.Run("should be able to update default receiver", func(t *testing.T) {
 		require.NotNil(t, defaultReceiver)
-		newDefault := defaultReceiver.DeepCopy()
+		newDefault := defaultReceiver.Copy().(*v0alpha1.Receiver)
 		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, "line"))
 
 		updatedReceiver, err := adminClient.Update(ctx, newDefault, v1.UpdateOptions{})
 		require.NoError(t, err)
 
-		expected := newDefault.DeepCopy()
+		expected := newDefault.Copy().(*v0alpha1.Receiver)
 		expected.Spec.Integrations[0].Uid = updatedReceiver.Spec.Integrations[0].Uid // default integration does not have UID before first update
 		lineIntegration := expected.Spec.Integrations[1]
 		lineIntegration.SecureFields = map[string]bool{
 			"token": true,
 		}
-		lineIntegration.Settings.Remove("token")
+		delete(lineIntegration.Settings, "token")
 		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[1].Type) // this type is in the schema but not in backend
 		lineIntegration.Type = "LINE"
 		lineIntegration.Uid = updatedReceiver.Spec.Integrations[1].Uid
@@ -1371,7 +1271,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.ReceiverSpec{
 				Title:        defaultReceiver.Spec.Title,
-				Integrations: nil,
+				Integrations: []v0alpha1.ReceiverIntegration{},
 			},
 		}
 		_, err := adminClient.Create(ctx, newReceiver, v1.CreateOptions{})
@@ -1385,14 +1285,14 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	var receiver *v0alpha1.Receiver
 	t.Run("should correctly persist all known integrations", func(t *testing.T) {
-		integrations := make([]v0alpha1.Integration, 0, len(notify.AllKnownConfigsForTesting))
+		integrations := make([]v0alpha1.ReceiverIntegration, 0, len(notify.AllKnownConfigsForTesting))
 		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
 		keys := slices.Collect(keysIter)
 		sort.Strings(keys)
 		for _, key := range keys {
 			integrations = append(integrations, createIntegration(t, key))
 		}
-
+		var err error
 		receiver, err = adminClient.Create(ctx, &v0alpha1.Receiver{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
@@ -1430,13 +1330,19 @@ func TestIntegrationCRUD(t *testing.T) {
 		t.Run("should return secrets in secureFields but not settings", func(t *testing.T) {
 			for _, integration := range get.Spec.Integrations {
 				t.Run(integration.Type, func(t *testing.T) {
+					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
+					var fields map[string]any
+					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
 					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
 					require.NoError(t, err)
 					for _, field := range secretFields {
+						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
+							continue
+						}
 						assert.Contains(t, integration.SecureFields, field)
 						assert.Truef(t, integration.SecureFields[field], "secure field should be always true")
 
-						value, ok, err := unstructured.NestedString(integration.Settings.Object, strings.Split(field, ".")...)
+						value, ok, err := unstructured.NestedString(integration.Settings, strings.Split(field, ".")...)
 						assert.NoErrorf(t, err, "failed to read field %s from settings", field)
 						assert.Falsef(t, ok, "secret field %s should not be in settings, value [%s]", field, value)
 					}
@@ -1453,19 +1359,19 @@ func TestIntegrationCRUD(t *testing.T) {
 			t.Run(key, func(t *testing.T) {
 				integration := createIntegration(t, key)
 				// Make the integration invalid, so it fails to create. This is usually done by sending empty settings.
-				clear(integration.Settings.Object)
+				clear(integration.Settings)
 				if key == "webex" {
 					// Webex integration is special case and passes validation without any settings so we instead set an invalid URL.
-					integration.Settings.Set("api_url", "(*^$*^%!@#$*()")
+					integration.Settings["api_url"] = "(*^$*^%!@#$*()"
 				}
 
-				receiver, err = adminClient.Create(ctx, &v0alpha1.Receiver{
+				receiver, err := adminClient.Create(ctx, &v0alpha1.Receiver{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "default",
 					},
 					Spec: v0alpha1.ReceiverSpec{
 						Title:        fmt.Sprintf("invalid-%s", key),
-						Integrations: []v0alpha1.Integration{integration},
+						Integrations: []v0alpha1.ReceiverIntegration{integration},
 					},
 				}, v1.CreateOptions{})
 				require.Errorf(t, err, "Expected error but got successful result: %v", receiver)
@@ -1483,23 +1389,19 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
-	require.NoError(t, err)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	recv1 := &v0alpha1.Receiver{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
 		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
 	}
-	recv1, err = adminClient.Create(ctx, recv1, v1.CreateOptions{})
+	recv1, err := adminClient.Create(ctx, recv1, v1.CreateOptions{})
 	require.NoError(t, err)
 
 	recv2 := &v0alpha1.Receiver{
@@ -1508,7 +1410,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 		},
 		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-2",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -1517,7 +1419,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
@@ -1551,7 +1453,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
 		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "API"),
+			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", recv2.Name, recv2.Spec.Title),
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
@@ -1560,7 +1462,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 	t.Run("should be empty when filter does not match", func(t *testing.T) {
 		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "unknown"),
+			FieldSelector: fmt.Sprintf("metadata.name=%s", "unknown"),
 		})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
@@ -1569,13 +1471,14 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 // persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
 // modifications, so we need to use k8s API to create new receivers before posting the config.
-func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient notificationsv0alpha1.ReceiverInterface, legacyCli alerting.LegacyApiClient) {
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig) {
 	ctx := context.Background()
 
-	var defaultReceiver *definitions.PostableApiReceiver
+	helper := getTestHelper(t)
+
+	receiverClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
 	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
 		if receiver.Name == "grafana-default-email" {
-			defaultReceiver = receiver
 			continue
 		}
 
@@ -1585,21 +1488,21 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 			},
 			Spec: v0alpha1.ReceiverSpec{
 				Title:        receiver.Name,
-				Integrations: []v0alpha1.Integration{},
+				Integrations: []v0alpha1.ReceiverIntegration{},
 			},
 		}
 
 		for _, integration := range receiver.GrafanaManagedReceivers {
 			settings := common.Unstructured{}
 			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
-			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.Integration{
-				Settings:              settings,
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.ReceiverIntegration{
+				Settings:              settings.Object,
 				Type:                  integration.Type,
 				DisableResolveMessage: util.Pointer(false),
 			})
 		}
 
-		created, err := adminClient.Create(ctx, &toCreate, v1.CreateOptions{})
+		created, err := receiverClient.Create(ctx, &toCreate, v1.CreateOptions{})
 		require.NoError(t, err)
 
 		for i, integration := range created.Spec.Integrations {
@@ -1607,31 +1510,25 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 		}
 	}
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	nsMapper := func(_ int64) string { return "default" }
 
-	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
-	require.Equalf(t, http.StatusOK, status, body)
-
-	idx := slices.IndexFunc(gettable.AlertmanagerConfig.Receivers, func(recv *definitions.GettableApiReceiver) bool {
-		return recv.Name == "grafana-default-email"
-	})
-	gettableDefault := gettable.AlertmanagerConfig.Receivers[idx]
-
-	// Assign uid of default receiver as well.
-	defaultReceiver.GrafanaManagedReceivers[0].UID = gettableDefault.GrafanaManagedReceivers[0].UID
+	routeClient := test_common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", nsMapper)
+	require.NoError(t, err)
+	_, err = routeClient.Update(ctx, v1route, v1.UpdateOptions{})
+	require.NoError(t, err)
 }
 
-func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
+func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
 	return createIntegrationWithSettings(t, integrationType, cfg.Config)
 }
-func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.Integration {
+func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
-	return v0alpha1.Integration{
-		Settings:              settings,
+	return v0alpha1.ReceiverIntegration{
+		Settings:              settings.Object,
 		Type:                  integrationType,
 		DisableResolveMessage: util.Pointer(false),
 	}

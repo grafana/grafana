@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, locationService } from '@grafana/runtime';
 import { IconName, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -13,7 +13,7 @@ const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportBu
 
 export interface ExportDrawerMenuItem {
   shareId: string;
-  testId: string;
+  testId?: string;
   label: string;
   description?: string;
   icon: IconName;
@@ -37,13 +37,26 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
     customShareDrawerItem.forEach((d) => menuItems.push(d));
 
+    const label = config.featureToggles.kubernetesDashboards
+      ? t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code')
+      : t('share-dashboard.menu.export-json-title', 'Export as JSON');
+
     menuItems.push({
       shareId: shareDashboardType.export,
       testId: newExportButtonSelector.exportAsJson,
       icon: 'arrow',
-      label: t('share-dashboard.menu.export-json-title', 'Export as JSON'),
+      label,
       renderCondition: true,
       onClick: () => onMenuItemClick(shareDashboardType.export),
+    });
+
+    menuItems.push({
+      shareId: shareDashboardType.image,
+      testId: newExportButtonSelector.exportAsImage,
+      icon: 'camera',
+      label: t('share-dashboard.menu.export-image-title', 'Export as image'),
+      renderCondition: Boolean(config.featureToggles.sharingDashboardImage),
+      onClick: () => onMenuItemClick(shareDashboardType.image),
     });
 
     return menuItems.filter((item) => item.renderCondition);
@@ -59,15 +72,18 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
   };
 
   return (
-    <Menu data-testid={newExportButtonSelector.container}>
+    <Menu
+      ariaLabel={t('dashboard.export.menu.label', 'Export dashboard menu')}
+      data-testid={newExportButtonSelector.container}
+    >
       {buildMenuItems().map((item) => (
         <Menu.Item
           key={item.label}
-          testId={item.testId}
           label={item.label}
           icon={item.icon}
           description={item.description}
           onClick={() => onClick(item)}
+          testId={item.testId}
         />
       ))}
     </Menu>

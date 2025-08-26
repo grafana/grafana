@@ -25,14 +25,20 @@ import {
   Annotations,
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
+  GrafanaAlertingRuleDefinition,
+  GrafanaPromAlertingRuleDTO,
+  GrafanaPromRecordingRuleDTO,
+  GrafanaRecordingRuleDefinition,
   PostableRuleDTO,
   PromAlertingRuleState,
+  PromRuleDTO,
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerCloudRuleDTO,
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
+  RulerRuleGroupDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
@@ -47,48 +53,88 @@ import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { AsyncRequestState } from './redux';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
-export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
-  return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
-}
+/* Grafana managed rules */
 
-export function isRecordingRule(rule: Rule | undefined): rule is RecordingRule {
-  return typeof rule === 'object' && rule.type === PromRuleType.Recording;
-}
-
-export function isAlertingRulerRule(rule?: RulerRuleDTO): rule is RulerAlertingRuleDTO {
-  return typeof rule === 'object' && 'alert' in rule;
-}
-
-export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordingRuleDTO {
-  return typeof rule === 'object' && 'record' in rule;
-}
-
-export function isGrafanaOrDataSourceRecordingRule(rule?: RulerRuleDTO) {
-  return (
-    (typeof rule === 'object' && isRecordingRulerRule(rule)) ||
-    (isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert)
-  );
-}
-
-export function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
-  return typeof rule === 'object' && isGrafanaOrDataSourceRecordingRule(rule) && isGrafanaRulerRule(rule);
-}
-
-export function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
-  return typeof rule === 'object' && isGrafanaRulerRule(rule) && !isGrafanaOrDataSourceRecordingRule(rule);
-}
-
-export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
+function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 
-export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerCloudRuleDTO {
+function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition> {
+  return isGrafanaRulerRule(rule) && !isGrafanaRecordingRule(rule);
+}
+
+function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition> {
+  return isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert;
+}
+
+export function isPausedRule(rule: RulerGrafanaRuleDTO) {
+  return Boolean(rule.grafana_alert.is_paused);
+}
+
+/* Data source managed rules */
+
+function isAlertingRulerRule(rule?: RulerRuleDTO): rule is RulerAlertingRuleDTO {
+  return typeof rule === 'object' && 'alert' in rule;
+}
+
+function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerCloudRuleDTO {
   return typeof rule === 'object' && !isGrafanaRulerRule(rule);
 }
 
-export function isGrafanaRulerRulePaused(rule: RulerGrafanaRuleDTO) {
-  return rule && isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.is_paused);
+function isCloudRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordingRuleDTO {
+  return typeof rule === 'object' && 'record' in rule;
 }
+export function isCloudRulerGroup(
+  rulerRuleGroup: RulerRuleGroupDTO
+): rulerRuleGroup is RulerRuleGroupDTO<RulerCloudRuleDTO> {
+  return rulerRuleGroup.rules.every((r) => isCloudRulerRule(r));
+}
+
+/* Prometheus rules */
+
+function isAlertingRule(rule?: Rule): rule is AlertingRule {
+  return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
+}
+
+function isRecordingRule(rule?: Rule): rule is RecordingRule {
+  return typeof rule === 'object' && rule.type === PromRuleType.Recording;
+}
+
+function isGrafanaPromAlertingRule(rule?: Rule): rule is GrafanaPromAlertingRuleDTO {
+  return isAlertingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+}
+
+function isGrafanaPromRecordingRule(rule?: Rule): rule is GrafanaPromRecordingRuleDTO {
+  return isRecordingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+}
+
+export const rulerRuleType = {
+  grafana: {
+    rule: isGrafanaRulerRule,
+    alertingRule: isGrafanaAlertingRule,
+    recordingRule: isGrafanaRecordingRule,
+  },
+  dataSource: {
+    rule: isCloudRulerRule,
+    alertingRule: isAlertingRulerRule,
+    recordingRule: isCloudRecordingRulerRule,
+  },
+  any: {
+    recordingRule: (rule?: RulerRuleDTO) => isCloudRecordingRulerRule(rule) || isGrafanaRecordingRule(rule),
+    alertingRule: (rule?: RulerRuleDTO) => isAlertingRulerRule(rule) || isGrafanaAlertingRule(rule),
+  },
+};
+
+export const prometheusRuleType = {
+  rule: (rule?: Rule) => isAlertingRule(rule) || isRecordingRule(rule),
+  alertingRule: isAlertingRule,
+  recordingRule: isRecordingRule,
+  grafana: {
+    rule: (rule?: Rule) => isGrafanaPromAlertingRule(rule) || isGrafanaPromRecordingRule(rule),
+    alertingRule: isGrafanaPromAlertingRule,
+    recordingRule: isGrafanaPromRecordingRule,
+  },
+};
 
 export function alertInstanceKey(alert: Alert): string {
   return JSON.stringify(alert.labels);
@@ -122,6 +168,14 @@ export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
 }
 
+export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
+  return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
+}
+
+export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
+  return group.rules.some((rule) => isProvisionedRule(rule));
+}
+
 export function getRuleHealth(health: string): RuleHealth | undefined {
   switch (health) {
     case 'ok':
@@ -139,11 +193,7 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
 }
 
 export function getPendingPeriod(rule: CombinedRule): string | undefined {
-  if (
-    isRecordingRulerRule(rule.rulerRule) ||
-    isRecordingRule(rule.promRule) ||
-    isGrafanaRecordingRule(rule.rulerRule)
-  ) {
+  if (rulerRuleType.any.recordingRule(rule.rulerRule)) {
     return undefined;
   }
 
@@ -162,21 +212,31 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
-export function getAnnotations(rule: CombinedRule): Annotations | undefined {
-  if (
-    isRecordingRulerRule(rule.rulerRule) ||
-    isRecordingRule(rule.promRule) ||
-    isGrafanaRecordingRule(rule.rulerRule)
-  ) {
+export function getPendingPeriodFromRulerRule(rule: RulerRuleDTO) {
+  return rulerRuleType.any.alertingRule(rule) ? rule.for : undefined;
+}
+
+export function getKeepFiringfor(rule: CombinedRule): string | undefined {
+  if (rulerRuleType.any.recordingRule(rule.rulerRule)) {
     return undefined;
   }
-  return rule.annotations ?? [];
+
+  if (isGrafanaAlertingRule(rule.rulerRule)) {
+    return rule.rulerRule.keep_firing_for;
+  }
+
+  return undefined;
 }
+
+export function getAnnotations(rule?: AlertingRule): Annotations {
+  return rule?.annotations ?? {};
+}
+
 export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule?: Rule | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): RulePluginOrigin | undefined {
   if (!rule) {
     return undefined;
   }
@@ -205,7 +265,11 @@ function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
 }
 
-export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {
+export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {
+  return group.rules.some((rule) => isPluginProvidedRule(rule));
+}
+
+export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
 
@@ -237,7 +301,13 @@ export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
     groups.forEach(({ name: groupName, rules }) => {
       rules.forEach((rule) => {
         if (rule.promRule && isAlertingRule(rule.promRule)) {
-          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
+          acc.push({
+            dataSourceName: getRulesSourceName(rulesSource),
+            namespaceName,
+            groupName,
+            ...rule,
+            namespace: { ...rule.namespace, uid: rule.promRule.folderUid },
+          });
         }
       });
     });
@@ -260,17 +330,21 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [PromAlertingRuleState.Inactive]: 'good',
   [PromAlertingRuleState.Firing]: 'bad',
   [PromAlertingRuleState.Pending]: 'warning',
+  [PromAlertingRuleState.Recovering]: 'warning',
   [GrafanaAlertState.Alerting]: 'bad',
   [GrafanaAlertState.Error]: 'bad',
   [GrafanaAlertState.NoData]: 'info',
   [GrafanaAlertState.Normal]: 'good',
   [GrafanaAlertState.Pending]: 'warning',
+  [GrafanaAlertState.Recovering]: 'warning',
   [AlertState.NoData]: 'info',
   [AlertState.Paused]: 'warning',
   [AlertState.Alerting]: 'bad',
   [AlertState.OK]: 'good',
   // AlertState.Pending is not included because the 'pending' value is already covered by `PromAlertingRuleState.Pending`
   // [AlertState.Pending]: 'warning',
+  // same for AlertState.Recovering
+  // [AlertState.Recovering]: 'warning',
   [AlertState.Unknown]: 'info',
 };
 
@@ -296,19 +370,20 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
  *
  * see https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation
  */
-export function isFederatedRuleGroup(group: CombinedRuleGroup) {
+export function isFederatedRuleGroup(group: CombinedRuleGroup | RulerRuleGroupDTO): boolean {
   return Array.isArray(group.source_tenants);
 }
 
-export function getRuleName(rule: RulerRuleDTO) {
-  if (isGrafanaRulerRule(rule)) {
+export function getRuleName(rule: RulerRuleDTO): string {
+  if (rulerRuleType.grafana.rule(rule)) {
     return rule.grafana_alert.title;
   }
-  if (isAlertingRulerRule(rule)) {
+
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
     return rule.alert;
   }
 
-  if (isRecordingRulerRule(rule)) {
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
     return rule.record;
   }
 
@@ -357,6 +432,24 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
     return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumberMs) + 1;
   }
 };
+
+/**
+ * Calculates the number of rule evaluations before the alerting rule will fire
+ * @param pendingPeriodMs - The pending period of the alerting rule in milliseconds
+ * @param groupIntervalMs - The group's evaluation interval in milliseconds
+ * @returns The number of rule evaluations before the rule will fire
+ */
+export function calcRuleEvalsToStartAlerting(pendingPeriodMs: number, groupIntervalMs: number) {
+  if (pendingPeriodMs === 0) {
+    return 1; // No pending period, the rule will fire immediately
+  }
+  if (groupIntervalMs === 0) {
+    return 0; // Invalid case. Group interval is never 0. The default interval will be used.
+  }
+
+  const evaluationsBeforeCeil = pendingPeriodMs / groupIntervalMs;
+  return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(pendingPeriodMs / groupIntervalMs) + 1;
+}
 
 /*
  * Extracts a rule group identifier from a CombinedRule
@@ -439,4 +532,23 @@ export function isRecordingRuleByType(type?: RuleFormType) {
 
 export function isDataSourceManagedRuleByType(type?: RuleFormType) {
   return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
+}
+
+/*
+ * Grab the UID from either a rulerRule definition or a Prometheus rule definition, only Grafana-managed rules will have a UID.
+ */
+export function getRuleUID(rule?: RulerRuleDTO | Rule) {
+  if (!rule) {
+    return;
+  }
+
+  let ruleUid: string | undefined;
+
+  if ('grafana_alert' in rule && rulerRuleType.grafana.rule(rule)) {
+    ruleUid = rule.grafana_alert.uid;
+  } else if ('uid' in rule && prometheusRuleType.grafana.rule(rule)) {
+    ruleUid = rule.uid;
+  }
+
+  return ruleUid;
 }

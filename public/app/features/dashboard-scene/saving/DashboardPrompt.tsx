@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -23,7 +23,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
-      if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
+      if (ignoreChanges(dashboard)) {
         return;
       }
 
@@ -72,7 +72,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    if (ignoreChanges(dashboard, dashboard.getInitialSaveModel())) {
+    if (ignoreChanges(dashboard)) {
       return true;
     }
 
@@ -125,20 +125,24 @@ export const UnsavedChangesModal = ({ onDiscard, onDismiss, onSaveDashboardClick
   return (
     <Modal
       isOpen={true}
-      title="Unsaved changes"
+      title={t('dashboard-scene.unsaved-changes-modal.title-unsaved-changes', 'Unsaved changes')}
       onDismiss={onDismiss}
       icon="exclamation-triangle"
       className={styles.modal}
     >
-      <h5>Do you want to save your changes?</h5>
+      <h5>
+        <Trans i18nKey="dashboard-scene.unsaved-changes-modal.changes">Do you want to save your changes?</Trans>
+      </h5>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
-          Cancel
+          <Trans i18nKey="dashboard-scene.unsaved-changes-modal.cancel">Cancel</Trans>
         </Button>
         <Button variant="destructive" onClick={onDiscard}>
-          Discard
+          <Trans i18nKey="dashboard-scene.unsaved-changes-modal.discard">Discard</Trans>
         </Button>
-        <Button onClick={onSaveDashboardClick}>Save dashboard</Button>
+        <Button onClick={onSaveDashboardClick}>
+          <Trans i18nKey="dashboard-scene.unsaved-changes-modal.save-dashboard">Save dashboard</Trans>
+        </Button>
       </Modal.ButtonRow>
     </Modal>
   );
@@ -153,13 +157,15 @@ const getStyles = () => ({
 /**
  * For some dashboards and users changes should be ignored *
  */
-export function ignoreChanges(current: DashboardScene | null, original?: Dashboard) {
+export function ignoreChanges(scene: DashboardScene | null) {
+  const original = scene?.getInitialSaveModel();
+
   if (!original) {
     return true;
   }
 
   // Ignore changes if original is unsaved
-  if (original.version === 0) {
+  if (scene?.state.meta.version === 0) {
     return true;
   }
 
@@ -168,11 +174,11 @@ export function ignoreChanges(current: DashboardScene | null, original?: Dashboa
     return true;
   }
 
-  if (!current) {
+  if (!scene) {
     return true;
   }
 
-  const { canSave, fromScript, fromFile } = current.state.meta;
+  const { canSave, fromScript, fromFile } = scene.state.meta;
   if (!contextSrv.isEditor && !canSave) {
     return true;
   }

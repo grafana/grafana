@@ -6,7 +6,7 @@ import { RefreshEvent } from '@grafana/runtime';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 
 import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
-import { DashboardModel } from '../../../dashboard/state';
+import { DashboardModel } from '../../../dashboard/state/DashboardModel';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { SnapshotWorker } from './SnapshotWorker';
@@ -43,7 +43,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.executeRun = this.executeRun.bind(this);
     this.results = new ReplaySubject<DashboardQueryRunnerWorkerResult>(1);
     this.runs = new Subject<DashboardQueryRunnerOptions>();
-    this.cancellationStream = new Subject<any>();
+    this.cancellationStream = new Subject<AnnotationQuery>();
     this.runsSubscription = this.runs.subscribe((options) => this.executeRun(options));
     this.eventsSubscription = dashboard.events.subscribe(RefreshEvent, (event) => {
       this.run({ dashboard: this.dashboard, range: this.timeSrv.timeRange() });

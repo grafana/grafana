@@ -129,13 +129,18 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	HomePath              string
-	ProvisioningPath      string
-	DataPath              string
-	LogsPath              string
-	PluginsPath           string
-	BundledPluginsPath    string
-	EnterpriseLicensePath string
+	HomePath                   string
+	ProvisioningPath           string
+	PermittedProvisioningPaths []string
+	// Job History Configuration
+	ProvisioningLokiURL      string
+	ProvisioningLokiUser     string
+	ProvisioningLokiPassword string
+	ProvisioningLokiTenantID string
+	DataPath                 string
+	LogsPath                 string
+	PluginsPath              string
+	EnterpriseLicensePath    string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -144,7 +149,7 @@ type Cfg struct {
 	ImagesDir                      string
 	CSVsDir                        string
 	PDFsDir                        string
-	RendererUrl                    string
+	RendererServerUrl              string
 	RendererCallbackUrl            string
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
@@ -154,18 +159,21 @@ type Cfg struct {
 	RendererDefaultImageScale      float64
 
 	// Security
-	DisableInitAdminCreation          bool
-	DisableBruteForceLoginProtection  bool
-	CookieSecure                      bool
-	CookieSameSiteDisabled            bool
-	CookieSameSiteMode                http.SameSite
-	AllowEmbedding                    bool
-	XSSProtectionHeader               bool
-	ContentTypeProtectionHeader       bool
-	StrictTransportSecurity           bool
-	StrictTransportSecurityMaxAge     int
-	StrictTransportSecurityPreload    bool
-	StrictTransportSecuritySubDomains bool
+	DisableInitAdminCreation             bool
+	DisableBruteForceLoginProtection     bool
+	BruteForceLoginProtectionMaxAttempts int64
+	DisableUsernameLoginProtection       bool
+	DisableIPAddressLoginProtection      bool
+	CookieSecure                         bool
+	CookieSameSiteDisabled               bool
+	CookieSameSiteMode                   http.SameSite
+	AllowEmbedding                       bool
+	XSSProtectionHeader                  bool
+	ContentTypeProtectionHeader          bool
+	StrictTransportSecurity              bool
+	StrictTransportSecurityMaxAge        int
+	StrictTransportSecurityPreload       bool
+	StrictTransportSecuritySubDomains    bool
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
@@ -174,11 +182,13 @@ type Cfg struct {
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
 	CSPReportOnlyTemplate           string
-	AngularSupportEnabled           bool
 	EnableFrontendSandboxForPlugins []string
 	DisableGravatar                 bool
 	DataProxyWhiteList              map[string]bool
 	ActionsAllowPostURL             string
+
+	// K8s Dashboard Cleanup
+	K8sDashboardCleanup K8sDashboardCleanupSettings
 
 	TempDataLifetime time.Duration
 
@@ -195,13 +205,14 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
-	PluginInstallToken               string
 	ForwardHostEnvVars               []string
-	PreinstallPlugins                []InstallPlugin
-	PreinstallPluginsAsync           bool
+	PreinstallPluginsAsync           []InstallPlugin
+	PreinstallPluginsSync            []InstallPlugin
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
+
+	PluginUpdateStrategy string
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -219,9 +230,11 @@ type Cfg struct {
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
-	DashboardVersionsToKeep  int
-	MinRefreshInterval       string
-	DefaultHomeDashboardPath string
+	DashboardVersionsToKeep     int
+	MinRefreshInterval          string
+	DefaultHomeDashboardPath    string
+	DashboardPerformanceMetrics []string
+	PanelSeriesLimit            int
 
 	// Auth
 	LoginCookieName               string
@@ -293,8 +306,8 @@ type Cfg struct {
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
 
-	ViewersCanEdit  bool
-	EditorsCanAdmin bool
+	// Deprecated: no longer used
+	ViewersCanEdit bool
 
 	ApiKeyMaxSecondsToLive int64
 
@@ -302,13 +315,10 @@ type Cfg struct {
 	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
-	AnonymousEnabled     bool
-	AnonymousOrgName     string
-	AnonymousOrgRole     string
-	AnonymousHideVersion bool
-	AnonymousDeviceLimit int64
+	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
+	QuickRanges QuickRanges
 
 	// User
 	UserInviteMaxLifetime        time.Duration
@@ -334,6 +344,12 @@ type Cfg struct {
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
 	ConcurrentQueryCount int
+	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+	DefaultDatasourceManageAlertsUIToggle bool
+	// Default behavior for the "Allow as recording rules target" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool
 
 	// IP range access control
 	IPRangeACEnabled     bool
@@ -399,23 +415,34 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	// User settings
-	AllowUserSignUp            bool
-	AllowUserOrgCreate         bool
-	VerifyEmailEnabled         bool
-	LoginHint                  string
-	PasswordHint               string
-	DisableSignoutMenu         bool
-	ExternalUserMngLinkUrl     string
-	ExternalUserMngLinkName    string
-	ExternalUserMngInfo        string
-	AutoAssignOrg              bool
-	AutoAssignOrgId            int
-	AutoAssignOrgRole          string
-	LoginDefaultOrgId          int64
-	OAuthSkipOrgRoleUpdateSync bool
+	AllowUserSignUp                bool
+	AllowUserOrgCreate             bool
+	VerifyEmailEnabled             bool
+	LoginHint                      string
+	PasswordHint                   string
+	DisableSignoutMenu             bool
+	ExternalUserMngLinkUrl         string
+	ExternalUserMngLinkName        string
+	ExternalUserMngInfo            string
+	ExternalUserMngAnalytics       bool
+	ExternalUserMngAnalyticsParams string
+	AutoAssignOrg                  bool
+	AutoAssignOrgId                int
+	AutoAssignOrgRole              string
+	LoginDefaultOrgId              int64
+	OAuthSkipOrgRoleUpdateSync     bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
+
+	// SQLExpressionCellLimit is the maximum number of cells (rows × columns, across all frames) that can be accepted by a SQL expression.
+	SQLExpressionCellLimit int64
+
+	// SQLExpressionOutputCellLimit is the maximum number of cells (rows × columns) that can be outputted by a SQL expression.
+	SQLExpressionOutputCellLimit int64
+
+	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
+	SQLExpressionTimeout time.Duration
 
 	ImageUploadProvider string
 
@@ -434,6 +461,9 @@ type Cfg struct {
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
+	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
+	// from clients. Defaults to 64KB.
+	LiveMessageSizeLimit int
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -455,6 +485,9 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
+	// Open feature settings
+	OpenFeature OpenFeatureSettings
+
 	Storage StorageSettings
 
 	Search SearchSettings
@@ -475,7 +508,8 @@ type Cfg struct {
 
 	RBAC RBACSettings
 
-	Zanzana ZanzanaSettings
+	ZanzanaClient ZanzanaClientSettings
+	ZanzanaServer ZanzanaServerSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -509,6 +543,7 @@ type Cfg struct {
 	// Explore UI
 	ExploreEnabled           bool
 	ExploreDefaultTimeOffset string
+	ExploreHideLogsDownload  bool
 
 	// Help UI
 	HelpEnabled bool
@@ -523,31 +558,61 @@ type Cfg struct {
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
-	//Short Links
+	// Short Links
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage    map[string]UnifiedStorageConfig
-	IndexPath         string
-	IndexWorkers      int
-	IndexMaxBatchSize int
-	IndexListLimit    int
+	UnifiedStorage                             map[string]UnifiedStorageConfig
+	MaxPageSizeBytes                           int
+	IndexPath                                  string
+	IndexWorkers                               int
+	IndexMaxBatchSize                          int
+	IndexFileThreshold                         int
+	IndexMinCount                              int
+	IndexMaxCount                              int
+	IndexRebuildInterval                       time.Duration
+	IndexCacheTTL                              time.Duration
+	EnableSharding                             bool
+	QOSEnabled                                 bool
+	QOSNumberWorker                            int
+	QOSMaxSizePerTenant                        int
+	MemberlistBindAddr                         string
+	MemberlistAdvertiseAddr                    string
+	MemberlistAdvertisePort                    int
+	MemberlistJoinMember                       string
+	MemberlistClusterLabel                     string
+	MemberlistClusterLabelVerificationDisabled bool
+	SearchRingReplicationFactor                int
+	InstanceID                                 string
+	SprinklesApiServer                         string
+	SprinklesApiServerPageLimit                int
+	CACertPath                                 string
+	HttpsSkipVerify                            bool
+
+	// Secrets Management
+	SecretsManagement SecretsManagerSettings
 }
 
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	DualWriterMigrationDataSyncDisabled  bool
+	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
+	DataSyncerInterval time.Duration
+	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
+	DataSyncerRecordsLimit int
 }
 
 type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
+	URL     string `json:"url,omitempty"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
 // the same intention can be used to hide both features.
 func (cfg *Cfg) AddChangePasswordLink() bool {
-	return !(cfg.DisableLoginForm || cfg.DisableLogin)
+	return !cfg.DisableLoginForm && !cfg.DisableLogin
 }
 
 type CommandLineArgs struct {
@@ -597,7 +662,15 @@ func RedactedValue(key, value string) string {
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
-		"GF_ENTITY_API_DB_PASS",
+		"API_DB_PASS",
+		"^TOKEN$",
+		"ID_FORWARDING_TOKEN$",
+		"AUTHENTICATION_TOKEN$",
+		"AUTH_TOKEN$",
+		"RENDERER_TOKEN$",
+		"API_TOKEN$",
+		"WEBHOOK_TOKEN$",
+		"INSTALL_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -719,7 +792,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 
-	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
+	newAnnotationCleanupSettings := func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
 		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
@@ -754,6 +827,9 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
+	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
+	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(100000)
+	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(time.Second * 10)
 }
 
 type AnnotationCleanupSettings struct {
@@ -1011,6 +1087,12 @@ func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
 	return NewCfgFromINIFile(parsedFile)
 }
 
+// prevents a log line from being printed when the static root path is not found, useful for apiservers that have no frontend
+func NewCfgFromBytesWithoutJSValidation(bytes []byte) (*Cfg, error) {
+	skipStaticRootValidation = true
+	return NewCfgFromBytes(bytes)
+}
+
 // NewCfgFromINIFile specialized function to create a new Cfg from an ini.File.
 func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
 	cfg := NewCfg()
@@ -1085,7 +1167,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
-	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
@@ -1109,11 +1190,17 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := cfg.readProvisioningSettings(iniFile); err != nil {
+		return err
+	}
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
+	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
+	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1131,9 +1218,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readZanzanaSettings()
 
-	if err := cfg.readRenderingSettings(iniFile); err != nil {
-		return err
-	}
+	cfg.readRenderingSettings(iniFile)
 
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
@@ -1193,6 +1278,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	} else {
 		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
 	}
+	cfg.ExploreHideLogsDownload = explore.Key("hide_logs_download").MustBool(false)
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)
@@ -1217,12 +1303,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
 
-	if err := cfg.readPluginSettings(iniFile); err != nil {
+	// nolint:staticcheck
+	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
 
-	// nolint:staticcheck
-	if err := cfg.readFeatureToggles(iniFile); err != nil {
+	if err := cfg.readPluginSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1258,8 +1344,14 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := cfg.readOpenFeatureSettings(); err != nil {
+		cfg.Logger.Error("Failed to read open feature settings", "error", err)
+		return err
+	}
+
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
+	cfg.readK8sDashboardCleanupSettings()
 	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)
@@ -1322,11 +1414,17 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
+	cfg.readSecretsManagerSettings()
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
+	// Time picker settings
+	if err := cfg.readTimePicker(); err != nil {
+		return err
+	}
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
@@ -1498,7 +1596,16 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	cfg.SecretKey = valueAsString(security, "secret_key", "")
 	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+	cfg.DisableUsernameLoginProtection = security.Key("disable_username_login_protection").MustBool(false)
+	cfg.DisableIPAddressLoginProtection = security.Key("disable_ip_address_login_protection").MustBool(true)
+
+	// Ensure at least one login attempt can be performed.
+	if cfg.BruteForceLoginProtectionMaxAttempts <= 0 {
+		cfg.BruteForceLoginProtectionMaxAttempts = 1
+	}
 
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
 	cfg.CookieSecure = CookieSecure
@@ -1532,7 +1639,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
-	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
@@ -1634,12 +1740,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	// anonymous access
-	anonSection := iniFile.Section("auth.anonymous")
-	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
-	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
-	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
+	cfg.readAnonymousSettings()
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -1681,7 +1782,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 			string(identity.RoleNone),
 			string(identity.RoleViewer),
 			string(identity.RoleEditor),
-			string(identity.RoleAdmin)})
+			string(identity.RoleAdmin),
+		})
 	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	// Deprecated
@@ -1696,9 +1798,15 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	cfg.ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
+	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
+	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
+	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
-	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+	//nolint:staticcheck
+	if cfg.ViewersCanEdit {
+		cfg.Logger.Warn("[Deprecated] The viewers_can_edit configuration setting is deprecated. Please upgrade viewers to editors.")
+	}
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
 	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)
@@ -1749,25 +1857,11 @@ func readServiceAccountSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
+func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	renderSec := iniFile.Section("rendering")
-	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
+	cfg.RendererServerUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
 	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
-
-	if cfg.RendererCallbackUrl == "" {
-		cfg.RendererCallbackUrl = AppUrl
-	} else {
-		if cfg.RendererCallbackUrl[len(cfg.RendererCallbackUrl)-1] != '/' {
-			cfg.RendererCallbackUrl += "/"
-		}
-		_, err := url.Parse(cfg.RendererCallbackUrl)
-		if err != nil {
-			// XXX: Should return an error?
-			cfg.Logger.Error("Invalid callback_url.", "url", cfg.RendererCallbackUrl, "error", err)
-			os.Exit(1)
-		}
-	}
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
@@ -1777,8 +1871,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
-
-	return nil
 }
 
 func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
@@ -1899,6 +1991,8 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
+	cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle = datasources.Key("default_allow_recording_rules_target_alerts_ui_toggle").MustBool(true)
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {
@@ -1946,6 +2040,10 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	if cfg.LiveMaxConnections < -1 {
 		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
 	}
+	cfg.LiveMessageSizeLimit = section.Key("message_size_limit").MustInt(65536)
+	if cfg.LiveMessageSizeLimit < -1 {
+		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
+	}
 	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
 	switch cfg.LiveHAEngine {
 	case "", "redis":
@@ -1974,6 +2072,31 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 
 	cfg.LiveAllowedOrigins = originPatterns
+	return nil
+}
+
+func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
+	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
+
+	provisioningPaths := strings.TrimSpace(valueAsString(iniFile.Section("paths"), "permitted_provisioning_paths", ""))
+	if provisioningPaths != "|" && provisioningPaths != "" {
+		cfg.PermittedProvisioningPaths = strings.Split(provisioningPaths, "|")
+		for i, s := range cfg.PermittedProvisioningPaths {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning path is empty in '%s' (at index %d)", provisioningPaths, i)
+			}
+			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
+		}
+	}
+
+	// Read job history configuration
+	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
+	cfg.ProvisioningLokiUser = valueAsString(iniFile.Section("provisioning"), "loki_user", "")
+	cfg.ProvisioningLokiPassword = valueAsString(iniFile.Section("provisioning"), "loki_password", "")
+	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
+
 	return nil
 }
 

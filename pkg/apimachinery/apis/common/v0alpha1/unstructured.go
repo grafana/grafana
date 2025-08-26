@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	"encoding/json"
+	"reflect"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -12,9 +13,9 @@ import (
 // Unstructured allows objects that do not have Golang structs registered to be manipulated
 // generically.
 type Unstructured struct {
-	// Object is a JSON compatible map with string, float, int, bool, []interface{},
-	// or map[string]interface{} children.
-	Object map[string]interface{}
+	// Object is a JSON compatible map with string, float, int, bool, []any,
+	// or map[string]any children.
+	Object map[string]any
 }
 
 // Produce an API definition that represents map[string]any
@@ -26,7 +27,7 @@ func (u Unstructured) OpenAPIDefinition() openapi.OpenAPIDefinition {
 				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
 			},
 			VendorExtensible: spec.VendorExtensible{
-				Extensions: map[string]interface{}{
+				Extensions: map[string]any{
 					"x-kubernetes-preserve-unknown-fields": true,
 				},
 			},
@@ -34,14 +35,18 @@ func (u Unstructured) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	}
 }
 
-func (u *Unstructured) UnstructuredContent() map[string]interface{} {
+func (u *Unstructured) IsZero() bool {
+	return len(u.Object) == 0
+}
+
+func (u *Unstructured) UnstructuredContent() map[string]any {
 	if u.Object == nil {
-		return make(map[string]interface{})
+		return make(map[string]any)
 	}
 	return u.Object
 }
 
-func (u *Unstructured) SetUnstructuredContent(content map[string]interface{}) {
+func (u *Unstructured) SetUnstructuredContent(content map[string]any) {
 	u.Object = content
 }
 
@@ -63,7 +68,7 @@ func (u *Unstructured) DeepCopy() *Unstructured {
 	}
 	out := new(Unstructured)
 	*out = *u
-	out.Object = runtime.DeepCopyJSON(u.Object)
+	out.Object = deepCopyJSONValue(u.Object).(map[string]any)
 	return out
 }
 
@@ -72,23 +77,74 @@ func (u *Unstructured) DeepCopyInto(out *Unstructured) {
 	*out = *clone
 }
 
-func (u *Unstructured) Set(field string, value interface{}) {
+// Copied from:
+//
+//	runtime.DeepCopyJSON(u.Object)
+//
+// BUT this avoids panic on int
+func deepCopyJSONValue(x any) any {
+	switch x := x.(type) {
+	case map[string]any:
+		if x == nil {
+			// Typed nil - an any that contains a type map[string]any with a value of nil
+			return x
+		}
+		clone := make(map[string]any, len(x))
+		for k, v := range x {
+			clone[k] = deepCopyJSONValue(v)
+		}
+		return clone
+	case []any:
+		if x == nil {
+			// Typed nil - an any that contains a type []any with a value of nil
+			return x
+		}
+		clone := make([]any, len(x))
+		for i, v := range x {
+			clone[i] = deepCopyJSONValue(v)
+		}
+		return clone
+	case string, int64, bool, float64, nil, json.Number:
+		return x
+
+	// Keep more numbers
+	case int, int8, int16, int32, float32, uint, uint16, uint32, uint64, uint8:
+		return x
+
+	case runtime.Object:
+		return x.DeepCopyObject()
+
+	default:
+		// fallback to reflection
+		val := reflect.ValueOf(x).Elem()
+		cpy := reflect.New(val.Type())
+		cpy.Elem().Set(val)
+
+		// Using the <obj>, <ok> for the type conversion ensures that it doesn't panic if it can't be converted
+		if obj, ok := cpy.Interface().(runtime.Object); ok {
+			return obj
+		}
+		return x
+	}
+}
+
+func (u *Unstructured) Set(field string, value any) {
 	if u.Object == nil {
-		u.Object = make(map[string]interface{})
+		u.Object = make(map[string]any)
 	}
 	_ = unstructured.SetNestedField(u.Object, value, field)
 }
 
 func (u *Unstructured) Remove(fields ...string) {
 	if u.Object == nil {
-		u.Object = make(map[string]interface{})
+		u.Object = make(map[string]any)
 	}
 	unstructured.RemoveNestedField(u.Object, fields...)
 }
 
-func (u *Unstructured) SetNestedField(value interface{}, fields ...string) {
+func (u *Unstructured) SetNestedField(value any, fields ...string) {
 	if u.Object == nil {
-		u.Object = make(map[string]interface{})
+		u.Object = make(map[string]any)
 	}
 	_ = unstructured.SetNestedField(u.Object, value, fields...)
 }

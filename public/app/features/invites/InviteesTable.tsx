@@ -1,6 +1,7 @@
 import { PureComponent } from 'react';
 
-import { Invitee } from 'app/types';
+import { Trans } from '@grafana/i18n';
+import { Invitee } from 'app/types/user';
 
 import InviteeRow from './InviteeRow';
 
@@ -16,8 +17,12 @@ export default class InviteesTable extends PureComponent<Props> {
       <table className="filter-table form-inline">
         <thead>
           <tr>
-            <th>Email</th>
-            <th>Name</th>
+            <th>
+              <Trans i18nKey="invites.invitees-table.email">Email</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="invites.invitees-table.name">Name</Trans>
+            </th>
             <th />
             <th style={{ width: '34px' }} />
           </tr>

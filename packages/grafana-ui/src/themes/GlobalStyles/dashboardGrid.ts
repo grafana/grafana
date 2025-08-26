@@ -19,6 +19,13 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
+    '.dragging-active': {
+      '*': {
+        cursor: 'move',
+        userSelect: 'none',
+      },
+    },
+
     [theme.breakpoints.down('md')]: {
       '.react-grid-layout': {
         height: 'unset !important',
@@ -66,6 +73,58 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
           transitionProperty: 'transform !important',
         },
       },
+    },
+
+    '.dashboard-selected-element': {
+      outline: `1px dashed ${theme.colors.primary.border}`,
+      outlineOffset: '0px',
+      borderRadius: theme.shape.radius.default,
+    },
+
+    '.dashboard-selectable-element': {
+      '&:hover': {
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        outlineOffset: '0px',
+        borderRadius: theme.shape.radius.default,
+        backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.08),
+      },
+    },
+
+    '.dashboard-canvas-add-button': {
+      display: 'flex',
+      opacity: 0.5,
+      transition: theme.transitions.create('opacity'),
+      filter: `grayscale(100%)`,
+      '&:hover,:focus-within': {
+        opacity: 1,
+        filter: 'unset',
+      },
+    },
+
+    '.dashboard-visible-hidden-element': {
+      position: 'relative',
+    },
+
+    // Universal style for marking drop targets when dragging between layouts
+    '.dashboard-drop-target': {
+      // Setting same options for hovered and not hovered to overwrite any conflicting styles
+      // There was a race condition with selectable elements styles
+      '&:is(:hover),&:not(:hover)': {
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: '0px',
+        borderRadius: theme.shape.radius.default,
+      },
+    },
+
+    // Body style for preventing selection when dragging
+    '.dashboard-draggable-transparent-selection': {
+      '*::selection': {
+        all: 'inherit',
+      },
+    },
+
+    '.react-draggable-dragging': {
+      opacity: 0.8,
     },
   });
 }

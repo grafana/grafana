@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Select, Stack } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { Trans, t } from 'app/core/internationalization';
-import { OrgRole } from 'app/types/acl';
 
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
@@ -67,7 +67,10 @@ export const AddPermission = ({
     (PermissionTarget.BuiltInRole && OrgRole.hasOwnProperty(builtInRole));
 
   return (
-    <div className="cta-form" aria-label="Permissions slider">
+    <div
+      className="cta-form"
+      aria-label={t('access-control.add-permission.permissions-aria-label', 'Permissions slider')}
+    >
       <CloseButton onClick={onCancel} />
       <h5>{title}</h5>
 
@@ -80,7 +83,7 @@ export const AddPermission = ({
       >
         <Stack gap={1} direction="row">
           <Select
-            aria-label="Role to add new permission to"
+            aria-label={t('access-control.add-permission.role-select-aria-label', 'Role to add new permission to')}
             value={target}
             options={targetOptions}
             onChange={(v) => setPermissionTarget(v.value!)}
@@ -98,7 +101,7 @@ export const AddPermission = ({
 
           {target === PermissionTarget.BuiltInRole && (
             <Select
-              aria-label={'Built-in role picker'}
+              aria-label={t('access-control.add-permission.built-in-aria-label', 'Built-in role picker')}
               options={Object.values(OrgRole)
                 .filter((r) => r !== OrgRole.None)
                 .map((r) => ({ value: r, label: r }))}
@@ -108,7 +111,7 @@ export const AddPermission = ({
           )}
 
           <Select
-            aria-label="Permission Level"
+            aria-label={t('access-control.add-permission.level-aria-label', 'Permission level')}
             width="auto"
             value={permissions.find((p) => p === permission)}
             options={permissions.map((p) => ({ label: p, value: p }))}

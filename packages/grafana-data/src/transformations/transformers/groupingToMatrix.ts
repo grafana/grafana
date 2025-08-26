@@ -12,6 +12,7 @@ import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
+import { getSpecialValue } from './utils';
 
 export interface GroupingToMatrixTransformerOptions {
   columnField?: string;
@@ -27,8 +28,7 @@ const DEFAULT_EMPTY_VALUE = SpecialValue.Empty;
 
 // grafana-data does not have access to runtime so we are accessing the window object
 // to get access to the feature toggle
-// eslint-disable-next-line
-const supportDataplaneFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+const supportDataplaneFallback = window.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
 
 export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
@@ -60,14 +60,14 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
       numFields += frame.fields.length;
     }
 
-    return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
+    return `Grouping to matrix requires at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
   operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
       map((data) => {
-        const columnFieldMatch = ctx.interpolate(options.columnField || DEFAULT_COLUMN_FIELD);
-        const rowFieldMatch = ctx.interpolate(options.rowField || DEFAULT_ROW_FIELD);
-        const valueFieldMatch = ctx.interpolate(options.valueField || DEFAULT_VALUE_FIELD);
+        const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
+        const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
+        const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
         const emptyValue = options.emptyValue || DEFAULT_EMPTY_VALUE;
 
         // Accept only single queries
@@ -106,15 +106,18 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           {
             name: rowColumnField,
             values: rowValues,
-            type: FieldType.string,
-            config: {},
+            type: keyRowField.type,
+            config: { ...keyRowField.config },
           },
         ];
 
         for (const columnName of columnValues) {
           let values = [];
           for (const rowName of rowValues) {
-            const value = matrixValues[columnName][rowName] ?? getSpecialValue(emptyValue);
+            // nested dataframes need to be undefined when empty
+            const value =
+              matrixValues[columnName][rowName] ??
+              (valueField.type === FieldType.frame ? undefined : getSpecialValue(emptyValue));
             values.push(value);
           }
 
@@ -126,8 +129,11 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
 
+          // the names of these columns need to be the selected column values, and not be overridden with the display name
+          delete valueField.config.displayName;
+
           fields.push({
-            name: columnName.toString(),
+            name: columnName?.toString() ?? null,
             values: values,
             config: valueField.config,
             type: valueField.type,
@@ -145,12 +151,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 };
 
 function uniqueValues<T>(values: T[]): T[] {
-  const unique = new Set<T>();
-
-  for (let index = 0; index < values.length; index++) {
-    unique.add(values[index]);
-  }
-
+  const unique = new Set<T>(values);
   return Array.from(unique);
 }
 
@@ -173,18 +174,4 @@ function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
   }
 
   return null;
-}
-
-function getSpecialValue(specialValue: SpecialValue) {
-  switch (specialValue) {
-    case SpecialValue.False:
-      return false;
-    case SpecialValue.True:
-      return true;
-    case SpecialValue.Null:
-      return null;
-    case SpecialValue.Empty:
-    default:
-      return '';
-  }
 }

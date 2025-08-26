@@ -28,6 +28,7 @@ import (
 const (
 	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
+	defaultDrainOnShutdown  = true
 )
 
 // ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
@@ -37,38 +38,58 @@ type ExternalAlertmanager struct {
 
 	manager *Manager
 
-	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
-	sdCancel           context.CancelFunc
-	sdManager          *discovery.Manager
+	sdCancel  context.CancelFunc
+	sdManager *discovery.Manager
+	options   *ExternalAMOptions
 }
 
 type ExternalAMcfg struct {
 	URL     string
 	Headers http.Header
+	Timeout time.Duration
 }
 
-type Option func(*ExternalAlertmanager)
+type ExternalAMOptions struct {
+	Options
+	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
+}
+
+type Option func(*ExternalAMOptions)
 
 type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, error)
 
 // WithDoFunc receives a function to use when making HTTP requests from the Manager.
 func WithDoFunc(doFunc doFunc) Option {
-	return func(s *ExternalAlertmanager) {
-		s.manager.opts.Do = doFunc
+	return func(opts *ExternalAMOptions) {
+		opts.Do = doFunc
 	}
 }
 
 // WithUTF8Labels skips sanitizing labels and annotations before sending alerts to the external Alertmanager(s).
 // It assumes UTF-8 label names are supported by the Alertmanager(s).
 func WithUTF8Labels() Option {
-	return func(s *ExternalAlertmanager) {
-		s.sanitizeLabelSetFn = func(lbls models.LabelSet) labels.Labels {
+	return func(opts *ExternalAMOptions) {
+		opts.sanitizeLabelSetFn = func(lbls models.LabelSet) labels.Labels {
 			ls := make(labels.Labels, 0, len(lbls))
 			for k, v := range lbls {
 				ls = append(ls, labels.Label{Name: k, Value: v})
 			}
 			return ls
 		}
+	}
+}
+
+// WithMaxQueueCapacity sets the maximum capacity of the queue used by the sender.
+func WithMaxQueueCapacity(capacity int) Option {
+	return func(opts *ExternalAMOptions) {
+		opts.QueueCapacity = capacity
+	}
+}
+
+// WithMaxBatchSize sets the maximum batch size for sending alerts to the external Alertmanager(s).
+func WithMaxBatchSize(size int) Option {
+	return func(opts *ExternalAMOptions) {
+		opts.MaxBatchSize = size
 	}
 }
 
@@ -97,31 +118,47 @@ func (cfg *ExternalAMcfg) headerString() string {
 
 func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) (*ExternalAlertmanager, error) {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
+
+	options := &ExternalAMOptions{
+		Options: Options{
+			QueueCapacity:   defaultMaxQueueCapacity,
+			MaxBatchSize:    DefaultMaxBatchSize,
+			Registerer:      reg,
+			DrainOnShutdown: defaultDrainOnShutdown,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	s := &ExternalAlertmanager{
 		logger:   l,
 		sdCancel: sdCancel,
+		options:  options,
 	}
 
-	s.sanitizeLabelSetFn = s.sanitizeLabelSet
+	if options.sanitizeLabelSetFn == nil {
+		options.sanitizeLabelSetFn = s.sanitizeLabelSet
+	}
+
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
-		s.logger,
+		&options.Options,
+		toSlogLogger(s.logger),
 	)
 	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
 	if err != nil {
 		s.logger.Error("failed to register service discovery metrics", "error", err)
 		return nil, err
 	}
-	s.sdManager = discovery.NewManager(sdCtx, s.logger, prometheus.NewRegistry(), sdMetrics)
+	// Convert s.Logger to slog.Logger using the adapter
+	slogLogger := toSlogLogger(s.logger)
+	s.sdManager = discovery.NewManager(sdCtx, slogLogger, prometheus.NewRegistry(), sdMetrics)
 
 	if s.sdManager == nil {
 		return nil, errors.New("failed to create new discovery manager")
-	}
-
-	for _, opt := range opts {
-		opt(s)
 	}
 
 	return s, nil
@@ -177,6 +214,15 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	for _, a := range alerts.PostableAlerts {
 		na := s.alertToNotifierAlert(a)
 		as = append(as, na)
+
+		s.logger.Debug(
+			"Sending alert",
+			"alert",
+			na.String(),
+			"starts_at",
+			na.StartsAt,
+			"ends_at",
+			na.EndsAt)
 	}
 
 	s.manager.Send(as...)
@@ -217,11 +263,16 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 			},
 		}
 
+		timeout := am.Timeout
+		if timeout == 0 {
+			timeout = defaultTimeout
+		}
+
 		amConfig := &config.AlertmanagerConfig{
 			APIVersion:              config.AlertmanagerAPIVersionV2,
 			Scheme:                  u.Scheme,
 			PathPrefix:              u.Path,
-			Timeout:                 model.Duration(defaultTimeout),
+			Timeout:                 model.Duration(timeout),
 			ServiceDiscoveryConfigs: sdConfig,
 		}
 
@@ -256,11 +307,11 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &Alert{
-		Labels:       s.sanitizeLabelSetFn(alert.Alert.Labels),
-		Annotations:  s.sanitizeLabelSetFn(alert.Annotations),
+		Labels:       s.options.sanitizeLabelSetFn(alert.Labels),
+		Annotations:  s.options.sanitizeLabelSetFn(alert.Annotations),
 		StartsAt:     time.Time(alert.StartsAt),
 		EndsAt:       time.Time(alert.EndsAt),
-		GeneratorURL: alert.Alert.GeneratorURL.String(),
+		GeneratorURL: alert.GeneratorURL.String(),
 	}
 }
 

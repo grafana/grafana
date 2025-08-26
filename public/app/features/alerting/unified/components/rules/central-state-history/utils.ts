@@ -11,7 +11,7 @@ import {
   ThresholdsMode,
   getDisplayProcessor,
 } from '@grafana/data';
-import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
+import { fieldIndexComparer } from '@grafana/data/internal';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
@@ -24,9 +24,33 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
 
-const emptyFilters = {
+/**
+ * Parse label filters and prepare backend filters.
+ * Backend supports only exact matchers.
+ */
+export function parseBackendLabelFilters(labelFilter: string): Record<string, string> {
+  const labelMatchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
+  const labelFilters: Record<string, string> = {};
+
+  labelMatchers.forEach((matcher) => {
+    if (!matcher.isRegex && matcher.isEqual) {
+      labelFilters[matcher.name] = matcher.value;
+    }
+  });
+
+  return labelFilters;
+}
+
+interface HistoryFilters {
+  stateTo: string;
+  stateFrom: string;
+  labels: string;
+}
+
+const emptyFilters: HistoryFilters = {
   stateTo: 'all',
   stateFrom: 'all',
+  labels: '',
 };
 
 /*
@@ -75,7 +99,7 @@ export function historyResultToDataFrame({ data }: DataFrameJSON, filters = empt
   });
 
   // Group DataFrames by time and filter by labels
-  return groupDataFramesByTimeAndFilterByLabels(dataFrames);
+  return groupDataFramesByTimeAndFilterByLabels(dataFrames, filters);
 }
 
 // Scenes sync variables in the URL adding a prefix to the variable name.
@@ -98,9 +122,9 @@ export function getStateFilterFromInQueryParams() {
  * This function groups the data frames by time and filters them by labels.
  * The interval is set to 10 seconds.
  * */
-function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[]): DataFrame[] {
+export function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[], filters: HistoryFilters): DataFrame[] {
   // Filter data frames by labels. This is used to filter out the data frames that do not match the query.
-  const labelsFilterValue = getLabelsFilterInQueryParams();
+  const labelsFilterValue = filters.labels;
   const dataframesFiltered = dataFrames.filter((frame) => {
     const labels = JSON.parse(frame.name ?? ''); // in name we store the labels stringified
 
@@ -186,7 +210,7 @@ function logRecordsToDataFrame(instanceLabels: string, records: LogRecord[]): Da
  * The time field is the timestamp of the log record.
  * The value field is the state of the log record.
  * The state is converted to a string and color is assigned based on the state.
- * The state can be Alerting, Pending, Normal, or NoData.
+ * The state can be Alerting, Pending, Recovering, Normal, or NoData.
  *
  * */
 export function logRecordsToDataFrameForState(records: LogRecord[], theme: GrafanaTheme2): DataFrame {
@@ -226,6 +250,9 @@ export function logRecordsToDataFrameForState(records: LogRecord[], theme: Grafa
                   color: theme.colors.error.main,
                 },
                 Pending: {
+                  color: theme.colors.warning.main,
+                },
+                Recovering: {
                   color: theme.colors.warning.main,
                 },
                 Normal: {

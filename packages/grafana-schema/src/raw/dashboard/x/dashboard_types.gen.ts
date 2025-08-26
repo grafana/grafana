@@ -192,6 +192,14 @@ export interface VariableModel {
    */
   sort?: VariableSort;
   /**
+   * Additional static options for query variable
+   */
+  staticOptions?: Array<VariableOption>;
+  /**
+   * Ordering of static options in relation to options returned from data source for query variable
+   */
+  staticOptionsOrder?: ('before' | 'after' | 'sorted');
+  /**
    * Type of variable
    */
   type: VariableType;
@@ -203,6 +211,7 @@ export const defaultVariableModel: Partial<VariableModel> = {
   multi: false,
   options: [],
   skipUrlSync: false,
+  staticOptions: [],
 };
 
 /**
@@ -652,6 +661,15 @@ export interface DataTransformerConfig {
 }
 
 /**
+ * Counterpart for TypeScript's TimeOption type.
+ */
+export interface TimeOption {
+  display: string;
+  from: string;
+  to: string;
+}
+
+/**
  * Time picker configuration
  * It defines the default config for the time picker and the refresh picker for the specific dashboard.
  */
@@ -665,19 +683,19 @@ export interface TimePickerConfig {
    */
   nowDelay?: string;
   /**
+   * Quick ranges for time picker.
+   */
+  quick_ranges?: Array<TimeOption>;
+  /**
    * Interval options available in the refresh picker dropdown.
    */
   refresh_intervals?: Array<string>;
-  /**
-   * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-   */
-  time_options?: Array<string>;
 }
 
 export const defaultTimePickerConfig: Partial<TimePickerConfig> = {
   hidden: false,
+  quick_ranges: [],
   refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
-  time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
 };
 
 /**
@@ -1191,7 +1209,7 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
-  schemaVersion: 39,
+  schemaVersion: 41,
   tags: [],
   timezone: 'browser',
 };

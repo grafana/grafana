@@ -1,0 +1,21 @@
+# This is a trick to ignore files only by git but not by other tools
+!/public/app/extensions
+!/pkg/extensions/*
+!/pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
+!/pkg/server/wireexts_enterprise.go
+!/pkg/build/cmd/enterprise.go
+!/pkg/extensions/*
+
+# Enterprise emails
+!/emails/templates/enterprise_*
+!/public/emails/enterprise_*
+
+# Enterprise reporting fonts
+!/public/fonts/dejavu
+
+# Enterprise devenv
+!/devenv/docker/blocks/grafana-enterprise
+!/devenv/docker/blocks/saml-enterprise
+# This is the new place of the block, but I leave the previous here for a while
+!/devenv/docker/blocks/auth/saml-enterprise
+!/devenv/docker/blocks/auth/signer

@@ -17,7 +17,7 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
 **Prerequisites:**
 
 - Permissions to manage Hashicorp Vault to enable secrets engines and issue tokens.
-- Access to the Grafana [configuration]({{< relref "../../../configure-grafana#configuration-file-location" >}}) file
+- Access to the Grafana [configuration](../../../configure-grafana/#configuration-file-location) file
 
 1. [Enable the transit secrets engine](https://www.vaultproject.io/docs/secrets/transit#setup) in Hashicorp Vault.
 
@@ -31,7 +31,6 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.hashicorpvault.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
    <br><br>b. Fill in the section with the following values:
    <br>
-
    - `token`: a periodic service token used to authenticate within Hashicorp Vault.
    - `url`: URL of the Hashicorp Vault server.
    - `transit_engine_path`: mount point of the transit engine.

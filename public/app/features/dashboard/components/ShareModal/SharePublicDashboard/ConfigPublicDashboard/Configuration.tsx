@@ -1,10 +1,9 @@
 import { UseFormRegister } from 'react-hook-form';
 
-import { TimeRange } from '@grafana/data/src';
+import { TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
-import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-import { Trans, t } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { FieldSet, Label, Switch, TimeRangeInput, Stack, VerticalGroup } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
@@ -26,7 +25,7 @@ export const Configuration = ({
     <>
       <FieldSet disabled={disabled}>
         <VerticalGroup spacing="md">
-          <Layout orientation={1} spacing="xs" justify="space-between">
+          <Stack direction="column" gap={0.5} justifyContent="space-between">
             <Label
               description={t(
                 'public-dashboard.settings-configuration.default-time-range-label-desc',
@@ -38,8 +37,8 @@ export const Configuration = ({
               </Trans>
             </Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
-          </Layout>
-          <Layout orientation={0} spacing="sm">
+          </Stack>
+          <Stack direction="row" gap={0.5}>
             <Switch
               {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
@@ -60,8 +59,8 @@ export const Configuration = ({
                 Time range picker enabled
               </Trans>
             </Label>
-          </Layout>
-          <Layout orientation={0} spacing="sm">
+          </Stack>
+          <Stack direction="row" gap={0.5}>
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
@@ -80,7 +79,7 @@ export const Configuration = ({
             >
               <Trans i18nKey="public-dashboard.settings-configuration.show-annotations-label">Show annotations</Trans>
             </Label>
-          </Layout>
+          </Stack>
         </VerticalGroup>
       </FieldSet>
     </>

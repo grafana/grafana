@@ -5,20 +5,13 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessoryButton } from '@grafana/experimental';
-import {
-  HorizontalGroup,
-  Select,
-  ButtonSelect,
-  AsyncMultiSelect,
-  getSelectStyles,
-  useTheme2,
-  Checkbox,
-} from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { AccessoryButton } from '@grafana/plugin-ui';
+import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Checkbox, Stack } from '@grafana/ui';
 
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { VariableOptionGroup } from '../../types';
+import { VariableOptionGroup } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {
@@ -237,10 +230,10 @@ const Filter = (
   };
 
   return (
-    <HorizontalGroup spacing="none">
+    <Stack gap={0}>
       <Select
         menuShouldPortal
-        placeholder="Property"
+        placeholder={t('components.filter.placeholder-property', 'Property')}
         value={item.property ? { value: item.property, label: item.property } : null}
         options={addValueToOptions(
           properties.map((type) => ({ label: type, value: type })),
@@ -261,7 +254,7 @@ const Filter = (
       <AsyncMultiSelect
         blurInputOnSelect={false}
         menuShouldPortal
-        placeholder="Value"
+        placeholder={t('components.filter.placeholder-value', 'Value')}
         value={selected}
         loadOptions={loadOptions}
         isLoading={loading}
@@ -280,8 +273,14 @@ const Filter = (
         onCloseMenu={() => onFieldChange('filters', item, selected, onChange)}
         hideSelectedOptions={false}
       />
-      <AccessoryButton aria-label="Remove filter" icon="times" variant="secondary" onClick={onDelete} type="button" />
-    </HorizontalGroup>
+      <AccessoryButton
+        aria-label={t('components.filter.aria-label-remove-filter', 'Remove filter')}
+        icon="times"
+        variant="secondary"
+        onClick={onDelete}
+        type="button"
+      />
+    </Stack>
   );
 };
 

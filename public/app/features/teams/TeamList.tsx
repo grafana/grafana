@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -16,20 +17,23 @@ import {
   LinkButton,
   Pagination,
   Stack,
+  Tag,
   TextLink,
   useStyles2,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, StoreState, Team } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
+import { TeamWithRoles } from 'app/types/teams';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
+import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
-type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
+type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
 export interface OwnProps {}
 
 export interface State {
@@ -37,13 +41,13 @@ export interface State {
 }
 
 // this is dummy data to pass to the table while the real data is loading
-const skeletonData: Team[] = new Array(3).fill(null).map((_, index) => ({
+const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => ({
   id: index,
   uid: '',
   memberCount: 0,
   name: '',
   orgId: 0,
-  permission: 0,
+  isProvisioned: false,
 }));
 
 export const TeamList = ({
@@ -76,7 +80,7 @@ export const TeamList = ({
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
 
-  const columns: Array<Column<Team>> = useMemo(
+  const columns: Array<Column<TeamWithRoles>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
@@ -104,7 +108,12 @@ export const TeamList = ({
           }
 
           return (
-            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.uid}`} title="Edit team">
+            <TextLink
+              color="primary"
+              inline={false}
+              href={`/org/teams/edit/${original.uid}`}
+              title={t('teams.team-list.columns.title-edit-team', 'Edit team')}
+            >
               {value}
             </TextLink>
           );
@@ -163,6 +172,16 @@ export const TeamList = ({
           ]
         : []),
       {
+        id: 'isProvisioned',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => {
+          if (!hasFetched) {
+            return <Skeleton width={240} />;
+          }
+          return !!value && <Tag colorIndex={14} name={'Provisioned'} />;
+        },
+      },
+      {
         id: 'actions',
         header: '',
         disableGrow: true,
@@ -177,21 +196,27 @@ export const TeamList = ({
           }
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
-          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
+          const canDelete =
+            contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original) &&
+            !original.isProvisioned;
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <LinkButton
                   href={`org/teams/edit/${original.uid}`}
-                  aria-label={`Edit team ${original.name}`}
+                  aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
+                    teamName: original.name,
+                  })}
                   icon="pen"
                   size="sm"
                   variant="secondary"
-                  tooltip={'Edit team'}
+                  tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
                 />
               )}
               <DeleteButton
-                aria-label={`Delete team ${original.name}`}
+                aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {
+                  teamName: original.name,
+                })}
                 size="sm"
                 disabled={!canDelete}
                 onConfirm={() => deleteTeam(original.uid)}
@@ -210,7 +235,7 @@ export const TeamList = ({
       actions={
         !noTeams ? (
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-            New Team
+            <Trans i18nKey="teams.team-list.new-team">New Team</Trans>
           </LinkButton>
         ) : undefined
       }
@@ -237,7 +262,11 @@ export const TeamList = ({
           <>
             <div className="page-action-bar">
               <InlineField grow>
-                <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
+                <FilterInput
+                  placeholder={t('teams.team-list.placeholder-search-teams', 'Search teams')}
+                  value={query}
+                  onChange={changeQuery}
+                />
               </InlineField>
             </div>
             {hasFetched && teams.length === 0 ? (
@@ -262,6 +291,7 @@ export const TeamList = ({
             )}
           </>
         )}
+        {!query && <EnterpriseAuthFeaturesCard page="teams" />}
       </Page.Contents>
     </Page>
   );

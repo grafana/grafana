@@ -105,13 +105,24 @@ Value mappings bypass unit formatting set in the **Standard options** section of
 
 You can configure value mappings for the following visualizations:
 
-|                                |                                      |                                      |
-| ------------------------------ | ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
-| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
-| [Candlestick](ref:candlestick) | [Pie chart](ref:pie-chart)           | [Time series](ref:time-series)       |
-| [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) |                                      |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Histogram](ref:histogram)
+- [Pie chart](ref:pie-chart)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+
+{{< /column-list >}}
 
 ## Types of value mappings
 
@@ -173,7 +184,6 @@ The following image shows a table visualization with value mappings. If you want
 1. Scroll to the **Value mappings** section and expand it.
 1. Click **Add value mappings**.
 1. Click **Add a new mapping** and then select one of the following:
-
    - **Value** - Enter a single value to match.
    - **Range** - Enter the beginning and ending values of a range to match.
    - **Regex** - Enter a regular expression pattern to match.

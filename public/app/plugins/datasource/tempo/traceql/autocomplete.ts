@@ -1,6 +1,6 @@
 import { IMarkdownString, languages } from 'monaco-editor';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
@@ -25,6 +25,8 @@ type CompletionItem = MinimalCompletionItem & {
 interface Props {
   languageProvider: TempoLanguageProvider;
   setAlertText: (text?: string) => void;
+  timeRangeForTags?: number;
+  range?: TimeRange;
 }
 
 /**
@@ -38,11 +40,15 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   languageProvider: TempoLanguageProvider;
   registerInteractionCommandId: string | null;
   setAlertText: (text?: string) => void;
+  timeRangeForTags?: number;
+  range?: TimeRange;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
     this.setAlertText = props.setAlertText;
     this.registerInteractionCommandId = null;
+    this.timeRangeForTags = props.timeRangeForTags;
+    this.range = props.range;
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
@@ -128,6 +134,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       detail: 'Negated regular expression',
     },
   ];
+  // https://grafana.com/docs/tempo/latest/traceql/#structural
   static readonly structuralOps: MinimalCompletionItem[] = [
     {
       label: '>>',
@@ -163,6 +170,78 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       detail: 'Sibling',
       documentation:
         'Sibling operator. Checks that spans matching {condA} and {condB} are siblings of the same parent span.',
+    },
+    // Union structural operators
+    {
+      label: '&>>',
+      insertText: '&>>',
+      detail: 'Union Descendant',
+      documentation:
+        'The descendant operator (>>) looks for spans matching {condB} that are descendants of a span matching {condA}',
+    },
+    {
+      label: '&>',
+      insertText: '&>',
+      detail: 'Union Child',
+      documentation:
+        'The child operator (>) looks for spans matching {condB} that are direct child spans of a parent matching {condA}',
+    },
+    {
+      label: '&<<',
+      insertText: '&<<',
+      detail: 'Union Ancestor',
+      documentation:
+        'The ancestor operator (<<) looks for spans matching {condB} that are ancestor of a span matching {condA}',
+    },
+    {
+      label: '&<',
+      insertText: '&<',
+      detail: 'Union Parent',
+      documentation:
+        'The parent operator (<) looks for spans matching {condB} that are direct parent spans of a child matching {condA}',
+    },
+    {
+      label: '&~',
+      insertText: '&~',
+      detail: 'Union Sibling',
+      documentation:
+        'The sibling operator (~) looks at spans matching {condB} that have at least one sibling matching {condA}',
+    },
+    // Negated structural operators
+    {
+      label: '!>>',
+      insertText: '!>>',
+      detail: 'Not Descendant',
+      documentation:
+        'The not-descendant operator (!>>) looks for spans matching {condB} that are not descendant spans of a parent matching {condA}',
+    },
+    {
+      label: '!>',
+      insertText: '!>',
+      detail: 'Not Child',
+      documentation:
+        'The not-child operator (!>) looks for spans matching {condB} that are not direct child spans of a parent matching {condA}',
+    },
+    {
+      label: '!<<',
+      insertText: '!<<',
+      detail: 'Not Ancestor',
+      documentation:
+        'The not-ancestor operator (!<<) looks for spans matching {condB} that are not ancestor spans of a child matching {condA}',
+    },
+    {
+      label: '!<',
+      insertText: '!<',
+      detail: 'Not Parent',
+      documentation:
+        'The not-parent operator (!<) looks for spans matching {condB} that are not direct parent spans of a child matching {condA}',
+    },
+    {
+      label: '!~',
+      insertText: '!~',
+      detail: 'Not Sibling',
+      documentation:
+        'The not-sibling operator (!~) looks for spans matching {condB} that do not have at least one sibling matching {condA}',
     },
   ];
 
@@ -219,10 +298,41 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       documentation: 'Groups by arbitrary attributes.',
     },
     {
+      label: 'compare',
+      insertText: 'compare($0)',
+      detail: 'Compare span groups',
+      documentation:
+        'Splits spans into two groups (selection and baseline) and returns time-series for all attributes to highlight differences. First parameter is a spanset filter for the selection group (e.g., {status=error}). Optional parameters: topN limit (default 10), start timestamp, end timestamp.',
+    },
+    {
       label: 'count_over_time',
       insertText: 'count_over_time()$0',
       detail: 'Number of spans over time',
       documentation: 'Counts the number of spans over time.',
+    },
+    {
+      label: 'min_over_time',
+      insertText: 'min_over_time()$0',
+      detail: 'Minimum value of attribute over time',
+      documentation: 'Minimum value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'max_over_time',
+      insertText: 'max_over_time()$0',
+      detail: 'Maximum value of attribute over time',
+      documentation: 'Maximum value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'avg_over_time',
+      insertText: 'avg_over_time()$0',
+      detail: 'Average value of attribute over time',
+      documentation: 'Average value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'sum_over_time',
+      insertText: 'sum_over_time()$0',
+      detail: 'Summation value of attribute over time',
+      documentation: 'Sum of the values for the specified attribute across all matching spans over time.',
     },
     {
       label: 'histogram_over_time',
@@ -250,6 +360,41 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     },
   ];
 
+  // Query hints
+  static readonly queryHints: MinimalCompletionItem[] = [
+    {
+      label: 'with',
+      insertText: 'with($0)',
+      detail: 'Query hints',
+      documentation:
+        'Provides query hints to modify search behavior. Use with parameters like most_recent=true to get the latest traces.',
+    },
+  ];
+
+  static readonly withParameters: MinimalCompletionItem[] = [
+    {
+      label: 'most_recent',
+      insertText: 'most_recent=$0',
+      detail: 'Get latest traces',
+      documentation:
+        'Forces Tempo to return the most recent results ordered by time. Use most_recent=true to see the freshest data when troubleshooting incidents.',
+    },
+    // Future parameters can be added here as simple objects
+  ];
+
+  static readonly withValues: MinimalCompletionItem[] = [
+    {
+      label: 'true',
+      insertText: 'true',
+      detail: 'Boolean true',
+    },
+    {
+      label: 'false',
+      insertText: 'false',
+      detail: 'Boolean false',
+    },
+  ];
+
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
@@ -272,6 +417,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
+
     const situation = getSituation(model.getValue(), offset);
     const completionItems = situation != null ? this.getCompletions(situation, this.setAlertText) : Promise.resolve([]);
 
@@ -294,14 +440,24 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private async getTagValues(tagName: string, query: string): Promise<Array<SelectableValue<string>>> {
+  private async getTagValues(
+    tagName: string,
+    query: string,
+    timeRangeForTags?: number,
+    range?: TimeRange
+  ): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
     const cacheKey = `${tagName}:${query}`;
 
     if (this.cachedValues.hasOwnProperty(cacheKey)) {
       tagValues = this.cachedValues[cacheKey];
     } else {
-      tagValues = await this.languageProvider.getOptionsV2(tagName, query);
+      tagValues = await this.languageProvider.getOptionsV2({
+        tag: tagName,
+        query,
+        timeRangeForTags,
+        range,
+      });
       this.cachedValues[cacheKey] = tagValues;
     }
     return tagValues;
@@ -348,7 +504,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           ...CompletionProvider.comparisonOps,
         ]);
       case 'SPANSET_COMBINING_OPERATORS':
-        return this.getOperatorsCompletions(CompletionProvider.spansetOps);
+        const withKeywords = CompletionProvider.queryHints.map((key) => ({
+          ...key,
+          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          type: 'KEYWORD' as const,
+        }));
+        return [...this.getOperatorsCompletions(CompletionProvider.spansetOps), ...withKeywords];
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
         const functions = CompletionProvider.functions.map((key) => ({
           ...key,
@@ -364,7 +525,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
-          tagValues = await this.getTagValues(situation.tagName, situation.query);
+          tagValues = await this.getTagValues(situation.tagName, situation.query, this.timeRangeForTags, this.range);
           setAlertText(undefined);
         } catch (error) {
           if (isFetchError(error)) {
@@ -404,6 +565,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           .concat(this.getTagsCompletions('.'));
       case 'ATTRIBUTE_FOR_FUNCTION':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
+      case 'QUERY_HINT_NAME':
+        return CompletionProvider.withParameters.map((key) => ({
+          ...key,
+          type: 'TAG_NAME' as const,
+          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+        }));
+      case 'QUERY_HINT_VALUE':
+        return CompletionProvider.withValues.map((key) => ({
+          ...key,
+          type: 'TAG_VALUE' as const,
+        }));
       default:
         throw new Error(`Unexpected situation ${situation}`);
     }

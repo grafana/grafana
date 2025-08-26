@@ -3,8 +3,17 @@ import { uniqueId } from 'lodash';
 import { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  CoreApp,
+  DataFrame,
+  GrafanaTheme2,
+  LoadingState,
+  PanelData,
+  dateTimeFormat,
+  isTimeSeriesFrames,
+} from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -27,7 +36,7 @@ import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
-import { formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+import { formatLabels, formatSeriesValue, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -95,7 +104,15 @@ export const Expression: FC<ExpressionProps> = ({
           return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => {}} />;
 
         case ExpressionQueryType.reduce:
-          return <Reduce onChange={onChangeQuery} refIds={availableRefIds} labelWidth={'auto'} query={query} />;
+          return (
+            <Reduce
+              onChange={onChangeQuery}
+              refIds={availableRefIds}
+              labelWidth={'auto'}
+              app={CoreApp.UnifiedAlerting}
+              query={query}
+            />
+          );
 
         case ExpressionQueryType.resample:
           return <Resample onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
@@ -116,14 +133,27 @@ export const Expression: FC<ExpressionProps> = ({
           );
 
         case ExpressionQueryType.sql:
-          return <SqlExpr onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
+          return (
+            <SqlExpr
+              onChange={(query) => onChangeQuery(query)}
+              query={query}
+              refIds={availableRefIds}
+              alerting
+              queries={[]}
+            />
+          );
 
         default:
-          return <>Expression not supported: {query.type}</>;
+          return (
+            <Trans i18nKey="alerting.expression.not-supported" values={{ expression: query.type }}>
+              Expression not supported: {'{{expression}}'}
+            </Trans>
+          );
       }
     },
     [onChangeQuery, queries, onQueriesValidationError]
   );
+
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
@@ -148,12 +178,12 @@ export const Expression: FC<ExpressionProps> = ({
         />
         <div className={styles.expression.body}>
           {error && (
-            <Alert title="Expression failed" severity="error">
+            <Alert title={t('alerting.expression.title-expression-failed', 'Expression failed')} severity="error">
               {error.message}
             </Alert>
           )}
           {warning && (
-            <Alert title="Expression warning" severity="warning">
+            <Alert title={t('alerting.expression.title-expression-warning', 'Expression warning')} severity="warning">
               {warning.message}
             </Alert>
           )}
@@ -230,7 +260,11 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
             isRecordingRule={isRecordingRule}
           />
         ))}
-      {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
+      {emptyResults && (
+        <div className={cx(styles.expression.noData, styles.mutedText)}>
+          <Trans i18nKey="alerting.expression-result.no-data">No data</Trans>
+        </div>
+      )}
       {shouldShowPagination && (
         <div className={styles.pagination.wrapper} data-testid="paginate-expression">
           <Stack>
@@ -240,11 +274,16 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
               onClick={previousPage}
               icon="angle-left"
               size="sm"
-              aria-label="previous-page"
+              aria-label={t('alerting.expression-result.aria-label-previouspage', 'previous-page')}
             />
             <Spacer />
             <span className={styles.mutedText}>
-              {pageStart} - {pageEnd} of {series.length}
+              <Trans
+                i18nKey="alerting.expression-result.page-counter"
+                values={{ pageStart, pageEnd, numPages: series.length }}
+              >
+                {'{{pageStart}}'} - {'{{pageEnd}}'} of {'{{numPages}}'}
+              </Trans>
             </span>
             <Spacer />
             <Button
@@ -253,7 +292,7 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
               onClick={nextPage}
               icon="angle-right"
               size="sm"
-              aria-label="next-page"
+              aria-label={t('alerting.expression-result.aria-label-nextpage', 'next-page')}
             />
           </Stack>
         </div>
@@ -271,7 +310,11 @@ export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: b
   const { mutedText } = useStyles2(getStyles);
 
   if (seriesCount === 0) {
-    return <span className={mutedText}>No series</span>;
+    return (
+      <span className={mutedText}>
+        <Trans i18nKey="alerting.preview-summary.no-series">No series</Trans>
+      </span>
+    );
   }
 
   if (isCondition) {
@@ -353,13 +396,17 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
-        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={alertCondition} />
+        <ExpressionStatusIndicator
+          refId={refId}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={alertCondition}
+        />
         <IconButton
           name="trash-alt"
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
-          tooltip="Remove expression"
+          tooltip={t('alerting.header.tooltip-remove', 'Remove expression "{{refId}}"', { refId })}
         />
       </Stack>
     </header>
@@ -374,7 +421,6 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
 
 const OpeningBracket = () => <span>{'{'}</span>;
 const ClosingBracket = () => <span>{'}'}</span>;
-// eslint-disable-next-line @grafana/no-untranslated-strings
 const Quote = () => <span>&quot;</span>;
 const Equals = () => <span>{'='}</span>;
 
@@ -418,7 +464,7 @@ function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProp
             )}
           </Text>
         </div>
-        <div className={styles.expression.resultValue}>{value}</div>
+        <div className={styles.expression.resultValue}>{formatSeriesValue(value)}</div>
         {shouldRenderSumary && (
           <>
             {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
@@ -458,8 +504,12 @@ const TimeseriesRow: FC<TimeseriesRowProps & { index: number }> = ({ frame, inde
               <table className={styles.timeseriesTable}>
                 <thead>
                   <tr>
-                    <th>Timestamp</th>
-                    <th>Value</th>
+                    <th>
+                      <Trans i18nKey="alerting.timeseries-row.timestamp">Timestamp</Trans>
+                    </th>
+                    <th>
+                      <Trans i18nKey="alerting.timeseries-row.value">Value</Trans>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -473,7 +523,9 @@ const TimeseriesRow: FC<TimeseriesRowProps & { index: number }> = ({ frame, inde
               </table>
             }
           >
-            <span>Time series data</span>
+            <span>
+              <Trans i18nKey="alerting.timeseries-row.time-series-data">Time series data</Trans>
+            </span>
           </PopupCard>
         </div>
       </Stack>

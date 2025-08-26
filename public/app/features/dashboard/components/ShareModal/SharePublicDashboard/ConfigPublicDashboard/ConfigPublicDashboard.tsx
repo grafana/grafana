@@ -1,34 +1,35 @@
 import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   ClipboardButton,
   Field,
   HorizontalGroup,
   Input,
+  Stack,
   Label,
   ModalsController,
   Switch,
   useStyles2,
-} from '@grafana/ui/src';
-import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-import { Trans, t } from 'app/core/internationalization';
+} from '@grafana/ui';
 import {
   useDeletePublicDashboardMutation,
   usePauseOrResumePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
-import { AccessControlAction, useSelector } from '../../../../../../types';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
 import { shareDashboardType } from '../../utils';
@@ -167,7 +168,7 @@ export function ConfigPublicDashboardBase({
       </Field>
 
       <Field className={styles.fieldSpace}>
-        <Layout>
+        <Stack>
           <Switch
             {...register('isPaused')}
             disabled={disableInputs}
@@ -186,7 +187,7 @@ export function ConfigPublicDashboardBase({
           >
             <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">Pause sharing dashboard</Trans>
           </Label>
-        </Layout>
+        </Stack>
       </Field>
 
       <Field className={styles.fieldSpace}>
@@ -207,10 +208,10 @@ export function ConfigPublicDashboardBase({
         </SettingsBar>
       </Field>
 
-      <Layout
-        orientation={isDesktop ? 0 : 1}
-        justify={isDesktop ? 'flex-end' : 'flex-start'}
-        align={isDesktop ? 'center' : 'normal'}
+      <Stack
+        direction={isDesktop ? 'row' : 'column'}
+        justifyContent={isDesktop ? 'flex-end' : 'flex-start'}
+        alignItems={isDesktop ? 'center' : 'stretch'}
       >
         <HorizontalGroup justify="flex-end">
           <Button
@@ -225,7 +226,7 @@ export function ConfigPublicDashboardBase({
             <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
           </Button>
         </HorizontalGroup>
-      </Layout>
+      </Stack>
     </div>
   );
 }

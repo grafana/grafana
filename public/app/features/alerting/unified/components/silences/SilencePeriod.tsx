@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useController, useFormContext } from 'react-hook-form';
 
 import { dateTime } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, TimeRangeInput } from '@grafana/ui';
 
 import { SilenceFormFields } from '../../types/silence-form';
@@ -46,7 +47,7 @@ export const SilencePeriod = () => {
   return (
     <Field
       className={styles.timeRange}
-      label="Silence start and end"
+      label={t('alerting.silence-period.label-silence-start-and-end', 'Silence start and end')}
       error={invalid ? 'To is before or the same as from' : ''}
       invalid={invalid}
     >
@@ -67,7 +68,7 @@ export const SilencePeriod = () => {
         onChangeTimeZone={(newValue) => onChangeTimeZone(newValue)}
         hideTimeZone={false}
         hideQuickRanges={true}
-        placeholder={'Select time range'}
+        placeholder={t('alerting.silence-period.placeholder-select-time-range', 'Select time range')}
       />
     </Field>
   );

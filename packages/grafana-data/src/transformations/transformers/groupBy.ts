@@ -1,15 +1,16 @@
 import { map } from 'rxjs/operators';
 
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
-import { reduceField, ReducerID } from '../fieldReducer';
+import { getFieldTypeForReducer, reduceField, ReducerID } from '../fieldReducer';
+import { getFieldMatcher } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 import { findMaxFields } from './utils';
 
-const MINIMUM_FIELDS_REQUIRED = 2;
+const MINIMUM_FIELDS_REQUIRED = 1;
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
@@ -58,20 +59,31 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        const hasValidConfig = Object.keys(options.fields).find(
-          (name) => options.fields[name].operation === GroupByOperationID.groupBy
-        );
+        const groupByFieldNames: string[] = [];
 
-        if (!hasValidConfig) {
+        for (const [k, v] of Object.entries(options.fields)) {
+          if (v.operation === GroupByOperationID.groupBy) {
+            groupByFieldNames.push(k);
+          }
+        }
+
+        if (groupByFieldNames.length === 0) {
           return data;
         }
+
+        const matcher = getFieldMatcher({
+          id: FieldMatcherID.byNames,
+          options: { names: groupByFieldNames },
+        });
 
         const processed: DataFrame[] = [];
 
         for (const frame of data) {
           // Create a list of fields to group on
           // If there are none we skip the rest
-          const groupByFields: Field[] = frame.fields.filter((field) => shouldGroupOnField(field, options));
+
+          const groupByFields: Field[] = frame.fields.filter((field) => matcher(field, frame, data));
+
           if (groupByFields.length === 0) {
             continue;
           }
@@ -112,16 +124,16 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
               const aggregationField: Field = {
                 name: `${fieldName} (${aggregation})`,
                 values: valuesByAggregation[aggregation] ?? [],
-                type: FieldType.other,
+                type: getFieldTypeForReducer(aggregation, field.type),
                 config: {},
               };
 
-              aggregationField.type = detectFieldType(aggregation, field, aggregationField);
               fields.push(aggregationField);
             }
           }
 
           processed.push({
+            refId: frame.refId,
             fields,
             length: valuesByGroupKey.size,
           });
@@ -132,33 +144,14 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
     ),
 };
 
-const shouldGroupOnField = (field: Field, options: GroupByTransformerOptions): boolean => {
-  const fieldName = getFieldDisplayName(field);
-  return options?.fields[fieldName]?.operation === GroupByOperationID.groupBy;
-};
-
 const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
   return (
     options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
-    Array.isArray(options?.fields[fieldName].aggregations) &&
+    Array.isArray(options?.fields[fieldName]?.aggregations) &&
     options?.fields[fieldName].aggregations.length > 0
   );
 };
-
-function detectFieldType(aggregation: string, sourceField: Field, targetField: Field): FieldType {
-  switch (aggregation) {
-    case ReducerID.allIsNull:
-      return FieldType.boolean;
-    case ReducerID.last:
-    case ReducerID.lastNotNull:
-    case ReducerID.first:
-    case ReducerID.firstNotNull:
-      return sourceField.type;
-    default:
-      return guessFieldTypeForField(targetField) ?? FieldType.string;
-  }
-}
 
 /**
  * Groups values together by key. This will create a mapping of strings

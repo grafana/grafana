@@ -11,36 +11,65 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		receiverType         string
 		expectedSecretFields []string
 	}{
-		{receiverType: "dingding", expectedSecretFields: []string{}},
+		{receiverType: "dingding", expectedSecretFields: []string{"url"}},
 		{receiverType: "kafka", expectedSecretFields: []string{"password"}},
 		{receiverType: "email", expectedSecretFields: []string{}},
 		{receiverType: "pagerduty", expectedSecretFields: []string{"integrationKey"}},
-		{receiverType: "victorops", expectedSecretFields: []string{}},
+		{receiverType: "victorops", expectedSecretFields: []string{"url"}},
 		{receiverType: "oncall", expectedSecretFields: []string{"password", "authorization_credentials"}},
 		{receiverType: "pushover", expectedSecretFields: []string{"apiToken", "userKey"}},
 		{receiverType: "slack", expectedSecretFields: []string{"token", "url"}},
 		{receiverType: "sensugo", expectedSecretFields: []string{"apikey"}},
 		{receiverType: "teams", expectedSecretFields: []string{}},
 		{receiverType: "telegram", expectedSecretFields: []string{"bottoken"}},
-		{receiverType: "webhook", expectedSecretFields: []string{"password", "authorization_credentials", "tlsConfig.caCertificate", "tlsConfig.clientCertificate", "tlsConfig.clientKey"}},
+		{receiverType: "webhook", expectedSecretFields: []string{
+			"password",
+			"authorization_credentials",
+			"tlsConfig.caCertificate",
+			"tlsConfig.clientCertificate",
+			"tlsConfig.clientKey",
+			"hmacConfig.secret",
+			"http_config.oauth2.client_secret",
+			"http_config.oauth2.tls_config.caCertificate",
+			"http_config.oauth2.tls_config.clientCertificate",
+			"http_config.oauth2.tls_config.clientKey",
+		}},
 		{receiverType: "wecom", expectedSecretFields: []string{"url", "secret"}},
 		{receiverType: "prometheus-alertmanager", expectedSecretFields: []string{"basicAuthPassword"}},
 		{receiverType: "discord", expectedSecretFields: []string{"url"}},
 		{receiverType: "googlechat", expectedSecretFields: []string{"url"}},
-		{receiverType: "line", expectedSecretFields: []string{"token"}},
+		{receiverType: "LINE", expectedSecretFields: []string{"token"}},
 		{receiverType: "threema", expectedSecretFields: []string{"api_secret"}},
 		{receiverType: "opsgenie", expectedSecretFields: []string{"apiKey"}},
 		{receiverType: "webex", expectedSecretFields: []string{"bot_token"}},
 		{receiverType: "sns", expectedSecretFields: []string{"sigv4.access_key", "sigv4.secret_key"}},
+		{receiverType: "mqtt", expectedSecretFields: []string{"password", "tlsConfig.caCertificate", "tlsConfig.clientCertificate", "tlsConfig.clientKey"}},
+		{receiverType: "jira", expectedSecretFields: []string{"user", "password", "api_token"}},
 	}
+	n := GetAvailableNotifiers()
+	allTypes := make(map[string]struct{}, len(n))
+	for _, plugin := range n {
+		allTypes[plugin.Type] = struct{}{}
+	}
+
 	for _, testCase := range testCases {
+		delete(allTypes, testCase.receiverType)
 		t.Run(testCase.receiverType, func(t *testing.T) {
 			got, err := GetSecretKeysForContactPointType(testCase.receiverType)
 			require.NoError(t, err)
-			t.Logf("got secret fields: %#v", got)
 			require.ElementsMatch(t, testCase.expectedSecretFields, got)
 		})
 	}
+
+	for integrationType := range allTypes {
+		t.Run(integrationType, func(t *testing.T) {
+			got, err := GetSecretKeysForContactPointType(integrationType)
+			require.NoError(t, err)
+			require.Emptyf(t, got, "secret keys for %s should be empty", integrationType)
+		})
+	}
+
+	require.Emptyf(t, allTypes, "not all types are covered: %s", allTypes)
 }
 
 func Test_getSecretFields(t *testing.T) {

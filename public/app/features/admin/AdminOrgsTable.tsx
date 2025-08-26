@@ -3,11 +3,12 @@ import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
-import { AccessControlAction, Organization } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { Organization } from 'app/types/organization';
 
 interface Props {
   orgs: Organization[];
@@ -32,6 +33,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
   const canDeleteOrgs = contextSrv.hasPermission(AccessControlAction.OrgsDelete);
 
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
+
   const deleteOrgName = deleteOrg?.name;
   return (
     <table className="filter-table form-inline filter-table--hover">
@@ -51,7 +53,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
                 size="sm"
                 icon="times"
                 onClick={() => setDeleteOrg(org)}
-                aria-label="Delete org"
+                aria-label={t('admin.admin-orgs-table.aria-label-delete-org', 'Delete org')}
                 disabled={!canDeleteOrgs}
               />
             </td>
@@ -62,7 +64,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
         <ConfirmModal
           isOpen
           icon="trash-alt"
-          title="Delete"
+          title={t('admin.admin-orgs-table.title-delete', 'Delete')}
           body={
             <div>
               <Trans i18nKey="admin.orgs.delete-body">
@@ -71,7 +73,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
               </Trans>
             </div>
           }
-          confirmText="Delete"
+          confirmText={t('admin.admin-orgs-table.confirmText-delete', 'Delete')}
           onDismiss={() => setDeleteOrg(undefined)}
           onConfirm={() => {
             onDelete(deleteOrg.id);

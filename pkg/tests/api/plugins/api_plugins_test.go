@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -31,7 +32,7 @@ import (
 )
 
 const (
-	usernameAdmin    = "admin"
+	usernameAdmin    = "otherAdmin"
 	usernameNonAdmin = "nonAdmin"
 	defaultPassword  = "password"
 )
@@ -100,7 +101,7 @@ func TestIntegrationPlugins(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		testCases := []testCase{
 			{
-				desc:        "should return all loaded core and bundled plugins",
+				desc:        "should return all loaded core plugins",
 				url:         "http://%s/api/plugins",
 				expStatus:   http.StatusOK,
 				expRespPath: "expectedListResp.json",
@@ -199,7 +200,9 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
@@ -224,7 +227,7 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	var body = make(map[string]interface{})
+	body := make(map[string]interface{})
 	err = json.Unmarshal(b, &body)
 	require.NoError(t, err)
 
@@ -251,7 +254,7 @@ func expectedResp(t *testing.T, filename string) dtos.PluginList {
 }
 
 func updateRespSnapshot(t *testing.T, filename string, body string) {
-	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
+	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0o600)
 	if err != nil {
 		t.Errorf("error writing snapshot %s: %v", filename, err)
 	}

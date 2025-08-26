@@ -16,9 +16,9 @@ This topic includes instructions for installing and running Grafana on Kubernete
 
 [Helm](https://helm.sh/) is an open-source command line tool used for managing Kubernetes applications. It is a graduate project in the [CNCF Landscape](https://www.cncf.io/projects/helm/).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The Grafana open-source community offers Helm Charts for running it on Kubernetes. Please be aware that the code is provided without any warranties. If you encounter any problems, you can report them to the [Official GitHub repository](https://github.com/grafana/helm-charts/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 Watch this video to learn more about installing Grafana using Helm Charts: {{< youtube id="sgYrEleW24E">}}
 
@@ -109,7 +109,6 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    ```
 
    Where:
-
    - `helm install`: Installs the chart by deploying it on the Kubernetes cluster
    - `my-grafana`: The logical chart name that you provided
    - `grafana/grafana`: The repository and package name to install
@@ -147,7 +146,6 @@ This section describes the steps you must complete to access Grafana via web bro
    ```
 
    This command will print out the chart notes. You will the output `NOTES` that provide the complete instructions about:
-
    - How to decode the login password for the Grafana admin account
    - Access Grafana service to the web browser
 
@@ -199,9 +197,9 @@ In order to make any configuration changes, download the `values.yaml` file from
 
 https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Enable persistent storage **(recommended)**
 
@@ -222,9 +220,9 @@ To enable the persistent storage in the Grafana Helm charts, complete the follow
    ............
    ......
    persistence:
-   type: pvc
-   enabled: true
-   # storageClassName: default
+     type: pvc
+     enabled: true
+     # storageClassName: default
    .......
    ............
    ......

@@ -19,7 +19,10 @@ import {
 } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
-import { Portal, SeriesTable, SeriesTableRowProps, UPlotConfigBuilder, VizTooltipContainer } from '../../../components';
+import { Portal } from '../../../components/Portal/Portal';
+import { SeriesTable, SeriesTableRowProps } from '../../../components/VizTooltip/SeriesTable';
+import { UPlotConfigBuilder } from '../../../components/uPlot/config/UPlotConfigBuilder';
+import { VizTooltipContainer } from '../../../components/VizTooltip/VizTooltipContainer';
 import { findMidPointYPosition } from '../../../components/uPlot/utils';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 

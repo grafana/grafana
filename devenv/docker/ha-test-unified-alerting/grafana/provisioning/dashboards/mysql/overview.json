@@ -10,9 +10,7 @@
         "limit": 100,
         "name": "PMM Annotations",
         "showIn": 0,
-        "tags": [
-          "pmm_annotation"
-        ],
+        "tags": ["pmm_annotation"],
         "type": "tags"
       },
       {
@@ -24,9 +22,7 @@
         "limit": 100,
         "name": "Annotations & Alerts",
         "showIn": 0,
-        "tags": [
-
-        ],
+        "tags": [],
         "type": "dashboard"
       }
     ]
@@ -41,9 +37,7 @@
       "icon": "dashboard",
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "QAN"
-      ],
+      "tags": ["QAN"],
       "targetBlank": false,
       "title": "Query Analytics",
       "type": "link",
@@ -53,9 +47,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "OS"
-      ],
+      "tags": ["OS"],
       "targetBlank": false,
       "title": "OS",
       "type": "dashboards"
@@ -64,9 +56,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "MySQL"
-      ],
+      "tags": ["MySQL"],
       "targetBlank": false,
       "title": "MySQL",
       "type": "dashboards"
@@ -75,9 +65,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "MongoDB"
-      ],
+      "tags": ["MongoDB"],
       "targetBlank": false,
       "title": "MongoDB",
       "type": "dashboards"
@@ -86,9 +74,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "PostgreSQL"
-      ],
+      "tags": ["PostgreSQL"],
       "targetBlank": false,
       "title": "PostgreSQL",
       "type": "dashboards"
@@ -97,9 +83,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "HA"
-      ],
+      "tags": ["HA"],
       "targetBlank": false,
       "title": "HA",
       "type": "dashboards"
@@ -108,9 +92,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "Cloud"
-      ],
+      "tags": ["Cloud"],
       "targetBlank": false,
       "title": "Cloud",
       "type": "dashboards"
@@ -119,9 +101,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "Insight"
-      ],
+      "tags": ["Insight"],
       "targetBlank": false,
       "title": "Insight",
       "type": "dashboards"
@@ -130,9 +110,7 @@
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "PMM"
-      ],
+      "tags": ["PMM"],
       "targetBlank": false,
       "title": "PMM",
       "type": "dashboards"
@@ -148,9 +126,7 @@
         "y": 0
       },
       "id": 382,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "",
       "type": "row"
@@ -159,11 +135,7 @@
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": true,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
+      "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
       "datasource": "Prometheus",
       "decimals": 1,
       "description": "**MySQL Uptime**\n\nThe amount of time since the last restart of the MySQL server process.",
@@ -186,9 +158,7 @@
       "height": "125px",
       "id": 12,
       "interval": "$interval",
-      "links": [
-
-      ],
+      "links": [],
       "mappingType": 1,
       "mappingTypes": [
         {
@@ -224,12 +194,8 @@
       "targets": [
         {
           "calculatedInterval": "10m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_uptime{instance=\"$host\"}",
           "format": "time_series",
           "interval": "5m",
@@ -245,20 +211,14 @@
       "transparent": false,
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-
-      ],
+      "valueMaps": [],
       "valueName": "current"
     },
     {
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": false,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
+      "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
       "datasource": "Prometheus",
       "decimals": 2,
       "description": "**Current QPS**\n\nBased on the queries reported by MySQL's ``SHOW STATUS`` command, it is the number of statements executed by the server within the last second. This variable includes statements executed within stored programs, unlike the Questions variable. It does not count \n``COM_PING`` or ``COM_STATISTICS`` commands.",
@@ -324,12 +284,8 @@
       "targets": [
         {
           "calculatedInterval": "10m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_queries{instance=\"$host\"}[$interval]) or irate(mysql_global_status_queries{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -345,20 +301,14 @@
       "transparent": false,
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-
-      ],
+      "valueMaps": [],
       "valueName": "current"
     },
     {
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": false,
-      "colors": [
-        "rgba(50, 172, 45, 0.97)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(245, 54, 54, 0.9)"
-      ],
+      "colors": ["rgba(50, 172, 45, 0.97)", "rgba(237, 129, 40, 0.89)", "rgba(245, 54, 54, 0.9)"],
       "datasource": "Prometheus",
       "decimals": 0,
       "description": "**InnoDB Buffer Pool Size**\n\nInnoDB maintains a storage area called the buffer pool for caching data and indexes in memory.  Knowing how the InnoDB buffer pool works, and taking advantage of it to keep frequently accessed data in memory, is one of the most important aspects of MySQL tuning. The goal is to keep the working set in memory. In most cases, this should be between 60%-90% of available memory on a dedicated database host, but depends on many factors.",
@@ -424,12 +374,8 @@
       "targets": [
         {
           "calculatedInterval": "10m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_variables_innodb_buffer_pool_size{instance=\"$host\"}",
           "format": "time_series",
           "interval": "5m",
@@ -445,20 +391,14 @@
       "transparent": false,
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-
-      ],
+      "valueMaps": [],
       "valueName": "current"
     },
     {
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": true,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
+      "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
       "datasource": "Prometheus",
       "decimals": 0,
       "description": "**InnoDB Buffer Pool Size % of Total RAM**\n\nInnoDB maintains a storage area called the buffer pool for caching data and indexes in memory.  Knowing how the InnoDB buffer pool works, and taking advantage of it to keep frequently accessed data in memory, is one of the most important aspects of MySQL tuning. The goal is to keep the working set in memory. In most cases, this should be between 60%-90% of available memory on a dedicated database host, but depends on many factors.",
@@ -527,12 +467,8 @@
       "targets": [
         {
           "calculatedInterval": "10m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "(mysql_global_variables_innodb_buffer_pool_size{instance=\"$host\"} * 100) / on (instance) node_memory_MemTotal{instance=\"$host\"}",
           "format": "time_series",
           "interval": "5m",
@@ -548,9 +484,7 @@
       "transparent": false,
       "type": "singlestat",
       "valueFontSize": "80%",
-      "valueMaps": [
-
-      ],
+      "valueMaps": [],
       "valueName": "current"
     },
     {
@@ -562,17 +496,13 @@
         "y": 3
       },
       "id": 383,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Connections",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -582,9 +512,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -632,12 +560,8 @@
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "max(max_over_time(mysql_global_status_threads_connected{instance=\"$host\"}[$interval])  or mysql_global_status_threads_connected{instance=\"$host\"} )",
           "format": "time_series",
           "interval": "$interval",
@@ -649,12 +573,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_max_used_connections{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -667,12 +587,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_variables_max_connections{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -684,9 +600,7 @@
           "target": ""
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Connections",
@@ -702,9 +616,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -730,9 +642,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -742,9 +652,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -767,9 +675,7 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
@@ -798,12 +704,8 @@
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "max_over_time(mysql_global_status_threads_connected{instance=\"$host\"}[$interval]) or\nmax_over_time(mysql_global_status_threads_connected{instance=\"$host\"}[5m])",
           "format": "time_series",
           "hide": false,
@@ -816,12 +718,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "max_over_time(mysql_global_status_threads_running{instance=\"$host\"}[$interval]) or\nmax_over_time(mysql_global_status_threads_running{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -841,9 +739,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Client Thread Activity",
@@ -859,9 +755,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-          "total"
-        ]
+        "values": ["total"]
       },
       "yaxes": [
         {
@@ -895,17 +789,13 @@
         "y": 11
       },
       "id": 384,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Table Locks",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -915,9 +805,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -953,21 +841,15 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_questions{instance=\"$host\"}[$interval]) or irate(mysql_global_status_questions{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -978,9 +860,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Questions",
@@ -996,9 +876,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -1022,9 +900,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1034,9 +910,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1083,12 +957,8 @@
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_variables_thread_cache_size{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -1100,12 +970,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_threads_cached{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -1117,12 +983,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_threads_created{instance=\"$host\"}[$interval]) or irate(mysql_global_status_threads_created{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1133,9 +995,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Thread Cache",
@@ -1152,9 +1012,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -1186,17 +1044,13 @@
         "y": 19
       },
       "id": 385,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Temporary Objects",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1205,9 +1059,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1230,29 +1082,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_created_tmp_tables{instance=\"$host\"}[$interval]) or irate(mysql_global_status_created_tmp_tables{instance=\"$host\"}[5m])",
           "interval": "$interval",
           "intervalFactor": 1,
@@ -1263,12 +1107,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_created_tmp_disk_tables{instance=\"$host\"}[$interval]) or irate(mysql_global_status_created_tmp_disk_tables{instance=\"$host\"}[5m])",
           "interval": "$interval",
           "intervalFactor": 1,
@@ -1279,12 +1119,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_created_tmp_files{instance=\"$host\"}[$interval]) or irate(mysql_global_status_created_tmp_files{instance=\"$host\"}[5m])",
           "interval": "$interval",
           "intervalFactor": 1,
@@ -1294,9 +1130,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Temporary Objects",
@@ -1312,9 +1146,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -1338,9 +1170,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1350,9 +1180,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1377,29 +1205,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_select_full_join{instance=\"$host\"}[$interval]) or irate(mysql_global_status_select_full_join{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1411,12 +1231,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_select_full_range_join{instance=\"$host\"}[$interval]) or irate(mysql_global_status_select_full_range_join{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1428,12 +1244,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_select_range{instance=\"$host\"}[$interval]) or irate(mysql_global_status_select_range{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1445,12 +1257,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_select_range_check{instance=\"$host\"}[$interval]) or irate(mysql_global_status_select_range_check{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1462,12 +1270,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_select_scan{instance=\"$host\"}[$interval]) or irate(mysql_global_status_select_scan{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1478,9 +1282,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Select Types",
@@ -1496,9 +1298,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -1530,17 +1330,13 @@
         "y": 27
       },
       "id": 386,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Sorts",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1550,9 +1346,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1576,29 +1370,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_sort_rows{instance=\"$host\"}[$interval]) or irate(mysql_global_status_sort_rows{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1610,12 +1396,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_sort_range{instance=\"$host\"}[$interval]) or irate(mysql_global_status_sort_range{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1627,12 +1409,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_sort_merge_passes{instance=\"$host\"}[$interval]) or irate(mysql_global_status_sort_merge_passes{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1644,12 +1422,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_sort_scan{instance=\"$host\"}[$interval]) or irate(mysql_global_status_sort_scan{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1660,9 +1434,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Sorts",
@@ -1678,9 +1450,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -1704,9 +1474,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1716,9 +1484,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1740,29 +1506,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_slow_queries{instance=\"$host\"}[$interval]) or irate(mysql_global_status_slow_queries{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1773,9 +1531,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Slow Queries",
@@ -1791,9 +1547,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -1827,17 +1581,13 @@
         "y": 35
       },
       "id": 387,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Aborted",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1847,9 +1597,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1871,29 +1619,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_aborted_connects{instance=\"$host\"}[$interval]) or irate(mysql_global_status_aborted_connects{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1905,12 +1645,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_aborted_clients{instance=\"$host\"}[$interval]) or irate(mysql_global_status_aborted_clients{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -1922,9 +1658,7 @@
           "target": ""
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Aborted Connections",
@@ -1940,9 +1674,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -1968,9 +1700,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -1980,9 +1710,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -2005,29 +1733,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_table_locks_immediate{instance=\"$host\"}[$interval]) or irate(mysql_global_status_table_locks_immediate{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -2039,12 +1759,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_table_locks_waited{instance=\"$host\"}[$interval]) or irate(mysql_global_status_table_locks_waited{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -2055,9 +1771,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Table Locks",
@@ -2073,9 +1787,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -2107,17 +1819,13 @@
         "y": 43
       },
       "id": 388,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Network",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -2127,9 +1835,7 @@
       "editable": true,
       "error": false,
       "fill": 6,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -2152,29 +1858,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_bytes_received{instance=\"$host\"}[$interval]) or irate(mysql_global_status_bytes_received{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -2186,12 +1884,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_bytes_sent{instance=\"$host\"}[$interval]) or irate(mysql_global_status_bytes_sent{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -2202,9 +1896,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Network Traffic",
@@ -2220,9 +1912,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -2246,9 +1936,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
@@ -2258,9 +1946,7 @@
       "editable": true,
       "error": false,
       "fill": 6,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -2284,29 +1970,21 @@
       },
       "lines": false,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "increase(mysql_global_status_bytes_received{instance=\"$host\"}[1h])",
           "format": "time_series",
           "interval": "1h",
@@ -2318,12 +1996,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "increase(mysql_global_status_bytes_sent{instance=\"$host\"}[1h])",
           "format": "time_series",
           "interval": "1h",
@@ -2334,9 +2008,7 @@
           "step": 3600
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": "24h",
       "timeShift": null,
       "title": "MySQL Network Usage Hourly",
@@ -2352,9 +2024,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -2386,17 +2056,13 @@
         "y": 51
       },
       "id": 389,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Memory",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -2406,9 +2072,7 @@
       "editable": true,
       "error": false,
       "fill": 6,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -2538,9 +2202,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Internal Memory Overview",
@@ -2556,9 +2218,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -2592,17 +2252,13 @@
         "y": 59
       },
       "id": 390,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Command, Handlers, Processes",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -2612,9 +2268,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -2651,21 +2305,15 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "topk(5, rate(mysql_global_status_commands_total{instance=\"$host\"}[$interval])>0) or topk(5, irate(mysql_global_status_commands_total{instance=\"$host\"}[5m])>0)",
           "format": "time_series",
           "hide": false,
@@ -2677,9 +2325,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "Top Command Counters",
@@ -2695,9 +2341,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -2721,9 +2365,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
@@ -2733,9 +2375,7 @@
       "editable": true,
       "error": false,
       "fill": 6,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -2771,21 +2411,15 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "topk(5, increase(mysql_global_status_commands_total{instance=\"$host\"}[1h])>0)",
           "format": "time_series",
           "interval": "1h",
@@ -2796,9 +2430,7 @@
           "step": 3600
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": "24h",
       "timeShift": null,
       "title": "Top Command Counters Hourly",
@@ -2814,9 +2446,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -2840,9 +2470,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -2852,9 +2480,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -2878,29 +2504,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_handlers_total{instance=\"$host\", handler!~\"commit|rollback|savepoint.*|prepare\"}[$interval]) or irate(mysql_global_status_handlers_total{instance=\"$host\", handler!~\"commit|rollback|savepoint.*|prepare\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -2911,9 +2529,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Handlers",
@@ -2929,9 +2545,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -2955,9 +2569,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -2966,9 +2578,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -2992,29 +2602,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_handlers_total{instance=\"$host\", handler=~\"commit|rollback|savepoint.*|prepare\"}[$interval]) or irate(mysql_global_status_handlers_total{instance=\"$host\", handler=~\"commit|rollback|savepoint.*|prepare\"}[5m])",
           "interval": "$interval",
           "intervalFactor": 1,
@@ -3024,9 +2626,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Transaction Handlers",
@@ -3042,9 +2642,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -3068,9 +2666,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -3079,9 +2675,7 @@
       "editable": true,
       "error": false,
       "fill": 0,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -3105,29 +2699,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_info_schema_threads{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -3138,9 +2724,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "Process States",
@@ -3156,9 +2740,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -3182,9 +2764,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
@@ -3193,9 +2773,7 @@
       "editable": true,
       "error": false,
       "fill": 6,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -3219,29 +2797,21 @@
       },
       "lines": false,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "topk(5, avg_over_time(mysql_info_schema_threads{instance=\"$host\"}[1h]))",
           "interval": "1h",
           "intervalFactor": 1,
@@ -3251,9 +2821,7 @@
           "step": 3600
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": "24h",
       "timeShift": null,
       "title": "Top Process States Hourly",
@@ -3269,9 +2837,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -3303,17 +2869,13 @@
         "y": 102
       },
       "id": 391,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Query Cache",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -3323,9 +2885,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -3348,29 +2908,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_qcache_free_memory{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -3382,12 +2934,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_variables_query_cache_size{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -3398,9 +2946,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Query Cache Memory",
@@ -3416,9 +2962,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -3442,9 +2986,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -3454,9 +2996,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -3480,29 +3020,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_qcache_hits{instance=\"$host\"}[$interval]) or irate(mysql_global_status_qcache_hits{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -3514,12 +3046,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_qcache_inserts{instance=\"$host\"}[$interval]) or irate(mysql_global_status_qcache_inserts{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -3531,12 +3059,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_qcache_not_cached{instance=\"$host\"}[$interval]) or irate(mysql_global_status_qcache_not_cached{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -3548,12 +3072,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_qcache_lowmem_prunes{instance=\"$host\"}[$interval]) or irate(mysql_global_status_qcache_lowmem_prunes{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -3565,12 +3085,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_qcache_queries_in_cache{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -3581,9 +3097,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Query Cache Activity",
@@ -3599,9 +3113,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -3633,17 +3145,13 @@
         "y": 110
       },
       "id": 392,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Files and Tables",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -3652,9 +3160,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -3677,29 +3183,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_opened_files{instance=\"$host\"}[$interval]) or irate(mysql_global_status_opened_files{instance=\"$host\"}[5m])",
           "interval": "$interval",
           "intervalFactor": 1,
@@ -3709,9 +3207,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL File Openings",
@@ -3727,9 +3223,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -3753,9 +3247,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -3764,9 +3256,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -3789,29 +3279,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_open_files{instance=\"$host\"}",
           "interval": "$interval",
           "intervalFactor": 1,
@@ -3822,12 +3304,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_variables_open_files_limit{instance=\"$host\"}",
           "interval": "$interval",
           "intervalFactor": 1,
@@ -3845,9 +3323,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Open Files",
@@ -3863,9 +3339,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -3897,17 +3371,13 @@
         "y": 118
       },
       "id": 393,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "Table Openings",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -3917,9 +3387,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -3966,12 +3434,8 @@
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(mysql_global_status_opened_tables{instance=\"$host\"}[$interval]) or irate(mysql_global_status_opened_tables{instance=\"$host\"}[5m])",
           "format": "time_series",
           "interval": "$interval",
@@ -4018,9 +3482,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Table Open Cache Status",
@@ -4036,9 +3498,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -4062,9 +3522,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -4074,9 +3532,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -4111,21 +3567,15 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_open_tables{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -4137,12 +3587,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_variables_table_open_cache{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -4153,9 +3599,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Open Tables",
@@ -4171,9 +3615,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -4205,17 +3647,13 @@
         "y": 126
       },
       "id": 394,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "MySQL Table Definition Cache",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -4225,9 +3663,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -4274,12 +3710,8 @@
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_status_open_table_definitions{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -4291,12 +3723,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "mysql_global_variables_table_definition_cache{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -4316,9 +3744,7 @@
           "step": 20
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "MySQL Table Definition Cache",
@@ -4334,9 +3760,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -4368,17 +3792,13 @@
         "y": 134
       },
       "id": 395,
-      "panels": [
-
-      ],
+      "panels": [],
       "repeat": null,
       "title": "System Charts",
       "type": "row"
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -4387,9 +3807,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -4413,29 +3831,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(node_vmstat_pgpgin{instance=\"$host\"}[$interval]) * 1024 or irate(node_vmstat_pgpgin{instance=\"$host\"}[5m]) * 1024",
           "format": "time_series",
           "interval": "$interval",
@@ -4448,12 +3858,8 @@
         },
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(node_vmstat_pgpgout{instance=\"$host\"}[$interval]) * 1024 or irate(node_vmstat_pgpgout{instance=\"$host\"}[5m]) * 1024",
           "format": "time_series",
           "interval": "$interval",
@@ -4465,9 +3871,7 @@
           "target": ""
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "I/O Activity",
@@ -4484,9 +3888,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -4511,9 +3913,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -4522,9 +3922,7 @@
       "editable": true,
       "error": false,
       "fill": 6,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -4549,29 +3947,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "max(node_memory_MemTotal{instance=\"$host\"}) without(job) - \n(max(node_memory_MemFree{instance=\"$host\"}) without(job) + \nmax(node_memory_Buffers{instance=\"$host\"}) without(job) + \n(max(node_memory_Cached{instance=\"$host\",job=~\"rds-enhanced|linux\"}) without (job) or \nmax(node_memory_Cached{instance=\"$host\",job=\"rds-basic\"}) without (job)))",
           "format": "time_series",
           "interval": "$interval",
@@ -4584,12 +3974,8 @@
         },
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "node_memory_MemFree{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -4602,12 +3988,8 @@
         },
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "node_memory_Buffers{instance=\"$host\"}",
           "format": "time_series",
           "interval": "$interval",
@@ -4620,12 +4002,8 @@
         },
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "max(node_memory_Cached{instance=~\"$host\",job=~\"rds-enhanced|linux\"}) without (job) or \nmax(node_memory_Cached{instance=~\"$host\",job=~\"rds-basic\"}) without (job)",
           "format": "time_series",
           "interval": "$interval",
@@ -4637,9 +4015,7 @@
           "target": ""
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "Memory Distribution",
@@ -4656,9 +4032,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -4700,9 +4074,7 @@
       "editable": true,
       "error": false,
       "fill": 6,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -4728,9 +4100,7 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
@@ -4759,12 +4129,8 @@
       "targets": [
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "clamp_max(((avg by (mode) ( (clamp_max(rate(node_cpu{instance=\"$host\",mode!=\"idle\"}[$interval]),1)) or (clamp_max(irate(node_cpu{instance=\"$host\",mode!=\"idle\"}[5m]),1)) ))*100 or (avg_over_time(node_cpu_average{instance=~\"$host\", mode!=\"total\", mode!=\"idle\"}[$interval]) or avg_over_time(node_cpu_average{instance=~\"$host\", mode!=\"total\", mode!=\"idle\"}[5m]))),100)",
           "format": "time_series",
           "hide": false,
@@ -4794,9 +4160,7 @@
           "refId": "C"
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "CPU Usage / Load",
@@ -4812,9 +4176,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -4840,9 +4202,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -4851,9 +4211,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -4879,29 +4237,21 @@
       },
       "lines": false,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 1,
       "points": true,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "sum((rate(node_disk_read_time_ms{device!~\"dm-.+\", instance=\"$host\"}[$interval]) / rate(node_disk_reads_completed{device!~\"dm-.+\", instance=\"$host\"}[$interval])) or (irate(node_disk_read_time_ms{device!~\"dm-.+\", instance=\"$host\"}[5m]) / irate(node_disk_reads_completed{device!~\"dm-.+\", instance=\"$host\"}[5m]))\nor avg_over_time(aws_rds_read_latency_average{instance=\"$host\"}[$interval]) or avg_over_time(aws_rds_read_latency_average{instance=\"$host\"}[5m]))",
           "format": "time_series",
           "interval": "$interval",
@@ -4914,12 +4264,8 @@
         },
         {
           "calculatedInterval": "2m",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "sum((rate(node_disk_write_time_ms{device!~\"dm-.+\", instance=\"$host\"}[$interval]) / rate(node_disk_writes_completed{device!~\"dm-.+\", instance=\"$host\"}[$interval])) or (irate(node_disk_write_time_ms{device!~\"dm-.+\", instance=\"$host\"}[5m]) / irate(node_disk_writes_completed{device!~\"dm-.+\", instance=\"$host\"}[5m])) or \navg_over_time(aws_rds_write_latency_average{instance=\"$host\"}[$interval]) or avg_over_time(aws_rds_write_latency_average{instance=\"$host\"}[5m]))",
           "format": "time_series",
           "interval": "$interval",
@@ -4931,9 +4277,7 @@
           "target": ""
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "Disk Latency",
@@ -4950,9 +4294,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -4978,9 +4320,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -4989,9 +4329,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -5016,9 +4354,7 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
@@ -5036,12 +4372,8 @@
       "targets": [
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "sum(rate(node_network_receive_bytes{instance=\"$host\", device!=\"lo\"}[$interval])) or sum(irate(node_network_receive_bytes{instance=\"$host\", device!=\"lo\"}[5m])) or sum(max_over_time(rdsosmetrics_network_rx{instance=\"$host\"}[$interval])) or sum(max_over_time(rdsosmetrics_network_rx{instance=\"$host\"}[5m])) ",
           "format": "time_series",
           "interval": "$interval",
@@ -5054,12 +4386,8 @@
         },
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "sum(rate(node_network_transmit_bytes{instance=\"$host\", device!=\"lo\"}[$interval])) or sum(irate(node_network_transmit_bytes{instance=\"$host\", device!=\"lo\"}[5m])) or\nsum(max_over_time(rdsosmetrics_network_tx{instance=\"$host\"}[$interval])) or sum(max_over_time(rdsosmetrics_network_tx{instance=\"$host\"}[5m]))",
           "format": "time_series",
           "interval": "$interval",
@@ -5071,9 +4399,7 @@
           "target": ""
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "Network Traffic",
@@ -5090,9 +4416,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -5117,9 +4441,7 @@
       }
     },
     {
-      "aliasColors": {
-
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -5128,9 +4450,7 @@
       "editable": true,
       "error": false,
       "fill": 2,
-      "grid": {
-
-      },
+      "grid": {},
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -5154,29 +4474,21 @@
       },
       "lines": true,
       "linewidth": 2,
-      "links": [
-
-      ],
+      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(node_vmstat_pswpin{instance=\"$host\"}[$interval]) * 4096 or irate(node_vmstat_pswpin{instance=\"$host\"}[5m]) * 4096",
           "format": "time_series",
           "interval": "$interval",
@@ -5189,12 +4501,8 @@
         },
         {
           "calculatedInterval": "2s",
-          "datasourceErrors": {
-
-          },
-          "errors": {
-
-          },
+          "datasourceErrors": {},
+          "errors": {},
           "expr": "rate(node_vmstat_pswpout{instance=\"$host\"}[$interval]) * 4096 or irate(node_vmstat_pswpout{instance=\"$host\"}[5m]) * 4096",
           "format": "time_series",
           "interval": "$interval",
@@ -5206,9 +4514,7 @@
           "target": ""
         }
       ],
-      "thresholds": [
-
-      ],
+      "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
       "title": "Swap Activity",
@@ -5225,9 +4531,7 @@
         "mode": "time",
         "name": null,
         "show": true,
-        "values": [
-
-        ]
+        "values": []
       },
       "yaxes": [
         {
@@ -5254,10 +4558,7 @@
   ],
   "refresh": "1m",
   "schemaVersion": 16,
-  "tags": [
-    "Percona",
-    "MySQL"
-  ],
+  "tags": ["Percona", "MySQL"],
   "templating": {
     "list": [
       {
@@ -5325,9 +4626,7 @@
       {
         "allFormat": "glob",
         "allValue": null,
-        "current": {
-
-        },
+        "current": {},
         "datasource": "Prometheus",
         "hide": 0,
         "includeAll": false,
@@ -5335,18 +4634,14 @@
         "multi": false,
         "multiFormat": "regex values",
         "name": "host",
-        "options": [
-
-        ],
+        "options": [],
         "query": "label_values(mysql_up, instance)",
         "refresh": 1,
         "refresh_on_load": false,
         "regex": "",
         "sort": 1,
         "tagValuesQuery": null,
-        "tags": [
-
-        ],
+        "tags": [],
         "tagsQuery": null,
         "type": "query",
         "useTags": false
@@ -5363,30 +4658,8 @@
     "hidden": false,
     "notice": false,
     "now": true,
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
     "status": "Stable",
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ],
     "type": "timepicker"
   },
   "timezone": "browser",

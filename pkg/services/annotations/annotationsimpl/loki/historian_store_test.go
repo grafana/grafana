@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
@@ -84,7 +85,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Run("can query history by alert id", func(t *testing.T) {
 			rule := dashboardRules[dashboard1.UID][0]
 
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
@@ -108,7 +109,34 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, res, numTransitions)
 		})
 
-		t.Run("should return ErrLokiStoreNotFound if rule is not found", func(t *testing.T) {
+		t.Run("can query history by alert uid", func(t *testing.T) {
+			rule := dashboardRules[dashboard1.UID][0]
+
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID:    1,
+				AlertUID: rule.UID,
+				From:     start.UnixMilli(),
+				To:       start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+			}
+			res, err := store.Get(
+				context.Background(),
+				query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Len(t, res, numTransitions)
+		})
+
+		t.Run("should return ErrLokiStoreNotFound if rule is not found by ID", func(t *testing.T) {
 			var rules = slices.Concat(maps.Values(dashboardRules)...)
 			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
 			// make sure id is not known
@@ -137,15 +165,36 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.ErrorIs(t, err, ErrLokiStoreNotFound)
 		})
 
+		t.Run("should return empty response if rule is not found by UID", func(t *testing.T) {
+			query := annotations.ItemQuery{
+				OrgID:    1,
+				AlertUID: "not-found-uid",
+				From:     start.UnixMilli(),
+				To:       start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+			}
+			res, err := store.Get(
+				context.Background(),
+				query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Empty(t, res)
+		})
+
 		t.Run("can query history by dashboard id", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID, // nolint: staticcheck
 				From:        start.UnixMilli(),
 				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
@@ -164,7 +213,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return empty results when type is annotation", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -188,14 +237,14 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return empty results when history is outside time range", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID, // nolint: staticcheck
 				From:        start.Add(-2 * time.Second).UnixMilli(),
 				To:          start.Add(-1 * time.Second).UnixMilli(),
 			}
@@ -214,7 +263,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return partial results when history is partly outside clamped time range", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -225,7 +274,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID,                           // nolint: staticcheck
 				From:        start.Add(-1 * time.Second).UnixMilli(), // should clamp to start
 				To:          start.Add(1 * time.Second).UnixMilli(),
 			}
@@ -246,17 +295,17 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			fakeLokiClient.cfg.MaxQueryLength = oldMax
 		})
 
-		t.Run("should sort history by time", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+		t.Run("should sort history by time and be able to query by dashboard uid", func(t *testing.T) {
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
-				OrgID:       1,
-				DashboardID: dashboard1.ID,
-				From:        start.UnixMilli(),
-				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+				OrgID:        1,
+				DashboardUID: dashboard1.UID,
+				From:         start.UnixMilli(),
+				To:           start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
 			res, err := store.Get(
 				context.Background(),
@@ -281,7 +330,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return nothing if query is for tags only", func(t *testing.T) {
-			fakeLokiClient.rangeQueryRes = []historian.Stream{
+			fakeLokiClient.rangeQueryRes = []lokiclient.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
@@ -312,13 +361,13 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
 		t.Run("should return empty list when no streams", func(t *testing.T) {
-			items := store.annotationsFromStream(historian.Stream{}, annotation_ac.AccessResources{})
+			items := store.annotationsFromStream(lokiclient.Stream{}, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
 
 		t.Run("should return empty list when no entries", func(t *testing.T) {
-			items := store.annotationsFromStream(historian.Stream{
-				Values: []historian.Sample{},
+			items := store.annotationsFromStream(lokiclient.Stream{
+				Values: []lokiclient.Sample{},
 			}, annotation_ac.AccessResources{})
 			require.Empty(t, items)
 		})
@@ -345,10 +394,10 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 				expected := &annotations.ItemDTO{
 					AlertID:      rule.ID,
-					DashboardID:  dashboard1.ID,
+					DashboardID:  dashboard1.ID, // nolint: staticcheck
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
-					Time:         transition.State.LastEvaluationTime.UnixMilli(),
+					Time:         transition.LastEvaluationTime.UnixMilli(),
 					NewState:     transition.Formatted(),
 				}
 				if i > 0 {
@@ -371,7 +420,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			rule = createAlertRule(t, sql, "Test rule", gen)
 			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			stream := historian.Stream{
+			stream := lokiclient.Stream{
 				Values: append(stream1.Values, stream2.Values...),
 				Stream: stream1.Stream,
 			}
@@ -385,6 +434,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, items, numTransitions)
 
 			for _, item := range items {
+				// nolint: staticcheck
 				require.Equal(t, dashboard1.ID, item.DashboardID)
 				require.Equal(t, dashboard1.UID, *item.DashboardUID)
 			}
@@ -401,7 +451,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			rule.DashboardUID = nil
 			stream2 := historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger())
 
-			stream := historian.Stream{
+			stream := lokiclient.Stream{
 				Values: append(stream1.Values, stream2.Values...),
 				Stream: stream1.Stream,
 			}
@@ -416,7 +466,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			for _, item := range items {
 				require.Zero(t, *item.DashboardUID)
-				require.Zero(t, item.DashboardID)
+				require.Zero(t, item.DashboardID) // nolint: staticcheck
 			}
 		})
 	})
@@ -505,7 +555,7 @@ func TestBuildHistoryQuery(t *testing.T) {
 	t.Run("should set dashboard UID from dashboard ID if query does not contain UID", func(t *testing.T) {
 		query := buildHistoryQuery(
 			&annotations.ItemQuery{
-				DashboardID: 1,
+				DashboardID: 1, // nolint: staticcheck
 			},
 			map[string]int64{
 				"dashboard-uid": 1,
@@ -518,7 +568,7 @@ func TestBuildHistoryQuery(t *testing.T) {
 	t.Run("should skip dashboard UID if missing from query and dashboard map", func(t *testing.T) {
 		query := buildHistoryQuery(
 			&annotations.ItemQuery{
-				DashboardID: 1,
+				DashboardID: 1, // nolint: staticcheck
 			},
 			map[string]int64{
 				"other-dashboard-uid": 2,
@@ -636,7 +686,7 @@ func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generat
 	rule.PanelID = nil
 
 	ruleStore := store.SetupStoreForTesting(t, sql)
-	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
+	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
 	require.NoError(t, err)
@@ -668,7 +718,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title st
 		rule.PanelID = panelID
 	}
 	ruleStore := store.SetupStoreForTesting(t, sql)
-	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
+	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
 	require.NoError(t, err)
@@ -746,7 +796,7 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 		require.Equal(t, expected.PanelID, actual.PanelID)
 	}
 	if expected.DashboardUID != nil {
-		require.Equal(t, expected.DashboardID, actual.DashboardID)
+		require.Equal(t, expected.DashboardID, actual.DashboardID) // nolint: staticcheck
 		require.Equal(t, *expected.DashboardUID, *actual.DashboardUID)
 	}
 	require.Equal(t, expected.NewState, actual.NewState)
@@ -762,23 +812,23 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 
 type FakeLokiClient struct {
 	client        client.Requester
-	cfg           historian.LokiConfig
+	cfg           lokiclient.LokiConfig
 	metrics       *metrics.Historian
 	log           log.Logger
-	rangeQueryRes []historian.Stream
+	rangeQueryRes []lokiclient.Stream
 }
 
 func NewFakeLokiClient() *FakeLokiClient {
 	url, _ := url.Parse("http://some.url")
-	req := historian.NewFakeRequester()
+	req := lokiclient.NewFakeRequester()
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), "annotations_test")
 
 	return &FakeLokiClient{
 		client: client.NewTimedClient(req, metrics.WriteDuration),
-		cfg: historian.LokiConfig{
+		cfg: lokiclient.LokiConfig{
 			WritePathURL:   url,
 			ReadPathURL:    url,
-			Encoder:        historian.JsonEncoder{},
+			Encoder:        lokiclient.JsonEncoder{},
 			MaxQueryLength: 721 * time.Hour,
 			MaxQuerySize:   65536,
 		},
@@ -787,15 +837,15 @@ func NewFakeLokiClient() *FakeLokiClient {
 	}
 }
 
-func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error) {
-	streams := make([]historian.Stream, len(c.rangeQueryRes))
+func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to, limit int64) (lokiclient.QueryRes, error) {
+	streams := make([]lokiclient.Stream, len(c.rangeQueryRes))
 
 	// clamp time range using logic from historian
-	from, to = historian.ClampRange(from, to, c.cfg.MaxQueryLength.Nanoseconds())
+	from, to = lokiclient.ClampRange(from, to, c.cfg.MaxQueryLength.Nanoseconds())
 
 	for n, stream := range c.rangeQueryRes {
 		streams[n].Stream = stream.Stream
-		streams[n].Values = []historian.Sample{}
+		streams[n].Values = []lokiclient.Sample{}
 		for _, sample := range stream.Values {
 			if sample.T.UnixNano() < from || sample.T.UnixNano() >= to { // matches Loki behavior
 				continue
@@ -804,14 +854,14 @@ func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to,
 		}
 	}
 
-	res := historian.QueryRes{
-		Data: historian.QueryData{
+	res := lokiclient.QueryRes{
+		Data: lokiclient.QueryData{
 			Result: streams,
 		},
 	}
 
 	// reset expected streams on read
-	c.rangeQueryRes = []historian.Stream{}
+	c.rangeQueryRes = []lokiclient.Stream{}
 	return res, nil
 }
 
@@ -824,7 +874,7 @@ func TestUseStore(t *testing.T) {
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
 		}
-		use := useStore(cfg, featuremgmt.WithFeatures())
+		use := useStore(cfg)
 		require.False(t, use)
 	})
 
@@ -834,7 +884,7 @@ func TestUseStore(t *testing.T) {
 				Enabled: true,
 				Backend: "invalid-backend",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -844,7 +894,7 @@ func TestUseStore(t *testing.T) {
 				Backend:      "multiple",
 				MultiPrimary: "invalid-backend",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -855,7 +905,7 @@ func TestUseStore(t *testing.T) {
 				MultiPrimary:     "annotations",
 				MultiSecondaries: []string{"annotations", "invalid-backend"},
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 	})
@@ -865,7 +915,7 @@ func TestUseStore(t *testing.T) {
 			Enabled: true,
 			Backend: "annotations",
 		}
-		use := useStore(cfg, featuremgmt.WithFeatures())
+		use := useStore(cfg)
 		require.False(t, use)
 	})
 
@@ -876,7 +926,7 @@ func TestUseStore(t *testing.T) {
 				Backend:      "multiple",
 				MultiPrimary: "loki",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -887,7 +937,7 @@ func TestUseStore(t *testing.T) {
 				MultiPrimary:     "annotations",
 				MultiSecondaries: []string{"loki"},
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 	})
@@ -898,12 +948,7 @@ func TestUseStore(t *testing.T) {
 				Enabled: true,
 				Backend: "loki",
 			}
-			features := featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertStateHistoryLokiOnly,
-				featuremgmt.FlagAlertStateHistoryLokiPrimary,
-				featuremgmt.FlagAlertStateHistoryLokiSecondary,
-			)
-			use := useStore(cfg, features)
+			use := useStore(cfg)
 			require.True(t, use)
 		})
 	})

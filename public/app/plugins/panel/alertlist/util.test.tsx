@@ -13,11 +13,12 @@ const defaultOption: UnifiedAlertListOptions = {
   groupBy: [''],
   alertName: 'test',
   showInstances: false,
-  folder: { id: 1, title: 'test folder' },
-  stateFilter: { firing: true, pending: true, noData: true, normal: true, error: true },
+  folder: { uid: 'abc', title: 'test folder' },
+  stateFilter: { firing: true, pending: true, noData: true, normal: true, error: true, recovering: false },
   alertInstanceLabelFilter: '',
   datasource: 'Alertmanager',
   viewMode: ViewMode.List,
+  showInactiveAlerts: false,
 };
 
 const alerts: Alert[] = [
@@ -37,14 +38,14 @@ describe('filterAlerts', () => {
   it('Filters by alert instance state ', () => {
     const noNormalStateOptions = {
       ...defaultOption,
-      ...{ stateFilter: { firing: true, pending: true, noData: true, normal: false, error: true } },
+      ...{ stateFilter: { firing: true, pending: true, noData: true, normal: false, error: true, recovering: false } },
     };
 
     expect(filterAlerts(noNormalStateOptions, alerts).length).toBe(3);
 
     const noErrorOrNormalStateOptions = {
       ...defaultOption,
-      ...{ stateFilter: { firing: true, pending: true, noData: true, normal: false, error: false } },
+      ...{ stateFilter: { firing: true, pending: true, noData: true, normal: false, error: false, recovering: false } },
     };
 
     expect(filterAlerts(noErrorOrNormalStateOptions, alerts).length).toBe(1);
@@ -63,7 +64,9 @@ describe('filterAlerts', () => {
   it('Filters by alert instance state and label', () => {
     const options = {
       ...defaultOption,
-      ...{ stateFilter: { firing: false, pending: false, noData: false, normal: false, error: true } },
+      ...{
+        stateFilter: { firing: false, pending: false, noData: false, normal: false, error: true, recovering: false },
+      },
       ...{ alertInstanceLabelFilter: '{severity=low}' },
     };
     const result = filterAlerts(options, alerts);

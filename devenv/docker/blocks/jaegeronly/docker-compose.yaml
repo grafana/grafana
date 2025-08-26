@@ -1,0 +1,12 @@
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686" # UI
+      - "14268:14268"
+      - "4317:4317" # OpenTelemetry Protocol (OTLP) over gRPC
+      - "4318:4318" # OpenTelemetry Protocol (OTLP) over HTTP
+    environment:
+      - MEMORY_MAX_TRACES=100000
+      - SPAN_STORAGE_TYPE=badger
+      - COLLECTOR_OTLP_ENABLED=true

@@ -81,6 +81,7 @@ const functions = [
   'days_in_month',
   'delta',
   'deriv',
+  'double_exponential_smoothing',
   'exp',
   'floor',
   'histogram_quantile',
@@ -90,10 +91,13 @@ const functions = [
   'histogram_fraction',
   'histogram_stddev',
   'histogram_stdvar',
+  // Renamed as DoubleExponentialSmoothing with Prometheus v3.x
+  // https://github.com/prometheus/prometheus/pull/14930
   'holt_winters',
   'hour',
   'idelta',
   'increase',
+  'info',
   'irate',
   'label_join',
   'label_replace',
@@ -158,7 +162,7 @@ export const language = {
   digits: /\d+(_+\d+)*/,
   octaldigits: /[0-7]+(_+[0-7]+)*/,
   binarydigits: /[0-1]+(_+[0-1]+)*/,
-  hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
+  hexdigits: /[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
   integersuffix: /(ll|LL|u|U|l|L)?(ll|LL|u|U|l|L)?/,
   floatsuffix: /[fFlL]?/,
   // The main tokenizer for our languages

@@ -1,16 +1,17 @@
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
-  changedSaveModel: Dashboard;
-  initialSaveModel: Dashboard;
+  changedSaveModel: Dashboard | DashboardV2Spec;
+  initialSaveModel: Dashboard | DashboardV2Spec;
   diffs: Diffs;
   diffCount: number;
   hasChanges: boolean;
@@ -19,6 +20,7 @@ export interface DashboardChangeInfo {
   hasRefreshChange: boolean;
   isNew?: boolean;
   hasFolderChanges?: boolean;
+  hasMigratedToV2?: boolean;
 }
 
 export function isVersionMismatchError(error?: Error) {
@@ -39,7 +41,7 @@ export interface NameAlreadyExistsErrorProps {
 }
 
 export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
+  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
   return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>
@@ -54,9 +56,14 @@ export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlready
       </p>
     </Alert>
   ) : (
-    <Alert title="Name already exists" severity="error">
+    <Alert
+      title={t('dashboard-scene.name-already-exists-error.title-name-already-exists', 'Name already exists')}
+      severity="error"
+    >
       <p>
-        A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
+        <Trans i18nKey="dashboard-scene.name-already-exists-error.body-name-already-exists">
+          A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
+        </Trans>
       </p>
       <Box paddingTop={2}>
         <Stack alignItems="center">
@@ -84,7 +91,11 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
       variant={overwrite ? 'destructive' : 'primary'}
       data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
-      {isLoading ? 'Saving...' : overwrite ? 'Save and overwrite' : 'Save'}
+      {isLoading
+        ? t('dashboard-scene.save-button.saving', 'Saving...')
+        : overwrite
+          ? t('dashboard-scene.save-button.save-and-overwrite', 'Save and overwrite')
+          : t('dashboard-scene.save-button.save', 'Save')}
     </Button>
   );
 }

@@ -12,15 +12,18 @@ import (
 
 type Installer interface {
 	// Add adds a new plugin.
-	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
+	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
 	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID, version string) error
 }
 
 type PluginSource interface {
+	// PluginClass is the associated Class of plugin for this source
 	PluginClass(ctx context.Context) Class
-	PluginURIs(ctx context.Context) []string
-	DefaultSignature(ctx context.Context) (Signature, bool)
+	// DefaultSignature is the (optional) default signature information for this source
+	DefaultSignature(ctx context.Context, pluginID string) (Signature, bool)
+	// Discover finds and returns plugin bundles from this source
+	Discover(ctx context.Context) ([]*FoundBundle, error)
 }
 
 type FileStore interface {
@@ -33,31 +36,33 @@ type File struct {
 	ModTime time.Time
 }
 
-type CompatOpts struct {
+type AddOpts struct {
 	grafanaVersion string
 
 	os   string
 	arch string
+
+	url string
 }
 
-func (co CompatOpts) GrafanaVersion() string {
+func (co AddOpts) GrafanaVersion() string {
 	return co.grafanaVersion
 }
 
-func (co CompatOpts) OS() string {
+func (co AddOpts) OS() string {
 	return co.os
 }
 
-func (co CompatOpts) Arch() string {
+func (co AddOpts) Arch() string {
 	return co.arch
 }
 
-func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
-	return CompatOpts{grafanaVersion: grafanaVersion, arch: arch, os: os}
+func (co AddOpts) URL() string {
+	return co.url
 }
 
-func NewSystemCompatOpts(os, arch string) CompatOpts {
-	return CompatOpts{arch: arch, os: os}
+func NewAddOpts(grafanaVersion, os, arch, url string) AddOpts {
+	return AddOpts{grafanaVersion: grafanaVersion, arch: arch, os: os, url: url}
 }
 
 type UpdateInfo struct {
@@ -96,11 +101,6 @@ type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
-type SecretsPluginManager interface {
-	// SecretsManager returns a secretsmanager plugin
-	SecretsManager(ctx context.Context) *Plugin
-}
-
 type StaticRouteResolver interface {
 	Routes(ctx context.Context) []*StaticRoute
 }
@@ -117,12 +117,10 @@ type PluginLoaderAuthorizer interface {
 
 type Licensing interface {
 	Environment() []string
-
 	Edition() string
-
 	Path() string
-
 	AppURL() string
+	ContentDeliveryPrefix() string
 }
 
 type SignatureCalculator interface {

@@ -1,7 +1,6 @@
 import { CSSProperties } from 'react';
 
 import { createTheme, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { PercentChangeColorMode } from '@grafana/schema';
 
 import { Props, BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './BigValue';
@@ -104,7 +103,8 @@ describe('BigValueLayout', () => {
   });
 
   describe('percentChangeColor', () => {
-    const themeVisualizationColors = config.theme2.visualization;
+    const theme = createTheme();
+    const themeVisualizationColors = theme.visualization;
     const red = themeVisualizationColors.getColorByName('red');
     const green = themeVisualizationColors.getColorByName('green');
     it('standard negative should be red', () => {

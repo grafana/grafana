@@ -1,14 +1,19 @@
-// This import has side effects, and must be at the top so jQuery is made global before
-// angular is imported.
+// This import has side effects, and must be at the top so jQuery is made global first
 import './global-jquery-shim';
 
-import angular from 'angular';
 import { TransformStream } from 'node:stream/web';
 import { TextEncoder, TextDecoder } from 'util';
 
-import { EventBusSrv } from '@grafana/data';
+// we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
+jest.isolateModulesAsync(async () => {
+  const { EventBusSrv } = await import('@grafana/data');
+  const testAppEvents = new EventBusSrv();
+  jest.mock('../app/core/core', () => ({
+    ...jest.requireActual('../app/core/core'),
+    appEvents: testAppEvents,
+  }));
+});
 import { GrafanaBootConfig } from '@grafana/runtime';
-import { initIconCache } from 'app/core/icons/iconBundle';
 
 import 'blob-polyfill';
 import 'mutationobserver-shim';
@@ -17,22 +22,17 @@ import './mocks/workers';
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
 
-// icon cache needs to be initialized for test to prevent
-// libraries such as msw from throwing "unhandled resource"-errors
-initIconCache();
-
-const testAppEvents = new EventBusSrv();
 const global = window as any;
-global.$ = global.jQuery = $;
 
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {
-  angularSupportEnabled: true,
   featureToggles: {},
 };
 global.grafanaBootData = {
   settings,
-  user: {},
+  user: {
+    locale: 'en-US',
+  },
   navTree: [],
 };
 
@@ -47,14 +47,6 @@ window.matchMedia = (query) => ({
   dispatchEvent: jest.fn(),
 });
 
-angular.module('grafana', ['ngRoute']);
-angular.module('grafana.services', ['ngRoute', '$strap.directives']);
-angular.module('grafana.panels', []);
-angular.module('grafana.controllers', []);
-angular.module('grafana.directives', []);
-angular.module('grafana.filters', []);
-angular.module('grafana.routes', ['ngRoute']);
-
 // mock the intersection observer and just say everything is in view
 const mockIntersectionObserver = jest
   .fn()
@@ -66,19 +58,15 @@ const mockIntersectionObserver = jest
     disconnect: jest.fn(),
   }));
 global.IntersectionObserver = mockIntersectionObserver;
+Object.defineProperty(document, 'fonts', {
+  value: { ready: Promise.resolve({}) },
+});
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 global.TransformStream = TransformStream;
 // add scrollTo interface since it's not implemented in jsdom
 Element.prototype.scrollTo = () => {};
-
-jest.mock('../app/core/core', () => ({
-  ...jest.requireActual('../app/core/core'),
-  appEvents: testAppEvents,
-}));
-jest.mock('../app/angular/partials', () => ({}));
-jest.mock('../app/features/plugins/plugin_loader', () => ({}));
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {

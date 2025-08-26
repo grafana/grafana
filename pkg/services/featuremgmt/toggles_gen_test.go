@@ -92,7 +92,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 					}
 				} else if item.DeletionTimestamp == nil {
 					item.DeletionTimestamp = &created
-					fmt.Printf("mark feature as deleted")
+					t.Log("mark feature as deleted")
 				}
 				current.Items = append(current.Items, item)
 			}
@@ -172,8 +172,8 @@ func verifyFlagsConfiguration(t *testing.T) {
 
 	// Check that all flags set in code are valid
 	for _, flag := range standardFeatureFlags {
-		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
-			t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
+		if flag.Expression == "true" && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStageDeprecated && flag.Stage != FeatureStagePublicPreview) {
+			t.Errorf("only features that are FeatureStagePublicPreview, FeatureStageGeneralAvailability, or FeatureStageDeprecated can be enabled by default.  See: %s", flag.Name)
 		}
 		if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
 			t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
@@ -187,7 +187,7 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Name != strings.TrimSpace(flag.Name) {
 			t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 		}
-		if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
+		if flag.AllowSelfServe && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStagePublicPreview && flag.Stage != FeatureStageDeprecated) {
 			t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
 		}
 		if flag.Owner == "" {
@@ -196,7 +196,7 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
 			t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
 		}
-		if !(flag.Expression == "" || flag.Expression == "true" || flag.Expression == "false") {
+		if flag.Expression != "" && flag.Expression != "true" && flag.Expression != "false" {
 			t.Errorf("the `Expression` property for %s is incorrect. valid values are: `true`, `false` or empty string for default", flag.Name)
 		}
 		// Check camel case names
@@ -286,6 +286,15 @@ func generateTypeScript() string {
 export interface FeatureToggles {
 `
 	for _, flag := range standardFeatureFlags {
+		buf += "  /**\n"
+		buf += "  * " + flag.Description + "\n"
+		if flag.Stage == FeatureStageDeprecated {
+			buf += "  * @deprecated\n"
+		}
+		if flag.Expression != "" {
+			buf += "  * @default " + flag.Expression + "\n"
+		}
+		buf += "  */\n"
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
 	}
 
@@ -384,6 +393,7 @@ func generateDocsMD() string {
 	buf := `---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+  - ../../administration/feature-toggles/ # /docs/grafana/latest/administration/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
@@ -396,7 +406,7 @@ weight: 150
 
 You use feature toggles, also known as feature flags, to enable or disable features in Grafana. You can turn on feature toggles to try out new functionality in development or test environments.
 
-This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
+This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation](../#feature_toggles). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
 
 For more information about feature release stages, refer to [Release life cycle for Grafana Labs](https://grafana.com/docs/release-life-cycle/) and [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/#manage-feature-toggles).
 
@@ -429,19 +439,9 @@ When features are slated for removal, they will be marked as Deprecated first.
 	}
 
 	buf += `
-## Experimental feature toggles
-
-[Experimental](https://grafana.com/docs/release-life-cycle/#experimental) features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
-Experimental features might be changed or removed without prior notice.
-
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.Stage == FeatureStageExperimental && !flag.RequiresDevMode
-	}, false)
-
-	buf += `
 ## Development feature toggles
 
-The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
+The following toggles require explicitly setting Grafana's [app mode](../#app_mode) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.RequiresDevMode

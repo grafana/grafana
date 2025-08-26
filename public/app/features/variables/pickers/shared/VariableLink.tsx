@@ -3,9 +3,9 @@ import { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { LoadingIndicator } from '@grafana/ui/src/components/PanelChrome/LoadingIndicator';
-import { t } from 'app/core/internationalization';
+import { LoadingIndicator } from '@grafana/ui/internal';
 
 import { getStyles as getTagBadgeStyles } from '../../../../core/components/TagFilter/TagBadge';
 import { ALL_VARIABLE_TEXT } from '../../constants';
@@ -70,6 +70,7 @@ interface VariableLinkTextProps {
 
 const VariableLinkText = ({ text }: VariableLinkTextProps) => {
   const styles = useStyles2(getStyles);
+
   return (
     <span className={styles.textAndTags}>
       {text === ALL_VARIABLE_TEXT ? t('variable.picker.link-all', 'All') : text}

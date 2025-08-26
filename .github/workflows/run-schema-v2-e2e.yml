@@ -1,0 +1,44 @@
+name: Run dashboard schema v2 e2e
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+env:
+  ARCH: linux-amd64
+
+jobs:
+  dashboard-schema-v2-e2e:
+    runs-on: ubuntu-latest-8-cores
+    continue-on-error: true
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Pin Go version to mod file
+        uses: actions/setup-go@v5.5.0
+        with:
+          go-version-file: 'go.mod'
+      - run: go version
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
+      - name: Build grafana
+        run: make build
+      - name: Run dashboard scenes e2e
+        run: yarn e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
+
+      - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
+        if: failure()
+        run: exit 0

@@ -1,9 +1,38 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LokiQuery, LokiQueryType } from '../../types';
+import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
+import { config, getAppEvents } from '@grafana/runtime';
 
-import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
+import { createLokiDatasource } from '../../mocks/datasource';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../../types';
+
+import { LokiQueryBuilderOptions, Props } from './LokiQueryBuilderOptions';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      ...jest.requireActual('@grafana/runtime').featureToggles,
+      lokiShardSplitting: true,
+    },
+  },
+  getAppEvents: jest.fn(),
+}));
+
+const subscribeMock = jest.fn();
+beforeAll(() => {
+  config.featureToggles.lokiShardSplitting = true;
+  subscribeMock.mockImplementation(() => ({ unsubscribe: jest.fn() }));
+  jest.mocked(getAppEvents).mockReturnValue({
+    publish: jest.fn(),
+    getStream: jest.fn(),
+    subscribe: subscribeMock,
+    removeAllListeners: jest.fn(),
+    newScopedBus: jest.fn(),
+  });
+});
 
 describe('LokiQueryBuilderOptions', () => {
   it('can change query type', async () => {
@@ -86,7 +115,7 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('shows correct options for log query', async () => {
-    setup({ expr: '{foo="bar"}' });
+    setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Backward });
     expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Direction: Backward')).toBeInTheDocument();
@@ -94,37 +123,16 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('shows correct options for metric query', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m', resolution: 2 });
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
-    expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
     expect(screen.queryByText(/Direction/)).not.toBeInTheDocument();
   });
 
-  it('does not shows resolution field if resolution is not set', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]' });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
-  });
-
-  it('does not shows resolution field if resolution is set to default value 1', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 1 });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
-  });
-
-  it('does shows resolution field with warning if resolution is set to non-default value', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 2 });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.getByText('Resolution')).toBeInTheDocument();
-    expect(
-      screen.getByText("The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter.")
-    ).toBeInTheDocument();
-  });
-
-  it('shows correct options for metric query with invalid step', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
+  it.each(['abc', 10])('shows correct options for metric query with invalid step', async (step: string | number) => {
+    // @ts-expect-error Expected for backward compatibility test
+    setup({ expr: 'rate({foo="bar"}[5m]', step });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: Invalid value')).toBeInTheDocument();
@@ -136,19 +144,19 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
   });
 
-  it('does not shows error when valid value in step', async () => {
+  it('does not show error when valid value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 
-  it('does not shows error when valid millisecond value in step', async () => {
+  it('does not show error when valid millisecond value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1ms' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 
-  it('does not shows error when valid day value in step', async () => {
+  it('does not show error when valid day value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1d' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
@@ -164,9 +172,155 @@ describe('LokiQueryBuilderOptions', () => {
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
   });
+
+  it('allows to clear step input', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '4s' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.getByDisplayValue('4s')).toBeInTheDocument();
+    await userEvent.clear(screen.getByDisplayValue('4s'));
+    expect(screen.queryByDisplayValue('4s')).not.toBeInTheDocument();
+  });
+
+  it('should transform non duration numbers to duration', async () => {
+    const onChange = jest.fn();
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '4' }, onChange);
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(onChange).toHaveBeenCalledWith({
+      refId: 'A',
+      expr: 'rate({foo="bar"}[5m]',
+      step: '4s',
+    });
+  });
+
+  describe('Query direction', () => {
+    it("initializes query direction when it's empty in Explore or Dashboards", () => {
+      const onChange = jest.fn();
+      setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Backward,
+      });
+    });
+
+    it('does not change direction on initialization elsewhere', () => {
+      const onChange = jest.fn();
+      setup({ expr: '{foo="bar"}' }, onChange, { app: undefined });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('uses backward as default in Explore with no previous stored preference', () => {
+      const onChange = jest.fn();
+      store.delete('grafana.explore.logs.sortOrder');
+      setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Backward,
+      });
+    });
+
+    it('uses the stored sorting option to determine direction in Explore', () => {
+      store.set('grafana.explore.logs.sortOrder', LogsSortOrder.Ascending);
+      const onChange = jest.fn();
+      setup({ expr: '{foo="bar"}' }, onChange, { app: CoreApp.Explore });
+      expect(onChange).toHaveBeenCalledWith({
+        expr: '{foo="bar"}',
+        refId: 'A',
+        direction: LokiQueryDirection.Forward,
+      });
+      store.delete('grafana.explore.logs.sortOrder');
+    });
+
+    describe('Event handling', () => {
+      let listener: (event: LogSortOrderChangeEvent) => void = jest.fn();
+      const onChangeMock = jest.fn();
+      beforeEach(() => {
+        onChangeMock.mockClear();
+        listener = jest.fn();
+        subscribeMock.mockImplementation((_: unknown, callback: (event: LogSortOrderChangeEvent) => void) => {
+          listener = callback;
+          return { unsubscribe: jest.fn() };
+        });
+      });
+      it('subscribes to sort change event and updates the direction', () => {
+        setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Backward }, onChangeMock, {
+          app: CoreApp.Dashboard,
+        });
+        expect(screen.getByText(/Direction: Backward/)).toBeInTheDocument();
+        listener(
+          new LogSortOrderChangeEvent({
+            order: LogsSortOrder.Ascending,
+          })
+        );
+        expect(onChangeMock).toHaveBeenCalledTimes(1);
+        expect(onChangeMock).toHaveBeenCalledWith({
+          direction: 'forward',
+          expr: '{foo="bar"}',
+          refId: 'A',
+        });
+      });
+
+      it('does not change the direction when the current direction is scan', () => {
+        setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Scan }, onChangeMock, { app: CoreApp.Dashboard });
+        expect(screen.getByText(/Direction: Scan/)).toBeInTheDocument();
+        listener(
+          new LogSortOrderChangeEvent({
+            order: LogsSortOrder.Ascending,
+          })
+        );
+        expect(onChangeMock).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Step validation', () => {
+    it('considers empty step as valid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+    });
+
+    it('considers variable step that exists in the datasource as valid', async () => {
+      const datasource = createLokiDatasource();
+      datasource.getVariables = jest.fn().mockReturnValue(['$interval']);
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '$interval' }, undefined, { datasource });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+    });
+
+    it('considers variable step that does not exist in the datasource as invalid', async () => {
+      const datasource = createLokiDatasource();
+      datasource.getVariables = jest.fn().mockReturnValue(['$interval']);
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '$custom' }, undefined, { datasource });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
+    });
+
+    it('considers valid duration step as valid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+    });
+
+    it('considers invalid step as invalid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]', step: 'invalid' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
+    });
+
+    it('considers non-duration number as invalid', async () => {
+      setup({ expr: 'rate({foo="bar"}[5m]', step: '123' });
+      await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+      expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
+    });
+  });
 });
 
-function setup(queryOverrides: Partial<LokiQuery> = {}) {
+function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), propOverrides: Partial<Props> = {}) {
+  const datasource = createLokiDatasource();
+  datasource.maxLines = 20;
+
   const props = {
     query: {
       refId: 'A',
@@ -174,9 +328,10 @@ function setup(queryOverrides: Partial<LokiQuery> = {}) {
       ...queryOverrides,
     },
     onRunQuery: jest.fn(),
-    onChange: jest.fn(),
-    maxLines: 20,
+    onChange,
+    datasource,
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
+    ...propOverrides,
   };
 
   const { container } = render(<LokiQueryBuilderOptions {...props} />);

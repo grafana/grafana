@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -68,12 +71,14 @@ var (
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
-	socialService social.Service, settingsProviderService setting.Provider, features featuremgmt.FeatureToggles,
+	socialService social.Service, settingsProviderService setting.Provider,
+	features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) *OAuth {
 	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
 		name, fmt.Sprintf("oauth_%s", providerName), providerName,
-		log.New(name), cfg, settingsProviderService, oauthService, socialService, features,
+		log.New(name), cfg, tracer, settingsProviderService, oauthService,
+		socialService, features,
 	}
 }
 
@@ -83,6 +88,7 @@ type OAuth struct {
 	providerName string
 	log          log.Logger
 	cfg          *setting.Cfg
+	tracer       trace.Tracer
 
 	settingsProviderSvc setting.Provider
 	oauthService        oauthtoken.OAuthTokenService
@@ -95,6 +101,9 @@ func (c *OAuth) Name() string {
 }
 
 func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.Authenticate")
+	defer span.End()
+
 	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
@@ -136,7 +145,21 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
+
 	// exchange auth code to a valid token
+	if oauthCfg.ClientAuthentication == social.WorkloadIdentity {
+		federatedToken, err := os.ReadFile(oauthCfg.WorkloadIdentityTokenFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read workload identity token file: %w", err)
+		}
+
+		opts = append(opts,
+			oauth2.SetAuthURLParam("client_id", oauthCfg.ClientId),
+			oauth2.SetAuthURLParam("client_assertion", strings.TrimSpace(string(federatedToken))),
+			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+		)
+	}
+
 	token, err := connector.Exchange(clientCtx, r.HTTPRequest.URL.Query().Get("code"), opts...)
 	if err != nil {
 		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
@@ -216,6 +239,9 @@ func (c *OAuth) GetConfig() authn.SSOClientConfig {
 }
 
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.RedirectURL") //nolint:ineffassign,staticcheck
+	defer span.End()
+
 	var opts []oauth2.AuthCodeOption
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
@@ -257,8 +283,11 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
-	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
+func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, bool) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.Logout")
+	defer span.End()
+
+	token := c.oauthService.GetCurrentOAuthToken(ctx, user, sessionToken)
 
 	userID, err := identity.UserIdentifier(user.GetID())
 	if err != nil {
@@ -268,7 +297,7 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Red
 
 	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, user); err != nil {
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, sessionToken); err != nil {
 		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 

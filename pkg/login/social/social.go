@@ -14,6 +14,14 @@ const (
 	OfflineAccessScope = "offline_access"
 	RoleGrafanaAdmin   = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
 
+	// Values for ClientAuthentication under OAuthInfo (based on oidc spec)
+	ClientSecretPost = "client_secret_post"
+	None             = "none"
+	// Azure AD
+	ManagedIdentity  = "managed_identity"
+	WorkloadIdentity = "workload_identity"
+	// Other providers...
+
 	AzureADProviderName      = "azuread"
 	GenericOAuthProviderName = "generic_oauth"
 	GitHubProviderName       = "github"
@@ -53,41 +61,46 @@ type SocialConnector interface {
 }
 
 type OAuthInfo struct {
-	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin" toml:"allow_assign_grafana_admin"`
-	AllowSignup             bool              `mapstructure:"allow_sign_up" toml:"allow_sign_up"`
-	AllowedDomains          []string          `mapstructure:"allowed_domains" toml:"allowed_domains"`
-	AllowedGroups           []string          `mapstructure:"allowed_groups" toml:"allowed_groups"`
-	ApiUrl                  string            `mapstructure:"api_url" toml:"api_url"`
-	AuthStyle               string            `mapstructure:"auth_style" toml:"auth_style"`
-	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url"`
-	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login"`
-	ClientId                string            `mapstructure:"client_id" toml:"client_id"`
-	ClientSecret            string            `mapstructure:"client_secret" toml:"-"`
-	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
-	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
-	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes"`
-	Enabled                 bool              `mapstructure:"enabled" toml:"enabled"`
-	GroupsAttributePath     string            `mapstructure:"groups_attribute_path" toml:"groups_attribute_path"`
-	HostedDomain            string            `mapstructure:"hosted_domain" toml:"hosted_domain"`
-	Icon                    string            `mapstructure:"icon" toml:"icon"`
-	Name                    string            `mapstructure:"name" toml:"name"`
-	RoleAttributePath       string            `mapstructure:"role_attribute_path" toml:"role_attribute_path"`
-	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict"`
-	OrgAttributePath        string            `mapstructure:"org_attribute_path"`
-	OrgMapping              []string          `mapstructure:"org_mapping"`
-	Scopes                  []string          `mapstructure:"scopes" toml:"scopes"`
-	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url"`
-	SkipOrgRoleSync         bool              `mapstructure:"skip_org_role_sync" toml:"skip_org_role_sync"`
-	TeamIdsAttributePath    string            `mapstructure:"team_ids_attribute_path" toml:"team_ids_attribute_path"`
-	TeamsUrl                string            `mapstructure:"teams_url" toml:"teams_url"`
-	TlsClientCa             string            `mapstructure:"tls_client_ca" toml:"tls_client_ca"`
-	TlsClientCert           string            `mapstructure:"tls_client_cert" toml:"tls_client_cert"`
-	TlsClientKey            string            `mapstructure:"tls_client_key" toml:"tls_client_key"`
-	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
-	TokenUrl                string            `mapstructure:"token_url" toml:"token_url"`
-	UsePKCE                 bool              `mapstructure:"use_pkce" toml:"use_pkce"`
-	UseRefreshToken         bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
-	Extra                   map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
+	AllowAssignGrafanaAdmin     bool              `mapstructure:"allow_assign_grafana_admin" toml:"allow_assign_grafana_admin"`
+	AllowSignup                 bool              `mapstructure:"allow_sign_up" toml:"allow_sign_up"`
+	AllowedDomains              []string          `mapstructure:"allowed_domains" toml:"allowed_domains"`
+	AllowedGroups               []string          `mapstructure:"allowed_groups" toml:"allowed_groups"`
+	ApiUrl                      string            `mapstructure:"api_url" toml:"api_url"`
+	AuthStyle                   string            `mapstructure:"auth_style" toml:"auth_style"`
+	AuthUrl                     string            `mapstructure:"auth_url" toml:"auth_url"`
+	AutoLogin                   bool              `mapstructure:"auto_login" toml:"auto_login"`
+	ClientAuthentication        string            `mapstructure:"client_authentication" toml:"client_authentication"`
+	ClientId                    string            `mapstructure:"client_id" toml:"client_id"`
+	ClientSecret                string            `mapstructure:"client_secret" toml:"-"`
+	ManagedIdentityClientID     string            `mapstructure:"managed_identity_client_id" toml:"managed_identity_client_id"`
+	WorkloadIdentityTokenFile   string            `mapstructure:"workload_identity_token_file" toml:"workload_identity_token_file"`
+	FederatedCredentialAudience string            `mapstructure:"federated_credential_audience" toml:"federated_credential_audience"`
+	EmailAttributeName          string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
+	EmailAttributePath          string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
+	EmptyScopes                 bool              `mapstructure:"empty_scopes" toml:"empty_scopes"`
+	Enabled                     bool              `mapstructure:"enabled" toml:"enabled"`
+	GroupsAttributePath         string            `mapstructure:"groups_attribute_path" toml:"groups_attribute_path"`
+	HostedDomain                string            `mapstructure:"hosted_domain" toml:"hosted_domain"`
+	Icon                        string            `mapstructure:"icon" toml:"icon"`
+	Name                        string            `mapstructure:"name" toml:"name"`
+	RoleAttributePath           string            `mapstructure:"role_attribute_path" toml:"role_attribute_path"`
+	RoleAttributeStrict         bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict"`
+	OrgAttributePath            string            `mapstructure:"org_attribute_path"`
+	OrgMapping                  []string          `mapstructure:"org_mapping"`
+	Scopes                      []string          `mapstructure:"scopes" toml:"scopes"`
+	SignoutRedirectUrl          string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url"`
+	SkipOrgRoleSync             bool              `mapstructure:"skip_org_role_sync" toml:"skip_org_role_sync"`
+	TeamIdsAttributePath        string            `mapstructure:"team_ids_attribute_path" toml:"team_ids_attribute_path"`
+	TeamsUrl                    string            `mapstructure:"teams_url" toml:"teams_url"`
+	TlsClientCa                 string            `mapstructure:"tls_client_ca" toml:"tls_client_ca"`
+	TlsClientCert               string            `mapstructure:"tls_client_cert" toml:"tls_client_cert"`
+	TlsClientKey                string            `mapstructure:"tls_client_key" toml:"tls_client_key"`
+	TlsSkipVerify               bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
+	TokenUrl                    string            `mapstructure:"token_url" toml:"token_url"`
+	UsePKCE                     bool              `mapstructure:"use_pkce" toml:"use_pkce"`
+	UseRefreshToken             bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
+	LoginPrompt                 string            `mapstructure:"login_prompt" toml:"login_prompt"`
+	Extra                       map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
 }
 
 func NewOAuthInfo() *OAuthInfo {
@@ -110,6 +123,14 @@ func (o *OAuthInfo) IsSingleLogoutEnabled() bool {
 
 func (o *OAuthInfo) IsAutoLoginEnabled() bool {
 	return o.AutoLogin
+}
+
+func (o *OAuthInfo) IsSkipOrgRoleSyncEnabled() bool {
+	return o.SkipOrgRoleSync
+}
+
+func (o *OAuthInfo) IsAllowAssignGrafanaAdminEnabled() bool {
+	return o.AllowAssignGrafanaAdmin
 }
 
 type BasicUserInfo struct {

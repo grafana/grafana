@@ -259,11 +259,9 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
-			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-			if err != nil {
-				return err
-			}
+		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+		if err != nil {
+			return err
 		}
 
 		cmd.UpdateSecretFn = func() error {
@@ -483,12 +481,15 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 		query := &datasources.GetDataSourceQuery{
 			ID:    cmd.ID,
+			UID:   cmd.UID,
 			OrgID: cmd.OrgID,
 		}
 		dataSource, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
 		}
+		cmd.UID = dataSource.UID
+		cmd.ID = dataSource.ID
 
 		// Validate the command
 		jd, err := cmd.JsonData.ToDB()
@@ -536,7 +537,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
-		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.AllowLBACRuleUpdates {
+		if !cmd.AllowLBACRuleUpdates {
 			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
 				"reason", "overriding_lbac_rules_from_datasource_api",
 				"datasource_id", dataSource.ID,
@@ -745,7 +746,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		}
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+	if ds.IsSecureSocksDSProxyEnabled() {
 		proxyOpts := &sdkproxy.Options{
 			Enabled: true,
 			Auth: &sdkproxy.AuthOptions{
@@ -922,7 +923,7 @@ func awsServiceNamespace(dsType string, jsonData *simplejson.Json) string {
 		} else {
 			return "es"
 		}
-	case datasources.DS_PROMETHEUS, datasources.DS_ALERTMANAGER:
+	case datasources.DS_PROMETHEUS, datasources.DS_AMAZON_PROMETHEUS, datasources.DS_ALERTMANAGER:
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
@@ -948,11 +949,9 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	}
 
 	cmd.EncryptedSecureJsonData = make(map[string][]byte)
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
-		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-		if err != nil {
-			return err
-		}
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
 	}
 
 	return nil

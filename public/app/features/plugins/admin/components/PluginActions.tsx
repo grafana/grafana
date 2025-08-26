@@ -1,17 +1,21 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { GrafanaTheme2, PluginErrorCode } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
-import configCore from 'app/core/config';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
-import { InstallControlsButton } from '../components/InstallControls';
-import { ExternallyManagedButton } from '../components/InstallControls/ExternallyManagedButton';
-import { getLatestCompatibleVersion, hasInstallControlWarning, isInstallControlsEnabled } from '../helpers';
+import { InstallControlsButton } from '../components/InstallControls/InstallControlsButton';
+import {
+  getLatestCompatibleVersion,
+  hasInstallControlWarning,
+  isDisabledAngularPlugin,
+  isInstallControlsEnabled,
+  isNonAngularVersion,
+} from '../helpers';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
-import { CatalogPlugin, PluginStatus } from '../types';
+import { CatalogPlugin, PluginStatus, Version } from '../types';
 
 interface Props {
   plugin?: CatalogPlugin;
@@ -23,48 +27,34 @@ export const PluginActions = ({ plugin }: Props) => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
 
-  if (!plugin) {
+  if (!plugin || plugin.angularDetected) {
     return null;
   }
 
   const hasInstallWarning = hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion);
-  const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const pluginStatus = plugin.isInstalled
-    ? plugin.hasUpdate
-      ? PluginStatus.UPDATE
-      : PluginStatus.UNINSTALL
-    : PluginStatus.INSTALL;
-  const isInstallControlsDisabled =
-    plugin.isCore || plugin.isDisabled || plugin.isProvisioned || !isInstallControlsEnabled();
+  const pluginStatus = getPluginStatus(plugin, latestCompatibleVersion);
+  const isInstallControlsDisabled = getInstallControlsDisabled(plugin, latestCompatibleVersion);
 
   return (
     <Stack direction="column">
       <Stack alignItems="center">
         {!isInstallControlsDisabled && (
-          <>
-            {isExternallyManaged && !hasInstallWarning && !configCore.featureToggles.managedPluginsInstall ? (
-              <ExternallyManagedButton
-                pluginId={plugin.id}
-                pluginStatus={pluginStatus}
-                angularDetected={plugin.angularDetected}
-              />
-            ) : (
-              <InstallControlsButton
-                plugin={plugin}
-                latestCompatibleVersion={latestCompatibleVersion}
-                pluginStatus={pluginStatus}
-                setNeedReload={setNeedReload}
-                hasInstallWarning={hasInstallWarning}
-              />
-            )}
-          </>
+          <InstallControlsButton
+            plugin={plugin}
+            latestCompatibleVersion={latestCompatibleVersion}
+            pluginStatus={pluginStatus}
+            setNeedReload={setNeedReload}
+            hasInstallWarning={hasInstallWarning}
+          />
         )}
         <GetStartedWithPlugin plugin={plugin} />
       </Stack>
       {needReload && (
         <Stack alignItems="center">
           <Icon name="exclamation-triangle" />
-          <span className={styles.message}>Refresh the page to see the changes</span>
+          <span className={styles.message}>
+            <Trans i18nKey="plugins.plugin-actions.refresh-changes">Refresh the page to see the changes</Trans>
+          </span>
         </Stack>
       )}
     </Stack>
@@ -78,3 +68,41 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function getAngularPluginStatus(plugin: CatalogPlugin, latestCompatibleVersion: Version | undefined): PluginStatus {
+  if (!plugin.isInstalled) {
+    return PluginStatus.INSTALL;
+  }
+
+  if (isNonAngularVersion(latestCompatibleVersion)) {
+    return PluginStatus.UPDATE;
+  }
+
+  return PluginStatus.UNINSTALL;
+}
+
+function getPluginStatus(plugin: CatalogPlugin, latestCompatibleVersion: Version | undefined) {
+  if (plugin.error === PluginErrorCode.angular) {
+    return getAngularPluginStatus(plugin, latestCompatibleVersion);
+  }
+
+  if (!plugin.isInstalled) {
+    return PluginStatus.INSTALL;
+  }
+
+  if (plugin.hasUpdate) {
+    return PluginStatus.UPDATE;
+  }
+
+  return PluginStatus.UNINSTALL;
+}
+
+function getInstallControlsDisabled(plugin: CatalogPlugin, latestCompatibleVersion: Version | undefined) {
+  if (isDisabledAngularPlugin(plugin) && isNonAngularVersion(latestCompatibleVersion)) {
+    return false;
+  }
+
+  return plugin.isCore || plugin.isDisabled || plugin.isProvisioned || !isInstallControlsEnabled();
+}
+
+export { getPluginStatus, getInstallControlsDisabled };

@@ -1,5 +1,6 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName, ButtonVariant } from '@grafana/ui';
+import { HistoryEntryView } from 'app/core/components/AppChrome/types';
 
 /**
  * Event Payloads
@@ -25,6 +26,12 @@ export interface ShowModalPayload {
 export interface ShowModalReactPayload {
   component: React.ComponentType<any>;
   props?: any;
+}
+
+export interface OpenExtensionSidebarPayload {
+  props?: Record<string, unknown>;
+  pluginId: string;
+  componentTitle: string;
 }
 
 export interface ShowConfirmModalPayload {
@@ -183,6 +190,14 @@ export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPaylo
   static type = 'show-react-modal';
 }
 
+export class OpenExtensionSidebarEvent extends BusEventWithPayload<OpenExtensionSidebarPayload> {
+  static type = 'open-extension-sidebar';
+}
+
+export class CloseExtensionSidebarEvent extends BusEventBase {
+  static type = 'close-extension-sidebar';
+}
+
 /**
  * @deprecated use ShowModalReactEvent instead that has this capability built in
  */
@@ -208,4 +223,8 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
+}
+
+export class RecordHistoryEntryEvent extends BusEventWithPayload<HistoryEntryView> {
+  static type = 'record-history-entry';
 }

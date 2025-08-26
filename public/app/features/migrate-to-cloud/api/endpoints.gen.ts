@@ -18,12 +18,22 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}` }),
     }),
     createSnapshot: build.mutation<CreateSnapshotApiResponse, CreateSnapshotApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/snapshot`, method: 'POST' }),
+      query: (queryArg) => ({
+        url: `/cloudmigration/migration/${queryArg.uid}/snapshot`,
+        method: 'POST',
+        body: queryArg.createSnapshotRequestDto,
+      }),
     }),
     getSnapshot: build.query<GetSnapshotApiResponse, GetSnapshotApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshot/${queryArg.snapshotUid}`,
-        params: { resultPage: queryArg.resultPage, resultLimit: queryArg.resultLimit },
+        params: {
+          resultPage: queryArg.resultPage,
+          resultLimit: queryArg.resultLimit,
+          resultSortColumn: queryArg.resultSortColumn,
+          resultSortOrder: queryArg.resultSortOrder,
+          errorsOnly: queryArg.errorsOnly,
+        },
       }),
     }),
     cancelSnapshot: build.mutation<CancelSnapshotApiResponse, CancelSnapshotApiArg>({
@@ -41,8 +51,15 @@ const injectedRtkApi = api.injectEndpoints({
     getShapshotList: build.query<GetShapshotListApiResponse, GetShapshotListApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshots`,
-        params: { page: queryArg.page, limit: queryArg.limit, sort: queryArg.sort },
+        params: {
+          page: queryArg.page,
+          limit: queryArg.limit,
+          sort: queryArg.sort,
+        },
       }),
+    }),
+    getResourceDependencies: build.query<GetResourceDependenciesApiResponse, GetResourceDependenciesApiArg>({
+      query: () => ({ url: `/cloudmigration/resources/dependencies` }),
     }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
       query: () => ({ url: `/cloudmigration/token` }),
@@ -83,6 +100,7 @@ export type CreateSnapshotApiResponse = /** status 200 (empty) */ CreateSnapshot
 export type CreateSnapshotApiArg = {
   /** UID of a session */
   uid: string;
+  createSnapshotRequestDto: CreateSnapshotRequestDto;
 };
 export type GetSnapshotApiResponse = /** status 200 (empty) */ GetSnapshotResponseDto;
 export type GetSnapshotApiArg = {
@@ -90,19 +108,25 @@ export type GetSnapshotApiArg = {
   resultPage?: number;
   /** Max limit for snapshot results returned. */
   resultLimit?: number;
+  /** ResultSortColumn can be used to override the default system sort. Valid values are "name", "resource_type", and "status". */
+  resultSortColumn?: string;
+  /** ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC. */
+  resultSortOrder?: string;
+  /** ErrorsOnly is used to only return resources with error statuses */
+  errorsOnly?: boolean;
   /** Session UID of a session */
   uid: string;
   /** UID of a snapshot */
   snapshotUid: string;
 };
-export type CancelSnapshotApiResponse = /** status 200 (empty) */ void;
+export type CancelSnapshotApiResponse = unknown;
 export type CancelSnapshotApiArg = {
   /** Session UID of a session */
   uid: string;
   /** UID of a snapshot */
   snapshotUid: string;
 };
-export type UploadSnapshotApiResponse = /** status 200 (empty) */ void;
+export type UploadSnapshotApiResponse = unknown;
 export type UploadSnapshotApiArg = {
   /** Session UID of a session */
   uid: string;
@@ -120,11 +144,13 @@ export type GetShapshotListApiArg = {
   /** Sort with value latest to return results sorted in descending order. */
   sort?: string;
 };
+export type GetResourceDependenciesApiResponse = /** status 200 (empty) */ ResourceDependenciesResponseDto;
+export type GetResourceDependenciesApiArg = void;
 export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAccessTokenResponseDto;
 export type GetCloudMigrationTokenApiArg = void;
 export type CreateCloudMigrationTokenApiResponse = /** status 200 (empty) */ CreateAccessTokenResponseDto;
 export type CreateCloudMigrationTokenApiArg = void;
-export type DeleteCloudMigrationTokenApiResponse = /** status 204 (empty) */ void;
+export type DeleteCloudMigrationTokenApiResponse = unknown;
 export type DeleteCloudMigrationTokenApiArg = {
   /** UID of a cloud migration token */
   uid: string;
@@ -163,8 +189,25 @@ export type CloudMigrationSessionRequestDto = {
 export type CreateSnapshotResponseDto = {
   uid?: string;
 };
+export type CreateSnapshotRequestDto = {
+  resourceTypes?: (
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN'
+  )[];
+};
 export type MigrateDataResponseItemDto = {
   errorCode?:
+    | 'ALERT_RULES_QUOTA_REACHED'
+    | 'ALERT_RULES_GROUP_QUOTA_REACHED'
     | 'DATASOURCE_NAME_CONFLICT'
     | 'DATASOURCE_INVALID_URL'
     | 'DATASOURCE_ALREADY_MANAGED'
@@ -175,7 +218,6 @@ export type MigrateDataResponseItemDto = {
     | 'RESOURCE_CONFLICT'
     | 'UNEXPECTED_STATUS_CODE'
     | 'INTERNAL_SERVICE_ERROR'
-    | 'ONLY_CORE_DATA_SOURCES'
     | 'GENERIC_ERROR';
   message?: string;
   name?: string;
@@ -188,10 +230,12 @@ export type MigrateDataResponseItemDto = {
     | 'FOLDER'
     | 'LIBRARY_ELEMENT'
     | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
-    | 'MUTE_TIMING';
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
 };
 export type SnapshotResourceStats = {
   statuses?: {
@@ -241,6 +285,36 @@ export type SnapshotDto = {
 export type SnapshotListResponseDto = {
   snapshots?: SnapshotDto[];
 };
+export type ResourceDependencyDto = {
+  dependencies?: (
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN'
+  )[];
+  resourceType?:
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
+};
+export type ResourceDependenciesResponseDto = {
+  resourceDependencies?: ResourceDependencyDto[];
+};
 export type GetAccessTokenResponseDto = {
   createdAt?: string;
   displayName?: string;
@@ -264,6 +338,7 @@ export type AnnotationPermission = {
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
   canAdmin?: boolean;
   canDelete?: boolean;
   canEdit?: boolean;
@@ -295,7 +370,7 @@ export type DashboardFullWithMeta = {
   dashboard?: Json;
   meta?: DashboardMeta;
 };
-export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = {
+export type LibraryElementDtoMetaUser = {
   avatarUrl?: string;
   id?: number;
   name?: string;
@@ -303,11 +378,11 @@ export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = 
 export type LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto = {
   connectedDashboards?: number;
   created?: string;
-  createdBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  createdBy?: LibraryElementDtoMetaUser;
   folderName?: string;
   folderUid?: string;
   updated?: string;
-  updatedBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  updatedBy?: LibraryElementDtoMetaUser;
 };
 export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   description?: string;
@@ -338,6 +413,7 @@ export const {
   useCancelSnapshotMutation,
   useUploadSnapshotMutation,
   useGetShapshotListQuery,
+  useGetResourceDependenciesQuery,
   useGetCloudMigrationTokenQuery,
   useCreateCloudMigrationTokenMutation,
   useDeleteCloudMigrationTokenMutation,

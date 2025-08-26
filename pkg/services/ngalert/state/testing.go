@@ -2,6 +2,8 @@ package state
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"slices"
 	"sync"
 
@@ -42,8 +44,6 @@ func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q models.AlertI
 	return nil
 }
 
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-
 func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...models.AlertInstanceKey) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -57,6 +57,17 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 }
 
 func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.recordedOps = append(f.recordedOps, FakeInstanceStoreOp{
+		Name: "SaveAlertInstancesForRule", Args: []any{
+			ctx,
+			key,
+			instances,
+		},
+	})
+
 	return nil
 }
 
@@ -64,7 +75,7 @@ func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key 
 	return nil
 }
 
-func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = []any{}
@@ -107,3 +118,33 @@ func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*mo
 
 // NoopSender is a no-op sender. Used when you want state manager to update LastSentAt without sending any alerts.
 var NoopSender = func(_ context.Context, _ StateTransitions) {}
+
+type CountingImageService struct {
+	mtx    sync.Mutex
+	Called int
+	Image  *models.Image
+	Err    error
+}
+
+func (c *CountingImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.Called += 1
+	return c.Image, c.Err
+}
+
+func newSuccessfulCountingImageService() *CountingImageService {
+	return &CountingImageService{
+		Called: 0,
+		Image: &models.Image{
+			Token: fmt.Sprint(rand.Int()),
+		},
+	}
+}
+
+func NewFailingCountingImageService(err error) *CountingImageService {
+	return &CountingImageService{
+		Called: 0,
+		Err:    err,
+	}
+}

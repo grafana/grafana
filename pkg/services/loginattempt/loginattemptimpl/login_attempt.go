@@ -11,10 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	maxInvalidLoginAttempts int64 = 5
-	loginAttemptsWindow           = time.Minute * 5
-)
+const loginAttemptsWindow = time.Minute * 5
 
 func ProvideService(db db.DB, cfg *setting.Cfg, lock *serverlock.ServerLockService) *Service {
 	return &Service{
@@ -50,13 +47,13 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
-	if s.cfg.DisableBruteForceLoginProtection {
+	if s.cfg.DisableBruteForceLoginProtection || (s.cfg.DisableUsernameLoginProtection && s.cfg.DisableIPAddressLoginProtection) {
 		return nil
 	}
 
 	_, err := s.store.CreateLoginAttempt(ctx, CreateLoginAttemptCommand{
 		Username:  strings.ToLower(username),
-		IpAddress: IPAddress,
+		IPAddress: IPAddress,
 	})
 	return err
 }
@@ -66,7 +63,7 @@ func (s *Service) Reset(ctx context.Context, username string) error {
 }
 
 func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
-	if s.cfg.DisableBruteForceLoginProtection {
+	if s.cfg.DisableBruteForceLoginProtection || s.cfg.DisableUsernameLoginProtection {
 		return true, nil
 	}
 
@@ -80,7 +77,29 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 		return false, err
 	}
 
-	if count >= maxInvalidLoginAttempts {
+	if count >= s.cfg.BruteForceLoginProtectionMaxAttempts {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (s *Service) ValidateIPAddress(ctx context.Context, IPAddress string) (bool, error) {
+	if s.cfg.DisableBruteForceLoginProtection || s.cfg.DisableIPAddressLoginProtection {
+		return true, nil
+	}
+
+	loginAttemptCountQuery := GetIPLoginAttemptCountQuery{
+		IPAddress: IPAddress,
+		Since:     time.Now().Add(-loginAttemptsWindow),
+	}
+
+	count, err := s.store.GetIPLoginAttemptCount(ctx, loginAttemptCountQuery)
+	if err != nil {
+		return false, err
+	}
+
+	if count >= s.cfg.BruteForceLoginProtectionMaxAttempts {
 		return false, nil
 	}
 

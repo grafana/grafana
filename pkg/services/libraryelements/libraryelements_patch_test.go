@@ -4,15 +4,20 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestPatchLibraryElement(t *testing.T) {
+func TestIntegration_PatchLibraryElement(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{Kind: int64(model.PanelElement), Version: 1}
@@ -24,7 +29,14 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_NewFolder",
+				Title: "NewFolder",
+			}
+			sc.folderSvc.ExpectedFolder = newFolder
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{newFolder}
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -67,7 +79,7 @@ func TestPatchLibraryElement(t *testing.T) {
 					Version: 2,
 					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "NewFolder",
-						FolderUID:           "NewFolder",
+						FolderUID:           "uid_for_NewFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -91,7 +103,14 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_NewFolder",
+				Title: "NewFolder",
+			}
+			sc.folderSvc.ExpectedFolder = newFolder
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{newFolder}
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -111,7 +130,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			sc.initialResult.Result.Meta.FolderName = "NewFolder"
-			sc.initialResult.Result.Meta.FolderUID = "NewFolder"
+			sc.initialResult.Result.Meta.FolderUID = "uid_for_NewFolder"
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -323,9 +342,10 @@ func TestPatchLibraryElement(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := model.PatchLibraryElementCommand{
-				Name:    "Text - Library Panel",
-				Version: 1,
-				Kind:    int64(model.PanelElement),
+				Name:      "Text - Library Panel",
+				Version:   1,
+				Kind:      int64(model.PanelElement),
+				FolderUID: &sc.folder.UID,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -335,26 +355,35 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_NewFolder",
+				Title: "NewFolder",
+			}
+			sc.folderSvc.ExpectedFolder = newFolder
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{newFolder}
+
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)
-			resp := sc.service.createHandler(sc.reqContext)
-			var result = validateAndUnMarshalResponse(t, resp)
+			sc.service.createHandler(sc.reqContext)
 			cmd := model.PatchLibraryElementCommand{
-				FolderID:  1, // nolint:staticcheck
-				FolderUID: &sc.folder.UID,
+				FolderID:  newFolder.ID, // nolint:staticcheck
+				FolderUID: &newFolder.UID,
 				Version:   1,
 				Kind:      int64(model.PanelElement),
 			}
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
-			resp = sc.service.patchHandler(sc.reqContext)
+			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
+			sc.folderSvc.ExpectedFolder = nil
+			sc.folderSvc.ExpectedError = folder.ErrFolderNotFound
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  sc.folder.ID, // nolint:staticcheck
 				FolderUID: &sc.folder.UID,
@@ -383,37 +412,5 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 412, resp.Status())
-		})
-
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with an other kind, it should succeed but panel should not change",
-		func(t *testing.T, sc scenarioContext) {
-			cmd := model.PatchLibraryElementCommand{
-				FolderID:  sc.folder.ID, // nolint:staticcheck
-				FolderUID: &sc.folder.UID,
-				Version:   1,
-				Kind:      int64(model.VariableElement),
-			}
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			sc.ctx.Req.Body = mockRequestBody(cmd)
-			resp := sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-			var result = validateAndUnMarshalResponse(t, resp)
-			sc.initialResult.Result.Type = "text"
-			sc.initialResult.Result.Kind = int64(model.PanelElement)
-			sc.initialResult.Result.Description = "A description"
-			sc.initialResult.Result.Model = map[string]any{
-				"datasource":  "${DS_GDEV-TESTDATA}",
-				"id":          float64(1),
-				"title":       "Text - Library Panel",
-				"type":        "text",
-				"description": "A description",
-			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
-			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
-			sc.initialResult.Result.Version = 2
-			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
 		})
 }

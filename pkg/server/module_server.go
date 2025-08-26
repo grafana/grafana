@@ -9,20 +9,41 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/gorilla/mux"
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/frontend"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg)
+func NewModule(opts Options,
+	apiOpts api.ServerOptions,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+	reg prometheus.Registerer,
+	promGatherer prometheus.Gatherer,
+	tracer tracing.Tracer, // Ensures tracing is initialized
+	license licensing.Licensing,
+) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +55,16 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(opts Options,
+	apiOpts api.ServerOptions,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+	reg prometheus.Registerer,
+	promGatherer prometheus.Gatherer,
+	license licensing.Licensing,
+) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -50,6 +80,11 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		version:          opts.Version,
 		commit:           opts.Commit,
 		buildBranch:      opts.BuildBranch,
+		storageMetrics:   storageMetrics,
+		indexMetrics:     indexMetrics,
+		promGatherer:     promGatherer,
+		registerer:       reg,
+		license:          license,
 	}
 
 	return s, nil
@@ -71,11 +106,22 @@ type ModuleServer struct {
 	shutdownFinished chan struct{}
 	isInitialized    bool
 	mtx              sync.Mutex
+	storageMetrics   *resource.StorageMetrics
+	indexMetrics     *resource.BleveIndexMetrics
+	license          licensing.Licensing
 
 	pidFile     string
 	version     string
 	commit      string
 	buildBranch string
+
+	promGatherer prometheus.Gatherer
+	registerer   prometheus.Registerer
+
+	MemberlistKVConfig         kv.Config
+	httpServerRouter           *mux.Router
+	searchServerRing           *ring.Ring
+	searchServerRingClientPool *ringclient.Pool
 }
 
 // init initializes the server and its services.
@@ -111,11 +157,15 @@ func (s *ModuleServer) Run() error {
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
-		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
+		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
-		return NewInstrumentationService(s.log, s.cfg)
+		return s.initInstrumentationServer()
 	})
+
+	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
+	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
+	m.RegisterModule(modules.SearchServerDistributor, s.initSearchServerDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
@@ -131,11 +181,19 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil)
+		docBuilders, err := InitializeDocumentBuilders(s.cfg)
+		if err != nil {
+			return nil, err
+		}
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
+	})
+
+	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
 	m.RegisterModule(modules.All, nil)

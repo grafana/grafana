@@ -12,8 +12,9 @@ import {
   dataFrameToJSON,
   DataTopic,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { Randomize, randomizeData } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
@@ -139,7 +140,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
         y: 20,
       },
       type: 'table',
-      title: 'Annotations',
+      title: t('dashboard.get-debug-dashboard.title.annotations', 'Annotations'),
       datasource: {
         type: 'datasource',
         uid: '-- Dashboard --',

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 )
 
+//go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
 type FeatureToggles interface {
 	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
@@ -21,6 +22,15 @@ type FeatureToggles interface {
 	// Get the enabled flags -- this *may* also include disabled flags (with value false)
 	// but it is guaranteed to have the enabled ones listed
 	GetEnabled(ctx context.Context) map[string]bool
+}
+
+func AnyEnabled(f FeatureToggles, flags ...string) bool {
+	for _, flag := range flags {
+		if f.IsEnabledGlobally(flag) {
+			return true
+		}
+	}
+	return false
 }
 
 // FeatureFlagStage indicates the quality level

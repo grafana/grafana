@@ -21,7 +21,7 @@ describe('Grouping to Matrix', () => {
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
-        { name: 'Time', type: FieldType.time, values: [1000, 1001, 1002] },
+        { name: 'Time', type: FieldType.time, values: [1000, 1001, 1002], config: { interval: 60000 } },
         { name: 'Value', type: FieldType.number, values: [1, 2, 3] },
       ],
     });
@@ -31,9 +31,11 @@ describe('Grouping to Matrix', () => {
       const expected: Field[] = [
         {
           name: 'Time\\Time',
-          type: FieldType.string,
+          type: FieldType.time,
           values: [1000, 1001, 1002],
-          config: {},
+          config: {
+            interval: 60000,
+          },
         },
         {
           name: '1000',
@@ -105,11 +107,18 @@ describe('Grouping to Matrix', () => {
     });
   });
 
-  it('generates Matrix with empty entries', async () => {
+  it.each([
+    [undefined, ''],
+    [SpecialValue.Null, null],
+    [SpecialValue.False, false],
+    [SpecialValue.True, true],
+    [SpecialValue.Empty, ''],
+    [SpecialValue.Zero, 0],
+  ])('generates Matrix with empty entries', async (emptyValue, expectedValue) => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
       options: {
-        emptyValue: SpecialValue.Null,
+        emptyValue: emptyValue,
       },
     };
 
@@ -126,20 +135,137 @@ describe('Grouping to Matrix', () => {
       const expected: Field[] = [
         {
           name: 'Time\\Time',
-          type: FieldType.string,
+          type: FieldType.time,
           values: [1000, 1001],
           config: {},
         },
         {
           name: '1000',
           type: FieldType.number,
-          values: [1, null],
+          values: [1, expectedValue],
           config: {},
         },
         {
           name: '1001',
           type: FieldType.number,
-          values: [null, 2],
+          values: [expectedValue, 2],
+          config: {},
+        },
+      ];
+
+      expect(processed[0].fields).toEqual(expected);
+    });
+  });
+
+  it('properly handles null column name values', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'Temp',
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['C1', null, 'C2'] },
+        { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5], config: { units: 'celsius' } },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        [
+          {
+            "config": {},
+            "name": "Row\\Column",
+            "type": "string",
+            "values": [
+              "R1",
+              "R2",
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": "C1",
+            "type": "number",
+            "values": [
+              1,
+              "",
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": null,
+            "type": "number",
+            "values": [
+              "",
+              4,
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": "C2",
+            "type": "number",
+            "values": [
+              5,
+              "",
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
+  it('properly handles the value display name (by ignoring it)', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'CustomName',
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['C1', 'C1', 'C2'] },
+        { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5], config: { displayName: 'CustomName' } },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Row\\Column',
+          type: FieldType.string,
+          values: ['R1', 'R2'],
+          config: {},
+        },
+        {
+          name: 'C1',
+          type: FieldType.number,
+          values: [1, 4],
+          config: {},
+        },
+        {
+          name: 'C2',
+          type: FieldType.number,
+          values: [5, ''],
           config: {},
         },
       ];
@@ -205,6 +331,33 @@ describe('Grouping to Matrix', () => {
           },
         ]
       `);
+    });
+  });
+
+  it('generates Matrix ignoring special value when value type is frame', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'Temp',
+        emptyValue: SpecialValue.Zero,
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['C1', 'C1', 'C2'] },
+        { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
+        { name: 'Temp', type: FieldType.frame, values: [{}, null, {}] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed[0].fields).toMatchSnapshot();
     });
   });
 });

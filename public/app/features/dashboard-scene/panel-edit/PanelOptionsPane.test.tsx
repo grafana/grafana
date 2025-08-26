@@ -1,3 +1,5 @@
+import { PanelPlugin } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -7,6 +9,15 @@ import { findVizPanelByKey } from '../utils/utils';
 
 import { PanelOptionsPane } from './PanelOptionsPane';
 import { testDashboard } from './testfiles/testDashboard';
+
+let pluginToLoad: PanelPlugin | undefined;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginImportUtils: () => ({
+    getPanelPluginFromCache: jest.fn(() => pluginToLoad),
+  }),
+}));
 
 describe('PanelOptionsPane', () => {
   describe('When changing plugin', () => {
@@ -20,6 +31,38 @@ describe('PanelOptionsPane', () => {
 
       expect(optionsPane['_cachedPluginOptions']['timeseries']?.options).toBe(panel.state.options);
       expect(optionsPane['_cachedPluginOptions']['timeseries']?.fieldConfig).toBe(panel.state.fieldConfig);
+    });
+
+    it('When visualization suggestion is selected should update options and fieldConfig', () => {
+      pluginToLoad = getPanelPlugin({
+        id: 'timeseries',
+      });
+
+      pluginToLoad.useFieldConfig({
+        useCustomConfig: (builder) => {
+          builder.addBooleanSwitch({
+            name: 'axisBorderShow',
+            path: 'axisBorderShow',
+            defaultValue: false,
+          });
+        },
+      });
+
+      const { optionsPane, panel } = setupTest('panel-1');
+      panel.setState({ $data: undefined });
+      panel.activate();
+
+      optionsPane.onChangePanelPlugin({
+        pluginId: 'table',
+        options: { showHeader: false },
+        fieldConfig: {
+          defaults: { custom: { axisBorderShow: true } },
+          overrides: [],
+        },
+      });
+
+      expect(panel.state.options).toEqual({ showHeader: false });
+      expect((panel.state.fieldConfig.defaults.custom as any).axisBorderShow).toEqual(true);
     });
 
     it('Should preserve correct field config', () => {

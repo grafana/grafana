@@ -52,9 +52,9 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   add-a-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
   about-users-and-permissions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
@@ -90,14 +90,17 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **To create a dashboard**:
 
+{{< shared id="create-dashboard" >}}
+
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-1. In the dialog box that opens, do one of the following:
+{{< /shared >}}
 
+1. In the dialog box that opens, do one of the following:
    - Select one of your existing data sources.
    - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
@@ -123,7 +126,6 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
-
    - [Configure value mappings](ref:configure-value-mappings)
    - [Visualization-specific options](ref:visualization-specific-options)
    - [Override field values](ref:override-field-values)

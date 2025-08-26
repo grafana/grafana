@@ -1,0 +1,31 @@
+name: Shellcheck
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  shellcheck:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Shellcheck scripts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # clone the repository
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run Shellcheck
+        run: find scripts/ -name '*.sh' -type f -exec shellcheck -e SC1071 -e SC2162 '{}' +

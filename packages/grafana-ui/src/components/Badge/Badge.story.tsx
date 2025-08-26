@@ -1,13 +1,12 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Badge } from '@grafana/ui';
-
 import { iconOptions } from '../../utils/storybook/icons';
 
+import { Badge } from './Badge';
 import mdx from './Badge.mdx';
 
 const meta: Meta<typeof Badge> = {
-  title: 'Data Display/Badge',
+  title: 'Information/Badge',
   component: Badge,
   parameters: {
     docs: { page: mdx },

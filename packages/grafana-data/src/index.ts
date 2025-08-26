@@ -98,7 +98,7 @@ export {
 } from './text/string';
 export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
 export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
-export { textUtil } from './text/sanitize';
+export { textUtil, validatePath, PathValidationError } from './text/sanitize';
 
 // Events
 export { eventFactory } from './events/eventFactory';
@@ -137,6 +137,8 @@ export {
   fieldColorModeRegistry,
   type FieldColorMode,
   getFieldSeriesColor,
+  /** @internal */
+  getColorByStringHash,
 } from './field/fieldColor';
 export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './field/thresholds';
@@ -255,10 +257,12 @@ export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/u
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
-export { store } from './utils/store';
+export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
+export { throwIfAngular } from './utils/throwIfAngular';
+export { fuzzySearch } from './utils/fuzzySearch';
 
-// Tranformations
+// Transformations
 export { standardTransformers } from './transformations/transformers';
 export {
   fieldMatchers,
@@ -403,6 +407,7 @@ export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parse
 export {
   intervalToAbbreviatedDurationString,
   parseDuration,
+  reverseParseDuration,
   addDurationToDate,
   durationToMilliseconds,
   isValidDate,
@@ -429,7 +434,11 @@ export {
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
-export { type PluginContextType, type DataSourcePluginContextType } from './context/plugins/PluginContext';
+export {
+  type PluginContextType,
+  type DataSourcePluginContextType,
+  PluginContext,
+} from './context/plugins/PluginContext';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
@@ -442,8 +451,11 @@ export { getLinksSupplier } from './field/fieldOverrides';
 // Types
 export { isUnsignedPluginSignature } from './types/pluginSignature';
 export type {
+  AzureSettings,
+  AzureCloudInfo,
   CurrentUserDTO,
   AnalyticsSettings,
+  AppPluginConfig,
   BootData,
   OAuth,
   OAuthSettings,
@@ -451,6 +463,8 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
+  PreinstalledPlugin,
+  UnifiedAlertingConfig,
 } from './types/config';
 export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';
 export type { WithAccessControlMetadata } from './types/accesscontrol';
@@ -483,6 +497,8 @@ export type {
   ExploreLogsPanelState,
   SplitOpenOptions,
   SplitOpen,
+  TraceSearchProps,
+  TraceSearchTag,
 } from './types/explore';
 export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
@@ -548,17 +564,23 @@ export {
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
-  type PluginExtensionConfig,
-  type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
+  type PluginExtensionComponentMeta,
+  type ComponentTypeWithExtensionMeta,
+  type PluginExtensionFunction,
   type PluginExtensionEventHelpers,
+  type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionDataSourceConfigActionsContext,
+  type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
+  type PluginExtensionAddedFunctionConfig,
+  type PluginExtensionResourceAttributesContext,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -572,6 +594,8 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
+  reverseScopeFilterOperatorMap,
+  isEqualityOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,
@@ -593,6 +617,7 @@ export {
   type PluginMetaInfo,
   type PluginConfigPageProps,
   type PluginConfigPage,
+  type ExtensionInfo,
 } from './types/plugin';
 export {
   type InterpolateFunction,
@@ -642,6 +667,7 @@ export {
   type QueryFixAction,
   type QueryHint,
   type MetricFindValue,
+  type FiltersApplicability,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
@@ -764,6 +790,8 @@ export {
   type DataSourceWithQueryModificationSupport,
   hasToggleableQueryFiltersSupport,
   hasQueryModificationSupport,
+  LogSortOrderChangeEvent,
+  type LogSortOrderChangePayload,
 } from './types/logs';
 export {
   type AnnotationQuery,
@@ -805,7 +833,11 @@ export {
 export {
   type Action,
   type ActionModel,
+  type ActionVariable,
+  type ActionVariableInput,
+  ActionType,
   HttpRequestMethod,
+  ActionVariableType,
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
@@ -864,3 +896,5 @@ export {
   userHasAllPermissions,
   userHasAnyPermission,
 } from './rbac/rbac';
+
+export { type UserStorage } from './types/userStorage';

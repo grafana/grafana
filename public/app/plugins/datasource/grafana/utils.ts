@@ -3,8 +3,8 @@ import { DropEvent, FileRejection } from 'react-dropzone';
 import { DataFrame, DataFrameJSON, dataFrameToJSON } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PanelModel } from 'app/features/dashboard/state';
-import * as DFImport from 'app/features/dataframe-import';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { filesToDataframes } from 'app/features/dataframe-import/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { defaultFileUploadQuery, GrafanaQuery, GrafanaQueryType } from './types';
@@ -62,7 +62,7 @@ export function getFileDropToQueryHandler(
   onFileLoaded: (query: GrafanaQuery, fileRejections: FileRejection[]) => void
 ) {
   return (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
-    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
+    filesToDataframes(acceptedFiles).subscribe(async (next) => {
       const snapshot: DataFrameJSON[] = [];
       next.dataFrames.forEach((df: DataFrame) => {
         const dataframeJson = dataFrameToJSON(df);

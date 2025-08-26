@@ -15,11 +15,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  // store the metrics explorer additional settings
-  useBackend?: boolean;
-  disableTextWrap?: boolean;
-  fullMetaSearch?: boolean;
-  includeNullMetadata?: boolean;
+  fromExploreMetrics?: boolean;
 }
 
 export enum PrometheusCacheLevel {
@@ -50,10 +46,12 @@ export interface PromOptions extends DataSourceJsonData {
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
   disableRecordingRules?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
   codeModeMetricNamesSuggestionLimit?: number;
   seriesEndpoint?: boolean;
+  seriesLimit?: number;
 }
 
 export type ExemplarTraceIdDestination = {

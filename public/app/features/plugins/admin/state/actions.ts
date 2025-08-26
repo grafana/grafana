@@ -3,9 +3,9 @@ import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import configCore from 'app/core/config';
+import { Settings } from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-import { StoreState, ThunkResult } from 'app/types';
+import { StoreState, ThunkResult } from 'app/types/store';
 
 import { invalidatePluginInCache } from '../../loader/cache';
 import {
@@ -19,8 +19,8 @@ import {
   getProvisionedPlugins,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
-import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
-import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin } from '../types';
+import { mapLocalToCatalog, mergeLocalsAndRemotes } from '../helpers';
+import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin, PluginStatus } from '../types';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -28,14 +28,8 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/pending` });
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/pending` });
 
-    const instance$ =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? from(getInstancePlugins())
-        : of(undefined);
-    const provisioned$ =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? from(getProvisionedPlugins())
-        : of(undefined);
+    const instance$ = config.pluginAdminExternalManageEnabled ? from(getInstancePlugins()) : of(undefined);
+    const provisioned$ = config.pluginAdminExternalManageEnabled ? from(getProvisionedPlugins()) : of(undefined);
     const TIMEOUT = 500;
     const pluginErrors$ = from(getPluginErrors());
     const local$ = from(getLocalPlugins());
@@ -195,17 +189,23 @@ export const install = createAsyncThunk<
   {
     id: string;
     version?: string;
-    isUpdating?: boolean;
+    installType?: PluginStatus;
   }
->(`${STATE_PREFIX}/install`, async ({ id, version, isUpdating = false }, thunkApi) => {
-  const changes = isUpdating
-    ? { isInstalled: true, installedVersion: version, hasUpdate: false }
-    : { isInstalled: true, installedVersion: version };
+>(`${STATE_PREFIX}/install`, async ({ id, version, installType = PluginStatus.INSTALL }, thunkApi) => {
+  const changes: Partial<CatalogPlugin> = { isInstalled: true, installedVersion: version };
+
+  if (installType === PluginStatus.UPDATE) {
+    changes.hasUpdate = false;
+  }
+  if (installType === PluginStatus.DOWNGRADE) {
+    changes.hasUpdate = true;
+  }
+
   try {
     await installPlugin(id, version);
     await updatePanels();
 
-    if (isUpdating) {
+    if (installType !== PluginStatus.INSTALL) {
       invalidatePluginInCache(id);
     }
 
@@ -279,3 +279,11 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
     return plugin;
   };
 };
+
+function updatePanels() {
+  return getBackendSrv()
+    .get('/api/frontend/settings')
+    .then((settings: Settings) => {
+      config.panels = settings.panels;
+    });
+}

@@ -1,12 +1,52 @@
 type StoreValue = string | number | boolean | null;
+type StoreSubscriber = () => void;
 
+/**
+ * @deprecated Import singleton instance 'store' from '@grafana/data' instead
+ */
 export class Store {
+  private subscribers: Map<string, Set<StoreSubscriber>> = new Map();
+
+  constructor() {
+    // Changes from other tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key) {
+        this.notifySubscribers(e.key);
+      }
+    });
+  }
+
+  private notifySubscribers(key: string) {
+    const keySubscribers = this.subscribers.get(key);
+    if (keySubscribers) {
+      keySubscribers.forEach((subscriber) => subscriber());
+    }
+  }
+
+  subscribe(key: string, callback: StoreSubscriber) {
+    if (!this.subscribers.has(key)) {
+      this.subscribers.set(key, new Set());
+    }
+    this.subscribers.get(key)!.add(callback);
+
+    return () => {
+      const keySubscribers = this.subscribers.get(key);
+      if (keySubscribers) {
+        keySubscribers.delete(callback);
+        if (keySubscribers.size === 0) {
+          this.subscribers.delete(key);
+        }
+      }
+    };
+  }
+
   get(key: string) {
     return window.localStorage[key];
   }
 
   set(key: string, value: StoreValue) {
     window.localStorage[key] = value;
+    this.notifySubscribers(key);
   }
 
   getBool(key: string, def: boolean): boolean {
@@ -58,6 +98,7 @@ export class Store {
 
   delete(key: string) {
     window.localStorage.removeItem(key);
+    this.notifySubscribers(key);
   }
 }
 

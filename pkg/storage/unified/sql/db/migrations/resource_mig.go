@@ -88,6 +88,34 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: "resource_blob",
+		Columns: []*migrator.Column{
+			{Name: "uuid", Type: migrator.DB_Uuid, Length: 36, Nullable: false, IsPrimaryKey: true},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
+
+			// The raw bytes
+			{Name: "value", Type: migrator.DB_LongBlob, Nullable: false},
+
+			// Used as an etag
+			{Name: "hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+			{Name: "content_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{
+				Cols: []string{"namespace", "group", "resource", "name"},
+				Type: migrator.IndexType,
+				Name: "IDX_resource_history_namespace_group_name",
+			},
+			{Cols: []string{"created"}, Type: migrator.IndexType}, // sort field
+		},
+	})
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
@@ -119,6 +147,24 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	mg.AddMigration("Add column folder in resource", migrator.NewAddColumnMigration(resource_table, &migrator.Column{
 		Name: "folder", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, Default: "''",
+	}))
+
+	mg.AddMigration("Migrate DeletionMarkers to real Resource objects", &deletionMarkerMigrator{})
+
+	mg.AddMigration("Add index to resource_history for get trash", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Name: "IDX_resource_history_namespace_group_resource_action_version",
+		Cols: []string{"namespace", "group", "resource", "action", "resource_version"},
+		Type: migrator.IndexType,
+	}))
+
+	// Add generation column so we can use it for more aggressive pruning
+	mg.AddMigration("Add generation to resource history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
+		Name: "generation", Type: migrator.DB_BigInt, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add generation index to resource history", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"namespace", "group", "resource", "name", "generation"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_namespace_group_resource_name_generation",
 	}))
 
 	return marker

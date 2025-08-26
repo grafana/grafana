@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
@@ -45,12 +46,14 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	exemplarSampler    func() exemplar.Sampler
+	featureToggles     backend.FeatureToggles
 }
 
 func New(
 	httpClient *http.Client,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
+	featureToggles backend.FeatureToggles,
 ) (*QueryData, error) {
 	jsonData, err := utils.GetJsonData(settings)
 	if err != nil {
@@ -85,6 +88,7 @@ func New(
 		ID:                 settings.ID,
 		URL:                settings.URL,
 		exemplarSampler:    exemplarSampler,
+		featureToggles:     featureToggles,
 	}, nil
 }
 
@@ -97,47 +101,32 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	var (
-		cfg                               = backend.GrafanaConfigFromContext(ctx)
-		hasPromQLScopeFeatureFlag         = cfg.FeatureToggles().IsEnabled("promQLScope")
-		hasPrometheusDataplaneFeatureFlag = cfg.FeatureToggles().IsEnabled("prometheusDataplane")
-		hasPrometheusRunQueriesInParallel = cfg.FeatureToggles().IsEnabled("prometheusRunQueriesInParallel")
+		hasPromQLScopeFeatureFlag = s.featureToggles.IsEnabled("promQLScope")
+		m                         sync.Mutex
 	)
 
-	if hasPrometheusRunQueriesInParallel {
-		var (
-			m sync.Mutex
-		)
-
-		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
-		if err != nil {
-			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), "prometheusRunQueriesInParallel")
-			concurrentQueryCount = 10
-		}
-
-		_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
-			query := req.Queries[idx]
-			r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, true)
-			if r != nil {
-				m.Lock()
-				result.Responses[query.RefID] = *r
-				m.Unlock()
-			}
-			return nil
-		})
-	} else {
-		for _, q := range req.Queries {
-			r := s.handleQuery(ctx, q, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, false)
-			if r != nil {
-				result.Responses[q.RefID] = *r
-			}
-		}
+	concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
+	if err != nil {
+		logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), "prometheusRunQueriesInParallel")
+		concurrentQueryCount = 10
 	}
+
+	_ = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
+		query := req.Queries[idx]
+		r := s.handleQuery(ctx, query, fromAlert, hasPromQLScopeFeatureFlag)
+		if r != nil {
+			m.Lock()
+			result.Responses[query.RefID] = *r
+			m.Unlock()
+		}
+		return nil
+	})
 
 	return &result, nil
 }
 
 func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromAlert,
-	hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
+	hasPromQLScopeFeatureFlag bool) *backend.DataResponse {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	defer span.End()
 	query, err := models.Parse(span, bq, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
@@ -147,15 +136,14 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 		}
 	}
 
-	r := s.fetch(traceCtx, s.client, query, hasPrometheusDataplaneFeatureFlag, hasPrometheusRunQueriesInParallel)
+	r := s.fetch(traceCtx, s.client, query)
 	if r == nil {
 		s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 	}
 	return r
 }
 
-func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query,
-	enablePrometheusDataplane, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
+func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
 	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr /*, "queryTimeout", s.QueryTimeout*/)
 
@@ -170,68 +158,48 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 	)
 
 	if q.InstantQuery {
-		if hasPrometheusRunQueriesInParallel {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				res := s.instantQuery(traceCtx, client, q, enablePrometheusDataplane)
-				m.Lock()
-				addDataResponse(&res, dr)
-				m.Unlock()
-			}()
-		} else {
-			res := s.instantQuery(traceCtx, client, q, enablePrometheusDataplane)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			res := s.instantQuery(traceCtx, client, q)
+			m.Lock()
 			addDataResponse(&res, dr)
-		}
+			m.Unlock()
+		}()
 	}
 
 	if q.RangeQuery {
-		if hasPrometheusRunQueriesInParallel {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane)
-				m.Lock()
-				addDataResponse(&res, dr)
-				m.Unlock()
-			}()
-		} else {
-			res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			res := s.rangeQuery(traceCtx, client, q)
+			m.Lock()
 			addDataResponse(&res, dr)
-		}
+			m.Unlock()
+		}()
 	}
 
 	if q.ExemplarQuery {
-		if hasPrometheusRunQueriesInParallel {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				res := s.exemplarQuery(traceCtx, client, q, enablePrometheusDataplane)
-				m.Lock()
-				if res.Error != nil {
-					// If exemplar query returns error, we want to only log it and
-					// continue with other results processing
-					logger.Error("Exemplar query failed", "query", q.Expr, "err", res.Error)
-				}
-				dr.Frames = append(dr.Frames, res.Frames...)
-				m.Unlock()
-			}()
-		} else {
-			res := s.exemplarQuery(traceCtx, client, q, enablePrometheusDataplane)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			res := s.exemplarQuery(traceCtx, client, q)
+			m.Lock()
 			if res.Error != nil {
 				// If exemplar query returns error, we want to only log it and
 				// continue with other results processing
 				logger.Error("Exemplar query failed", "query", q.Expr, "err", res.Error)
 			}
 			dr.Frames = append(dr.Frames, res.Frames...)
-		}
+			m.Unlock()
+		}()
 	}
 	wg.Wait()
 
 	return dr
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return addErrorSourceToDataResponse(err)
@@ -247,7 +215,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return addErrorSourceToDataResponse(err)
@@ -271,7 +239,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		response := backend.DataResponse{
@@ -300,6 +268,7 @@ func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
 		} else {
 			dr.Error = fmt.Errorf("%v %w", dr.Error, res.Error)
 		}
+		dr.ErrorSource = status.SourceFromHTTPStatus(int(res.Status))
 		dr.Status = res.Status
 	}
 	dr.Frames = append(dr.Frames, res.Frames...)

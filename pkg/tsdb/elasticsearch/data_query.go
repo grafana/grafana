@@ -3,15 +3,17 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -52,7 +54,8 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mq, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return errorsource.AddPluginErrorToResponse(e.dataQueries[0].RefID, response, err), nil
+		response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		return response, nil
 	}
 
 	ms := e.client.MultiSearch()
@@ -63,7 +66,8 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
 			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-			return errorsource.AddPluginErrorToResponse(q.RefID, response, err), nil
+			response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+			return response, nil
 		}
 	}
 
@@ -71,21 +75,35 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mqs, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return errorsource.AddPluginErrorToResponse(e.dataQueries[0].RefID, response, err), nil
+		response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		return response, nil
 	}
 
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
-			err = errorsource.DownstreamError(err, false)
+			err = backend.DownstreamError(err)
 		}
-		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			// Unsupported protocol scheme is a common error when the URL is not valid and should be treated as a downstream error
+			if urlErr.Err != nil && strings.HasPrefix(urlErr.Err.Error(), "unsupported protocol scheme") {
+				err = backend.DownstreamError(err)
+			}
+		}
+		response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		return response, nil
 	}
 
 	if res.Status >= 400 {
-		errWithSource := errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.Status), fmt.Errorf("unexpected status code: %d", res.Status), false)
-		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, errWithSource), nil
+		statusErr := fmt.Errorf("unexpected status code: %d", res.Status)
+		if backend.ErrorSourceFromHTTPStatus(res.Status) == backend.ErrorSourceDownstream {
+			response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(statusErr))
+		} else {
+			response.Responses[e.dataQueries[0].RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(statusErr))
+		}
+		return response, nil
 	}
 
 	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.keepLabelsInResponse, e.logger)
@@ -94,8 +112,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	err := isQueryWithError(q)
 	if err != nil {
-		err = errorsource.DownstreamError(fmt.Errorf("received invalid query. %w", err), false)
-		return err
+		return backend.DownstreamError(fmt.Errorf("received invalid query. %w", err))
 	}
 
 	defaultTimeField := e.client.GetConfiguredFields().TimeField
@@ -218,7 +235,7 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 
 func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
 	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *es.HistogramAgg, b es.AggBuilder) {
-		a.Interval = stringToIntWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
+		a.Interval = stringToFloatWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 
 		if missing, err := bucketAgg.Settings.Get("missing").Int(); err == nil {
@@ -332,7 +349,7 @@ func getPipelineAggField(m *MetricAgg) string {
 func isQueryWithError(query *Query) error {
 	if len(query.BucketAggs) == 0 {
 		// If no aggregations, only document and logs queries are valid
-		if len(query.Metrics) == 0 || !(isLogsQuery(query) || isDocumentQuery(query)) {
+		if len(query.Metrics) == 0 || (!isLogsQuery(query) && !isDocumentQuery(query)) {
 			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
 	}
@@ -503,6 +520,18 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 
 func stringToIntWithDefaultValue(valueStr string, defaultValue int) int {
 	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		value = defaultValue
+	}
+	// In our case, 0 is not a valid value and in this case we default to defaultValue
+	if value == 0 {
+		value = defaultValue
+	}
+	return value
+}
+
+func stringToFloatWithDefaultValue(valueStr string, defaultValue float64) float64 {
+	value, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
 		value = defaultValue
 	}

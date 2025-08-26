@@ -2,15 +2,17 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { getFiltersFromUrlParams } from '../../utils/misc';
 
 import { AlertStateFilter } from './AlertStateFilter';
 import { GroupBy } from './GroupBy';
 import { MatcherFilter } from './MatcherFilter';
+import { ReceiverFilter } from './ReceiverFilter';
 
 interface Props {
   groups: AlertmanagerGroup[];
@@ -19,7 +21,7 @@ interface Props {
 export const AlertGroupFilter = ({ groups }: Props) => {
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
   const [queryParams, setQueryParams] = useQueryParams();
-  const { groupBy = [], queryString, alertState } = getFiltersFromUrlParams(queryParams);
+  const { groupBy = [], queryString, alertState, receivers = [] } = getFiltersFromUrlParams(queryParams);
   const matcherFilterKey = `matcher-${filterKey}`;
 
   const styles = useStyles2(getStyles);
@@ -30,11 +32,12 @@ export const AlertGroupFilter = ({ groups }: Props) => {
       queryString: null,
       alertState: null,
       contactPoint: null,
+      receivers: null,
     });
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
-  const showClearButton = !!(groupBy.length > 0 || queryString || alertState);
+  const showClearButton = !!(groupBy.length > 0 || queryString || alertState || receivers.length > 0);
 
   return (
     <div className={styles.wrapper}>
@@ -49,13 +52,20 @@ export const AlertGroupFilter = ({ groups }: Props) => {
           groupBy={groupBy}
           onGroupingChange={(keys) => setQueryParams({ groupBy: keys.length ? keys.join(',') : null })}
         />
+        <ReceiverFilter
+          groups={groups}
+          receivers={receivers}
+          onReceiversChange={(receivers) =>
+            setQueryParams({ receivers: receivers.length ? receivers.join(',') : null })
+          }
+        />
         <AlertStateFilter
           stateFilter={alertState as AlertState}
           onStateFilterChange={(value) => setQueryParams({ alertState: value ? value : null })}
         />
         {showClearButton && (
           <Button className={styles.clearButton} variant={'secondary'} icon="times" onClick={clearFilters}>
-            Clear filters
+            <Trans i18nKey="alerting.alert-group-filter.clear-filters">Clear filters</Trans>
           </Button>
         )}
       </div>

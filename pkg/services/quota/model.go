@@ -59,7 +59,7 @@ func NewTag(srv TargetSrv, t Target, scope Scope) (Tag, error) {
 }
 
 func (t Tag) split() ([]string, error) {
-	parts := strings.SplitN(string(t), delimiter, -1)
+	parts := strings.Split(string(t), delimiter)
 	if len(parts) != 3 {
 		return nil, ErrInvalidTagFormat.Errorf("tag format should be ^(?<srv>\\w):(?<target>\\w):(?<scope>\\w)$")
 	}

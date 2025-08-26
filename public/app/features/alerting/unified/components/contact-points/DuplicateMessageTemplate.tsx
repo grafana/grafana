@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
@@ -8,28 +9,35 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { generateCopiedName } from '../../utils/duplicate';
 import { stringifyErrorLike } from '../../utils/misc';
 import { updateDefinesWithUniqueValue } from '../../utils/templates';
+import { createRelativeUrl } from '../../utils/url';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
+import { ActiveTab } from './ContactPoints';
 import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
 const notFoundComponent = <EntityNotFound entity="Notification template" />;
 
-const DuplicateMessageTemplate = () => {
+const DuplicateMessageTemplateComponent = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { name } = useParams<{ name: string }>();
   const templateUid = name ? decodeURIComponent(name) : undefined;
 
   const {
     currentData: template,
-    isLoading,
-    error,
+    isLoading: isLoadingTemplate,
+    error: templateFetchError,
   } = useGetNotificationTemplate({ alertmanager: selectedAlertmanager ?? '', uid: templateUid ?? '' });
 
   const {
     currentData: templates,
     isLoading: templatesLoading,
-    error: templatesError,
+    error: templatesFetchError,
   } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
+
+  const isLoading = isLoadingTemplate || templatesLoading;
+  const error = templateFetchError || templatesFetchError;
 
   if (!selectedAlertmanager) {
     return <EntityNotFound entity="Alertmanager" />;
@@ -39,18 +47,35 @@ const DuplicateMessageTemplate = () => {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  if (isLoading || templatesLoading) {
-    return <LoadingPlaceholder text="Loading notification template" />;
+  if (isLoading) {
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.duplicate-message-template.text-loading-notification-template',
+          'Loading notification template'
+        )}
+      />
+    );
   }
 
-  if (error || templatesError || !template || !templates) {
+  if (error) {
     return isNotFoundError(error) ? (
       notFoundComponent
     ) : (
-      <Alert title="Error loading notification template" severity="error">
+      <Alert
+        title={t(
+          'alerting.duplicate-message-template.title-error-loading-notification-template',
+          'Error loading notification template'
+        )}
+        severity="error"
+      >
         {stringifyErrorLike(error)}
       </Alert>
     );
+  }
+
+  if (!template) {
+    return notFoundComponent;
   }
 
   const duplicatedName = generateCopiedName(template.title, templates?.map((t) => t.title) ?? []);
@@ -63,4 +88,29 @@ const DuplicateMessageTemplate = () => {
   );
 };
 
-export default DuplicateMessageTemplate;
+function DuplicateMessageTemplate() {
+  return (
+    <AlertmanagerPageWrapper
+      navId="receivers"
+      accessType="notification"
+      pageNav={{
+        id: 'templates',
+        text: t('alerting.notification-templates.duplicate.title', 'Duplicate notification template group'),
+        subTitle: t(
+          'alerting.notification-templates.duplicate.subTitle',
+          'Duplicate a group of notification templates'
+        ),
+        parentItem: {
+          text: t('alerting.common.titles.notification-templates', 'Notification Templates'),
+          url: createRelativeUrl('/alerting/notifications', {
+            tab: ActiveTab.NotificationTemplates,
+          }),
+        },
+      }}
+    >
+      <DuplicateMessageTemplateComponent />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(DuplicateMessageTemplate);

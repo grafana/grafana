@@ -9,7 +9,7 @@ export { PromQueryEditorByApp } from './components/PromQueryEditorByApp';
 export { MonacoQueryFieldLazy } from './components/monaco-query-field/MonacoQueryFieldLazy';
 export { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 export { PromCheatSheet } from './components/PromCheatSheet';
-export { PrometheusMetricsBrowser } from './components/PrometheusMetricsBrowser';
+export { MetricsBrowser } from './components/metrics-browser/MetricsBrowser';
 export { PromExemplarField } from './components/PromExemplarField';
 export { PromExploreExtraField } from './components/PromExploreExtraField';
 export { PromQueryEditorForAlerting } from './components/PromQueryEditorForAlerting';
@@ -18,13 +18,9 @@ export { PromVariableQueryEditor } from './components/VariableQueryEditor';
 
 // CONFIGURATION/
 // Main export
-export {
-  ConfigEditor,
-  docsTip,
-  overhaulStyles,
-  validateInput,
-  PROM_CONFIG_LABEL_WIDTH,
-} from './configuration/ConfigEditor';
+export { ConfigEditor } from './configuration/ConfigEditor';
+export { overhaulStyles, validateInput, docsTip } from './configuration/shared/utils';
+export { PROM_CONFIG_LABEL_WIDTH, InstantQueryRefIdIndex } from './constants';
 // The parts
 export { AlertingSettingsOverhaul } from './configuration/AlertingSettingsOverhaul';
 export { DataSourceHttpSettingsOverhaul } from './configuration/DataSourceHttpSettingsOverhaul';
@@ -42,7 +38,7 @@ export { QueryPatternsModal } from './querybuilder/QueryPatternsModal';
 export { LabelFilterItem } from './querybuilder/components/LabelFilterItem';
 export { LabelFilters } from './querybuilder/components/LabelFilters';
 export { LabelParamEditor } from './querybuilder/components/LabelParamEditor';
-export { MetricSelect } from './querybuilder/components/MetricSelect';
+export { MetricCombobox } from './querybuilder/components/MetricCombobox';
 export { MetricsLabelsSection } from './querybuilder/components/MetricsLabelsSection';
 export { NestedQuery } from './querybuilder/components/NestedQuery';
 export { NestedQueryList } from './querybuilder/components/NestedQueryList';
@@ -55,14 +51,15 @@ export { PromQueryEditorSelector } from './querybuilder/components/PromQueryEdit
 export { PromQueryLegendEditor } from './querybuilder/components/PromQueryLegendEditor';
 export { QueryPreview } from './querybuilder/components/QueryPreview';
 export { MetricsModal } from './querybuilder/components/metrics-modal/MetricsModal';
-export { PromQail } from './querybuilder/components/promQail/PromQail';
 
 // SRC/
 // Main export
-export { PrometheusDatasource, InstantQueryRefIdIndex } from './datasource';
+export { PrometheusDatasource } from './datasource';
 // The parts
 export { addLabelToQuery } from './add_label_to_query';
 export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery';
+export { interpolateQueryExpr } from './escaping';
+export { loadResources } from './loadResources';
 export { PrometheusMetricFindQuery } from './metric_find_query';
 export { promqlGrammar } from './promql';
 export { getQueryHints, getInitHints } from './query_hints';
@@ -85,3 +82,13 @@ export {
   type StandardPromVariableQuery,
 } from './types';
 export { PrometheusVariableSupport } from './variables';
+
+export type { PrometheusLanguageProviderInterface } from './language_provider';
+
+// For Metrics Drilldown
+export { default as PromQlLanguageProvider } from './language_provider';
+export { getPrometheusTime } from './language_utils';
+export { isValidLegacyName, utf8Support, wrapUtf8Filters } from './utf8_support';
+export { buildVisualQueryFromString } from './querybuilder/parsing';
+export { PromQueryModeller } from './querybuilder/PromQueryModeller';
+export { type QueryBuilderLabelFilter } from './querybuilder/shared/types';

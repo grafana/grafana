@@ -3,9 +3,10 @@ import selectEvent from 'react-select-event';
 
 import { config } from '@grafana/runtime';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
-import { validLogsQuery, validMetricSearchBuilderQuery } from '../../__mocks__/queries';
-import { DEFAULT_LOGS_QUERY_STRING } from '../../defaultQueries';
+import { LogsQueryLanguage } from '../../dataquery.gen';
+import { DEFAULT_CWLI_QUERY_STRING } from '../../defaultQueries';
+import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
+import { validLogsQuery, validMetricSearchBuilderQuery } from '../../mocks/queries';
 
 import QueryHeader from './QueryHeader';
 
@@ -25,14 +26,19 @@ describe('QueryHeader', () => {
       { value: 'us-east-2', label: 'us-east-2' },
       { value: 'us-east-1', label: 'us-east-1' },
     ]);
-    it('should reset account id if new region is not monitoring account', async () => {
+    it('should reset account id and log groups if new region is not monitoring account', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
       datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
       render(
         <QueryHeader
           datasource={datasource}
-          query={{ ...validMetricSearchBuilderQuery, region: 'us-east-1', accountId: 'all' }}
+          query={{
+            ...validMetricSearchBuilderQuery,
+            region: 'us-east-1',
+            accountId: 'all',
+            logGroups: [{ arn: 'arn', name: 'name' }],
+          }}
           onChange={onChange}
           onRunQuery={jest.fn()}
           dataIsStale={false}
@@ -44,10 +50,11 @@ describe('QueryHeader', () => {
         ...validMetricSearchBuilderQuery,
         region: 'us-east-2',
         accountId: undefined,
+        logGroups: [],
       });
     });
 
-    it('should not reset account id if new region is a monitoring account', async () => {
+    it('should reset log groups but not account id if new region is a monitoring account', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
       datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
@@ -55,7 +62,12 @@ describe('QueryHeader', () => {
       render(
         <QueryHeader
           datasource={datasource}
-          query={{ ...validMetricSearchBuilderQuery, region: 'us-east-1', accountId: '123' }}
+          query={{
+            ...validMetricSearchBuilderQuery,
+            region: 'us-east-1',
+            accountId: '123',
+            logGroups: [{ arn: 'arn', name: 'name' }],
+          }}
           onChange={onChange}
           onRunQuery={jest.fn()}
           dataIsStale={false}
@@ -67,6 +79,7 @@ describe('QueryHeader', () => {
         ...validMetricSearchBuilderQuery,
         region: 'us-east-2',
         accountId: '123',
+        logGroups: [],
       });
     });
 
@@ -111,32 +124,6 @@ describe('QueryHeader', () => {
 
   describe('when changing query mode', () => {
     const { datasource } = setupMockedDataSource();
-    it('should set default log query when switching to log mode', async () => {
-      const onChange = jest.fn();
-      datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
-      render(
-        <QueryHeader
-          datasource={datasource}
-          query={{ ...validMetricSearchBuilderQuery, expression: 'foo' }}
-          onChange={onChange}
-          onRunQuery={jest.fn()}
-          dataIsStale={false}
-        />
-      );
-      expect(await screen.findByText('CloudWatch Metrics')).toBeInTheDocument();
-      await selectEvent.select(await screen.findByLabelText('Query mode'), 'CloudWatch Logs', {
-        container: document.body,
-      });
-      expect(onChange).toHaveBeenCalledWith({
-        ...validMetricSearchBuilderQuery,
-        logGroupNames: undefined,
-        logGroups: [],
-        queryMode: 'Logs',
-        sqlExpression: '',
-        expression: DEFAULT_LOGS_QUERY_STRING,
-      });
-    });
-
     it('should set expression to empty when switching to metrics mode', async () => {
       const onChange = jest.fn();
       datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
@@ -155,6 +142,7 @@ describe('QueryHeader', () => {
       });
       expect(onChange).toHaveBeenCalledWith({
         ...validMetricSearchBuilderQuery,
+        queryLanguage: LogsQueryLanguage.CWLI,
         logGroupNames: undefined,
         logGroups: [],
         sqlExpression: '',
@@ -185,7 +173,7 @@ describe('QueryHeader', () => {
       render(
         <QueryHeader
           datasource={datasource}
-          query={{ ...validMetricSearchBuilderQuery, queryMode: 'Logs', expression: DEFAULT_LOGS_QUERY_STRING }}
+          query={{ ...validMetricSearchBuilderQuery, queryMode: 'Logs', expression: DEFAULT_CWLI_QUERY_STRING }}
           onChange={onChange}
           onRunQuery={jest.fn()}
           dataIsStale={false}

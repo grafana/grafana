@@ -1,5 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 
 import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -7,29 +6,34 @@ import { config } from '@grafana/runtime';
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
-import { setupPluginExtensionRegistries } from './registry/setup';
+import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
+import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';
-import { isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { isGrafanaDevMode } from './utils';
 
-jest.mock('app/features/plugins/pluginSettings', () => ({
-  getPluginSettings: jest.fn().mockResolvedValue({
-    id: 'my-app-plugin',
-    enabled: true,
-    jsonData: {},
-    type: 'panel',
-    name: 'My App Plugin',
-    module: 'app/plugins/my-app-plugin/module',
-  }),
-}));
-
+jest.mock('./useLoadAppPlugins');
 jest.mock('./utils', () => ({
   ...jest.requireActual('./utils'),
 
   // Manually set the dev mode to false
   // (to make sure that by default we are testing a production scneario)
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
-  wrapWithPluginContext: jest.fn().mockImplementation((_, component: React.ReactNode) => component),
+}));
+
+// See: public/app/features/plugins/extensions/utils.tsx for implementation details
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: jest.fn().mockImplementation(() => ({
+    error: null,
+    loading: false,
+    value: {
+      id: 'my-app-plugin',
+    },
+  })),
 }));
 
 jest.mock('./logs/log', () => {
@@ -75,6 +79,7 @@ describe('usePluginComponent()', () => {
     extensions: {
       addedLinks: [],
       addedComponents: [],
+      addedFunctions: [],
       // This is necessary, so we can register exposed components to the registry during the tests
       // (Otherwise the registry would reject it in the imitated production mode)
       exposedComponents: [exposedComponentConfig],
@@ -83,11 +88,15 @@ describe('usePluginComponent()', () => {
   };
 
   beforeEach(() => {
-    registries = setupPluginExtensionRegistries();
+    registries = {
+      addedComponentsRegistry: new AddedComponentsRegistry(),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(),
+      addedLinksRegistry: new AddedLinksRegistry(),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+    };
+    jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     resetLogMock(log);
-
-    jest.mocked(wrapWithPluginContext).mockClear();
 
     pluginMeta = {
       id: pluginId,
@@ -114,6 +123,7 @@ describe('usePluginComponent()', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedFunctions: [],
       },
       dependencies: {
         grafanaVersion: '8.0.0',
@@ -200,9 +210,11 @@ describe('usePluginComponent()', () => {
       });
     });
 
-    expect(wrapWithPluginContext).toHaveBeenCalledTimes(0);
+    jest.mocked(isGrafanaDevMode).mockClear();
+    expect(isGrafanaDevMode).toHaveBeenCalledTimes(0);
     renderHook(() => usePluginComponent(exposedComponentId), { wrapper });
-    await waitFor(() => expect(wrapWithPluginContext).toHaveBeenCalledTimes(1));
+    // The registryState is undefined in the first render, so the isGrafanaDevMode() is called twice
+    await waitFor(() => expect(isGrafanaDevMode).toHaveBeenCalledTimes(2));
   });
 
   it('should not validate the meta-info in production mode', () => {
@@ -319,5 +331,117 @@ describe('usePluginComponent()', () => {
     let { result } = renderHook(() => usePluginComponent(exposedComponentId), { wrapper });
     expect(result.current.component).not.toBe(null);
     expect(log.warning).not.toHaveBeenCalled();
+  });
+
+  it('should pass a writable copy of the props (in dev mode)', async () => {
+    config.buildInfo.env = 'development';
+
+    type Props = {
+      a: {
+        b: {
+          c: string;
+        };
+      };
+      override?: boolean;
+    };
+
+    registries.exposedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          ...exposedComponentConfig,
+          // @ts-expect-error - The registry shouldn't be used this way
+          component: (props: Props) => {
+            if (props.override) {
+              props.a.b.c = 'baz';
+            }
+
+            return <span>Foo</span>;
+          },
+        },
+      ],
+    });
+
+    const originalProps = {
+      a: {
+        b: {
+          c: 'bar',
+        },
+      },
+    };
+
+    const { result } = renderHook(() => usePluginComponent<Props>(exposedComponentId), { wrapper });
+    const Component = result.current.component;
+
+    // Should render normally if it doesn't mutate the props
+    const rendered = render(Component && <Component {...originalProps} />);
+    expect(rendered.getByText('Foo')).toBeVisible();
+
+    // Should not throw an error if it mutates the props
+    expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
+
+    // Should log an error in dev mode
+    expect(log.error).toHaveBeenCalledWith(
+      'Attempted to mutate object property "c" from extension with id myorg-extensions-app and version unknown',
+      {
+        stack: expect.any(String),
+      }
+    );
+  });
+
+  it('should pass a writable copy of the props (in production mode)', async () => {
+    config.buildInfo.env = 'production';
+
+    type Props = {
+      a: {
+        b: {
+          c: string;
+        };
+      };
+      override?: boolean;
+    };
+
+    registries.exposedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          ...exposedComponentConfig,
+          // @ts-expect-error - The registry shouldn't be used this way
+          component: (props: Props) => {
+            if (props.override) {
+              props.a.b.c = 'baz';
+            }
+
+            return <span>Foo</span>;
+          },
+        },
+      ],
+    });
+
+    const originalProps = {
+      a: {
+        b: {
+          c: 'bar',
+        },
+      },
+    };
+
+    const { result } = renderHook(() => usePluginComponent<Props>(exposedComponentId), { wrapper });
+    const Component = result.current.component;
+
+    // Should render normally if it doesn't mutate the props
+    const rendered = render(Component && <Component {...originalProps} />);
+    expect(rendered.getByText('Foo')).toBeVisible();
+
+    // Should not throw an error if it mutates the props
+    expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
+
+    // Should log a warning
+    expect(log.warning).toHaveBeenCalledWith(
+      'Attempted to mutate object property "c" from extension with id myorg-extensions-app and version unknown',
+      {
+        stack: expect.any(String),
+      }
+    );
   });
 });

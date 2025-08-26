@@ -10,8 +10,6 @@ labels:
 
 You can enable macros support in the select clause to create time-series queries.
 
-{{< docs/experimental product="Macros support in visual query builder" featureFlag="`sqlQuerybuilderFunctionParameters`" >}}
-
 Use the **Data operations** drop-down to select a macro like `$__timeGroup` or `$__timeGroupAlias`.
 Select a time column from the **Column** drop-down and a time interval from the **Interval** drop-down to create a time-series query.
 

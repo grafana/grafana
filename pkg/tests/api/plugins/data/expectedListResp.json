@@ -11,10 +11,19 @@
         "url": "https://grafana.com"
       },
       "description": "Shows list of alerts and their current status",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/alert-list/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
-        "large": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
+        "small": "public/plugins/alertlist/img/icn-singlestat-panel.svg",
+        "large": "public/plugins/alertlist/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -56,11 +65,19 @@
         {
           "name": "Learn more",
           "url": "https://prometheus.io/docs/alerting/latest/alertmanager/"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/alertmanager/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
-        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
+        "small": "public/plugins/alertmanager/img/logo.svg",
+        "large": "public/plugins/alertmanager/img/logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -105,10 +122,19 @@
         "url": "https://grafana.com"
       },
       "description": "List annotations",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/annotations/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
-        "large": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
+        "small": "public/plugins/annolist/img/icn-annolist-panel.svg",
+        "large": "public/plugins/annolist/img/icn-annolist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -152,30 +178,38 @@
           "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/"
         },
         {
-          "name": "Apache License",
-          "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE"
+          "name": "License",
+          "url": "https://github.com/grafana/grafana/blob/HEAD/LICENSE"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/azuremonitor/img/logo.jpg",
-        "large": "public/app/plugins/datasource/azuremonitor/img/logo.jpg"
+        "small": "public/plugins/grafana-azure-monitor-datasource/img/logo.jpg",
+        "large": "public/plugins/grafana-azure-monitor-datasource/img/logo.jpg"
       },
       "build": {},
       "screenshots": [
         {
           "name": "Azure Contoso Loans",
-          "path": "public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
+          "path": "public/plugins/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png"
         },
         {
           "name": "Azure Monitor Network",
-          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
+          "path": "public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_network.png"
         },
         {
           "name": "Azure Monitor CPU",
-          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
+          "path": "public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -215,10 +249,19 @@
         "url": "https://grafana.com"
       },
       "description": "Categorical charts with group support",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/bar-chart/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/barchart/img/barchart.svg",
-        "large": "public/app/plugins/panel/barchart/img/barchart.svg"
+        "small": "public/plugins/barchart/img/barchart.svg",
+        "large": "public/plugins/barchart/img/barchart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -256,10 +299,19 @@
         "url": "https://grafana.com"
       },
       "description": "Horizontal and vertical gauges",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/bar-gauge/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
-        "large": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
+        "small": "public/plugins/bargauge/img/icon_bar_gauge.svg",
+        "large": "public/plugins/bargauge/img/icon_bar_gauge.svg"
       },
       "build": {},
       "screenshots": null,
@@ -297,10 +349,19 @@
         "url": "https://grafana.com"
       },
       "description": "Graphical representation of price movements of a security, derivative, or currency.",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/candlestick/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
-        "large": "public/app/plugins/panel/candlestick/img/candlestick.svg"
+        "small": "public/plugins/candlestick/img/candlestick.svg",
+        "large": "public/plugins/candlestick/img/candlestick.svg"
       },
       "build": {},
       "screenshots": null,
@@ -343,10 +404,19 @@
         "url": "https://grafana.com"
       },
       "description": "Explicit element placement",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/canvas/img/icn-canvas.svg",
-        "large": "public/app/plugins/panel/canvas/img/icn-canvas.svg"
+        "small": "public/plugins/canvas/img/icn-canvas.svg",
+        "large": "public/plugins/canvas/img/icn-canvas.svg"
       },
       "build": {},
       "screenshots": null,
@@ -384,10 +454,19 @@
         "url": "https://grafana.com"
       },
       "description": "Data source for Amazon AWS monitoring service",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-        "large": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+        "small": "public/plugins/cloudwatch/img/amazon-web-services.png",
+        "large": "public/plugins/cloudwatch/img/amazon-web-services.png"
       },
       "build": {},
       "screenshots": null,
@@ -428,10 +507,19 @@
         "url": "https://grafana.com"
       },
       "description": "List of dynamic links to other dashboards",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/dashboard-list/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
+        "small": "public/plugins/dashlist/img/icn-dashlist-panel.svg",
+        "large": "public/plugins/dashlist/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -469,10 +557,19 @@
         "url": "https://grafana.com"
       },
       "description": "",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/datagrid/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
+        "small": "public/plugins/datagrid/img/icn-table-panel.svg",
+        "large": "public/plugins/datagrid/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -514,11 +611,19 @@
         {
           "name": "Learn more",
           "url": "https://grafana.com/docs/features/datasources/elasticsearch/"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/elasticsearch/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
-        "large": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
+        "small": "public/plugins/elasticsearch/img/elasticsearch.svg",
+        "large": "public/plugins/elasticsearch/img/elasticsearch.svg"
       },
       "build": {},
       "screenshots": null,
@@ -563,10 +668,19 @@
         "url": "https://grafana.com"
       },
       "description": "",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/flame-graph/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
-        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
+        "small": "public/plugins/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/plugins/flamegraph/img/icn-flamegraph.svg"
       },
       "build": {},
       "screenshots": null,
@@ -604,10 +718,19 @@
         "url": "https://grafana.com"
       },
       "description": "Standard gauge visualization",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/gauge/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/gauge/img/icon_gauge.svg",
-        "large": "public/app/plugins/panel/gauge/img/icon_gauge.svg"
+        "small": "public/plugins/gauge/img/icon_gauge.svg",
+        "large": "public/plugins/gauge/img/icon_gauge.svg"
       },
       "build": {},
       "screenshots": null,
@@ -645,10 +768,19 @@
         "url": "https://grafana.com"
       },
       "description": "Geomap panel",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/geomap/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/geomap/img/icn-geomap.svg",
-        "large": "public/app/plugins/panel/geomap/img/icn-geomap.svg"
+        "small": "public/plugins/geomap/img/icn-geomap.svg",
+        "large": "public/plugins/geomap/img/icn-geomap.svg"
       },
       "build": {},
       "screenshots": null,
@@ -686,10 +818,15 @@
         "url": "https://grafana.com"
       },
       "description": "",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
+        "small": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg",
+        "large": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -727,14 +864,23 @@
         "url": "https://grafana.com"
       },
       "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
-        "large": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
+        "small": "public/plugins/stackdriver/img/cloud_monitoring_logo.svg",
+        "large": "public/plugins/stackdriver/img/cloud_monitoring_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -772,15 +918,23 @@
         {
           "name": "GitHub Project",
           "url": "https://github.com/grafana/pyroscope"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/pyroscope/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/pyroscope/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
-        "large": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
+        "small": "public/plugins/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
+        "large": "public/plugins/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -811,47 +965,6 @@
     "angularDetected": false
   },
   {
-    "name": "Graph (old)",
-    "type": "panel",
-    "id": "graph",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "The old default graph panel",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/graph/img/icn-graph-panel.svg",
-        "large": "public/app/plugins/panel/graph/img/icn-graph-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/graph/",
-    "category": "",
-    "state": "deprecated",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Graphite",
     "type": "datasource",
     "id": "graphite",
@@ -871,11 +984,19 @@
         {
           "name": "Graphite 1.1 Release",
           "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/graphite/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/graphite/img/graphite_logo.png",
-        "large": "public/app/plugins/datasource/graphite/img/graphite_logo.png"
+        "small": "public/plugins/graphite/img/graphite_logo.png",
+        "large": "public/plugins/graphite/img/graphite_logo.png"
       },
       "build": {},
       "screenshots": null,
@@ -913,10 +1034,19 @@
         "url": "https://grafana.com"
       },
       "description": "Like a histogram over time",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/heatmap/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
-        "large": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
+        "small": "public/plugins/heatmap/img/icn-heatmap-panel.svg",
+        "large": "public/plugins/heatmap/img/icn-heatmap-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -954,10 +1084,19 @@
         "url": "https://grafana.com"
       },
       "description": "Distribution of values presented as a bar chart.",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/histogram/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/histogram/img/histogram.svg",
-        "large": "public/app/plugins/panel/histogram/img/histogram.svg"
+        "small": "public/plugins/histogram/img/histogram.svg",
+        "large": "public/plugins/histogram/img/histogram.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1000,10 +1139,19 @@
         "url": "https://grafana.com"
       },
       "description": "Open source time series database",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/influxdb/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
-        "large": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
+        "small": "public/plugins/influxdb/img/influxdb_logo.svg",
+        "large": "public/plugins/influxdb/img/influxdb_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1047,17 +1195,29 @@
           "url": "https://www.jaegertracing.io"
         },
         {
-          "name": "GitHub Project",
+          "name": "Jaeger GitHub Project",
           "url": "https://github.com/jaegertracing/jaeger"
+        },
+        {
+          "name": "Repository",
+          "url": "https://github.com/grafana/grafana"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/jaeger/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
-        "large": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
+        "small": "public/plugins/jaeger/img/jaeger_logo.svg",
+        "large": "public/plugins/jaeger/img/jaeger_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1091,10 +1251,19 @@
         "url": "https://grafana.com"
       },
       "description": "",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/logs/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/logs/img/icn-logs-panel.svg",
-        "large": "public/app/plugins/panel/logs/img/icn-logs-panel.svg"
+        "small": "public/plugins/logs/img/icn-logs-panel.svg",
+        "large": "public/plugins/logs/img/icn-logs-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1140,20 +1309,28 @@
         {
           "name": "GitHub Project",
           "url": "https://github.com/grafana/loki"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/loki/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/loki/img/loki_icon.svg",
-        "large": "public/app/plugins/datasource/loki/img/loki_icon.svg"
+        "small": "public/plugins/loki/img/loki_icon.svg",
+        "large": "public/plugins/loki/img/loki_icon.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.4.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1182,14 +1359,23 @@
         "url": "https://grafana.com"
       },
       "description": "Data source for Microsoft SQL Server compatible databases",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/mssql/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
-        "large": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
+        "small": "public/plugins/mssql/img/sql_server_logo.svg",
+        "large": "public/plugins/mssql/img/sql_server_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1223,14 +1409,23 @@
         "url": "https://grafana.com"
       },
       "description": "Data source for MySQL databases",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/mysql/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/mysql/img/mysql_logo.svg",
-        "large": "public/app/plugins/datasource/mysql/img/mysql_logo.svg"
+        "small": "public/plugins/mysql/img/mysql_logo.svg",
+        "large": "public/plugins/mysql/img/mysql_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1264,10 +1459,19 @@
         "url": "https://grafana.com"
       },
       "description": "RSS feed reader",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/news/img/news.svg",
-        "large": "public/app/plugins/panel/news/img/news.svg"
+        "small": "public/plugins/news/img/news.svg",
+        "large": "public/plugins/news/img/news.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1305,10 +1509,19 @@
         "url": "https://grafana.com"
       },
       "description": "",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/node-graph/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
-        "large": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
+        "small": "public/plugins/nodeGraph/img/icn-node-graph.svg",
+        "large": "public/plugins/nodeGraph/img/icn-node-graph.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1346,10 +1559,19 @@
         "url": "https://grafana.com"
       },
       "description": "Open source time series database",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/opentsdb/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
-        "large": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
+        "small": "public/plugins/opentsdb/img/opentsdb_logo.png",
+        "large": "public/plugins/opentsdb/img/opentsdb_logo.png"
       },
       "build": {},
       "screenshots": null,
@@ -1391,15 +1613,23 @@
         {
           "name": "GitHub Project",
           "url": "https://github.com/parca-dev/parca"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/parca/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/parca/img/logo-small.svg",
-        "large": "public/app/plugins/datasource/parca/img/logo-small.svg"
+        "small": "public/plugins/parca/img/logo-small.svg",
+        "large": "public/plugins/parca/img/logo-small.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1438,10 +1668,19 @@
         "url": "https://grafana.com"
       },
       "description": "The new core pie chart visualization",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/pie-chart/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/piechart/img/icon_piechart.svg",
-        "large": "public/app/plugins/panel/piechart/img/icon_piechart.svg"
+        "small": "public/plugins/piechart/img/icon_piechart.svg",
+        "large": "public/plugins/piechart/img/icon_piechart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1479,14 +1718,23 @@
         "url": "https://grafana.com"
       },
       "description": "Data source for PostgreSQL and compatible databases",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/postgres/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg",
-        "large": "public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg"
+        "small": "public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg",
+        "large": "public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1524,11 +1772,19 @@
         {
           "name": "Learn more",
           "url": "https://prometheus.io/"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
-        "large": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+        "small": "public/plugins/prometheus/img/prometheus_logo.svg",
+        "large": "public/plugins/prometheus/img/prometheus_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1566,10 +1822,19 @@
         "url": "https://grafana.com"
       },
       "description": "Big stat values \u0026 sparklines",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/stat/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
-        "large": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
+        "small": "public/plugins/stat/img/icn-singlestat-panel.svg",
+        "large": "public/plugins/stat/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1607,10 +1872,19 @@
         "url": "https://grafana.com"
       },
       "description": "State changes and durations",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/state-timeline/img/timeline.svg",
-        "large": "public/app/plugins/panel/state-timeline/img/timeline.svg"
+        "small": "public/plugins/state-timeline/img/timeline.svg",
+        "large": "public/plugins/state-timeline/img/timeline.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1648,10 +1922,19 @@
         "url": "https://grafana.com"
       },
       "description": "Periodic status history",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/status-history/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/status-history/img/status.svg",
-        "large": "public/app/plugins/panel/status-history/img/status.svg"
+        "small": "public/plugins/status-history/img/status.svg",
+        "large": "public/plugins/status-history/img/status.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1689,10 +1972,19 @@
         "url": "https://grafana.com"
       },
       "description": "Supports many column styles",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/table/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table/img/icn-table-panel.svg"
+        "small": "public/plugins/table/img/icn-table-panel.svg",
+        "large": "public/plugins/table/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1719,47 +2011,6 @@
     "angularDetected": false
   },
   {
-    "name": "Table (old)",
-    "type": "panel",
-    "id": "table-old",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Table Panel for Grafana",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/table-old/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table-old/img/icn-table-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/table-old/",
-    "category": "",
-    "state": "deprecated",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Tempo",
     "type": "datasource",
     "id": "tempo",
@@ -1775,15 +2026,23 @@
         {
           "name": "GitHub Project",
           "url": "https://github.com/grafana/tempo"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/tempo/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/tempo/img/tempo_logo.svg",
-        "large": "public/app/plugins/datasource/tempo/img/tempo_logo.svg"
+        "small": "public/plugins/tempo/img/tempo_logo.svg",
+        "large": "public/plugins/tempo/img/tempo_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1817,14 +2076,23 @@
         "url": "https://grafana.com"
       },
       "description": "Generates test data in different forms",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/testdata/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
-        "large": "public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
+        "small": "public/plugins/grafana-testdata-datasource/img/testdata.svg",
+        "large": "public/plugins/grafana-testdata-datasource/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1858,10 +2126,19 @@
         "url": "https://grafana.com"
       },
       "description": "Supports markdown and html content",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/text/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/text/img/icn-text-panel.svg",
-        "large": "public/app/plugins/panel/text/img/icn-text-panel.svg"
+        "small": "public/plugins/text/img/icn-text-panel.svg",
+        "large": "public/plugins/text/img/icn-text-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1899,10 +2176,19 @@
         "url": "https://grafana.com"
       },
       "description": "Time based line, area and bar charts",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
-        "large": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
+        "small": "public/plugins/timeseries/img/icn-timeseries-panel.svg",
+        "large": "public/plugins/timeseries/img/icn-timeseries-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1940,10 +2226,19 @@
         "url": "https://grafana.com"
       },
       "description": "",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/traces/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/traces/img/traces-panel.svg",
-        "large": "public/app/plugins/panel/traces/img/traces-panel.svg"
+        "small": "public/plugins/traces/img/traces-panel.svg",
+        "large": "public/plugins/traces/img/traces-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1981,10 +2276,19 @@
         "url": "https://grafana.com"
       },
       "description": "Like timeseries, but when x != time",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/trend/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/trend/img/trend.svg",
-        "large": "public/app/plugins/panel/trend/img/trend.svg"
+        "small": "public/plugins/trend/img/trend.svg",
+        "large": "public/plugins/trend/img/trend.svg"
       },
       "build": {},
       "screenshots": null,
@@ -2022,10 +2326,15 @@
         "url": "https://grafana.com"
       },
       "description": "",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
+        "small": "public/plugins/welcome/img/icn-dashlist-panel.svg",
+        "large": "public/plugins/welcome/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -2063,10 +2372,19 @@
         "url": "https://grafana.com"
       },
       "description": "Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.",
-      "links": null,
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/xy-chart/"
+        }
+      ],
       "logos": {
-        "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
-        "large": "public/app/plugins/panel/xychart/img/icn-xychart.svg"
+        "small": "public/plugins/xychart/img/icn-xychart.svg",
+        "large": "public/plugins/xychart/img/icn-xychart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -2111,15 +2429,23 @@
         {
           "name": "Learn more",
           "url": "https://zipkin.io"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/zipkin/"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
-        "large": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
+        "small": "public/plugins/zipkin/img/zipkin-logo.svg",
+        "large": "public/plugins/zipkin/img/zipkin-logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "11.3.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },

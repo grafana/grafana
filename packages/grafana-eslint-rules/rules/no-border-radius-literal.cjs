@@ -1,40 +1,49 @@
-// @ts-check
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
-const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`);
+const createRule = ESLintUtils.RuleCreator(
+  (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
+);
+
+const BORDER_RADIUS_PROPERTIES = [
+  'borderRadius',
+  'borderTopLeftRadius',
+  'borderTopRightRadius',
+  'borderBottomLeftRadius',
+  'borderBottomRightRadius',
+];
+
+const RE_ZERO_VALUE = /^0([a-zA-Z%]*)$/;
 
 const borderRadiusRule = createRule({
   create(context) {
     return {
-      CallExpression(node) {
-        if (node.callee.type === AST_NODE_TYPES.Identifier && node.callee.name === 'css') {
-          const cssObjects = node.arguments.flatMap((node) => {
-            switch (node.type) {
-              case AST_NODE_TYPES.ObjectExpression:
-                return [node];
-              case AST_NODE_TYPES.ArrayExpression:
-                return node.elements.filter((v) => v?.type === AST_NODE_TYPES.ObjectExpression);
-              default:
-                return [];
-            }
-          });
+      [`${AST_NODE_TYPES.CallExpression}[callee.name="css"] ${AST_NODE_TYPES.Property}`]: function (node) {
+        if (
+          node.type === AST_NODE_TYPES.Property &&
+          node.key.type === AST_NODE_TYPES.Identifier &&
+          BORDER_RADIUS_PROPERTIES.includes(node.key.name) &&
+          node.value.type === AST_NODE_TYPES.Literal
+        ) {
+          const value = node.value.value;
 
-          for (const cssObject of cssObjects) {
-            if (cssObject?.type === AST_NODE_TYPES.ObjectExpression) {
-              for (const property of cssObject.properties) {
-                if (
-                  property.type === AST_NODE_TYPES.Property &&
-                  property.key.type === AST_NODE_TYPES.Identifier &&
-                  property.key.name === 'borderRadius' &&
-                  property.value.type === AST_NODE_TYPES.Literal
-                ) {
-                  context.report({
-                    node: property,
-                    messageId: 'borderRadiusId',
-                  });
-                }
-              }
-            }
+          if (value === 'unset' || value === 'initial') {
+            // Allow 'unset' or 'initial' to remove border radius
+            return;
+          } else if (value === 0 || RE_ZERO_VALUE.test(value)) {
+            // Require 'unset' or 'initial' to remove border radius instead of `0` or `0px`
+            context.report({
+              node,
+              messageId: 'borderRadiusNoZeroValue',
+              fix(fixer) {
+                return fixer.replaceText(node.value, "'unset'");
+              },
+            });
+          } else {
+            // Otherwise, require theme tokens are used
+            context.report({
+              node,
+              messageId: 'borderRadiusUseTokens',
+            });
           }
         }
       },
@@ -43,11 +52,13 @@ const borderRadiusRule = createRule({
   name: 'no-border-radius-literal',
   meta: {
     type: 'problem',
+    fixable: 'code',
     docs: {
       description: 'Check if border-radius theme tokens are used',
     },
     messages: {
-      borderRadiusId: 'Prefer using theme.shape.radius tokens instead of literal values.',
+      borderRadiusUseTokens: 'Prefer using theme.shape.radius tokens instead of literal values.',
+      borderRadiusNoZeroValue: 'Use unset or initial to remove a border radius.',
     },
     schema: [],
   },

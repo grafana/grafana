@@ -75,11 +75,6 @@ func (f *FakeServiceAccountStore) MigrateApiKeysToServiceAccounts(ctx context.Co
 	return f.expectedMigratedResults, f.ExpectedError
 }
 
-// MigrateApiKey is a fake migrating an api key to a service account.
-func (f *FakeServiceAccountStore) MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error {
-	return f.ExpectedError
-}
-
 // RevertApiKey is a fake reverting an api key to a service account.
 func (f *FakeServiceAccountStore) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
 	return f.ExpectedError
@@ -122,7 +117,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
+func TestIntegrationProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	storeMock := newServiceAccountStoreFake()
 	acSvc := actest.FakeService{}
 	pSvc := &actest.FakePermissionsService{}

@@ -3,15 +3,14 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -29,13 +28,13 @@ var (
 
 var resource = iamv0.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac authz.AccessClient) *LegacyStore {
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
 	return &LegacyStore{store, ac}
 }
 
 type LegacyStore struct {
 	store legacy.LegacyIdentityStore
-	ac    authz.AccessClient
+	ac    claims.AccessClient
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -62,8 +61,8 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	res, err := common.List(
-		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.ServiceAccount], error) {
+		ctx, resource, s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.ServiceAccount], error) {
 			found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
 				Pagination: p,
 			})
@@ -72,12 +71,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			items := make([]iamv0.ServiceAccount, 0, len(found.Items))
+			items := make([]iamv0alpha1.ServiceAccount, 0, len(found.Items))
 			for _, sa := range found.Items {
 				items = append(items, toSAItem(sa, ns.Value))
 			}
 
-			return &common.ListResponse[iamv0.ServiceAccount]{
+			return &common.ListResponse[iamv0alpha1.ServiceAccount]{
 				Items:    items,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -89,31 +88,28 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	obj := &iamv0.ServiceAccountList{Items: res.Items}
-	obj.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
-	obj.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
+	obj := &iamv0alpha1.ServiceAccountList{Items: res.Items}
+	obj.Continue = common.OptionalFormatInt(res.Continue)
+	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil
 }
 
-func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
-	item := iamv0.ServiceAccount{
+func toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.ServiceAccount {
+	item := iamv0alpha1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              sa.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", sa.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
-		Spec: iamv0.ServiceAccountSpec{
+		Spec: iamv0alpha1.ServiceAccountSpec{
 			Title:    sa.Name,
 			Disabled: sa.Disabled,
 		},
 	}
 	obj, _ := utils.MetaAccessor(&item)
 	obj.SetUpdatedTimestamp(&sa.Updated)
-	obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(sa.ID, 10),
-	})
+	obj.SetDeprecatedInternalID(sa.ID) // nolint:staticcheck
 	return item
 }
 

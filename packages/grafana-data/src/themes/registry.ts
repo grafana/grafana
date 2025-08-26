@@ -1,7 +1,7 @@
 import { Registry, RegistryItem } from '../utils/Registry';
 
-import { createColors } from './createColors';
 import { createTheme } from './createTheme';
+import * as extraThemes from './themeDefinitions';
 import { GrafanaTheme2 } from './types';
 
 export interface ThemeRegistryItem extends RegistryItem {
@@ -22,102 +22,48 @@ export function getThemeById(id: string): GrafanaTheme2 {
  * @internal
  * For internal use only
  */
-export function getBuiltInThemes(includeExtras?: boolean) {
-  return themeRegistry.list().filter((item) => {
-    return includeExtras ? true : !item.isExtra;
+export function getBuiltInThemes(allowedExtras: string[]) {
+  const themes = themeRegistry.list().filter((item) => {
+    if (item.isExtra) {
+      return allowedExtras.includes(item.id);
+    }
+    return true;
   });
+  // sort themes alphabetically, but put built-in themes (default, dark, light, system) first
+  const sortedThemes = themes.sort((a, b) => {
+    if (a.isExtra && !b.isExtra) {
+      return 1;
+    } else if (!a.isExtra && b.isExtra) {
+      return -1;
+    } else {
+      return a.name.localeCompare(b.name);
+    }
+  });
+  return sortedThemes;
 }
 
 /**
- * There is also a backend list at services/perferences/themes.go
+ * There is also a backend list at pkg/services/preference/themes.go
  */
 const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   return [
     { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
     { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
     { id: 'light', name: 'Light', build: () => createTheme({ colors: { mode: 'light' } }) },
-    { id: 'debug', name: 'Debug', build: createDebug, isExtra: true },
   ];
 });
+
+for (const [id, theme] of Object.entries(extraThemes)) {
+  themeRegistry.register({
+    id,
+    name: theme.name ?? '',
+    build: () => createTheme(theme),
+    isExtra: true,
+  });
+}
 
 function getSystemPreferenceTheme() {
   const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
   const id = mediaResult.matches ? 'dark' : 'light';
   return getThemeById(id);
-}
-
-/**
- * a very ugly theme that is useful for debugging and checking if the theme is applied correctly
- * borders are red,
- * backgrounds are blue,
- * text is yellow,
- * and grafana loves you <3
- * (also corners are rounded, action states (hover, focus, selected) are purple)
- */
-function createDebug(): GrafanaTheme2 {
-  const baseDarkColors = createColors({
-    mode: 'dark',
-  });
-
-  return createTheme({
-    name: 'Debug',
-    colors: {
-      mode: 'dark',
-      background: {
-        canvas: '#000033',
-        primary: '#000044',
-        secondary: '#000055',
-      },
-      text: {
-        primary: '#bbbb00',
-        secondary: '#888800',
-        disabled: '#444400',
-        link: '#dddd00',
-        maxContrast: '#ffff00',
-      },
-      border: {
-        weak: '#ff000044',
-        medium: '#ff000088',
-        strong: '#ff0000ff',
-      },
-      primary: {
-        ...baseDarkColors.primary,
-        border: '#ff000088',
-        text: '#cccc00',
-        contrastText: '#ffff00',
-        shade: '#9900dd',
-      },
-      secondary: {
-        ...baseDarkColors.secondary,
-        border: '#ff000088',
-        text: '#cccc00',
-        contrastText: '#ffff00',
-        shade: '#9900dd',
-      },
-      info: {
-        ...baseDarkColors.info,
-        shade: '#9900dd',
-      },
-      warning: {
-        ...baseDarkColors.warning,
-        shade: '#9900dd',
-      },
-      success: {
-        ...baseDarkColors.success,
-        shade: '#9900dd',
-      },
-      error: {
-        ...baseDarkColors.error,
-        shade: '#9900dd',
-      },
-      action: {
-        hover: '#9900dd',
-        focus: '#6600aa',
-        selected: '#440088',
-      },
-    },
-    shape: {
-      borderRadius: 8,
-    },
-  });
 }

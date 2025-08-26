@@ -3,17 +3,16 @@
  *
  * It includes auto-complete for template data and syntax highlighting
  */
-import { editor, IDisposable } from 'monaco-editor';
-import { useEffect, useRef } from 'react';
+import { IDisposable, editor } from 'monaco-editor';
+import { ComponentProps, useEffect, useRef } from 'react';
 
 import { CodeEditor } from '@grafana/ui';
-import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 
 import { registerGoTemplateAutocomplete } from './editor/autocomplete';
 import goTemplateLanguageDefinition, { GO_TEMPLATE_LANGUAGE_ID } from './editor/definition';
 import { registerLanguage } from './editor/register';
 
-type TemplateEditorProps = Omit<CodeEditorProps, 'language' | 'theme'> & {
+type TemplateEditorProps = Omit<ComponentProps<typeof CodeEditor>, 'language' | 'theme'> & {
   autoHeight?: boolean;
 };
 

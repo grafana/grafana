@@ -23,9 +23,9 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable2 } from '../../types';
+import { Themeable2 } from '../../types/theme';
 import { calculateFontSize, measureText } from '../../utils/measureText';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -34,6 +34,7 @@ const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
 const VALUE_LEFT_PADDING = 10;
+const VALUE_RIGHT_OVERFLOW_PADDING = 15;
 
 export interface Props extends Themeable2 {
   height: number;
@@ -52,6 +53,7 @@ export interface Props extends Themeable2 {
   alignmentFactors?: DisplayValueAlignmentFactors;
   valueDisplayMode?: BarGaugeValueMode;
   namePlacement?: BarGaugeNamePlacement;
+  isOverflow: boolean;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -73,6 +75,7 @@ export class BarGauge extends PureComponent<Props> {
     },
     itemSpacing: 8,
     showUnfilled: true,
+    isOverflow: false,
   };
 
   render() {
@@ -145,6 +148,7 @@ export class BarGauge extends PureComponent<Props> {
       text,
       valueDisplayMode,
       theme,
+      isOverflow,
     } = this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
       calculateBarAndValueDimensions(this.props);
@@ -160,7 +164,15 @@ export class BarGauge extends PureComponent<Props> {
     const valueColor = getTextValueColor(this.props);
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
+    const valueStyles = getValueStyles(
+      valueToBaseSizeOn,
+      valueColor,
+      valueWidth,
+      valueHeight,
+      orientation,
+      isOverflow,
+      text
+    );
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -486,7 +498,7 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, field, value, alignmentFactors, orientation, theme, text } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme, text, isOverflow } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -496,7 +508,15 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const barColor = value.color ?? FALLBACK_COLOR;
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-  const valueStyles = getValueStyles(valueToBaseSizeOn, textColor, valueWidth, valueHeight, orientation, text);
+  const valueStyles = getValueStyles(
+    valueToBaseSizeOn,
+    textColor,
+    valueWidth,
+    valueHeight,
+    orientation,
+    isOverflow,
+    text
+  );
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -507,7 +527,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const barStyles: CSSProperties = {
     borderRadius: theme.shape.radius.default,
     position: 'relative',
-    zIndex: 1,
   };
 
   const emptyBar: CSSProperties = {
@@ -663,12 +682,13 @@ function getValueStyles(
   width: number,
   height: number,
   orientation: VizOrientation,
+  isOverflow: boolean,
   text?: VizTextDisplayOptions
 ): CSSProperties {
   const styles: CSSProperties = {
     color,
     height: `${height}px`,
-    width: `${width}px`,
+    maxWidth: `${width}px`,
     display: 'flex',
     alignItems: 'center',
     textWrap: 'nowrap',
@@ -688,7 +708,7 @@ function getValueStyles(
       calculateFontSize(formattedValueString, textWidth - VALUE_LEFT_PADDING * 2, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `flex-end`;
     styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
-    styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
+    styles.paddingRight = `${VALUE_LEFT_PADDING + (isOverflow ? VALUE_RIGHT_OVERFLOW_PADDING : 0)}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
   }

@@ -1,14 +1,13 @@
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
-import { makeAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { testWithFeatureToggles } from '../../test/test-utils';
+import { makeAllK8sEndpointsFail } from '../../mocks/server/configure';
 
 import NewReceiverView from './NewReceiverView';
 
@@ -33,9 +32,7 @@ beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
-describe('alerting API server enabled', () => {
-  testWithFeatureToggles(['alertingApiServer']);
-
+describe('new receiver', () => {
   it('can create a receiver', async () => {
     const { user } = renderForm();
 
@@ -52,9 +49,7 @@ describe('alerting API server enabled', () => {
 
     expect(await screen.findByText(/redirected/i)).toBeInTheDocument();
   });
-});
 
-describe('alerting API server disabled', () => {
   it('should be able to test and save a receiver', async () => {
     const capture = captureRequests();
 
@@ -90,29 +85,24 @@ describe('alerting API server disabled', () => {
 
     const requests = await capture;
     const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
-    const saveRequest = requests.find(
-      (r) => r.url.endsWith('/api/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
-    );
+    const saveRequest = requests.find((r) => r.url.endsWith('/receivers') && r.method === 'POST');
 
     const testBody = await testRequest?.json();
-    const fullSaveBody = await saveRequest?.json();
-
-    // Only snapshot and check the receivers, as we don't want other tests to break this
-    // just because we added something new to the mock config
-    const saveBody = fullSaveBody.alertmanager_config.receivers;
+    const saveBody = await saveRequest?.json();
 
     expect([testBody]).toMatchSnapshot();
     expect([saveBody]).toMatchSnapshot();
   });
 
   it('does not redirect when creating contact point and API errors', async () => {
-    makeAlertmanagerConfigUpdateFail();
     const { user } = renderForm();
 
     await user.type(await ui.inputs.name.find(), 'receiver that should fail');
     const email = ui.inputs.email.addresses.get();
     await user.clear(email);
     await user.type(email, 'tester@grafana.com');
+
+    makeAllK8sEndpointsFail('someerror');
 
     await user.click(ui.saveContactButton.get());
 

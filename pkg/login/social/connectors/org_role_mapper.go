@@ -34,6 +34,13 @@ type MappingConfiguration struct {
 	strictRoleMapping bool
 }
 
+func NewMappingConfiguration(orgMapping map[string]map[int64]org.RoleType, strictRoleMapping bool) MappingConfiguration {
+	return MappingConfiguration{
+		orgMapping,
+		strictRoleMapping,
+	}
+}
+
 func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapper {
 	return &OrgRoleMapper{
 		cfg:        cfg,
@@ -50,7 +57,7 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 //
 // directlyMappedRole: role that is directly mapped to the user (ex: through `role_attribute_path`)
 func (m *OrgRoleMapper) MapOrgRoles(
-	mappingCfg *MappingConfiguration,
+	mappingCfg MappingConfiguration,
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
@@ -131,7 +138,7 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 // ParseOrgMappingSettings parses the `org_mapping` setting and returns an internal representation of the mapping.
 // If the roleStrict is enabled, the mapping should contain a valid role for each org.
 // FIXME: Consider introducing a struct to represent the org mapping settings
-func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) *MappingConfiguration {
+func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) MappingConfiguration {
 	res := map[string]map[int64]org.RoleType{}
 
 	for _, v := range mappings {
@@ -140,7 +147,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 			m.logger.Error("Skipping org mapping due to invalid format.", "mapping", fmt.Sprintf("%v", v))
 			if roleStrict {
 				// Return empty mapping if the mapping format is invalied and roleStrict is enabled
-				return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
+				return NewMappingConfiguration(map[string]map[int64]org.RoleType{}, roleStrict)
 			}
 			continue
 		}
@@ -150,7 +157,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 			m.logger.Warn("Could not fetch OrgID. Skipping.", "err", err, "mapping", fmt.Sprintf("%v", v), "org", kv[1])
 			if roleStrict {
 				// Return empty mapping if at least one org name cannot be resolved when roleStrict is enabled
-				return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
+				return NewMappingConfiguration(map[string]map[int64]org.RoleType{}, roleStrict)
 			}
 			continue
 		}
@@ -158,7 +165,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 		if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
 			// Return empty mapping if at least one org mapping is invalid (missing role, invalid role)
 			m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
-			return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
+			return NewMappingConfiguration(map[string]map[int64]org.RoleType{}, roleStrict)
 		}
 
 		orga := kv[0]
@@ -169,12 +176,16 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 		res[orga][int64(orgID)] = getRoleForInternalOrgMapping(kv)
 	}
 
-	return &MappingConfiguration{orgMapping: res, strictRoleMapping: roleStrict}
+	return NewMappingConfiguration(res, roleStrict)
 }
 
 func (m *OrgRoleMapper) getOrgIDForInternalMapping(ctx context.Context, orgIdCfg string) (int, error) {
 	if orgIdCfg == "*" {
 		return mapperMatchAllOrgID, nil
+	}
+
+	if orgIdCfg == "" {
+		return 0, fmt.Errorf("the org name or id is empty")
 	}
 
 	orgID, err := strconv.Atoi(orgIdCfg)

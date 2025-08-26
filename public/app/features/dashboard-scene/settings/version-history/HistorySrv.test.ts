@@ -1,7 +1,7 @@
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { HistorySrv } from './HistorySrv';
-import { restore, versions } from './__mocks__/dashboardHistoryMocks';
+import { restore, versions } from './mocks/dashboardHistoryMocks';
 
 const getMock = jest.fn().mockResolvedValue({});
 const postMock = jest.fn().mockResolvedValue({});
@@ -62,11 +62,11 @@ describe('historySrv', () => {
 
   describe('getDashboardVersion', () => {
     it('should return a version object for the given dashboard id and version', () => {
-      getMock.mockImplementation(() => Promise.resolve(versionsResponse[0]));
+      getMock.mockImplementation(() => Promise.resolve(versionsResponse.versions[0]));
       historySrv = new HistorySrv();
 
       return historySrv.getDashboardVersion(dash.uid, 4).then((version) => {
-        expect(version).toEqual(versionsResponse[0]);
+        expect(version).toEqual(versionsResponse.versions[0]);
       });
     });
 

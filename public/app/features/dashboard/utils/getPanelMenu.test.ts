@@ -1,20 +1,21 @@
 import { Store } from 'redux';
 
 import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-import { AngularComponent, usePluginLinks } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 import config from 'app/core/config';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { PanelModel } from '../state';
+import { PanelModel } from '../state/PanelModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { getPanelMenu } from './getPanelMenu';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasAccessToExplore: () => true,
     hasPermission: jest.fn(),
   },
@@ -304,15 +305,11 @@ describe('getPanelMenu()', () => {
 
   describe('when panel is in view mode', () => {
     it('should return the correct panel menu items', () => {
-      const getExtendedMenu = () => [{ text: 'Toggle legend', shortcut: 'p l', click: jest.fn() }];
-      const ctrl = { getExtendedMenu };
-      const scope = { $$childHead: { ctrl } };
-      const angularComponent = { getScope: () => scope } as AngularComponent;
       const panel = new PanelModel({ isViewing: true });
       const dashboard = createDashboardModelFixture({});
       const extensions: PluginExtensionLink[] = [];
 
-      const menuItems = getPanelMenu(dashboard, panel, extensions, angularComponent);
+      const menuItems = getPanelMenu(dashboard, panel, extensions);
       expect(menuItems).toMatchInlineSnapshot(`
         [
           {
@@ -351,26 +348,12 @@ describe('getPanelMenu()', () => {
             "text": "Inspect",
             "type": "submenu",
           },
-          {
-            "iconClassName": "cube",
-            "subMenu": [
-              {
-                "href": undefined,
-                "onClick": [Function],
-                "shortcut": "p l",
-                "text": "Toggle legend",
-              },
-            ],
-            "text": "More...",
-            "type": "submenu",
-          },
         ]
       `);
     });
   });
 
   describe('onNavigateToExplore', () => {
-    const testSubUrl = '/testSubUrl';
     const testUrl = '/testUrl';
     const windowOpen = jest.fn();
     let event: any;
@@ -404,15 +387,16 @@ describe('getPanelMenu()', () => {
       expect(windowOpen).toHaveBeenLastCalledWith(testUrl);
     });
 
-    it('should navigate to url with subUrl', () => {
-      config.appSubUrl = testSubUrl;
+    it('should navigate to url without subUrl even if appSubUrl is set', () => {
+      const exploreUrl = '/explore?param1=a&param2=b';
+      config.appSubUrl = 'grafana';
       explore.onClick!(event);
 
       const openInNewWindow = navigateSpy.mock.calls[0][1].openInNewWindow;
 
-      openInNewWindow(testUrl);
-
-      expect(windowOpen).toHaveBeenLastCalledWith(`${testSubUrl}${testUrl}`);
+      openInNewWindow(`${exploreUrl}`);
+      // When opening in a new window, onNavigateToExplore should not include the subUrl, as getExploreUrl already handles it.
+      expect(windowOpen).toHaveBeenLastCalledWith(`${exploreUrl}`);
     });
   });
 

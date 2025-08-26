@@ -3,25 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 
 import { DataFrame, DataSourceApi, FieldType, toDataFrame } from '@grafana/data';
-import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';
+import { createLokiDatasource } from '../../mocks/datasource';
 import { LokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId } from '../types';
 
 import { UnwrapParamEditor } from './UnwrapParamEditor';
 
 describe('UnwrapParamEditor', () => {
-  const queryHintsFeatureToggle = config.featureToggles.lokiQueryHints;
-  beforeAll(() => {
-    config.featureToggles.lokiQueryHints = true;
-  });
-  afterAll(() => {
-    config.featureToggles.lokiQueryHints = queryHintsFeatureToggle;
-  });
-
   it('shows value if value present', () => {
     const props = createProps({ value: 'unique' });
     render(<UnwrapParamEditor {...props} />);
@@ -59,16 +50,6 @@ describe('UnwrapParamEditor', () => {
     await userEvent.click(input);
     expect(await screen.findByText('status')).toBeInTheDocument();
     expect(await screen.findByText('duration')).toBeInTheDocument();
-  });
-
-  it('does not show labels with unwrap-friendly values when feature is disabled', async () => {
-    config.featureToggles.lokiQueryHints = false;
-    const props = createProps({}, frames);
-    render(<UnwrapParamEditor {...props} />);
-    const input = screen.getByRole('combobox');
-    await userEvent.click(input);
-    expect(screen.queryByText('status')).not.toBeInTheDocument();
-    expect(screen.queryByText('duration')).not.toBeInTheDocument();
   });
 });
 

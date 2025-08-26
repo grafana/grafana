@@ -5,13 +5,13 @@
 package v0alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
+	apisaggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	versioned "github.com/grafana/grafana/pkg/aggregator/generated/clientset/versioned"
 	internalinterfaces "github.com/grafana/grafana/pkg/aggregator/generated/informers/externalversions/internalinterfaces"
-	v0alpha1 "github.com/grafana/grafana/pkg/aggregator/generated/listers/aggregation/v0alpha1"
+	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/generated/listers/aggregation/v0alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -22,7 +22,7 @@ import (
 // DataPlaneServices.
 type DataPlaneServiceInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v0alpha1.DataPlaneServiceLister
+	Lister() aggregationv0alpha1.DataPlaneServiceLister
 }
 
 type dataPlaneServiceInformer struct {
@@ -47,16 +47,28 @@ func NewFilteredDataPlaneServiceInformer(client versioned.Interface, resyncPerio
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AggregationV0alpha1().DataPlaneServices().List(context.TODO(), options)
+				return client.AggregationV0alpha1().DataPlaneServices().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AggregationV0alpha1().DataPlaneServices().Watch(context.TODO(), options)
+				return client.AggregationV0alpha1().DataPlaneServices().Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AggregationV0alpha1().DataPlaneServices().List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AggregationV0alpha1().DataPlaneServices().Watch(ctx, options)
 			},
 		},
-		&aggregationv0alpha1.DataPlaneService{},
+		&apisaggregationv0alpha1.DataPlaneService{},
 		resyncPeriod,
 		indexers,
 	)
@@ -67,9 +79,9 @@ func (f *dataPlaneServiceInformer) defaultInformer(client versioned.Interface, r
 }
 
 func (f *dataPlaneServiceInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&aggregationv0alpha1.DataPlaneService{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisaggregationv0alpha1.DataPlaneService{}, f.defaultInformer)
 }
 
-func (f *dataPlaneServiceInformer) Lister() v0alpha1.DataPlaneServiceLister {
-	return v0alpha1.NewDataPlaneServiceLister(f.Informer().GetIndexer())
+func (f *dataPlaneServiceInformer) Lister() aggregationv0alpha1.DataPlaneServiceLister {
+	return aggregationv0alpha1.NewDataPlaneServiceLister(f.Informer().GetIndexer())
 }

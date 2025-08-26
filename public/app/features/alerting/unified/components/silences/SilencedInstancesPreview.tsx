@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Badge, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -65,8 +66,13 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
 
   if (isError) {
     return (
-      <Alert title="Preview not available" severity="error">
-        Error occurred when generating preview of affected alerts. Are your matchers valid?
+      <Alert
+        title={t('alerting.silenced-instances-preview.title-preview-not-available', 'Preview not available')}
+        severity="error"
+      >
+        <Trans i18nKey="alerting.silenced-instances-preview.error-generating-preview">
+          Error occurred when generating preview of affected alerts. Are your matchers valid?
+        </Trans>
       </Alert>
     );
   }
@@ -79,14 +85,45 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   return (
     <div>
       <h4 className={styles.title}>
-        Affected alert rule instances
+        <Trans i18nKey="alerting.silences.affected-instances">Affected alert instances</Trans>
+        <Tooltip
+          content={
+            <div>
+              <Trans i18nKey="alerting.silences.preview-affected-instances">
+                Preview the alert instances affected by this silence.
+              </Trans>
+              <br />
+              <Trans i18nKey="alerting.silences.only-firing-instances">
+                Only alert instances in the firing state are displayed.
+              </Trans>
+            </div>
+          }
+        >
+          <span>
+            &nbsp;
+            <Icon name="info-circle" size="sm" />
+          </span>
+        </Tooltip>
         {tableItemAlerts.length > 0 ? (
           <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
         ) : null}
       </h4>
-      {!hasValidMatchers && <span>Add a valid matcher to see affected alerts</span>}
+      {!hasValidMatchers && (
+        <span>
+          <Trans i18nKey="alerting.silenced-instances-preview.valid-matcher-affected-alerts">
+            Add a valid matcher to see affected alerts
+          </Trans>
+        </span>
+      )}
 
-      {isFetching && <LoadingPlaceholder text="Loading affected alert rule instances..." />}
+      {isFetching && (
+        <LoadingPlaceholder
+          text={t(
+            'alerting.silenced-instances-preview.text-loading-affected-alert-rule-instances',
+            'Loading affected alert rule instances...'
+          )}
+        />
+      )}
       {!isFetching && !isError && hasValidMatchers && (
         <div className={styles.table}>
           {tableItemAlerts.length > 0 ? (
@@ -97,7 +134,11 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
               pagination={{ itemsPerPage: 10 }}
             />
           ) : (
-            <span>No firing alert instances found</span>
+            <span>
+              <Trans i18nKey="alerting.silenced-instances-preview.no-firing-alert-instances-found">
+                No firing alert instances found
+              </Trans>
+            </span>
           )}
         </div>
       )}
@@ -111,7 +152,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
   return [
     {
       id: 'state',
-      label: 'State',
+      label: t('alerting.use-columns.label.state', 'State'),
       renderCell: function renderStateTag({ data }) {
         return <AmAlertStateTag state={data.status.state} />;
       },
@@ -120,7 +161,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'labels',
-      label: 'Labels',
+      label: t('alerting.use-columns.label.labels', 'Labels'),
       renderCell: function renderName({ data }) {
         return <AlertLabels labels={data.labels} size="sm" />;
       },
@@ -128,7 +169,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'created',
-      label: 'Created',
+      label: t('alerting.use-columns.label.created', 'Created'),
       renderCell: function renderSummary({ data }) {
         return <>{isNullDate(data.startsAt) ? '-' : dateTime(data.startsAt).format('YYYY-MM-DD HH:mm:ss')}</>;
       },

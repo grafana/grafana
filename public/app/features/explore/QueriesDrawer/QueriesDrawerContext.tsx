@@ -1,29 +1,25 @@
 import { PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
 
-import { config } from '@grafana/runtime';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { selectRichHistorySettings } from '../state/selectors';
 
 export enum Tabs {
-  QueryLibrary = 'Query library',
   RichHistory = 'Query history',
   Starred = 'Starred',
   Settings = 'Settings',
 }
 
-type QueryLibraryContextType = {
-  selectedTab?: Tabs;
+type RichHistoryContextType = {
+  selectedTab: Tabs;
   setSelectedTab: (tab: Tabs) => void;
-  queryLibraryAvailable: boolean;
   drawerOpened: boolean;
   setDrawerOpened: (value: boolean) => void;
 };
 
-export const QueriesDrawerContext = createContext<QueryLibraryContextType>({
-  selectedTab: undefined,
+export const QueriesDrawerContext = createContext<RichHistoryContextType>({
+  selectedTab: Tabs.RichHistory,
   setSelectedTab: () => {},
-  queryLibraryAvailable: false,
   drawerOpened: false,
   setDrawerOpened: () => {},
 });
@@ -33,24 +29,20 @@ export function useQueriesDrawerContext() {
 }
 
 export function QueriesDrawerContextProvider({ children }: PropsWithChildren) {
-  const queryLibraryAvailable = config.featureToggles.queryLibrary === true;
-  const [selectedTab, setSelectedTab] = useState<Tabs | undefined>(
-    queryLibraryAvailable ? Tabs.QueryLibrary : undefined
-  );
+  const [selectedTab, setSelectedTab] = useState<Tabs>(Tabs.RichHistory);
   const [drawerOpened, setDrawerOpened] = useState<boolean>(false);
 
   const settings = useSelector(selectRichHistorySettings);
 
   useEffect(() => {
-    if (settings && !queryLibraryAvailable) {
+    if (settings) {
       setSelectedTab(settings.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory);
     }
-  }, [settings, setSelectedTab, queryLibraryAvailable]);
+  }, [settings, setSelectedTab]);
 
   return (
     <QueriesDrawerContext.Provider
       value={{
-        queryLibraryAvailable,
         selectedTab,
         setSelectedTab,
         drawerOpened,

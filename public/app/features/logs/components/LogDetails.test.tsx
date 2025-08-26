@@ -11,11 +11,21 @@ import {
   createDataFrame,
   DataFrameType,
   CoreApp,
+  PluginExtensionPoints,
 } from '@grafana/data';
+import { setPluginLinksHook } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
-import { createLogRow } from './__mocks__/logRow';
+import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+  };
+});
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();
@@ -57,6 +67,33 @@ describe('LogDetails', () => {
       expect(screen.getByRole('cell', { name: 'label1' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'key2' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label2' })).toBeInTheDocument();
+    });
+    it('should show an option to display the log line when displayed fields are used', async () => {
+      const onClickShowField = jest.fn();
+
+      setup({ displayedFields: ['key1'], onClickShowField }, { labels: { key1: 'label1' } });
+      expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Show log line'));
+
+      expect(onClickShowField).toHaveBeenCalledTimes(1);
+    });
+    it('should show an active option to display the log line when displayed fields are used', async () => {
+      const onClickHideField = jest.fn();
+
+      setup({ displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField }, { labels: { key1: 'label1' } });
+      expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Hide log line'));
+
+      expect(onClickHideField).toHaveBeenCalledTimes(1);
+    });
+    it('should not show an option to display the log line when displayed fields are not used', () => {
+      setup({ displayedFields: undefined }, { labels: { key1: 'label1' } });
+      expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
+      expect(screen.queryByLabelText('Show log line')).not.toBeInTheDocument();
     });
     it('should render filter controls when the callbacks are provided', () => {
       setup(
@@ -266,5 +303,115 @@ describe('LogDetails', () => {
     expect(screen.getByText('value1')).toBeInTheDocument();
     expect(screen.getByText('shouldShowLinkName')).toBeInTheDocument();
     expect(screen.getByText('shouldShowLinkValue')).toBeInTheDocument();
+  });
+
+  it('should load plugin links for logs view resource attributes extension point', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    const rowOverrides = {
+      datasourceType: 'loki',
+      datasourceUid: 'grafanacloud-logs',
+      labels: { key1: 'label1', key2: 'label2' },
+    };
+    setup(undefined, rowOverrides);
+
+    expect(usePluginLinksMock).toHaveBeenCalledWith({
+      extensionPointId: PluginExtensionPoints.LogsViewResourceAttributes,
+      limitPerPlugin: 10,
+      context: {
+        datasource: {
+          type: 'loki',
+          uid: 'grafanacloud-logs',
+        },
+        attributes: { key1: ['label1'], key2: ['label2'] },
+      },
+    });
+  });
+
+  describe('Label types', () => {
+    const entry = 'test';
+    const labels = {
+      label1: 'value1',
+      label2: 'value2',
+      label3: 'value3',
+    };
+    const dataFrame = createDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'body', type: FieldType.string, values: [entry] },
+        { name: 'id', type: FieldType.string, values: ['1'] },
+        {
+          name: 'labels',
+          type: FieldType.other,
+          values: [labels],
+        },
+        {
+          name: 'labelTypes',
+          type: FieldType.other,
+          values: [
+            {
+              label1: 'I',
+              label2: 'S',
+              label3: 'P',
+            },
+          ],
+        },
+      ],
+      meta: {
+        type: DataFrameType.LogLines,
+      },
+    });
+    it('should show label types if they are available and supported', () => {
+      setup(
+        {},
+        {
+          entry,
+          dataFrame,
+          entryFieldIndex: 0,
+          rowIndex: 0,
+          labels,
+          datasourceType: 'loki',
+          rowId: '1',
+        }
+      );
+
+      // Show labels and links
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('value1')).toBeInTheDocument();
+      expect(screen.getByText('label2')).toBeInTheDocument();
+      expect(screen.getByText('value2')).toBeInTheDocument();
+      expect(screen.getByText('label3')).toBeInTheDocument();
+      expect(screen.getByText('value3')).toBeInTheDocument();
+      expect(screen.getByText('I')).toBeInTheDocument();
+      expect(screen.getByText('S')).toBeInTheDocument();
+      expect(screen.getByText('P')).toBeInTheDocument();
+    });
+    it('should not show label types if they are unavailable or not supported', () => {
+      setup(
+        {},
+        {
+          entry,
+          dataFrame,
+          entryFieldIndex: 0,
+          rowIndex: 0,
+          labels,
+          datasourceType: 'other datasource',
+          rowId: '1',
+        }
+      );
+
+      // Show labels and links
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('value1')).toBeInTheDocument();
+      expect(screen.getByText('label2')).toBeInTheDocument();
+      expect(screen.getByText('value2')).toBeInTheDocument();
+      expect(screen.getByText('label3')).toBeInTheDocument();
+      expect(screen.getByText('value3')).toBeInTheDocument();
+      expect(screen.queryByText('I')).not.toBeInTheDocument();
+      expect(screen.queryByText('S')).not.toBeInTheDocument();
+      expect(screen.queryByText('P')).not.toBeInTheDocument();
+    });
   });
 });

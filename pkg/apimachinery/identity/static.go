@@ -2,12 +2,13 @@ package identity
 
 import (
 	"fmt"
+	"strconv"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 )
 
-var _ Requester = &StaticRequester{}
+var _ Requester = (*StaticRequester)(nil)
 
 // StaticRequester allows creating requester values explicitly.
 // It is helpful in tests!
@@ -29,64 +30,92 @@ type StaticRequester struct {
 	Namespace       string
 	IsGrafanaAdmin  bool
 	// Permissions grouped by orgID and actions
-	Permissions   map[int64]map[string][]string
-	IDToken       string
-	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims]
-	CacheKey      string
+	Permissions       map[int64]map[string][]string
+	IDToken           string
+	IDTokenClaims     *authnlib.Claims[authnlib.IDTokenClaims]
+	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims]
+	CacheKey          string
 }
 
-// Access implements Requester.
-func (u *StaticRequester) GetAccess() claims.AccessClaims {
-	return &IDClaimsWrapper{Source: u}
+// GetID returns typed id for the entity
+func (u *StaticRequester) GetID() string {
+	return claims.NewTypeID(u.Type, strconv.FormatInt(u.UserID, 10))
 }
 
-// Identity implements Requester.
-func (u *StaticRequester) GetIdentity() claims.IdentityClaims {
-	if u.IDTokenClaims != nil {
-		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
-	}
-	return &IDClaimsWrapper{Source: u}
-}
-
-// GetRawIdentifier implements Requester.
 func (u *StaticRequester) GetUID() string {
-	return fmt.Sprintf("%s:%s", u.Type, u.UserUID)
+	return claims.NewTypeID(u.Type, u.UserUID)
 }
 
-// GetRawIdentifier implements Requester.
-func (u *StaticRequester) GetRawIdentifier() string {
+func (u *StaticRequester) GetIdentifier() string {
 	return u.UserUID
 }
 
-// GetInternalID implements Requester.
-func (u *StaticRequester) GetInternalID() (int64, error) {
-	return u.UserID, nil
-}
-
-// GetIdentityType implements Requester.
 func (u *StaticRequester) GetIdentityType() claims.IdentityType {
 	return u.Type
 }
 
-// IsIdentityType implements Requester.
+func (u *StaticRequester) GetSubject() string {
+	return claims.NewTypeID(u.Type, strconv.FormatInt(u.UserID, 10))
+}
+
+func (u *StaticRequester) GetAudience() []string {
+	return []string{fmt.Sprintf("org:%d", u.OrgID)}
+}
+
+func (u *StaticRequester) GetTokenPermissions() []string {
+	if u.AccessTokenClaims != nil {
+		return u.AccessTokenClaims.Rest.Permissions
+	}
+	return []string{}
+}
+
+func (u *StaticRequester) GetTokenDelegatedPermissions() []string {
+	if u.AccessTokenClaims != nil {
+		return u.AccessTokenClaims.Rest.DelegatedPermissions
+	}
+	return []string{}
+}
+
+func (u *StaticRequester) GetEmail() string {
+	return u.Email
+}
+
+func (u *StaticRequester) GetEmailVerified() bool {
+	return u.EmailVerified
+}
+
+func (u *StaticRequester) GetUsername() string {
+	return u.Login
+}
+
+func (u *StaticRequester) GetRawIdentifier() string {
+	return u.UserUID
+}
+
+func (u *StaticRequester) GetInternalID() (int64, error) {
+	return u.UserID, nil
+}
+
 func (u *StaticRequester) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
-// GetExtra implements Requester.
 func (u *StaticRequester) GetExtra() map[string][]string {
 	if u.IDToken != "" {
 		return map[string][]string{"id-token": {u.IDToken}}
 	}
-	return map[string][]string{}
+
+	result := map[string][]string{}
+	if u.AccessTokenClaims != nil && u.AccessTokenClaims.Rest.ServiceIdentity != "" {
+		result[authnlib.ServiceIdentityKey] = []string{u.AccessTokenClaims.Rest.ServiceIdentity}
+	}
+	return result
 }
 
-// GetGroups implements Requester.
 func (u *StaticRequester) GetGroups() []string {
 	return []string{}
 }
 
-// GetName implements Requester.
 func (u *StaticRequester) GetName() string {
 	if u.Name != "" {
 		return u.Name
@@ -171,11 +200,6 @@ func (u *StaticRequester) HasUniqueId() bool {
 	return u.UserID > 0
 }
 
-// GetID returns typed id for the entity
-func (u *StaticRequester) GetID() string {
-	return claims.NewTypeID(u.Type, fmt.Sprintf("%d", u.UserID))
-}
-
 func (u *StaticRequester) GetAuthID() string {
 	return u.AuthID
 }
@@ -200,12 +224,6 @@ func (u *StaticRequester) IsAuthenticatedBy(providers ...string) bool {
 // FIXME: remove this method once all services are using an interface
 func (u *StaticRequester) IsNil() bool {
 	return u == nil
-}
-
-// GetEmail returns the email of the active entity
-// Can be empty.
-func (u *StaticRequester) GetEmail() string {
-	return u.Email
 }
 
 func (u *StaticRequester) IsEmailVerified() bool {

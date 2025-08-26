@@ -1,4 +1,6 @@
 {
+  "__inputs": [],
+  "__elements": {},
   "__requires": [
     {
       "type": "panel",
@@ -10,19 +12,13 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.4.3"
+      "version": "10.4.7"
     },
     {
       "type": "datasource",
       "id": "grafana-azure-monitor-datasource",
       "name": "Azure Monitor",
-      "version": "0.3.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
+      "version": "1.0.0"
     },
     {
       "type": "panel",
@@ -44,23 +40,36 @@
     }
   ],
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1620257813794,
   "links": [],
   "panels": [
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
@@ -80,12 +89,14 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
+        "w": 4,
         "x": 0,
-        "y": 1
+        "y": 0
       },
       "id": 7,
       "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -94,9 +105,10 @@
         },
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
+        "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -176,6 +188,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -185,21 +200,20 @@
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Availability",
       "transparent": true,
       "type": "gauge"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "blue",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -215,9 +229,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 3,
-        "y": 1
+        "w": 4,
+        "x": 4,
+        "y": 0
       },
       "id": 6,
       "options": {
@@ -230,10 +244,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "value_and_name"
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -316,6 +332,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -325,19 +344,19 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "purple",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -353,9 +372,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 6,
-        "y": 1
+        "w": 4,
+        "x": 8,
+        "y": 0
       },
       "id": 8,
       "options": {
@@ -368,10 +387,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "value_and_name"
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -450,6 +471,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -459,19 +483,19 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "purple",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -487,9 +511,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 9,
-        "y": 1
+        "w": 4,
+        "x": 12,
+        "y": 0
       },
       "id": 9,
       "options": {
@@ -502,10 +526,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "value_and_name"
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -584,6 +610,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -593,19 +622,19 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "blue",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -621,9 +650,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 12,
-        "y": 1
+        "w": 4,
+        "x": 16,
+        "y": 0
       },
       "id": 10,
       "options": {
@@ -636,10 +665,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "value_and_name"
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -718,6 +749,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -727,19 +761,19 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "fixedColor": "blue",
             "mode": "fixed"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -755,9 +789,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 15,
-        "y": 1
+        "w": 4,
+        "x": 20,
+        "y": 0
       },
       "id": 11,
       "options": {
@@ -770,10 +804,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "value_and_name"
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -852,6 +888,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -861,62 +900,89 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transparent": true,
       "type": "stat"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 4
       },
-      "hiddenSeries": false,
       "id": 2,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null as zero",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -925,6 +991,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -934,7 +1001,6 @@
             "aggregation": "Total",
             "alias": "Table transactions",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -957,8 +1023,12 @@
             "metricDefinition": "$ns/tableServices",
             "metricName": "Transactions",
             "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1000,6 +1070,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -1015,6 +1088,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -1024,7 +1098,6 @@
             "aggregation": "Total",
             "alias": "Blob transactions",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -1047,8 +1120,12 @@
             "metricDefinition": "$ns/blobServices",
             "metricName": "Transactions",
             "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1090,6 +1167,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -1106,6 +1186,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -1115,7 +1196,6 @@
             "aggregation": "Total",
             "alias": "File transactions",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -1142,8 +1222,12 @@
             "metricDefinition": "$ns/fileServices",
             "metricName": "Transactions",
             "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1185,6 +1269,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -1201,6 +1288,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -1210,7 +1298,6 @@
             "aggregation": "Total",
             "alias": "Queue transactions",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -1233,8 +1320,12 @@
             "metricDefinition": "$ns/queueServices",
             "metricName": "Transactions",
             "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1276,6 +1367,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -1286,102 +1380,89 @@
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Transactions by storage type",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "transformations": [],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 4
       },
-      "hiddenSeries": false,
       "id": 14,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -1390,6 +1471,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -1399,7 +1481,6 @@
             "aggregation": "Total",
             "alias": "",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [
               {
                 "dimension": "ApiName",
@@ -1428,8 +1509,12 @@
             "metricDefinition": "$ns",
             "metricName": "Transactions",
             "metricNamespace": "Microsoft.Storage/storageAccounts",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1471,6 +1556,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -1480,56 +1568,22 @@
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Transactions by API Name",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "transformations": [],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1539,8 +1593,10 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1548,7 +1604,14 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -1572,17 +1635,19 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 14
+        "y": 13
       },
       "id": 13,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
-        "tooltipOptions": {
-          "mode": "multi"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.3",
@@ -1623,6 +1688,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "insightsAnalytics": {
             "query": "",
@@ -1678,6 +1746,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -1729,6 +1800,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -1775,6 +1849,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -1785,20 +1862,22 @@
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Capacity by storage type",
-      "transformations": [],
       "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1808,8 +1887,10 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineStyle": {
               "fill": "solid"
@@ -1820,7 +1901,14 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -1840,17 +1928,19 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 14
+        "y": 13
       },
       "id": 12,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.3",
@@ -1932,6 +2022,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "insightsAnalytics": {
             "query": "",
@@ -2018,6 +2111,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -2110,6 +2206,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -2197,6 +2296,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -2207,34 +2309,42 @@
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Availability by storage type",
-      "transformations": [],
       "type": "timeseries"
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 22
       },
       "id": 52,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Failures",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -2284,7 +2394,7 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 24
+        "y": 23
       },
       "id": 16,
       "options": {
@@ -2297,10 +2407,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -2389,6 +2501,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -2398,13 +2513,12 @@
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "",
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2412,6 +2526,9 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -2421,8 +2538,10 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -2430,7 +2549,14 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -2466,17 +2592,19 @@
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 24
+        "y": 23
       },
       "id": 18,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.3",
@@ -2569,6 +2697,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -2578,21 +2709,24 @@
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "",
       "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2613,8 +2747,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "basic"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "gauge"
+                }
               }
             ]
           }
@@ -2624,13 +2761,20 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 29
       },
       "id": 20,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -2725,6 +2869,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -2746,15 +2893,21 @@
       "type": "table"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2775,8 +2928,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "basic"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "gauge"
+                }
               }
             ]
           }
@@ -2786,13 +2942,20 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 29
       },
       "id": 22,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -2891,6 +3054,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -2912,15 +3078,21 @@
       "type": "table"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2941,8 +3113,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "basic"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "gauge"
+                }
               }
             ]
           }
@@ -2952,13 +3127,20 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 37
       },
       "id": 24,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -3053,6 +3235,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -3074,15 +3259,21 @@
       "type": "table"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -3103,8 +3294,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "basic"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "gauge"
+                }
               }
             ]
           }
@@ -3114,13 +3308,20 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 37
       },
       "id": 26,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -3215,6 +3416,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -3237,26 +3441,37 @@
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 45
       },
       "id": 50,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Performance",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -3290,7 +3505,7 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 47
+        "y": 46
       },
       "id": 28,
       "options": {
@@ -3303,10 +3518,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -3384,6 +3601,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "insightsAnalytics": {
             "query": "",
@@ -3470,6 +3690,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -3480,17 +3703,21 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "stat"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -3500,8 +3727,10 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -3509,7 +3738,14 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -3544,17 +3780,19 @@
         "h": 6,
         "w": 18,
         "x": 6,
-        "y": 47
+        "y": 46
       },
       "id": 30,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.3",
@@ -3635,6 +3873,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "insightsAnalytics": {
             "query": "",
@@ -3721,6 +3962,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -3731,19 +3975,24 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -3765,8 +4014,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "lcd-gauge"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
               },
               {
                 "id": "color",
@@ -3783,8 +4035,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge"
+                }
               },
               {
                 "id": "color",
@@ -3802,8 +4057,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge"
+                }
               },
               {
                 "id": "color",
@@ -3832,13 +4090,20 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 52
       },
       "id": 32,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -3922,6 +4187,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "insightsAnalytics": {
             "query": "",
@@ -4014,6 +4282,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -4024,7 +4295,6 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "transformations": [
         {
           "id": "reduce",
@@ -4051,27 +4321,38 @@
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 63
       },
       "id": 48,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Availability",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "description": "The data comes from Storage metrics. It measures the availability of requests on Storage accounts.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
@@ -4093,10 +4374,12 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 64
       },
       "id": 34,
       "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -4105,9 +4388,10 @@
         },
         "showThresholdLabels": false,
         "showThresholdMarkers": false,
+        "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -4187,6 +4471,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -4272,6 +4559,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -4359,6 +4649,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -4451,6 +4744,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -4538,6 +4834,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -4548,19 +4847,24 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "gauge"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -4580,8 +4884,11 @@
                 "value": "percent"
               },
               {
-                "id": "custom.displayMode",
-                "value": "color-background"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
               },
               {
                 "id": "color",
@@ -4597,14 +4904,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 72
       },
       "id": 36,
       "maxDataPoints": 1,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": false
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -4689,6 +5003,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "insightsAnalytics": {
             "query": "",
@@ -4781,6 +5098,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -4879,6 +5199,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -4972,6 +5295,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -4982,8 +5308,6 @@
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Availability by API name",
       "transformations": [
         {
@@ -4998,57 +5322,85 @@
       "type": "table"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 72
       },
-      "hiddenSeries": false,
       "id": 38,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -5057,6 +5409,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5066,7 +5419,6 @@
             "aggregation": "Average",
             "alias": "Blob Availability",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -5085,8 +5437,12 @@
             "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
             "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5128,6 +5484,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -5143,6 +5502,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5152,7 +5512,6 @@
             "aggregation": "Average",
             "alias": "Table Availability",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -5171,8 +5530,12 @@
             "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
             "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5214,6 +5577,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -5230,6 +5596,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5239,7 +5606,6 @@
             "aggregation": "Average",
             "alias": "File Availability",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -5262,8 +5628,12 @@
             "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
             "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5305,6 +5675,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -5321,6 +5694,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5330,7 +5704,6 @@
             "aggregation": "Average",
             "alias": "Queue Availability",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -5349,8 +5722,12 @@
             "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
             "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5392,6 +5769,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -5402,70 +5782,42 @@
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Availability Trend",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "transformations": [],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "percent",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 80
       },
       "id": 46,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$ds"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Capacity",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -5483,7 +5835,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 81
       },
       "id": 40,
       "options": {
@@ -5496,10 +5848,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -5538,6 +5892,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "insightsAnalytics": {
             "query": "",
             "resultFormat": "time_series"
@@ -5592,6 +5949,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -5637,6 +5997,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -5689,6 +6052,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -5735,6 +6101,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -5745,61 +6114,88 @@
           "subscription": "$sub"
         }
       ],
-      "title": "",
       "type": "stat"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "decbytes"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 90
+        "y": 89
       },
-      "hiddenSeries": false,
       "id": 42,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 1,
-      "points": true,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
           "appInsights": {
@@ -5808,6 +6204,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5817,7 +6214,6 @@
             "aggregation": "Average",
             "alias": "Blob Capacity",
             "allowedTimeGrainsMs": [3600000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -5832,8 +6228,12 @@
             "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCapacity",
             "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5846,6 +6246,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -5863,6 +6266,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5872,14 +6276,17 @@
             "aggregation": "Average",
             "alias": "Table Capacity",
             "allowedTimeGrainsMs": [3600000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
             "metricDefinition": "$ns/tableServices",
             "metricName": "TableCapacity",
             "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5892,6 +6299,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -5909,6 +6319,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5918,7 +6329,6 @@
             "aggregation": "Average",
             "alias": "File Capacity",
             "allowedTimeGrainsMs": [3600000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -5929,8 +6339,12 @@
             "metricDefinition": "$ns/fileServices",
             "metricName": "FileCapacity",
             "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5943,6 +6357,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -5960,6 +6377,7 @@
             "timeGrain": "auto"
           },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
             "resultFormat": "time_series",
             "workspace": "00000000-0000-0000-0000-000000000000"
@@ -5969,14 +6387,17 @@
             "aggregation": "Average",
             "alias": "Queue Capacity",
             "allowedTimeGrainsMs": [3600000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
             "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCapacity",
             "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource/default",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource/default"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -5990,6 +6411,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -6000,55 +6424,22 @@
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Storage capacity",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "decbytes",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "$ds"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -6058,8 +6449,10 @@
             "hideFrom": {
               "graph": false,
               "legend": false,
-              "tooltip": false
+              "tooltip": false,
+              "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 4,
@@ -6067,7 +6460,14 @@
               "type": "linear"
             },
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -6091,17 +6491,19 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 90
+        "y": 89
       },
       "id": 44,
       "options": {
         "legend": {
           "calcs": ["mean"],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
-        "tooltipOptions": {
-          "mode": "single"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
       "pluginVersion": "7.4.3",
@@ -6152,6 +6554,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -6197,6 +6602,9 @@
               }
             ],
             "top": "10"
+          },
+          "datasource": {
+            "uid": "$ds"
           },
           "hide": false,
           "insightsAnalytics": {
@@ -6249,6 +6657,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -6295,6 +6706,9 @@
             ],
             "top": "10"
           },
+          "datasource": {
+            "uid": "$ds"
+          },
           "hide": false,
           "insightsAnalytics": {
             "query": "",
@@ -6305,21 +6719,21 @@
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Storage count",
       "type": "timeseries"
     }
   ],
   "refresh": false,
-  "schemaVersion": 27,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
       {
-        "current": {},
-        "description": null,
-        "error": null,
+        "current": {
+          "selected": false,
+          "text": "Azure Monitor",
+          "value": "azure-monitor-oob"
+        },
         "hide": 0,
         "includeAll": false,
         "label": "Data Source",
@@ -6334,25 +6748,30 @@
         "type": "datasource"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
-        "definition": "subscriptions()",
-        "description": null,
-        "error": null,
+        "datasource": {
+          "uid": "$ds"
+        },
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Subscription",
         "multi": false,
         "name": "sub",
         "options": [],
-        "query": "subscriptions()",
+        "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "SubscriptionsQuery",
+            "rawQuery": "subscriptions()"
+          },
+          "queryType": "Azure Subscriptions",
+          "refId": "A"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -6385,12 +6804,11 @@
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "uid": "$ds"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Resource Group",
@@ -6410,18 +6828,16 @@
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "uid": "$ds"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Resource",
@@ -6440,7 +6856,6 @@
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -6455,5 +6870,6 @@
   "timezone": "",
   "title": "Azure / Insights / Storage Accounts",
   "uid": "3n2E8CrGk",
-  "version": 29
+  "version": 29,
+  "weekStart": ""
 }

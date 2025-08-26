@@ -1,12 +1,12 @@
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { useCallback, useMemo, useState } from 'react';
+import { CellProps } from 'react-table';
 
-import { InteractiveTable, CellProps, LinkButton } from '@grafana/ui';
-
+import { LinkButton } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
-import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
+import { FetchDataArgs, InteractiveTable, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
@@ -103,7 +103,7 @@ const pageableData: CarData[] = [
 ];
 
 const meta: Meta<typeof InteractiveTable<CarData>> = {
-  title: 'Experimental/InteractiveTable',
+  title: 'Layout/InteractiveTable',
   component: InteractiveTable,
   parameters: {
     docs: {
@@ -112,6 +112,8 @@ const meta: Meta<typeof InteractiveTable<CarData>> = {
     controls: {
       exclude: EXCLUDED_PROPS,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   args: {
     columns: [

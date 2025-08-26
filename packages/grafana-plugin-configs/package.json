@@ -2,23 +2,33 @@
   "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
-  "version": "11.4.0-pre",
+  "version": "12.2.0-pre",
   "dependencies": {
-    "tslib": "2.7.0"
+    "tslib": "2.8.1"
   },
+  "type": "module",
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@swc/core": "1.4.2",
+    "@swc/core": "1.13.3",
+    "@swc/helpers": "^0.5.0",
+    "@swc/jest": "^0.2.26",
     "@types/eslint": "9.6.1",
-    "copy-webpack-plugin": "12.0.2",
-    "eslint": "9.14.0",
-    "eslint-webpack-plugin": "4.2.0",
-    "fork-ts-checker-webpack-plugin": "9.0.2",
-    "glob": "11.0.0",
+    "@types/webpack-bundle-analyzer": "^4.7.0",
+    "copy-webpack-plugin": "13.0.0",
+    "eslint": "9.32.0",
+    "eslint-webpack-plugin": "5.0.2",
+    "fork-ts-checker-webpack-plugin": "9.1.0",
+    "glob": "11.0.3",
+    "identity-obj-proxy": "^3.0.0",
+    "imports-loader": "^5.0.0",
+    "jest-canvas-mock": "2.5.2",
+    "jest-environment-jsdom": "29.7.0",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
-    "typescript": "5.5.4",
-    "webpack": "5.95.0"
+    "typescript": "5.9.2",
+    "webpack": "5.101.0",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-virtual-modules": "^0.6.2"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.9.2"
 }

@@ -4,15 +4,21 @@ import { ReactElement, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
-import { Button, ConfirmModal, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
+import { UsagesToNetwork, VariableUsageTree, getVariableUsages } from '../../variables/utils';
 
 import { getDefinition } from './utils';
 
 export interface VariableEditorListRowProps {
   index: number;
   variable: SceneVariable;
+  usageTree: VariableUsageTree[];
+  usagesNetwork: UsagesToNetwork[];
   onEdit: (identifier: string) => void;
   onDuplicate: (identifier: string) => void;
   onDelete: (identifier: string) => void;
@@ -21,15 +27,20 @@ export interface VariableEditorListRowProps {
 export function VariableEditorListRow({
   index,
   variable,
+  usageTree,
+  usagesNetwork,
   onEdit: propsOnEdit,
   onDuplicate: propsOnDuplicate,
   onDelete: propsOnDelete,
 }: VariableEditorListRowProps): ReactElement {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
   const definition = getDefinition(variable);
   const variableState = variable.state;
   const identifier = variableState.name;
+  const usages = getVariableUsages(identifier, usageTree);
+  const passed = usages > 0 || variableState.type === 'adhoc';
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const handleDeleteVariableModal = (show: boolean) => () => {
     setShowDeleteModal(show);
@@ -79,6 +90,12 @@ export function VariableEditorListRow({
 
           <td role="gridcell" className={styles.column}>
             <div className={styles.icons}>
+              <VariableCheckIndicator passed={passed} />
+              <VariableUsagesButton
+                id={variableState.name}
+                isAdhoc={variableState.type === 'adhoc'}
+                usages={usagesNetwork}
+              />
               <IconButton
                 onClick={(event) => {
                   event.preventDefault();
@@ -86,7 +103,7 @@ export function VariableEditorListRow({
                   propsOnDuplicate(identifier);
                 }}
                 name="copy"
-                tooltip="Duplicate variable"
+                tooltip={t('dashboard-scene.variable-editor-list-row.tooltip-duplicate-variable', 'Duplicate variable')}
                 data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(
                   variableState.name
                 )}
@@ -97,16 +114,23 @@ export function VariableEditorListRow({
                   setShowDeleteModal(true);
                 }}
                 name="trash-alt"
-                tooltip="Remove variable"
+                tooltip={t('dashboard-scene.variable-editor-list-row.tooltip-remove-variable', 'Remove variable')}
                 data-testid={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(
                   variableState.name
                 )}
               />
               <ConfirmModal
                 isOpen={showDeleteModal}
-                title="Delete variable"
-                body={`Are you sure you want to delete: ${variableState.name}?`}
-                confirmText="Delete variable"
+                title={t('dashboard-scene.variable-editor-list-row.title-delete-variable', 'Delete variable')}
+                body={t(
+                  'dashboard-scene.variable-editor-list-row.body-delete-variable',
+                  'Are you sure you want to delete: {{variable}}?',
+                  { variable: variableState.name }
+                )}
+                confirmText={t(
+                  'dashboard-scene.variable-editor-list-row.confirmText-delete-variable',
+                  'Delete variable'
+                )}
                 onConfirm={onDeleteVariable}
                 onDismiss={handleDeleteVariableModal(false)}
               />
@@ -119,6 +143,52 @@ export function VariableEditorListRow({
         </tr>
       )}
     </Draggable>
+  );
+}
+
+interface VariableCheckIndicatorProps {
+  passed: boolean;
+}
+
+function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactElement {
+  const styles = useStyles2(getStyles);
+
+  if (passed) {
+    return (
+      <Tooltip
+        content={t(
+          'dashboard-scene.variable-check-indicator.content-variable-referenced-other-variables-dashboard',
+          'This variable is referenced by other variables or dashboard.'
+        )}
+      >
+        <Icon
+          name="check"
+          className={styles.iconPassed}
+          aria-label={t(
+            'dashboard-scene.variable-check-indicator.aria-label-variable-referenced-other-variables-dashboard',
+            'This variable is referenced by other variables or dashboard.'
+          )}
+        />
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip
+      content={t(
+        'dashboard-scene.variable-check-indicator.content-variable-not-referenced-other-variables-dashboard',
+        'This variable is not referenced by other variables or dashboard.'
+      )}
+    >
+      <Icon
+        name="exclamation-triangle"
+        className={styles.iconFailed}
+        aria-label={t(
+          'dashboard-scene.variable-check-indicator.aria-label-variable-referenced-dashboard',
+          'This variable is not referenced by any variable or dashboard.'
+        )}
+      />
+    </Tooltip>
   );
 }
 

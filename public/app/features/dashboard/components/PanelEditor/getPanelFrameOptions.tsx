@@ -1,4 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -14,7 +15,7 @@ import { OptionPaneRenderProps } from './types';
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { dashboard, panel, onPanelConfigChange } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
-    title: 'Panel options',
+    title: t('dashboard.get-panel-frame-category.descriptor.title.panel-options', 'Panel options'),
     id: 'Panel options',
     isOpenDefault: true,
   });
@@ -38,14 +39,15 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Title',
+        title: t('dashboard.get-panel-frame-category.title.title', 'Title'),
+        id: 'PanelFrameTitle',
         value: panel.title,
         popularRank: 1,
-        render: function renderTitle() {
+        render: function renderTitle(descriptor) {
           return (
             <Input
               data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
-              id="PanelFrameTitle"
+              id={descriptor.props.id}
               defaultValue={panel.title}
               onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
             />
@@ -62,14 +64,15 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Description',
+        title: t('dashboard.get-panel-frame-category.title.description', 'Description'),
+        id: 'description-text-area',
         description: panel.description,
         value: panel.description,
-        render: function renderDescription() {
+        render: function renderDescription(descriptor) {
           return (
             <TextArea
               data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
-              id="description-text-area"
+              id={descriptor.props.id}
               defaultValue={panel.description}
               onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
             />
@@ -82,13 +85,14 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Transparent background',
-        render: function renderTransparent() {
+        title: t('dashboard.get-panel-frame-category.title.transparent-background', 'Transparent background'),
+        id: 'transparent-background',
+        render: function renderTransparent(descriptor) {
           return (
             <Switch
               data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Transparent background')}
               value={panel.transparent}
-              id="transparent-background"
+              id={descriptor.props.id}
               onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
             />
           );
@@ -97,13 +101,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addCategory(
       new OptionsPaneCategoryDescriptor({
-        title: 'Panel links',
+        title: t('dashboard.get-panel-frame-category.title.panel-links', 'Panel links'),
         id: 'Panel links',
         isOpenDefault: false,
         itemsCount: panel.links?.length,
       }).addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Panel links',
+          title: t('dashboard.get-panel-frame-category.title.panel-links', 'Panel links'),
           render: function renderLinks() {
             return (
               <DataLinksInlineEditor
@@ -119,19 +123,20 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addCategory(
       new OptionsPaneCategoryDescriptor({
-        title: 'Repeat options',
+        title: t('dashboard.get-panel-frame-category.title.repeat-options', 'Repeat options'),
         id: 'Repeat options',
         isOpenDefault: false,
       })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Repeat by variable',
+            title: t('dashboard.get-panel-frame-category.title.repeat-by-variable', 'Repeat by variable'),
+            id: 'repeat-by-variable-select',
             description:
               'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-            render: function renderRepeatOptions() {
+            render: function renderRepeatOptions(descriptor) {
               return (
                 <RepeatRowSelect
-                  id="repeat-by-variable-select"
+                  id={descriptor.props.id}
                   repeat={panel.repeat}
                   onChange={(value?: string) => {
                     onPanelConfigChange('repeat', value);
@@ -143,12 +148,18 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Repeat direction',
+            title: t('dashboard.get-panel-frame-category.title.repeat-direction', 'Repeat direction'),
             showIf: () => !!panel.repeat,
             render: function renderRepeatOptions() {
               const directionOptions = [
-                { label: 'Horizontal', value: 'h' },
-                { label: 'Vertical', value: 'v' },
+                {
+                  label: t('dashboard.get-panel-frame-category.direction-options.label.horizontal', 'Horizontal'),
+                  value: 'h',
+                },
+                {
+                  label: t('dashboard.get-panel-frame-category.direction-options.label.vertical', 'Vertical'),
+                  value: 'v',
+                },
               ];
 
               return (
@@ -163,7 +174,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Max per row',
+            title: t('dashboard.get-panel-frame-category.title.max-per-row', 'Max per row'),
             showIf: () => Boolean(panel.repeat && panel.repeatDirection === 'h'),
             render: function renderOption() {
               const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));

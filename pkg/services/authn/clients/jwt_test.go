@@ -11,9 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -136,6 +140,116 @@ func TestAuthenticateJWT(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Valid Use case with org_mapping",
+			wantID: &authn.Identity{
+				OrgID:           0,
+				OrgName:         "",
+				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
+				Login:           "eai-doe",
+				Groups:          []string{"foo", "bar"},
+				Name:            "Eai Doe",
+				Email:           "eai.doe@cor.po",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.JWTModule,
+				AuthID:          "1234567890",
+				IsDisabled:      false,
+				HelpFlags1:      0,
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
+					SyncTeams:       true,
+					LookUpParams: login.UserLookupParams{
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
+					},
+				},
+			},
+			verifyProvider: func(context.Context, string) (map[string]any, error) {
+				return map[string]any{
+					"sub":                "1234567890",
+					"email":              "eai.doe@cor.po",
+					"preferred_username": "eai-doe",
+					"name":               "Eai Doe",
+					"roles":              "None",
+					"groups":             []string{"foo", "bar"},
+					"orgs":               []string{"org1", "org2"},
+				}, nil
+			},
+			cfg: &setting.Cfg{
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					HeaderName:              jwtHeaderName,
+					EmailClaim:              "email",
+					UsernameClaim:           "preferred_username",
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+					RoleAttributePath:       "roles",
+					GroupsAttributePath:     "groups[]",
+					OrgAttributePath:        "orgs[]",
+					OrgMapping:              []string{"org1:Org4:Editor", "org2:Org5:Viewer"},
+				},
+			},
+		},
+		{
+			name: "Invalid Use case with org_mapping and invalid roles",
+			wantID: &authn.Identity{
+				OrgID:           0,
+				OrgName:         "",
+				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
+				Login:           "eai-doe",
+				Groups:          []string{"foo", "bar"},
+				Name:            "Eai Doe",
+				Email:           "eai.doe@cor.po",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.JWTModule,
+				AuthID:          "1234567890",
+				IsDisabled:      false,
+				HelpFlags1:      0,
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
+					SyncTeams:       true,
+					LookUpParams: login.UserLookupParams{
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
+					},
+				},
+			},
+			verifyProvider: func(context.Context, string) (map[string]any, error) {
+				return map[string]any{
+					"sub":                "1234567890",
+					"email":              "eai.doe@cor.po",
+					"preferred_username": "eai-doe",
+					"name":               "Eai Doe",
+					"roles":              []string{"Invalid"},
+					"groups":             []string{"foo", "bar"},
+					"orgs":               []string{"org1", "org2"},
+				}, nil
+			},
+			cfg: &setting.Cfg{
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					HeaderName:              jwtHeaderName,
+					EmailClaim:              "email",
+					UsernameClaim:           "preferred_username",
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+					RoleAttributePath:       "roles",
+					GroupsAttributePath:     "groups[]",
+					OrgAttributePath:        "orgs[]",
+					OrgMapping:              []string{"org1:Org4:Editor", "org2:Org5:Viewer"},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -146,7 +260,10 @@ func TestAuthenticateJWT(t *testing.T) {
 				VerifyProvider: tc.verifyProvider,
 			}
 
-			jwtClient := ProvideJWT(jwtService, tc.cfg)
+			jwtClient := ProvideJWT(jwtService,
+				connectors.ProvideOrgRoleMapper(tc.cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				tc.cfg, tracing.InitializeTracerForTest())
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
 					jwtHeaderName: {"sample-token"}},
@@ -262,7 +379,9 @@ func TestJWTClaimConfig(t *testing.T) {
 				Header: map[string][]string{
 					jwtHeaderName: {token}},
 			}
-			jwtClient := ProvideJWT(jwtService, cfg)
+			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(cfg,
+				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				cfg, tracing.InitializeTracerForTest())
 			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 				OrgID:       1,
 				HTTPRequest: httpReq,
@@ -372,7 +491,10 @@ func TestJWTTest(t *testing.T) {
 					RoleAttributeStrict:     true,
 				},
 			}
-			jwtClient := ProvideJWT(jwtService, cfg)
+			jwtClient := ProvideJWT(jwtService,
+				connectors.ProvideOrgRoleMapper(cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				cfg, tracing.InitializeTracerForTest())
 			httpReq := &http.Request{
 				URL: &url.URL{RawQuery: "auth_token=" + tc.token},
 				Header: map[string][]string{
@@ -425,7 +547,10 @@ func TestJWTStripParam(t *testing.T) {
 	httpReq := &http.Request{
 		URL: &url.URL{RawQuery: "auth_token=" + token + "&other_param=other_value"},
 	}
-	jwtClient := ProvideJWT(jwtService, cfg)
+	jwtClient := ProvideJWT(jwtService,
+		connectors.ProvideOrgRoleMapper(cfg,
+			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+		cfg, tracing.InitializeTracerForTest())
 	_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,
@@ -481,7 +606,10 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 		},
 	}
 
-	jwtClient := ProvideJWT(jwtService, cfg)
+	jwtClient := ProvideJWT(jwtService,
+		connectors.ProvideOrgRoleMapper(cfg,
+			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+		cfg, tracing.InitializeTracerForTest())
 	identity, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,

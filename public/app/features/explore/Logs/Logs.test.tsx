@@ -10,14 +10,15 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
-  standardTransformersRegistry,
   toUtc,
   createDataFrame,
   ExploreLogsPanelState,
+  DataQuery,
 } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
 
 import { initialExploreState } from '../state/main';
@@ -25,7 +26,7 @@ import { makeExplorePaneState } from '../state/utils';
 
 import { Logs } from './Logs';
 import { visualisationTypeKey } from './utils/logs';
-import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
+import { getMockElasticFrame, getMockLokiFrame } from './utils/mocks';
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -48,6 +49,18 @@ jest.mock('../state/explorePane', () => ({
   },
 }));
 
+const fakeChangeQueries = jest.fn().mockReturnValue({ type: 'fakeChangeQueries' });
+const fakeRunQueries = jest.fn().mockReturnValue({ type: 'fakeRunQueries' });
+jest.mock('../state/query', () => ({
+  ...jest.requireActual('../state/query'),
+  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeChangeQueries(args);
+  },
+  runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeRunQueries(args);
+  },
+}));
+
 describe('Logs', () => {
   let originalHref = window.location.href;
 
@@ -66,18 +79,7 @@ describe('Logs', () => {
   });
   beforeAll(() => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    standardTransformersRegistry.setInit(() => {
-      return transformers.map((t) => {
-        return {
-          id: t.id,
-          aliasIds: t.aliasIds,
-          name: t.name,
-          transformation: t,
-          description: t.description,
-          editor: () => null,
-        };
-      });
-    });
+    mockTransformationsRegistry(transformers);
   });
 
   afterAll(() => {
@@ -375,6 +377,28 @@ describe('Logs', () => {
     expect(logRows.length).toBe(3);
     expect(logRows[0].textContent).toContain('log message 1');
     expect(logRows[2].textContent).toContain('log message 3');
+    expect(fakeRunQueries).not.toHaveBeenCalled();
+  });
+
+  it('should sync the query direction when changing the order of loki queries', async () => {
+    const query = { expr: '{a="b"}', refId: 'A', datasource: { type: 'loki' } };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).toHaveBeenCalledWith({
+      exploreId: 'left',
+      queries: [{ ...query, direction: LokiQueryDirection.Forward }],
+    });
+    expect(fakeRunQueries).toHaveBeenCalledWith({ exploreId: 'left' });
+  });
+
+  it('should not change the query direction when changing the order of non-loki queries', async () => {
+    fakeChangeQueries.mockClear();
+    const query = { refId: 'B' };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).not.toHaveBeenCalled();
   });
 
   describe('for permalinking', () => {

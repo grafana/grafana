@@ -11,7 +11,7 @@ describe('ColorPickerPopover', () => {
   it('should be tabbable', async () => {
     render(<ColorPickerPopover color={'red'} onChange={() => {}} />);
     const color = screen.getByRole('button', { name: 'dark-red color' });
-    const customTab = screen.getByRole('button', { name: 'Custom' });
+    const customTab = screen.getByRole('tab', { name: 'Custom' });
 
     await userEvent.tab();
     expect(customTab).toHaveFocus();

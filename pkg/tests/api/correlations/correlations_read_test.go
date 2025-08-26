@@ -25,15 +25,15 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
+		Password:       "admin2",
+		Login:          "admin2",
 	})
 
 	otherOrgId := ctx.createOrg("New organization")
 	otherOrgUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin2",
-		Login:          "admin2",
+		Password:       "admin3",
+		Login:          "admin3",
 		OrgID:          otherOrgId,
 	})
 

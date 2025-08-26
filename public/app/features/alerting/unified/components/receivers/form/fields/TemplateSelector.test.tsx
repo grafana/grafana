@@ -1,19 +1,21 @@
-import { ReactNode } from 'react';
+import { ComponentProps, ReactNode } from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
+import { CodeEditor } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
-import { AccessControlAction, NotificationChannelOption } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { NotificationChannelOption } from 'app/types/alerting';
 
-import { getTemplateOptions, TemplatesPicker } from './TemplateSelector';
+import { TemplatesPicker, getTemplateOptions } from './TemplateSelector';
 import { parseTemplates } from './utils';
+
+type CodeEditorProps = ComponentProps<typeof CodeEditor>;
 
 const alertmanagerConfigMock = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
@@ -84,8 +86,6 @@ describe('getTemplateOptions function', () => {
 });
 
 describe('TemplatesPicker', () => {
-  testWithFeatureToggles(['alertingApiServer']);
-
   beforeEach(() => {
     grantUserPermissions([
       AccessControlAction.AlertingNotificationsRead,

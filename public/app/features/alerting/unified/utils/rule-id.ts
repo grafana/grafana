@@ -7,23 +7,23 @@ import {
   EditableRuleIdentifier,
   Rule,
   RuleGroupIdentifier,
+  RuleGroupIdentifierV2,
   RuleIdentifier,
   RuleWithLocation,
 } from 'app/types/unified-alerting';
 import { Annotations, Labels, PromRuleType, RulerCloudRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
-  isAlertingRule,
-  isAlertingRulerRule,
+  getRuleName,
   isCloudRuleIdentifier,
   isGrafanaRuleIdentifier,
-  isGrafanaRulerRule,
   isPrometheusRuleIdentifier,
-  isRecordingRule,
-  isRecordingRulerRule,
+  prometheusRuleType,
+  rulerRuleType,
 } from './rules';
 
 export function fromRulerRule(
@@ -32,16 +32,31 @@ export function fromRulerRule(
   groupName: string,
   rule: RulerRuleDTO
 ): EditableRuleIdentifier {
-  if (isGrafanaRulerRule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     return { uid: rule.grafana_alert.uid!, ruleSourceName: 'grafana' };
   }
   return {
     ruleSourceName,
     namespace,
     groupName,
-    ruleName: isAlertingRulerRule(rule) ? rule.alert : rule.record,
+    ruleName: getRuleName(rule),
     rulerRuleHash: hashRulerRule(rule),
   } satisfies CloudRuleIdentifier;
+}
+
+export function fromRulerRuleAndGroupIdentifierV2(
+  ruleGroup: RuleGroupIdentifierV2,
+  rule: RulerRuleDTO
+): EditableRuleIdentifier {
+  if (ruleGroup.groupOrigin === 'grafana') {
+    if (rulerRuleType.grafana.rule(rule)) {
+      return { uid: rule.grafana_alert.uid, ruleSourceName: 'grafana' };
+    }
+    logError(new Error('Rule is not a Grafana Ruler rule'));
+    throw new Error('Rule is not a Grafana Ruler rule');
+  }
+
+  return fromRulerRule(ruleGroup.rulesSource.name, ruleGroup.namespace.name, ruleGroup.groupName, rule);
 }
 
 export function fromRulerRuleAndRuleGroupIdentifier(
@@ -228,7 +243,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     .join('$');
 }
 
-function hash(value: string): number {
+export function hash(value: string): number {
   let hash = 0;
   if (value.length === 0) {
     return hash;
@@ -243,46 +258,48 @@ function hash(value: string): number {
 
 // this is used to identify rules, mimir / loki rules do not have a unique identifier
 export function hashRulerRule(rule: RulerRuleDTO): string {
-  if (isGrafanaRulerRule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     return rule.grafana_alert.uid;
   }
 
-  const fingerprint = getRulerRuleFingerprint(rule);
-  return hash(JSON.stringify(fingerprint)).toString();
-}
-
-function getRulerRuleFingerprint(rule: RulerCloudRuleDTO) {
   const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
   // If the prometheusRulesPrimary feature toggle is enabled, we don't need to hash the query
   // We need to make fingerprint compatibility between Prometheus and Ruler rules
   // Query often differs between the two, so we can't use it to generate a fingerprint
-  const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.expr);
+  const includeQuery = !prometheusRulesPrimary;
+  const fingerprint = getRulerRuleFingerprint(rule, includeQuery);
+  return hash(JSON.stringify(fingerprint)).toString();
+}
+
+export function getRulerRuleFingerprint(rule: RulerCloudRuleDTO, includeQuery: boolean) {
+  const queryHash = includeQuery ? hashQuery(rule.expr) : '';
   const labelsHash = hashLabelsOrAnnotations(rule.labels);
 
-  if (isRecordingRulerRule(rule)) {
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
     return [rule.record, PromRuleType.Recording, queryHash, labelsHash];
   }
-  if (isAlertingRulerRule(rule)) {
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
     return [rule.alert, PromRuleType.Alerting, queryHash, hashLabelsOrAnnotations(rule.annotations), labelsHash];
   }
   throw new Error('Only recording and alerting ruler rules can be hashed');
 }
 
 export function hashRule(rule: Rule): string {
-  const fingerprint = getPromRuleFingerprint(rule);
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+  const includeQuery = !prometheusRulesPrimary;
+
+  const fingerprint = getPromRuleFingerprint(rule, includeQuery);
   return hash(JSON.stringify(fingerprint)).toString();
 }
 
-function getPromRuleFingerprint(rule: Rule) {
-  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
-
-  const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.query);
+export function getPromRuleFingerprint(rule: Rule, includeQuery: boolean) {
+  const queryHash = includeQuery ? hashQuery(rule.query) : '';
   const labelsHash = hashLabelsOrAnnotations(rule.labels);
 
-  if (isRecordingRule(rule)) {
+  if (prometheusRuleType.recordingRule(rule)) {
     return [rule.name, PromRuleType.Recording, queryHash, labelsHash];
   }
-  if (isAlertingRule(rule)) {
+  if (prometheusRuleType.alertingRule(rule)) {
     return [rule.name, PromRuleType.Alerting, queryHash, hashLabelsOrAnnotations(rule.annotations), labelsHash];
   }
   throw new Error('Only recording and alerting rules can be hashed');
@@ -294,9 +311,21 @@ export function hashQuery(query: string) {
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
     query = query.slice(1, -1);
   }
+
   // whitespace could be added or removed
   query = query.replace(/\s|\n/g, '');
-  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
+
+  // normalize escaped quotes in template strings like {{\"REQ_SENT\"}} -> {{"REQ_SENT"}}
+  query = query.replace(/\\"/g, '"');
+
+  // normalize backtick template strings to double quotes for consistency
+  // Convert `{{.field}}` to "{{.field}}"
+  query = query.replace(/`([^`]*)`/g, '"$1"');
+
+  // remove quotes, brackets, parentheses, backslashes, and backticks
+  query = query.replace(/['"()\[\]\\`]/g, '');
+
+  // labels matchers can be reordered, so sort the entire string, essentially comparing just the character counts
   return query.split('').sort().join('');
 }
 

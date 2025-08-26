@@ -24,14 +24,15 @@ import { config, locationService, logWarning } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { store } from 'app/store/store';
+import { AppNotification } from 'app/types/appNotifications';
+import { ThunkResult, StoreState } from 'app/types/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { appEvents } from '../../../core/core';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { Graph, Node } from '../../../core/utils/dag';
-import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';

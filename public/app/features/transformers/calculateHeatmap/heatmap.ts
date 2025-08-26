@@ -12,13 +12,11 @@ import {
   Field,
   getValueFormat,
   formattedValueToString,
-  durationToMilliseconds,
-  parseDuration,
   TransformationApplicabilityLevels,
   TimeRange,
 } from '@grafana/data';
-import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { config } from '@grafana/runtime';
+import { isLikelyAscendingVector } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
   ScaleDistribution,
   HeatmapCellLayout,
@@ -26,17 +24,20 @@ import {
   HeatmapCalculationOptions,
 } from '@grafana/schema';
 
-import { niceLinearIncrs, niceTimeIncrs } from './utils';
+import { convertDurationToMilliseconds, niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
   /** the raw values will still exist in results after transformation */
   keepOriginalData?: boolean;
 }
 
-export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransformerOptions> = {
+export const getHeatmapTransformer: () => SynchronousDataTransformerInfo<HeatmapTransformerOptions> = () => ({
   id: DataTransformerID.heatmap,
-  name: 'Create heatmap',
-  description: 'Generate heatmap data from source data.',
+  name: t('transformers.get-heatmap-transformer.name.create-heatmap', 'Create heatmap'),
+  description: t(
+    'transformers.get-heatmap-transformer.description.generate-heatmap-data-from-source',
+    'Generate heatmap data from source data.'
+  ),
   defaultOptions: {},
   isApplicable: (data) => {
     const { xField, yField, xs, ys } = findHeatmapFields(data);
@@ -54,29 +55,7 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   isApplicableDescription:
     'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.',
   operator: (options, ctx) => (source) =>
-    source.pipe(
-      map((data) => {
-        if (config.featureToggles.transformationsVariableSupport) {
-          const optionsCopy = {
-            ...options,
-            xBuckets: { ...options.xBuckets } ?? undefined,
-            yBuckets: { ...options.yBuckets } ?? undefined,
-          };
-
-          if (optionsCopy.xBuckets?.value) {
-            optionsCopy.xBuckets.value = ctx.interpolate(optionsCopy.xBuckets.value);
-          }
-
-          if (optionsCopy.yBuckets?.value) {
-            optionsCopy.yBuckets.value = ctx.interpolate(optionsCopy.yBuckets.value);
-          }
-
-          return heatmapTransformer.transformer(optionsCopy, ctx)(data);
-        } else {
-          return heatmapTransformer.transformer(options, ctx)(data);
-        }
-      })
-    ),
+    source.pipe(map((data) => getHeatmapTransformer().transformer(options, ctx)(data))),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
@@ -87,7 +66,7 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
       return [v];
     };
   },
-};
+});
 
 function parseNumeric(v?: string | null) {
   return v === '+Inf' ? Infinity : v === '-Inf' ? -Infinity : +(v ?? 0);
@@ -329,7 +308,7 @@ export function calculateHeatmapFromData(
     xMode: xBucketsCfg.mode,
     xSize:
       xBucketsCfg.mode === HeatmapCalculationMode.Size
-        ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
+        ? convertDurationToMilliseconds(xBucketsCfg.value ?? '')
         : xBucketsCfg.value
           ? +xBucketsCfg.value
           : undefined,

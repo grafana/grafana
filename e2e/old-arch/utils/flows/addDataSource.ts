@@ -58,7 +58,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
 
   if (basicAuth) {
     cy.contains('label', 'Basic auth').scrollIntoView().click();
-    cy.contains('.gf-form-group', 'Basic Auth Details')
+    cy.contains('section', 'Basic Auth Details')
       .should('be.visible')
       .scrollIntoView()
       .within(() => {

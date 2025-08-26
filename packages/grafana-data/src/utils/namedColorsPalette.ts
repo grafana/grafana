@@ -1,3 +1,7 @@
+/**
+ * @deprecated
+ * This is defined on the theme object now. Use `theme.visualization.palette` instead.
+ */
 export const classicColors = [
   '#7EB26D', // 0: pale green
   '#EAB839', // 1: mustard

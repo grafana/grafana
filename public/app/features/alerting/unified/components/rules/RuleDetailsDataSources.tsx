@@ -2,13 +2,14 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { rulerRuleType } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
 
 type Props = {
@@ -25,7 +26,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
       return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
     }
 
-    if (isGrafanaRulerRule(rule.rulerRule)) {
+    if (rulerRuleType.grafana.rule(rule.rulerRule)) {
       const { data } = rule.rulerRule.grafana_alert;
       const unique = data.reduce<Record<string, { name: string; icon?: string }>>((dataSources, query) => {
         const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
@@ -49,7 +50,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
   }
 
   return (
-    <DetailsField label="Data source">
+    <DetailsField label={t('alerting.rule-details-data-sources.label-data-source', 'Data source')}>
       {dataSources.map(({ name, icon }, index) => (
         <div key={name}>
           {icon && (

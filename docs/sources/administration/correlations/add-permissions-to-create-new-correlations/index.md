@@ -12,7 +12,7 @@ weight: 30
 
 ## Before you begin
 
-Adding access to create correlations for [Viewers and Editors]({{< relref "../../../administration/roles-and-permissions" >}}) is available with [Role-based access control]({{< relref "../../../administration/roles-and-permissions/access-control" >}}).
+Adding access to create correlations for [Viewers and Editors](../../roles-and-permissions/) is available with [Role-based access control](../../roles-and-permissions/access-control/).
 
 ## Add permissions to create correlations
 

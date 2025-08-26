@@ -11,10 +11,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -27,6 +31,7 @@ import (
 
 var folderTitle string = "folder1"
 var folderDsc string = "folder desc"
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
 
 func TestIntegrationCreate(t *testing.T) {
 	if testing.Short() {
@@ -56,6 +61,18 @@ func TestIntegrationCreate(t *testing.T) {
 			UID:         util.GenerateShortUID(),
 		})
 		require.Error(t, err)
+	})
+
+	t.Run("creating a folder with itself as a parent should fail", func(t *testing.T) {
+		uid := util.GenerateShortUID()
+		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+			Title:       folderTitle,
+			OrgID:       orgID,
+			ParentUID:   uid,
+			Description: folderDsc,
+			UID:         uid,
+		})
+		require.ErrorIs(t, err, folder.ErrFolderCannotBeParentOfItself)
 	})
 
 	t.Run("creating a folder without providing a parent should default to the empty parent folder", func(t *testing.T) {
@@ -619,7 +636,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs := make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -636,7 +652,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs := make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 		assert.Equal(t, []string{parent.UID}, childrenUIDs)
@@ -669,7 +684,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -687,7 +701,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -707,7 +720,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -725,7 +737,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -743,7 +754,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -864,7 +874,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 	for i := 0; i < foldersNum; i++ {
 		uid := util.GenerateShortUID()
 		f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:       folderTitle,
+			Title:       folderTitle + fmt.Sprintf("-%d", i),
 			Description: folderDsc,
 			OrgID:       orgID,
 			UID:         uid,
@@ -968,17 +978,50 @@ func TestIntegrationGetFolders(t *testing.T) {
 		assert.NotEmpty(t, actualFolder.Updated)
 		assert.NotEmpty(t, actualFolder.URL)
 	})
+
+	t.Run("get folders with limit and page should work as expected", func(t *testing.T) {
+		q := folder.NewGetFoldersQuery(folder.GetFoldersQuery{
+			OrgID: orgID,
+			UIDs:  uids,
+			Limit: 3,
+			Page:  2,
+		})
+
+		actualFolders, err := folderStore.GetFolders(context.Background(), q)
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(actualFolders))
+
+		for i, actualFolder := range actualFolders {
+			assert.Equal(t, fmt.Sprintf("folder1-%d", i+3), actualFolder.Title)
+		}
+	})
 }
 
 func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	t.Helper()
 
+	requester := &identity.StaticRequester{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionOrgsDelete: {"*"},
+			},
+			2: {
+				accesscontrol.ActionOrgsDelete: {"*"},
+			},
+		},
+	}
 	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil)
+	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc, acimpl.ProvideAccessControlTest())
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		err = orgService.Delete(context.Background(), &org.DeleteOrgCommand{ID: orgID})
+		ctx := identity.WithRequester(context.Background(), requester)
+		err = deleteOrgService.Delete(ctx, &org.DeleteOrgCommand{ID: orgID})
 		require.NoError(t, err)
 	})
 

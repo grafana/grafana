@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -39,12 +38,42 @@ func TestNewThresholdCommand(t *testing.T) {
 			shouldError: false,
 		},
 		{
+			fn:          "eq",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
+			fn:          "ne",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
+			fn:          "gte",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
+			fn:          "lte",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
 			fn:          "within_range",
 			args:        []float64{0, 1},
 			shouldError: false,
 		},
 		{
 			fn:          "outside_range",
+			args:        []float64{0, 1},
+			shouldError: false,
+		},
+		{
+			fn:          "within_range_included",
+			args:        []float64{0, 1},
+			shouldError: false,
+		},
+		{
+			fn:          "outside_range_included",
 			args:        []float64{0, 1},
 			shouldError: false,
 		},
@@ -61,6 +90,30 @@ func TestNewThresholdCommand(t *testing.T) {
 			expectedError: "incorrect number of arguments",
 		},
 		{
+			fn:            "eq",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "ne",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "gte",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "lte",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
 			fn:            "within_range",
 			args:          []float64{0},
 			shouldError:   true,
@@ -68,6 +121,18 @@ func TestNewThresholdCommand(t *testing.T) {
 		},
 		{
 			fn:            "outside_range",
+			args:          []float64{0},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "within_range_included",
+			args:          []float64{0},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "outside_range_included",
 			args:          []float64{0},
 			shouldError:   true,
 			expectedError: "incorrect number of arguments",
@@ -211,7 +276,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				QueryRaw:   []byte(tc.query),
 				QueryType:  "",
 				DataSource: nil,
-			}, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
+			})
 
 			if tc.shouldError {
 				require.Nil(t, cmd)
@@ -250,11 +315,35 @@ func TestIsSupportedThresholdFunc(t *testing.T) {
 			supported: true,
 		},
 		{
+			function:  ThresholdIsEqual,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsNotEqual,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsGreaterThanEqual,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsLessThanEqual,
+			supported: true,
+		},
+		{
 			function:  ThresholdIsWithinRange,
 			supported: true,
 		},
 		{
 			function:  ThresholdIsOutsideRange,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsWithinRangeIncluded,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsOutsideRangeIncluded,
 			supported: true,
 		},
 		{
@@ -376,7 +465,7 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 		cmd, err := UnmarshalThresholdCommand(&rawNode{
 			RefID:    "B",
 			QueryRaw: raw,
-		}, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
+		})
 		require.NoError(t, err)
 
 		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
@@ -549,7 +638,7 @@ func TestThresholdExecute(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 						"A": newResults(input[name]),
-					}, tracing.InitializeTracerForTest())
+					}, tracing.InitializeTracerForTest(), nil)
 					require.NoError(t, err)
 					require.Equal(t, newResults(tc.expected[name]), result)
 				})

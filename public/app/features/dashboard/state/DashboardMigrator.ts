@@ -27,12 +27,11 @@ import {
   ValueMapping,
   VariableHide,
 } from '@grafana/data';
-import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
-import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
+import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
+import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -65,6 +64,7 @@ import {
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -81,7 +81,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 40;
+export const DASHBOARD_SCHEMA_VERSION = 41;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -626,6 +626,14 @@ export class DashboardMigrator {
           return panel;
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
+        // Hacky way to call the automigrate feature
+        if (panel.type === 'table-old') {
+          const newType = getPanelPluginToMigrateTo(panel);
+          if (newType) {
+            panel.autoMigrateFrom = panel.type;
+            panel.type = newType;
+          }
+        }
         return panel;
       });
     }
@@ -822,16 +830,16 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (
-          panel.options?.legend &&
+        if (panel.options?.legend && typeof panel.options.legend === 'object') {
           // There were two ways to hide the legend, this normalizes to `legend.showLegend`
-          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
-        ) {
-          panel.options.legend.displayMode = 'list';
-          panel.options.legend.showLegend = false;
-        } else if (panel.options?.legend) {
-          panel.options.legend = { ...panel.options?.legend, showLegend: true };
+          if (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false) {
+            panel.options.legend.displayMode = 'list';
+            panel.options.legend.showLegend = false;
+          } else {
+            panel.options.legend = { ...panel.options.legend, showLegend: true };
+          }
         }
+
         return panel;
       });
     }
@@ -855,7 +863,7 @@ export class DashboardMigrator {
           // Update any overrides referencing the cell display mode
           if (panel.fieldConfig?.overrides) {
             for (const override of panel.fieldConfig.overrides) {
-              for (let j = 0; j < override.properties?.length ?? 0; j++) {
+              for (let j = 0; j < (override.properties?.length || 0); j++) {
                 let overrideDisplayMode = override.properties[j].value;
                 if (override.properties[j].id === 'custom.displayMode') {
                   override.properties[j].id = 'custom.cellOptions';
@@ -905,10 +913,22 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 40) {
-      // In old ashboards refresh property can be a boolean
+      // In old dashboards refresh property can be a boolean
       if (typeof this.dashboard.refresh !== 'string') {
         this.dashboard.refresh = '';
       }
+    }
+
+    if (oldVersion < 41) {
+      // time_options is a legacy property that was not used since grafana version 5
+      //  therefore deprecating this property from the schema
+      if ('time_options' in this.dashboard.timepicker) {
+        delete this.dashboard.timepicker.time_options;
+      }
+    }
+
+    if (oldVersion < 42) {
+      panelUpgrades.push(migrateHideFromFunctionality);
     }
 
     /**
@@ -972,6 +992,10 @@ export class DashboardMigrator {
     }
   }
 
+  // Migrates CloudWatch annotation queries that use multiple statistics into separate queries.
+  // For example, if an annotation query uses ['Max', 'Min'] statistics, it will be split into
+  // two separate annotation queries - one with 'Max' and another with 'Min'.
+  // The new annotation queries are added to the end of the annotations list.
   migrateCloudWatchAnnotationQuery() {
     for (const annotation of this.dashboard.annotations.list) {
       if (isLegacyCloudWatchAnnotationQuery(annotation)) {
@@ -1456,6 +1480,26 @@ function ensureXAxisVisibility(panel: PanelModel) {
         ],
       };
     }
+  }
+
+  return panel;
+}
+
+function migrateHideFromFunctionality(panel: PanelModel) {
+  // migrate overrides with hideFrom.viz = true to also set tooltip = true
+  // this includes the __systemRef override
+  if (panel.fieldConfig && panel.fieldConfig.overrides) {
+    panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+      if (override.properties) {
+        override.properties = override.properties.map((property) => {
+          if (property.id === 'custom.hideFrom' && property.value?.viz === true) {
+            property.value.tooltip = true;
+          }
+          return property;
+        });
+      }
+      return override;
+    });
   }
 
   return panel;

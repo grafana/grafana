@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, useId } from 'react';
 import * as React from 'react';
 
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
-import { PopoverContent } from '../Tooltip';
+import { PopoverContent } from '../Tooltip/types';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -21,8 +21,9 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
 /**
  * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
- * @deprecated Please use the {@link Field} component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-field--simple See Storybook}.
+ *
  * For inline fields, use {@link InlineField}, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-inlinefield--basic See Storybook}.
+ * @deprecated Please use the {@link Field} component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-field--simple See Storybook}.
  */
 export const FormField = ({
   label,
@@ -35,13 +36,15 @@ export const FormField = ({
   ...inputProps
 }: Props) => {
   const styles = getStyles();
+  const id = useId();
   return (
     <div className={cx(styles.formField, className)}>
-      <InlineFormLabel width={labelWidth} tooltip={tooltip} interactive={interactive}>
+      <InlineFormLabel htmlFor={id} width={labelWidth} tooltip={tooltip} interactive={interactive}>
         {label}
       </InlineFormLabel>
       {inputEl || (
         <input
+          id={id}
           type="text"
           className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`}
           {...inputProps}

@@ -136,40 +136,46 @@ const FlameGraph = ({
     search,
     selectedView,
   };
-  const canvas = levelsCallers ? (
-    <>
-      <div className={styles.sandwichCanvasWrapper}>
-        <div className={styles.sandwichMarker}>
-          Callers
-          <Icon className={styles.sandwichMarkerIcon} name={'arrow-down'} />
-        </div>
-        <FlameGraphCanvas
-          {...commonCanvasProps}
-          root={levelsCallers[levelsCallers.length - 1][0]}
-          depth={levelsCallers.length}
-          direction={'parents'}
-          // We do not support collapsing in sandwich view for now.
-          collapsing={false}
-        />
-      </div>
+  let canvas = null;
 
-      <div className={styles.sandwichCanvasWrapper}>
-        <div className={cx(styles.sandwichMarker, styles.sandwichMarkerCalees)}>
-          <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
-          Callees
+  if (levelsCallers?.length) {
+    canvas = (
+      <>
+        <div className={styles.sandwichCanvasWrapper}>
+          <div className={styles.sandwichMarker}>
+            Callers
+            <Icon className={styles.sandwichMarkerIcon} name={'arrow-down'} />
+          </div>
+          <FlameGraphCanvas
+            {...commonCanvasProps}
+            root={levelsCallers[levelsCallers.length - 1][0]}
+            depth={levelsCallers.length}
+            direction={'parents'}
+            // We do not support collapsing in sandwich view for now.
+            collapsing={false}
+          />
         </div>
-        <FlameGraphCanvas
-          {...commonCanvasProps}
-          root={levels[0][0]}
-          depth={levels.length}
-          direction={'children'}
-          collapsing={false}
-        />
-      </div>
-    </>
-  ) : (
-    <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
-  );
+
+        <div className={styles.sandwichCanvasWrapper}>
+          <div className={cx(styles.sandwichMarker, styles.sandwichMarkerCalees)}>
+            <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
+            Callees
+          </div>
+          <FlameGraphCanvas
+            {...commonCanvasProps}
+            root={levels[0][0]}
+            depth={levels.length}
+            direction={'children'}
+            collapsing={false}
+          />
+        </div>
+      </>
+    );
+  } else if (levels?.length) {
+    canvas = (
+      <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
+    );
+  }
 
   return (
     <div className={styles.graph}>

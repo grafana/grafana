@@ -2,13 +2,16 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import {
   NameAlreadyExistsError,
@@ -19,8 +22,8 @@ import {
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -46,9 +49,8 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     return getDashboardSceneFor(this);
   }
 
-  public getSaveModel(): Dashboard {
-    const dashboard = this.getDashboard();
-    return transformSceneToSaveModel(dashboard);
+  public getSaveModel(): Dashboard | DashboardV2Spec {
+    return this.getDashboard().getSaveModel();
   }
 
   public getJsonText(): string {
@@ -60,23 +62,39 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     this.setState({ jsonText: value });
   };
 
-  public onSaveSuccess = (result: SaveDashboardResponseDTO) => {
-    const jsonModel = JSON.parse(this.state.jsonText);
+  public onSaveSuccess = async (result: SaveDashboardResponseDTO) => {
+    const jsonModel: DashboardDataDTO | DashboardV2Spec = JSON.parse(this.state.jsonText);
     const dashboard = this.getDashboard();
-    jsonModel.version = result.version;
 
-    const rsp: DashboardDTO = {
-      dashboard: jsonModel,
-      meta: dashboard.state.meta,
-    };
-    const newDashboardScene = transformSaveModelToScene(rsp);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state);
+    const isV2 = isDashboardV2Spec(jsonModel);
+    let newDashboardScene: DashboardScene;
 
-    dashboard.pauseTrackingChanges();
-    dashboard.setInitialSaveModel(rsp.dashboard);
-    dashboard.setState(newState);
+    if (isV2) {
+      // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
+      const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
+      newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
+
+      dashboard.pauseTrackingChanges();
+      dashboard.setInitialSaveModel(dto.spec, dto.metadata);
+      dashboard.setState(newState);
+    } else {
+      jsonModel.version = result.version;
+      newDashboardScene = transformSaveModelToScene({
+        dashboard: jsonModel,
+        meta: dashboard.state.meta,
+      });
+      const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
+
+      dashboard.pauseTrackingChanges();
+      dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
+      dashboard.setState(newState);
+    }
 
     this.setState({ jsonText: this.getJsonText() });
+
+    // We also need to resume tracking changes since the change handler won't see any later edit
+    dashboard.resumeTrackingChanges();
   };
 
   static Component = ({ model }: SceneComponentProps<JsonModelEditView>) => {
@@ -90,14 +108,16 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const { jsonText } = model.useState();
 
     const onSave = async (overwrite: boolean) => {
-      const result = await onSaveDashboard(dashboard, JSON.parse(model.state.jsonText), {
+      const result = await onSaveDashboard(dashboard, {
         folderUid: dashboard.state.meta.folderUid,
         overwrite,
+        rawDashboardJSON: JSON.parse(model.state.jsonText),
+        k8s: dashboard.state.meta.k8s,
       });
 
       setIsSaving(true);
       if (result.status === 'success') {
-        model.onSaveSuccess(result);
+        await model.onSaveSuccess(result);
         setIsSaving(false);
       } else {
         setIsSaving(true);
@@ -113,7 +133,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         variant={overwrite ? 'destructive' : 'primary'}
       >
         {overwrite ? (
-          'Save and overwrite'
+          <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">'Save and overwrite'</Trans>
         ) : (
           <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
         )}
@@ -122,7 +142,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
     const cancelButton = (
       <Button variant="secondary" onClick={() => setIsSaving(false)} fill="outline">
-        Cancel
+        <Trans i18nKey="dashboard-scene.json-model-edit-view.cancel-button.cancel">Cancel</Trans>
       </Button>
     );
     const styles = useStyles2(getStyles);
@@ -131,8 +151,18 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       if (error && isSaving) {
         if (isVersionMismatchError(error)) {
           return (
-            <Alert title="Someone else has updated this dashboard" severity="error">
-              <p>Would you still like to save this dashboard?</p>
+            <Alert
+              title={t(
+                'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-someone-else-has-updated-this-dashboard',
+                'Someone else has updated this dashboard'
+              )}
+              severity="error"
+            >
+              <p>
+                <Trans i18nKey="dashboard-scene.json-model-edit-view.render-save-button-and-error.would-still-dashboard">
+                  Would you still like to save this dashboard?
+                </Trans>
+              </p>
               <Box paddingTop={2}>
                 <Stack alignItems="center">
                   {cancelButton}
@@ -149,10 +179,18 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
         if (isPluginDashboardError(error)) {
           return (
-            <Alert title="Plugin dashboard" severity="error">
+            <Alert
+              title={t(
+                'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-plugin-dashboard',
+                'Plugin dashboard'
+              )}
+              severity="error"
+            >
               <p>
-                Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom
-                version.
+                <Trans i18nKey="dashboard-scene.json-model-edit-view.render-save-button-and-error.body-plugin-dashboard">
+                  Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
+                  version.
+                </Trans>
               </p>
               <Box paddingTop={2}>
                 <Stack alignItems="center">{saveButton(true)}</Stack>
@@ -165,7 +203,13 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       return (
         <>
           {error && isSaving && (
-            <Alert title="Failed to save dashboard" severity="error">
+            <Alert
+              title={t(
+                'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-failed-to-save-dashboard',
+                'Failed to save dashboard'
+              )}
+              severity="error"
+            >
               <p>{error.message}</p>
             </Alert>
           )}

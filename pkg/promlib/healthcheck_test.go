@@ -124,8 +124,10 @@ func getPluginContext() backend.PluginContext {
 		User:                       nil,
 		AppInstanceSettings:        nil,
 		DataSourceInstanceSettings: getPromInstanceSettings(),
+		GrafanaConfig:              backend.NewGrafanaCfg(map[string]string{"concurrent_query_count": "10"}),
 	}
 }
+
 func getPromInstanceSettings() *backend.DataSourceInstanceSettings {
 	return &backend.DataSourceInstanceSettings{
 		ID:                      0,

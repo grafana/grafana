@@ -1,0 +1,510 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "metadata": {
+    "name": "test-v2alpha1-complete",
+    "creationTimestamp": null,
+    "labels": {
+      "category": "test"
+    },
+    "annotations": {
+      "description": "Complete example of v2alpha1 dashboard features"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            }
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true
+        }
+      },
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "gdev-prometheus"
+            },
+            "spec": {
+              "expr": "changes(process_start_time_seconds[1m])",
+              "refId": "Anno"
+            }
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "yellow",
+          "name": "Prometheus Annotations",
+          "builtIn": false
+        }
+      }
+    ],
+    "cursorSync": "Tooltip",
+    "description": "This dashboard demonstrates all features that need to be converted from v2alpha1 to v2beta1",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Panel with Conditional Rendering",
+          "description": "This panel demonstrates conditional rendering features",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "gdev-prometheus"
+                      },
+                      "spec": {
+                        "expr": "up{job=\"grafana\"}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "reduce",
+                  "spec": {
+                    "id": "reduce",
+                    "options": {
+                      "includeTimeField": false,
+                      "mode": "reduceFields",
+                      "reducers": [
+                        "mean"
+                      ]
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "12.1.0-pre",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "textMode": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "0": {
+                          "text": "Down",
+                          "color": "red"
+                        },
+                        "1": {
+                          "text": "Up",
+                          "color": "green"
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "red"
+                      },
+                      {
+                        "value": 1,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
+          {
+            "kind": "Row",
+            "spec": {
+              "title": "Conditional Row",
+              "collapse": false,
+              "hideHeader": false,
+              "fillScreen": false,
+              "conditionalRendering": {
+                "kind": "ConditionalRenderingGroup",
+                "spec": {
+                  "visibility": "show",
+                  "condition": "and",
+                  "items": [
+                    {
+                      "kind": "ConditionalRenderingVariable",
+                      "spec": {
+                        "variable": "group_by",
+                        "operator": "includes",
+                        "value": "instance"
+                      }
+                    },
+                    {
+                      "kind": "ConditionalRenderingData",
+                      "spec": {
+                        "value": true
+                      }
+                    },
+                    {
+                      "kind": "ConditionalRenderingTimeRangeSize",
+                      "spec": {
+                        "value": "1h"
+                      }
+                    }
+                  ]
+                }
+              },
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 24,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-1"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": true,
+    "preload": true,
+    "tags": [
+      "test",
+      "example",
+      "migration"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "10s",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "weekStart": "monday",
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Test: Complete V2alpha1 Dashboard Example",
+    "variables": [
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "prometheus_query",
+          "current": {
+            "text": "All",
+            "value": [
+              "$__all"
+            ]
+          },
+          "label": "Prometheus Query",
+          "hide": "dontHide",
+          "refresh": "time",
+          "skipUrlSync": false,
+          "description": "Shows all up metrics",
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "gdev-prometheus"
+            },
+            "spec": {
+              "expr": "up"
+            }
+          },
+          "regex": "",
+          "sort": "alphabetical",
+          "definition": "up",
+          "options": null,
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "text_var",
+          "current": {
+            "selected": true,
+            "text": "server1",
+            "value": "server1"
+          },
+          "query": "server1,server2,server3",
+          "label": "Text Variable",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "A simple text variable"
+        }
+      },
+      {
+        "kind": "ConstantVariable",
+        "spec": {
+          "name": "constant_var",
+          "query": "production",
+          "current": {
+            "selected": true,
+            "text": "production",
+            "value": "production"
+          },
+          "label": "Constant",
+          "hide": "dontHide",
+          "skipUrlSync": true,
+          "description": "A constant value"
+        }
+      },
+      {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "ds_var",
+          "pluginId": "prometheus",
+          "refresh": "load",
+          "regex": "/^gdev-/",
+          "current": {
+            "text": "gdev-prometheus",
+            "value": "gdev-prometheus"
+          },
+          "options": [
+            {
+              "text": "gdev-prometheus",
+              "value": "gdev-prometheus"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Datasource",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Select a datasource",
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "IntervalVariable",
+        "spec": {
+          "name": "interval",
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d",
+          "current": {
+            "selected": true,
+            "text": "5m",
+            "value": "5m"
+          },
+          "options": [
+            {
+              "text": "1m",
+              "value": "1m"
+            },
+            {
+              "text": "5m",
+              "value": "5m"
+            },
+            {
+              "text": "10m",
+              "value": "10m"
+            },
+            {
+              "text": "30m",
+              "value": "30m"
+            },
+            {
+              "text": "1h",
+              "value": "1h"
+            },
+            {
+              "text": "6h",
+              "value": "6h"
+            },
+            {
+              "text": "12h",
+              "value": "12h"
+            },
+            {
+              "text": "1d",
+              "value": "1d"
+            }
+          ],
+          "auto": true,
+          "auto_min": "10s",
+          "auto_count": 30,
+          "refresh": "load",
+          "label": "Interval",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Time interval selection"
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "custom_var",
+          "query": "prod : Production, staging : Staging, dev : Development",
+          "current": {
+            "text": [
+              "Production"
+            ],
+            "value": [
+              "prod"
+            ]
+          },
+          "options": [
+            {
+              "text": "Production",
+              "value": "prod"
+            },
+            {
+              "text": "Staging",
+              "value": "staging"
+            },
+            {
+              "text": "Development",
+              "value": "dev"
+            }
+          ],
+          "multi": true,
+          "includeAll": true,
+          "allValue": "*",
+          "label": "Custom Options",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Custom multi-value variable",
+          "allowCustomValue": true
+        }
+      },
+      {
+        "kind": "GroupByVariable",
+        "group": "prometheus",
+        "datasource": {
+          "name": "gdev-prometheus"
+        },
+        "spec": {
+          "name": "group_by",
+          "current": {
+            "text": "instance",
+            "value": "instance"
+          },
+          "options": null,
+          "multi": false,
+          "label": "Group By",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Group metrics by label"
+        }
+      },
+      {
+        "kind": "AdhocVariable",
+        "group": "prometheus",
+        "datasource": {
+          "name": "gdev-prometheus"
+        },
+        "spec": {
+          "name": "filters",
+          "baseFilters": [
+            {
+              "key": "job",
+              "operator": "=",
+              "value": "grafana",
+              "condition": "AND"
+            }
+          ],
+          "filters": [],
+          "defaultKeys": [
+            {
+              "text": "job",
+              "value": "job",
+              "expandable": true
+            },
+            {
+              "text": "instance",
+              "value": "instance",
+              "expandable": true
+            }
+          ],
+          "label": "Filters",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": false
+        }
+      }
+    ]
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v2alpha1"
+    }
+  }
+}

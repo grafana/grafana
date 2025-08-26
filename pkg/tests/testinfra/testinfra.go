@@ -12,10 +12,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/dskit/kv"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -80,7 +85,25 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
-	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
+	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
+	require.NoError(t, err)
+
+	// Use proper database type based on the environment variable GRAFANA_TEST_DB in tests
+	testDB, err := sqlutil.GetTestDB(sqlutil.GetTestDBType())
+	require.NoError(t, err)
+	t.Cleanup(testDB.Cleanup)
+
+	dbCfg := cfg.Raw.Section("database")
+	dbCfg.Key("type").SetValue(testDB.DriverName)
+	dbCfg.Key("host").SetValue(testDB.Host)
+	dbCfg.Key("port").SetValue(testDB.Port)
+	dbCfg.Key("user").SetValue(testDB.User)
+	dbCfg.Key("password").SetValue(testDB.Password)
+	dbCfg.Key("name").SetValue(testDB.Database)
+
+	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database)
+
+	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
 	require.NotNil(t, env.Cfg)
@@ -104,7 +127,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry())
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -149,7 +172,9 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 // CreateGrafDir creates the Grafana directory.
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
-func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
+//
+//nolint:gocyclo
+func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
@@ -183,16 +208,16 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.True(t, found, "Couldn't detect project root directory")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
-	err := os.MkdirAll(cfgDir, 0750)
+	err := os.MkdirAll(cfgDir, 0o750)
 	require.NoError(t, err)
 	dataDir := filepath.Join(tmpDir, "data")
 	// nolint:gosec
-	err = os.MkdirAll(dataDir, 0750)
+	err = os.MkdirAll(dataDir, 0o750)
 	require.NoError(t, err)
 	logsDir := filepath.Join(tmpDir, "logs")
 	pluginsDir := filepath.Join(tmpDir, "plugins")
 	publicDir := filepath.Join(tmpDir, "public")
-	err = os.MkdirAll(publicDir, 0750)
+	err = os.MkdirAll(publicDir, 0o750)
 	require.NoError(t, err)
 
 	viewsDir := filepath.Join(publicDir, "views")
@@ -201,7 +226,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 
 	// add a stub manifest to the build directory
 	buildDir := filepath.Join(publicDir, "build")
-	err = os.MkdirAll(buildDir, 0750)
+	err = os.MkdirAll(buildDir, 0o750)
 	require.NoError(t, err)
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
 		"entrypoints": {
@@ -231,7 +256,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		  "integrity": "sha256-k1g7TksMHFQhhQGE"
 		}
 	  }
-	  `), 0750)
+	  `), 0o750)
 	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
@@ -239,16 +264,16 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	provDir := filepath.Join(cfgDir, "provisioning")
 	provDSDir := filepath.Join(provDir, "datasources")
-	err = os.MkdirAll(provDSDir, 0750)
+	err = os.MkdirAll(provDSDir, 0o750)
 	require.NoError(t, err)
 	provNotifiersDir := filepath.Join(provDir, "notifiers")
-	err = os.MkdirAll(provNotifiersDir, 0750)
+	err = os.MkdirAll(provNotifiersDir, 0o750)
 	require.NoError(t, err)
 	provPluginsDir := filepath.Join(provDir, "plugins")
-	err = os.MkdirAll(provPluginsDir, 0750)
+	err = os.MkdirAll(provPluginsDir, 0o750)
 	require.NoError(t, err)
 	provDashboardsDir := filepath.Join(provDir, "dashboards")
-	err = os.MkdirAll(provDashboardsDir, 0750)
+	err = os.MkdirAll(provDashboardsDir, 0o750)
 	require.NoError(t, err)
 	corePluginsDir := filepath.Join(publicDir, "app/plugins")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
@@ -293,6 +318,20 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
 
+	if opts.EnableRecordingRules {
+		recordingRulesSect, err := cfg.NewSection("recording_rules")
+		require.NoError(t, err)
+		_, err = recordingRulesSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.LicensePath != "" {
+		section, err := cfg.NewSection("enterprise")
+		require.NoError(t, err)
+		_, err = section.NewKey("license_path", opts.LicensePath)
+		require.NoError(t, err)
+	}
+
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
@@ -319,151 +358,204 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	}
 
 	queryRetries := 3
-	for _, o := range opts {
-		if o.EnableCSP {
-			securitySect, err := cfg.NewSection("security")
+	if opts.EnableCSP {
+		securitySect, err := cfg.NewSection("security")
+		require.NoError(t, err)
+		_, err = securitySect.NewKey("content_security_policy", "true")
+		require.NoError(t, err)
+	}
+	if len(opts.EnableFeatureToggles) > 0 {
+		featureSection, err := cfg.NewSection("feature_toggles")
+		require.NoError(t, err)
+		_, err = featureSection.NewKey("enable", strings.Join(opts.EnableFeatureToggles, " "))
+		require.NoError(t, err)
+	}
+	if len(opts.DisableFeatureToggles) > 0 {
+		featureSection, err := cfg.NewSection("feature_toggles")
+		require.NoError(t, err)
+		for _, toggle := range opts.DisableFeatureToggles {
+			_, err = featureSection.NewKey(toggle, "false")
 			require.NoError(t, err)
-			_, err = securitySect.NewKey("content_security_policy", "true")
-			require.NoError(t, err)
-		}
-		if len(o.EnableFeatureToggles) > 0 {
-			featureSection, err := cfg.NewSection("feature_toggles")
-			require.NoError(t, err)
-			_, err = featureSection.NewKey("enable", strings.Join(o.EnableFeatureToggles, " "))
-			require.NoError(t, err)
-		}
-		if o.NGAlertAdminConfigPollInterval != 0 {
-			ngalertingSection, err := cfg.NewSection("unified_alerting")
-			require.NoError(t, err)
-			_, err = ngalertingSection.NewKey("admin_config_poll_interval", o.NGAlertAdminConfigPollInterval.String())
-			require.NoError(t, err)
-		}
-		if o.NGAlertAlertmanagerConfigPollInterval != 0 {
-			ngalertingSection, err := getOrCreateSection("unified_alerting")
-			require.NoError(t, err)
-			_, err = ngalertingSection.NewKey("alertmanager_config_poll_interval", o.NGAlertAlertmanagerConfigPollInterval.String())
-			require.NoError(t, err)
-		}
-		if o.AppModeProduction {
-			_, err = dfltSect.NewKey("app_mode", "production")
-			require.NoError(t, err)
-		}
-		if o.AnonymousUserRole != "" {
-			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
-			require.NoError(t, err)
-		}
-		if o.EnableQuota {
-			quotaSection, err := cfg.NewSection("quota")
-			require.NoError(t, err)
-			_, err = quotaSection.NewKey("enabled", "true")
-			require.NoError(t, err)
-			dashboardQuota := int64(100)
-			if o.DashboardOrgQuota != nil {
-				dashboardQuota = *o.DashboardOrgQuota
-			}
-			_, err = quotaSection.NewKey("org_dashboard", strconv.FormatInt(dashboardQuota, 10))
-			require.NoError(t, err)
-		}
-		if o.DisableAnonymous {
-			anonSect, err := cfg.GetSection("auth.anonymous")
-			require.NoError(t, err)
-			_, err = anonSect.NewKey("enabled", "false")
-			require.NoError(t, err)
-		}
-		if o.PluginAdminEnabled {
-			anonSect, err := cfg.NewSection("plugins")
-			require.NoError(t, err)
-			_, err = anonSect.NewKey("plugin_admin_enabled", "true")
-			require.NoError(t, err)
-		}
-		if o.PluginAdminExternalManageEnabled {
-			anonSect, err := cfg.NewSection("plugins")
-			require.NoError(t, err)
-			_, err = anonSect.NewKey("plugin_admin_external_manage_enabled", "true")
-			require.NoError(t, err)
-		}
-		if o.ViewersCanEdit {
-			usersSection, err := cfg.NewSection("users")
-			require.NoError(t, err)
-			_, err = usersSection.NewKey("viewers_can_edit", "true")
-			require.NoError(t, err)
-		}
-		if o.EnableUnifiedAlerting {
-			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
-			require.NoError(t, err)
-			_, err = unifiedAlertingSection.NewKey("enabled", "true")
-			require.NoError(t, err)
-		}
-		if len(o.UnifiedAlertingDisabledOrgs) > 0 {
-			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
-			require.NoError(t, err)
-			disableOrgStr := strings.Join(strings.Split(strings.Trim(fmt.Sprint(o.UnifiedAlertingDisabledOrgs), "[]"), " "), ",")
-			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
-			require.NoError(t, err)
-		}
-		if !o.EnableLog {
-			logSection, err := getOrCreateSection("log")
-			require.NoError(t, err)
-			_, err = logSection.NewKey("enabled", "false")
-			require.NoError(t, err)
-		} else {
-			serverSection, err := getOrCreateSection("server")
-			require.NoError(t, err)
-			_, err = serverSection.NewKey("router_logging", "true")
-			require.NoError(t, err)
-		}
-
-		if o.APIServerStorageType != "" {
-			section, err := getOrCreateSection("grafana-apiserver")
-			require.NoError(t, err)
-			_, err = section.NewKey("storage_type", string(o.APIServerStorageType))
-			require.NoError(t, err)
-
-			// Hardcoded local etcd until this is needed to run in CI
-			if o.APIServerStorageType == "etcd" {
-				_, err = section.NewKey("etcd_servers", "localhost:2379")
-				require.NoError(t, err)
-			}
-		}
-
-		if o.GRPCServerAddress != "" {
-			logSection, err := getOrCreateSection("grpc_server")
-			require.NoError(t, err)
-			_, err = logSection.NewKey("address", o.GRPCServerAddress)
-			require.NoError(t, err)
-		}
-		// retry queries 3 times by default
-		if o.QueryRetries != 0 {
-			queryRetries = int(o.QueryRetries)
-		}
-
-		if o.NGAlertSchedulerBaseInterval > 0 {
-			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
-			require.NoError(t, err)
-			_, err = unifiedAlertingSection.NewKey("scheduler_tick_interval", o.NGAlertSchedulerBaseInterval.String())
-			require.NoError(t, err)
-			_, err = unifiedAlertingSection.NewKey("min_interval", o.NGAlertSchedulerBaseInterval.String())
-			require.NoError(t, err)
-		}
-
-		if o.GrafanaComAPIURL != "" {
-			grafanaComSection, err := getOrCreateSection("grafana_com")
-			require.NoError(t, err)
-			_, err = grafanaComSection.NewKey("api_url", o.GrafanaComAPIURL)
-			require.NoError(t, err)
-		}
-		if o.UnifiedStorageConfig != nil {
-			for k, v := range o.UnifiedStorageConfig {
-				section, err := getOrCreateSection(fmt.Sprintf("unified_storage.%s", k))
-				require.NoError(t, err)
-				_, err = section.NewKey("dualWriterMode", fmt.Sprintf("%d", v.DualWriterMode))
-				require.NoError(t, err)
-			}
 		}
 	}
-	logSection, err := getOrCreateSection("database")
+	if opts.NGAlertAdminConfigPollInterval != 0 {
+		ngalertingSection, err := cfg.NewSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = ngalertingSection.NewKey("admin_config_poll_interval", opts.NGAlertAdminConfigPollInterval.String())
+		require.NoError(t, err)
+	}
+	if opts.NGAlertAlertmanagerConfigPollInterval != 0 {
+		ngalertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = ngalertingSection.NewKey("alertmanager_config_poll_interval", opts.NGAlertAlertmanagerConfigPollInterval.String())
+		require.NoError(t, err)
+	}
+	if opts.AppModeProduction {
+		_, err = dfltSect.NewKey("app_mode", "production")
+		require.NoError(t, err)
+	}
+	if opts.AnonymousUserRole != "" {
+		_, err = anonSect.NewKey("org_role", string(opts.AnonymousUserRole))
+		require.NoError(t, err)
+	}
+	if opts.EnableQuota {
+		quotaSection, err := cfg.NewSection("quota")
+		require.NoError(t, err)
+		_, err = quotaSection.NewKey("enabled", "true")
+		require.NoError(t, err)
+		dashboardQuota := int64(100)
+		if opts.DashboardOrgQuota != nil {
+			dashboardQuota = *opts.DashboardOrgQuota
+		}
+		_, err = quotaSection.NewKey("org_dashboard", strconv.FormatInt(dashboardQuota, 10))
+		require.NoError(t, err)
+	}
+	if opts.DisableAnonymous {
+		anonSect, err := cfg.GetSection("auth.anonymous")
+		require.NoError(t, err)
+		_, err = anonSect.NewKey("enabled", "false")
+		require.NoError(t, err)
+	}
+	if opts.PluginAdminEnabled {
+		anonSect, err := cfg.NewSection("plugins")
+		require.NoError(t, err)
+		_, err = anonSect.NewKey("plugin_admin_enabled", "true")
+		require.NoError(t, err)
+	}
+	if opts.PluginAdminExternalManageEnabled {
+		anonSect, err := cfg.NewSection("plugins")
+		require.NoError(t, err)
+		_, err = anonSect.NewKey("plugin_admin_external_manage_enabled", "true")
+		require.NoError(t, err)
+	}
+	if opts.ViewersCanEdit {
+		usersSection, err := cfg.NewSection("users")
+		require.NoError(t, err)
+		_, err = usersSection.NewKey("viewers_can_edit", "true")
+		require.NoError(t, err)
+	}
+	if opts.EnableUnifiedAlerting {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("enabled", "true")
+		require.NoError(t, err)
+	}
+	if len(opts.UnifiedAlertingDisabledOrgs) > 0 {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		disableOrgStr := strings.Join(strings.Split(strings.Trim(fmt.Sprint(opts.UnifiedAlertingDisabledOrgs), "[]"), " "), ",")
+		_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
+		require.NoError(t, err)
+	}
+	if !opts.EnableLog {
+		logSection, err := getOrCreateSection("log")
+		require.NoError(t, err)
+		_, err = logSection.NewKey("enabled", "false")
+		require.NoError(t, err)
+	} else {
+		serverSection, err := getOrCreateSection("server")
+		require.NoError(t, err)
+		_, err = serverSection.NewKey("router_logging", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.APIServerStorageType != "" {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("storage_type", string(opts.APIServerStorageType))
+		require.NoError(t, err)
+
+		// Hardcoded local etcd until this is needed to run in CI
+		if opts.APIServerStorageType == "etcd" {
+			_, err = section.NewKey("etcd_servers", "localhost:2379")
+			require.NoError(t, err)
+		}
+	}
+
+	if opts.GRPCServerAddress != "" {
+		logSection, err := getOrCreateSection("grpc_server")
+		require.NoError(t, err)
+		_, err = logSection.NewKey("address", opts.GRPCServerAddress)
+		require.NoError(t, err)
+	}
+	// retry queries 3 times by default
+	if opts.QueryRetries != 0 {
+		queryRetries = int(opts.QueryRetries)
+	}
+
+	if opts.NGAlertSchedulerBaseInterval > 0 {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("scheduler_tick_interval", opts.NGAlertSchedulerBaseInterval.String())
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("min_interval", opts.NGAlertSchedulerBaseInterval.String())
+		require.NoError(t, err)
+	}
+
+	if opts.GrafanaComAPIURL != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
+		require.NoError(t, err)
+	}
+
+	if opts.RemoteAlertmanagerURL != "" {
+		remoteAlertmanagerSection, err := getOrCreateSection("remote.alertmanager")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("url", opts.RemoteAlertmanagerURL)
+		require.NoError(t, err)
+		_, err = remoteAlertmanagerSection.NewKey("tenant", "1")
+		require.NoError(t, err)
+	}
+	if opts.GrafanaComSSOAPIToken != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("sso_api_token", opts.GrafanaComSSOAPIToken)
+		require.NoError(t, err)
+	}
+
+	if opts.UnifiedStorageConfig != nil {
+		for k, v := range opts.UnifiedStorageConfig {
+			section, err := getOrCreateSection(fmt.Sprintf("unified_storage.%s", k))
+			require.NoError(t, err)
+			_, err = section.NewKey("dualWriterMode", fmt.Sprintf("%d", v.DualWriterMode))
+			require.NoError(t, err)
+		}
+	}
+	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
+		require.NoError(t, err)
+	}
+	if opts.PermittedProvisioningPaths != "" {
+		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
+		require.NoError(t, err)
+	}
+	if opts.EnableSCIM {
+		scimSection, err := getOrCreateSection("auth.scim")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("user_sync_enabled", "true")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("group_sync_enabled", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.APIServerRuntimeConfig != "" {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("runtime_config", opts.APIServerRuntimeConfig)
+		require.NoError(t, err)
+	}
+	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
-	_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+	require.NoError(t, err)
+	_, err = dbSection.NewKey("max_open_conn", "2")
+	require.NoError(t, err)
+	_, err = dbSection.NewKey("max_idle_conn", "2")
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -487,6 +579,7 @@ func SQLiteIntegrationTest(t *testing.T) {
 type GrafanaOpts struct {
 	EnableCSP                             bool
 	EnableFeatureToggles                  []string
+	DisableFeatureToggles                 []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
 	NGAlertSchedulerBaseInterval          time.Duration
@@ -507,9 +600,19 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	UnifiedStorageMaxPageSizeBytes        int
+	PermittedProvisioningPaths            string
+	GrafanaComSSOAPIToken                 string
+	LicensePath                           string
+	EnableRecordingRules                  bool
+	EnableSCIM                            bool
+	APIServerRuntimeConfig                string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Remote alertmanager configuration
+	RemoteAlertmanagerURL string
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
@@ -519,7 +622,9 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfg.AutoAssignOrgId = 1
 	cmd.OrgID = 1
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

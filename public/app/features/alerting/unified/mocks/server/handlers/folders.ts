@@ -2,13 +2,13 @@ import { HttpResponse, http } from 'msw';
 
 import { mockFolder } from 'app/features/alerting/unified/mocks';
 import { grafanaRulerRule } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
-const DEFAULT_FOLDERS: FolderDTO[] = [
+export const DEFAULT_FOLDERS: FolderDTO[] = [
   mockFolder({
     id: 1,
-    uid: 'uid',
-    title: 'title',
+    uid: 'e3d1f4fd-9e7c-4f63-9a9e-2b5a1d2e6a9c',
+    title: 'Alerting-folder',
   }),
   mockFolder({
     id: 2,

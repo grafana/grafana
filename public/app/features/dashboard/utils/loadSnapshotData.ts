@@ -10,7 +10,8 @@ import { config } from 'app/core/config';
 
 import { SnapshotWorker } from '../../query/state/DashboardQueryRunner/SnapshotWorker';
 import { getTimeSrv } from '../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state/PanelModel';
 
 import { applyPanelTimeOverrides } from './panel';
 

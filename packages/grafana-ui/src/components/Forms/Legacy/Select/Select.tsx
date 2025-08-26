@@ -13,7 +13,8 @@ import { ScrollContainer } from '../../../ScrollContainer/ScrollContainer';
 import { SingleValue } from '../../../Select/SingleValue';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
-import { Tooltip, PopoverContent } from '../../../Tooltip';
+import { Tooltip } from '../../../Tooltip/Tooltip';
+import { PopoverContent } from '../../../Tooltip/types';
 
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
@@ -246,6 +247,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               //@ts-expect-error
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
+              //@ts-expect-error
               onChange={onChange}
               loadOptions={loadOptions}
               isLoading={isLoading}

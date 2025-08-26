@@ -1,11 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { LibraryElementDTOMeta } from '@grafana/schema';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
-import { PanelModel } from '../../../state';
+import { PanelModel } from '../../../state/PanelModel';
 
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
 import { closeEditor, initialState, PanelEditorState } from './reducers';

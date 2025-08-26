@@ -2,10 +2,11 @@ import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Box, Legend } from '@grafana/ui';
+import { Box, Legend, TextLink } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
 import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
@@ -68,25 +69,28 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
           <Box marginBottom={3}>
             <div>
               <Legend>
-                Importing dashboard from{' '}
-                <a
-                  href={`https://grafana.com/dashboards/${dashboard.gnetId}`}
-                  className="external-link"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Grafana.com
-                </a>
+                <Trans i18nKey="manage-dashboards.import-dashboard-overview-un-connected.importing-from">
+                  Importing dashboard from{' '}
+                  <TextLink href={`https://grafana.com/dashboards/${dashboard.gnetId}`}>Grafana.com</TextLink>
+                </Trans>
               </Legend>
             </div>
             <table className="filter-table form-inline">
               <tbody>
                 <tr>
-                  <td>Published by</td>
+                  <td>
+                    <Trans i18nKey="manage-dashboards.import-dashboard-overview-un-connected.published-by">
+                      Published by
+                    </Trans>
+                  </td>
                   <td>{meta.orgName}</td>
                 </tr>
                 <tr>
-                  <td>Updated on</td>
+                  <td>
+                    <Trans i18nKey="manage-dashboards.import-dashboard-overview-un-connected.updated-on">
+                      Updated on
+                    </Trans>
+                  </td>
                   <td>{dateTimeFormat(meta.updatedAt)}</td>
                 </tr>
               </tbody>
@@ -112,7 +116,6 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
               watch={watch}
-              initialFolderUid={folder.uid}
             />
           )}
         </Form>

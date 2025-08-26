@@ -1,15 +1,15 @@
 import { StoryFn, Meta } from '@storybook/react';
 
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 
-import { Props } from './BarGauge';
+import { BarGauge, Props } from './BarGauge';
 import mdx from './BarGauge.mdx';
 
 const meta: Meta = {
-  title: 'Visualizations/BarGauge',
+  title: 'Plugins/BarGauge',
   component: BarGauge,
   parameters: {
     docs: {

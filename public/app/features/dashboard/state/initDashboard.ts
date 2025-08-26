@@ -1,4 +1,5 @@
 import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
@@ -24,11 +25,12 @@ import {
   DashboardDTO,
   DashboardInitPhase,
   DashboardRoutes,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
+  HomeDashboardRedirectDTO,
+  isRedirectResponse,
+} from 'app/types/dashboard';
+import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
+import { contextSrv } from '../../../core/services/context_srv';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
@@ -61,7 +63,7 @@ async function fetchDashboard(
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
-        const stateManager = getDashboardScenePageStateManager();
+        const stateManager = getDashboardScenePageStateManager('v1');
         const cachedDashboard = stateManager.getDashboardFromCache(HOME_DASHBOARD_CACHE_KEY);
 
         if (cachedDashboard) {
@@ -69,10 +71,10 @@ async function fetchDashboard(
         }
 
         // load home dash
-        const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
+        const dashDTO = await backendSrv.get<DashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
         // if user specified a custom home dashboard redirect to that
-        if (dashDTO.redirectUri) {
+        if (isRedirectResponse(dashDTO)) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
           locationService.replace(newUrl);
           return null;
@@ -135,7 +137,12 @@ async function fetchDashboard(
       return null;
     }
 
-    dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
+    dispatch(
+      dashboardInitFailed({
+        message: t('dashboard.fetch-dashboard.message.failed-to-fetch-dashboard', 'Failed to fetch dashboard'),
+        error: err,
+      })
+    );
     console.error(err);
     return null;
   }
@@ -198,7 +205,12 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     try {
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
-      dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
+      dispatch(
+        dashboardInitFailed({
+          message: t('dashboard.init-dashboard.message.failed-create-dashboard-model', 'Failed create dashboard model'),
+          error: err,
+        })
+      );
       console.error(err);
       return;
     }
@@ -271,10 +283,10 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // set week start
-    if (dashboard.weekStart !== '') {
+    if (dashboard.weekStart !== '' && dashboard.weekStart !== undefined) {
       setWeekStart(dashboard.weekStart);
     } else {
-      setWeekStart(config.bootData.user.weekStart);
+      setWeekStart(contextSrv.user.weekStart);
     }
 
     // Propagate an app-wide event about the dashboard being loaded

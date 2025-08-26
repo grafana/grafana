@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
@@ -57,6 +58,7 @@ const (
 	Pyroscope       = "grafana-pyroscope-datasource"
 	Parca           = "parca"
 	Zipkin          = "zipkin"
+	Jaeger          = "jaeger"
 )
 
 func init() {
@@ -92,15 +94,15 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 	}
 }
 
-func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
+func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service) *Registry {
+	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:      asBackendPlugin(cw.Executor),
+		CloudWatch:      asBackendPlugin(cw),
 		CloudMonitoring: asBackendPlugin(cm),
 		AzureMonitor:    asBackendPlugin(am),
 		Elasticsearch:   asBackendPlugin(es),
@@ -118,6 +120,7 @@ func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cl
 		Pyroscope:       asBackendPlugin(pyroscope),
 		Parca:           asBackendPlugin(parca),
 		Zipkin:          asBackendPlugin(zipkin),
+		Jaeger:          asBackendPlugin(jaeger),
 	})
 }
 
@@ -214,7 +217,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 		jsonData.AliasIDs = append(jsonData.AliasIDs, TestDataAlias)
 		svc = testdatasource.ProvideService()
 	case CloudWatch:
-		svc = cloudwatch.ProvideService(httpClientProvider).Executor
+		svc = cloudwatch.ProvideService()
 	case CloudMonitoring:
 		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:
@@ -234,7 +237,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case Tempo:
 		svc = tempo.ProvideService(httpClientProvider)
 	case PostgreSQL:
-		svc = postgres.ProvideService(cfg)
+		svc = postgres.ProvideService(cfg, features)
 	case MySQL:
 		svc = mysql.ProvideService()
 	case MSSQL:
@@ -245,6 +248,8 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 		svc = parca.ProvideService(httpClientProvider)
 	case Zipkin:
 		svc = zipkin.ProvideService(httpClientProvider)
+	case Jaeger:
+		svc = jaeger.ProvideService(httpClientProvider)
 	default:
 		return nil, ErrCorePluginNotFound
 	}

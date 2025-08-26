@@ -2,16 +2,16 @@ import { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { defaultIntervals, RefreshPicker } from '@grafana/ui';
+import { defaultIntervals, isWeekStart, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
-import { t } from 'app/core/internationalization';
 import { AutoRefreshInterval } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -93,7 +93,7 @@ export class DashNavTimeControls extends Component<Props> {
 
   render() {
     const { dashboard, isOnCanvas } = this.props;
-    const { refresh_intervals } = dashboard.timepicker;
+    const { quick_ranges, refresh_intervals } = dashboard.timepicker;
     const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
 
     const timePickerValue = getTimeSrv().timeRange();
@@ -121,7 +121,8 @@ export class DashNavTimeControls extends Component<Props> {
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
           isOnCanvas={isOnCanvas}
           onToolbarTimePickerClick={this.props.onToolbarTimePickerClick}
-          weekStart={weekStart}
+          weekStart={isWeekStart(weekStart) ? weekStart : undefined}
+          quickRanges={quick_ranges}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}

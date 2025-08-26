@@ -5,6 +5,7 @@ import {
   DataSourceRef,
   DataSourceSelectItem,
   ScopedVars,
+  isObject,
   matchPluginId,
 } from '@grafana/data';
 import {
@@ -12,11 +13,14 @@ import {
   getBackendSrv,
   GetDataSourceListFilters,
   getDataSourceSrv as getDataSourceService,
-  getLegacyAngularInjector,
   getTemplateSrv,
+  RuntimeDataSourceRegistration,
+  RuntimeDataSource,
   TemplateSrv,
+  isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -25,13 +29,14 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { importDataSourcePlugin } from './plugin_loader';
+import { importDataSourcePlugin } from './pluginLoader';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
+  private runtimeDataSources: Record<string, RuntimeDataSource> = {}; //
   private defaultName = ''; // actually UID
 
   constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}
@@ -51,11 +56,37 @@ export class DatasourceSrv implements DataSourceService {
       this.settingsMapById[dsSettings.id] = dsSettings;
     }
 
+    for (const ds of Object.values(this.runtimeDataSources)) {
+      this.datasources[ds.uid] = ds;
+      this.settingsMapByUid[ds.uid] = ds.instanceSettings;
+    }
+
     // Preload expressions
-    this.datasources[ExpressionDatasourceRef.type] = expressionDatasource as any;
-    this.datasources[ExpressionDatasourceUID] = expressionDatasource as any;
+    this.datasources[ExpressionDatasourceRef.type] = expressionDatasource as DataSourceApi<
+      DataQuery,
+      DataSourceJsonData,
+      {}
+    >;
+    this.datasources[ExpressionDatasourceUID] = expressionDatasource as DataSourceApi<
+      DataQuery,
+      DataSourceJsonData,
+      {}
+    >;
     this.settingsMapByUid[ExpressionDatasourceRef.uid] = expressionInstanceSettings;
     this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
+  }
+
+  registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void {
+    if (this.runtimeDataSources[entry.dataSource.uid]) {
+      throw new Error(`A runtime data source with uid ${entry.dataSource.uid} has already been registered`);
+    }
+    if (this.settingsMapByUid[entry.dataSource.uid]) {
+      throw new Error(`A data source with uid ${entry.dataSource.uid} has already been registered`);
+    }
+
+    this.runtimeDataSources[entry.dataSource.uid] = entry.dataSource;
+    this.datasources[entry.dataSource.uid] = entry.dataSource;
+    this.settingsMapByUid[entry.dataSource.uid] = entry.dataSource.instanceSettings;
   }
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
@@ -112,6 +143,15 @@ export class DatasourceSrv implements DataSourceService {
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
+      // type exists, but not the other properties
+      if (isDatasourceRef(ref)) {
+        const settings = this.getList({ type: ref.type });
+        if (!settings?.length) {
+          return Promise.reject('no datasource of type');
+        }
+        const ds = settings.find((v) => v.isDefault) ?? settings[0];
+        return this.get(ds.uid);
+      }
       return this.get(this.defaultName);
     }
 
@@ -162,23 +202,17 @@ export class DatasourceSrv implements DataSourceService {
         return this.datasources[key];
       }
 
-      // If there is only one constructor argument it is instanceSettings
-      const useAngular = dsPlugin.DataSourceClass.length !== 1;
-      let instance: DataSourceApi;
-
-      if (useAngular) {
-        instance = getLegacyAngularInjector().instantiate(dsPlugin.DataSourceClass, {
-          instanceSettings,
-        });
-      } else {
-        instance = new dsPlugin.DataSourceClass(instanceSettings);
-      }
+      const instance = new dsPlugin.DataSourceClass(instanceSettings);
 
       instance.components = dsPlugin.components;
+      if (!instance.userStorage) {
+        // DatasourceApi does not instantiate a userStorage property, but DataSourceWithBackend does
+        instance.userStorage = new UserStorage(instanceSettings.type);
+      }
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
-        const anyInstance = instance as any;
+        const anyInstance: any = instance;
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
         anyInstance.type = instanceSettings.type;
@@ -229,8 +263,14 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.filter && !filters.filter(x)) {
         return false;
       }
-      if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
-        return false;
+      if (filters.type) {
+        if (Array.isArray(filters.type)) {
+          if (!filters.type.includes(x.type)) {
+            return false;
+          }
+        } else if (!(x.type === filters.type || x.meta.aliasIDs?.includes(filters.type!))) {
+          return false;
+        }
       }
       if (
         !filters.all &&
@@ -364,6 +404,13 @@ export function variableInterpolation<T>(value: T | T[]) {
   }
   return value;
 }
+
+const isDatasourceRef = (ref: string | DataSourceRef | null | undefined): ref is DataSourceRef => {
+  if (ref && isObject(ref) && 'type' in ref) {
+    return true;
+  }
+  return false;
+};
 
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;

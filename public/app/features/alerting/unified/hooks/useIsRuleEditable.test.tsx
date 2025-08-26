@@ -3,13 +3,15 @@ import * as React from 'react';
 import { Provider } from 'react-redux';
 
 import { contextSrv } from 'app/core/services/context_srv';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { FolderDTO } from 'app/types/folders';
 
-import { mockFeatureDiscoveryApi, setupMswServer } from '../mockApi';
+import { setupMswServer } from '../mockApi';
 import { mockDataSource, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { buildInfoResponse } from '../testSetup/featureDiscovery';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
@@ -20,10 +22,10 @@ const mocks = {
   useFolder: jest.mocked(useFolder),
 };
 
-const server = setupMswServer();
+setupMswServer();
 
 const dataSources = {
-  mimir: mockDataSource({ uid: 'mimir', name: 'Mimir' }),
+  mimir: mockDataSource({ uid: MIMIR_DATASOURCE_UID, name: 'Mimir' }),
 };
 
 setupDataSources(dataSources.mimir);
@@ -56,7 +58,9 @@ describe('useIsRuleEditable', () => {
 
         const wrapper = getProviderWrapper();
 
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+        const { result } = renderHook(() => useIsRuleEditable(GRAFANA_RULES_SOURCE_NAME, mockRulerGrafanaRule()), {
+          wrapper,
+        });
 
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isRemovable).toBe(true);
@@ -107,8 +111,6 @@ describe('useIsRuleEditable', () => {
       beforeEach(() => {
         mocks.useFolder.mockReturnValue({ loading: false });
         contextSrv.isEditor = true;
-
-        mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.mimir, buildInfoResponse.mimir);
       });
 
       it('Should allow editing and deleting when the user has alert rule external write permission', async () => {

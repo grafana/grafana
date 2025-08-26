@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, getTagColorIndexFromName, TagList, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, TagList, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -17,25 +18,34 @@ import { Spacer } from '../../Spacer';
 
 import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
 import { NotificationRouteDetailsModal } from './NotificationRouteDetailsModal';
+import UnknownContactPointDetails from './UnknownContactPointDetails';
 import { RouteWithPath } from './route';
 
-function NotificationRouteHeader({
-  route,
-  receiver,
-  routesByIdMap,
-  instancesCount,
-  alertManagerSourceName,
-  expandRoute,
-  onExpandRouteClick,
-}: {
+export interface ReceiverNameProps {
+  /** Receiver name taken from route definition. Used as a fallback when full receiver details cannot be found (in case of RBAC restrictions) */
+  receiverNameFromRoute?: string;
+}
+
+interface NotificationRouteHeaderProps extends ReceiverNameProps {
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
   alertManagerSourceName: string;
   expandRoute: boolean;
   onExpandRouteClick: (expand: boolean) => void;
-}) {
+}
+
+function NotificationRouteHeader({
+  route,
+  receiver,
+  receiverNameFromRoute,
+  routesByIdMap,
+  instancesCount,
+  alertManagerSourceName,
+  expandRoute,
+  onExpandRouteClick,
+}: NotificationRouteHeaderProps) {
   const styles = useStyles2(getStyles);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -50,7 +60,7 @@ function NotificationRouteHeader({
       <CollapseToggle
         isCollapsed={!expandRoute}
         onToggle={(isCollapsed) => onExpandRouteClick(!isCollapsed)}
-        aria-label="Expand policy route"
+        aria-label={t('alerting.notification-route-header.aria-label-expand-policy-route', 'Expand policy route')}
       />
 
       <Stack flexGrow={1} gap={1}>
@@ -58,7 +68,7 @@ function NotificationRouteHeader({
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
           <Stack gap={1} direction="row" alignItems="center">
-            Notification policy
+            <Trans i18nKey="alerting.notification-route-header.notification-policy">Notification policy</Trans>
             <NotificationPolicyMatchers
               route={route}
               matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
@@ -72,13 +82,16 @@ function NotificationRouteHeader({
           </MetaText>
           <Stack gap={1} direction="row" alignItems="center">
             <div>
-              <span className={styles.textMuted}>@ Delivered to</span> {receiver.name}
+              <span className={styles.textMuted}>
+                <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>
+              </span>{' '}
+              {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverNameFromRoute} />}
             </div>
 
             <div className={styles.verticalBar} />
 
             <Button type="button" onClick={onClickDetails} variant="secondary" fill="outline" size="sm">
-              See details
+              <Trans i18nKey="alerting.notification-route-header.see-details">See details</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -88,6 +101,7 @@ function NotificationRouteHeader({
           onClose={() => setShowDetails(false)}
           route={route}
           receiver={receiver}
+          receiverNameFromRoute={receiverNameFromRoute}
           routesByIdMap={routesByIdMap}
           alertManagerSourceName={alertManagerSourceName}
         />
@@ -96,9 +110,9 @@ function NotificationRouteHeader({
   );
 }
 
-interface NotificationRouteProps {
+interface NotificationRouteProps extends ReceiverNameProps {
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   instanceMatches: AlertInstanceMatch[];
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
@@ -108,6 +122,7 @@ export function NotificationRoute({
   route,
   instanceMatches,
   receiver,
+  receiverNameFromRoute,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteProps) {
@@ -122,6 +137,7 @@ export function NotificationRoute({
       <NotificationRouteHeader
         route={route}
         receiver={receiver}
+        receiverNameFromRoute={receiverNameFromRoute}
         routesByIdMap={routesByIdMap}
         instancesCount={instanceMatches.length}
         alertManagerSourceName={alertManagerSourceName}
@@ -153,7 +169,9 @@ export function NotificationRoute({
                           getColorIndex={(_, index) => matchingLabels[index].colorIndex}
                         />
                       ) : (
-                        <div className={cx(styles.textMuted, styles.textItalic)}>No matching labels</div>
+                        <div className={cx(styles.textMuted, styles.textItalic)}>
+                          <Trans i18nKey="alerting.notification-route.no-matching-labels">No matching labels</Trans>
+                        </div>
                       )}
                       <div className={styles.labelSeparator} />
                       <TagList
@@ -163,7 +181,9 @@ export function NotificationRoute({
                       />
                     </>
                   ) : (
-                    <div className={styles.textMuted}>No labels</div>
+                    <div className={styles.textMuted}>
+                      <Trans i18nKey="alerting.notification-route.no-labels">No labels</Trans>
+                    </div>
                   )}
                 </div>
               );

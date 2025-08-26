@@ -1,4 +1,8 @@
-import { config } from '@grafana/runtime';
+import { screen } from '@testing-library/react';
+
+import { config, locationService } from '@grafana/runtime';
+
+import { ScopesService } from '../ScopesService';
 
 import {
   applyScopes,
@@ -19,8 +23,6 @@ import {
   updateScopes,
 } from './utils/actions';
 import {
-  expectPersistedApplicationsGrafanaNotPresent,
-  expectPersistedApplicationsMimirNotPresent,
   expectPersistedApplicationsMimirPresent,
   expectResultApplicationsCloudNotPresent,
   expectResultApplicationsCloudPresent,
@@ -36,10 +38,8 @@ import {
   expectResultCloudOpsSelected,
   expectScopesHeadline,
   expectScopesSelectorValue,
-  expectSelectedScopePath,
-  expectTreeScopePath,
 } from './utils/assertions';
-import { fetchNodesSpy, fetchScopeSpy, getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
@@ -52,17 +52,33 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Tree', () => {
+  let fetchNodesSpy: jest.SpyInstance;
+  let fetchScopeSpy: jest.SpyInstance;
+  let scopesService: ScopesService;
+
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 
-  beforeEach(() => {
-    renderDashboard();
+  beforeEach(async () => {
+    const result = await renderDashboard();
+    scopesService = result.scopesService;
+    fetchNodesSpy = jest.spyOn(result.client, 'fetchNodes');
+    fetchScopeSpy = jest.spyOn(result.client, 'fetchScope');
   });
 
   afterEach(async () => {
-    await resetScenes();
+    locationService.replace('');
+    await resetScenes([fetchNodesSpy, fetchScopeSpy]);
+  });
+
+  it('Gives autofocus to search field when node is expanded', async () => {
+    await openSelector();
+    expect(screen.getByRole('textbox', { name: 'Search' })).not.toHaveFocus();
+
+    await expandResultApplications();
+    expect(screen.getByRole('textbox', { name: 'Search Applications' })).toHaveFocus();
   });
 
   it('Fetches scope details on select', async () => {
@@ -73,7 +89,7 @@ describe('Tree', () => {
   });
 
   it('Selects the proper scopes', async () => {
-    await updateScopes(['grafana', 'mimir']);
+    await updateScopes(scopesService, ['grafana', 'mimir']);
     await openSelector();
     await expandResultApplications();
     expectResultApplicationsGrafanaSelected();
@@ -87,7 +103,7 @@ describe('Tree', () => {
     await selectResultApplicationsMimir();
     await selectResultApplicationsCloud();
     await applyScopes();
-    expectScopesSelectorValue('Grafana, Mimir, Cloud');
+    expectScopesSelectorValue('Grafana + Mimir + Cloud');
   });
 
   it('Can select a node from an inner level', async () => {
@@ -126,16 +142,16 @@ describe('Tree', () => {
     await openSelector();
     await expandResultApplications();
     await searchScopes('Cloud');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectResultApplicationsGrafanaNotPresent();
     expectResultApplicationsMimirNotPresent();
     expectResultApplicationsCloudPresent();
 
     await clearScopesSearch();
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
 
     await searchScopes('Grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsGrafanaPresent();
     expectResultApplicationsCloudNotPresent();
   });
@@ -156,10 +172,8 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirPresent();
-    expectPersistedApplicationsGrafanaNotPresent();
-    expectResultApplicationsMimirNotPresent();
     expectResultApplicationsGrafanaPresent();
   });
 
@@ -168,8 +182,7 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('mimir');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
-    expectPersistedApplicationsMimirNotPresent();
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectResultApplicationsMimirPresent();
   });
 
@@ -178,12 +191,10 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await clearScopesSearch();
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-    expectPersistedApplicationsMimirNotPresent();
-    expectPersistedApplicationsGrafanaNotPresent();
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectResultApplicationsMimirPresent();
     expectResultApplicationsGrafanaPresent();
   });
@@ -192,15 +203,15 @@ describe('Tree', () => {
     await openSelector();
     await expandResultApplications();
     await searchScopes('mimir');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await selectResultApplicationsMimir();
     await searchScopes('unknown');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectPersistedApplicationsMimirPresent();
 
     await clearScopesSearch();
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsMimirPresent();
     expectResultApplicationsGrafanaPresent();
   });
@@ -210,11 +221,11 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await selectResultApplicationsGrafana();
     await applyScopes();
-    expectScopesSelectorValue('Mimir, Grafana');
+    expectScopesSelectorValue('Mimir + Grafana');
   });
 
   it('Deselects a persisted scope', async () => {
@@ -222,11 +233,11 @@ describe('Tree', () => {
     await expandResultApplications();
     await selectResultApplicationsMimir();
     await searchScopes('grafana');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
     await selectResultApplicationsGrafana();
     await applyScopes();
-    expectScopesSelectorValue('Mimir, Grafana');
+    expectScopesSelectorValue('Mimir + Grafana');
 
     await openSelector();
     await selectPersistedApplicationsMimir();
@@ -236,38 +247,20 @@ describe('Tree', () => {
 
   it('Shows the proper headline', async () => {
     await openSelector();
-    expectScopesHeadline('Recommended');
 
     await searchScopes('Applications');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(1);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
     expectScopesHeadline('Results');
 
     await searchScopes('unknown');
-    expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
+    expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectScopesHeadline('No results found for your query');
   });
 
-  it('Updates the paths for scopes without paths on nodes fetching', async () => {
-    const selectedScopeName = 'grafana';
-    const unselectedScopeName = 'mimir';
-    const selectedScopeNameFromOtherGroup = 'dev';
-
-    await updateScopes([selectedScopeName, selectedScopeNameFromOtherGroup]);
-    expectSelectedScopePath(selectedScopeName, []);
-    expectTreeScopePath(selectedScopeName, []);
-    expectSelectedScopePath(unselectedScopeName, undefined);
-    expectTreeScopePath(unselectedScopeName, undefined);
-    expectSelectedScopePath(selectedScopeNameFromOtherGroup, []);
-    expectTreeScopePath(selectedScopeNameFromOtherGroup, []);
-
+  it('Should only show Recommended when there are no leaf container nodes visible', async () => {
     await openSelector();
     await expandResultApplications();
-    const expectedPath = ['', 'applications', 'applications-grafana'];
-    expectSelectedScopePath(selectedScopeName, expectedPath);
-    expectTreeScopePath(selectedScopeName, expectedPath);
-    expectSelectedScopePath(unselectedScopeName, undefined);
-    expectTreeScopePath(unselectedScopeName, undefined);
-    expectSelectedScopePath(selectedScopeNameFromOtherGroup, []);
-    expectTreeScopePath(selectedScopeNameFromOtherGroup, []);
+    await expandResultApplicationsCloud();
+    expectScopesHeadline('Recommended');
   });
 });

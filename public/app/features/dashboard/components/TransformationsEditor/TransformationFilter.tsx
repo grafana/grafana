@@ -1,44 +1,40 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import {
-  DataTransformerConfig,
-  GrafanaTheme2,
-  StandardEditorContext,
-  StandardEditorsRegistryItem,
-} from '@grafana/data';
+import { DataFrame, DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
-import { TransformationData } from './TransformationsEditor';
-
 interface TransformationFilterProps {
+  /** data frames from the output of previous transformation */
+  data: DataFrame[];
   index: number;
   config: DataTransformerConfig;
-  data: TransformationData;
+  annotations?: DataFrame[];
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
-export const TransformationFilter = ({ index, data, config, onChange }: TransformationFilterProps) => {
+export const TransformationFilter = ({ index, annotations, config, onChange, data }: TransformationFilterProps) => {
   const styles = useStyles2(getStyles);
 
   const opts = useMemo(() => {
     return {
       // eslint-disable-next-line
-      context: { data: data.series } as StandardEditorContext<unknown>,
-      showTopic: true || data.annotations?.length || config.topic?.length,
+      context: { data },
+      showTopic: true || annotations?.length || config.topic?.length,
       showFilter: config.topic !== DataTopic.Annotations,
       source: [
-        { value: DataTopic.Series, label: `Query results` },
+        { value: DataTopic.Series, label: `Query and Transformation results` },
         { value: DataTopic.Annotations, label: `Annotation data` },
       ],
     };
-  }, [data, config.topic]);
+  }, [data, annotations?.length, config.topic]);
 
   return (
     <div className={styles.wrapper}>
-      <Field label="Apply transformation to">
+      <Field label={t('dashboard.transformation-filter.label-apply-transformation-to', 'Apply transformation to')}>
         <>
           {opts.showTopic && (
             <Select
@@ -59,8 +55,6 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
             <FrameMultiSelectionEditor
               value={config.filter!}
               context={opts.context}
-              // eslint-disable-next-line
-              item={{} as StandardEditorsRegistryItem}
               onChange={(filter) => onChange(index, { ...config, filter })}
             />
           )}

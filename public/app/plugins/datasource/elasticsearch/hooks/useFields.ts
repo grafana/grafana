@@ -5,7 +5,7 @@ import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { isBucketAggregationType } from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { useDatasource, useRange } from '../components/QueryEditor/ElasticsearchQueryContext';
 import { isMetricAggregationType } from '../components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { MetricAggregationType, BucketAggregationType } from '../types';
+import { BucketAggregationType, MetricAggregationType } from '../dataquery.gen';
 
 type AggregationType = BucketAggregationType | MetricAggregationType;
 
@@ -60,7 +60,7 @@ export const useFields = (type: AggregationType | string[]) => {
   let rawFields: MetricFindValue[];
 
   return async (q?: string) => {
-    // _mapping doesn't support filtering, we avoid sending a request everytime q changes
+    // TODO: use _field_caps to support filtering
     if (!rawFields) {
       rawFields = await lastValueFrom(datasource.getFields(filter, range));
     }

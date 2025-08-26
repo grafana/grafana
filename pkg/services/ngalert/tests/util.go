@@ -24,26 +24,46 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type TestEnvOptions struct {
+	featureToggles featuremgmt.FeatureToggles
+}
+
+type TestEnvOption func(*TestEnvOptions)
+
+func WithFeatureToggles(toggles featuremgmt.FeatureToggles) TestEnvOption {
+	return func(opts *TestEnvOptions) {
+		opts.featureToggles = toggles
+	}
+}
+
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOption) (*ngalert.AlertNG, *store.DBstore) {
 	tb.Helper()
+
+	options := TestEnvOptions{
+		featureToggles: featuremgmt.WithFeatures(),
+	}
+
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -62,20 +82,19 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
-	features := featuremgmt.WithFeatures()
-	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, features, ac)
-	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
+	folderService := foldertest.NewFakeService()
+	dashboardService := dashboards.NewFakeDashboardService(tb)
+	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
-		cfg, features, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
+		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)
 	require.NoError(tb, err)
+
 	return ng, &store.DBstore{
-		FeatureToggles: features,
+		FeatureToggles: options.featureToggles,
 		SQLStore:       ng.SQLStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
@@ -101,19 +120,21 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
 		Permissions: map[int64]map[string][]string{
-			orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
+			orgID: {
+				dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+			},
 		},
 	}
 
 	ctx = identity.WithRequester(ctx, user)
 	_, err := dbstore.FolderService.Create(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, SignedInUser: user})
-	// var foldr *folder.Folder
 	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
 		_, err = dbstore.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID, SignedInUser: user})
 	}
 	require.NoError(t, err)
 
-	_, err = dbstore.InsertAlertRules(ctx, []models.AlertRule{
+	_, err = dbstore.InsertAlertRules(ctx, models.NewUserUID(user), []models.AlertRule{
 		{
 
 			ID:        0,

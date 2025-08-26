@@ -47,7 +47,7 @@ You will also need the Application Request Routing (ARR) module for IIS for prox
 
 ## Grafana Config
 
-The Grafana config can be set by creating a file named/editing the existing file named `custom.ini` in the `conf` subdirectory of your Grafana installation. See the [installation instructions](http://docs.grafana.org/installation/windows/#configure) for more details.
+The Grafana config can be set by creating a file named/editing the existing file named `custom.ini` in the `conf` subdirectory of your Grafana installation. See the [installation instructions](/docs/grafana/<GRAFANA_VERSION>/installation/windows/#configure) for more details.
 
 Using the example from above, if the subpath is `grafana` (you can set this to whatever is required) and the parent site is `yourdomain.com:8080`, then you would add this to the `custom.ini` config file:
 

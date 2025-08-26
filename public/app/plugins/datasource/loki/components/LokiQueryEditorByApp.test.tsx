@@ -3,11 +3,18 @@ import { noop } from 'lodash';
 
 import { CoreApp } from '@grafana/data';
 
-import { createLokiDatasource } from '../__mocks__/datasource';
+import { createLokiDatasource } from '../mocks/datasource';
 
 import { testIds as regularTestIds } from './LokiQueryEditor';
 import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';
 import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn().mockReturnValue({
+    subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+  }),
+}));
 
 function setup(app: CoreApp): RenderResult {
   const dataSource = createLokiDatasource();

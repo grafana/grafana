@@ -2,6 +2,7 @@
 aliases:
   - ../meta-monitoring/ # /docs/grafana/<GRAFANA_VERSION>/alerting/meta-monitoring/
   - ../monitoring/ # /docs/grafana/<GRAFANA_VERSION>/alerting/monitoring/
+  - ../monitor/ # /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/meta-monitoring
 description: Monitor your alerting metrics to ensure you identify potential issues before they become critical.
 keywords:
@@ -34,11 +35,59 @@ You can use meta-monitoring metrics to understand the health of your alerting sy
 
 ## Metrics for Grafana-managed alerts
 
-To meta monitor Grafana-managed alerts, you need a Prometheus server, or other metrics database to collect and store metrics exported by Grafana.
+To meta monitor Grafana-managed alerts, you can collect two types of metrics in a Prometheus instance:
 
-For example, if you are using Prometheus, add a `scrape_config` to Prometheus to scrape metrics from Grafana, Alertmanager, or your data sources.
+- **State history metric (`GRAFANA_ALERTS`)** — Exported by Grafana Alerting as part of alert state history.
 
-### Example
+- **Scraped metrics** — Exported by Grafana’s `/metrics` endpoint to monitor alerting activity and performance.
+
+You need a Prometheus-compatible server to collect and store these metrics.
+
+### `GRAFANA_ALERTS` metric
+
+If you have configured [Prometheus for alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/), Grafana writes alert state changes to the `ALERTS` metric:
+
+```
+GRAFANA_ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
+```
+
+This `GRAFANA_ALERTS` metric is compatible with the `ALERTS` metric used by Prometheus Alerting and includes two additional labels:
+
+1. A new `grafana_rule_uid` label for the UID of the Grafana rule.
+2. A new `grafana_alertstate` label for the Grafana alert state, which differs slightly from the equivalent Prometheus state included in the `alertstate` label.
+
+Alert labels are automatically converted before being written to Prometheus to ensure compatibility. Prometheus requires label names to start with a letter or underscore (`_`), followed only by letters, numbers, or additional underscores. Invalid characters are replaced during conversion. For example, `1my-label` becomes `_my_label`.
+
+| Grafana state  | `alertstate`          | `grafana_alertstate`  |
+| -------------- | --------------------- | --------------------- |
+| **Alerting**   | `firing`              | `alerting`            |
+| **Recovering** | `firing`              | `recovering`          |
+| **Pending**    | `pending`             | `pending`             |
+| **Error**      | `firing`              | `error`               |
+| **NoData**     | `firing`              | `nodata`              |
+| **Normal**     | _(no metric emitted)_ | _(no metric emitted)_ |
+
+You can then query this metric like any other Prometheus metric:
+
+{{< code >}}
+
+```firing-alerts
+GRAFANA_ALERTS{grafana_alertstate="alerting"}
+```
+
+```recovering-alerts
+GRAFANA_ALERTS{grafana_alertstate="recovering"}
+```
+
+```critical-alerts-in-pending
+GRAFANA_ALERTS{grafana_alertstate="pending", severity="critical"}
+```
+
+    {{< /code >}}
+
+### Scraped metrics
+
+To collect scraped Alerting metrics, configure Prometheus to scrape metrics from Grafana.
 
 ```yaml
 - job_name: grafana
@@ -52,8 +101,6 @@ For example, if you are using Prometheus, add a `scrape_config` to Prometheus to
     - targets:
         - grafana:3000
 ```
-
-### List of available metrics
 
 The Grafana ruler, which is responsible for evaluating alert rules, and the Grafana Alertmanager, which is responsible for sending notifications of firing and resolved alerts, provide a number of metrics that let you observe them.
 
@@ -81,6 +128,45 @@ This metric is a gauge that shows you the number of seconds that the scheduler i
 
 This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric lets you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
 
+#### grafana_alerting_state_history_writes_failed_total
+
+This metric is a counter that shows you the number of failed writes to the configured alert state history backend. It includes a `backend` label to distinguish between different backends (such as `loki` or `prometheus`).
+
+For example, you might want to create an alert that fires when `grafana_alerting_state_history_writes_failed_total{backend="prometheus"}` is greater than 0 to detect when Prometheus remote write is failing.
+
+## Logs for Grafana-managed alerts
+
+If you have configured [Loki for alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/), logs related to state changes in Grafana-managed alerts are stored in the Loki data source.
+
+You can use **Grafana Explore** and the Loki query editor to search for alert state changes.
+
+{{< code >}}
+
+```basic-query
+{from="state-history"} | json
+```
+
+```additional-filters
+{from="state-history"} | json | previous=~"Normal.*" | current=~"Alerting.*"
+```
+
+```failing-rules
+{from="state-history"} | json | current=~"Error.*"
+```
+
+    {{< /code >}}
+
+In the **Logs** view, you can review details for individual alerts by selecting fields such as:
+
+- `previous`: previous alert instance state.
+- `current`: current alert instance state.
+- `ruleTitle`: alert rule title.
+- `ruleID` and `ruleUID`.
+- `labels_alertname`, `labels_new_label`, and `labels_grafana_folder`.
+- Additional available fields.
+
+Alternatively, you can access the [History page](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/) in Grafana to visualize and filter state changes for individual alerts or all alerts.
+
 ## Metrics for Mimir-managed alerts
 
 To meta monitor Grafana Mimir-managed alerts, open source and on-premise users need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by the Mimir ruler.
@@ -95,8 +181,6 @@ To meta monitor the Alertmanager, you need a Prometheus/Mimir server, or another
 
 For example, if you are using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Alertmanager.
 
-### Example
-
 ```yaml
 - job_name: alertmanager
   honor_timestamps: true
@@ -109,8 +193,6 @@ For example, if you are using Prometheus you should add a `scrape_config` to Pro
     - targets:
         - alertmanager:9093
 ```
-
-### List of available metrics
 
 The following is a list of available metrics for Alertmanager.
 

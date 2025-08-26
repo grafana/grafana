@@ -1,13 +1,16 @@
 import { map } from 'rxjs/operators';
 
+import { cacheFieldDisplayNames } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo, SpecialValue } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
+import { getSpecialValue } from './utils';
 
 export interface TransposeTransformerOptions {
   firstFieldName?: string;
   restFieldsName?: string;
+  emptyValue?: SpecialValue;
 }
 
 export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptions> = {
@@ -28,6 +31,9 @@ export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptio
 };
 
 function transposeDataFrame(options: TransposeTransformerOptions, data: DataFrame[]): DataFrame[] {
+  cacheFieldDisplayNames(data);
+  const emptyValue = options.emptyValue ?? SpecialValue.Empty;
+
   return data.map((frame) => {
     const firstField = frame.fields[0];
     const firstName = !options.firstFieldName ? 'Field' : options.firstFieldName;
@@ -35,11 +41,15 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
     const useFirstFieldAsHeaders =
       firstField.type === FieldType.string || firstField.type === FieldType.time || firstField.type === FieldType.enum;
     const headers = useFirstFieldAsHeaders
-      ? [firstName, ...fieldValuesAsStrings(firstField, firstField.values)]
+      ? [firstName, ...fieldValuesAsStrings(firstField, firstField.values, emptyValue)]
       : [firstName, ...firstField.values.map((_, i) => restName)];
     const rows = useFirstFieldAsHeaders
-      ? frame.fields.map((field) => field.name).slice(1)
-      : frame.fields.map((field) => field.name);
+      ? frame.fields
+          .map((field) => {
+            return field.state?.displayName ?? field.name;
+          })
+          .slice(1)
+      : frame.fields.map((field) => field.state?.displayName ?? field.name);
     const fieldType = determineFieldType(
       useFirstFieldAsHeaders
         ? frame.fields.map((field) => field.type).slice(1)
@@ -58,7 +68,7 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
 
       const values = frame.fields.map((field) => {
         if (fieldType === FieldType.string) {
-          return fieldValuesAsStrings(field, [field.values[index - 1]])[0];
+          return fieldValuesAsStrings(field, [field.values[index - 1]], emptyValue)[0];
         }
         return field.values[index - 1];
       });
@@ -80,6 +90,7 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
       ...frame,
       fields: newFields,
       length: Math.max(...newFields.map((field) => field.values.length)),
+      refId: `${DataTransformerID.transpose}-${frame.refId}`,
     };
   });
 }
@@ -89,17 +100,17 @@ function determineFieldType(fieldTypes: FieldType[]): FieldType {
   return uniqueFieldTypes.size === 1 ? [...uniqueFieldTypes][0] : FieldType.string;
 }
 
-function fieldValuesAsStrings(field: Field, values: unknown[]) {
+function fieldValuesAsStrings(field: Field, values: unknown[], emptyValue: SpecialValue) {
   switch (field.type) {
     case FieldType.time:
     case FieldType.number:
     case FieldType.boolean:
     case FieldType.string:
-      return values.map((v) => `${v}`);
+      return values.map((v) => (v != null ? `${v}` : getSpecialValue(emptyValue)));
     case FieldType.enum:
       // @ts-ignore
-      return values.map((v) => field.config.type!.enum!.text![v]);
+      return values.map((v) => field.config.type!.enum!.text![v] ?? getSpecialValue(emptyValue));
     default:
-      return values.map((v) => JSON.stringify(v));
+      return values.map((v) => (v != null ? JSON.stringify(v) : getSpecialValue(emptyValue)));
   }
 }

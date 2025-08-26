@@ -15,27 +15,33 @@ title: Recorded queries
 weight: 300
 ---
 
-# Recorded queries
+# DEPRECATED Recorded queries
+
+{{< admonition type="warning" >}}
+Recorded queries are deprecated. Please use the new [Grafana-managed recording rules](/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules) instead.
+
+To learn how to migrate your recorded queries to Grafana-managed recording rules, refer to the migration documentation [here.](/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/migrate-recorded-queries)
+{{< /admonition >}}
 
 Recorded queries allow you to see trends over time by taking a snapshot of a data point on a set interval. This can give you insight into historic trends.
 
 For our plugins that do not return time series, it might be useful to plot historical data. For example, you might want to query ServiceNow to see a history of request response times but it can only return current point-in-time metrics.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## How recorded queries work
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 An administrator must configure a Prometheus data source and associate it with a [Remote write target](#remote-write-target) before recorded queries can be used.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Recorded queries only work with backend data source plugins. Refer to [Backend data source plugin](/tutorials/build-a-data-source-backend-plugin/) for more information about backend data source plugins. You can recorded four types of queries:
 
 - single row and column - A query that returns a single row and column.
 - row count - A query that returns meaningful rows to be counted.
-- expression - Any expression. To learn more about creating and using expressions, see [Write expression queries]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}).
+- expression - Any expression. To learn more about creating and using expressions, see [Write expression queries](../../panels-visualizations/query-transform-data/expression-queries/).
 - dataplane numeric - A query that returns [dataplane numeric kind](/developers/dataplane/numeric) data.
 
 After a recorded query is created or enabled, it immediately creates a snapshot and continues to create snapshots at the set interval. The recorded query stops taking snapshots when it is disabled, deleted, or when Grafana is not running. Data points are gathered in the backend by running the recorded query and forwarding each result to a remote-write enabled Prometheus instance.
@@ -48,7 +54,7 @@ To use a recorded query, create one and add it to a dashboard. After that, it ca
 
 1.  Find/create a query you want to record on a dashboard in an edit panel. The query must only return one row and column. If it returns more, you can still record the number of results returned using the “count” option.
     - The query's data source must be a backend data source.
-    - Expressions can be used to aggregate data from a time series query. Refer to [Write expression queries]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}) to learn more about creating and using expressions.
+    - Expressions can be used to aggregate data from a time series query. Refer to [Write expression queries](../../panels-visualizations/query-transform-data/expression-queries/) to learn more about creating and using expressions.
 1.  Click the record query button located in the top right of the query editor.
 1.  Enter recorded query information. All fields are required unless otherwise indicated.
     - Name - Name of the recorded query.
@@ -68,7 +74,7 @@ You can add existing recorded queries to panels in a dashboard. For each recorde
 1. If you want to filter recorded queries by data source, select a data source from the filter by data source drop down menu.
 1. Click the `Add` button on your recorded query to add it to the panel.
 
-After adding your recorded query to the panel, the panel data source will become `-- Mixed --`. Your recorded query is represented by a `Prometheus` query with a name label matching your recorded query name. Refer to [Prometheus]({{< relref "../../datasources/prometheus/" >}}) to learn more about the `Prometheus` data source.
+After adding your recorded query to the panel, the panel data source will become `-- Mixed --`. Your recorded query is represented by a `Prometheus` query with a name label matching your recorded query name. Refer to [Prometheus](../../datasources/prometheus/) to learn more about the `Prometheus` data source.
 
 If after adding a recorded query, a query with a `-- Mixed --` data source instead of `Prometheus` data source appears, this could mean that a Prometheus remote write target was not set up for recorded queries. Refer to [Remote write target](#remote-write-target) to set up a remote write point.
 

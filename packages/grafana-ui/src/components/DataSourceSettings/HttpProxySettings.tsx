@@ -1,4 +1,11 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineField } from '../Forms/InlineField';
+import { Stack } from '../Layout/Stack/Stack';
 import { InlineSwitch } from '../Switch/Switch';
 
 import { HttpSettingsBaseProps } from './types';
@@ -10,10 +17,15 @@ export const HttpProxySettings = ({
   onChange,
   showForwardOAuthIdentityOption = true,
 }: HttpSettingsBaseProps) => {
+  const gridLayout = useStyles2(getGridLayout);
   return (
-    <>
-      <div className="gf-form-inline">
-        <InlineField label="TLS Client Auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+    <div className={gridLayout}>
+      <Stack direction="row" gap={0.5}>
+        <InlineField
+          label={t('grafana-ui.data-source-http-proxy-settings.ts-client-auth-label', 'TLS Client Auth')}
+          labelWidth={LABEL_WIDTH}
+          disabled={dataSourceConfig.readOnly}
+        >
           <InlineSwitch
             id="http-settings-tls-client-auth"
             value={dataSourceConfig.jsonData.tlsAuth || false}
@@ -21,8 +33,11 @@ export const HttpProxySettings = ({
           />
         </InlineField>
         <InlineField
-          label="With CA Cert"
-          tooltip="Needed for verifying self-signed TLS Certs"
+          label={t('grafana-ui.data-source-http-proxy-settings.with-ca-cert-label', 'With CA Cert')}
+          tooltip={t(
+            'grafana-ui.data-source-http-proxy-settings.with-ca-cert-tooltip',
+            'Needed for verifying self-signed TLS Certs'
+          )}
           labelWidth={LABEL_WIDTH}
           disabled={dataSourceConfig.readOnly}
         >
@@ -34,36 +49,44 @@ export const HttpProxySettings = ({
             }
           />
         </InlineField>
-      </div>
-      <div className="gf-form-inline">
-        <InlineField label="Skip TLS Verify" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
+      </Stack>
+      <InlineField
+        label={t('grafana-ui.data-source-http-proxy-settings.skip-tls-verify-label', 'Skip TLS Verify')}
+        labelWidth={LABEL_WIDTH}
+        disabled={dataSourceConfig.readOnly}
+      >
+        <InlineSwitch
+          id="http-settings-skip-tls-verify"
+          value={dataSourceConfig.jsonData.tlsSkipVerify || false}
+          onChange={(event) => onChange({ ...dataSourceConfig.jsonData, tlsSkipVerify: event!.currentTarget.checked })}
+        />
+      </InlineField>
+      {showForwardOAuthIdentityOption && (
+        <InlineField
+          label={t('grafana-ui.data-source-http-proxy-settings.oauth-identity-label', 'Forward OAuth Identity')}
+          tooltip={t(
+            'grafana-ui.data-source-http-proxy-settings.oauth-identity-tooltip',
+            "Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
+          )}
+          labelWidth={LABEL_WIDTH}
+          disabled={dataSourceConfig.readOnly}
+        >
           <InlineSwitch
-            id="http-settings-skip-tls-verify"
-            value={dataSourceConfig.jsonData.tlsSkipVerify || false}
+            id="http-settings-forward-oauth"
+            value={dataSourceConfig.jsonData.oauthPassThru || false}
             onChange={(event) =>
-              onChange({ ...dataSourceConfig.jsonData, tlsSkipVerify: event!.currentTarget.checked })
+              onChange({ ...dataSourceConfig.jsonData, oauthPassThru: event!.currentTarget.checked })
             }
           />
         </InlineField>
-      </div>
-      {showForwardOAuthIdentityOption && (
-        <div className="gf-form-inline">
-          <InlineField
-            label="Forward OAuth Identity"
-            tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
-            labelWidth={LABEL_WIDTH}
-            disabled={dataSourceConfig.readOnly}
-          >
-            <InlineSwitch
-              id="http-settings-forward-oauth"
-              value={dataSourceConfig.jsonData.oauthPassThru || false}
-              onChange={(event) =>
-                onChange({ ...dataSourceConfig.jsonData, oauthPassThru: event!.currentTarget.checked })
-              }
-            />
-          </InlineField>
-        </div>
       )}
-    </>
+    </div>
   );
 };
+
+const getGridLayout = (theme: GrafanaTheme2) =>
+  css({
+    display: 'grid',
+    gridTemplateColumns: 'auto',
+    gap: 0, // Inline field has a margin
+  });

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
 import {
@@ -10,15 +10,17 @@ import {
   DataTopic,
   dateTime,
   EventBus,
+  getFrameDisplayName,
   GrafanaTheme2,
   LoadingState,
+  shallowCompare,
   SplitOpen,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -34,10 +36,10 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
-  onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
+  onDisplayedSeriesChanged: (series: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
-  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
+  toggleLegendRef?: React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>;
 };
 
 export const LogsVolumePanelList = ({
@@ -46,7 +48,7 @@ export const LogsVolumePanelList = ({
   onUpdateTimeRange,
   width,
   onLoadLogsVolume,
-  onHiddenSeriesChanged,
+  onDisplayedSeriesChanged,
   eventBus,
   splitOpen,
   timeZone,
@@ -96,12 +98,35 @@ export const LogsVolumePanelList = ({
   const to = dateTime(Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to));
   const visibleRange: TimeRange = { from, to, raw: { from, to } };
 
+  const handleHiddenSeriesChanged = useCallback(
+    (hiddenSeries: string[]) => {
+      // Not supported
+      if (numberOfLogVolumes > 1) {
+        return;
+      }
+      const allLevels = [
+        ...new Set(
+          Object.values(logVolumes)
+            .map((series) => series.map((dataFrame) => getFrameDisplayName(dataFrame)))
+            .flat()
+        ),
+      ];
+      const displayedLevels = allLevels.filter((level) => !hiddenSeries.includes(level));
+      onDisplayedSeriesChanged(shallowCompare(allLevels, displayedLevels) ? [] : displayedLevels);
+    },
+    [logVolumes, numberOfLogVolumes, onDisplayedSeriesChanged]
+  );
+
   if (logsVolumeData?.state === LoadingState.Loading) {
-    return <span>Loading...</span>;
+    return (
+      <span>
+        <Trans i18nKey="explore.logs-volume-panel-list.loading">Loading...</Trans>
+      </span>
+    );
   } else if (timeoutError && !canShowPartialData) {
     return (
       <SupplementaryResultError
-        title="Unable to show log volume"
+        title={t('explore.logs-volume-panel-list.title-unable-to-show-log-volume', 'Unable to show log volume')}
         // Using info to avoid users thinking that the actual query has failed.
         message={
           <>
@@ -131,14 +156,27 @@ export const LogsVolumePanelList = ({
       />
     );
   } else if (logsVolumeData?.error !== undefined && !canShowPartialData) {
-    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
+    return (
+      <SupplementaryResultError
+        error={logsVolumeData.error}
+        title={t(
+          'explore.logs-volume-panel-list.title-failed-volume-query',
+          'Failed to load log volume for this query'
+        )}
+      />
+    );
   }
 
   if (numberOfLogVolumes === 0 && logsVolumeData?.state !== LoadingState.Streaming) {
     return (
       <div className={styles.alertContainer}>
-        <Alert severity="info" title="No logs volume available">
-          No volume information available for the current queries and time range.
+        <Alert
+          severity="info"
+          title={t('explore.logs-volume-panel-list.title-no-logs-volume-available', 'No logs volume available')}
+        >
+          <Trans i18nKey="explore.logs-volumne-panel-list.body-no-logs-volume-available">
+            No volume information available for the current queries and time range.
+          </Trans>
         </Alert>
       </div>
     );
@@ -148,7 +186,7 @@ export const LogsVolumePanelList = ({
     <div className={styles.listContainer}>
       {timeoutError && canShowPartialData && (
         <SupplementaryResultError
-          title="Showing partial data"
+          title={t('explore.logs-volume-panel-list.title-showing-partial-data', 'Showing partial data')}
           message="The query is trying to access too much data and some sharded requests could not be completed. Try decreasing the time range or adding more labels to your query."
           severity="info"
           dismissable
@@ -168,7 +206,7 @@ export const LogsVolumePanelList = ({
             splitOpen={splitOpen}
             onLoadLogsVolume={onLoadLogsVolume}
             // TODO: Support filtering level from multiple log levels
-            onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
+            onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : handleHiddenSeriesChanged}
             eventBus={eventBus}
             annotations={annotations}
           />
@@ -176,8 +214,18 @@ export const LogsVolumePanelList = ({
       })}
       {containsZoomed && (
         <div className={styles.extraInfoContainer}>
-          <InlineField label="Reload log volume" transparent>
-            <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+          <InlineField
+            label={t('explore.logs-volume-panel-list.label-reload-log-volume', 'Reload log volume')}
+            transparent
+          >
+            <Button
+              aria-label={t('explore.logs-volume-panel-list.aria-label-reload-log-volume', 'Reload log volume')}
+              size="xs"
+              icon="sync"
+              variant="secondary"
+              onClick={onLoadLogsVolume}
+              id="reload-volume"
+            />
           </InlineField>
         </div>
       )}

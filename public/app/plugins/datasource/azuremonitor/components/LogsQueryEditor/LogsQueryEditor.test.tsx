@@ -3,12 +3,13 @@ import userEvent from '@testing-library/user-event';
 
 import { dateTime, LoadingState } from '@grafana/data';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
 import { ResultFormat } from '../../dataquery.gen';
-import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
+import { EngineSchema } from '../../types/types';
 
 import LogsQueryEditor from './LogsQueryEditor';
+import { createMockResourcePickerData } from './mocks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,6 +20,10 @@ jest.mock('@grafana/runtime', () => ({
       }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
 
@@ -43,6 +48,7 @@ describe('LogsQueryEditor', () => {
     delete query?.subscription;
     delete query?.azureLogAnalytics?.resources;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
     const basicLogsEnabled = false;
 
     render(
@@ -51,6 +57,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -94,6 +101,7 @@ describe('LogsQueryEditor', () => {
     delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -101,6 +109,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -129,6 +138,7 @@ describe('LogsQueryEditor', () => {
     delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -136,6 +146,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -164,6 +175,7 @@ describe('LogsQueryEditor', () => {
     delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -171,6 +183,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -203,6 +216,7 @@ describe('LogsQueryEditor', () => {
     const query = createMockQuery();
     const basicLogsEnabled = false;
     const onChange = jest.fn();
+    const onQueryChange = jest.fn();
 
     render(
       <LogsQueryEditor
@@ -210,6 +224,7 @@ describe('LogsQueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        onQueryChange={onQueryChange}
         setError={() => {}}
         basicLogsEnabled={basicLogsEnabled}
       />
@@ -233,6 +248,7 @@ describe('LogsQueryEditor', () => {
       const query = createMockQuery();
       const basicLogsEnabled = false;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       const date = dateTime(new Date());
       render(
@@ -241,6 +257,7 @@ describe('LogsQueryEditor', () => {
           datasource={mockDatasource}
           variableOptionGroup={variableOptionGroup}
           onChange={onChange}
+          onQueryChange={onQueryChange}
           setError={() => {}}
           basicLogsEnabled={basicLogsEnabled}
           data={{
@@ -274,6 +291,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -282,6 +300,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -300,6 +319,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -308,6 +328,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -328,6 +349,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = false;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -336,6 +358,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -354,6 +377,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -362,6 +386,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -382,6 +407,7 @@ describe('LogsQueryEditor', () => {
       });
       const basicLogsEnabled = true;
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -390,6 +416,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={basicLogsEnabled}
           />
@@ -397,6 +424,46 @@ describe('LogsQueryEditor', () => {
       });
 
       expect(await screen.queryByLabelText('Basic')).not.toBeInTheDocument();
+    });
+
+    it('should disable other resources with a basic logs query when one resource is selected', async () => {
+      const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+        },
+      });
+      const basicLogsEnabled = true;
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={basicLogsEnabled}
+        />
+      );
+
+      expect(await screen.findByLabelText('Basic')).toBeInTheDocument();
+
+      const resourcePickerButton = await screen.findByRole('button', { name: 'la-workspace' });
+      await userEvent.click(resourcePickerButton);
+
+      const checkbox = await screen.findByLabelText('la-workspace');
+      expect(checkbox).toBeChecked();
+
+      expect(await screen.findByLabelText('la-workspace-1')).toBeDisabled();
+      expect(
+        await screen.findByText('When using Basic Logs, you may only select one resource at a time.')
+      ).toBeInTheDocument();
     });
   });
 
@@ -412,6 +479,7 @@ describe('LogsQueryEditor', () => {
           basicLogsQuery: true,
         },
       });
+      const onQueryChange = jest.fn();
 
       mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
       await act(async () => {
@@ -421,6 +489,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={true}
           />
@@ -447,6 +516,7 @@ describe('LogsQueryEditor', () => {
           basicLogsQuery: true,
         },
       });
+      const onQueryChange = jest.fn();
 
       mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.45);
       await act(async () => {
@@ -456,6 +526,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={true}
           />
@@ -481,6 +552,7 @@ describe('LogsQueryEditor', () => {
           query: '',
         },
       });
+      const onQueryChange = jest.fn();
 
       mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.5);
       await act(async () => {
@@ -490,6 +562,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={true}
           />
@@ -509,6 +582,7 @@ describe('LogsQueryEditor', () => {
         },
       });
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -517,6 +591,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={false}
           />
@@ -532,6 +607,7 @@ describe('LogsQueryEditor', () => {
       const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
       const query = { ...createMockQuery(), azureLogAnalytics: undefined };
       const onChange = jest.fn();
+      const onQueryChange = jest.fn();
 
       await act(async () => {
         render(
@@ -540,6 +616,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
+            onQueryChange={onQueryChange}
             setError={() => {}}
             basicLogsEnabled={false}
           />
@@ -550,6 +627,129 @@ describe('LogsQueryEditor', () => {
         azureLogAnalytics: { resultFormat: ResultFormat.Logs },
       };
       expect(onChange).toHaveBeenCalledWith(newQuery);
+    });
+  });
+
+  describe('schema loading and auto-completion', () => {
+    it('loads schema and table plans when resources change and builder mode is set', async () => {
+      const mockSchema: EngineSchema = {
+        clusterType: 'Engine',
+        cluster: {
+          connectionString:
+            '/subscriptions/subscriptionId/resourceGroups/resourceGroup/providers/Microsoft.OperationalInsights/workspaces/la-workspace',
+          databases: [
+            {
+              name: '/subscriptions/subscriptionId/resourceGroups/resourceGroup/providers/Microsoft.OperationalInsights/workspaces/la-workspace',
+              tables: [
+                {
+                  columns: [
+                    {
+                      description: '',
+                      isPreferredFacet: false,
+                      name: 'TenantId',
+                      type: 'string',
+                    },
+                    {
+                      description: 'Date and time when dependency call was recorded.',
+                      isPreferredFacet: false,
+                      name: 'TimeGenerated',
+                      type: 'datetime',
+                    },
+                  ],
+                  description: 'Application Insights dependencies.',
+                  id: 'AppDependencies',
+                  name: 'AppDependencies',
+                  timespanColumn: 'TimeGenerated',
+                  hasData: true,
+                  related: {
+                    solutions: [],
+                    functions: [],
+                    categories: [],
+                  },
+                },
+              ],
+              functions: [],
+              majorVersion: 0,
+              minorVersion: 0,
+              entityGroups: [],
+            },
+          ],
+        },
+        database: {
+          name: '/subscriptions/subscriptionId/resourceGroups/resourceGroup/providers/Microsoft.OperationalInsights/workspaces/la-workspace',
+          tables: [
+            {
+              columns: [
+                {
+                  description: '',
+                  isPreferredFacet: false,
+                  name: 'TenantId',
+                  type: 'string',
+                },
+                {
+                  description: 'Date and time when dependency call was recorded.',
+                  isPreferredFacet: false,
+                  name: 'TimeGenerated',
+                  type: 'datetime',
+                },
+              ],
+              description: 'Application Insights dependencies.',
+              id: 'AppDependencies',
+              name: 'AppDependencies',
+              timespanColumn: 'TimeGenerated',
+              hasData: true,
+              related: {
+                solutions: [],
+                functions: [],
+                categories: [],
+              },
+            },
+          ],
+          functions: [],
+          majorVersion: 0,
+          minorVersion: 0,
+          entityGroups: [],
+        },
+      };
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(mockSchema);
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn().mockResolvedValue('plan');
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+
+      await act(async () => {
+        render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockDatasource.azureLogAnalyticsDatasource.getKustoSchema).toHaveBeenCalledWith(
+          query.azureLogAnalytics?.resources?.[0]
+        );
+      });
+      expect(mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan).toHaveBeenCalledTimes(1);
+      expect(mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan).toHaveBeenCalledWith(
+        query.azureLogAnalytics?.resources,
+        'AppDependencies'
+      );
     });
   });
 });

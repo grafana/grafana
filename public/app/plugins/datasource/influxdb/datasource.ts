@@ -1,4 +1,4 @@
-import { cloneDeep, extend, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { map as _map, cloneDeep, extend, has, isString, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -47,14 +47,7 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
-import {
-  DEFAULT_POLICY,
-  InfluxOptions,
-  InfluxQuery,
-  InfluxQueryTag,
-  InfluxVariableQuery,
-  InfluxVersion,
-} from './types';
+import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVariableQuery, InfluxVersion } from './types';
 import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -71,6 +64,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   version?: InfluxVersion;
   isProxyAccess: boolean;
+  showTagTime: string;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -92,6 +86,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const settingsData: InfluxOptions = instanceSettings.jsonData ?? {};
     this.database = settingsData.dbName ?? instanceSettings.database;
     this.interval = settingsData.timeInterval;
+    this.showTagTime = settingsData.showTagTime || '';
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.version = settingsData.version ?? InfluxVersion.InfluxQL;
@@ -206,11 +201,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.version === InfluxVersion.SQL || this.isMigrationToggleOnAndIsAccessProxy()) {
       query = this.applyVariables(query, variables, filters);
       if (query.adhocFilters?.length) {
-        const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
+        query.adhocFilters = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
+          asTag.value = this.templateSrv.replace(asTag.value ?? '', variables);
           return asTag;
         });
-        query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
+        query.tags = [...(query.tags ?? []), ...query.adhocFilters];
       }
     }
 
@@ -225,7 +221,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.templateSrv.containsTemplate(queryText);
   }
 
-  interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
+  interpolateVariablesInQueries(
+    queries: InfluxQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): InfluxQuery[] {
     if (!queries || queries.length === 0) {
       return [];
     }
@@ -244,10 +244,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         };
       }
 
+      const queryWithVariables = this.applyVariables(query, scopedVars, filters);
+      if (queryWithVariables.adhocFilters?.length) {
+        queryWithVariables.adhocFilters = (queryWithVariables.adhocFilters ?? []).map((af) => {
+          const { condition, ...asTag } = af;
+          asTag.value = this.templateSrv.replace(asTag.value ?? '', scopedVars);
+          return asTag;
+        });
+        queryWithVariables.tags = [...(queryWithVariables.tags ?? []), ...queryWithVariables.adhocFilters];
+      }
+
       return {
-        ...query,
+        ...queryWithVariables,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
       };
     });
   }
@@ -350,17 +359,32 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // If the variable is not a multi-value variable
     // we want to see how it's been used. If it is used in a regex expression
     // we escape it. Otherwise, we return it directly.
-    // regex below checks if the variable inside /^...$/ (^ and $ is optional)
+    // The regex below searches for regexes within the query string
+    const regexMatcher = new RegExp(
+      /(\s*(=|!)~\s*)\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
+      'gm'
+    );
+    // If matches are found this regex is evaluated to check if the variable is contained in the regex /^...$/ (^ and $ is optional)
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
-    if (query && regex.test(query)) {
-      if (typeof value === 'string') {
-        return escapeRegex(value);
+
+    // We need to validate the type of the query as some legacy cases can pass a query value with a different type
+    if (!query || typeof query !== 'string') {
+      return value;
+    }
+
+    const queryMatches = query.match(regexMatcher);
+    if (!queryMatches) {
+      return value;
+    }
+    for (const match of queryMatches) {
+      if (!match.match(regex)) {
+        continue;
       }
 
       // If the value is a string array first escape them then join them with pipe
       // then put inside parenthesis.
-      return `(${value.map((v) => escapeRegex(v)).join('|')})`;
+      return typeof value === 'string' ? escapeRegex(value) : `(${value.map((v) => escapeRegex(v)).join('|')})`;
     }
 
     return value;
@@ -432,6 +456,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
+      withTimeFilter: this.showTagTime,
     });
 
     return this.metricFindQuery({ refId: 'get-tag-keys', query });
@@ -443,6 +468,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
+      withTimeFilter: this.showTagTime,
     });
 
     return this.metricFindQuery({ refId: 'get-tag-values', query });

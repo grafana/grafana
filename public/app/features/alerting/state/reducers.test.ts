@@ -1,5 +1,5 @@
 import { dateTime } from '@grafana/data';
-import { AlertRuleDTO, AlertRulesState, NotificationChannelState, NotifierDTO } from 'app/types';
+import { AlertRuleDTO, AlertRulesState, NotificationChannelState, NotifierDTO } from 'app/types/alerting';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
@@ -9,9 +9,9 @@ import {
   initialState,
   loadAlertRules,
   loadedAlertRules,
+  notificationChannelLoaded,
   notificationChannelReducer,
   setSearchQuery,
-  notificationChannelLoaded,
 } from './reducers';
 
 describe('Alert rules', () => {

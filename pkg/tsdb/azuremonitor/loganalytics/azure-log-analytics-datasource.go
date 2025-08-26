@@ -12,13 +12,13 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -28,6 +28,83 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
+// Returns tables with the `HasData` field set to true
+func filterTablesWithData(tables []types.MetadataTable) []types.MetadataTable {
+	filtered := []types.MetadataTable{}
+	for _, table := range tables {
+		if table.HasData {
+			filtered = append(filtered, table)
+		}
+	}
+
+	return filtered
+}
+
+func writeErrorResponse(rw http.ResponseWriter, statusCode int, message string) error {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(statusCode)
+
+	// Log the raw error message
+	backend.Logger.Error(message)
+
+	// Set error response to initial error message
+	errorBody := map[string]string{"error": message}
+
+	// Attempt to locate JSON portion in error message
+	re := regexp.MustCompile(`\{.*\}`)
+	jsonPart := re.FindString(message)
+	if jsonPart != "" {
+		var jsonData map[string]interface{}
+		if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
+			errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
+			backend.Logger.Error("failed to unmarshal JSON error message", "error", unmarshalErr)
+		} else {
+			// Extract relevant fields for a formatted error message
+			errorType, ok := jsonData["error"].(string)
+			if ok {
+				errorDescription, ok := jsonData["error_description"].(string)
+				if !ok {
+					backend.Logger.Error("unable to convert error_description to string", "rawError", jsonData["error_description"])
+					// Attempt to just format the error as a string
+					errorDescription = fmt.Sprintf("%v", jsonData["error_description"])
+				}
+				if errorType == "" {
+					errorType = "UnknownError"
+				}
+
+				errorBody["error"] = fmt.Sprintf("%s: %s", errorType, errorDescription)
+			} else {
+				nestedError, ok := jsonData["error"].(map[string]interface{})
+
+				if !ok {
+					errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
+					backend.Logger.Error("failed to unmarshal JSON error message", "error", unmarshalErr)
+				}
+
+				errorType := nestedError["code"].(string)
+				errorDescription, ok := nestedError["message"].(string)
+				if !ok {
+					backend.Logger.Error("unable to convert error_description to string", "rawError", jsonData["error_description"])
+					// Attempt to just format the error as a string
+					errorDescription = fmt.Sprintf("%v", nestedError["message"])
+				}
+
+				if errorType == "" {
+					errorType = "UnknownError"
+				}
+				errorBody["error"] = fmt.Sprintf("%s: %s", errorType, errorDescription)
+			}
+		}
+	}
+
+	jsonRes, _ := json.Marshal(errorBody)
+	_, err := rw.Write(jsonRes)
+	if err != nil {
+		return fmt.Errorf("unable to write HTTP response: %v", err)
+	}
+	return nil
+}
+
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	if req.URL.Path == "/usage/basiclogs" {
 		newUrl := &url.URL{
@@ -36,7 +113,68 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			Path:   "/v1/query",
 		}
 		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
+	} else if strings.Contains(req.URL.Path, "/metadata") {
+		isAppInsights := strings.Contains(strings.ToLower(req.URL.Path), "microsoft.insights/components")
+		// Add necessary headers
+		if isAppInsights {
+			// metadata-format-v4 is not supported for AppInsights resources
+			req.Header.Set("Prefer", "metadata-format-v3,exclude-resourcetypes,exclude-customfunctions")
+		} else {
+			req.Header.Set("Prefer", "metadata-format-v4,exclude-resourcetypes,exclude-customfunctions")
+		}
+		queryParams := req.URL.Query()
+		// Add necessary query params
+		queryParams.Add("select", "categories,solutions,tables,workspaces")
+		req.URL.RawQuery = queryParams.Encode()
+		resp, err := cli.Do(req)
+		if err != nil {
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
+		}
+
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				e.Logger.Warn("Failed to close response body for metadata request", "err", err)
+			}
+		}()
+
+		encoding := resp.Header.Get("Content-Encoding")
+		body, err := decode(encoding, resp.Body)
+		if err != nil {
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to read metadata response: %s", err))
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("metadata API error: %s", string(body)))
+		}
+
+		var metadata types.AzureLogAnalyticsMetadata
+		err = json.Unmarshal(body, &metadata)
+		if err != nil {
+			return nil, writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to unmarshal metadata response: %s", err))
+		}
+
+		// AppInsights metadata requests do not return the HasData field
+		// So we return all tables
+		if !isAppInsights {
+			metadata.Tables = filterTablesWithData(metadata.Tables)
+		}
+
+		responseBody, err := json.Marshal(metadata)
+		if err != nil {
+			return nil, writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to marshal metadata response: %s", err))
+		}
+
+		rw.Header().Set("Content-Type", "application/json")
+		rw.WriteHeader(http.StatusOK)
+		_, err = rw.Write(responseBody)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write metadata response: %w", err)
+		}
+
+		return rw, nil
 	}
+
+	// Default behavior for other requests
 	return e.Proxy.Do(rw, req, cli)
 }
 
@@ -81,7 +219,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 		},
 		TimeColumn: "TimeGenerated",
 		Resources:  []string{payload.Resource},
-		QueryType:  dataquery.AzureQueryTypeAzureLogAnalytics,
+		QueryType:  dataquery.AzureQueryTypeLogAnalytics,
 		URL:        getApiURL(payload.Resource, false, false),
 	}
 
@@ -124,7 +262,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	if err != nil {
 		return rw, err
 	}
-	_, err = rw.Write([]byte(fmt.Sprintf("%f", value)))
+	_, err = fmt.Fprintf(rw, "%f", value)
 	if err != nil {
 		return rw, err
 	}
@@ -142,12 +280,12 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	for _, query := range originalQueries {
 		logsQuery, err := e.buildQuery(ctx, query, dsInfo, fromAlert)
 		if err != nil {
-			errorsource.AddErrorToResponse(query.RefID, result, err)
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 		res, err := e.executeQuery(ctx, logsQuery, dsInfo, client, url)
 		if err != nil {
-			errorsource.AddErrorToResponse(query.RefID, result, err)
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -171,7 +309,7 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	basicLogsQuery := false
 	basicLogsEnabled := false
 
-	resultFormat := ParseResultFormat(azureLogAnalyticsTarget.ResultFormat, dataquery.AzureQueryTypeAzureLogAnalytics)
+	resultFormat := ParseResultFormat(azureLogAnalyticsTarget.ResultFormat, dataquery.AzureQueryTypeLogAnalytics)
 
 	basicLogsQueryFlag := false
 	if azureLogAnalyticsTarget.BasicLogsQuery != nil {
@@ -239,7 +377,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 		return nil, fmt.Errorf("failed to compile Application Insights regex")
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
+	if query.QueryType == string(dataquery.AzureQueryTypeLogAnalytics) {
 		azureLogAnalyticsQuery, err = buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, fromAlert)
 		if err != nil {
 			errorMessage := fmt.Errorf("failed to build azure log analytics query: %w", err)
@@ -247,12 +385,12 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 		}
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
-		if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
+		if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 			cfg := backend.GrafanaConfigFromContext(ctx)
 			hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
 			if !hasPromExemplarsToggle {
-				return nil, errorsource.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"), false)
+				return nil, backend.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"))
 			}
 		}
 		azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
@@ -268,8 +406,23 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
-	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, errorsource.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"), false)
+	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok {
+		sameAsValue, ok := sameAs.(bool)
+		if !ok {
+			stringVal, ok := sameAs.(string)
+			if !ok {
+				return nil, backend.DownstreamError(fmt.Errorf("unknown value for Log Analytics credentials. Go to the data source configuration to update Azure Monitor credentials"))
+			}
+
+			var err error
+			sameAsValue, err = strconv.ParseBool(stringVal)
+			if err != nil {
+				return nil, backend.DownstreamError(fmt.Errorf("unknown value for Log Analytics credentials. Go to the data source configuration to update Azure Monitor credentials"))
+			}
+		}
+		if !sameAsValue {
+			return nil, backend.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
+		}
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -280,7 +433,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
 		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
-			return nil, errorsource.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"), false)
+			return nil, backend.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"))
 		}
 	}
 
@@ -301,7 +454,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, errorsource.DownstreamError(err, false)
+		return nil, backend.DownstreamError(err)
 	}
 
 	defer func() {
@@ -321,14 +474,22 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	logLimitDisabled := backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorDisableLogLimit")
+
 	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat, logLimitDisabled)
 	if err != nil {
 		return nil, err
 	}
+
 	frame = appendErrorNotice(frame, logResponse.Error)
 	if frame == nil {
-		dataResponse := backend.DataResponse{}
-		return &dataResponse, nil
+		return &backend.DataResponse{}, nil
+	}
+
+	// Ensure Meta.Custom is initialized
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = &LogAnalyticsMeta{
+			ColumnTypes: make([]string, 0),
+		}
 	}
 
 	queryUrl, err := getQueryUrl(query.Query, query.Resources, dsInfo.Routes["Azure Portal"].URL, query.TimeRange)
@@ -336,30 +497,37 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if (query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql) && query.ResultFormat == dataquery.ResultFormatTrace {
-		frame.Meta.PreferredVisualization = data.VisTypeTrace
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatTable {
-		frame.Meta.PreferredVisualization = data.VisTypeTable
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatLogs {
-		frame.Meta.PreferredVisualization = data.VisTypeLogs
-		frame.Meta.Custom = &LogAnalyticsMeta{
-			ColumnTypes:     frame.Meta.Custom.(*LogAnalyticsMeta).ColumnTypes,
-			AzurePortalLink: queryUrl,
+	// Set the preferred visualization
+	switch query.ResultFormat {
+	case dataquery.ResultFormatTrace:
+		if query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceExemplar {
+			frame.Meta.PreferredVisualization = data.VisTypeTrace
 		}
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatTimeSeries {
+	case dataquery.ResultFormatTable:
+		frame.Meta.PreferredVisualization = data.VisTypeTable
+	case dataquery.ResultFormatLogs:
+		frame.Meta.PreferredVisualization = data.VisTypeLogs
+		if logMeta, ok := frame.Meta.Custom.(*LogAnalyticsMeta); ok {
+			frame.Meta.Custom = &LogAnalyticsMeta{
+				ColumnTypes:     logMeta.ColumnTypes,
+				AzurePortalLink: queryUrl,
+			}
+		} else {
+			frame.Meta.Custom = &LogAnalyticsMeta{
+				AzurePortalLink: queryUrl,
+			}
+		}
+	case dataquery.ResultFormatTimeSeries:
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
 			if err == nil {
 				frame = wideFrame
 			} else {
-				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
+				frame.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "could not convert frame to time series, returning raw table: " + err.Error(),
+				})
 			}
 		}
 	}
@@ -413,7 +581,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 		queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 	}
 
-	logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
+	logsQueryType := string(dataquery.AzureQueryTypeLogAnalytics)
 	logsJSONModel := dataquery.AzureMonitorQuery{
 		QueryType: &logsQueryType,
 		AzureLogAnalytics: &dataquery.AzureLogsQuery{
@@ -431,7 +599,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
 		AddCustomDataLink(*frame, data.DataLink{
@@ -442,7 +610,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		linkTitle := "Explore Trace in Azure Portal"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
@@ -456,7 +624,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 			DatasourceName: dsInfo.DatasourceName,
 			Query:          logsJSONModel,
 		},
-	})
+	}, SingleField)
 
 	return nil
 }
@@ -487,7 +655,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 		body["query_datetimescope_column"] = query.TimeColumn
 	}
 
-	if len(query.Resources) > 1 && query.QueryType == dataquery.AzureQueryTypeAzureLogAnalytics && !query.AppInsightsQuery {
+	if len(query.Resources) > 1 && query.QueryType == dataquery.AzureQueryTypeLogAnalytics && !query.AppInsightsQuery {
 		str := strings.ToLower(query.Resources[0])
 
 		if strings.Contains(str, "microsoft.operationalinsights/workspaces") {
@@ -498,7 +666,12 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 	}
 
 	if query.AppInsightsQuery {
-		body["applications"] = []string{query.Resources[0]}
+		// If the query type is traces then we only need the first resource as the rest are specified in the query
+		if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+			body["applications"] = []string{query.Resources[0]}
+		} else {
+			body["applications"] = query.Resources
+		}
 	}
 
 	jsonValue, err := json.Marshal(body)
@@ -597,11 +770,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
+			return AzureCorrelationAPIResponse{}, backend.DownstreamError(err)
 		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
+			return AzureCorrelationAPIResponse{}, backend.DownstreamError(err)
 		}
 
 		defer func() {
@@ -611,7 +784,10 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		}()
 
 		if res.StatusCode/100 != 2 {
-			return AzureCorrelationAPIResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
+			if res.StatusCode == 404 {
+				return AzureCorrelationAPIResponse{}, backend.DownstreamError(fmt.Errorf("requested trace not found by Application Insights indexing. Select the relevant Application Insights resource to search for the Operation ID directly"))
+			}
+			return AzureCorrelationAPIResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 		}
 		var data AzureCorrelationAPIResponse
 		d := json.NewDecoder(bytes.NewReader(body))
@@ -675,7 +851,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureLogAnalyticsResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
+		return AzureLogAnalyticsResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data AzureLogAnalyticsResponse

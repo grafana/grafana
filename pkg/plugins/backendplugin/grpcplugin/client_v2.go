@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	errstatus "github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
@@ -15,8 +16,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+)
+
+var (
+	logger = log.New("plugins.clientv2")
 )
 
 type ClientV2 struct {
@@ -27,7 +31,6 @@ type ClientV2 struct {
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
 	pluginextensionv2.RendererPlugin
-	secretsmanagerplugin.SecretsManagerPlugin
 }
 
 func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (*ClientV2, error) {
@@ -62,11 +65,6 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawRenderer, err := rpcClient.Dispense("renderer")
-	if err != nil {
-		return nil, err
-	}
-
-	rawSecretsManager, err := rpcClient.Dispense("secretsmanager")
 	if err != nil {
 		return nil, err
 	}
@@ -114,20 +112,8 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if rawSecretsManager != nil {
-		if secretsManagerPlugin, ok := rawSecretsManager.(secretsmanagerplugin.SecretsManagerPlugin); ok {
-			c.SecretsManagerPlugin = secretsManagerPlugin
-		}
-	}
-
 	if descriptor.startRendererFn != nil {
 		if err := descriptor.startRendererFn(descriptor.pluginID, c.RendererPlugin, logger); err != nil {
-			return nil, err
-		}
-	}
-
-	if descriptor.startSecretsManagerFn != nil {
-		if err := descriptor.startSecretsManagerFn(descriptor.pluginID, c.SecretsManagerPlugin, logger); err != nil {
 			return nil, err
 		}
 	}
@@ -186,6 +172,17 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 			return nil, plugins.ErrMethodNotImplemented
 		}
 
+		if status.Code(err) == codes.Unavailable {
+			return nil, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx).Errorf("%v", err)
+		}
+
+		if status.Code(err) == codes.ResourceExhausted {
+			return nil, plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("%v", err)
+		}
+
+		if errorSource, ok := backend.ErrorSourceFromGrpcStatusError(ctx, err); ok {
+			return nil, handleGrpcStatusError(ctx, errorSource, err)
+		}
 		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
@@ -337,4 +334,25 @@ func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRe
 	}
 
 	return backend.FromProto().ConversionResponse(protoResp), nil
+}
+
+// handleGrpcStatusError sets the error source via context based on the error source provided. Regardless of its value,
+// a plugin downstream error is returned as both plugin and downstream errors are treated the same in Grafana.
+func handleGrpcStatusError(ctx context.Context, errorSource errstatus.Source, err error) error {
+	switch errorSource {
+	case backend.ErrorSourceDownstream:
+		innerErr := backend.WithErrorSource(ctx, backend.ErrorSourceDownstream)
+		if innerErr != nil {
+			logger.Error("Could not set downstream error source", "error", innerErr)
+		}
+		return plugins.ErrPluginRequestFailureErrorBase.Errorf("%v", err)
+	case backend.ErrorSourcePlugin:
+		errorSourceErr := backend.WithErrorSource(ctx, backend.ErrorSourcePlugin)
+		if errorSourceErr != nil {
+			logger.Error("Could not set plugin error source", "error", errorSourceErr)
+		}
+		// plugin request has failed after being sent from the Grafana server
+		return plugins.ErrPluginRequestFailureErrorBase.Errorf("%v", err)
+	}
+	return fmt.Errorf("%v: %w", "Failed to query data", err)
 }

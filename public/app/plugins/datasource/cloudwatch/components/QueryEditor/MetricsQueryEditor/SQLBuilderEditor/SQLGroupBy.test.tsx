@@ -4,8 +4,8 @@ import selectEvent from 'react-select-event';
 
 import { config } from '@grafana/runtime';
 
-import { setupMockedDataSource } from '../../../../__mocks__/CloudWatchDataSource';
-import { createArray, createGroupBy } from '../../../../__mocks__/sqlUtils';
+import { setupMockedDataSource } from '../../../../mocks/CloudWatchDataSource';
+import { createArray, createGroupBy } from '../../../../mocks/sqlUtils';
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../../../types';
 
 import SQLGroupBy from './SQLGroupBy';
@@ -61,9 +61,8 @@ describe('Cloudwatch SQLGroupBy', () => {
     });
   });
 
-  it('should show Account ID in groupBy options if feature flag is enabled', async () => {
+  it('should show Account ID in groupBy options if cloudWatchCrossAccountQuerying feature flag is enabled', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
-    config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
     baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
     const query = makeSQLQuery();
 
@@ -76,20 +75,8 @@ describe('Cloudwatch SQLGroupBy', () => {
 
   it('should not show Account ID in groupBy options if not using a monitoring account', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
-    config.featureToggles.cloudwatchMetricInsightsCrossAccount = true;
     baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
 
-    const query = makeSQLQuery();
-
-    render(<SQLGroupBy {...baseProps} query={query} />);
-    const addButton = screen.getByRole('button', { name: 'Add' });
-    await userEvent.click(addButton);
-    selectEvent.openMenu(screen.getByLabelText(/Group by/));
-    expect(screen.queryByText('Account ID')).not.toBeInTheDocument();
-  });
-
-  it('should not show Account ID in groupBy options if feature flag is disabled', async () => {
-    config.featureToggles.cloudwatchMetricInsightsCrossAccount = false;
     const query = makeSQLQuery();
 
     render(<SQLGroupBy {...baseProps} query={query} />);

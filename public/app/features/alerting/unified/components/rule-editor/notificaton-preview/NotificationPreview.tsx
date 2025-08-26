@@ -1,6 +1,7 @@
 import { compact } from 'lodash';
-import { lazy, Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -64,30 +65,40 @@ export const NotificationPreview = ({
     <Stack direction="column">
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
         <Stack direction="column" gap={1}>
-          <Text element="h5">Alert instance routing preview</Text>
+          <Text element="h5">
+            <Trans i18nKey="alerting.notification-preview.title">Alert instance routing preview</Trans>
+          </Text>
           {isLoading && previewUninitialized && (
             <Text color="secondary" variant="bodySmall">
-              Loading...
+              <Trans i18nKey="alerting.common.loading">Loading...</Trans>
             </Text>
           )}
           {previewUninitialized ? (
             <Text color="secondary" variant="bodySmall">
-              When you have your folder selected and your query and labels are configured, click &quot;Preview
-              routing&quot; to see the results here.
+              <Trans i18nKey="alerting.notification-preview.uninitialized">
+                When you have your folder selected and your query and labels are configured, click &quot;Preview
+                routing&quot; to see the results here.
+              </Trans>
             </Text>
           ) : (
             <Text color="secondary" variant="bodySmall">
-              Based on the labels added, alert instances are routed to the following notification policies. Expand each
-              notification policy below to view more details.
+              <Trans i18nKey="alerting.notification-preview.initialized">
+                Based on the labels added, alert instances are routed to the following notification policies. Expand
+                each notification policy below to view more details.
+              </Trans>
             </Text>
           )}
         </Stack>
         <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={disabled}>
-          Preview routing
+          <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
         </Button>
       </Stack>
       {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
-        <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
+        <Suspense
+          fallback={
+            <LoadingPlaceholder text={t('alerting.notification-preview.text-loading-preview', 'Loading preview...')} />
+          }
+        >
           {alertManagerDataSources.map((alertManagerSource) => (
             <NotificationPreviewByAlertManager
               alertManagerSource={alertManagerSource}

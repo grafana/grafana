@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
@@ -52,11 +51,11 @@ var (
 const (
 	gceAuthentication         = "gce"
 	jwtAuthentication         = "jwt"
-	annotationQueryType       = dataquery.QueryTypeAnnotation
-	timeSeriesListQueryType   = dataquery.QueryTypeTimeSeriesList
-	timeSeriesQueryQueryType  = dataquery.QueryTypeTimeSeriesQuery
-	sloQueryType              = dataquery.QueryTypeSlo
-	promQLQueryType           = dataquery.QueryTypePromQL
+	annotationQueryType       = dataquery.QueryTypeANNOTATION
+	timeSeriesListQueryType   = dataquery.QueryTypeTIMESERIESLIST
+	timeSeriesQueryQueryType  = dataquery.QueryTypeTIMESERIESQUERY
+	sloQueryType              = dataquery.QueryTypeSLO
+	promQLQueryType           = dataquery.QueryTypePROMQL
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
@@ -133,22 +132,26 @@ type Service struct {
 }
 
 type datasourceInfo struct {
-	id                 int64
-	updated            time.Time
-	url                string
-	authenticationType string
-	defaultProject     string
-	clientEmail        string
-	tokenUri           string
-	services           map[string]datasourceService
-	privateKey         string
+	id                          int64
+	updated                     time.Time
+	url                         string
+	authenticationType          string
+	defaultProject              string
+	clientEmail                 string
+	tokenUri                    string
+	services                    map[string]datasourceService
+	privateKey                  string
+	usingImpersonation          bool
+	serviceAccountToImpersonate string
 }
 
 type datasourceJSONData struct {
-	AuthenticationType string `json:"authenticationType"`
-	DefaultProject     string `json:"defaultProject"`
-	ClientEmail        string `json:"clientEmail"`
-	TokenURI           string `json:"tokenUri"`
+	AuthenticationType          string `json:"authenticationType"`
+	DefaultProject              string `json:"defaultProject"`
+	ClientEmail                 string `json:"clientEmail"`
+	TokenURI                    string `json:"tokenUri"`
+	UsingImpersonation          bool   `json:"usingImpersonation"`
+	ServiceAccountToImpersonate string `json:"serviceAccountToImpersonate"`
 }
 
 type datasourceService struct {
@@ -169,14 +172,16 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                 settings.ID,
-			updated:            settings.Updated,
-			url:                settings.URL,
-			authenticationType: jsonData.AuthenticationType,
-			defaultProject:     jsonData.DefaultProject,
-			clientEmail:        jsonData.ClientEmail,
-			tokenUri:           jsonData.TokenURI,
-			services:           map[string]datasourceService{},
+			id:                          settings.ID,
+			updated:                     settings.Updated,
+			url:                         settings.URL,
+			authenticationType:          jsonData.AuthenticationType,
+			defaultProject:              jsonData.DefaultProject,
+			clientEmail:                 jsonData.ClientEmail,
+			tokenUri:                    jsonData.TokenURI,
+			usingImpersonation:          jsonData.UsingImpersonation,
+			serviceAccountToImpersonate: jsonData.ServiceAccountToImpersonate,
+			services:                    map[string]datasourceService{},
 		}
 
 		dsInfo.privateKey, err = utils.GetPrivateKey(&settings)
@@ -218,10 +223,6 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters any) []string 
 	return metricTypeFilterArray
 }
 
-func strPtr(s string) *string {
-	return &s
-}
-
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
 		var rawQuery map[string]any
@@ -240,7 +241,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if err != nil {
 				return err
 			}
-			q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
+			q.QueryType = string(dataquery.QueryTypeTIMESERIESLIST)
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -261,7 +262,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 
 		// Migrate type to queryType, which is only used for annotations
 		if rawQuery["type"] != nil && rawQuery["type"].(string) == "annotationQuery" {
-			q.QueryType = string(dataquery.QueryTypeAnnotation)
+			q.QueryType = string(dataquery.QueryTypeANNOTATION)
 		}
 		if rawQuery["queryType"] != nil {
 			q.QueryType = rawQuery["queryType"].(string)
@@ -275,9 +276,9 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				rawQuery["timeSeriesQuery"] = &dataquery.TimeSeriesQuery{
 					ProjectName: toString(metricQuery["projectName"]),
 					Query:       toString(metricQuery["query"]),
-					GraphPeriod: strPtr(toString(metricQuery["graphPeriod"])),
+					GraphPeriod: toString(metricQuery["graphPeriod"]),
 				}
-				q.QueryType = string(dataquery.QueryTypeTimeSeriesQuery)
+				q.QueryType = string(dataquery.QueryTypeTIMESERIESQUERY)
 			} else {
 				tslb, err := json.Marshal(metricQuery)
 				if err != nil {
@@ -293,7 +294,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
 				}
 				rawQuery["timeSeriesList"] = tsl
-				q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
+				q.QueryType = string(dataquery.QueryTypeTIMESERIESLIST)
 			}
 			// AliasBy is now a top level property
 			if metricQuery["aliasBy"] != nil {
@@ -306,7 +307,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			q.JSON = b
 		}
 
-		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSlo) {
+		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSLO) {
 			sloQuery := rawQuery["sloQuery"].(map[string]any)
 			// AliasBy is now a top level property
 			if sloQuery["aliasBy"] != nil {
@@ -350,7 +351,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	switch req.Queries[0].QueryType {
-	case string(dataquery.QueryTypeAnnotation):
+	case string(dataquery.QueryTypeANNOTATION):
 		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries, logger)
 	default:
 		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries, logger)
@@ -363,16 +364,16 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	for _, queryExecutor := range queries {
 		dr, queryRes, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
 		if err != nil {
-			errorsource.AddErrorToResponse(queryExecutor.getRefID(), resp, err)
+			resp.Responses[queryExecutor.getRefID()] = backend.ErrorResponseWithErrorSource(err)
 			return resp, err
 		}
 		err = queryExecutor.parseResponse(dr, queryRes, executedQueryString, logger)
 		if err != nil {
 			dr.Error = err
-			// // Default to a plugin error if there's no source
-			errWithSource := errorsource.SourceError(backend.ErrorSourcePlugin, err, false)
-			dr.Error = errWithSource.Unwrap()
-			dr.ErrorSource = errWithSource.ErrorSource()
+			// If the error is a downstream error, set the error source
+			if backend.IsDownstreamError(err) {
+				dr.ErrorSource = backend.ErrorSourceDownstream
+			}
 		}
 
 		resp.Responses[queryExecutor.getRefID()] = *dr
@@ -392,11 +393,11 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 
 func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
 	cloudMonitoringQueryExecutors := make([]cloudMonitoringQueryExecutor, 0, len(req.Queries))
-	startTime := req.Queries[0].TimeRange.From
-	endTime := req.Queries[0].TimeRange.To
-	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
-	for _, query := range req.Queries {
+	for index, query := range req.Queries {
+		startTime := req.Queries[index].TimeRange.From
+		endTime := req.Queries[index].TimeRange.To
+		durationSeconds := int(endTime.Sub(startTime).Seconds())
 		q, err := queryModel(query)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
@@ -404,10 +405,11 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 
 		var queryInterface cloudMonitoringQueryExecutor
 		switch query.QueryType {
-		case string(dataquery.QueryTypeTimeSeriesList), string(dataquery.QueryTypeAnnotation):
+		case string(dataquery.QueryTypeTIMESERIESLIST), string(dataquery.QueryTypeANNOTATION):
 			cmtsf := &cloudMonitoringTimeSeriesList{
-				refID:   query.RefID,
-				aliasBy: q.AliasBy,
+				refID:     query.RefID,
+				aliasBy:   q.AliasBy,
+				timeRange: req.Queries[index].TimeRange,
 			}
 			if q.TimeSeriesList.View == nil || *q.TimeSeriesList.View == "" {
 				fullString := "FULL"
@@ -416,34 +418,35 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			cmtsf.parameters = q.TimeSeriesList
 			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
-		case string(dataquery.QueryTypeTimeSeriesQuery):
+		case string(dataquery.QueryTypeTIMESERIESQUERY):
 			queryInterface = &cloudMonitoringTimeSeriesQuery{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
 				parameters: q.TimeSeriesQuery,
 				IntervalMS: query.Interval.Milliseconds(),
-				timeRange:  req.Queries[0].TimeRange,
+				timeRange:  req.Queries[index].TimeRange,
 				logger:     logger,
 			}
-		case string(dataquery.QueryTypeSlo):
+		case string(dataquery.QueryTypeSLO):
 			cmslo := &cloudMonitoringSLO{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
 				parameters: q.SloQuery,
+				timeRange:  req.Queries[index].TimeRange,
 			}
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
-		case string(dataquery.QueryTypePromQL):
+		case string(dataquery.QueryTypePROMQL):
 			cmp := &cloudMonitoringProm{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
 				parameters: q.PromQLQuery,
-				timeRange:  req.Queries[0].TimeRange,
+				timeRange:  req.Queries[index].TimeRange,
 				logger:     logger,
 			}
 			queryInterface = cmp
 		default:
-			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
+			return nil, backend.DownstreamError(fmt.Errorf("unrecognized query type %q", query.QueryType))
 		}
 
 		cloudMonitoringQueryExecutors = append(cloudMonitoringQueryExecutors, queryInterface)
@@ -592,7 +595,7 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 	if dsInfo.authenticationType == gceAuthentication {
 		project, err := s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
 		if err != nil {
-			return project, errorsource.DownstreamError(err, false)
+			return project, backend.DownstreamError(err)
 		}
 		return project, nil
 	}
@@ -613,7 +616,11 @@ func unmarshalResponse(res *http.Response, logger log.Logger) (cloudMonitoringRe
 
 	if res.StatusCode/100 != 2 {
 		logger.Error("Request failed", "status", res.Status, "body", string(body), "statusSource", backend.ErrorSourceDownstream)
-		return cloudMonitoringResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("query failed: %s", string(body)), false)
+		statusErr := fmt.Errorf("query failed: %s", string(body))
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return cloudMonitoringResponse{}, backend.DownstreamError(statusErr)
+		}
+		return cloudMonitoringResponse{}, backend.PluginError(statusErr)
 	}
 
 	var data cloudMonitoringResponse
@@ -626,7 +633,7 @@ func unmarshalResponse(res *http.Response, logger log.Logger) (cloudMonitoringRe
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string, period *string, logger log.Logger) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period string, logger log.Logger) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -647,8 +654,8 @@ func addConfigData(frames data.Frames, dl string, unit string, period *string, l
 		if frames[i].Fields[0].Config == nil {
 			frames[i].Fields[0].Config = &data.FieldConfig{}
 		}
-		if period != nil && *period != "" {
-			err := addInterval(*period, frames[i].Fields[0])
+		if period != "" {
+			err := addInterval(period, frames[i].Fields[0])
 			if err != nil {
 				logger.Error("Failed to add interval: %s", err, "statusSource", backend.ErrorSourceDownstream)
 			}

@@ -12,7 +12,7 @@ import {
   TestReceiversResult,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
 export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {
@@ -30,6 +30,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
       alertmanager_config: result.data.alertmanager_config ?? {},
       last_applied: result.data.last_applied,
       id: result.data.id,
+      extra_config: result.data.extra_config,
     };
   } catch (e) {
     // if no config has been uploaded to grafana, it returns error instead of latest config

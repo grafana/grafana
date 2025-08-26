@@ -2,8 +2,8 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,14 +17,24 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -52,6 +62,11 @@ const defaultAlertmanagerConfigJSON = `
 	}
 }
 `
+
+type Response struct {
+	Message string `json:"message"`
+	TraceID string `json:"traceID"`
+}
 
 func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 	t.Helper()
@@ -239,7 +254,8 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 }
 
 type apiClient struct {
-	url string
+	url                              string
+	prometheusConversionUseLokiPaths bool
 }
 
 type LegacyApiClient struct {
@@ -337,6 +353,19 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUI
 	a.ReloadCachedPermissions(t)
 }
 
+func (a apiClient) ReloadAlertingFileProvisioning(t *testing.T) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/admin/provisioning/alerting/reload", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", nil)
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 func (a apiClient) GetOrgQuotaLimits(t *testing.T, orgID int64) (int64, int64) {
 	t.Helper()
 
@@ -391,41 +420,7 @@ func (a apiClient) UpdateAlertRuleOrgQuota(t *testing.T, orgID int64, limit int6
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func (a apiClient) PostConfiguration(t *testing.T, c apimodels.PostableUserConfig) (bool, error) {
-	t.Helper()
-
-	b, err := json.Marshal(c)
-	require.NoError(t, err)
-
-	u := fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/alerts", a.url)
-	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
-	require.NoError(t, err)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	b, err = io.ReadAll(resp.Body)
-	require.NoError(t, err)
-
-	data := struct {
-		Message string `json:"message"`
-	}{}
-	require.NoError(t, json.Unmarshal(b, &data))
-
-	if resp.StatusCode == http.StatusAccepted {
-		return true, nil
-	}
-
-	return false, errors.New(data.Message)
-}
-
-func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (apimodels.UpdateRuleGroupResponse, int, string) {
+func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, permanentlyDelete bool) (apimodels.UpdateRuleGroupResponse, int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
@@ -433,6 +428,14 @@ func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *
 	require.NoError(t, err)
 
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s", a.url, folder)
+	uri, err := url.Parse(u)
+	require.NoError(t, err)
+	q := uri.Query()
+	if permanentlyDelete {
+		q.Set("deletePermanently", "true")
+	}
+	uri.RawQuery = q.Encode()
+	u = uri.String()
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", &buf)
 	require.NoError(t, err)
@@ -446,6 +449,13 @@ func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *
 		require.NoError(t, json.Unmarshal(b, &m))
 	}
 	return m, resp.StatusCode, string(b)
+}
+
+func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, permanentlyDelete bool) apimodels.UpdateRuleGroupResponse {
+	t.Helper()
+	m, status, raw := a.PostRulesGroupWithStatus(t, folder, group, permanentlyDelete)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+	return m
 }
 
 func (a apiClient) PostRulesExportWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, params *apimodels.ExportQueryParams) (int, string) {
@@ -484,22 +494,21 @@ func (a apiClient) PostRulesExportWithStatus(t *testing.T, folder string, group 
 	return resp.StatusCode, string(b)
 }
 
-func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (int, string) {
+func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string, permanently bool) (int, string) {
 	t.Helper()
 
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s/%s", a.url, folder, group)
 	req, err := http.NewRequest(http.MethodDelete, u, nil)
 	require.NoError(t, err)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	require.NoError(t, err)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	b, err := io.ReadAll(resp.Body)
+
+	if permanently {
+		req.URL.RawQuery = url.Values{"deletePermanently": []string{"true"}}.Encode()
+	}
+
+	resp, status, err := sendRequestRaw(t, req)
 	require.NoError(t, err)
 
-	return resp.StatusCode, string(b)
+	return status, string(resp)
 }
 
 func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (apimodels.PostSilencesOKBody, int, string) {
@@ -511,14 +520,14 @@ func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (apimo
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silences", a.url), bytes.NewReader(b))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
-	return sendRequest[apimodels.PostSilencesOKBody](t, req, http.StatusAccepted)
+	return sendRequestJSON[apimodels.PostSilencesOKBody](t, req, http.StatusAccepted)
 }
 
 func (a apiClient) GetSilence(t *testing.T, id string) (apimodels.GettableSilence, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silence/%s", a.url, id), nil)
 	require.NoError(t, err)
-	return sendRequest[apimodels.GettableSilence](t, req, http.StatusOK)
+	return sendRequestJSON[apimodels.GettableSilence](t, req, http.StatusOK)
 }
 
 func (a apiClient) GetSilences(t *testing.T, filters ...string) (apimodels.GettableSilences, int, string) {
@@ -533,7 +542,7 @@ func (a apiClient) GetSilences(t *testing.T, filters ...string) (apimodels.Getta
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.GettableSilences](t, req, http.StatusOK)
+	return sendRequestJSON[apimodels.GettableSilences](t, req, http.StatusOK)
 }
 
 func (a apiClient) DeleteSilence(t *testing.T, id string) (any, int, string) {
@@ -545,13 +554,12 @@ func (a apiClient) DeleteSilence(t *testing.T, id string) (any, int, string) {
 		Message string `json:"message"`
 	}
 
-	return sendRequest[dynamic](t, req, http.StatusOK)
+	return sendRequestJSON[dynamic](t, req, http.StatusOK)
 }
 
-func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
+func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int) {
 	result, status, _ := a.GetRulesGroupWithStatus(t, folder, group)
-	require.Equal(t, http.StatusAccepted, status)
-	return result
+	return result, status
 }
 
 func (a apiClient) GetRulesGroupWithStatus(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int, []byte) {
@@ -612,6 +620,25 @@ func (a apiClient) GetAllRulesWithStatus(t *testing.T) (apimodels.NamespaceConfi
 	return result, resp.StatusCode, b
 }
 
+func (a apiClient) GetDeletedRulesWithStatus(t *testing.T) (apimodels.NamespaceConfigResponse, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules", a.url), nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("deleted", "true")
+	req.URL.RawQuery = q.Encode()
+	return sendRequestJSON[apimodels.NamespaceConfigResponse](t, req, http.StatusOK)
+}
+
+func (a apiClient) DeleteRuleFromTrashByGUID(t *testing.T, ruleGUID string) (int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/ruler/grafana/api/v1/trash/rule/guid/%s", a.url, ruleGUID), nil)
+	require.NoError(t, err)
+	raw, status, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return status, string(raw)
+}
+
 func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRulesExportParameters) (int, string) {
 	t.Helper()
 	u, err := url.Parse(fmt.Sprintf("%s/api/ruler/grafana/api/v1/export/rules", a.url))
@@ -652,6 +679,30 @@ func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRu
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) GetRuleGroupProvisioning(t *testing.T, folderUID string, groupName string) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, folderUID, groupName), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.AlertRuleGroup](t, req, http.StatusOK)
+}
+
+func (a apiClient) CreateOrUpdateRuleGroupProvisioning(t *testing.T, group apimodels.AlertRuleGroup) (apimodels.AlertRuleGroup, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(group)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/folder/%s/rule-groups/%s", a.url, group.FolderUID, group.Title), &buf)
+	require.NoError(t, err)
+	req.Header.Add("Content-Type", "application/json")
+
+	return sendRequestJSON[apimodels.AlertRuleGroup](t, req, http.StatusOK)
 }
 
 func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.BacktestConfig) (int, string) {
@@ -695,7 +746,13 @@ func (a apiClient) SubmitRuleForTesting(t *testing.T, config apimodels.PostableE
 func (a apiClient) CreateTestDatasource(t *testing.T) (result api.CreateOrUpdateDatasourceResponse) {
 	t.Helper()
 
-	payload := fmt.Sprintf(`{"name":"TestData-%s","type":"testdata","access":"proxy","isDefault":false}`, uuid.NewString())
+	return a.CreateDatasource(t, "testdata")
+}
+
+func (a apiClient) CreateDatasource(t *testing.T, dsType string) (result api.CreateOrUpdateDatasourceResponse) {
+	t.Helper()
+
+	payload := fmt.Sprintf(`{"name":"TestDatasource-%s","type":"%s","access":"proxy","isDefault":false}`, uuid.NewString(), dsType)
 	buf := bytes.Buffer{}
 	buf.Write([]byte(payload))
 
@@ -744,7 +801,7 @@ func (a apiClient) GetAllMuteTimingsWithStatus(t *testing.T) (apimodels.MuteTimi
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/mute-timings", a.url), nil)
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.MuteTimings](t, req, http.StatusOK)
+	return sendRequestJSON[apimodels.MuteTimings](t, req, http.StatusOK)
 }
 
 func (a apiClient) GetMuteTimingByNameWithStatus(t *testing.T, name string) (apimodels.MuteTimeInterval, int, string) {
@@ -753,7 +810,7 @@ func (a apiClient) GetMuteTimingByNameWithStatus(t *testing.T, name string) (api
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/mute-timings/%s", a.url, name), nil)
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.MuteTimeInterval](t, req, http.StatusOK)
+	return sendRequestJSON[apimodels.MuteTimeInterval](t, req, http.StatusOK)
 }
 
 func (a apiClient) CreateMuteTimingWithStatus(t *testing.T, interval apimodels.MuteTimeInterval) (apimodels.MuteTimeInterval, int, string) {
@@ -768,7 +825,7 @@ func (a apiClient) CreateMuteTimingWithStatus(t *testing.T, interval apimodels.M
 	req.Header.Add("Content-Type", "application/json")
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.MuteTimeInterval](t, req, http.StatusCreated)
+	return sendRequestJSON[apimodels.MuteTimeInterval](t, req, http.StatusCreated)
 }
 
 func (a apiClient) EnsureMuteTiming(t *testing.T, interval apimodels.MuteTimeInterval) {
@@ -790,7 +847,7 @@ func (a apiClient) UpdateMuteTimingWithStatus(t *testing.T, interval apimodels.M
 	req.Header.Add("Content-Type", "application/json")
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.MuteTimeInterval](t, req, http.StatusAccepted)
+	return sendRequestJSON[apimodels.MuteTimeInterval](t, req, http.StatusAccepted)
 }
 
 func (a apiClient) DeleteMuteTimingWithStatus(t *testing.T, name string) (int, string) {
@@ -812,13 +869,39 @@ func (a apiClient) DeleteMuteTimingWithStatus(t *testing.T, name string) (int, s
 	return resp.StatusCode, string(body)
 }
 
+func (a apiClient) ExportMuteTiming(t *testing.T, name string, format string) string {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/mute-timings/%s/export", a.url, name))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("format", format)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
+}
+
 func (a apiClient) GetRouteWithStatus(t *testing.T) (apimodels.Route, int, string) {
 	t.Helper()
 
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), nil)
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.Route](t, req, http.StatusOK)
+	return sendRequestJSON[apimodels.Route](t, req, http.StatusOK)
 }
 
 func (a apiClient) GetRoute(t *testing.T) apimodels.Route {
@@ -856,6 +939,32 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route, no
 	return resp.StatusCode, string(body)
 }
 
+func (a apiClient) ExportNotificationPolicy(t *testing.T, format string) string {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/policies/export", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("format", format)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
+}
+
 func (a apiClient) UpdateRoute(t *testing.T, route apimodels.Route, noProvenance bool) {
 	t.Helper()
 	status, data := a.UpdateRouteWithStatus(t, route, noProvenance)
@@ -873,25 +982,7 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	require.NoError(t, err)
 
-	return sendRequest[data.Frame](t, req, http.StatusOK)
-}
-
-func (a apiClient) GetAllTimeIntervalsWithStatus(t *testing.T) ([]apimodels.GettableTimeIntervals, int, string) {
-	t.Helper()
-
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals", a.url), nil)
-	require.NoError(t, err)
-
-	return sendRequest[[]apimodels.GettableTimeIntervals](t, req, http.StatusOK)
-}
-
-func (a apiClient) GetTimeIntervalByNameWithStatus(t *testing.T, name string) (apimodels.GettableTimeIntervals, int, string) {
-	t.Helper()
-
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals/%s", a.url, name), nil)
-	require.NoError(t, err)
-
-	return sendRequest[apimodels.GettableTimeIntervals](t, req, http.StatusOK)
+	return sendRequestJSON[data.Frame](t, req, http.StatusOK)
 }
 
 func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
@@ -906,7 +997,7 @@ func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.Emb
 	req.Header.Add("Content-Type", "application/json")
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.EmbeddedContactPoint](t, req, http.StatusAccepted)
+	return sendRequestJSON[apimodels.EmbeddedContactPoint](t, req, http.StatusAccepted)
 }
 
 func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedContactPoint) {
@@ -959,39 +1050,478 @@ func (a apiClient) GetAlertmanagerConfigWithStatus(t *testing.T) (apimodels.Gett
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/alerts", a.url), nil)
 	require.NoError(t, err)
 
-	return sendRequest[apimodels.GettableUserConfig](t, req, http.StatusOK)
+	return sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetAlertmanagerConfigForDatasource(t *testing.T, datasourceUID string) apimodels.GettableUserConfig {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/%s/config/api/v1/alerts", a.url, datasourceUID), nil)
+	require.NoError(t, err)
+
+	config, status, body := sendRequestJSON[apimodels.GettableUserConfig](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, body)
+	return config
 }
 
 func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroups, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/alerts/groups", a.url), nil)
 	require.NoError(t, err)
-	return sendRequest[apimodels.AlertGroups](t, req, http.StatusOK)
+	return sendRequestJSON[apimodels.AlertGroups](t, req, http.StatusOK)
 }
 
-func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
+func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
 	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	return sendRequestJSON[apimodels.GettableRuleVersions](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetRuleByUID(t *testing.T, ruleUID string) apimodels.GettableExtendedRuleNode {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+	rule, status, raw := sendRequestJSON[apimodels.GettableExtendedRuleNode](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, raw)
+	return rule
+}
+
+func (a apiClient) ConvertPrometheusPostRuleGroups(t *testing.T, datasourceUID string, promNamespaces map[string][]apimodels.PrometheusRuleGroup, headers map[string]string) apimodels.ConvertPrometheusResponse {
+	t.Helper()
+
+	resp, status, body := a.RawConvertPrometheusPostRuleGroups(t, datasourceUID, promNamespaces, headers)
+	requireStatusCode(t, http.StatusAccepted, status, body)
+
+	return resp
+}
+
+func (a apiClient) RawConvertPrometheusPostRuleGroups(t *testing.T, datasourceUID string, promNamespaces map[string][]apimodels.PrometheusRuleGroup, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/prometheus/config/v1/rules"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules"
+	}
+
+	// Based on the content-type header, marshal the data to JSON or YAML
+	contentType := headers["Content-Type"]
+	var data []byte
+	var err error
+	if contentType == "application/json" {
+		data, err = json.Marshal(promNamespaces)
+		require.NoError(t, err)
+	} else {
+		data, err = yaml.Marshal(promNamespaces)
+		require.NoError(t, err)
+	}
+
+	buf := bytes.NewReader(data)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(path, a.url), buf)
+	require.NoError(t, err)
+	req.Header.Set("X-Grafana-Alerting-Datasource-UID", datasourceUID)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) ConvertPrometheusPostRuleGroup(t *testing.T, namespaceTitle, datasourceUID string, promGroup apimodels.PrometheusRuleGroup, headers map[string]string) apimodels.ConvertPrometheusResponse {
+	t.Helper()
+
+	resp, status, body := a.RawConvertPrometheusPostRuleGroup(t, namespaceTitle, datasourceUID, promGroup, headers)
+	requireStatusCode(t, http.StatusAccepted, status, body)
+
+	return resp
+}
+
+func (a apiClient) RawConvertPrometheusPostRuleGroup(t *testing.T, namespaceTitle, datasourceUID string, promGroup apimodels.PrometheusRuleGroup, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s"
+	}
+
+	// Based on the content-type header, marshal the data to JSON or YAML
+	contentType := headers["Content-Type"]
+	var data []byte
+	var err error
+	if contentType == "application/json" {
+		data, err = json.Marshal(promGroup)
+		require.NoError(t, err)
+	} else {
+		data, err = yaml.Marshal(promGroup)
+		require.NoError(t, err)
+	}
+
+	buf := bytes.NewReader(data)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(path, a.url, namespaceTitle), buf)
+	require.NoError(t, err)
+	req.Header.Set("X-Grafana-Alerting-Datasource-UID", datasourceUID)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) ConvertPrometheusGetRuleGroupRules(t *testing.T, namespaceTitle, groupName string, headers map[string]string) apimodels.PrometheusRuleGroup {
+	t.Helper()
+
+	rule, status, raw := a.RawConvertPrometheusGetRuleGroupRules(t, namespaceTitle, groupName, headers)
+	requireStatusCode(t, http.StatusOK, status, raw)
+
+	return rule
+}
+
+func (a apiClient) RawConvertPrometheusGetRuleGroupRules(t *testing.T, namespaceTitle, groupName string, headers map[string]string) (apimodels.PrometheusRuleGroup, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url, namespaceTitle, groupName), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	rule, status, raw := sendRequestYAML[apimodels.PrometheusRuleGroup](t, req, http.StatusOK)
+
+	return rule, status, raw
+}
+
+func (a apiClient) ConvertPrometheusGetNamespaceRules(t *testing.T, namespaceTitle string, headers map[string]string) map[string][]apimodels.PrometheusRuleGroup {
+	t.Helper()
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url, namespaceTitle), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	ns, status, raw := sendRequestYAML[map[string][]apimodels.PrometheusRuleGroup](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, raw)
+
+	return ns
+}
+
+func (a apiClient) ConvertPrometheusGetAllRules(t *testing.T, headers map[string]string) map[string][]apimodels.PrometheusRuleGroup {
+	t.Helper()
+
+	path := "%s/api/convert/prometheus/config/v1/rules"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	result, status, raw := sendRequestYAML[map[string][]apimodels.PrometheusRuleGroup](t, req, http.StatusOK)
+	requireStatusCode(t, http.StatusOK, status, raw)
+
+	return result
+}
+
+func (a apiClient) ConvertPrometheusDeleteRuleGroup(t *testing.T, namespaceTitle, groupName string, headers map[string]string) {
+	t.Helper()
+
+	_, status, raw := a.RawConvertPrometheusDeleteRuleGroup(t, namespaceTitle, groupName, headers)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+}
+
+func (a apiClient) RawConvertPrometheusDeleteRuleGroup(t *testing.T, namespaceTitle, groupName string, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(path, a.url, namespaceTitle, groupName), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) ConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle string, headers map[string]string) {
+	t.Helper()
+
+	_, status, raw := a.RawConvertPrometheusDeleteNamespace(t, namespaceTitle, headers)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+}
+
+func (a apiClient) ConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) apimodels.ConvertPrometheusResponse {
+	t.Helper()
+
+	resp, status, body := a.RawConvertPrometheusPostAlertmanagerConfig(t, amCfg, headers)
+	requireStatusCode(t, http.StatusAccepted, status, body)
+
+	return resp
+}
+
+func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCfg apimodels.AlertmanagerUserConfig, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/api/v1/alerts"
+
+	// Based on the content-type header, marshal the data to JSON or YAML
+	contentType := headers["Content-Type"]
+	var data []byte
+	var err error
+	if contentType == "application/json" {
+		data, err = json.Marshal(amCfg)
+		require.NoError(t, err)
+	} else {
+		data, err = yaml.Marshal(amCfg)
+		require.NoError(t, err)
+	}
+
+	buf := bytes.NewReader(data)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(path, a.url), buf)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) ConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) apimodels.AlertmanagerUserConfig {
+	t.Helper()
+
+	config, status, raw := a.RawConvertPrometheusGetAlertmanagerConfig(t, headers)
+	requireStatusCode(t, http.StatusOK, status, raw)
+
+	return config
+}
+
+func (a apiClient) RawConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) (apimodels.AlertmanagerUserConfig, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/api/v1/alerts"
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(path, a.url), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	config, status, raw := sendRequestYAML[apimodels.AlertmanagerUserConfig](t, req, http.StatusOK)
+
+	return config, status, raw
+}
+
+func (a apiClient) ConvertPrometheusDeleteAlertmanagerConfig(t *testing.T, headers map[string]string) {
+	t.Helper()
+
+	_, status, raw := a.RawConvertPrometheusDeleteAlertmanagerConfig(t, headers)
+	requireStatusCode(t, http.StatusAccepted, status, raw)
+}
+
+func (a apiClient) RawConvertPrometheusDeleteAlertmanagerConfig(t *testing.T, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/api/v1/alerts"
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(path, a.url), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) RawConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle string, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
+	t.Helper()
+
+	path := "%s/api/convert/prometheus/config/v1/rules/%s"
+	if a.prometheusConversionUseLokiPaths {
+		path = "%s/api/convert/api/prom/rules/%s"
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf(path, a.url, namespaceTitle), nil)
+	require.NoError(t, err)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) UpdateNamespaceRules(t *testing.T, folder string, body *apimodels.UpdateNamespaceRulesRequest) (apimodels.UpdateNamespaceRulesResponse, int, string) {
+	t.Helper()
+
 	client := &http.Client{}
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(body)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s", a.url, folder)
+
+	req, err := http.NewRequest(http.MethodPatch, u, &buf)
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+
 	resp, err := client.Do(req)
 	require.NoError(t, err)
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	body, err := io.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
+	var m apimodels.UpdateNamespaceRulesResponse
+	if resp.StatusCode == http.StatusAccepted {
+		require.NoError(t, json.Unmarshal(b, &m))
+	}
+	return m, resp.StatusCode, string(b)
+}
 
+func sendRequestRaw(t *testing.T, req *http.Request) ([]byte, int, error) {
+	t.Helper()
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return body, resp.StatusCode, nil
+}
+
+func sendRequestJSON[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
+	t.Helper()
 	var result T
 
-	if resp.StatusCode != successStatusCode {
-		return result, resp.StatusCode, string(body)
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+
+	if statusCode != successStatusCode {
+		return result, statusCode, string(body)
 	}
 
 	err = json.Unmarshal(body, &result)
 	require.NoError(t, err)
-	return result, resp.StatusCode, string(body)
+	return result, statusCode, string(body)
+}
+
+func sendRequestYAML[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
+	t.Helper()
+	var result T
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+
+	if statusCode != successStatusCode {
+		return result, statusCode, string(body)
+	}
+
+	err = yaml.Unmarshal(body, &result)
+	require.NoError(t, err)
+	return result, statusCode, string(body)
 }
 
 func requireStatusCode(t *testing.T, expected, actual int, response string) {
 	t.Helper()
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
+}
+
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+	t.Helper()
+
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 1
+
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+
+	u, err := usrSvc.Create(context.Background(), &cmd)
+	require.NoError(t, err)
+	return u.ID
+}
+
+func (a apiClient) GetProvisioningAlertRule(t *testing.T, ruleUID string) (apimodels.ProvisionedAlertRule, int, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s", a.url, ruleUID), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.ProvisionedAlertRule](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, params *apimodels.ExportQueryParams) (int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s/export", a.url, ruleUID))
+	require.NoError(t, err)
+	if params != nil {
+		q := url.Values{}
+		if params.Format != "" {
+			q.Set("format", params.Format)
+		}
+		if params.Download {
+			q.Set("download", "true")
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
 }

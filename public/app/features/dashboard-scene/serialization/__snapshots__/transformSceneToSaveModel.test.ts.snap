@@ -1,5 +1,380 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Given a scene with custom quick ranges should save quick ranges to save model 1`] = `
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana",
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "Enabled",
+        "target": {
+          "lines": 4,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": false,
+        "hide": false,
+        "iconColor": "yellow",
+        "name": "Disabled",
+        "target": {
+          "lines": 5,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "dark-purple",
+        "name": "Hidden",
+        "target": {
+          "lines": 6,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+    ],
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 1,
+  "graphTooltip": 1,
+  "id": 1351,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
+      "description": "This is a simple time series graph",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic",
+          },
+          "custom": {
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineWidth": 2,
+          },
+        },
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0,
+      },
+      "id": 28,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+        },
+      },
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
+      "title": "Simple time series graph ",
+      "type": "timeseries",
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8,
+      },
+      "id": 5,
+      "panels": [],
+      "title": "Row title",
+      "type": "row",
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 9,
+      },
+      "id": 29,
+      "options": {},
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
+      "title": "panel inside row",
+      "type": "timeseries",
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 11,
+        "x": 12,
+        "y": 9,
+      },
+      "id": 25,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false,
+        },
+        "content": "content",
+        "mode": "markdown",
+      },
+      "pluginVersion": "10.2.0-pre",
+      "title": "Transparent text panel",
+      "transparent": true,
+      "type": "text",
+    },
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "graph-ng",
+    "demo",
+  ],
+  "templating": {
+    "list": [
+      {
+        "baseFilters": [],
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "filters": [],
+        "name": "Filters",
+        "type": "adhoc",
+      },
+      {
+        "auto": true,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "text": "1m",
+          "value": "1m",
+        },
+        "name": "intervalVar",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m",
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m",
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m",
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h",
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h",
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h",
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d",
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d",
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d",
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d",
+          },
+        ],
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "refresh": 2,
+        "type": "interval",
+      },
+      {
+        "current": {
+          "text": [
+            "a",
+          ],
+          "value": [
+            "a",
+          ],
+        },
+        "includeAll": true,
+        "multi": true,
+        "name": "customVar",
+        "options": [],
+        "query": "a, b, c",
+        "type": "custom",
+      },
+      {
+        "current": {
+          "text": "gdev-testdata",
+          "value": "PD8C576611E62080A",
+        },
+        "includeAll": false,
+        "name": "dsVar",
+        "options": [],
+        "query": "grafana-testdata-datasource",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource",
+      },
+      {
+        "current": {
+          "text": "A",
+          "value": "A",
+        },
+        "definition": "*",
+        "includeAll": false,
+        "name": "query0",
+        "options": [],
+        "query": {
+          "query": "*",
+          "refId": "StandardVariableQuery",
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query",
+      },
+      {
+        "current": {
+          "text": "test",
+          "value": "test",
+        },
+        "hide": 2,
+        "name": "constant",
+        "query": "test",
+        "skipUrlSync": true,
+        "type": "constant",
+      },
+    ],
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now",
+  },
+  "timepicker": {
+    "quick_ranges": [
+      {
+        "display": "Last 6 hours",
+        "from": "now-6h",
+        "to": "now",
+      },
+      {
+        "display": "Last 3 days",
+        "from": "now-3d",
+        "to": "now",
+      },
+    ],
+    "refresh_intervals": [
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d",
+    ],
+  },
+  "timezone": "America/New_York",
+  "title": "Dashboard to load1",
+  "uid": "nP8rcffGkasd",
+  "version": 2,
+  "weekStart": "saturday",
+}
+`;
+
 exports[`transformSceneToSaveModel Annotations should transform annotations to save model 1`] = `
 [
   {
@@ -280,7 +655,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "templating",
     "gdev",
@@ -288,7 +663,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   "templating": {
     "list": [
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "A",
@@ -307,7 +681,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "type": "custom",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "1",
@@ -336,7 +709,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
   "version": 1,
-  "weekStart": "",
 }
 `;
 
@@ -550,7 +922,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   ],
   "preload": false,
   "refresh": "5m",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "tag1",
     "tag2",
@@ -558,7 +930,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "templating": {
     "list": [
       {
-        "allowCustomValue": true,
         "baseFilters": [],
         "datasource": {
           "type": "prometheus",
@@ -634,7 +1005,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "interval",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "a",
@@ -651,7 +1021,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "custom",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "gdev-testdata",
           "value": "PD8C576611E62080A",
@@ -665,7 +1034,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "datasource",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "A",
           "value": "A",
@@ -912,7 +1280,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "gdev",
     "graph-ng",
@@ -921,7 +1289,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   "templating": {
     "list": [
       {
-        "allowCustomValue": true,
         "baseFilters": [],
         "datasource": {
           "type": "prometheus",
@@ -997,7 +1364,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "interval",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": [
             "a",
@@ -1014,7 +1380,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "custom",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "gdev-testdata",
           "value": "PD8C576611E62080A",
@@ -1028,7 +1393,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "datasource",
       },
       {
-        "allowCustomValue": true,
         "current": {
           "text": "A",
           "value": "A",

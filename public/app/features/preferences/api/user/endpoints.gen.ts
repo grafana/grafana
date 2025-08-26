@@ -14,7 +14,7 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type GetUserPreferencesApiResponse = /** status 200 (empty) */ Preferences;
+export type GetUserPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
 export type GetUserPreferencesApiArg = void;
 export type PatchUserPreferencesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -26,38 +26,34 @@ export type UpdateUserPreferencesApiResponse =
 export type UpdateUserPreferencesApiArg = {
   updatePrefsCmd: UpdatePrefsCmd;
 };
-export type CookiePreferencesDefinesModelForCookiePreferences = {
-  analytics?: {
-    [key: string]: any;
-  };
-  functional?: {
-    [key: string]: any;
-  };
-  performance?: {
-    [key: string]: any;
-  };
+export type PreferencesCookiePreferences = {
+  analytics?: any;
+  functional?: any;
+  performance?: any;
 };
-export type NavbarPreferenceDefinesModelForNavbarPreference = {
+export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
 };
-export type QueryHistoryPreferenceDefinesModelForQueryHistoryPreference = {
-  /** HomeTab one of: '' | 'query' | 'starred'; */
+export type PreferencesQueryHistoryPreference = {
+  /** one of: '' | 'query' | 'starred'; */
   homeTab?: string;
 };
-export type Preferences = {
-  cookiePreferences?: CookiePreferencesDefinesModelForCookiePreferences;
+export type PreferencesSpec = {
+  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
   language?: string;
-  navbar?: NavbarPreferenceDefinesModelForNavbarPreference;
-  queryHistory?: QueryHistoryPreferenceDefinesModelForQueryHistoryPreference;
-  /** Theme light, dark, empty is default */
+  navbar?: PreferencesNavbarPreference;
+  queryHistory?: PreferencesQueryHistoryPreference;
+  /** Selected locale (beta) */
+  regionalFormat?: string;
+  /** light, dark, empty is default */
   theme?: string;
   /** The timezone selection
     TODO: this should use the timezone defined in common */
   timezone?: string;
-  /** WeekStart day of the week (sunday, monday, etc) */
+  /** day of the week (sunday, monday, etc) */
   weekStart?: string;
 };
 export type ErrorResponseBody = {
@@ -74,14 +70,21 @@ export type SuccessResponseBody = {
   message?: string;
 };
 export type CookieType = string;
+export type NavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type QueryHistoryPreference = {
+  homeTab?: string;
+};
 export type PatchPrefsCmd = {
   cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  navbar?: NavbarPreferenceDefinesModelForNavbarPreference;
-  queryHistory?: QueryHistoryPreferenceDefinesModelForQueryHistoryPreference;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark';
   timezone?: 'utc' | 'browser';
   weekStart?: string;
@@ -92,8 +95,9 @@ export type UpdatePrefsCmd = {
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  navbar?: NavbarPreferenceDefinesModelForNavbarPreference;
-  queryHistory?: QueryHistoryPreferenceDefinesModelForQueryHistoryPreference;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   timezone?: 'utc' | 'browser';
   weekStart?: string;

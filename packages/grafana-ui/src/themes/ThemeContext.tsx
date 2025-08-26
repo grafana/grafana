@@ -118,6 +118,13 @@ export function useStyles2<T extends unknown[], CSSReturnValue>(
 ): CSSReturnValue {
   const theme = useTheme2();
 
+  // Grafana ui can be bundled and used in older versions of Grafana where the theme doesn't have elevated background
+  // This can be removed post G12
+  if (!theme.colors.background.elevated) {
+    theme.colors.background.elevated =
+      theme.colors.mode === 'light' ? theme.colors.background.primary : theme.colors.background.secondary;
+  }
+
   let memoizedStyleCreator: typeof getStyles = memoizedStyleCreators.get(getStyles);
 
   if (!memoizedStyleCreator) {

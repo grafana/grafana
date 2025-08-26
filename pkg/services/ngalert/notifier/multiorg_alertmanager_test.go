@@ -127,7 +127,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		2: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
 	})
 
-	orgs, err := mam.orgStore.GetOrgs(ctx)
+	orgs, err := mam.orgStore.FetchOrgIds(ctx)
 	require.NoError(t, err)
 	// No successfully applied configurations should be found at first.
 	{
@@ -221,7 +221,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		status, err := am.GetStatus(ctx)
 		require.NoError(t, err)
 		require.Equal(t, "N/A", *status.VersionInfo.Version)
-		require.Equal(t, int64(2), internalAm.orgID)
+		require.Equal(t, int64(2), internalAm.Base.TenantID())
 	}
 
 	// Let's now remove the previous queried organization.
@@ -396,6 +396,7 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		log.New("testlogger"),
 		secretsService,
 		featuremgmt.WithFeatures(),
+		nil,
 	)
 	require.NoError(t, err)
 	return mam

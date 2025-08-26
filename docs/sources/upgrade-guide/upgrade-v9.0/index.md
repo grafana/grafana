@@ -59,7 +59,7 @@ In the Prometheus data source, when grafana receives numeric data from Prometheu
 
 <!-- ### InfluxDB: Support for browser access mode removed (should this stay??)
 
-In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../../datasources/influxdb/##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
+In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode](../../datasources/influxdb/##influxql-classic-influxdb-query) on the data source configuration page or you can do this via provisioning. -->
 
 ### Transformations: Allow more complex regex expressions in rename by regex
 
@@ -90,7 +90,7 @@ The recommendation here is to enable `envelopeEncryption` for older versions, or
 before upgrading to v9.0. However, the latter is probably going to be removed in one of the next releases, so we hugely
 encourage to move on with envelope encryption.
 
-Find [here]({{< relref "../../setup-grafana/configure-security/configure-database-encryption" >}}) more details and some
+Find [here](../../setup-grafana/configure-security/configure-database-encryption/) more details and some
 possible workarounds in case you end up in an undesired situation.
 
 ### A note on Grafana Enterprise licensing

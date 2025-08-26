@@ -1,57 +1,55 @@
-import { t } from 'i18next';
 import { useState } from 'react';
 
+import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, Modal } from '@grafana/ui';
-import { isQueryLibraryEnabled, useAllQueryTemplatesQuery } from 'app/features/query-library';
+import { Button } from '@grafana/ui';
+import { useDispatch, useSelector } from 'app/types/store';
 
-import {
-  queryLibraryTrackAddFromQueryHistory,
-  queryLibraryTrackAddFromQueryHistoryAddModalShown,
-} from '../QueryLibrary/QueryLibraryAnalyticsEvents';
-import { QueryTemplateForm } from '../QueryLibrary/QueryTemplateForm';
+import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
+import { changeQueries } from '../state/query';
+import { selectExploreDSMaps } from '../state/selectors';
 
 type Props = {
   query: DataQuery;
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
-  const { refetch } = useAllQueryTemplatesQuery();
-  const [isOpen, setIsOpen] = useState(false);
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
+  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
+  const dispatch = useDispatch();
+  const exploreActiveDS = useSelector(selectExploreDSMaps);
+  const exploreId = exploreActiveDS.exploreToDS[0]?.exploreId;
 
-  const buttonLabel = t('explore.rich-history-card.add-to-library', 'Add to library');
+  const onSelectQuery = (newQuery: DataQuery) => {
+    reportInteraction('grafana_explore_query_replaced_from_library');
+    if (exploreId) {
+      dispatch(changeQueries({ exploreId, queries: [newQuery] }));
+    }
+  };
 
-  return isQueryLibraryEnabled() && !hasBeenSaved ? (
+  const buttonLabel = t('explore.rich-history-card.add-to-library', 'Save query');
+
+  return queryLibraryEnabled && !hasBeenSaved ? (
     <>
       <Button
         variant="secondary"
         aria-label={buttonLabel}
         onClick={() => {
-          setIsOpen(true);
-          queryLibraryTrackAddFromQueryHistoryAddModalShown();
+          openDrawer({
+            query,
+            onSelectQuery,
+            options: {
+              onSave: () => {
+                setHasBeenSaved(true);
+              },
+              context: 'rich-history',
+            },
+          });
         }}
       >
         {buttonLabel}
       </Button>
-      <Modal
-        title={t('explore.query-template-modal.add-title', 'Add query to Query Library')}
-        isOpen={isOpen}
-        onDismiss={() => setIsOpen(false)}
-      >
-        <QueryTemplateForm
-          onCancel={() => setIsOpen(() => false)}
-          queryToAdd={query}
-          onSave={(isSuccess) => {
-            if (isSuccess) {
-              setIsOpen(false);
-              setHasBeenSaved(true);
-              refetch();
-              queryLibraryTrackAddFromQueryHistory(query.datasource?.type || '');
-            }
-          }}
-        />
-      </Modal>
     </>
   ) : undefined;
 };

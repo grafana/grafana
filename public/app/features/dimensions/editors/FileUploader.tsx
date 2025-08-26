@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { Dispatch, SetStateAction, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
@@ -24,7 +25,7 @@ export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here
     <div className={styles.iconWrapper}>
       <small className={styles.small}>{secondaryText}</small>
       <Button type="button" icon="upload">
-        Upload
+        <Trans i18nKey="dimensions.file-dropzone-custom-children.upload">Upload</Trans>
       </Button>
     </div>
   );
@@ -35,7 +36,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
   const [file, setFile] = useState<string>('');
 
   const Preview = () => (
-    <Field label="Preview">
+    <Field label={t('dimensions.file-uploader.preview.label-preview', 'Preview')}>
       <div className={styles.iconPreview}>
         {mediaType === MediaType.Icon && <SanitizedSVG src={file} className={styles.img} />}
         {mediaType === MediaType.Image && <img src={file} alt="Preview of the uploaded file" className={styles.img} />}

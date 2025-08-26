@@ -1,10 +1,10 @@
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
-import { HorizontalGroup, Switch } from '@grafana/ui';
+import { EditorField, EditorRow } from '@grafana/plugin-ui';
+import { Stack, Switch } from '@grafana/ui';
 
 import { GRAPH_PERIODS } from '../constants';
 
-import { PeriodSelect } from './index';
+import { PeriodSelect } from './PeriodSelect';
 
 export interface Props {
   refId: string;
@@ -26,7 +26,7 @@ export const GraphPeriod = ({ refId, onChange, graphPeriod, variableOptionGroup 
           </>
         }
       >
-        <HorizontalGroup>
+        <Stack gap={1}>
           <Switch
             data-testid={`${refId}-switch-graph-period`}
             value={graphPeriod !== 'disabled'}
@@ -40,7 +40,7 @@ export const GraphPeriod = ({ refId, onChange, graphPeriod, variableOptionGroup 
             disabled={graphPeriod === 'disabled'}
             aligmentPeriods={GRAPH_PERIODS}
           />
-        </HorizontalGroup>
+        </Stack>
       </EditorField>
     </EditorRow>
   );

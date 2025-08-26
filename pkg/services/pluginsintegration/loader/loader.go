@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginsLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
@@ -19,11 +20,13 @@ type Loader struct {
 	loader *pluginsLoader.Loader
 }
 
-func ProvideService(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
+func ProvideService(
+	cfg *config.PluginManagementCfg,
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
 	initializer initialization.Initializer, termination termination.Terminator, errorTracker pluginerrs.ErrorTracker,
 ) *Loader {
 	return &Loader{
-		loader: pluginsLoader.New(discovery, bootstrap, validation, initializer, termination, errorTracker),
+		loader: pluginsLoader.New(cfg, discovery, bootstrap, validation, initializer, termination, errorTracker),
 	}
 }
 

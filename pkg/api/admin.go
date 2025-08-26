@@ -69,7 +69,7 @@ func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get anon stats from database", err)
 	}
-	adminStats.AnonymousStats.ActiveDevices = devicesCount
+	adminStats.ActiveDevices = devicesCount
 
 	return response.JSON(http.StatusOK, adminStats)
 }

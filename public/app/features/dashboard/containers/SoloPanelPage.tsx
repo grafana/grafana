@@ -5,10 +5,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { StoreState } from 'app/types';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { StoreState } from 'app/types/store';
 
 import { useGrafana } from '../../../core/context/GrafanaContext';
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
@@ -96,12 +98,22 @@ export interface SoloPanelProps extends State {
 
 export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: SoloPanelProps) => {
   const styles = useStyles2(getStyles);
+
   if (notFound) {
-    return <Alert severity="error" title={`Panel with id ${panelId} not found`} />;
+    return (
+      <Alert
+        severity="error"
+        title={t('dashboard.solo-panel.title-not-found', 'Panel with id {{panelId}} not found', { panelId })}
+      />
+    );
   }
 
   if (!panel || !dashboard) {
-    return <div>Loading & initializing dashboard</div>;
+    return (
+      <div>
+        <Trans i18nKey="dashboard.solo-panel.loading-initializing-dashboard">Loading & initializing dashboard</Trans>
+      </div>
+    );
   }
 
   return (

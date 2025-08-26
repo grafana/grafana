@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { forwardRef, HTMLProps, ReactNode, useContext } from 'react';
-import useMeasure from 'react-use/lib/useMeasure';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -60,16 +61,23 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   // if a better solution is found.
   const isInAutoSizeInput = useContext(AutoSizeInputContext);
   const accessoriesWidth = (prefixRect.width || 0) + (suffixRect.width || 0);
-  const finalWidth = isInAutoSizeInput && width ? width + accessoriesWidth / 8 : width;
+  const autoSizeWidth = isInAutoSizeInput && width ? width + accessoriesWidth / 8 : undefined;
 
   const theme = useTheme2();
 
-  const styles = getInputStyles({ theme, invalid: !!invalid, width: finalWidth });
+  // Don't pass the width prop, as this causes an unnecessary amount of Emotion calls when auto sizing
+  const styles = getInputStyles({ theme, invalid: !!invalid, width: autoSizeWidth ? undefined : width });
 
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
   return (
-    <div className={cx(styles.wrapper, className)} data-testid="input-wrapper">
+    <div
+      className={cx(styles.wrapper, className)}
+      // If the component is in an AutoSizeInput, set the width here to prevent emotion doing stuff
+      // on every keypress
+      style={autoSizeWidth ? { width: theme.spacing(autoSizeWidth) } : undefined}
+      data-testid="input-wrapper"
+    >
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
       <div className={styles.inputWrapper}>
         {prefix && (
@@ -160,8 +168,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:not(:first-child):last-child': {
         '> input': {
           borderLeft: 'none',
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
 
@@ -169,8 +177,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:first-child:not(:last-child)': {
         '> input': {
           borderRight: 'none',
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
         },
       },
 
@@ -178,10 +186,10 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:not(:first-child):not(:last-child)': {
         '> input': {
           borderRight: 'none',
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
 
@@ -230,20 +238,20 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       position: 'relative',
 
       '&:first-child': {
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0,
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
         '> :last-child': {
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
         },
       },
 
       '&:last-child': {
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
         '> :first-child': {
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
       '> *:focus': {
@@ -258,8 +266,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(0.5),
         borderRight: 'none',
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0,
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
       })
     ),
     suffix: cx(
@@ -268,10 +276,9 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         label: 'input-suffix',
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),
-        marginBottom: '-2px',
         borderLeft: 'none',
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
         right: 0,
       })
     ),

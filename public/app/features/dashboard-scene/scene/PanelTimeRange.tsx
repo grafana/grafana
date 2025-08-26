@@ -7,6 +7,7 @@ import {
   SceneTimeRangeLike,
   SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
@@ -33,16 +34,32 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     this.addActivationHandler(() => this._onActivate());
   }
 
+  protected _variableDependency: VariableDependencyConfig<PanelTimeRangeState> = new VariableDependencyConfig(this, {
+    statePaths: ['timeFrom', 'timeShift'],
+  });
+
   private _onActivate() {
     this._subs.add(
-      this.subscribeToState((n, p) => {
-        // Listen to own changes and update time info when required
-        if (n.timeFrom !== p.timeFrom || n.timeShift !== p.timeShift) {
-          const { timeInfo, timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+      this.subscribeToState((n) => {
+        const { timeInfo, timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+
+        // When timeFrom or timeShift is a variable we cannot compare to previous interpolated value
+        //   therefore we need to compare timeInfo directly and update when required
+        // Note: compare to newState.timeInfo because it is always one behind
+        if (n.timeInfo !== timeInfo) {
           this.setState({ timeInfo, value: timeRange });
         }
       })
     );
+
+    const { timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+
+    // set initial values on activate
+    this.setState({
+      value: timeRange,
+      from: timeRange.raw.from.toString(),
+      to: timeRange.raw.to.toString(),
+    });
   }
   protected ancestorTimeRangeChanged(timeRange: SceneTimeRangeState): void {
     const overrideResult = this.getTimeOverride(timeRange.value);
@@ -64,10 +81,11 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
       // Only evaluate if the timeFrom if parent time is relative
       if (rangeUtil.isRelativeTimeRange(parentTimeRange.raw)) {
+        const timeZone = this.getTimeZone();
         newTimeData.timeInfo = timeFromInfo.display;
         newTimeData.timeRange = {
-          from: dateMath.parse(timeFromInfo.from)!,
-          to: dateMath.parse(timeFromInfo.to)!,
+          from: dateMath.parse(timeFromInfo.from, undefined, timeZone)!,
+          to: dateMath.parse(timeFromInfo.to, undefined, timeZone)!,
           raw: { from: timeFromInfo.from, to: timeFromInfo.to },
         };
       }
@@ -86,6 +104,11 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       newTimeData.timeInfo += ' timeshift ' + timeShift;
       const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false)!;
       const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true)!;
+
+      if (!from || !to) {
+        newTimeData.timeInfo = 'invalid timeshift';
+        return newTimeData;
+      }
 
       newTimeData.timeRange = { from, to, raw: { from, to } };
     }

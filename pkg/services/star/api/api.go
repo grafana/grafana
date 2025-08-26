@@ -52,13 +52,8 @@ func (api *API) getDashboardHelper(ctx context.Context, orgID int64, id int64, u
 }
 
 func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Only users and service accounts get starred dashboards", nil)
-	}
-
 	query := star.GetUserStarsQuery{
-		UserID: userID,
+		UserID: c.UserID,
 	}
 
 	iuserstars, err := api.starService.GetByUser(c.Req.Context(), &query)
@@ -67,20 +62,8 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 	}
 
 	uids := []string{}
-	if len(iuserstars.UserStars) > 0 {
-		var uids []string
-		for uid := range iuserstars.UserStars {
-			uids = append(uids, uid)
-		}
-		starredDashboards, err := api.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
-		if err != nil {
-			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch dashboards", err)
-		}
-
-		uids = make([]string, len(starredDashboards))
-		for i, dash := range starredDashboards {
-			uids[i] = dash.UID
-		}
+	for uid := range iuserstars.UserStars {
+		uids = append(uids, uid)
 	}
 
 	return response.JSON(http.StatusOK, uids)
@@ -101,7 +84,7 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (api *API) StarDashboard(c *contextmodel.ReqContext) response.Response {
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
@@ -144,17 +127,17 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
-	dash, rsp := api.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
+	dash, rsp := api.getDashboardHelper(c.Req.Context(), c.GetOrgID(), 0, uid)
 	if rsp != nil {
 		return rsp
 	}
 
-	cmd := star.StarDashboardCommand{UserID: userID, DashboardID: dash.ID, DashboardUID: uid, OrgID: c.SignedInUser.GetOrgID(), Updated: time.Now()}
+	cmd := star.StarDashboardCommand{UserID: userID, DashboardID: dash.ID, DashboardUID: uid, OrgID: c.GetOrgID(), Updated: time.Now()}
 
 	if err := api.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
@@ -185,7 +168,7 @@ func (api *API) UnstarDashboard(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
@@ -223,12 +206,12 @@ func (api *API) UnstarDashboardByUID(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
-	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardUID: uid, OrgID: c.SignedInUser.GetOrgID()}
+	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardUID: uid, OrgID: c.GetOrgID()}
 
 	if err := api.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)

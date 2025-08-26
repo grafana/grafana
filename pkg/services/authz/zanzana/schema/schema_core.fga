@@ -1,32 +1,37 @@
 module core
 
-type namespace
-  relations
-    define view: [user, team#member, role#assignee] or edit
-    define edit: [user, team#member, role#assignee] or admin
-    define admin: [user, team#member, role#assignee]
-
-    define read: [user, team#member, role#assignee] or view
-    define create: [user, team#member, role#assignee] or edit
-    define write: [user, team#member, role#assignee] or edit
-    define delete: [user, team#member, role#assignee] or edit
-    define permissions_read: [user, team#member, role#assignee] or admin
-    define permissions_write: [user, team#member, role#assignee] or admin
-
 type user
+  relations
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
+
+type service-account
+  relations
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
+
+type render
+
+type anonymous
 
 type role
   relations
-    define assignee: [user, team#member, role#assignee]
+    define assignee: [user, service-account, anonymous, team#member, role#assignee]
+
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
 
 type team
   relations
-    # Action sets
-    define admin: [user]
-    define member: [user] or admin
+    define admin: [user, service-account]
+    define member: [user, service-account] or admin
 
-    define read: [role#assignee] or member
-    define write: [role#assignee] or admin
-    define delete: [role#assignee] or admin
-    define permissions_read: [role#assignee] or admin
-    define permissions_write: [role#assignee] or admin
+    define get: [user, service-account, team#member, role#assignee] or member
+    define update: [user, service-account, team#member, role#assignee] or admin
+    define delete: [user, service-account, team#member, role#assignee] or admin
+
+    define get_permissions: [user, service-account, team#member, role#assignee] or admin
+    define set_permissions: [user, service-account, team#member, role#assignee] or admin

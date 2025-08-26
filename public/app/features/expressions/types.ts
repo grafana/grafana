@@ -66,11 +66,11 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
     value: ExpressionQueryType.sql,
     label: 'SQL',
-    description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+    description: 'Transform data using SQL. Supports MySQL syntax.',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
-    return config.featureToggles?.sqlExpressions;
+    return config?.featureToggles?.sqlExpressions;
   }
   return true;
 });
@@ -126,8 +126,14 @@ export const upsamplingTypes: Array<SelectableValue<string>> = [
 export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
   { value: EvalFunction.IsAbove, label: 'Is above' },
   { value: EvalFunction.IsBelow, label: 'Is below' },
+  { value: EvalFunction.IsEqual, label: 'Is equal to' },
+  { value: EvalFunction.IsNotEqual, label: 'Is not equal to' },
+  { value: EvalFunction.IsGreaterThanEqual, label: 'Is above or equal to' },
+  { value: EvalFunction.IsLessThanEqual, label: 'Is below or equal to' },
   { value: EvalFunction.IsWithinRange, label: 'Is within range' },
   { value: EvalFunction.IsOutsideRange, label: 'Is outside range' },
+  { value: EvalFunction.IsWithinRangeIncluded, label: 'Is within range included' },
+  { value: EvalFunction.IsOutsideRangeIncluded, label: 'Is outside range included' },
 ];
 
 /**
@@ -143,6 +149,11 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
+}
+
+export interface SqlExpressionQuery extends ExpressionQuery {
+  /** Format `alerting` is expected when using SQL expressions in alert rules */
+  format?: 'alerting';
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {

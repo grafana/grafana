@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import TeamPages from './TeamPages';
-import { getMockTeam } from './__mocks__/teamMocks';
+import { getMockTeam } from './mocks/teamMocks';
 
 jest.mock('app/core/components/Select/UserPicker', () => {
   return { UserPicker: () => null };
@@ -30,7 +30,6 @@ jest.mock('@grafana/runtime', () => ({
       licenseUrl: '',
     },
     featureToggles: { accesscontrol: true },
-    bootData: { navTree: [], user: {} },
     buildInfo: {
       edition: 'Open Source',
       version: '7.5.0',

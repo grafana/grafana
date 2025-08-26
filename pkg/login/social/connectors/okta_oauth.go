@@ -54,9 +54,7 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *Or
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
 
 	return provider
 }
@@ -84,7 +82,7 @@ func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSett
 }
 
 func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.OktaProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}

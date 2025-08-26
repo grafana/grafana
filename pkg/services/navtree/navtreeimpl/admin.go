@@ -1,14 +1,15 @@
 package navtreeimpl
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
+	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,21 +53,22 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Icon:     "toggle-on",
 		})
 	}
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagStorage) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Storage",
-			Id:       "storage",
-			SubTitle: "Manage file storage",
-			Icon:     "cube",
-			Url:      s.cfg.AppSubURL + "/admin/storage",
-		})
-	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.HasRole(org.RoleAdmin) {
+	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
-			SubTitle: "Copy configuration from your self-managed installation to a cloud stack",
+			SubTitle: "Copy resources from your self-managed installation to a cloud stack",
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
+		})
+	}
+	if c.HasRole(identity.RoleAdmin) &&
+		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
+			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
+		configNodes = append(configNodes, &navtree.NavLink{
+			Text:     "Provisioning",
+			Id:       "provisioning",
+			SubTitle: "View and manage your provisioning connections",
+			Url:      s.cfg.AppSubURL + "/admin/provisioning",
 		})
 	}
 
@@ -152,19 +154,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
-	disabled, err := s.apiKeyService.IsDisabled(ctx, c.SignedInUser.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-	if hasAccess(ac.ApiKeyAccessEvaluator) && !disabled {
-		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
-			Text:     "API keys",
-			Id:       "apikeys",
-			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-			Icon:     "key-skeleton-alt",
-			Url:      s.cfg.AppSubURL + "/org/apikeys",
-		})
-	}
 
 	if s.license.FeatureEnabled("groupsync") &&
 		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
@@ -194,7 +183,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNodes = append(configNodes, usersNode)
 
 	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
-		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {
+		hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:      "Authentication",
 			Id:        "authentication",
@@ -208,7 +197,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Administration",
-		SubTitle:   "Organization: " + c.SignedInUser.GetOrgName(),
+		SubTitle:   "Organization: " + c.GetOrgName(),
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,

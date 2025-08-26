@@ -1,11 +1,12 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -35,7 +36,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
   const dashboardPageNav = dashboard.getPageNav(location, navIndex);
 
   const pageNav: NavModelItem = {
-    text: 'Settings',
+    text: t('dashboard-scene.use-dashboard-edit-page-nav.page-nav.text.settings', 'Settings'),
     url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
     children: [],
     parentItem: dashboardPageNav,
@@ -64,7 +65,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.id && dashboard.state.meta.canSave) {
+  if (dashboard.state.uid && dashboard.state.meta.canSave) {
     pageNav.children!.push({
       text: t('dashboard-settings.versions.title', 'Versions'),
       url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),
@@ -72,7 +73,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.id && dashboard.state.meta.canAdmin) {
+  if (dashboard.state.uid && dashboard.state.meta.canAdmin) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pageNav.children!.push({
         text: t('dashboard-settings.permissions.title', 'Permissions'),

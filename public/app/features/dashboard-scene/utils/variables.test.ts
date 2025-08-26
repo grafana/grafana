@@ -19,7 +19,7 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, VariableType } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
@@ -411,6 +411,12 @@ describe('when creating variables objects', () => {
           operator: '=',
           value: 'test',
         },
+        {
+          key: 'originFilter',
+          operator: '=',
+          value: 'val',
+          origin: 'dashboard',
+        },
       ],
       baseFilters: [
         {
@@ -434,9 +440,17 @@ describe('when creating variables objects', () => {
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
+      originFilters: [
+        {
+          key: 'originFilter',
+          operator: '=',
+          value: 'val',
+          origin: 'dashboard',
+        },
+      ],
       skipUrlSync: false,
       type: 'adhoc',
-      filterExpression: 'filterTest="test"',
+      filterExpression: 'originFilter="val",filterTest="test"',
       filters: [{ key: 'filterTest', operator: '=', value: 'test' }],
       baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
       datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
@@ -501,10 +515,10 @@ describe('when creating variables objects', () => {
     expect(filterVarState).toEqual({
       key: expect.any(String),
       description: 'Adhoc Description',
-      allowCustomValue: true,
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
+      originFilters: [],
       skipUrlSync: false,
       type: 'adhoc',
       filterExpression: 'filterTest="test"',
@@ -674,7 +688,6 @@ describe('when creating variables objects', () => {
     expect(migrated).toBeInstanceOf(DataSourceVariable);
     expect(rest).toEqual({
       allValue: 'Custom all',
-      allowCustomValue: true,
       defaultToAll: true,
       includeAll: true,
       label: undefined,
@@ -717,7 +730,6 @@ describe('when creating variables objects', () => {
     expect(migrated).toBeInstanceOf(DataSourceVariable);
     expect(rest).toEqual({
       allValue: 'Custom all',
-      allowCustomValue: true,
       defaultToAll: true,
       includeAll: true,
       label: undefined,

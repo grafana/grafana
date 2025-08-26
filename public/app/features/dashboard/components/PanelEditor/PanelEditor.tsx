@@ -6,10 +6,10 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
-  HorizontalGroup,
   InlineSwitch,
   ModalsController,
   RadioButtonGroup,
@@ -29,15 +29,16 @@ import { SaveLibraryPanelModal } from 'app/features/library-panels/components/Sa
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { StoreState } from 'app/types';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import { notifyApp } from '../../../../core/actions';
 import { UnlinkModal } from '../../../dashboard-scene/scene/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { SaveDashboardDrawer } from '../SaveDashboard/SaveDashboardDrawer';
 
@@ -300,11 +301,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.panelToolbar}>
-        <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
+        <Stack justifyContent={variables.length > 0 ? 'space-between' : 'flex-end'} alignItems="flex-start">
           {this.renderTemplateVariables(styles)}
           <Stack gap={1}>
             <InlineSwitch
-              label="Table view"
+              label={t('dashboard.panel-editor-unconnected.table-view-label-table-view', 'Table view')}
               showLabel={true}
               id="table-view"
               value={tableViewEnabled}
@@ -315,7 +316,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
           </Stack>
-        </HorizontalGroup>
+        </Stack>
       </div>
     );
   }
@@ -325,13 +326,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     let editorActions = [
       <Button
         onClick={this.onDiscard}
-        title="Undo all changes"
+        title={t('dashboard.panel-editor-unconnected.editor-actions.title-undo-all-changes', 'Undo all changes')}
         key="discard"
         size={size}
         variant="destructive"
         fill="outline"
       >
-        Discard
+        <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.discard">Discard</Trans>
       </Button>,
       this.props.dashboard.meta.canSave &&
         (this.props.panel.libraryPanel ? (
@@ -339,31 +340,42 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             onClick={this.onSaveLibraryPanel}
             variant="primary"
             size={size}
-            title="Apply changes and save library panel"
+            title={t(
+              'dashboard.panel-editor-unconnected.editor-actions.title-apply-changes-and-save-library-panel',
+              'Apply changes and save library panel'
+            )}
             key="save-panel"
           >
-            Save library panel
+            <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.save-library-panel">
+              Save library panel
+            </Trans>
           </Button>
         ) : (
           <Button
             onClick={this.onSaveDashboard}
-            title="Apply changes and save dashboard"
+            title={t(
+              'dashboard.panel-editor-unconnected.editor-actions.title-apply-changes-and-save-dashboard',
+              'Apply changes and save dashboard'
+            )}
             key="save"
             size={size}
             variant="secondary"
           >
-            Save
+            <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.save">Save</Trans>
           </Button>
         )),
       <Button
         onClick={this.onBack}
         variant="primary"
-        title="Apply changes and go back to dashboard"
+        title={t(
+          'dashboard.panel-editor-unconnected.editor-actions.title-apply-changes-dashboard',
+          'Apply changes and go back to dashboard'
+        )}
         data-testid={selectors.components.PanelEditor.applyButton}
         key="apply"
         size={size}
       >
-        Apply
+        <Trans i18nKey="dashboard.panel-editor-unconnected.editor-actions.apply">Apply</Trans>
       </Button>,
     ];
 
@@ -385,10 +397,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                     isOpen: true,
                   });
                 }}
-                title="Disconnects this panel from the library panel so that you can edit it regularly."
+                title={t(
+                  'dashboard.panel-editor-unconnected.title-unlink',
+                  'Disconnects this panel from the library panel so that you can edit it regularly.'
+                )}
                 key="unlink"
               >
-                Unlink
+                <Trans i18nKey="dashboard.panel-editor-unconnected.unlink">Unlink</Trans>
               </ToolbarButton>
             );
           }}

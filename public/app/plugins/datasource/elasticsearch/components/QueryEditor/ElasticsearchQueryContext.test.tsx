@@ -1,15 +1,14 @@
-import { render } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { render, renderHook } from '@testing-library/react';
 import { PropsWithChildren } from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { ElasticDatasource } from '../../datasource';
-import { ElasticsearchQuery } from '../../types';
 
 import { ElasticsearchProvider, useQuery } from './ElasticsearchQueryContext';
 
-const query: ElasticsearchQuery = {
+const query: ElasticsearchDataQuery = {
   refId: 'A',
   query: '',
   metrics: [{ id: '1', type: 'count' }],
@@ -32,7 +31,7 @@ describe('ElasticsearchQueryContext', () => {
       />
     );
 
-    const changedQuery: ElasticsearchQuery = onChange.mock.calls[0][0];
+    const changedQuery: ElasticsearchDataQuery = onChange.mock.calls[0][0];
     expect(changedQuery.query).toBeDefined();
     expect(changedQuery.alias).toBeDefined();
     expect(changedQuery.metrics).toBeDefined();
@@ -47,9 +46,11 @@ describe('ElasticsearchQueryContext', () => {
   // the following applies to all hooks in ElasticsearchQueryContext as they all share the same code.
   describe('useQuery Hook', () => {
     it('Should throw when used outside of ElasticsearchQueryContext', () => {
-      const { result } = renderHook(() => useQuery());
-
-      expect(result.error).toBeTruthy();
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      expect(() => {
+        renderHook(() => useQuery());
+      }).toThrow();
+      expect(console.error).toHaveBeenCalled();
     });
 
     it('Should return the current query object', () => {

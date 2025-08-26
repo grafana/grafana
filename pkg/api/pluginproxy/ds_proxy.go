@@ -57,7 +57,8 @@ type httpClient interface {
 func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*DataSourceProxy, error) {
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
 		return nil, err
@@ -147,8 +148,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetAttributes(
 		attribute.String("datasource_name", proxy.ds.Name),
 		attribute.String("datasource_type", proxy.ds.Type),
-		attribute.String("user", proxy.ctx.SignedInUser.Login),
-		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
+		attribute.String("user", proxy.ctx.Login),
+		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
@@ -261,7 +262,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
-		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser); token != nil {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, proxy.ctx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
 			idToken, ok := token.Extra("id_token").(string)
@@ -299,20 +300,20 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 
 		// route match
-		if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+		r1, err := util.CleanRelativePath(proxy.proxyPath)
+		if err != nil {
+			return err
+		}
+		r2, err := util.CleanRelativePath(route.Path)
+		if err != nil {
+			return err
+		}
+		if !strings.HasPrefix(r1, r2) {
 			continue
 		}
 
-		if proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagDatasourceProxyDisableRBAC) {
-			// TODO(aarongodin): following logic can be removed with FlagDatasourceProxyDisableRBAC as it is covered by
-			// proxy.hasAccessToRoute(..)
-			if route.ReqRole.IsValid() && !proxy.ctx.HasUserRole(route.ReqRole) {
-				return errors.New("plugin proxy route access denied")
-			}
-		} else {
-			if !proxy.hasAccessToRoute(route) {
-				return errors.New("plugin proxy route access denied")
-			}
+		if !proxy.hasAccessToRoute(route) {
+			return errors.New("plugin proxy route access denied")
 		}
 
 		proxy.matchedRoute = route
@@ -320,7 +321,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == datasources.DS_PROMETHEUS {
+	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}
@@ -337,8 +338,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
-	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
-	if useRBAC {
+	if route.ReqAction != "" {
 		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.UID, route.ReqAction)
 		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
 		if !hasAccess {

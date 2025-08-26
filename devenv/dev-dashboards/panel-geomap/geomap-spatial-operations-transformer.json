@@ -29,8 +29,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "grafana-testdata-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -91,8 +90,7 @@
         {
           "csvFileName": "flight_info_by_state.csv",
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "grafana-testdata-datasource"
           },
           "refId": "A",
           "scenarioId": "csv_file"
@@ -103,11 +101,7 @@
     }
   ],
   "schemaVersion": 37,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "geomap"
-  ],
+  "tags": ["gdev", "panel-tests", "geomap"],
   "templating": {
     "list": []
   },

@@ -5,9 +5,12 @@ import { config } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScenePage';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types/dashboard';
+
+import { isDashboardV2Resource } from '../api/utils';
 
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
+import { DashboardPageError } from './DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
 export type DashboardPageProxyProps = Omit<
@@ -22,12 +25,12 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const forceOld = props.queryParams.scenes === false;
   const params = useParams<DashboardPageParams>();
   const location = useLocation();
+  const stateManager = getDashboardScenePageStateManager();
 
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
   }
 
-  const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
     props.route.routeName === DashboardRoutes.Home || (props.route.routeName === DashboardRoutes.Normal && params.uid)
   );
@@ -40,14 +43,33 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       return null;
     }
 
-    return stateManager.fetchDashboard({ route: props.route.routeName as DashboardRoutes, uid: params.uid ?? '' });
+    return stateManager.fetchDashboard({
+      route: props.route.routeName as DashboardRoutes,
+      uid: params.uid ?? '',
+      type: params.type,
+      slug: params.slug,
+    });
   }, [params.uid, props.route.routeName]);
+
+  if (dashboard.error) {
+    return <DashboardPageError error={dashboard.error} />;
+  }
 
   if (dashboard.loading) {
     return null;
   }
 
-  if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
+  const uid =
+    dashboard.value && isDashboardV2Resource(dashboard.value)
+      ? dashboard.value.metadata.name
+      : dashboard.value?.meta.uid;
+  const canEdit =
+    dashboard.value && isDashboardV2Resource(dashboard.value)
+      ? dashboard.value?.access.canEdit
+      : dashboard.value?.meta?.canEdit || dashboard.value?.meta?.canMakeEditable;
+  const isNew = !uid;
+
+  if (uid !== params.uid && !isNew) {
     return null;
   }
 
@@ -55,11 +77,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
-  if (
-    dashboard.value &&
-    !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
-    isScenesSupportedRoute
-  ) {
+  if (!canEdit && isScenesSupportedRoute && !forceOld) {
     return <DashboardScenePage {...props} />;
   } else {
     return <DashboardPage {...props} params={params} location={location} />;

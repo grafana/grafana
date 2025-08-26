@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface LoadingBarProps {
   width: number;
@@ -27,7 +27,7 @@ export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel =
 
   return (
     <div style={containerStyles}>
-      <div aria-label={ariaLabel} className={styles.bar} />
+      <div aria-label={ariaLabel} role="status" className={styles.bar} />
     </div>
   );
 }
@@ -47,7 +47,7 @@ const getStyles = (theme: GrafanaTheme2, delay: number, duration: number) => {
     bar: css({
       width: BAR_WIDTH + '%',
       height: 1,
-      background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
+      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.primary.main} 80.75%, transparent 100%)`,
       transform: 'translateX(-100%)',
       willChange: 'transform',
       [theme.transitions.handleMotion('no-preference')]: {

@@ -8,8 +8,6 @@ import {
   DataQueryResponse,
   DataTopic,
   dateTime,
-  durationToMilliseconds,
-  parseDuration,
   rangeUtil,
   TimeRange,
   LoadingState,
@@ -48,6 +46,17 @@ export function partitionTimeRange(
   });
 }
 
+interface QuerySplittingOptions {
+  /**
+   * Tells the query splitting code to not emit partial updates. Only emit on error or when it finishes querying.
+   */
+  skipPartialUpdates?: boolean;
+  /**
+   * Do not retry failed queries.
+   */
+  disableRetry?: boolean;
+}
+
 /**
  * Based in the state of the current response, if any, adjust target parameters such as `maxLines`.
  * For `maxLines`, we will update it as `maxLines - current amount of lines`.
@@ -76,7 +85,11 @@ export function adjustTargetsFromResponseState(targets: LokiQuery[], response: D
     })
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
-export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
+export function runSplitGroupedQueries(
+  datasource: LokiDatasource,
+  requests: LokiGroupedRequest[],
+  options: QuerySplittingOptions = {}
+) {
   const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
@@ -116,6 +129,9 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     };
 
     const retry = (errorResponse?: DataQueryResponse) => {
+      if (options.disableRetry) {
+        return false;
+      }
       try {
         if (errorResponse && !isRetriableError(errorResponse)) {
           return false;
@@ -170,13 +186,17 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
           shouldStop = true;
         }
         mergedResponse = combineResponses(mergedResponse, partialResponse);
-        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
+        if (!options.skipPartialUpdates) {
+          mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
+        }
       },
       complete: () => {
         if (retrying) {
           return;
         }
-        subscriber.next(mergedResponse);
+        if (!options.skipPartialUpdates) {
+          subscriber.next(mergedResponse);
+        }
         nextRequest();
       },
       error: (error) => {
@@ -268,8 +288,15 @@ function querySupportsSplitting(query: LokiQuery) {
   );
 }
 
-export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const queries = request.targets.filter((query) => !query.hide).filter((query) => query.expr);
+export function runSplitQuery(
+  datasource: LokiDatasource,
+  request: DataQueryRequest<LokiQuery>,
+  options: QuerySplittingOptions = {}
+) {
+  const queries = request.targets
+    .filter((query) => !query.hide)
+    .filter((query) => query.expr)
+    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
@@ -281,45 +308,35 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
   const requests: LokiGroupedRequest[] = [];
 
   for (const direction in directionPartitionedLogQueries) {
-    const rangePartitionedLogQueries = groupBy(directionPartitionedLogQueries[direction], (query) =>
-      query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
-    );
-    for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedLogQueries)) {
-      const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
-      for (const resolution in resolutionPartition) {
-        const groupedRequest = {
-          request: { ...request, targets: resolutionPartition[resolution] },
-          partition: partitionTimeRange(true, request.range, request.intervalMs, Number(chunkRangeMs)),
-        };
+    const queries = directionPartitionedLogQueries[direction];
+    const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
+    for (const resolution in resolutionPartition) {
+      const groupedRequest = {
+        request: { ...request, targets: resolutionPartition[resolution] },
+        partition: partitionTimeRange(true, request.range, request.intervalMs, oneDayMs),
+      };
 
-        if (direction === LokiQueryDirection.Forward) {
-          groupedRequest.partition.reverse();
-        }
-
-        requests.push(groupedRequest);
+      if (direction === LokiQueryDirection.Forward) {
+        groupedRequest.partition.reverse();
       }
+
+      requests.push(groupedRequest);
     }
   }
 
-  const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
-    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
+  const stepMsPartition = groupBy(metricQueries, (query) =>
+    calculateStep(request.intervalMs, request.range, query.resolution || 1, query.step)
   );
 
-  for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedMetricQueries)) {
-    const stepMsPartition = groupBy(queries, (query) =>
-      calculateStep(request.intervalMs, request.range, query.resolution || 1, query.step)
-    );
-
-    for (const stepMs in stepMsPartition) {
-      const targets = stepMsPartition[stepMs].map((q) => {
-        const { maxLines, ...query } = q;
-        return query;
-      });
-      requests.push({
-        request: { ...request, targets },
-        partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
-      });
-    }
+  for (const stepMs in stepMsPartition) {
+    const targets = stepMsPartition[stepMs].map((q) => {
+      const { maxLines, ...query } = q;
+      return query;
+    });
+    requests.push({
+      request: { ...request, targets },
+      partition: partitionTimeRange(false, request.range, Number(stepMs), oneDayMs),
+    });
   }
 
   if (nonSplittingQueries.length) {
@@ -330,12 +347,10 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
   }
 
   const startTime = new Date();
-  return runSplitGroupedQueries(datasource, requests).pipe(
+  return runSplitGroupedQueries(datasource, requests, options).pipe(
     tap((response) => {
       if (response.state === LoadingState.Done) {
-        trackGroupedQueries(response, requests, request, startTime, {
-          predefinedOperations: datasource.predefinedOperations,
-        });
+        trackGroupedQueries(response, requests, request, startTime);
       }
     })
   );

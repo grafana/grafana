@@ -1,8 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService } from '@grafana/runtime';
-import { logMeasurement } from '@grafana/runtime/src/utils/logging';
+import { locationService, logMeasurement } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   AlertmanagerGroup,
@@ -10,11 +9,10 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types/store';
 import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { backendSrv } from '../../../../core/services/backend_srv';
 import { withPromRulesMetadataLogging, withRulerRulesMetadataLogging } from '../Analytics';
 import {
   deleteAlertManagerConfig,
@@ -183,7 +181,7 @@ export function fetchAllPromRulesAction(
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaAnnotations',
-  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
+  (ruleUID: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(ruleUID))
 );
 
 interface UpdateAlertManagerConfigActionOptions {
@@ -240,19 +238,6 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       }
     )
 );
-
-export const fetchFolderAction = createAsyncThunk(
-  'unifiedalerting/fetchFolder',
-  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid, { withAccessControl: true }))
-);
-
-export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    if (!getState().unifiedAlerting.folders[uid]?.dispatched) {
-      dispatch(fetchFolderAction(uid));
-    }
-  };
-};
 
 export const fetchAlertGroupsAction = createAsyncThunk(
   'unifiedalerting/fetchAlertGroups',

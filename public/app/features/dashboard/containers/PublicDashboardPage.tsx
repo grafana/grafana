@@ -14,7 +14,8 @@ import {
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { useSelector, useDispatch } from 'app/types';
+import { DashboardInitError } from 'app/types/dashboard';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
@@ -24,7 +25,7 @@ import { useGetPublicDashboardConfig } from '../components/PublicDashboard/usePu
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
 import { initDashboard } from '../state/initDashboard';
 
 export type Props = Omit<
@@ -64,6 +65,7 @@ const PublicDashboardPage = (props: Props) => {
   const prevProps = usePrevious({ ...props, location });
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
+  const loadError = dashboardState.initError;
   const dashboard = dashboardState.getModel();
 
   useEffect(() => {
@@ -96,16 +98,12 @@ const PublicDashboardPage = (props: Props) => {
     }
   }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden, accessToken]);
 
+  if (loadError) {
+    return <PublicDashboardPageError error={loadError} />;
+  }
+
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;
-  }
-
-  if (dashboard.meta.publicDashboardEnabled === false) {
-    return <PublicDashboardNotAvailable paused />;
-  }
-
-  if (dashboard.meta.dashboardNotFound) {
-    return <PublicDashboardNotAvailable />;
   }
 
   return (
@@ -134,3 +132,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export default PublicDashboardPage;
+
+function PublicDashboardPageError({ error }: { error: DashboardInitError }) {
+  let statusCode: number | undefined;
+  let messageId: string | undefined;
+
+  if (typeof error.error === 'object' && error.error !== null && 'data' in error.error) {
+    const typedError = error.error as { data: { statusCode: number; messageId: string } };
+    statusCode = typedError.data.statusCode;
+    messageId = typedError.data.messageId;
+  }
+
+  const isPublicDashboardPaused = statusCode === 403 && messageId === 'publicdashboards.notEnabled';
+  const isPublicDashboardNotFound = statusCode === 404 && messageId === 'publicdashboards.notFound';
+  const isDashboardNotFound = statusCode === 404 && messageId === 'publicdashboards.dashboardNotFound';
+
+  const publicDashboardEnabled = isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused;
+  const dashboardNotFound = isPublicDashboardNotFound || isDashboardNotFound;
+
+  if (publicDashboardEnabled === false) {
+    return <PublicDashboardNotAvailable paused />;
+  }
+
+  if (dashboardNotFound) {
+    return <PublicDashboardNotAvailable />;
+  }
+
+  return <DashboardFailed initError={error} />;
+}

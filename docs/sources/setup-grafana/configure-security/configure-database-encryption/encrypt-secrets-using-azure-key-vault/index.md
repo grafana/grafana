@@ -17,7 +17,7 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
 **Prerequisites:**
 
 - An Azure account with permission to view and create Key Vault keys and programmatic credentials to access those keys
-- Access to the Grafana [configuration]({{< relref "../../../configure-grafana#configuration-file-location" >}}) file
+- Access to the Grafana [configuration](../../../configure-grafana/#configuration-file-location) file
 
 1. [Create a vault](https://docs.microsoft.com/en-us/azure/key-vault/general/quick-create-portal#create-a-vault).
 
@@ -35,7 +35,6 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.azurekv.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
    <br><br>b. Fill in the section with the following values:
    <br>
-
    - `tenant_id`: the **Directory ID** (tenant) from the application that you registered.
    - `client_id`: the **Application ID** (client) from the application that you registered.
    - `client_secret`: the VALUE of the secret that you generated in your app. (Don't use the Secret ID).

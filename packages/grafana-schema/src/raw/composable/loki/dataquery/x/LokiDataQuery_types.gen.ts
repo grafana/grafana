@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.4.0-pre";
+export const pluginVersion = "%VERSION%";
 
 export enum QueryEditorMode {
   Builder = 'builder',

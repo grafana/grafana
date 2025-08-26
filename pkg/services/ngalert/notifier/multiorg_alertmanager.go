@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
@@ -77,6 +78,17 @@ type Alertmanager interface {
 	Ready() bool
 }
 
+// ExternalState holds nflog entries and silences from an external Alertmanager.
+type ExternalState struct {
+	Silences []byte
+	Nflog    []byte
+}
+
+// StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
+type StateMerger interface {
+	MergeState(ExternalState) error
+}
+
 type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore
@@ -128,6 +140,7 @@ func NewMultiOrgAlertmanager(
 	l log.Logger,
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
+	notificationHistorian nfstatus.NotificationHistorian,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -148,19 +161,15 @@ func NewMultiOrgAlertmanager(
 		peer:                        &NilPeer{},
 	}
 
-	if cfg.UnifiedAlerting.SkipClustering {
-		l.Info("Skipping setting up clustering for MOA")
-	} else {
-		if err := moa.setupClustering(cfg); err != nil {
-			return nil, err
-		}
+	if err := moa.setupClustering(cfg); err != nil {
+		return nil, err
 	}
 
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
-		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto, notificationHistorian)
 	}
 
 	for _, opt := range opts {
@@ -179,15 +188,20 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
-			addr:       cfg.UnifiedAlerting.HARedisAddr,
-			name:       cfg.UnifiedAlerting.HARedisPeerName,
-			prefix:     cfg.UnifiedAlerting.HARedisPrefix,
-			password:   cfg.UnifiedAlerting.HARedisPassword,
-			username:   cfg.UnifiedAlerting.HARedisUsername,
-			db:         cfg.UnifiedAlerting.HARedisDB,
-			maxConns:   cfg.UnifiedAlerting.HARedisMaxConns,
-			tlsEnabled: cfg.UnifiedAlerting.HARedisTLSEnabled,
-			tls:        cfg.UnifiedAlerting.HARedisTLSConfig,
+			addr:             cfg.UnifiedAlerting.HARedisAddr,
+			name:             cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:           cfg.UnifiedAlerting.HARedisPrefix,
+			password:         cfg.UnifiedAlerting.HARedisPassword,
+			username:         cfg.UnifiedAlerting.HARedisUsername,
+			db:               cfg.UnifiedAlerting.HARedisDB,
+			maxConns:         cfg.UnifiedAlerting.HARedisMaxConns,
+			tlsEnabled:       cfg.UnifiedAlerting.HARedisTLSEnabled,
+			tls:              cfg.UnifiedAlerting.HARedisTLSConfig,
+			clusterMode:      cfg.UnifiedAlerting.HARedisClusterModeEnabled,
+			sentinelMode:     cfg.UnifiedAlerting.HARedisSentinelModeEnabled,
+			masterName:       cfg.UnifiedAlerting.HARedisSentinelMasterName,
+			sentinelUsername: cfg.UnifiedAlerting.HARedisSentinelUsername,
+			sentinelPassword: cfg.UnifiedAlerting.HARedisSentinelPassword,
 		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 		if err != nil {
 			return fmt.Errorf("unable to initialize redis: %w", err)
@@ -254,7 +268,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
 	moa.logger.Debug("Synchronizing Alertmanagers for orgs")
 	// First, load all the organizations from the database.
-	orgIDs, err := moa.orgStore.GetOrgs(ctx)
+	orgIDs, err := moa.orgStore.FetchOrgIds(ctx)
 	if err != nil {
 		return err
 	}

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, ModalProps } from '@grafana/ui';
 
 import { stringifyErrorLike } from '../../../utils/misc';
@@ -53,17 +54,30 @@ export const useDeleteContactPointModal = (
         onDismiss={handleDismiss}
         closeOnBackdropClick={!isLoading}
         closeOnEscape={!isLoading}
-        title="Delete contact point"
+        title={t(
+          'alerting.use-delete-contact-point-modal.modal-element.title-delete-contact-point',
+          'Delete contact point'
+        )}
       >
-        <p>Deleting this contact point will permanently remove it.</p>
-        <p>Are you sure you want to delete this contact point?</p>
+        <p>
+          <Trans i18nKey="alerting.use-delete-contact-point-modal.modal-element.deleting-contact-point-permanently-remove">
+            Deleting this contact point will permanently remove it.
+          </Trans>
+        </p>
+        <p>
+          <Trans i18nKey="alerting.use-delete-contact-point-modal.modal-element.delete-contact-point">
+            Are you sure you want to delete this contact point?
+          </Trans>
+        </p>
 
         <Modal.ButtonRow>
           <Button type="button" variant="destructive" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? 'Deleting...' : 'Yes, delete contact point'}
+            {isLoading
+              ? t('alerting.use-delete-contact-point-modal.deleting', 'Deleting...')
+              : t('alerting.use-delete-contact-point-modal.delete-confirm', 'Yes, delete contact point')}
           </Button>
           <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isLoading}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </Button>
         </Modal.ButtonRow>
       </Modal>
@@ -76,17 +90,23 @@ export const useDeleteContactPointModal = (
 interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
   error: unknown;
 }
-const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
-  <Modal
-    isOpen={isOpen}
-    onDismiss={onDismiss}
-    closeOnBackdropClick={true}
-    closeOnEscape={true}
-    title={'Something went wrong'}
-  >
-    <p>Failed to update your configuration:</p>
-    <pre>
-      <code>{stringifyErrorLike(error)}</code>
-    </pre>
-  </Modal>
-);
+const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onDismiss={onDismiss}
+      closeOnBackdropClick={true}
+      closeOnEscape={true}
+      title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
+    >
+      <p>
+        <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
+          Failed to update your configuration:
+        </Trans>
+      </p>
+      <pre>
+        <code>{stringifyErrorLike(error)}</code>
+      </pre>
+    </Modal>
+  );
+};

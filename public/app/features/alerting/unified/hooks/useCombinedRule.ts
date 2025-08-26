@@ -1,13 +1,21 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/datasource';
-import { CombinedRule, RuleIdentifier, RulesSource, RuleWithLocation } from 'app/types/unified-alerting';
+import {
+  CombinedRule,
+  RuleGroupIdentifierV2,
+  RuleIdentifier,
+  RuleWithLocation,
+  RulesSource,
+} from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getDataSourceByName } from '../utils/datasource';
+import { groupIdentifier } from '../utils/groupIdentifier';
 import * as ruleId from '../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
@@ -158,7 +166,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation, namespaceName]);
 
   return {
-    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
+    loading: isLoadingRuleLocation || isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
   };
@@ -169,25 +177,40 @@ export interface RuleLocation {
   namespace: string;
   group: string;
   ruleName: string;
+  groupIdentifier: RuleGroupIdentifierV2;
 }
 
 export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
+  const validIdentifier = (() => {
+    if (isGrafanaRuleIdentifier(ruleIdentifier) && ruleIdentifier.uid !== '') {
+      return { uid: ruleIdentifier.uid };
+    }
+    return skipToken;
+  })();
+
   const { isLoading, currentData, error, isUninitialized } = alertRuleApi.endpoints.getAlertRule.useQuery(
-    { uid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : '' },
-    { skip: !isGrafanaRuleIdentifier(ruleIdentifier), refetchOnMountOrArgChange: true }
+    validIdentifier,
+    {
+      refetchOnMountOrArgChange: true,
+    }
   );
 
   return useMemo(() => {
     if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
-      return {
-        result: {
-          datasource: ruleIdentifier.ruleSourceName,
-          namespace: ruleIdentifier.namespace,
-          group: ruleIdentifier.groupName,
-          ruleName: ruleIdentifier.ruleName,
-        },
-        loading: false,
-      };
+      try {
+        return {
+          result: {
+            datasource: ruleIdentifier.ruleSourceName,
+            namespace: ruleIdentifier.namespace,
+            group: ruleIdentifier.groupName,
+            ruleName: ruleIdentifier.ruleName,
+            groupIdentifier: groupIdentifier.fromRuleIdentifier(ruleIdentifier),
+          } satisfies RuleLocation,
+          loading: false,
+        };
+      } catch (error) {
+        return { loading: false, error };
+      }
     }
 
     if (isGrafanaRuleIdentifier(ruleIdentifier)) {
@@ -205,7 +228,12 @@ export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<Ru
             namespace: currentData.grafana_alert.namespace_uid,
             group: currentData.grafana_alert.rule_group,
             ruleName: currentData.grafana_alert.title,
-          },
+            groupIdentifier: {
+              namespace: { uid: currentData.grafana_alert.namespace_uid },
+              groupName: currentData.grafana_alert.rule_group,
+              groupOrigin: 'grafana',
+            },
+          } satisfies RuleLocation,
           loading: false,
         };
       }

@@ -3,7 +3,7 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getRulesPermissions } from '../utils/access-control';
-import { isGrafanaRulerRule } from '../utils/rules';
+import { rulerRuleType } from '../utils/rules';
 
 import { useFolder } from './useFolder';
 
@@ -12,17 +12,33 @@ interface ResultBag {
   isEditable?: boolean;
   isRemovable?: boolean;
   loading: boolean;
+  error?: unknown;
 }
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
-  const { currentData: dsFeatures, isLoading } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+  const {
+    currentData: dsFeatures,
+    isLoading,
+    error,
+  } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
     rulesSourceName,
   });
 
-  const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
+  const folderUID = rule && rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
   const { folder, loading } = useFolder(folderUID);
+
+  // handle discovery and data source errors
+  if (error) {
+    return {
+      isEditable: false,
+      isRemovable: false,
+      loading: false,
+      isRulerAvailable: false,
+      error,
+    };
+  }
 
   if (!rule) {
     return { isEditable: false, isRemovable: false, loading: false };
@@ -31,7 +47,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   // Grafana rules can be edited if user can edit the folder they're in
   // When RBAC is disabled access to a folder is the only requirement for managing rules
   // When RBAC is enabled the appropriate alerting permissions need to be met
-  if (isGrafanaRulerRule(rule)) {
+  if (rulerRuleType.grafana.rule(rule)) {
     if (!folderUID) {
       throw new Error(
         `Rule ${rule.grafana_alert.title} does not have a folder uid, cannot determine if it is editable.`

@@ -3,6 +3,131 @@ import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  describe('info function support', () => {
+    // Currently, the visual query editor throws an error when parsing the 'info' function
+    // because this function is only supported in code mode.
+    // TODO: When visual query editor support for the 'info' function is implemented,
+    // this test should be updated to expect successful parsing instead of an error.
+    it('should throw error when trying to parse info function', () => {
+      expect(
+        buildVisualQueryFromString(
+          'sum by (cluster, sdk_language) ( info( rate(server_req_dur_sec_count{instance="the-instance"}[2m]), {sdk_language="go"} ) )'
+        )
+      ).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'instance',
+              op: '=',
+              value: 'the-instance',
+            },
+            {
+              label: 'sdk_language',
+              op: '=',
+              value: 'go',
+            },
+          ],
+          metric: 'server_req_dur_sec_count',
+          operations: [
+            {
+              id: 'rate',
+              params: ['2m'],
+            },
+            {
+              id: 'info',
+              params: [],
+            },
+            {
+              id: '__sum_by',
+              params: ['cluster', 'sdk_language'],
+            },
+          ],
+        },
+        errors: [
+          {
+            from: 33,
+            text: 'Query parsing is ambiguous.',
+            to: 121,
+          },
+        ],
+      });
+    });
+  });
+
+  describe('utf8 support', () => {
+    it('supports uts-8 label names', () => {
+      expect(buildVisualQueryFromString('{"glück:🍀.dot"="luck"} == 11')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'glück:🍀.dot',
+              op: '=',
+              value: 'luck',
+            },
+          ],
+          metric: '',
+          operations: [
+            {
+              id: PromOperationId.EqualTo,
+              params: [11, false],
+            },
+          ],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names', () => {
+      expect(buildVisualQueryFromString('{"I am a metric"}')).toEqual({
+        query: {
+          labels: [],
+          metric: 'I am a metric',
+          operations: [],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names with labels', () => {
+      expect(buildVisualQueryFromString('{"metric.name", label_field="label value"}')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'label_field',
+              op: '=',
+              value: 'label value',
+            },
+          ],
+          metric: 'metric.name',
+          operations: [],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names with utf8 labels', () => {
+      expect(buildVisualQueryFromString('{"metric.name", "glück:🍀.dot"="luck"} == 11')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'glück:🍀.dot',
+              op: '=',
+              value: 'luck',
+            },
+          ],
+          metric: 'metric.name',
+          operations: [
+            {
+              id: PromOperationId.EqualTo,
+              params: [11, false],
+            },
+          ],
+        },
+        errors: [],
+      });
+    });
+  });
+
   it('creates no errors for empty query', () => {
     expect(buildVisualQueryFromString('')).toEqual(
       noErrors({
@@ -244,6 +369,31 @@ describe('buildVisualQueryFromString', () => {
     expect(buildVisualQueryFromString('sum without (app, version)(metric_name{instance="internal:3000"})')).toEqual(
       noErrors(visQuery)
     );
+  });
+
+  it('parses query with aggregation by utf8 labels', () => {
+    const visQuery = {
+      metric: 'metric_name',
+      labels: [
+        {
+          label: 'instance',
+          op: '=',
+          value: 'internal:3000',
+        },
+      ],
+      operations: [
+        {
+          id: '__sum_by',
+          params: ['cluster', '"app.version"'],
+        },
+      ],
+    };
+    expect(
+      buildVisualQueryFromString('sum(metric_name{instance="internal:3000"}) by ("app.version", cluster)')
+    ).toEqual(noErrors(visQuery));
+    expect(
+      buildVisualQueryFromString('sum by ("app.version", cluster)(metric_name{instance="internal:3000"})')
+    ).toEqual(noErrors(visQuery));
   });
 
   it('parses aggregation with params', () => {
@@ -793,6 +943,25 @@ describe('buildVisualQueryFromString', () => {
           {
             id: '__group_by',
             params: ['job'],
+          },
+        ],
+      })
+    );
+  });
+
+  it('parses query with custom variable', () => {
+    expect(buildVisualQueryFromString('topk($custom, rate(metric_name[$__rate_interval]))')).toEqual(
+      noErrors({
+        metric: 'metric_name',
+        labels: [],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'topk',
+            params: ['$custom'],
           },
         ],
       })

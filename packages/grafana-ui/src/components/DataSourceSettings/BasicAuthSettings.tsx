@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { InlineField } from '../../components/Forms/InlineField';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
@@ -37,10 +39,10 @@ export const BasicAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsPr
     <>
       <InlineField disabled={dataSourceConfig.readOnly}>
         <FormField
-          label="User"
+          label={t('grafana-ui.data-source-basic-auth-settings.user-label', 'User')}
           labelWidth={10}
           inputWidth={18}
-          placeholder="user"
+          placeholder={t('grafana-ui.data-source-basic-auth-settings.user-placeholder', 'user')}
           value={dataSourceConfig.basicAuthUser}
           onChange={(event) => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
         />

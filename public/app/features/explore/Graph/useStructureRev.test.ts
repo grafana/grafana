@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 
 import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
@@ -62,7 +62,7 @@ describe('useStructureRev', () => {
 
   // mirrors the logic in componentDidUpdate in packages/grafana-ui/src/components/GraphNG/GraphNG.tsx,
   // which treats all falsy values for structureRev as a signal to reconfig the graph
-  it('should start from a thruthy value', () => {
+  it('should start from a truthy value', () => {
     let frames: DataFrame[] = [toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }] })];
     const { result } = renderHook((frames) => useStructureRev(frames), { initialProps: frames });
 
@@ -70,14 +70,22 @@ describe('useStructureRev', () => {
   });
 
   it('should increment only when relevant fields in frame change', () => {
+    let all: number[] = [];
     let frames: DataFrame[] = [toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }] })];
-    const { result, rerender } = renderHook((frames) => useStructureRev(frames), { initialProps: frames });
+    const { result, rerender } = renderHook(
+      (frames) => {
+        const result = useStructureRev(frames);
+        all.push(result);
+        return result;
+      },
+      { initialProps: frames }
+    );
     startCounters(result.current);
 
     // When changing number of frames, the structureRev should increment
     frames = [...frames, toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }] })];
     rerender(frames);
-    expect(result.all).toHaveIncremented();
+    expect(all).toHaveIncremented();
 
     // Changing RefId should not increment the structure revision
     frames[0] = toDataFrame({
@@ -85,7 +93,7 @@ describe('useStructureRev', () => {
       fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }],
     });
     rerender([...frames]);
-    expect(result.all).not.toHaveIncremented();
+    expect(all).not.toHaveIncremented();
 
     // Changing frame name should increment the structure revision
     frames[0] = toDataFrame({
@@ -94,7 +102,7 @@ describe('useStructureRev', () => {
       fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }],
     });
     rerender([...frames]);
-    expect(result.all).toHaveIncremented();
+    expect(all).toHaveIncremented();
 
     // Changing frame's fields number should increment the structure revision
     frames[0] = toDataFrame({
@@ -106,7 +114,7 @@ describe('useStructureRev', () => {
       ],
     });
     rerender([...frames]);
-    expect(result.all).toHaveIncremented();
+    expect(all).toHaveIncremented();
 
     // Changing a frame's field's config should increment the structure revision
     frames[0] = toDataFrame({
@@ -118,7 +126,7 @@ describe('useStructureRev', () => {
       ],
     });
     rerender([...frames]);
-    expect(result.all).toHaveIncremented();
+    expect(all).toHaveIncremented();
 
     // Changing a frame's field's name should increment the structure revision
     frames[0] = toDataFrame({
@@ -130,6 +138,6 @@ describe('useStructureRev', () => {
       ],
     });
     rerender([...frames]);
-    expect(result.all).toHaveIncremented();
+    expect(all).toHaveIncremented();
   });
 });

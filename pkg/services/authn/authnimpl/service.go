@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,6 +34,7 @@ const (
 )
 
 var (
+	errInvalidNamespace    = errutil.Forbidden("authn.invalid-namespace", errutil.WithPublicMessage("invalid namespace"))
 	errCantAuthenticateReq = errutil.Unauthorized("auth.unauthorized")
 	errDisabledIdentity    = errutil.Unauthorized("identity.disabled")
 )
@@ -56,9 +58,12 @@ func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer, sessionService auth.UserTokenService,
 	usageStats usagestats.Service, registerer prometheus.Registerer, authTokenService login.AuthInfoService,
 ) *Service {
+	stackID, _ := strconv.ParseInt(cfg.StackID, 10, 64)
+
 	s := &Service{
 		log:                    log.New("authn.service"),
 		cfg:                    cfg,
+		stackID:                stackID,
 		clients:                make(map[string]authn.Client),
 		clientQueue:            newQueue[authn.ContextAwareClient](),
 		idenityResolverClients: make(map[string]authn.IdentityResolverClient),
@@ -76,8 +81,9 @@ func ProvideService(
 }
 
 type Service struct {
-	log log.Logger
-	cfg *setting.Cfg
+	log     log.Logger
+	cfg     *setting.Cfg
+	stackID int64
 
 	clients     map[string]authn.Client
 	clientQueue *queue[authn.ContextAwareClient]
@@ -102,7 +108,11 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
 	defer span.End()
 
-	r.OrgID = orgIDFromRequest(r)
+	orgID, err := s.orgIDFromRequest(r)
+	if err != nil {
+		return nil, err
+	}
+	r.OrgID = orgID
 
 	var authErr error
 	for _, item := range s.clientQueue.items {
@@ -203,7 +213,11 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	))
 	defer span.End()
 
-	r.OrgID = orgIDFromRequest(r)
+	orgID, err := s.orgIDFromRequest(r)
+	if err != nil {
+		return nil, err
+	}
+	r.OrgID = orgID
 
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {
@@ -225,7 +239,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	}
 
 	// Login is only supported for users
-	if !id.IsIdentityType(claims.TypeUser) {
+	if !id.IsIdentityType(types.TypeUser) {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.GetIdentityType())
 	}
@@ -291,7 +305,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 		redirect.URL = s.cfg.SignoutRedirectUrl
 	}
 
-	if !user.IsIdentityType(claims.TypeUser) {
+	if !user.IsIdentityType(types.TypeUser) {
 		return redirect, nil
 	}
 
@@ -322,7 +336,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 			goto Default
 		}
 
-		clientRedirect, ok := logoutClient.Logout(ctx, user)
+		clientRedirect, ok := logoutClient.Logout(ctx, user, sessionToken)
 		if !ok {
 			goto Default
 		}
@@ -349,7 +363,7 @@ func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, typedID stri
 
 	identity, err := s.resolveIdenity(ctx, orgID, typedID)
 	if err != nil {
-		if errors.Is(err, claims.ErrInvalidTypedID) {
+		if errors.Is(err, types.ErrInvalidTypedID) {
 			return nil, authn.ErrUnsupportedIdentity.Errorf("invalid identity type")
 		}
 
@@ -408,16 +422,16 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	t, i, err := claims.ParseTypeID(typedID)
+	t, i, err := types.ParseTypeID(typedID)
 	if err != nil {
 		return nil, err
 	}
 
-	if claims.IsIdentityType(t, claims.TypeUser) {
+	if types.IsIdentityType(t, types.TypeUser) {
 		return &authn.Identity{
 			OrgID: orgID,
 			ID:    i,
-			Type:  claims.TypeUser,
+			Type:  types.TypeUser,
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
@@ -426,10 +440,10 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 		}, nil
 	}
 
-	if claims.IsIdentityType(t, claims.TypeServiceAccount) {
+	if types.IsIdentityType(t, types.TypeServiceAccount) {
 		return &authn.Identity{
 			ID:    i,
-			Type:  claims.TypeServiceAccount,
+			Type:  types.TypeServiceAccount,
 			OrgID: orgID,
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,
@@ -461,17 +475,66 @@ func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, 
 	return l.Warn
 }
 
-func orgIDFromRequest(r *authn.Request) int64 {
+func (s *Service) orgIDFromRequest(r *authn.Request) (int64, error) {
 	if r.HTTPRequest == nil {
-		return 0
+		return 0, nil
 	}
 
-	orgID := orgIDFromQuery(r.HTTPRequest)
+	orgID, err := s.orgIDFromNamespace(r.HTTPRequest)
+	if err != nil {
+		return 0, err
+	}
+
 	if orgID > 0 {
-		return orgID
+		return orgID, nil
 	}
 
-	return orgIDFromHeader(r.HTTPRequest)
+	orgID = orgIDFromQuery(r.HTTPRequest)
+	if orgID > 0 {
+		return orgID, nil
+	}
+
+	return orgIDFromHeader(r.HTTPRequest), nil
+}
+
+func (s *Service) orgIDFromNamespace(req *http.Request) (int64, error) {
+	if !strings.HasPrefix(req.URL.Path, "/apis") {
+		return 0, nil
+	}
+
+	namespace := parseNamespace(req.URL.Path)
+	if namespace == "" {
+		return 0, nil
+	}
+
+	info, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return 0, nil
+	}
+
+	if info.StackID != s.stackID {
+		return 0, errInvalidNamespace.Errorf("invalid namespace")
+	}
+
+	return info.OrgID, nil
+}
+
+func parseNamespace(path string) string {
+	// Pretty navie parsing of namespace but it should do the job
+	// Possbile url paths can be found here:
+	// https://github.com/kubernetes/kubernetes/blob/803e9d64952407981b3815b1d749cc96a39ba3c6/staging/src/k8s.io/apiserver/pkg/endpoints/request/requestinfo.go#L104-L127
+	const namespacePath = "/namespaces/"
+	index := strings.Index(path, namespacePath)
+	if index == -1 {
+		return ""
+	}
+
+	parts := strings.Split(path[index+len(namespacePath):], "/")
+	if len(parts) == 0 {
+		return ""
+	}
+
+	return parts[0]
 }
 
 // name of query string used to target specific org for request

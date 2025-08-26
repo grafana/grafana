@@ -1,7 +1,7 @@
 import { SceneTimeRange } from '@grafana/scenes';
 import store from 'app/core/store';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';

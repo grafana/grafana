@@ -20,13 +20,13 @@ weight: 100
 
 A _user_ is defined as any individual who can log in to Grafana. Each user is associated with a _role_ that includes _permissions_. Permissions determine the tasks a user can perform in the system.
 
-If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions in Grafana, you can manage all users for a Grafana instance in the Server Admin section:
+If you have [server administrator](../../roles-and-permissions/#grafana-server-administrators) permissions in Grafana, you can manage all users for a Grafana instance in the Server Admin section:
 
 {{< section >}}
 
-If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, refer to [Manage users in a organization]({{< relref "../manage-org-users/" >}}).
+If you have [organization administrator](../../roles-and-permissions/#organization-roles) permissions and _not_ [server administrator](../../roles-and-permissions/#grafana-server-administrators) permissions, refer to [Manage users in a organization](../manage-org-users/).
 
-For more information about user roles and permissions, refer to [Roles and permissions]({{< relref "../../roles-and-permissions/" >}}). For more information about managing users in general, see [User management]({{< relref "../" >}}).
+For more information about user roles and permissions, refer to [Roles and permissions](../../roles-and-permissions/). For more information about managing users in general, see [User management](../).
 
 ## View a list of users
 
@@ -41,9 +41,9 @@ You can see a list of users with accounts on your Grafana server. This action mi
 1. Sign in to Grafana as a server administrator.
 1. Click **Administration** in the left-side menu, **Users and access**, and then **Users**.
 
-{{% admonition type="note" %}}
-If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still [view of list of users in a given organization]({{< relref "../manage-org-users/#view-a-list-of-organization-users" >}}).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+If you have [organization administrator](../../roles-and-permissions/#organization-roles) permissions and _not_ [server administrator](../../roles-and-permissions/#grafana-server-administrators) permissions, you can still [view of list of users in a given organization](../manage-org-users/#view-a-list-of-organization-users).
+{{< /admonition >}}
 
 ## View user details
 
@@ -104,7 +104,7 @@ Edit a user account when you want to modify user login credentials, or delete, d
 
 Add users when you want to manually provide individuals with access to Grafana.
 
-When you create a user using this method, you must create their password. The user does not receive a notification by email. To invite a user to Grafana and allow them to create their own password, [invite a user to join an organization]({{< relref "../manage-org-users#invite-a-user-to-join-an-organization" >}}).
+When you create a user using this method, you must create their password. The user does not receive a notification by email. To invite a user to Grafana and allow them to create their own password, [invite a user to join an organization](../manage-org-users/#invite-a-user-to-join-an-organization).
 
 When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth proxy, users are created automatically.
 
@@ -119,11 +119,11 @@ When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth 
 1. Click **New user**.
 1. Complete the fields and click **Create user**.
 
-When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization]({{< relref "add-remove-user-to-org/" >}}).
+When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization](add-remove-user-to-org/).
 
-{{% admonition type="note" %}}
-If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still add users by [inviting a user to join an organization]({{< relref "../manage-org-users#invite-a-user-to-join-an-organization" >}}).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+If you have [organization administrator](../../roles-and-permissions/#organization-roles) permissions and _not_ [server administrator](../../roles-and-permissions/#grafana-server-administrators) permissions, you can still add users by [inviting a user to join an organization](../manage-org-users/#invite-a-user-to-join-an-organization).
+{{< /admonition >}}
 
 ## Force a user to log out of Grafana
 

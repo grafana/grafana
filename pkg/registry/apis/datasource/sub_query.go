@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -9,10 +10,14 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/web"
+
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type subQueryREST struct {
@@ -50,9 +55,21 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
+
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return nil, k8serrors.NewNotFound(
+				schema.GroupResource{
+					Group:    r.builder.connectionResourceInfo.GroupResource().Group,
+					Resource: r.builder.connectionResourceInfo.GroupResource().Resource,
+				},
+				name,
+			)
+		}
+
 		return nil, err
 	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		dqr := data.QueryDataRequest{}
 		err := web.Bind(req, &dqr)

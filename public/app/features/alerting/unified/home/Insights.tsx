@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   EmbeddedScene,
@@ -14,8 +15,9 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
+import { Icon, Text, Tooltip } from '@grafana/ui';
 
-import { config } from '../../../../core/config';
+import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getActiveGrafanaAlertsScene } from '../insights/grafana/Active';
@@ -76,6 +78,7 @@ const SERIES_COLORS = {
   missed: 'red',
   failed: 'red',
   pending: 'yellow',
+  recovering: 'yellow',
   nodata: 'blue',
   'active evaluation': 'blue',
   normal: 'green',
@@ -94,9 +97,9 @@ export const PANEL_STYLES = { minHeight: 300 };
 
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 
-const namespace = config.bootData.settings.namespace;
+const namespace = getAPINamespace();
 
-export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
+export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
 const getInsightsDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
@@ -173,7 +176,30 @@ export function getInsightsScenes() {
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
-        props: { children: <div>Monitor the status of your system.</div> },
+        props: {
+          children: (
+            <Text>
+              <Trans i18nKey="alerting.insights.monitor-status-of-system">Monitor the status of your system</Trans>{' '}
+              <Tooltip
+                content={
+                  <div>
+                    <Trans i18nKey="alerting.insights.monitor-status-system-tooltip">
+                      Alerting insights provides pre-built dashboards to monitor your alerting data.
+                    </Trans>
+                    <br />
+                    <br />
+                    <Trans i18nKey="alerting.insights.monitor-status-system-tooltip-identify">
+                      You can identify patterns in why things go wrong and discover trends in alerting performance
+                      within your organization.
+                    </Trans>
+                  </div>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Text>
+          ),
+        },
       }),
       new SceneControlsSpacer(),
       new SceneTimePicker({}),
@@ -188,7 +214,7 @@ export function getInsightsScenes() {
 
 function getGrafanaManagedScenes() {
   return new NestedScene({
-    title: 'Grafana-managed alert rules',
+    title: t('alerting.get-grafana-managed-scenes.title.grafanamanaged-alert-rules', 'Grafana-managed alert rules'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -219,6 +245,12 @@ function getGrafanaManagedScenes() {
                           'Firing instances',
                           'The number of currently firing alert rule instances',
                           'alerting'
+                        ),
+                        getInstanceStatByStatusScene(
+                          cloudUsageDs,
+                          'Recovering instances',
+                          'The number of currently recovering alert rule instances',
+                          'recovering'
                         ),
                         getInstanceStatByStatusScene(
                           cloudUsageDs,
@@ -272,7 +304,7 @@ function getGrafanaManagedScenes() {
 
 function getGrafanaAlertmanagerScenes() {
   return new NestedScene({
-    title: 'Grafana Alertmanager',
+    title: t('alerting.get-grafana-alertmanager-scenes.title.grafana-alertmanager', 'Grafana Alertmanager'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -295,7 +327,7 @@ function getGrafanaAlertmanagerScenes() {
 
 function getCloudScenes() {
   return new NestedScene({
-    title: 'Mimir Alertmanager',
+    title: t('alerting.get-cloud-scenes.title.mimir-alertmanager', 'Mimir Alertmanager'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -329,7 +361,7 @@ function getCloudScenes() {
 
 function getMimirManagedRulesScenes() {
   return new NestedScene({
-    title: 'Mimir-managed alert rules',
+    title: t('alerting.get-mimir-managed-rules-scenes.title.mimirmanaged-alert-rules', 'Mimir-managed alert rules'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -370,14 +402,17 @@ function getMimirManagedRulesScenes() {
 
 function getMimirManagedRulesPerGroupScenes() {
   const ruleGroupHandler = new QueryVariable({
-    label: 'Rule Group',
+    label: t('alerting.get-mimir-managed-rules-per-group-scenes.rule-group-handler.label.rule-group', 'Rule Group'),
     name: 'rule_group',
     datasource: cloudUsageDs,
     query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
   });
 
   return new NestedScene({
-    title: 'Mimir-managed alert rules - per rule group',
+    title: t(
+      'alerting.get-mimir-managed-rules-per-group-scenes.title.mimirmanaged-alert-rules-per-rule-group',
+      'Mimir-managed alert rules - per rule group'
+    ),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({

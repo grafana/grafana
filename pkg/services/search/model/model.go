@@ -65,6 +65,7 @@ const (
 type Hit struct {
 	ID                    int64      `json:"id"`
 	UID                   string     `json:"uid"`
+	OrgID                 int64      `json:"orgId"`
 	Title                 string     `json:"title"`
 	URI                   string     `json:"uri"`
 	URL                   string     `json:"url"`

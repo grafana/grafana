@@ -3,8 +3,10 @@ import { BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';
+import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';
+import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
 
 import { isChromePerformance, prepareContext } from './crash.utils';
 
@@ -19,6 +21,7 @@ interface GrafanaCrashReport extends BaseStateReport {
     email: string;
     login: string;
     name: string;
+    lastInteraction: number;
   };
   memory?: {
     heapUtilization: number;
@@ -30,6 +33,15 @@ interface GrafanaCrashReport extends BaseStateReport {
 }
 
 export function initializeCrashDetection() {
+  if (!sharedWorkersSupported()) {
+    return;
+  }
+
+  let lastInteraction = Date.now();
+  // Add last interaction listeners to capture phase to reduce skipped events when stopPropagation() is called
+  document.body.addEventListener('click', () => (lastInteraction = Date.now()), true);
+  document.body.addEventListener('keypress', () => (lastInteraction = Date.now()), true);
+
   initCrashDetection<GrafanaCrashReport>({
     id: nanoid(5),
 
@@ -39,8 +51,18 @@ export function initializeCrashDetection() {
       return new Worker(new URL('./client.worker', import.meta.url));
     },
 
-    createDetectorWorker(): SharedWorker {
-      return new SharedWorker(new URL('./detector.worker', import.meta.url));
+    /**
+     *  There are limitations that require us to manually assert the type here.
+     *  1) Webpack uses static code analysis to create a new entry point for a SharedWorker.
+     *     It requies constructing an object with exact syntax new SharedWorker(...) (https://webpack.js.org/guides/web-workers/)
+     *  2) Some browsers may not support SharedWorkers hence we cannot extend CorsSharedWorker like CorsWorker and
+     *     window.SharedWorker needs to be referenced during runtime only if it is supported (https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker)
+     *
+     *  We guarantee the type assertion is correct by returning a SharedWorker in CorsSharedWorker constructor.
+     */
+    createDetectorWorker() {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return new SharedWorker(new URL('./detector.worker', import.meta.url)) as globalThis.SharedWorker;
     },
 
     reportCrash: async (report) => {
@@ -65,6 +87,7 @@ export function initializeCrashDetection() {
         email: contextSrv.user.email,
         login: contextSrv.user.login,
         name: contextSrv.user.name,
+        lastInteraction,
       };
 
       if (isChromePerformance(performance)) {

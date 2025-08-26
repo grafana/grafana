@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
+import { setPluginLinksHook } from '@grafana/runtime';
 
 import DetailState from './SpanDetail/DetailState';
 import { UnthemedSpanDetailRow, SpanDetailRowProps } from './SpanDetailRow';
@@ -47,30 +47,27 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     traceStartTime: 1000,
     theme: createTheme(),
     traceFlameGraphs: {},
+    timeRange: {
+      raw: {
+        from: 0,
+        to: 1000000000000,
+      },
+    },
     ...propOverrides,
   };
   return render(<UnthemedSpanDetailRow {...(props as SpanDetailRowProps)} />);
 };
 
 describe('SpanDetailRow tests', () => {
+  beforeEach(() => {
+    setPluginLinksHook(() => ({
+      isLoading: false,
+      links: [],
+    }));
+  });
+
   it('renders without exploding', () => {
     expect(() => setup()).not.toThrow();
-  });
-
-  it('calls toggle on click', async () => {
-    const mockToggle = jest.fn();
-    setup({ onDetailToggled: mockToggle } as unknown as SpanDetailRowProps);
-    expect(mockToggle).not.toHaveBeenCalled();
-
-    const detailRow = screen.getByTestId('detail-row-expanded-accent');
-    await userEvent.click(detailRow);
-    expect(mockToggle).toHaveBeenCalled();
-  });
-
-  it('renders the span tree offset', () => {
-    setup();
-
-    expect(screen.getByTestId('SpanTreeOffset--indentGuide')).toBeInTheDocument();
   });
 
   it('renders the SpanDetail', () => {

@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/url"
-	"slices"
+	"sort"
+	"sync"
 	"testing"
 	"time"
 
@@ -23,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -64,7 +67,19 @@ func TestProcessTicks(t *testing.T) {
 	}
 
 	cacheServ := &datasources.FakeCacheService{}
-	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+	evaluator := eval.NewEvaluatorFactory(
+		setting.UnifiedAlertingSettings{},
+		cacheServ,
+		expr.ProvideService(
+			&setting.Cfg{ExpressionsEnabled: true},
+			nil,
+			nil,
+			featuremgmt.WithFeatures(),
+			nil,
+			tracing.InitializeTracerForTest(),
+			dsquerierclient.NewNullQSDatasourceClientBuilder(),
+		),
+	)
 	rrSet := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
@@ -80,6 +95,7 @@ func TestProcessTicks(t *testing.T) {
 		RecordingRulesCfg: rrSet,
 		Tracer:            testTracer,
 		Log:               log.New("ngalert.scheduler"),
+		FeatureToggles:    featuremgmt.WithFeatures(),
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
@@ -518,7 +534,7 @@ func TestProcessTicks(t *testing.T) {
 
 		require.Emptyf(t, updated, "No rules should be updated")
 	})
-	t.Run("after 12th tick no status should be available", func(t *testing.T) {
+	t.Run("after 17th tick no status should be available", func(t *testing.T) {
 		_, ok := sched.Status(alertRule1.GetKey())
 		require.False(t, ok, "status for a rule that was deleted should not be available")
 		_, ok = sched.Status(alertRule2.GetKey())
@@ -532,35 +548,112 @@ func TestProcessTicks(t *testing.T) {
 		ruleStore.rules = map[string]*models.AlertRule{}
 		ruleStore.PutRule(context.Background(), rules...)
 
-		expectedUids := make([]string, 0, len(rules))
-		for _, rule := range rules {
-			expectedUids = append(expectedUids, rule.UID)
-		}
-		slices.Sort(expectedUids)
-
 		tick = tick.Add(cfg.BaseInterval)
 
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
 		require.Emptyf(t, updated, "None rules are expected to be updated")
+		require.Len(t, scheduled, len(rules), "All rules should be scheduled in this tick")
+	})
 
-		actualUids := make([]string, 0, len(scheduled))
-		for _, rule := range scheduled {
-			actualUids = append(actualUids, rule.rule.UID)
+	t.Run("sequence should be evaluated in the correct order", func(t *testing.T) {
+		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithPrometheusOriginalRuleDefinition("def")).GenerateManyRef(10, 20)
+		ruleStore.rules = map[string]*models.AlertRule{}
+		ruleStore.PutRule(context.Background(), rules...)
+
+		// Create tracking for evaluation order by group
+		evalOrderByGroup := make(map[string][]string)
+		mutex := sync.Mutex{}
+
+		// Replace evalAppliedFunc to track order by group
+		origEvalAppliedFunc := sched.evalAppliedFunc
+		sched.evalAppliedFunc = func(alertDefKey models.AlertRuleKey, now time.Time) {
+			// Find corresponding rule
+			var rule *models.AlertRule
+			for _, r := range rules {
+				if r.GetKey() == alertDefKey {
+					rule = r
+					break
+				}
+			}
+
+			if rule != nil {
+				groupKey := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(rule.NamespaceUID), rule.RuleGroup)
+				mutex.Lock()
+				evalOrderByGroup[groupKey] = append(evalOrderByGroup[groupKey], rule.UID)
+				mutex.Unlock()
+			}
+
+			origEvalAppliedFunc(alertDefKey, now)
+		}
+		defer func() {
+			sched.evalAppliedFunc = origEvalAppliedFunc
+		}()
+
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, _, _ := sched.processTick(ctx, dispatcherGroup, tick)
+		require.NotEmpty(t, scheduled)
+
+		// Wait for all evaluations to complete
+		time.Sleep(100 * time.Millisecond)
+
+		// Group rules by their group for expected order
+		expectedOrderByGroup := make(map[string][]string)
+		for _, rule := range rules {
+			groupKey := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(rule.NamespaceUID), rule.RuleGroup)
+			expectedOrderByGroup[groupKey] = append(expectedOrderByGroup[groupKey], rule.UID)
 		}
 
-		require.Len(t, scheduled, len(rules))
-		assert.Truef(t, slices.IsSorted(actualUids), "The scheduler rules should be sorted by UID but they aren't")
-		require.Equal(t, expectedUids, actualUids)
+		// Sort each group's rules by title
+		for _, ruleUIDs := range expectedOrderByGroup {
+			rulesByUID := make(map[string]*models.AlertRule)
+			for _, rule := range rules {
+				rulesByUID[rule.UID] = rule
+			}
+
+			sort.Slice(ruleUIDs, func(i, j int) bool {
+				return rulesByUID[ruleUIDs[i]].Title < rulesByUID[ruleUIDs[j]].Title
+			})
+		}
+
+		// Verify that rules within each group were evaluated in correct order
+		for groupKey, expectedUIDs := range expectedOrderByGroup {
+			actualUIDs, evaluated := evalOrderByGroup[groupKey]
+			if !evaluated {
+				// Some groups might not be evaluated during the test
+				continue
+			}
+
+			if len(actualUIDs) > 1 { // Only check order for groups with multiple rules
+				// Convert back to rule titles for clearer error messages
+				rulesByUID := make(map[string]*models.AlertRule)
+				for _, rule := range rules {
+					rulesByUID[rule.UID] = rule
+				}
+
+				expectedTitles := make([]string, 0, len(expectedUIDs))
+				for _, uid := range expectedUIDs {
+					expectedTitles = append(expectedTitles, rulesByUID[uid].Title)
+				}
+
+				actualTitles := make([]string, 0, len(actualUIDs))
+				for _, uid := range actualUIDs {
+					actualTitles = append(actualTitles, rulesByUID[uid].Title)
+				}
+
+				assert.Equal(t, expectedTitles, actualTitles, "Rules in group %s were not evaluated in expected order", groupKey)
+			}
+		}
 	})
 }
 
 func TestSchedule_updateRulesMetrics(t *testing.T) {
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
 	ctx := context.Background()
 	const firstOrgID int64 = 1
+	const secondOrgID int64 = 2
 
 	t.Run("grafana_alerting_rule_group_rules metric should reflect the current state", func(t *testing.T) {
 		// Without any rules there are no metrics
@@ -635,6 +728,77 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("prometheus_imported_rules metric should reflect the current state", func(t *testing.T) {
+		// Without any imported rules there are no metrics
+		t.Run("it should not show metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_prometheus_imported_rules")
+			require.NoError(t, err)
+		})
+
+		// The metric includes alert rules with either internal ConvertedPrometheusRuleLabel label,
+		// or when AlertRule.HasPrometheusRuleDefinition() returns true.
+		alertRule1 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
+		).GenerateRef()
+
+		alertRule2 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithLabel(models.ConvertedPrometheusRuleLabel, "true"),
+		).GenerateRef()
+
+		alertRulePaused := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
+			models.RuleGen.WithIsPaused(true),
+		).GenerateRef()
+
+		t.Run("it should show two imported rules in a single org", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2, alertRulePaused})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_prometheus_imported_rules The number of rules imported from a Prometheus-compatible source.
+								# TYPE grafana_alerting_prometheus_imported_rules gauge
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="active"} 2
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="paused"} 1
+				`, alertRule1.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_prometheus_imported_rules")
+			require.NoError(t, err)
+		})
+
+		alertRule3 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(secondOrgID),
+			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
+		).GenerateRef()
+
+		t.Run("it should show three imported rules in two orgs", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2, alertRule3, alertRulePaused})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_prometheus_imported_rules The number of rules imported from a Prometheus-compatible source.
+								# TYPE grafana_alerting_prometheus_imported_rules gauge
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="active"} 2
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="paused"} 1
+								grafana_alerting_prometheus_imported_rules{org="%[2]d",state="active"} 1
+				`, firstOrgID, secondOrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_prometheus_imported_rules")
+			require.NoError(t, err)
+		})
+
+		t.Run("after removing all rules it should not show any metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_prometheus_imported_rules")
 			require.NoError(t, err)
 		})
 	})
@@ -783,6 +947,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		alertRuleWithAdvancedSettings := models.RuleGen.With(
 			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(false),
 		).GenerateRef()
 
@@ -798,6 +963,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		alertRule1 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(firstOrgID),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(true),
 		).GenerateRef()
 
 		t.Run("it should show one rule in a single org", func(t *testing.T) {
@@ -806,6 +972,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
 								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_notifications_section"} 1
 								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
 				`, alertRule1.OrgID)
 
@@ -815,6 +982,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		alertRule2 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(secondOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
 			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		).GenerateRef()
 
@@ -824,6 +992,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
 								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_notifications_section"} 1
 								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
 								grafana_alerting_simplified_editor_rules{org="%[2]d",setting="simplified_query_and_expressions_section"} 1
 				`, alertRule1.OrgID, alertRule2.OrgID)
@@ -913,29 +1082,114 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 	})
 }
 
+type mockAlertRuleStopReasonProvider struct {
+	mock.Mock
+}
+
+func (m *mockAlertRuleStopReasonProvider) FindReason(ctx context.Context, logger log.Logger, key models.AlertRuleKeyWithGroup) (error, error) {
+	args := m.Called(ctx, logger, key)
+	return args.Error(0), args.Error(1)
+}
+
 func TestSchedule_deleteAlertRule(t *testing.T) {
+	ctx := context.Background()
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
-			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			ruleStore := newFakeRulesStore()
+			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, nil)
 			ruleFactory := ruleFactoryFromScheduler(sch)
 			rule := models.RuleGen.GenerateRef()
+			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(context.Background(), rule, ruleFactory)
-			sch.deleteAlertRule(key)
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			sch.deleteAlertRule(ctx, key)
+
 			require.ErrorIs(t, info.(*alertRule).ctx.Err(), errRuleDeleted)
 			require.False(t, sch.registry.exists(key))
 		})
+
+		t.Run("it should call ruleStopReasonProvider if it is defined", func(t *testing.T) {
+			mockReasonProvider := new(mockAlertRuleStopReasonProvider)
+			expectedReason := errors.New("some rule deletion reason")
+			mockReasonProvider.On("FindReason", mock.Anything, mock.Anything, mock.Anything).Return(expectedReason, nil)
+
+			ruleStore := newFakeRulesStore()
+			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, mockReasonProvider)
+			ruleFactory := ruleFactoryFromScheduler(sch)
+			rule := models.RuleGen.GenerateRef()
+			ruleStore.PutRule(ctx, rule)
+			key := rule.GetKey()
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			_, err := sch.updateSchedulableAlertRules(ctx)
+			require.NoError(t, err)
+
+			sch.deleteAlertRule(ctx, key)
+
+			mockReasonProvider.AssertCalled(t, "FindReason", mock.Anything, mock.Anything, rule.GetKeyWithGroup())
+
+			require.ErrorIs(t, info.(*alertRule).ctx.Err(), expectedReason)
+			require.False(t, sch.registry.exists(key))
+		})
+
+		t.Run("it should use the default reason if ruleStopReasonProvider does not return anything", func(t *testing.T) {
+			mockReasonProvider := new(mockAlertRuleStopReasonProvider)
+			mockReasonProvider.On("FindReason", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+			ruleStore := newFakeRulesStore()
+			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, mockReasonProvider)
+			ruleFactory := ruleFactoryFromScheduler(sch)
+			rule := models.RuleGen.GenerateRef()
+			ruleStore.PutRule(ctx, rule)
+			key := rule.GetKey()
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			_, err := sch.updateSchedulableAlertRules(ctx)
+			require.NoError(t, err)
+
+			sch.deleteAlertRule(ctx, key)
+
+			mockReasonProvider.AssertCalled(t, "FindReason", mock.Anything, mock.Anything, rule.GetKeyWithGroup())
+
+			require.ErrorIs(t, info.(*alertRule).ctx.Err(), errRuleDeleted)
+			require.False(t, sch.registry.exists(key))
+		})
+
+		t.Run("it should still call ruleStopReasonProvider if the rule is not found in the registry", func(t *testing.T) {
+			mockReasonProvider := new(mockAlertRuleStopReasonProvider)
+			expectedReason := errors.New("some rule deletion reason")
+			mockReasonProvider.On("FindReason", mock.Anything, mock.Anything, mock.Anything).Return(expectedReason, nil)
+
+			// Don't create a ruleStore so that the rule will not be found in deleteAlertRule
+			sch := setupScheduler(t, nil, nil, nil, nil, nil, mockReasonProvider)
+			ruleFactory := ruleFactoryFromScheduler(sch)
+			rule := models.RuleGen.GenerateRef()
+			key := rule.GetKey()
+			info, _ := sch.registry.getOrCreate(ctx, rule, ruleFactory)
+
+			_, err := sch.updateSchedulableAlertRules(ctx)
+			require.NoError(t, err)
+
+			sch.deleteAlertRule(ctx, key)
+
+			mockReasonProvider.AssertCalled(t, "FindReason", mock.Anything, mock.Anything, rule.GetKeyWithGroup())
+
+			require.ErrorIs(t, info.(*alertRule).ctx.Err(), expectedReason)
+			require.False(t, sch.registry.exists(key))
+		})
 	})
+
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
-			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			sch := setupScheduler(t, nil, nil, nil, nil, nil, nil)
 			key := models.GenerateRuleKey(rand.Int63())
-			sch.deleteAlertRule(key)
+			sch.deleteAlertRule(ctx, key)
 		})
 	})
 }
 
-func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory, ruleStopReasonProvider AlertRuleStopReasonProvider) *schedule {
 	t.Helper()
 	testTracer := tracing.InitializeTracerForTest()
 
@@ -951,7 +1205,19 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, &datasources.FakeCacheService{}, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+		evaluator = eval.NewEvaluatorFactory(
+			setting.UnifiedAlertingSettings{},
+			&datasources.FakeCacheService{},
+			expr.ProvideService(
+				&setting.Cfg{ExpressionsEnabled: true},
+				nil,
+				nil,
+				featuremgmt.WithFeatures(),
+				nil,
+				tracing.InitializeTracerForTest(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
+			),
+		)
 	}
 
 	if registry == nil {
@@ -980,18 +1246,20 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	fakeRecordingWriter := writer.FakeWriter{}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:      cfg.BaseInterval,
-		MaxAttempts:       cfg.MaxAttempts,
-		C:                 mockedClock,
-		AppURL:            appUrl,
-		EvaluatorFactory:  evaluator,
-		RuleStore:         rs,
-		RecordingRulesCfg: cfg.RecordingRules,
-		Metrics:           m.GetSchedulerMetrics(),
-		AlertSender:       senderMock,
-		Tracer:            testTracer,
-		Log:               log.New("ngalert.scheduler"),
-		RecordingWriter:   fakeRecordingWriter,
+		BaseInterval:           cfg.BaseInterval,
+		MaxAttempts:            cfg.MaxAttempts,
+		C:                      mockedClock,
+		AppURL:                 appUrl,
+		EvaluatorFactory:       evaluator,
+		RuleStore:              rs,
+		RecordingRulesCfg:      cfg.RecordingRules,
+		Metrics:                m.GetSchedulerMetrics(),
+		AlertSender:            senderMock,
+		Tracer:                 testTracer,
+		Log:                    log.New("ngalert.scheduler"),
+		FeatureToggles:         featuremgmt.WithFeatures(),
+		RecordingWriter:        fakeRecordingWriter,
+		RuleStopReasonProvider: ruleStopReasonProvider,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),

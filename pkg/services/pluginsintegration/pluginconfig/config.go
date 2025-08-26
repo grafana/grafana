@@ -30,16 +30,16 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
 		config.Features{
-			ExternalCorePluginsEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
-			SkipHostEnvVarsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
-			SriChecksEnabled:           features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
+			SkipHostEnvVarsEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
+			SriChecksEnabled:       features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
+			TempoAlertingEnabled:   features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
+			PluginAssetProvider:    features.IsEnabledGlobally(featuremgmt.FlagPluginAssetProvider),
 		},
-		cfg.AngularSupportEnabled,
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
 		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
-		cfg.PluginInstallToken,
+		cfg.GrafanaComSSOAPIToken,
 	), nil
 }
 

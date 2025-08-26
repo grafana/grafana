@@ -1,9 +1,10 @@
-import { each } from 'lodash';
+import { formatDateRange } from '@grafana/i18n';
 
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
+import { getFeatureToggle } from '../utils/featureToggles';
 
 import * as dateMath from './datemath';
-import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
 import { isDateTime, DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
@@ -17,7 +18,7 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   y: { display: 'year' },
 };
 
-const rangeOptions: TimeOption[] = [
+const BASE_RANGE_OPTIONS: TimeOption[] = [
   { from: 'now/d', to: 'now/d', display: 'Today' },
   { from: 'now/d', to: 'now', display: 'Today so far' },
   { from: 'now/w', to: 'now/w', display: 'This week' },
@@ -66,7 +67,7 @@ const rangeOptions: TimeOption[] = [
   { from: 'now/fy', to: 'now/fy', display: 'This fiscal year' },
 ];
 
-const hiddenRangeOptions: TimeOption[] = [
+const HIDDEN_RANGE_OPTIONS: TimeOption[] = [
   { from: 'now', to: 'now+1m', display: 'Next minute' },
   { from: 'now', to: 'now+5m', display: 'Next 5 minutes' },
   { from: 'now', to: 'now+15m', display: 'Next 15 minutes' },
@@ -86,13 +87,11 @@ const hiddenRangeOptions: TimeOption[] = [
   { from: 'now', to: 'now+5y', display: 'Next 5 years' },
 ];
 
-const rangeIndex: Record<string, TimeOption> = {};
-each(rangeOptions, (frame) => {
-  rangeIndex[frame.from + ' to ' + frame.to] = frame;
-});
-each(hiddenRangeOptions, (frame) => {
-  rangeIndex[frame.from + ' to ' + frame.to] = frame;
-});
+const STANDARD_RANGE_OPTIONS = BASE_RANGE_OPTIONS.concat(HIDDEN_RANGE_OPTIONS);
+
+function findRangeInOptions(range: RawTimeRange, options: TimeOption[]) {
+  return options.find((option) => option.from === range.from && option.to === range.to);
+}
 
 // handles expressions like
 // 5m
@@ -106,7 +105,7 @@ export function describeTextRange(expr: string): TimeOption {
     expr = (isLast ? 'now-' : 'now') + expr;
   }
 
-  let opt = rangeIndex[expr + ' to now'];
+  let opt = findRangeInOptions({ from: expr, to: 'now' }, STANDARD_RANGE_OPTIONS);
   if (opt) {
     return opt;
   }
@@ -138,20 +137,29 @@ export function describeTextRange(expr: string): TimeOption {
   return opt;
 }
 
+// TODO: Should we keep these format presets somewhere common?
+const rangeFormatShort: Intl.DateTimeFormatOptions = {
+  dateStyle: 'short',
+  timeStyle: 'short',
+};
+
+const rangeFormatFull: Intl.DateTimeFormatOptions = {
+  dateStyle: 'short',
+  timeStyle: 'medium',
+};
+
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
  *
- * @example
- * ```
- * // Prints "2":
- * console.log(add(1,1));
- * ```
  * @category TimeUtils
  * @param range - a time range (usually specified by the TimePicker)
+ * @param timeZone - optional time zone.
+ * @param quickRanges - optional dashboard's custom quick ranges to pick range names from.
  * @alpha
  */
-export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): string {
-  const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]): string {
+  const rangeOptions = quickRanges ? quickRanges.concat(STANDARD_RANGE_OPTIONS) : STANDARD_RANGE_OPTIONS;
+  const option = findRangeInOptions(range, rangeOptions);
 
   if (option) {
     return option.display;
@@ -160,9 +168,25 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): str
   const options = { timeZone };
 
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
+    const fromDate = range.from.toDate();
+    const toDate = range.to.toDate();
+
+    if (!getFeatureToggle('localeFormatPreference')) {
+      return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
+    }
+
+    const hasSeconds = fromDate.getSeconds() !== 0 || toDate.getSeconds() !== 0;
+    const intlFormat = hasSeconds ? rangeFormatFull : rangeFormatShort;
+    const intlFormatOptions = {
+      ...intlFormat,
+      timeZone: timeZone ? toIANATimezone(timeZone) : undefined,
+    };
+
+    return formatDateRange(fromDate, toDate, intlFormatOptions);
   }
 
+  // TODO: We could update these to all use Intl APIs.
+  // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
     const parsed = dateMath.parse(range.to, true, 'utc');
     return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
@@ -299,7 +323,7 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
   };
 }
 
-const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
+const interval_regex = /^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 // histogram & trends
 const intervals_in_seconds: Record<string, number> = {
   y: 31536000,

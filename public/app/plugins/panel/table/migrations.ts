@@ -10,7 +10,7 @@ import {
   DataFrame,
   FieldType,
 } from '@grafana/data';
-import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
+import { ReduceTransformerOptions } from '@grafana/data/internal';
 
 import { Options } from './panelcfg.gen';
 
@@ -136,7 +136,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.decimals) {
+  if (style.decimals !== undefined) {
     override.properties.push({
       id: 'decimals',
       value: style.decimals,
@@ -186,7 +186,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.thresholds?.length) {
+  if (style.thresholds?.length && style.colors?.length) {
     override.properties.push({
       id: 'thresholds',
       value: {
@@ -216,7 +216,7 @@ const migrateDefaults = (prevDefaults: Style) => {
       isNil
     );
 
-    if (prevDefaults.thresholds.length) {
+    if (prevDefaults.thresholds && prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),

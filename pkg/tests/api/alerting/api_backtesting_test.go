@@ -4,8 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
-	"path/filepath"
+	"path"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -17,13 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestBacktesting(t *testing.T) {
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+	dir, grafanaPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
@@ -34,17 +32,11 @@ func TestBacktesting(t *testing.T) {
 		EnableLog: false,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, grafanaPath)
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
-	input, err := os.ReadFile(filepath.Join("api_backtesting_data.json"))
+	input, err := testData.ReadFile(path.Join("test-data", "api_backtesting_data.json"))
 	require.NoError(t, err)
 	var testData map[string]apimodels.BacktestConfig
 	require.NoError(t, json.Unmarshal(input, &testData))
@@ -62,7 +54,7 @@ func TestBacktesting(t *testing.T) {
 			Type:   "testdata",
 			Access: datasources.DS_ACCESS_PROXY,
 			UID:    query.DatasourceUID,
-			UserID: userId,
+			UserID: 1,
 			OrgID:  1,
 		}
 		_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)

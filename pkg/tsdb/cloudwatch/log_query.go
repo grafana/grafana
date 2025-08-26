@@ -2,23 +2,25 @@ package cloudwatch
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 
-func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
+func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput, groupingFieldNames []string) (*data.Frame, error) {
 	if response == nil {
 		return nil, fmt.Errorf("response is nil, cannot convert log results to data frames")
 	}
 
-	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
+	nonEmptyRows := make([][]cloudwatchlogstypes.ResultField, 0)
 	for _, row := range response.Results {
 		// Sometimes CloudWatch can send empty rows
 		if len(row) == 0 {
@@ -54,9 +56,13 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			if _, exists := fieldValues[*resultField.Field]; !exists {
 				fieldNames = append(fieldNames, *resultField.Field)
 
-				// Check if it's a time field
-				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
+				// Check if it's a cloudWatchTSFormat field or one of the known timestamp fields:
+				// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData-discoverable-fields.html
+				// which can be in a millisecond format as well as cloudWatchTSFormat string format
+				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil || isTimestampField(*resultField.Field) {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
+				} else if slices.Contains[[]string, string](groupingFieldNames, *resultField.Field) {
+					fieldValues[*resultField.Field] = make([]*string, rowCount)
 				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
 					fieldValues[*resultField.Field] = make([]*float64, rowCount)
 				} else {
@@ -67,9 +73,13 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			if timeField, ok := fieldValues[*resultField.Field].([]*time.Time); ok {
 				parsedTime, err := time.Parse(cloudWatchTSFormat, *resultField.Value)
 				if err != nil {
-					return nil, err
+					unixTimeMs, err := strconv.ParseInt(*resultField.Value, 10, 64)
+					if err == nil {
+						parsedTime = time.Unix(unixTimeMs/1000, (unixTimeMs%1000)*int64(time.Millisecond))
+					} else {
+						return nil, err
+					}
 				}
-
 				timeField[i] = &parsedTime
 			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
 				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
@@ -92,9 +102,10 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	for _, fieldName := range fieldNames {
 		newFields = append(newFields, data.NewField(fieldName, nil, fieldValues[fieldName]))
 
-		if fieldName == "@timestamp" {
+		switch fieldName {
+		case "@timestamp":
 			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{DisplayName: "Time"})
-		} else if fieldName == logStreamIdentifierInternal || fieldName == logIdentifierInternal {
+		case logStreamIdentifierInternal, logIdentifierInternal:
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
 					Custom: map[string]any{
@@ -107,26 +118,20 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	queryStats := make([]data.QueryStat, 0)
 	if response.Statistics != nil {
-		if response.Statistics.BytesScanned != nil {
-			queryStats = append(queryStats, data.QueryStat{
-				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
-				Value:       *response.Statistics.BytesScanned,
-			})
-		}
+		queryStats = append(queryStats, data.QueryStat{
+			FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
+			Value:       response.Statistics.BytesScanned,
+		})
 
-		if response.Statistics.RecordsScanned != nil {
-			queryStats = append(queryStats, data.QueryStat{
-				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
-				Value:       *response.Statistics.RecordsScanned,
-			})
-		}
+		queryStats = append(queryStats, data.QueryStat{
+			FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
+			Value:       response.Statistics.RecordsScanned,
+		})
 
-		if response.Statistics.RecordsMatched != nil {
-			queryStats = append(queryStats, data.QueryStat{
-				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
-				Value:       *response.Statistics.RecordsMatched,
-			})
-		}
+		queryStats = append(queryStats, data.QueryStat{
+			FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
+			Value:       response.Statistics.RecordsMatched,
+		})
 	}
 
 	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
@@ -139,10 +144,8 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		frame.Meta.Stats = queryStats
 	}
 
-	if response.Status != nil {
-		frame.Meta.Custom = map[string]any{
-			"Status": *response.Status,
-		}
+	frame.Meta.Custom = map[string]any{
+		"Status": string(response.Status),
 	}
 
 	// Results aren't guaranteed to come ordered by time (ascending), so we need to sort
@@ -150,7 +153,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	return frame, nil
 }
 
-func changeToStringField(lengthOfValues int, rows [][]*cloudwatchlogs.ResultField, logEventField string) []*string {
+func changeToStringField(lengthOfValues int, rows [][]cloudwatchlogstypes.ResultField, logEventField string) []*string {
 	fieldValuesAsStrings := make([]*string, lengthOfValues)
 	for i, resultFields := range rows {
 		for _, field := range resultFields {
@@ -170,15 +173,6 @@ func groupResults(results *data.Frame, groupingFieldNames []string, fromSyncQuer
 	for i, field := range results.Fields {
 		for _, groupingField := range groupingFieldNames {
 			if field.Name == groupingField {
-				// convert numeric grouping field to string field
-				if field.Type().Numeric() {
-					newField, err := numericFieldToStringField(field)
-					if err != nil {
-						return nil, err
-					}
-					results.Fields[i] = newField
-					field = newField
-				}
 				// For expressions and alerts to work properly we need to remove non-time grouping fields
 				if fromSyncQuery && !field.Type().Time() {
 					removeFieldIndices = append(removeFieldIndices, i)
@@ -208,8 +202,12 @@ func groupResults(results *data.Frame, groupingFieldNames []string, fromSyncQuer
 				groupLabels := generateLabels(groupingFields, i)
 
 				// set the group key as the display name for sync queries
-				for j := 1; j < len(newFrame.Fields); j++ {
+				for j := 0; j < len(newFrame.Fields); j++ {
 					valueField := newFrame.Fields[j]
+					// the time field might not be the first field so we check it here and skip the field if it is
+					if valueField.Type().Time() {
+						continue
+					}
 					if valueField.Config == nil {
 						valueField.Config = &data.FieldConfig{}
 					}
@@ -292,24 +290,6 @@ func generateLabels(fields []*data.Field, row int) data.Labels {
 	return labels
 }
 
-func numericFieldToStringField(field *data.Field) (*data.Field, error) {
-	if !field.Type().Numeric() {
-		return nil, fmt.Errorf("field is not numeric")
-	}
-
-	strings := make([]*string, field.Len())
-	for i := 0; i < field.Len(); i++ {
-		floatVal, err := field.FloatAt(i)
-		if err != nil {
-			return nil, err
-		}
-
-		strVal := fmt.Sprintf("%g", floatVal)
-		strings[i] = aws.String(strVal)
-	}
-
-	newField := data.NewField(field.Name, field.Labels, strings)
-	newField.Config = field.Config
-
-	return newField, nil
+func isTimestampField(fieldName string) bool {
+	return fieldName == "@timestamp" || fieldName == "@ingestionTime"
 }

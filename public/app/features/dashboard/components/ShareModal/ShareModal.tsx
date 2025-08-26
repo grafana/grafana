@@ -1,22 +1,23 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
 import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShareEmbed } from './ShareEmbed';
 import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
-import { ShareModalTabModel } from './types';
+import { ShareModalTabModel, ShareModalTabProps } from './types';
 import { getTrackingSource, shareDashboardType } from './utils';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
@@ -45,7 +46,7 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
 
   if (panel) {
     const embedLabel = t('share-modal.tab-title.embed', 'Embed');
-    tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbed });
+    tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbedTab });
 
     if (!isPanelModelLibraryPanel(panel)) {
       const libraryPanelLabel = t('share-modal.tab-title.library-panel', 'Library panel');
@@ -76,6 +77,17 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
     tabs,
     activeTab: at?.value ?? tabs[0].value,
   };
+}
+
+function ShareEmbedTab(props: ShareModalTabProps) {
+  return (
+    <ShareEmbed
+      dashboard={props.dashboard}
+      panelId={String(props.panel?.id)}
+      timeFrom={props.panel?.timeFrom}
+      onDismiss={props.onDismiss}
+    />
+  );
 }
 
 interface Props extends Themeable2 {

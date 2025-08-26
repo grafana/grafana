@@ -3,7 +3,10 @@ package folders
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,6 +16,11 @@ import (
 type storageMock struct {
 	*mock.Mock
 	rest.Storage
+}
+
+type searcherMock struct {
+	*mock.Mock
+	resourcepb.ResourceIndexClient
 }
 
 func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -66,4 +74,9 @@ func (m storageMock) Update(ctx context.Context, name string, objInfo rest.Updat
 		return nil, false, args.Error(2)
 	}
 	return args.Get(0).(runtime.Object), args.Bool(1), args.Error(2)
+}
+
+func (s searcherMock) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	args := s.Called(ctx, req)
+	return args.Get(0).(*resourcepb.ResourceStatsResponse), args.Error(1)
 }

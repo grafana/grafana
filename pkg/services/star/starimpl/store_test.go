@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -144,4 +146,38 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 			require.Equal(t, 1, len(res.UserStars))
 		})
 	})
+}
+
+func TestIntegration_StarMigrations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	testDB := db.InitTestDB(t)
+
+	d := dashboards.Dashboard{
+		UID:     "test",
+		Slug:    "org",
+		Created: time.Now(),
+		Updated: time.Now(),
+		OrgID:   100,
+	}
+	_, err := testDB.GetEngine().Insert(&d)
+	require.NoError(t, err)
+	require.NotZero(t, d.ID)
+
+	// Insert star record with NULL org_id and dashboard_uid
+	_, err = testDB.GetEngine().Exec(`INSERT INTO star (id, user_id, dashboard_id, dashboard_uid, org_id, updated) VALUES (?,?,?,?,?,?)`,
+		1000, 1, d.ID, nil, nil, time.Now())
+	require.NoError(t, err)
+
+	// Migration will update NULL user_id and dashboard_uid
+	require.NoError(t, migrations.RunStarMigrations(testDB.GetEngine().NewSession(), testDB.GetDialect().DriverName()))
+
+	// Check that star has updated fields
+	var s []star.Star
+	require.NoError(t, testDB.GetEngine().Find(&s))
+
+	require.Len(t, s, 1)
+	require.Equal(t, "test", s[0].DashboardUID)
+	require.Equal(t, int64(100), s[0].OrgID)
 }

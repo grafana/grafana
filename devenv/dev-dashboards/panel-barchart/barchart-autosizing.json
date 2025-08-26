@@ -29,10 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -82,9 +79,7 @@
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "list",
           "placement": "right"
         },
@@ -110,10 +105,7 @@
       "type": "barchart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "description": "Should be smaller given the longer value",
       "fieldConfig": {
         "defaults": {
@@ -165,9 +157,7 @@
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "list",
           "placement": "right"
         },
@@ -193,10 +183,7 @@
       "type": "barchart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -246,9 +233,7 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "list",
           "placement": "right"
         },
@@ -274,10 +259,7 @@
       "type": "barchart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -327,9 +309,7 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "list",
           "placement": "right"
         },
@@ -436,10 +416,7 @@
       "type": "barchart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -490,9 +467,7 @@
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "list",
           "placement": "right"
         },
@@ -518,10 +493,7 @@
       "type": "barchart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "grafana-testdata-datasource" },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -572,9 +544,7 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": ["max"],
           "displayMode": "list",
           "placement": "right"
         },
@@ -602,12 +572,7 @@
   ],
   "refresh": "",
   "schemaVersion": 36,
-  "tags": [
-    "gdev",
-    "panel-tests",
-    "barchart",
-    "graph-ng"
-  ],
+  "tags": ["gdev", "panel-tests", "barchart", "graph-ng"],
   "templating": {
     "list": []
   },

@@ -30,7 +30,8 @@ func TestDashboardQueries(t *testing.T) {
 	}
 
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
-		RootDir: "testdata",
+		RootDir:        "testdata",
+		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlQueryDashboards: {
 				{
@@ -67,6 +68,30 @@ func TestDashboardQueries(t *testing.T) {
 					Data: getQuery(&DashboardQuery{
 						OrgID:  2,
 						LastID: 22,
+					}),
+				},
+				{
+					Name: "folders",
+					Data: getQuery(&DashboardQuery{
+						OrgID:      2,
+						GetFolders: true,
+					}),
+				},
+				{
+					Name: "export_with_history",
+					Data: getQuery(&DashboardQuery{
+						OrgID:      1,
+						GetHistory: true,
+						Order:      "ASC",
+					}),
+				},
+				{
+					Name: "migration_with_fallback",
+					Data: getQuery(&DashboardQuery{
+						OrgID:         1,
+						GetHistory:    true,
+						AllowFallback: true,
+						Order:         "ASC",
 					}),
 				},
 			},

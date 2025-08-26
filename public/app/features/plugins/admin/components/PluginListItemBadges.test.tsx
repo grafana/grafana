@@ -65,7 +65,7 @@ describe('PluginListItemBadges', () => {
     config.licenseInfo.enabledFeatures = {};
     render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
-    expect(screen.getByLabelText(/lock icon/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/enterprise/i)).toBeInTheDocument();
   });
 
   it('renders a error badge (when plugin has an error)', () => {
@@ -99,9 +99,9 @@ describe('PluginListItemBadges', () => {
     expect(screen.queryByText(/update available/i)).toBeNull();
   });
 
-  it('renders an angular badge (when plugin is angular)', () => {
+  it('does not render an angular badge (when plugin is angular), because its not loaded', () => {
     render(<PluginListItemBadges plugin={{ ...plugin, angularDetected: true }} />);
-    expect(screen.getByText(/angular/i)).toBeVisible();
+    expect(screen.queryByText(/angular/i)).not.toBeInTheDocument();
   });
 
   it('does not render an angular badge (when plugin is not angular)', () => {

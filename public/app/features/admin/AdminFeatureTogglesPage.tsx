@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Icon } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { useStyles2, Icon, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 
 import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
@@ -28,8 +28,14 @@ export default function AdminFeatureTogglesPage() {
         </div>
         <span className={styles.message}>
           {featureState.value?.restartRequired
-            ? 'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
-            : 'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'}
+            ? t(
+                'admin.feature-toggles.restart-pending',
+                'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
+              )
+            : t(
+                'admin.feature-toggles.restart-required',
+                'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'
+              )}
         </span>
       </div>
     );
@@ -39,13 +45,12 @@ export default function AdminFeatureTogglesPage() {
     <div>
       <Trans i18nKey="admin.feature-toggles.sub-title">
         View and edit feature toggles. Read more about feature toggles at{' '}
-        <a
-          className="external-link"
-          target="_new"
+        <TextLink
           href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/"
+          external
         >
           grafana.com
-        </a>
+        </TextLink>
         .
       </Trans>
     </div>
@@ -55,7 +60,7 @@ export default function AdminFeatureTogglesPage() {
     <Page navId="feature-toggles" subTitle={subTitle}>
       <Page.Contents isLoading={featureState.loading}>
         <>
-          {featureState.error}
+          {featureState.error?.message}
           {featureState.loading && 'Fetching feature toggles'}
 
           <EditingAlert />

@@ -1,7 +1,8 @@
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { NEW_REDUCER_REF } from './query-and-alert-condition/reducer';
 import {
   containsPathSeparator,
   findRenamedDataQueryReferences,
@@ -163,10 +164,10 @@ describe('rule-editor', () => {
 
     it('should rewire threshold expressions', () => {
       const queries: AlertQuery[] = [dataSource, reduceExpression, thresholdExpression];
-      const rewiredQueries = queriesWithUpdatedReferences(queries, 'B', 'REDUCER');
+      const rewiredQueries = queriesWithUpdatedReferences(queries, 'B', NEW_REDUCER_REF);
 
       const queryModel = rewiredQueries[2].model as ExpressionQuery;
-      expect(queryModel.expression).toBe('REDUCER');
+      expect(queryModel.expression).toBe(NEW_REDUCER_REF);
     });
 
     it('should rewire multiple expressions', () => {

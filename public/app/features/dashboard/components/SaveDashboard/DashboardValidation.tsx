@@ -3,11 +3,12 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 interface DashboardValidationProps {
   dashboard: DashboardModel;
@@ -36,14 +37,27 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
   let alert: React.ReactNode;
 
   if (loading) {
-    alert = <Alert severity="info" title="Checking dashboard validity" />;
+    alert = (
+      <Alert
+        severity="info"
+        title={t('dashboard.dashboard-validation.title-checking-dashboard-validity', 'Checking dashboard validity')}
+      />
+    );
   } else if (value) {
     if (!value.isValid) {
       alert = (
-        <Alert severity="warning" title="Dashboard failed schema validation">
+        <Alert
+          severity="warning"
+          title={t(
+            'dashboard.dashboard-validation.title-dashboard-failed-schema-validation',
+            'Dashboard failed schema validation'
+          )}
+        >
           <p>
-            Validation is provided for development purposes and should be safe to ignore. If you are a Grafana
-            developer, consider checking and updating the dashboard schema
+            <Trans i18nKey="dashboard.dashboard-validation.body-dashboard-failed-schema-validation">
+              Validation is provided for development purposes and should be safe to ignore. If you are a Grafana
+              developer, consider checking and updating the dashboard schema
+            </Trans>
           </p>
           <div className={styles.error}>{value.message}</div>
         </Alert>
@@ -52,7 +66,13 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
   } else {
     const errorMessage = error?.message ?? 'Unknown error';
     alert = (
-      <Alert severity="info" title="Error checking dashboard validity">
+      <Alert
+        severity="info"
+        title={t(
+          'dashboard.dashboard-validation.title-error-checking-dashboard-validity',
+          'Error checking dashboard validity'
+        )}
+      >
         <p className={styles.error}>{errorMessage}</p>
       </Alert>
     );

@@ -3,6 +3,7 @@ package userstorage
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -13,8 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	userstorage "github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -26,10 +25,6 @@ type UserStorageAPIBuilder struct {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *UserStorageAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagUserStorageAPI) {
-		return nil
-	}
-
 	builder := &UserStorageAPIBuilder{
 		registerer: registerer,
 	}
@@ -59,6 +54,10 @@ func (b *UserStorageAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *UserStorageAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
+
 func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	resourceInfo := userstorage.UserStorageResourceInfo
 	storage := map[string]rest.Storage{}
@@ -76,10 +75,6 @@ func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 
 func (b *UserStorageAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return userstorage.GetOpenAPIDefinitions
-}
-
-func (b *UserStorageAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -103,7 +98,7 @@ func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			switch attr.GetVerb() {
 			case "create":
 				// Create requests are validated later since we don't have access to the resource name
-				return authorizer.DecisionNoOpinion, "", nil
+				return authorizer.DecisionAllow, "", nil
 			case "get", "delete", "patch", "update":
 				// Only allow the user to access their own settings
 				if !compareResourceNameAndUserUID(attr.GetName(), u) {

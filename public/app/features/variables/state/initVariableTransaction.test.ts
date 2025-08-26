@@ -1,6 +1,6 @@
-import { DataSourceRef, LoadingState } from '@grafana/data/src';
-import { setDataSourceSrv } from '@grafana/runtime/src';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DataSourceRef, LoadingState } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
@@ -49,6 +49,7 @@ function getTestContext(variables?: VariableModel[]) {
   const templating = { list: variables ?? [constant] };
   const getInstanceSettingsMock = jest.fn().mockReturnValue(undefined);
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     get: jest.fn().mockResolvedValue({}),
     getList: jest.fn().mockReturnValue([]),
     getInstanceSettings: getInstanceSettingsMock,

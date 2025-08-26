@@ -10,17 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
-	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
@@ -44,10 +43,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 )
 
 func ProvideBackgroundServiceRegistry(
@@ -55,8 +53,8 @@ func ProvideBackgroundServiceRegistry(
 	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pluginStore *pluginStore.Service,
 	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService, tracing *tracing.TracingService,
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
-	statsCollector *statscollector.Service, grafanaUpdateChecker *updatechecker.GrafanaService,
-	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
+	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
+	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
@@ -67,13 +65,14 @@ func ProvideBackgroundServiceRegistry(
 	ssoSettings *ssosettingsimpl.Service,
 	pluginExternal *pluginexternal.Service,
 	pluginInstaller *plugininstaller.Service,
-	accessControl accesscontrol.Service,
+	zanzanaReconciler *dualwrite.ZanzanaReconciler,
 	appRegistry *appregistry.Service,
+	pluginDashboardUpdater *plugindashboardsservice.DashboardUpdater,
+	dashboardServiceImpl *service.DashboardServiceImpl,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
-	_ serviceaccounts.Service, _ *guardian.Provider,
-	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
-	_ *grpcserver.HealthService, _ authz.Client, _ *grpcserver.ReflectionService,
+	_ serviceaccounts.Service,
+	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
 	_ cloudmigration.Service, _ authnimpl.Registration,
 ) *BackgroundServiceRegistry {
@@ -112,8 +111,10 @@ func ProvideBackgroundServiceRegistry(
 		ssoSettings,
 		pluginExternal,
 		pluginInstaller,
-		accessControl,
+		zanzanaReconciler,
 		appRegistry,
+		pluginDashboardUpdater,
+		dashboardServiceImpl,
 	)
 }
 

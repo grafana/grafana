@@ -1,5 +1,13 @@
 export const INVALID_EXTENSION_POINT_ID =
-  'Invalid usage of extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "myorg-foo-app/toolbar/v1".';
+  'Invalid usage of extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "myorg-foo-app/toolbar/v1". Returning an empty array of extensions.';
+
+export const INVALID_EXTENSION_POINT_ID_PLUGIN = (pluginId: string, extensionPointId: string) =>
+  `Invalid usage of extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "${pluginId}/${extensionPointId}".`;
+
+export const INVALID_EXTENSION_POINT_ID_GRAFANA_PREFIX = (extensionPointId: string) =>
+  `Invalid usage of extension point. Reason: Core Grafana extension point id should be prefixed with "grafana/", e.g "grafana/${extensionPointId}".`;
+
+export const INVALID_EXTENSION_POINT_ID_GRAFANA_EXPOSED = `Invalid usage of extension point. Reason: Core Grafana extension point id should be exposed to plugins via the "PluginExtensionPoints" enum in the "grafana-data" package (/packages/grafana-data/src/types/pluginExtensions.ts).`;
 
 export const EXTENSION_POINT_META_INFO_MISSING =
   'Invalid usage of extension point. Reason: The extension point is not recorded in the "plugin.json" file. Extension points must be listed in the section "extensions.extensionPoints[]". Returning an empty array of extensions.';
@@ -7,6 +15,8 @@ export const EXTENSION_POINT_META_INFO_MISSING =
 export const TITLE_MISSING = 'Title is missing.';
 
 export const DESCRIPTION_MISSING = 'Description is missing.';
+
+export const INVALID_EXTENSION_FUNCTION = 'The "fn" argument is invalid, it should be a function.';
 
 export const INVALID_CONFIGURE_FUNCTION = 'The "configure" function is invalid. It should be a function.';
 
@@ -32,6 +42,9 @@ export const TITLE_NOT_MATCHING_META_INFO = 'The "title" doesn\'t match the titl
 
 export const ADDED_LINK_META_INFO_MISSING =
   'The extension was not recorded in the plugin.json. Added link extensions must be listed in the section "extensions.addedLinks[]". Currently, this is only required in development but will be enforced also in production builds in the future.';
+
+export const ADDED_FUNCTION_META_INFO_MISSING =
+  'The extension was not recorded in the plugin.json. Added function extensions must be listed in the section "extensions.addedFunction[]". Currently, this is only required in development but will be enforced also in production builds in the future.';
 
 export const DESCRIPTION_NOT_MATCHING_META_INFO =
   'The "description" doesn\'t match the description recorded in plugin.json.';

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue, StandardEditorContext } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -53,8 +54,12 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
 
   const allLayersEditorFragment = (
     <InlineFieldRow>
-      <InlineField label="Layer" labelWidth={labelWidth} grow={true}>
-        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} />
+      <InlineField
+        label={t('geomap.fit-map-view-editor.all-layers-editor-fragment.label-layer', 'Layer')}
+        labelWidth={labelWidth}
+        grow={true}
+      >
+        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} value={value.layer} />
       </InlineField>
     </InlineFieldRow>
   );
@@ -66,10 +71,13 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
   const lastOnlyEditorFragment = (
     <InlineFieldRow>
       <InlineField
-        label="Padding"
+        label={t('geomap.fit-map-view-editor.last-only-editor-fragment.label-padding', 'Padding')}
         labelWidth={labelWidth}
         grow={true}
-        tooltip="sets padding in relative percent beyond data extent"
+        tooltip={t(
+          'geomap.fit-map-view-editor.last-only-editor-fragment.tooltip-padding-relative-percent-beyond-extent',
+          'Sets padding in relative percent beyond data extent'
+        )}
       >
         <NumberInput value={value?.padding ?? 5} min={0} step={1} onChange={onChangePadding} />
       </InlineField>
@@ -102,7 +110,7 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Data" labelWidth={labelWidth} grow={true}>
+        <InlineField label={t('geomap.fit-map-view-editor.label-data', 'Data')} labelWidth={labelWidth} grow={true}>
           <RadioButtonGroup
             value={currentDataScope}
             options={DataScopeOptions}

@@ -10,7 +10,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
     managedIdentityEnabled: true,
     workloadIdentityEnabled: true,
-    userIdentityEnabled: true,
     credentials: { authType: 'currentuser' },
     azureCloudOptions: [
       { value: 'AzureCloud', label: 'Azure' },

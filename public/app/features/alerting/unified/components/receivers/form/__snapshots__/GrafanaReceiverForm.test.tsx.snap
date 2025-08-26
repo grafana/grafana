@@ -1,6 +1,83 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`GrafanaReceiverForm alertingApiServer handles nested secure fields correctly 1`] = `
+exports[`GrafanaReceiverForm SNS contact point should handle secure fields correctly when editing contact point 1`] = `
+{
+  "metadata": {
+    "name": "amazon-sns-id",
+    "resourceVersion": "a5e9fd75262d5488",
+  },
+  "spec": {
+    "integrations": [
+      {
+        "disableResolveMessage": false,
+        "name": "amazon-sns",
+        "secureFields": {
+          "sigv4.secret_key": true,
+        },
+        "settings": {
+          "api_url": "https://amazon.example.com:1234",
+          "sigv4": {
+            "access_key": "new-access-key",
+            "region": "us-east-1",
+          },
+          "topic_arn": "arn:aws:sns:us-east-1:123456789012:MyTopic",
+        },
+        "type": "sns",
+      },
+    ],
+    "title": "amazon-sns",
+  },
+}
+`;
+
+exports[`GrafanaReceiverForm Webhook contact point should properly remove TLS config when deleted 1`] = `
+{
+  "metadata": {
+    "name": "webhook-id",
+    "resourceVersion": "a5e9fd75262d5488",
+  },
+  "spec": {
+    "integrations": [
+      {
+        "disableResolveMessage": false,
+        "name": "webhook-test",
+        "secureFields": {
+          "http_config.oauth2.client_secret": true,
+        },
+        "settings": {
+          "http_config": {
+            "oauth2": {
+              "client_id": "client-id",
+              "endpoint_params": {
+                "param1": "value1",
+                "param2": "value2",
+              },
+              "proxy_config": {
+                "no_proxy": "example.com",
+                "proxy_connect_header": {
+                  "X-Custom-Header": "custom-value",
+                },
+                "proxy_from_environment": true,
+                "proxy_url": "http://example.com/proxy",
+              },
+              "scopes": [
+                "scope1",
+                "scope2",
+              ],
+              "token_url": "http://example.com/oauth2/token",
+            },
+          },
+          "url": "http://example.com",
+        },
+        "type": "webhook",
+      },
+    ],
+    "title": "webhook-test",
+  },
+}
+`;
+
+exports[`GrafanaReceiverForm handles nested secure fields correctly 1`] = `
 {
   "metadata": {},
   "spec": {
@@ -8,11 +85,7 @@ exports[`GrafanaReceiverForm alertingApiServer handles nested secure fields corr
       {
         "disableResolveMessage": false,
         "name": "mqtt contact point",
-        "secureFields": {
-          "password": true,
-          "tlsConfig.clientCertificate": true,
-          "tlsConfig.clientKey": true,
-        },
+        "secureFields": {},
         "settings": {
           "brokerUrl": "broker url",
           "retain": false,

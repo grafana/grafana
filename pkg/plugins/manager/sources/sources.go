@@ -5,26 +5,32 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	cfg *setting.Cfg
+	cfg            *config.PluginManagementCfg
+	staticRootPath string
+
 	log log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService(cfg *setting.Cfg, pCcfg *config.PluginManagementCfg) *Service {
 	return &Service{
-		cfg: cfg,
-		log: log.New("plugin.sources"),
+		cfg:            pCcfg,
+		staticRootPath: cfg.StaticRootPath,
+		log:            log.New("plugin.sources"),
 	}
 }
 
 func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	r := []plugins.PluginSource{
-		NewLocalSource(plugins.ClassCore, corePluginPaths(s.cfg.StaticRootPath)),
-		NewLocalSource(plugins.ClassBundled, []string{s.cfg.BundledPluginsPath}),
+		NewLocalSource(
+			plugins.ClassCore,
+			s.corePluginPaths(),
+		),
 	}
 	r = append(r, s.externalPluginSources()...)
 	r = append(r, s.pluginSettingSources()...)
@@ -32,7 +38,7 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 }
 
 func (s *Service) externalPluginSources() []plugins.PluginSource {
-	localSrcs, err := DirAsLocalSources(s.cfg.PluginsPath, plugins.ClassExternal)
+	localSrcs, err := DirAsLocalSources(s.cfg, s.cfg.PluginsPath, plugins.ClassExternal)
 	if err != nil {
 		s.log.Error("Failed to load external plugins", "error", err)
 		return []plugins.PluginSource{}
@@ -53,16 +59,19 @@ func (s *Service) pluginSettingSources() []plugins.PluginSource {
 		if !exists || path == "" {
 			continue
 		}
-
-		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}))
+		if s.cfg.DevMode {
+			sources = append(sources, NewUnsafeLocalSource(plugins.ClassExternal, []string{path}))
+		} else {
+			sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}))
+		}
 	}
 
 	return sources
 }
 
 // corePluginPaths provides a list of the Core plugin file system paths
-func corePluginPaths(staticRootPath string) []string {
-	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
-	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
+func (s *Service) corePluginPaths() []string {
+	datasourcePaths := filepath.Join(s.staticRootPath, "app", "plugins", "datasource")
+	panelsPath := filepath.Join(s.staticRootPath, "app", "plugins", "panel")
 	return []string{datasourcePaths, panelsPath}
 }

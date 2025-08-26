@@ -29,11 +29,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
 
-	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
-	if errors.As(err, &secretsPlugin) {
-		return response.Error(http.StatusInternalServerError, fmt.Sprint("Secrets Plugin error: ", err.Error()), err)
-	}
-
 	return response.ErrOrFallback(http.StatusInternalServerError, "Query data error", err)
 }
 
@@ -76,7 +71,16 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	handleTimeInQuery := c.Req.Header.Get("X-Query-V2") == "true"
+
+	var resp *backend.QueryDataResponse
+	var err error
+	if handleTimeInQuery {
+		resp, err = hs.queryDataService.QueryDataNew(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	} else {
+		resp, err = hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	}
+
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}

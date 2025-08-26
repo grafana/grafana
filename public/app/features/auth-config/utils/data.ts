@@ -1,9 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 
-import { fieldMap, sectionFields } from '../fields';
+import { fieldMap, getSectionFields } from '../fields';
 import { FieldData, SSOProvider, SSOProviderDTO } from '../types';
 
-import { isSelectableValue } from './guards';
+import { isSelectableValueArray } from './guards';
 
 export const emptySettings: SSOProviderDTO = {
   allowAssignGrafanaAdmin: false,
@@ -15,12 +15,17 @@ export const emptySettings: SSOProviderDTO = {
   authStyle: '',
   authUrl: '',
   autoLogin: false,
+  clientAuthentication: '',
   clientId: '',
   clientSecret: '',
+  managedIdentityClientId: '',
+  federatedCredentialAudience: '',
+  workloadIdentityTokenFile: '',
   emailAttributeName: '',
   emailAttributePath: '',
   emptyScopes: false,
   enabled: false,
+  loginPrompt: '',
   extra: {},
   groupsAttributePath: '',
   hostedDomain: '',
@@ -53,7 +58,10 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
   }
   // Stored as JSON Array
   if (val.startsWith('[') && val.endsWith(']')) {
-    return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+    // Fallback to parsing it like a non-json string if it is not valid json, instead of crashing.
+    try {
+      return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
+    } catch {}
   }
 
   return val.split(/[\s,]/).map((s) => ({ label: s, value: s }));
@@ -75,15 +83,12 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
 }
 
 const valuesToString = (values: Array<SelectableValue<string>>) => {
-  if (values.length <= 1) {
-    return values.map(({ value }) => value).join(',');
-  }
-  // Store as JSON array if there are multiple values
+  // Store arrays as JSON array
   return JSON.stringify(values.map(({ value }) => value));
 };
 
 const getFieldsForProvider = (provider: string) => {
-  const sections = sectionFields[provider];
+  const sections = getSectionFields()[provider];
 
   // include the enabled field because it is not part of the fields defined for providers
   const fields = ['enabled'];
@@ -115,10 +120,10 @@ export function dtoToData(dto: SSOProviderDTO, provider: string) {
   for (const field of arrayFields) {
     const value = current[field];
     if (value) {
-      if (isSelectableValue(value)) {
+      if (isSelectableValueArray(value)) {
         //@ts-expect-error
         settings[field] = valuesToString(value);
-      } else if (isSelectableValue([value])) {
+      } else if (isSelectableValueArray([value])) {
         //@ts-expect-error
         settings[field] = value.value;
       }
@@ -130,5 +135,5 @@ export function dtoToData(dto: SSOProviderDTO, provider: string) {
 export function getArrayFields(obj: Record<string, FieldData>, providerFields: string[]): Array<keyof SSOProviderDTO> {
   return Object.entries(obj)
     .filter(([key, value]) => providerFields.includes(key) && value.type === 'select')
-    .map(([key]) => key as keyof SSOProviderDTO);
+    .map(([key]) => key as keyof SSOProviderDTO); // TODO: replace this with a type guard
 }

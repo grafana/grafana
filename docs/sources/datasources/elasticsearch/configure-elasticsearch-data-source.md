@@ -42,7 +42,7 @@ You can create a variety of queries to visualize logs or metrics stored in Elast
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 
 Only users with the organization `administrator` role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](ref:provisioning-data-sources) with Grafana's provisioning system.
 
 ## Configuring permissions
 
@@ -95,9 +95,9 @@ Select one of the following authentication methods from the dropdown menu.
 
 ### TLS settings
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Use TLS (Transport Layer Security) for an additional layer of security when working with Elasticsearch. For information on setting up TLS encryption with Elasticsearch see [Configure TLS](https://www.elastic.co/guide/en/elasticsearch/reference/8.8/configuring-tls.html#configuring-tls). You must add TLS settings to your Elasticsearch configuration file **prior** to setting these options in Grafana.
-{{% /admonition %}}
+{{< /admonition >}}
 
 - **Add self-signed certificate** - Check the box to authenticate with a CA certificate. Follow the instructions of the CA (Certificate Authority) to download the certificate file. Required for verifying self-signed TLS certificates.
 
@@ -127,16 +127,17 @@ Additional settings are optional settings that can be configured for more contro
 
 The following settings are specific to the Elasticsearch data source.
 
-- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
+- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
 
 - **Pattern** - Select the matching pattern if using one in your index name. Options include:
-
   - no pattern
   - hourly
   - daily
   - weekly
   - monthly
   - yearly
+
+Only select a pattern option if you have specified a time pattern in the Index name field.
 
 - **Time field name** - Name of the time field. The default value is @timestamp. You can enter a different name.
 
@@ -160,13 +161,13 @@ For example, set this to `1m` if Elasticsearch writes data every minute.
 
 You can also override this setting in a dashboard panel under its data source options. The default is `10s`.
 
-- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
+- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor](../query-editor/) with additional aggregations, such as `Rate` and `Top Metrics`.
 
 - **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active. Includes frozen indices in searches. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Logs
 

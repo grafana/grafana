@@ -1,41 +1,166 @@
 package common
 
 import (
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"google.golang.org/protobuf/types/known/structpb"
 
-	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	iamalpha1 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-type TypeInfo struct {
-	Type string
+type typeInfo struct {
+	Type      string
+	Relations []string
 }
 
-var typedResources = map[string]TypeInfo{
+var typedResources = map[string]typeInfo{
 	FormatGroupResource(
-		folderalpha1.FolderResourceInfo.GroupResource().Group,
-		folderalpha1.FolderResourceInfo.GroupResource().Resource,
-	): {Type: "folder"},
+		folders.FolderResourceInfo.GroupResource().Group,
+		folders.FolderResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "folder", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamalpha1.TeamResourceInfo.GroupResource().Group,
+		iamalpha1.TeamResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "team", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamalpha1.UserResourceInfo.GroupResource().Group,
+		iamalpha1.UserResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "user", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamalpha1.ServiceAccountResourceInfo.GroupResource().Group,
+		iamalpha1.ServiceAccountResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "service-account", Relations: RelationsTyped},
 }
 
-func GetTypeInfo(group, resource string) (TypeInfo, bool) {
-	info, ok := typedResources[FormatGroupResource(group, resource)]
+func getTypeInfo(group, resource string) (typeInfo, bool) {
+	info, ok := typedResources[FormatGroupResource(group, resource, "")]
 	return info, ok
 }
 
-var VerbMapping = map[string]string{
-	utils.VerbGet:              RelationRead,
-	utils.VerbList:             RelationRead,
-	utils.VerbWatch:            RelationRead,
-	utils.VerbCreate:           RelationCreate,
-	utils.VerbUpdate:           RelationWrite,
-	utils.VerbPatch:            RelationWrite,
-	utils.VerbDelete:           RelationDelete,
-	utils.VerbDeleteCollection: RelationDelete,
+func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
+	typ, relations := getTypeAndRelations(r.GetGroup(), r.GetResource())
+	return newResource(
+		typ,
+		r.GetGroup(),
+		r.GetResource(),
+		r.GetName(),
+		r.GetFolder(),
+		r.GetSubresource(),
+		relations,
+	)
 }
 
-var RelationToVerbMapping = map[string]string{
-	RelationRead:   utils.VerbGet,
-	RelationCreate: utils.VerbCreate,
-	RelationWrite:  utils.VerbUpdate,
-	RelationDelete: utils.VerbDelete,
+func NewResourceInfoFromBatchItem(i *authzextv1.BatchCheckItem) ResourceInfo {
+	typ, relations := getTypeAndRelations(i.GetGroup(), i.GetResource())
+	return newResource(
+		typ,
+		i.GetGroup(),
+		i.GetResource(),
+		i.GetName(),
+		i.GetFolder(),
+		i.GetSubresource(),
+		relations,
+	)
+}
+
+func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
+	typ, relations := getTypeAndRelations(r.GetGroup(), r.GetResource())
+	return newResource(
+		typ,
+		r.GetGroup(),
+		r.GetResource(),
+		"",
+		"",
+		r.GetSubresource(),
+		relations,
+	)
+}
+
+func getTypeAndRelations(group, resource string) (string, []string) {
+	if info, ok := getTypeInfo(group, resource); ok {
+		return info.Type, info.Relations
+	}
+	return TypeResource, RelationsResource
+}
+
+func newResource(
+	typ, group, resource, name, folder, subresource string, relations []string,
+) ResourceInfo {
+	return ResourceInfo{
+		typ:         typ,
+		group:       group,
+		resource:    resource,
+		name:        name,
+		folder:      folder,
+		subresource: subresource,
+		relations:   relations,
+	}
+}
+
+type ResourceInfo struct {
+	typ         string
+	group       string
+	resource    string
+	name        string
+	folder      string
+	subresource string
+	relations   []string
+}
+
+func (r ResourceInfo) GroupResource() string {
+	return FormatGroupResource(r.group, r.resource, r.subresource)
+}
+
+func (r ResourceInfo) GroupResourceIdent() string {
+	return NewGroupResourceIdent(r.group, r.resource, r.subresource)
+}
+
+func (r ResourceInfo) ResourceIdent() string {
+	if r.name == "" {
+		return ""
+	}
+
+	if r.IsGeneric() {
+		return NewResourceIdent(r.group, r.resource, r.subresource, r.name)
+	}
+
+	return NewTypedIdent(r.typ, r.name)
+}
+
+func (r ResourceInfo) FolderIdent() string {
+	if r.folder == "" {
+		return ""
+	}
+
+	return NewFolderIdent(r.folder)
+}
+
+func (r ResourceInfo) IsGeneric() bool {
+	return r.typ == TypeResource
+}
+
+func (r ResourceInfo) Type() string {
+	return r.typ
+}
+
+func (r ResourceInfo) Context() *structpb.Struct {
+	return &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"requested_group": structpb.NewStringValue(r.GroupResource()),
+			"subresource":     structpb.NewStringValue(r.GroupResource()),
+		},
+	}
+}
+
+func (r ResourceInfo) IsValidRelation(relation string) bool {
+	return isValidRelation(relation, r.relations)
+}
+
+func (r ResourceInfo) HasSubresource() bool {
+	return r.subresource != ""
 }

@@ -22,7 +22,7 @@ func NewFakePluginInstaller() *fakePluginInstaller {
 	return &fakePluginInstaller{plugins: map[string]fakePlugin{}}
 }
 
-func (pm *fakePluginInstaller) Add(_ context.Context, pluginID, version string, _ plugins.CompatOpts) error {
+func (pm *fakePluginInstaller) Add(_ context.Context, pluginID, version string, _ plugins.AddOpts) error {
 	pm.plugins[pluginID] = fakePlugin{
 		pluginID: pluginID,
 		version:  version,

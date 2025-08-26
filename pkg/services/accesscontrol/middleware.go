@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -36,7 +37,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
 				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
-				if err == nil && orgID > 0 && orgID != c.SignedInUser.GetOrgID() {
+				if err == nil && orgID > 0 && orgID != c.GetOrgID() {
 					forceLogin = true
 				}
 
@@ -87,10 +88,21 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	id := newID()
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
+		// Return 404s for dashboard not found errors, our plugins rely on being able to distinguish between access denied and not found.
+		var dashboardErr dashboardaccess.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			if c.IsApiRequest() && dashboardErr.StatusCode == http.StatusNotFound {
+				c.JSON(http.StatusNotFound, map[string]string{
+					"title":   "Not found", // the component needs to pick this up
+					"message": dashboardErr.Error(),
+				})
+				return
+			}
+		}
 	} else {
 		c.Logger.Info(
 			"Access denied",
-			"id", c.SignedInUser.GetID(),
+			"id", c.GetID(),
 			"accessErrorID", id,
 			"permissions", evaluator.GoString(),
 		)
@@ -228,7 +240,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 
 			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
-				if errors.Is(err, ErrInvalidRequestBody) {
+				if errors.Is(err, ErrInvalidRequestBody) || errors.Is(err, ErrInvalidRequest) {
 					c.JSON(http.StatusBadRequest, map[string]string{
 						"message": err.Error(),
 						"traceID": tracing.TraceIDFromContext(c.Req.Context(), false),
@@ -240,11 +252,11 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 			}
 
 			var orgUser identity.Requester = c.SignedInUser
-			if targetOrgID != c.SignedInUser.GetOrgID() {
-				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+			if targetOrgID != c.GetOrgID() {
+				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.GetID())
 				if err == nil && orgUser.GetOrgID() == NoOrgID {
 					// User is not a member of the target org, so only their global permissions are relevant
-					orgUser, err = authnService.ResolveIdentity(c.Req.Context(), GlobalOrgID, c.SignedInUser.GetID())
+					orgUser, err = authnService.ResolveIdentity(c.Req.Context(), GlobalOrgID, c.GetID())
 				}
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
@@ -254,10 +266,10 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 			authorize(c, ac, orgUser, evaluator)
 
 			// guard against nil map
-			if c.SignedInUser.Permissions == nil {
-				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+			if c.Permissions == nil {
+				c.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
+			c.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 		}
 	}
 }
@@ -296,12 +308,11 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	query, err := getOrgQueryFromRequest(c)
 	if err != nil {
-		// Special case of macaron handling invalid params
-		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+		return NoOrgID, err
 	}
 
 	if query.OrgId == nil {
-		return c.SignedInUser.GetOrgID(), nil
+		return c.GetOrgID(), nil
 	}
 
 	return *query.OrgId, nil
@@ -313,11 +324,7 @@ func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		query, err := getOrgQueryFromRequest(c)
 		if err != nil {
-			if errors.Is(err, ErrInvalidRequestBody) {
-				return NoOrgID, err
-			}
-			// Special case of macaron handling invalid params
-			return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+			return NoOrgID, err
 		}
 
 		// We only check permissions in the global organization if we are not running a SingleOrganization setup
@@ -326,7 +333,7 @@ func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 			return GlobalOrgID, nil
 		}
 
-		return c.SignedInUser.GetOrgID(), nil
+		return c.GetOrgID(), nil
 	}
 }
 
@@ -339,7 +346,7 @@ func UseGlobalOrgFromRequestParams(cfg *setting.Cfg) OrgIDGetter {
 			return GlobalOrgID, nil
 		}
 
-		return c.SignedInUser.GetOrgID(), nil
+		return c.GetOrgID(), nil
 	}
 }
 
@@ -355,7 +362,7 @@ func getOrgQueryFromRequest(c *contextmodel.ReqContext) (*QueryWithOrg, error) {
 		if err.Error() == "unexpected EOF" {
 			return nil, fmt.Errorf("%w: unexpected end of JSON input", ErrInvalidRequestBody)
 		}
-		return nil, err
+		return nil, ErrInvalidRequest.Errorf("error parsing request: %w", err)
 	}
 
 	return query, nil

@@ -5,7 +5,9 @@ import { FetchDataArgs } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, Team, TeamMember, ThunkResult } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ThunkResult } from 'app/types/store';
+import { Team, TeamMember, TeamWithRoles } from 'app/types/teams';
 
 import { buildNavModel } from './navModel';
 import {
@@ -46,9 +48,9 @@ export function loadTeams(initial = false): ThunkResult<void> {
       contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)
     ) {
       dispatch(rolesFetchBegin());
-      const teamIds = response?.teams.map((t: Team) => t.id);
+      const teamIds = response?.teams.map((t: TeamWithRoles) => t.id);
       const roles = await getBackendSrv().post(`/api/access-control/teams/roles/search`, { teamIds });
-      response.teams.forEach((t: Team) => {
+      response.teams.forEach((t: TeamWithRoles) => {
         t.roles = roles ? roles[t.id] || [] : [];
       });
       dispatch(rolesFetchEnd());
@@ -118,7 +120,7 @@ export function updateTeam(name: string, email: string): ThunkResult<void> {
 export function loadTeamGroups(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    const response = await getBackendSrv().get(`/api/teams/${team.id}/groups`);
+    const response = await getBackendSrv().get(`/api/teams/${team.uid}/groups`);
     dispatch(teamGroupsLoaded(response));
   };
 }
@@ -126,7 +128,7 @@ export function loadTeamGroups(): ThunkResult<void> {
 export function addTeamGroup(groupId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    await getBackendSrv().post(`/api/teams/${team.id}/groups`, { groupId: groupId });
+    await getBackendSrv().post(`/api/teams/${team.uid}/groups`, { groupId: groupId });
     dispatch(loadTeamGroups());
   };
 }
@@ -135,7 +137,7 @@ export function removeTeamGroup(groupId: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
     // need to use query parameter due to escaped characters in the request
-    await getBackendSrv().delete(`/api/teams/${team.id}/groups?groupId=${encodeURIComponent(groupId)}`);
+    await getBackendSrv().delete(`/api/teams/${team.uid}/groups?groupId=${encodeURIComponent(groupId)}`);
     dispatch(loadTeamGroups());
   };
 }

@@ -7,447 +7,728 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package dataquery
 
-// Defines values for CloudWatchQueryMode.
+import (
+	json "encoding/json"
+	errors "errors"
+)
+
+type MetricStat struct {
+	// AWS region to query for the metric
+	Region string `json:"region"`
+	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
+	Namespace string `json:"namespace"`
+	// Name of the metric
+	MetricName *string `json:"metricName,omitempty"`
+	// The dimensions of the metric
+	Dimensions *Dimensions `json:"dimensions,omitempty"`
+	// Only show metrics that exactly match all defined dimension names.
+	MatchExact *bool `json:"matchExact,omitempty"`
+	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
+	Period *string `json:"period,omitempty"`
+	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
+	AccountId *string `json:"accountId,omitempty"`
+	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
+	Statistic *string `json:"statistic,omitempty"`
+	// @deprecated use statistic
+	Statistics []string `json:"statistics,omitempty"`
+}
+
+// NewMetricStat creates a new MetricStat object.
+func NewMetricStat() *MetricStat {
+	return &MetricStat{}
+}
+
+// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
+type Dimensions map[string]StringOrArrayOfString
+
+// Shape of a CloudWatch Metrics query
+type CloudWatchMetricsQuery struct {
+	// Whether a query is a Metrics, Logs, or Annotations query
+	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
+	// Whether to use a metric search or metric insights query
+	MetricQueryType *MetricQueryType `json:"metricQueryType,omitempty"`
+	// Whether to use the query builder or code editor to create the query
+	MetricEditorMode *MetricEditorMode `json:"metricEditorMode,omitempty"`
+	// ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
+	Id string `json:"id"`
+	// Deprecated: use label
+	// @deprecated use label
+	Alias *string `json:"alias,omitempty"`
+	// Change the time series legend names using dynamic labels. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html for more details.
+	Label *string `json:"label,omitempty"`
+	// Math expression query
+	Expression *string `json:"expression,omitempty"`
+	// When the metric query type is set to `Insights`, this field is used to specify the query string.
+	SqlExpression *string `json:"sqlExpression,omitempty"`
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+	// AWS region to query for the metric
+	Region string `json:"region"`
+	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
+	Namespace string `json:"namespace"`
+	// Name of the metric
+	MetricName *string `json:"metricName,omitempty"`
+	// The dimensions of the metric
+	Dimensions *Dimensions `json:"dimensions,omitempty"`
+	// Only show metrics that exactly match all defined dimension names.
+	MatchExact *bool `json:"matchExact,omitempty"`
+	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
+	Period *string `json:"period,omitempty"`
+	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
+	AccountId *string `json:"accountId,omitempty"`
+	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
+	Statistic *string `json:"statistic,omitempty"`
+	// When the metric query type is set to `Insights` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
+	Sql *SQLExpression `json:"sql,omitempty"`
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource any `json:"datasource,omitempty"`
+	// @deprecated use statistic
+	Statistics []string `json:"statistics,omitempty"`
+}
+
+// NewCloudWatchMetricsQuery creates a new CloudWatchMetricsQuery object.
+func NewCloudWatchMetricsQuery() *CloudWatchMetricsQuery {
+	return &CloudWatchMetricsQuery{}
+}
+
+type CloudWatchQueryMode string
+
 const (
-	CloudWatchQueryModeAnnotations CloudWatchQueryMode = "Annotations"
-	CloudWatchQueryModeLogs        CloudWatchQueryMode = "Logs"
 	CloudWatchQueryModeMetrics     CloudWatchQueryMode = "Metrics"
+	CloudWatchQueryModeLogs        CloudWatchQueryMode = "Logs"
+	CloudWatchQueryModeAnnotations CloudWatchQueryMode = "Annotations"
 )
 
-// Defines values for MetricEditorMode.
+type MetricQueryType int64
+
 const (
-	MetricEditorModeN0 MetricEditorMode = 0
-	MetricEditorModeN1 MetricEditorMode = 1
+	MetricQueryTypeSearch   MetricQueryType = 0
+	MetricQueryTypeInsights MetricQueryType = 1
 )
 
-// Defines values for MetricQueryType.
+type MetricEditorMode int64
+
 const (
-	MetricQueryTypeN0 MetricQueryType = 0
-	MetricQueryTypeN1 MetricQueryType = 1
+	MetricEditorModeBuilder MetricEditorMode = 0
+	MetricEditorModeCode    MetricEditorMode = 1
 )
 
-// Defines values for QueryEditorArrayExpressionType.
-const (
-	QueryEditorArrayExpressionTypeAnd QueryEditorArrayExpressionType = "and"
-	QueryEditorArrayExpressionTypeOr  QueryEditorArrayExpressionType = "or"
-)
+type SQLExpression struct {
+	// SELECT part of the SQL expression
+	Select *QueryEditorFunctionExpression `json:"select,omitempty"`
+	// FROM part of the SQL expression
+	From *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression `json:"from,omitempty"`
+	// WHERE part of the SQL expression
+	Where *QueryEditorArrayExpression `json:"where,omitempty"`
+	// GROUP BY part of the SQL expression
+	GroupBy *QueryEditorArrayExpression `json:"groupBy,omitempty"`
+	// ORDER BY part of the SQL expression
+	OrderBy *QueryEditorFunctionExpression `json:"orderBy,omitempty"`
+	// The sort order of the SQL expression, `ASC` or `DESC`
+	OrderByDirection *string `json:"orderByDirection,omitempty"`
+	// LIMIT part of the SQL expression
+	Limit *int64 `json:"limit,omitempty"`
+}
 
-// Defines values for QueryEditorExpressionType.
+// NewSQLExpression creates a new SQLExpression object.
+func NewSQLExpression() *SQLExpression {
+	return &SQLExpression{}
+}
+
+type QueryEditorFunctionExpression struct {
+	Type       QueryEditorExpressionType                `json:"type"`
+	Name       *string                                  `json:"name,omitempty"`
+	Parameters []QueryEditorFunctionParameterExpression `json:"parameters,omitempty"`
+}
+
+// NewQueryEditorFunctionExpression creates a new QueryEditorFunctionExpression object.
+func NewQueryEditorFunctionExpression() *QueryEditorFunctionExpression {
+	return &QueryEditorFunctionExpression{
+		Type: QueryEditorExpressionTypeFunction,
+	}
+}
+
+type QueryEditorExpressionType string
+
 const (
-	QueryEditorExpressionTypeAnd               QueryEditorExpressionType = "and"
-	QueryEditorExpressionTypeFunction          QueryEditorExpressionType = "function"
-	QueryEditorExpressionTypeFunctionParameter QueryEditorExpressionType = "functionParameter"
-	QueryEditorExpressionTypeGroupBy           QueryEditorExpressionType = "groupBy"
+	QueryEditorExpressionTypeProperty          QueryEditorExpressionType = "property"
 	QueryEditorExpressionTypeOperator          QueryEditorExpressionType = "operator"
 	QueryEditorExpressionTypeOr                QueryEditorExpressionType = "or"
-	QueryEditorExpressionTypeProperty          QueryEditorExpressionType = "property"
+	QueryEditorExpressionTypeAnd               QueryEditorExpressionType = "and"
+	QueryEditorExpressionTypeGroupBy           QueryEditorExpressionType = "groupBy"
+	QueryEditorExpressionTypeFunction          QueryEditorExpressionType = "function"
+	QueryEditorExpressionTypeFunctionParameter QueryEditorExpressionType = "functionParameter"
 )
 
-// Defines values for QueryEditorFunctionExpressionType.
-const (
-	QueryEditorFunctionExpressionTypeAnd               QueryEditorFunctionExpressionType = "and"
-	QueryEditorFunctionExpressionTypeFunction          QueryEditorFunctionExpressionType = "function"
-	QueryEditorFunctionExpressionTypeFunctionParameter QueryEditorFunctionExpressionType = "functionParameter"
-	QueryEditorFunctionExpressionTypeGroupBy           QueryEditorFunctionExpressionType = "groupBy"
-	QueryEditorFunctionExpressionTypeOperator          QueryEditorFunctionExpressionType = "operator"
-	QueryEditorFunctionExpressionTypeOr                QueryEditorFunctionExpressionType = "or"
-	QueryEditorFunctionExpressionTypeProperty          QueryEditorFunctionExpressionType = "property"
-)
+type QueryEditorFunctionParameterExpression struct {
+	Type QueryEditorExpressionType `json:"type"`
+	Name *string                   `json:"name,omitempty"`
+}
 
-// Defines values for QueryEditorFunctionParameterExpressionType.
-const (
-	QueryEditorFunctionParameterExpressionTypeAnd               QueryEditorFunctionParameterExpressionType = "and"
-	QueryEditorFunctionParameterExpressionTypeFunction          QueryEditorFunctionParameterExpressionType = "function"
-	QueryEditorFunctionParameterExpressionTypeFunctionParameter QueryEditorFunctionParameterExpressionType = "functionParameter"
-	QueryEditorFunctionParameterExpressionTypeGroupBy           QueryEditorFunctionParameterExpressionType = "groupBy"
-	QueryEditorFunctionParameterExpressionTypeOperator          QueryEditorFunctionParameterExpressionType = "operator"
-	QueryEditorFunctionParameterExpressionTypeOr                QueryEditorFunctionParameterExpressionType = "or"
-	QueryEditorFunctionParameterExpressionTypeProperty          QueryEditorFunctionParameterExpressionType = "property"
-)
+// NewQueryEditorFunctionParameterExpression creates a new QueryEditorFunctionParameterExpression object.
+func NewQueryEditorFunctionParameterExpression() *QueryEditorFunctionParameterExpression {
+	return &QueryEditorFunctionParameterExpression{
+		Type: QueryEditorExpressionTypeFunctionParameter,
+	}
+}
 
-// Defines values for QueryEditorGroupByExpressionType.
-const (
-	QueryEditorGroupByExpressionTypeAnd               QueryEditorGroupByExpressionType = "and"
-	QueryEditorGroupByExpressionTypeFunction          QueryEditorGroupByExpressionType = "function"
-	QueryEditorGroupByExpressionTypeFunctionParameter QueryEditorGroupByExpressionType = "functionParameter"
-	QueryEditorGroupByExpressionTypeGroupBy           QueryEditorGroupByExpressionType = "groupBy"
-	QueryEditorGroupByExpressionTypeOperator          QueryEditorGroupByExpressionType = "operator"
-	QueryEditorGroupByExpressionTypeOr                QueryEditorGroupByExpressionType = "or"
-	QueryEditorGroupByExpressionTypeProperty          QueryEditorGroupByExpressionType = "property"
-)
+type QueryEditorPropertyExpression struct {
+	Type     QueryEditorExpressionType `json:"type"`
+	Property QueryEditorProperty       `json:"property"`
+}
 
-// Defines values for QueryEditorOperatorExpressionType.
-const (
-	QueryEditorOperatorExpressionTypeAnd               QueryEditorOperatorExpressionType = "and"
-	QueryEditorOperatorExpressionTypeFunction          QueryEditorOperatorExpressionType = "function"
-	QueryEditorOperatorExpressionTypeFunctionParameter QueryEditorOperatorExpressionType = "functionParameter"
-	QueryEditorOperatorExpressionTypeGroupBy           QueryEditorOperatorExpressionType = "groupBy"
-	QueryEditorOperatorExpressionTypeOperator          QueryEditorOperatorExpressionType = "operator"
-	QueryEditorOperatorExpressionTypeOr                QueryEditorOperatorExpressionType = "or"
-	QueryEditorOperatorExpressionTypeProperty          QueryEditorOperatorExpressionType = "property"
-)
+// NewQueryEditorPropertyExpression creates a new QueryEditorPropertyExpression object.
+func NewQueryEditorPropertyExpression() *QueryEditorPropertyExpression {
+	return &QueryEditorPropertyExpression{
+		Type:     QueryEditorExpressionTypeProperty,
+		Property: *NewQueryEditorProperty(),
+	}
+}
 
-// Defines values for QueryEditorPropertyExpressionType.
-const (
-	QueryEditorPropertyExpressionTypeAnd               QueryEditorPropertyExpressionType = "and"
-	QueryEditorPropertyExpressionTypeFunction          QueryEditorPropertyExpressionType = "function"
-	QueryEditorPropertyExpressionTypeFunctionParameter QueryEditorPropertyExpressionType = "functionParameter"
-	QueryEditorPropertyExpressionTypeGroupBy           QueryEditorPropertyExpressionType = "groupBy"
-	QueryEditorPropertyExpressionTypeOperator          QueryEditorPropertyExpressionType = "operator"
-	QueryEditorPropertyExpressionTypeOr                QueryEditorPropertyExpressionType = "or"
-	QueryEditorPropertyExpressionTypeProperty          QueryEditorPropertyExpressionType = "property"
-)
+type QueryEditorProperty struct {
+	Type QueryEditorPropertyType `json:"type"`
+	Name *string                 `json:"name,omitempty"`
+}
 
-// Defines values for QueryEditorPropertyType.
+// NewQueryEditorProperty creates a new QueryEditorProperty object.
+func NewQueryEditorProperty() *QueryEditorProperty {
+	return &QueryEditorProperty{
+		Type: QueryEditorPropertyTypeString,
+	}
+}
+
+type QueryEditorPropertyType string
+
 const (
 	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
 )
 
+type QueryEditorArrayExpression struct {
+	Type        QueryEditorArrayExpressionType                                  `json:"type"`
+	Expressions ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression `json:"expressions"`
+}
+
+// NewQueryEditorArrayExpression creates a new QueryEditorArrayExpression object.
+func NewQueryEditorArrayExpression() *QueryEditorArrayExpression {
+	return &QueryEditorArrayExpression{
+		Expressions: *NewArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression(),
+	}
+}
+
+type QueryEditorExpression any
+
+type QueryEditorGroupByExpression struct {
+	Type     QueryEditorExpressionType `json:"type"`
+	Property QueryEditorProperty       `json:"property"`
+}
+
+// NewQueryEditorGroupByExpression creates a new QueryEditorGroupByExpression object.
+func NewQueryEditorGroupByExpression() *QueryEditorGroupByExpression {
+	return &QueryEditorGroupByExpression{
+		Type:     QueryEditorExpressionTypeGroupBy,
+		Property: *NewQueryEditorProperty(),
+	}
+}
+
+type QueryEditorOperatorExpression struct {
+	Type     QueryEditorExpressionType `json:"type"`
+	Property QueryEditorProperty       `json:"property"`
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator QueryEditorOperator `json:"operator"`
+}
+
+// NewQueryEditorOperatorExpression creates a new QueryEditorOperatorExpression object.
+func NewQueryEditorOperatorExpression() *QueryEditorOperatorExpression {
+	return &QueryEditorOperatorExpression{
+		Type:     QueryEditorExpressionTypeOperator,
+		Property: *NewQueryEditorProperty(),
+		Operator: *NewQueryEditorOperator(),
+	}
+}
+
+// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
+type QueryEditorOperator struct {
+	Name  *string                                              `json:"name,omitempty"`
+	Value *StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType `json:"value,omitempty"`
+}
+
+// NewQueryEditorOperator creates a new QueryEditorOperator object.
+func NewQueryEditorOperator() *QueryEditorOperator {
+	return &QueryEditorOperator{}
+}
+
+type QueryEditorOperatorType = StringOrBoolOrInt64
+
+// NewQueryEditorOperatorType creates a new QueryEditorOperatorType object.
+func NewQueryEditorOperatorType() *QueryEditorOperatorType {
+	return NewStringOrBoolOrInt64()
+}
+
+type QueryEditorOperatorValueType = StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType
+
+// NewQueryEditorOperatorValueType creates a new QueryEditorOperatorValueType object.
+func NewQueryEditorOperatorValueType() *QueryEditorOperatorValueType {
+	return NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType()
+}
+
+type LogsQueryLanguage string
+
+const (
+	LogsQueryLanguageCWLI LogsQueryLanguage = "CWLI"
+	LogsQueryLanguageSQL  LogsQueryLanguage = "SQL"
+	LogsQueryLanguagePPL  LogsQueryLanguage = "PPL"
+)
+
+// Shape of a CloudWatch Logs query
+type CloudWatchLogsQuery struct {
+	// Whether a query is a Metrics, Logs, or Annotations query
+	QueryMode CloudWatchQueryMode `json:"queryMode"`
+	Id        string              `json:"id"`
+	// AWS region to query for the logs
+	Region string `json:"region"`
+	// The CloudWatch Logs Insights query to execute
+	Expression *string `json:"expression,omitempty"`
+	// Fields to group the results by, this field is automatically populated whenever the query is updated
+	StatsGroups []string `json:"statsGroups,omitempty"`
+	// Log groups to query
+	LogGroups []LogGroup `json:"logGroups,omitempty"`
+	// @deprecated use logGroups
+	LogGroupNames []string `json:"logGroupNames,omitempty"`
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+	// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
+	QueryLanguage *LogsQueryLanguage `json:"queryLanguage,omitempty"`
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource any `json:"datasource,omitempty"`
+}
+
+// NewCloudWatchLogsQuery creates a new CloudWatchLogsQuery object.
+func NewCloudWatchLogsQuery() *CloudWatchLogsQuery {
+	return &CloudWatchLogsQuery{}
+}
+
+type LogGroup struct {
+	// ARN of the log group
+	Arn string `json:"arn"`
+	// Name of the log group
+	Name string `json:"name"`
+	// AccountId of the log group
+	AccountId *string `json:"accountId,omitempty"`
+	// Label of the log group
+	AccountLabel *string `json:"accountLabel,omitempty"`
+}
+
+// NewLogGroup creates a new LogGroup object.
+func NewLogGroup() *LogGroup {
+	return &LogGroup{}
+}
+
 // Shape of a CloudWatch Annotation query
-//
 // TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
 // #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
 type CloudWatchAnnotationQuery struct {
-	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
-	AccountId *string `json:"accountId,omitempty"`
-
+	// Whether a query is a Metrics, Logs, or Annotations query
+	QueryMode CloudWatchQueryMode `json:"queryMode"`
+	// Enable matching on the prefix of the action name or alarm name, specify the prefixes with actionPrefix and/or alarmNamePrefix
+	PrefixMatching *bool `json:"prefixMatching,omitempty"`
 	// Use this parameter to filter the results of the operation to only those alarms
 	// that use a certain alarm action. For example, you could specify the ARN of
 	// an SNS topic to find all alarms that send notifications to that topic.
 	// e.g. `arn:aws:sns:us-east-1:123456789012:my-app-` would match `arn:aws:sns:us-east-1:123456789012:my-app-action`
 	// but not match `arn:aws:sns:us-east-1:123456789012:your-app-action`
 	ActionPrefix *string `json:"actionPrefix,omitempty"`
-
-	// An alarm name prefix. If you specify this parameter, you receive information
-	// about all alarms that have names that start with this prefix.
-	// e.g. `my-team-service-` would match `my-team-service-high-cpu` but not match `your-team-service-high-cpu`
-	AlarmNamePrefix *string `json:"alarmNamePrefix,omitempty"`
-
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
-	Dimensions *Dimensions `json:"dimensions,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// Only show metrics that exactly match all defined dimension names.
-	MatchExact *bool `json:"matchExact,omitempty"`
-
-	// Name of the metric
-	MetricName *string `json:"metricName,omitempty"`
-
-	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
-	Namespace *string `json:"namespace,omitempty"`
-
-	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
-	Period *string `json:"period,omitempty"`
-
-	// Enable matching on the prefix of the action name or alarm name, specify the prefixes with actionPrefix and/or alarmNamePrefix
-	PrefixMatching *bool                `json:"prefixMatching,omitempty"`
-	QueryMode      *CloudWatchQueryMode `json:"queryMode,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId *string `json:"refId,omitempty"`
-
-	// AWS region to query for the metric
-	Region *string `json:"region,omitempty"`
-
-	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
-	Statistic *string `json:"statistic,omitempty"`
-
-	// @deprecated use statistic
-	Statistics []string `json:"statistics,omitempty"`
-}
-
-// CloudWatchDataQuery defines model for CloudWatchDataQuery.
-type CloudWatchDataQuery = map[string]any
-
-// Shape of a CloudWatch Logs query
-type CloudWatchLogsQuery struct {
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// The CloudWatch Logs Insights query to execute
-	Expression *string `json:"expression,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool   `json:"hide,omitempty"`
-	Id   *string `json:"id,omitempty"`
-
-	// @deprecated use logGroups
-	LogGroupNames []string `json:"logGroupNames,omitempty"`
-
-	// Log groups to query
-	LogGroups []LogGroup           `json:"logGroups,omitempty"`
-	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId *string `json:"refId,omitempty"`
-
-	// AWS region to query for the logs
-	Region *string `json:"region,omitempty"`
-
-	// Fields to group the results by, this field is automatically populated whenever the query is updated
-	StatsGroups []string `json:"statsGroups,omitempty"`
-}
-
-// Shape of a CloudWatch Metrics query
-type CloudWatchMetricsQuery struct {
-	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
-	AccountId *string `json:"accountId,omitempty"`
-
-	// Deprecated: use label
-	// @deprecated use label
-	Alias *string `json:"alias,omitempty"`
-
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
-	Dimensions *Dimensions `json:"dimensions,omitempty"`
-
-	// Math expression query
-	Expression *string `json:"expression,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
-	Id *string `json:"id,omitempty"`
-
-	// Change the time series legend names using dynamic labels. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html for more details.
-	Label *string `json:"label,omitempty"`
-
-	// Only show metrics that exactly match all defined dimension names.
-	MatchExact       *bool             `json:"matchExact,omitempty"`
-	MetricEditorMode *MetricEditorMode `json:"metricEditorMode,omitempty"`
-
-	// Name of the metric
-	MetricName      *string          `json:"metricName,omitempty"`
-	MetricQueryType *MetricQueryType `json:"metricQueryType,omitempty"`
-
-	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
-	Namespace *string `json:"namespace,omitempty"`
-
-	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
-	Period    *string              `json:"period,omitempty"`
-	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId *string `json:"refId,omitempty"`
-
-	// AWS region to query for the metric
-	Region *string        `json:"region,omitempty"`
-	Sql    *SQLExpression `json:"sql,omitempty"`
-
-	// When the metric query type is set to `Insights`, this field is used to specify the query string.
-	SqlExpression *string `json:"sqlExpression,omitempty"`
-
-	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
-	Statistic *string `json:"statistic,omitempty"`
-
-	// @deprecated use statistic
-	Statistics []string `json:"statistics,omitempty"`
-}
-
-// CloudWatchQueryMode defines model for CloudWatchQueryMode.
-type CloudWatchQueryMode string
-
-// These are the common properties available to all queries in all datasources.
-// Specific implementations will *extend* this interface, adding the required
-// properties for the given context.
-type DataQuery struct {
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
-}
-
-// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
-type Dimensions map[string]any
-
-// LogGroup defines model for LogGroup.
-type LogGroup struct {
-	// AccountId of the log group
-	AccountId *string `json:"accountId,omitempty"`
-
-	// Label of the log group
-	AccountLabel *string `json:"accountLabel,omitempty"`
-
-	// ARN of the log group
-	Arn string `json:"arn"`
-
-	// Name of the log group
-	Name string `json:"name"`
-}
-
-// MetricEditorMode defines model for MetricEditorMode.
-type MetricEditorMode int
-
-// MetricQueryType defines model for MetricQueryType.
-type MetricQueryType int
-
-// MetricStat defines model for MetricStat.
-type MetricStat struct {
-	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
-	AccountId *string `json:"accountId,omitempty"`
-
-	// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
-	Dimensions *Dimensions `json:"dimensions,omitempty"`
-
-	// Only show metrics that exactly match all defined dimension names.
-	MatchExact *bool `json:"matchExact,omitempty"`
-
-	// Name of the metric
-	MetricName *string `json:"metricName,omitempty"`
-
-	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
-	Namespace string `json:"namespace"`
-
-	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
-	Period *string `json:"period,omitempty"`
-
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
 	// AWS region to query for the metric
 	Region string `json:"region"`
-
+	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
+	Namespace string `json:"namespace"`
+	// Name of the metric
+	MetricName *string `json:"metricName,omitempty"`
+	// The dimensions of the metric
+	Dimensions *Dimensions `json:"dimensions,omitempty"`
+	// Only show metrics that exactly match all defined dimension names.
+	MatchExact *bool `json:"matchExact,omitempty"`
+	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
+	Period *string `json:"period,omitempty"`
+	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
+	AccountId *string `json:"accountId,omitempty"`
 	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
 	Statistic *string `json:"statistic,omitempty"`
-
+	// An alarm name prefix. If you specify this parameter, you receive information
+	// about all alarms that have names that start with this prefix.
+	// e.g. `my-team-service-` would match `my-team-service-high-cpu` but not match `your-team-service-high-cpu`
+	AlarmNamePrefix *string `json:"alarmNamePrefix,omitempty"`
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource any `json:"datasource,omitempty"`
 	// @deprecated use statistic
 	Statistics []string `json:"statistics,omitempty"`
 }
 
-// QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
-type QueryEditorArrayExpression struct {
-	Expressions []any                          `json:"expressions"`
-	Type        QueryEditorArrayExpressionType `json:"type"`
+// NewCloudWatchAnnotationQuery creates a new CloudWatchAnnotationQuery object.
+func NewCloudWatchAnnotationQuery() *CloudWatchAnnotationQuery {
+	return &CloudWatchAnnotationQuery{}
 }
 
-// QueryEditorArrayExpressionType defines model for QueryEditorArrayExpression.Type.
 type QueryEditorArrayExpressionType string
 
-// QueryEditorExpressionType defines model for QueryEditorExpressionType.
-type QueryEditorExpressionType string
+const (
+	QueryEditorArrayExpressionTypeAnd QueryEditorArrayExpressionType = "and"
+	QueryEditorArrayExpressionTypeOr  QueryEditorArrayExpressionType = "or"
+)
 
-// QueryEditorFunctionExpression defines model for QueryEditorFunctionExpression.
-type QueryEditorFunctionExpression struct {
-	Name       *string                                  `json:"name,omitempty"`
-	Parameters []QueryEditorFunctionParameterExpression `json:"parameters,omitempty"`
-	Type       QueryEditorFunctionExpressionType        `json:"type"`
+type StringOrArrayOfString struct {
+	String        *string  `json:"String,omitempty"`
+	ArrayOfString []string `json:"ArrayOfString,omitempty"`
 }
 
-// QueryEditorFunctionExpressionType defines model for QueryEditorFunctionExpression.Type.
-type QueryEditorFunctionExpressionType string
-
-// QueryEditorFunctionParameterExpression defines model for QueryEditorFunctionParameterExpression.
-type QueryEditorFunctionParameterExpression struct {
-	Name *string                                    `json:"name,omitempty"`
-	Type QueryEditorFunctionParameterExpressionType `json:"type"`
+// NewStringOrArrayOfString creates a new StringOrArrayOfString object.
+func NewStringOrArrayOfString() *StringOrArrayOfString {
+	return &StringOrArrayOfString{}
 }
 
-// QueryEditorFunctionParameterExpressionType defines model for QueryEditorFunctionParameterExpression.Type.
-type QueryEditorFunctionParameterExpressionType string
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrArrayOfString` as JSON.
+func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
 
-// QueryEditorGroupByExpression defines model for QueryEditorGroupByExpression.
-type QueryEditorGroupByExpression struct {
-	Property QueryEditorProperty              `json:"property"`
-	Type     QueryEditorGroupByExpressionType `json:"type"`
+	if resource.ArrayOfString != nil {
+		return json.Marshal(resource.ArrayOfString)
+	}
+
+	return []byte("null"), nil
 }
 
-// QueryEditorGroupByExpressionType defines model for QueryEditorGroupByExpression.Type.
-type QueryEditorGroupByExpressionType string
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
+func (resource *StringOrArrayOfString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
 
-// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
-type QueryEditorOperator struct {
-	Name  *string `json:"name,omitempty"`
-	Value *any    `json:"value,omitempty"`
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// ArrayOfString
+	var ArrayOfString []string
+	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfString = nil
+	} else {
+		resource.ArrayOfString = ArrayOfString
+		return nil
+	}
+
+	return errors.Join(errList...)
 }
 
-// QueryEditorOperatorExpression defines model for QueryEditorOperatorExpression.
-type QueryEditorOperatorExpression struct {
-	// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
-	Operator QueryEditorOperator               `json:"operator"`
-	Property QueryEditorProperty               `json:"property"`
-	Type     QueryEditorOperatorExpressionType `json:"type"`
+type QueryEditorPropertyExpressionOrQueryEditorFunctionExpression struct {
+	QueryEditorPropertyExpression *QueryEditorPropertyExpression `json:"QueryEditorPropertyExpression,omitempty"`
+	QueryEditorFunctionExpression *QueryEditorFunctionExpression `json:"QueryEditorFunctionExpression,omitempty"`
 }
 
-// QueryEditorOperatorExpressionType defines model for QueryEditorOperatorExpression.Type.
-type QueryEditorOperatorExpressionType string
-
-// QueryEditorProperty defines model for QueryEditorProperty.
-type QueryEditorProperty struct {
-	Name *string                 `json:"name,omitempty"`
-	Type QueryEditorPropertyType `json:"type"`
+// NewQueryEditorPropertyExpressionOrQueryEditorFunctionExpression creates a new QueryEditorPropertyExpressionOrQueryEditorFunctionExpression object.
+func NewQueryEditorPropertyExpressionOrQueryEditorFunctionExpression() *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression {
+	return &QueryEditorPropertyExpressionOrQueryEditorFunctionExpression{}
 }
 
-// QueryEditorPropertyExpression defines model for QueryEditorPropertyExpression.
-type QueryEditorPropertyExpression struct {
-	Property QueryEditorProperty               `json:"property"`
-	Type     QueryEditorPropertyExpressionType `json:"type"`
+// MarshalJSON implements a custom JSON marshalling logic to encode `QueryEditorPropertyExpressionOrQueryEditorFunctionExpression` as JSON.
+func (resource QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) MarshalJSON() ([]byte, error) {
+	if resource.QueryEditorPropertyExpression != nil {
+		return json.Marshal(resource.QueryEditorPropertyExpression)
+	}
+	if resource.QueryEditorFunctionExpression != nil {
+		return json.Marshal(resource.QueryEditorFunctionExpression)
+	}
+
+	return []byte("null"), nil
 }
 
-// QueryEditorPropertyExpressionType defines model for QueryEditorPropertyExpression.Type.
-type QueryEditorPropertyExpressionType string
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `QueryEditorPropertyExpressionOrQueryEditorFunctionExpression` from JSON.
+func (resource *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
 
-// QueryEditorPropertyType defines model for QueryEditorPropertyType.
-type QueryEditorPropertyType string
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]any)
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
 
-// SQLExpression defines model for SQLExpression.
-type SQLExpression struct {
-	// FROM part of the SQL expression
-	From    *any                        `json:"from,omitempty"`
-	GroupBy *QueryEditorArrayExpression `json:"groupBy,omitempty"`
+	discriminator, found := parsedAsMap["type"]
+	if !found {
+		return nil
+	}
 
-	// LIMIT part of the SQL expression
-	Limit   *int64                         `json:"limit,omitempty"`
-	OrderBy *QueryEditorFunctionExpression `json:"orderBy,omitempty"`
+	switch discriminator {
+	case "function":
+		var queryEditorFunctionExpression QueryEditorFunctionExpression
+		if err := json.Unmarshal(raw, &queryEditorFunctionExpression); err != nil {
+			return err
+		}
 
-	// The sort order of the SQL expression, `ASC` or `DESC`
-	OrderByDirection *string                        `json:"orderByDirection,omitempty"`
-	Select           *QueryEditorFunctionExpression `json:"select,omitempty"`
-	Where            *QueryEditorArrayExpression    `json:"where,omitempty"`
+		resource.QueryEditorFunctionExpression = &queryEditorFunctionExpression
+		return nil
+	case "property":
+		var queryEditorPropertyExpression QueryEditorPropertyExpression
+		if err := json.Unmarshal(raw, &queryEditorPropertyExpression); err != nil {
+			return err
+		}
+
+		resource.QueryEditorPropertyExpression = &queryEditorPropertyExpression
+		return nil
+	}
+
+	return nil
+}
+
+type ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression struct {
+	ArrayOfQueryEditorExpression      []QueryEditorExpression      `json:"ArrayOfQueryEditorExpression,omitempty"`
+	ArrayOfQueryEditorArrayExpression []QueryEditorArrayExpression `json:"ArrayOfQueryEditorArrayExpression,omitempty"`
+}
+
+// NewArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression creates a new ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression object.
+func NewArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression() *ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression {
+	return &ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression` as JSON.
+func (resource ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression) MarshalJSON() ([]byte, error) {
+	if resource.ArrayOfQueryEditorExpression != nil {
+		return json.Marshal(resource.ArrayOfQueryEditorExpression)
+	}
+
+	if resource.ArrayOfQueryEditorArrayExpression != nil {
+		return json.Marshal(resource.ArrayOfQueryEditorArrayExpression)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression` from JSON.
+func (resource *ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// ArrayOfQueryEditorExpression
+	var ArrayOfQueryEditorExpression []QueryEditorExpression
+	if err := json.Unmarshal(raw, &ArrayOfQueryEditorExpression); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfQueryEditorExpression = nil
+	} else {
+		resource.ArrayOfQueryEditorExpression = ArrayOfQueryEditorExpression
+		return nil
+	}
+
+	// ArrayOfQueryEditorArrayExpression
+	var ArrayOfQueryEditorArrayExpression []QueryEditorArrayExpression
+	if err := json.Unmarshal(raw, &ArrayOfQueryEditorArrayExpression); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfQueryEditorArrayExpression = nil
+	} else {
+		resource.ArrayOfQueryEditorArrayExpression = ArrayOfQueryEditorArrayExpression
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+type StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType struct {
+	String                         *string                   `json:"String,omitempty"`
+	Bool                           *bool                     `json:"Bool,omitempty"`
+	Int64                          *int64                    `json:"Int64,omitempty"`
+	ArrayOfQueryEditorOperatorType []QueryEditorOperatorType `json:"ArrayOfQueryEditorOperatorType,omitempty"`
+}
+
+// NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType creates a new StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType object.
+func NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType() *StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType {
+	return &StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType` as JSON.
+func (resource StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+
+	if resource.Int64 != nil {
+		return json.Marshal(resource.Int64)
+	}
+
+	if resource.ArrayOfQueryEditorOperatorType != nil {
+		return json.Marshal(resource.ArrayOfQueryEditorOperatorType)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType` from JSON.
+func (resource *StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
+	}
+
+	// Int64
+	var Int64 int64
+	if err := json.Unmarshal(raw, &Int64); err != nil {
+		errList = append(errList, err)
+		resource.Int64 = nil
+	} else {
+		resource.Int64 = &Int64
+		return nil
+	}
+
+	// ArrayOfQueryEditorOperatorType
+	var ArrayOfQueryEditorOperatorType []QueryEditorOperatorType
+	if err := json.Unmarshal(raw, &ArrayOfQueryEditorOperatorType); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfQueryEditorOperatorType = nil
+	} else {
+		resource.ArrayOfQueryEditorOperatorType = ArrayOfQueryEditorOperatorType
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+type StringOrBoolOrInt64 struct {
+	String *string `json:"String,omitempty"`
+	Bool   *bool   `json:"Bool,omitempty"`
+	Int64  *int64  `json:"Int64,omitempty"`
+}
+
+// NewStringOrBoolOrInt64 creates a new StringOrBoolOrInt64 object.
+func NewStringOrBoolOrInt64() *StringOrBoolOrInt64 {
+	return &StringOrBoolOrInt64{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrInt64` as JSON.
+func (resource StringOrBoolOrInt64) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+
+	if resource.Int64 != nil {
+		return json.Marshal(resource.Int64)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64` from JSON.
+func (resource *StringOrBoolOrInt64) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
+	}
+
+	// Int64
+	var Int64 int64
+	if err := json.Unmarshal(raw, &Int64); err != nil {
+		errList = append(errList, err)
+		resource.Int64 = nil
+	} else {
+		resource.Int64 = &Int64
+		return nil
+	}
+
+	return errors.Join(errList...)
 }

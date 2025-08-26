@@ -2,8 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 
-import { configureStore } from '../../../store/configureStore';
+import { TimeRange } from '@grafana/data';
 
+import { configureStore } from '../../../store/configureStore';
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
+
+// TODO: rebase after https://github.com/grafana/grafana/pull/105711, as this is already fixed
+// eslint-disable-next-line no-restricted-imports
 import { frameOld } from './TraceView.test';
 import { TraceViewContainer } from './TraceViewContainer';
 
@@ -11,15 +17,28 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
   };
 });
 
 function renderTraceViewContainer(frames = [frameOld]) {
-  const store = configureStore();
+  const initialState = {
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState({
+          initialized: true,
+          datasourceInstance: null,
+        }),
+      },
+    },
+  };
+
+  const store = configureStore(initialState);
 
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} />
+      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} timeRange={{} as TimeRange} />
     </Provider>
   );
   return {
@@ -59,9 +78,9 @@ describe('TraceViewContainer', () => {
   it('toggles collapses and expands all levels', async () => {
     renderTraceViewContainer();
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
-    await user.click(screen.getByLabelText('Collapse All'));
+    await user.click(screen.getByLabelText('Collapse all'));
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(1);
-    await user.click(screen.getByLabelText('Expand All'));
+    await user.click(screen.getByLabelText('Expand all'));
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
   });
 
@@ -79,7 +98,6 @@ describe('TraceViewContainer', () => {
     const tagOption = screen.getByText('component');
     await waitFor(() => expect(tagOption).toBeInTheDocument());
     await user.click(tagOption);
-
     await waitFor(() => {
       expect(
         screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className

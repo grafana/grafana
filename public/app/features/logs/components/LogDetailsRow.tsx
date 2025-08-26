@@ -14,13 +14,27 @@ import {
   LogLabelStatsModel,
   LogRowModel,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
+import {
+  ClipboardButton,
+  DataLinkButton,
+  IconButton,
+  PopoverContent,
+  Themeable2,
+  Tooltip,
+  withTheme2,
+} from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
+import { getLabelTypeFromRow } from '../utils';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
+
+interface LinkModelWithIcon extends LinkModel<Field> {
+  icon?: IconName;
+}
 
 export interface Props extends Themeable2 {
   parsedValues: string[];
@@ -30,7 +44,7 @@ export interface Props extends Themeable2 {
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  links?: Array<LinkModel<Field>>;
+  links?: LinkModelWithIcon[];
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
@@ -50,12 +64,26 @@ interface State {
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
+    labelType: css({
+      border: `solid 1px ${theme.colors.text.secondary}`,
+      color: theme.colors.text.secondary,
+      borderRadius: theme.shape.radius.circle,
+      fontSize: theme.spacing(1),
+      lineHeight: theme.spacing(1.25),
+      height: theme.spacing(1.5),
+      width: theme.spacing(1.5),
+      display: 'flex',
+      justifyContent: 'center',
+      verticalAlign: 'middle',
+      marginLeft: theme.spacing(1),
+    }),
     wordBreakAll: css({
       label: 'wordBreakAll',
       wordBreak: 'break-all',
     }),
     copyButton: css({
       '& > button': {
+        gap: 0,
         color: theme.colors.text.secondary,
         padding: 0,
         justifyContent: 'center',
@@ -222,7 +250,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <div className={`log-details-value-copy ${styles.copyButton}`}>
         <ClipboardButton
           getText={() => val}
-          title="Copy value to clipboard"
+          aria-label={t('logs.un-themed-log-details-row.title-copy-value-to-clipboard', 'Copy value to clipboard')}
           fill="text"
           variant="secondary"
           icon="copy"
@@ -275,15 +303,28 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
     const refIdTooltip = app === CoreApp.Explore && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
+    const labelType = singleKey ? getLabelTypeFromRow(parsedKeys[0], row) : null;
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
 
     const toggleFieldButton =
       displayedFields && parsedKeys != null && displayedFields.includes(parsedKeys[0]) ? (
-        <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
+        <IconButton
+          variant="primary"
+          tooltip={t('logs.un-themed-log-details-row.toggle-field-button.tooltip-hide-this-field', 'Hide this field')}
+          name="eye"
+          onClick={this.hideField}
+        />
       ) : (
-        <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
+        <IconButton
+          tooltip={t(
+            'logs.un-themed-log-details-row.toggle-field-button.tooltip-field-instead-message',
+            'Show this field instead of the message'
+          )}
+          name="eye"
+          onClick={this.showField}
+        />
       );
 
     return (
@@ -302,7 +343,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   />
                   <IconButton
                     name="search-minus"
-                    tooltip={`Filter out value${refIdTooltip}`}
+                    tooltip={
+                      app === CoreApp.Explore && row.dataFrame?.refId
+                        ? t('logs.un-themed-log-details-row.filter-out-query', 'Filter out value in query {{query}}', {
+                            query: row.dataFrame?.refId,
+                          })
+                        : t('logs.un-themed-log-details-row.filter-out', 'Filter out value')
+                    }
                     onClick={this.filterOutLabel}
                   />
                 </>
@@ -312,7 +359,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 <IconButton
                   variant={showFieldsStats ? 'primary' : 'secondary'}
                   name="signal"
-                  tooltip="Ad-hoc statistics"
+                  tooltip={t('logs.un-themed-log-details-row.tooltip-adhoc-statistics', 'Ad-hoc statistics')}
                   className="stats-button"
                   disabled={!singleKey}
                   onClick={this.showStats}
@@ -321,6 +368,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             </div>
           </td>
 
+          <td>{labelType && <LabelTypeBadge type={labelType} styles={styles} />}</td>
           {/* Key - value columns */}
           <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
@@ -348,6 +396,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                             typeof pinLineButtonTooltipTitle === 'object' && link.onClick
                               ? pinLineButtonTooltipTitle
                               : undefined,
+                          variant: 'secondary',
+                          fill: 'outline',
+                          ...(link.icon && { icon: link.icon }),
                         }}
                         link={link}
                       />
@@ -360,11 +411,11 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         </tr>
         {showFieldsStats && singleKey && singleVal && (
           <tr>
-            <td>
+            <td colSpan={2}>
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
-                tooltip="Hide ad-hoc statistics"
+                tooltip={t('logs.un-themed-log-details-row.tooltip-hide-adhoc-statistics', 'Hide ad-hoc statistics')}
                 onClick={this.showStats}
               />
             </td>
@@ -384,6 +435,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       </>
     );
   }
+}
+
+function LabelTypeBadge({ type, styles }: { type: string; styles: ReturnType<typeof getStyles> }) {
+  return (
+    <Tooltip content={type}>
+      <div className={styles.labelType}>
+        <span>{type.substring(0, 1)}</span>
+      </div>
+    </Tooltip>
+  );
 }
 
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {

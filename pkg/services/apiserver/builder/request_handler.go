@@ -18,47 +18,53 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 	router := mux.NewRouter()
 
 	for _, builder := range builders {
-		routes := builder.GetAPIRoutes()
-		if routes == nil {
+		provider, ok := builder.(APIGroupRouteProvider)
+		if !ok || provider == nil {
 			continue
 		}
 
-		gv := builder.GetGroupVersion()
-		prefix := "/apis/" + gv.String()
-
-		// Root handlers
-		var sub *mux.Router
-		for _, route := range routes.Root {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+		for _, gv := range GetGroupVersions(builder) {
+			routes := provider.GetAPIRoutes(gv)
+			if routes == nil {
+				continue
 			}
 
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
-			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
-		}
+			prefix := "/apis/" + gv.String()
 
-		// Namespace handlers
-		sub = nil
-		prefix += "/namespaces/{namespace}"
-		for _, route := range routes.Namespace {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+			// Root handlers
+			var sub *mux.Router
+			for _, route := range routes.Root {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
+
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
 
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
+			// Namespace handlers
+			sub = nil
+			prefix += "/namespaces/{namespace}"
+			for _, route := range routes.Namespace {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
+
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
 		}
 	}
 

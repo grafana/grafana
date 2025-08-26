@@ -8,6 +8,7 @@ import {
   createDataFrame,
   dateTime,
 } from '@grafana/data';
+import { setTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import LokiLanguageProvider from './LanguageProvider';
 import {
@@ -15,7 +16,7 @@ import {
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from './LogContextProvider';
-import { createLokiDatasource } from './__mocks__/datasource';
+import { createLokiDatasource } from './mocks/datasource';
 import { LokiQuery } from './types';
 
 const defaultLanguageProviderMock = {
@@ -23,10 +24,6 @@ const defaultLanguageProviderMock = {
   fetchLabels: jest.fn(() => ['bar', 'xyz']),
   getLabelKeys: jest.fn(() => ['bar', 'xyz']),
 } as unknown as LokiLanguageProvider;
-
-const defaultDatasourceMock = createLokiDatasource();
-defaultDatasourceMock.query = jest.fn(() => of({ data: [] } as DataQueryResponse));
-defaultDatasourceMock.languageProvider = defaultLanguageProviderMock;
 
 const defaultLogRow = {
   rowIndex: 0,
@@ -68,6 +65,13 @@ const frameWithoutTypes = {
 describe('LogContextProvider', () => {
   let logContextProvider: LogContextProvider;
   beforeEach(() => {
+    const templateSrv = {
+      replace: jest.fn((str: string) => str?.replace('$test', 'baz')),
+    };
+    setTemplateSrv(templateSrv as unknown as TemplateSrv);
+    const defaultDatasourceMock = createLokiDatasource(templateSrv);
+    defaultDatasourceMock.query = jest.fn(() => of({ data: [] } as DataQueryResponse));
+    defaultDatasourceMock.languageProvider = defaultLanguageProviderMock;
     logContextProvider = new LogContextProvider(defaultDatasourceMock);
   });
 
@@ -107,6 +111,32 @@ describe('LogContextProvider', () => {
       expect(logContextProvider.cachedContextFilters).toHaveLength(1);
     });
 
+    it('should replace variables before getInitContextFilters', async () => {
+      logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
+        contextFilters: [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }],
+        preservedFiltersApplied: false,
+      });
+
+      expect(logContextProvider.cachedContextFilters).toHaveLength(0);
+      await logContextProvider.getLogRowContext(
+        defaultLogRow,
+        {
+          limit: 10,
+          direction: LogRowContextQueryDirection.Backward,
+          scopedVars: { test: { value: 'baz', text: 'baz' } },
+        },
+        {
+          expr: '{bar="$test"}',
+          refId: 'A',
+        }
+      );
+      expect(logContextProvider.getInitContextFilters).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ expr: '{bar="baz"}', refId: 'A' }),
+        expect.anything()
+      );
+    });
+
     it('should not call getInitContextFilters if cachedContextFilters', async () => {
       logContextProvider.getInitContextFilters = jest
         .fn()
@@ -138,6 +168,26 @@ describe('LogContextProvider', () => {
       });
       expect(query.expr).toBe('{bar="baz"}');
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalled();
+    });
+
+    it('should replace variables before getInitContextFilters', async () => {
+      logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
+        contextFilters: [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }],
+        preservedFiltersApplied: false,
+      });
+
+      const query = await logContextProvider.getLogRowContextQuery(
+        defaultLogRow,
+        {
+          limit: 10,
+          direction: LogRowContextQueryDirection.Backward,
+        },
+        {
+          expr: '{bar="$test"}',
+          refId: 'A',
+        }
+      );
+      expect(query.expr).toBe('{bar="baz"}');
     });
 
     it('should also call getInitContextFilters if cacheFilters is not set', async () => {

@@ -92,7 +92,6 @@ func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuer
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table("user_auth").In("user_id", params).OrderBy("created").Find(&userAuths)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -108,10 +107,11 @@ func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuer
 
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-		AuthId:     cmd.AuthId,
-		Created:    GetTime(),
+		UserId:      cmd.UserId,
+		AuthModule:  cmd.AuthModule,
+		AuthId:      cmd.AuthId,
+		ExternalUID: cmd.ExternalUID,
+		Created:     GetTime(),
 	}
 
 	if cmd.OAuthToken != nil {
@@ -151,10 +151,11 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 
 func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-		AuthId:     cmd.AuthId,
-		Created:    GetTime(),
+		UserId:      cmd.UserId,
+		AuthModule:  cmd.AuthModule,
+		AuthId:      cmd.AuthId,
+		Created:     GetTime(),
+		ExternalUID: cmd.ExternalUID,
 	}
 
 	if cmd.OAuthToken != nil {
@@ -187,7 +188,9 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 	}
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
+		upd, err := sess.MustCols("o_auth_expiry", "o_auth_access_token", "o_auth_refresh_token", "o_auth_id_token", "o_auth_token_type").
+			Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).
+			Update(authUser)
 
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 
@@ -198,7 +201,6 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 				"SELECT id FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ?",
 				cmd.UserId, cmd.AuthModule, cmd.AuthId,
 			).Get(&id)
-
 			if err != nil {
 				return err
 			}
@@ -220,7 +222,7 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 
 func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM user_auth WHERE user_id = ?"
+		rawSQL := "DELETE FROM user_auth WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})

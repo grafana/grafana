@@ -2,10 +2,12 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
-import { DashboardRoutes } from 'app/types';
+import { getMessageFromError } from 'app/core/utils/errors';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -23,8 +25,8 @@ export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
 
   if (loadError) {
     return (
-      <Alert severity="error" title="Failed to load dashboard">
-        {loadError}
+      <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
+        {getMessageFromError(loadError)}
       </Alert>
     );
   }

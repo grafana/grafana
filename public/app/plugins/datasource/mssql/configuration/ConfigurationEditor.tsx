@@ -10,7 +10,8 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
+import { Trans, t } from '@grafana/i18n';
+import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';
 import { NumberInput } from '@grafana/sql/src/components/configuration/NumberInput';
@@ -18,7 +19,7 @@ import {
   Alert,
   FieldSet,
   Input,
-  Link,
+  TextLink,
   SecretInput,
   Select,
   useStyles2,
@@ -45,6 +46,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   useMigrateDatabaseFields(props);
 
   const { options: dsSettings, onOptionsChange } = props;
+
   const styles = useStyles2(getStyles);
   const jsonData = dsSettings.jsonData;
   const azureAuthIsSupported = config.azureAuthEnabled;
@@ -131,62 +133,98 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         docsLink="https://grafana.com/docs/grafana/latest/datasources/mssql/"
         hasRequiredFields
       />
-      <Alert title="User Permission" severity="info">
-        The database user should only be granted SELECT permissions on the specified database and tables you want to
-        query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
-        statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <em>highly</em> recommend you create a specific MS SQL user with restricted permissions. Check
-        out the{' '}
-        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mssql/">
-          Microsoft SQL Server Data Source Docs
-        </Link>{' '}
-        for more information.
+      <Alert title={t('configuration.configuration-editor.title-user-permission', 'User Permission')} severity="info">
+        <Trans
+          i18nKey="configuration.configuration-editor.body-user-permission"
+          values={{ permissionType: 'SELECT', example1: 'USE otherdb;', example2: 'DROP TABLE user;' }}
+        >
+          The database user should only be granted {'{{permissionType}}'} permissions on the specified database and
+          tables you want to query. Grafana does not validate that queries are safe so queries can contain any SQL
+          statement. For example, statements like <code>{'{{example1}}'}</code> and <code>{'{{example2}}'}</code> would
+          be executed. To protect against this we <em>highly</em> recommend you create a specific MS SQL user with
+          restricted permissions. Check out the{' '}
+          <TextLink external href="http://docs.grafana.org/features/datasources/mssql/">
+            Microsoft SQL Server Data Source Docs
+          </TextLink>{' '}
+          for more information.
+        </Trans>
       </Alert>
       <Divider />
-      <ConfigSection title="Connection">
-        <Field label="Host" required invalid={!dsSettings.url} error={'Host is required'}>
+      <ConfigSection title={t('configuration.configuration-editor.title-connection', 'Connection')}>
+        <Field
+          label={t('configuration.configuration-editor.title-host', 'Host')}
+          required
+          invalid={!dsSettings.url}
+          error={t('configuration.configuration-editor.required-host', 'Host is required')}
+        >
           <Input
             width={LONG_WIDTH}
             name="host"
             type="text"
             value={dsSettings.url || ''}
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="localhost:1433"
             onChange={onDSOptionChanged('url')}
           />
         </Field>
-        <Field label="Database" required invalid={!jsonData.database} error={'Database is required'}>
+        <Field
+          label={t('configuration.configuration-editor.title-database', 'Database')}
+          required
+          invalid={!jsonData.database}
+          error={t('configuration.configuration-editor.required-database', 'Database is required')}
+        >
           <Input
             width={LONG_WIDTH}
             name="database"
             value={jsonData.database || ''}
-            placeholder="database name"
+            placeholder={t('configuration.configuration-editor.placeholder-database', 'database name')}
             onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           />
         </Field>
       </ConfigSection>
 
-      <ConfigSection title="TLS/SSL Auth">
+      <ConfigSection title={t('configuration.configuration-editor.title-tls-auth', 'TLS/SSL Auth')}>
         <Field
           htmlFor="encrypt"
           description={
             <>
-              Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
+              <Trans i18nKey="configuration.configuration-editor.description-encrypt">
+                Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
+              </Trans>
               <ul className={styles.ulPadding}>
                 <li>
-                  <i>disable</i> - Data sent between client and server is not encrypted.
+                  <Trans
+                    i18nKey="configuration.configuration-editor.description-encrypt-disable"
+                    values={{ encryptionValue: 'disable' }}
+                  >
+                    <i>{'{{encryptionValue}}'}</i> - Data sent between client and server is not encrypted.
+                  </Trans>
                 </li>
                 <li>
-                  <i>false</i> - Data sent between client and server is not encrypted beyond the login packet. (default)
+                  <Trans
+                    i18nKey="configuration.configuration-editor.description-encrypt-false"
+                    values={{ encryptionValue: 'false' }}
+                  >
+                    <i>{'{{encryptionValue}}'}</i> - Data sent between client and server is not encrypted beyond the
+                    login packet. (default)
+                  </Trans>
                 </li>
                 <li>
-                  <i>true</i> - Data sent between client and server is encrypted.
+                  <Trans
+                    i18nKey="configuration.configuration-editor.description-encrypt-true"
+                    values={{ encryptionValue: 'true' }}
+                  >
+                    <i>{'{{encryptionValue}}'}</i> - Data sent between client and server is encrypted.
+                  </Trans>
                 </li>
               </ul>
-              If you&apos;re using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable
-              encryption to be able to connect.
+              <Trans i18nKey="configuration.configuration-editor.description-encrypt-older-version">
+                If you&apos;re using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to
+                disable encryption to be able to connect.
+              </Trans>
             </>
           }
-          label="Encrypt"
+          label={t('configuration.configuration-editor.label-encrypt', 'Encrypt')}
         >
           <Select
             options={encryptOptions}
@@ -199,7 +237,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
         {jsonData.encrypt === MSSQLEncryptOptions.true ? (
           <>
-            <Field htmlFor="skipTlsVerify" label="Skip TLS Verify">
+            <Field
+              htmlFor="skipTlsVerify"
+              label={t('configuration.configuration-editor.label-skip-tls', 'Skip TLS Verify')}
+            >
               <Switch id="skipTlsVerify" onChange={onSkipTLSVerifyChanged} value={jsonData.tlsSkipVerify || false} />
             </Field>
             {jsonData.tlsSkipVerify ? null : (
@@ -207,22 +248,32 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                 <Field
                   description={
                     <span>
-                      Path to file containing the public key certificate of the CA that signed the SQL Server
-                      certificate. Needed when the server certificate is self signed.
+                      <Trans i18nKey="configuration.configuration-editor.description-tls-cert">
+                        Path to file containing the public key certificate of the CA that signed the SQL Server
+                        certificate. Needed when the server certificate is self signed.
+                      </Trans>
                     </span>
                   }
-                  label="TLS/SSL Root Certificate"
+                  label={t('configuration.configuration-editor.label-tls-cert', 'TLS/SSL Root Certificate')}
                 >
                   <Input
                     value={jsonData.sslRootCertFile || ''}
                     onChange={onUpdateDatasourceJsonDataOption(props, 'sslRootCertFile')}
-                    placeholder="TLS/SSL root certificate file path"
+                    placeholder={t(
+                      'configuration.configuration-editor.placeholder-tls-cert',
+                      'TLS/SSL root certificate file path'
+                    )}
                     width={LONG_WIDTH}
                   />
                 </Field>
-                <Field label="Hostname in server certificate">
+                <Field
+                  label={t('configuration.configuration-editor.label-common-name', 'Hostname in server certificate')}
+                >
                   <Input
-                    placeholder="Common Name (CN) in server certificate"
+                    placeholder={t(
+                      'configuration.configuration-editor.placeholder-common-name',
+                      'Common Name (CN) in server certificate'
+                    )}
                     value={jsonData.serverName || ''}
                     onChange={onUpdateDatasourceJsonDataOption(props, 'serverName')}
                     width={LONG_WIDTH}
@@ -234,40 +285,54 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         ) : null}
       </ConfigSection>
 
-      <ConfigSection title="Authentication">
+      <ConfigSection title={t('configuration.configuration-editor.title-authentication', 'Authentication')}>
         <Field
-          label="Authentication Type"
+          label={t('configuration.configuration-editor.label-auth-type', 'Authentication Type')}
           htmlFor="authenticationType"
           description={
             <ul className={styles.ulPadding}>
               <li>
-                <i>SQL Server Authentication</i> This is the default mechanism to connect to MS SQL Server. Enter the
-                SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.
+                <Trans i18nKey="configuration.configuration-editor.description-auth-type-sql-server">
+                  <i>SQL Server Authentication</i> This is the default mechanism to connect to MS SQL Server. Enter the
+                  SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.
+                </Trans>
               </li>
               <li>
-                <i>Windows Authentication</i> Windows Integrated Security - single sign on for users who are already
-                logged onto Windows and have enabled this option for MS SQL Server.
+                <Trans i18nKey="configuration.configuration-editor.description-auth-type-windows-auth">
+                  <i>Windows Authentication</i> Windows Integrated Security - single sign on for users who are already
+                  logged onto Windows and have enabled this option for MS SQL Server.
+                </Trans>
               </li>
               {azureAuthIsSupported && (
                 <li>
-                  <i>Azure Authentication</i> Securely authenticate and access Azure resources and applications using
-                  Azure AD credentials - Managed Service Identity and Client Secret Credentials are supported.
+                  <Trans i18nKey="configuration.configuration-editor.description-auth-type-azure-auth">
+                    <i>Azure Authentication</i> Securely authenticate and access Azure resources and applications using
+                    Azure AD credentials - Managed Service Identity and Client Secret Credentials are supported.
+                  </Trans>
                 </li>
               )}
               <li>
-                <i>Windows AD: Username + password</i> Windows Active Directory - Sign on for domain user via
-                username/password.
+                <Trans i18nKey="configuration.configuration-editor.description-auth-type-username-password">
+                  <i>Windows AD: Username + password</i> Windows Active Directory - Sign on for domain user via
+                  username/password.
+                </Trans>
               </li>
               <li>
-                <i>Windows AD: Keytab</i> Windows Active Directory - Sign on for domain user via keytab file.
+                <Trans i18nKey="configuration.configuration-editor.description-auth-type-keytab">
+                  <i>Windows AD: Keytab</i> Windows Active Directory - Sign on for domain user via keytab file.
+                </Trans>
               </li>
               <li>
-                <i>Windows AD: Credential cache</i> Windows Active Directory - Sign on for domain user via credential
-                cache.
+                <Trans i18nKey="configuration.configuration-editor.description-auth-type-credential-cache">
+                  <i>Windows AD: Credential cache</i> Windows Active Directory - Sign on for domain user via credential
+                  cache.
+                </Trans>
               </li>
               <li>
-                <i>Windows AD: Credential cache file</i> Windows Active Directory - Sign on for domain user via
-                credential cache file.
+                <Trans i18nKey="configuration.configuration-editor.description-auth-type-credential-cache-file">
+                  <i>Windows AD: Credential cache file</i> Windows Active Directory - Sign on for domain user via
+                  credential cache file.
+                </Trans>
               </li>
             </ul>
           }
@@ -292,30 +357,33 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           !jsonData.authenticationType) && (
           <>
             <Field
-              label="Username"
+              label={t('configuration.configuration-editor.label-username', 'Username')}
               required
               invalid={!dsSettings.user}
-              error={'Username is required'}
+              error={t('configuration.configuration-editor.required-username', 'Username is required')}
               description={jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw ? UsernameMessage : ''}
             >
               <Input
                 value={dsSettings.user || ''}
                 placeholder={
-                  jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw ? 'name@EXAMPLE.COM' : 'user'
+                  jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw
+                    ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                      'name@EXAMPLE.COM'
+                    : t('configuration.configuration-editor.placeholder-user', 'user')
                 }
                 onChange={onDSOptionChanged('user')}
                 width={LONG_WIDTH}
               />
             </Field>
             <Field
-              label="Password"
+              label={t('configuration.configuration-editor.label-password', 'Password')}
               required
               invalid={!dsSettings.secureJsonFields.password && !dsSettings.secureJsonData?.password}
-              error={'Password is required'}
+              error={t('configuration.configuration-editor.required-password', 'Password is required')}
             >
               <SecretInput
                 width={LONG_WIDTH}
-                placeholder="Password"
+                placeholder={t('configuration.configuration-editor.placeholder-password', 'Password')}
                 isConfigured={dsSettings.secureJsonFields && dsSettings.secureJsonFields.password}
                 onReset={onResetPassword}
                 onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
@@ -326,7 +394,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         )}
 
         {azureAuthIsSupported && jsonData.authenticationType === MSSQLAuthenticationType.azureAuth && (
-          <FieldSet label="Azure Authentication Settings">
+          <FieldSet
+            label={t('configuration.configuration-editor.label-auth-settings', 'Azure Authentication Settings')}
+          >
             <azureAuthSettings.azureAuthSettingsUI dataSourceConfig={dsSettings} onChange={onOptionsChange} />
           </FieldSet>
         )}
@@ -334,25 +404,37 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
       <Divider />
       <ConfigSection
-        title="Additional settings"
-        description="Additional settings are optional settings that can be configured for more control over your data source. This includes connection limits, connection timeout, group-by time interval, and Secure Socks Proxy."
+        title={t('configuration.configuration-editor.title-additional-settings', 'Additional settings')}
+        description={t(
+          'configuration.configuration-editor.description-additional-settings',
+          'Additional settings are optional settings that can be configured for more control over your data source. This includes connection limits, connection timeout, group-by time interval, and Secure Socks Proxy.'
+        )}
         isCollapsible={true}
         isInitiallyOpen={true}
       >
         <ConnectionLimits options={dsSettings} onOptionsChange={onOptionsChange} />
 
-        <ConfigSubSection title="Connection details">
+        <ConfigSubSection
+          title={t('configuration.configuration-editor.title-connection-details', 'Connection details')}
+        >
           <Field
             description={
               <span>
-                A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example
-                <code>1m</code> if your data is written every minute.
+                <Trans
+                  i18nKey="configuration.configuration-editor.description-min-interval"
+                  values={{ exampleInterval: '1m' }}
+                >
+                  A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
+                  example
+                  <code>{'{{exampleInterval}}'}</code> if your data is written every minute.
+                </Trans>
               </span>
             }
-            label="Min time interval"
+            label={t('configuration.configuration-editor.label-min-interval', 'Min time interval')}
           >
             <Input
               width={LONG_WIDTH}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="1m"
               value={jsonData.timeInterval || ''}
               onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
@@ -361,11 +443,16 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           <Field
             description={
               <span>
-                The number of seconds to wait before canceling the request when connecting to the database. The default
-                is <code>0</code>, meaning no timeout.
+                <Trans
+                  i18nKey="configuration.configuration-editor.description-connection-timeout"
+                  values={{ defaultTimeout: '0' }}
+                >
+                  The number of seconds to wait before canceling the request when connecting to the database. The
+                  default is <code>{'{{defaultTimeout}}'}</code>, meaning no timeout.
+                </Trans>
               </span>
             }
-            label="Connection timeout"
+            label={t('configuration.configuration-editor.label-connection-timeout', 'Connection timeout')}
           >
             <NumberInput
               width={LONG_WIDTH}

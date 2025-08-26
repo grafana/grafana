@@ -12,6 +12,7 @@ import {
   GroupingLabels,
   Identifier,
   LabelName,
+  QuotedLabelName,
   MatchingModifierClause,
   MatchOp,
   NumberDurationLiteral,
@@ -19,10 +20,13 @@ import {
   ParenExpr,
   parser,
   StringLiteral,
+  QuotedLabelMatcher,
   UnquotedLabelMatcher,
   VectorSelector,
   Without,
 } from '@prometheus-io/lezer-promql';
+
+import { t } from '@grafana/i18n';
 
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
@@ -32,7 +36,9 @@ import {
   getString,
   makeBinOp,
   makeError,
+  replaceBuiltInVariable,
   replaceVariables,
+  returnBuiltInVariable,
 } from './parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
@@ -40,13 +46,12 @@ import { PromVisualQuery, PromVisualQueryBinary } from './types';
 /**
  * Parses a PromQL query into a visual query model.
  *
- * It traverses the tree and uses sort of state machine to update the query model. The query model is modified
- * during the traversal and sent to each handler as context.
- *
- * @param expr
+ * It traverses the tree and uses sort of state machine to update the query model.
+ * The query model is modified during the traversal and sent to each handler as context.
  */
-export function buildVisualQueryFromString(expr: string): Context {
-  const replacedExpr = replaceVariables(expr);
+export function buildVisualQueryFromString(expr: string): Omit<Context, 'replacements'> {
+  expr = replaceBuiltInVariable(expr);
+  const { replacedExpr, replacedVariables } = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
 
@@ -59,6 +64,7 @@ export function buildVisualQueryFromString(expr: string): Context {
   const context: Context = {
     query: visQuery,
     errors: [],
+    replacements: replacedVariables,
   };
 
   try {
@@ -78,10 +84,8 @@ export function buildVisualQueryFromString(expr: string): Context {
     context.errors = [];
   }
 
-  // We don't want parsing errors related to Grafana global variables
-  if (isValidPromQLMinusGrafanaGlobalVariables(expr)) {
-    context.errors = [];
-  }
+  // No need to return replaced variables
+  delete context.replacements;
 
   return context;
 }
@@ -96,36 +100,7 @@ interface ParsingError {
 interface Context {
   query: PromVisualQuery;
   errors: ParsingError[];
-}
-
-// TODO find a better approach for grafana global variables
-function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
-  const context: Context = {
-    query: {
-      metric: '',
-      labels: [],
-      operations: [],
-    },
-    errors: [],
-  };
-
-  expr = expr.replace(/\$__interval/g, '1s');
-  expr = expr.replace(/\$__interval_ms/g, '1000');
-  expr = expr.replace(/\$__rate_interval/g, '1s');
-  expr = expr.replace(/\$__range_ms/g, '1000');
-  expr = expr.replace(/\$__range_s/g, '1');
-  expr = expr.replace(/\$__range/g, '1s');
-
-  const tree = parser.parse(expr);
-  const node = tree.topNode;
-
-  try {
-    handleExpression(expr, node, context);
-  } catch (err) {
-    return false;
-  }
-
-  return context.errors.length === 0;
+  replacements?: Record<string, string>;
 }
 
 /**
@@ -135,7 +110,7 @@ function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
  * @param node
  * @param context
  */
-export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
+function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
 
   switch (node.type.id) {
@@ -145,9 +120,33 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case QuotedLabelName: {
+      // Usually we got the metric name above in the Identifier case.
+      // If we didn't get the name that's potentially we have it in curly braces as quoted string.
+      // It must be quoted because that's how utf8 metric names should be defined
+      // See proposal https://github.com/prometheus/proposals/blob/main/proposals/2023-08-21-utf8.md
+      if (visQuery.metric === '') {
+        const strLiteral = node.getChild(StringLiteral);
+        const quotedMetric = getString(expr, strLiteral);
+        visQuery.metric = quotedMetric.slice(1, -1);
+      }
+      break;
+    }
+
+    case QuotedLabelMatcher: {
+      const quotedLabel = getLabel(expr, node, QuotedLabelName);
+      quotedLabel.label = quotedLabel.label.slice(1, -1);
+      visQuery.labels.push(quotedLabel);
+      const err = node.getChild(ErrorId);
+      if (err) {
+        context.errors.push(makeError(expr, err));
+      }
+      break;
+    }
+
     case UnquotedLabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
-      visQuery.labels.push(getLabel(expr, node));
+      visQuery.labels.push(getLabel(expr, node, LabelName));
       const err = node.getChild(ErrorId);
       if (err) {
         context.errors.push(makeError(expr, err));
@@ -202,8 +201,12 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
-function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild(LabelName));
+function getLabel(
+  expr: string,
+  node: SyntaxNode,
+  labelType: typeof LabelName | typeof QuotedLabelName
+): QueryBuilderLabelFilter {
+  const label = getString(expr, node.getChild(labelType));
   const op = getString(expr, node.getChild(MatchOp));
   const value = getString(expr, node.getChild(StringLiteral)).replace(/^["'`]|["'`]$/g, '');
   return {
@@ -226,6 +229,18 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild(FunctionIdentifier);
   const funcName = getString(expr, nameNode);
 
+  // Visual query builder doesn't support nested queries and so info function.
+  if (funcName === 'info') {
+    context.errors.push({
+      text: t(
+        'grafana-prometheus.querybuilder.handle-function.text.query-parsing-is-ambiguous',
+        'Query parsing is ambiguous.'
+      ),
+      from: node.from,
+      to: node.to,
+    });
+  }
+
   const body = node.getChild(FunctionCallBody);
   const params = [];
   let interval = '';
@@ -238,7 +253,9 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
     let match = getString(expr, node).match(/\[(.+)\]/);
     if (match?.[1]) {
       interval = match[1];
-      params.push(match[1]);
+      // We were replaced the builtin variables to prevent errors
+      // Here we return those back
+      params.push(returnBuiltInVariable(match[1]));
     }
   }
 
@@ -281,7 +298,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, LabelName));
+    labels.push(...getAllByType(expr, modifier, LabelName), ...getAllByType(expr, modifier, QuotedLabelName));
   }
 
   const body = node.getChild(FunctionCallBody);
@@ -322,7 +339,10 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
 
         if (binaryExpressionWithinFunctionArgs) {
           context.errors.push({
-            text: 'Query parsing is ambiguous.',
+            text: t(
+              'grafana-prometheus.querybuilder.update-function-args.text.query-parsing-is-ambiguous',
+              'Query parsing is ambiguous.'
+            ),
             from: binaryExpressionWithinFunctionArgs.from,
             to: binaryExpressionWithinFunctionArgs.to,
           });
@@ -342,6 +362,19 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
     case StringLiteral: {
       op.params.push(getString(expr, node).replace(/"/g, ''));
       break;
+    }
+
+    case VectorSelector: {
+      // When we replace a custom variable to prevent errors during parsing we receive VectorSelector and Identifier in it.
+      // But this is also a normal case for a normal function body. i.e. topk(5, http_requests_total{})
+      // In such cases we got identifier as http_requests_total. So we shouldn't push this as param.
+      // So we check whether the given VectorSelector is something we replaced earlier.
+      if (context.replacements?.[expr.substring(node.from, node.to)]) {
+        const identifierNode = node.getChild(Identifier);
+        const customVarName = getString(expr, identifierNode);
+        op.params.push(customVarName);
+        break;
+      }
     }
 
     default: {
@@ -414,6 +447,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, right, {
       query: binQuery.query,
       errors: context.errors,
+      replacements: context.replacements,
     });
   }
 }

@@ -1,13 +1,12 @@
 import { uniqBy } from 'lodash';
 
-import { AppEvents, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import { AppEvents, DateTime, LocalStorageValueProvider, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
-import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 
-import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
-
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
+const MAX_HISTORY_ITEMS = 4;
 
 interface Props extends Omit<TimeRangePickerProps, 'history' | 'theme'> {}
 
@@ -17,22 +16,19 @@ interface TimePickerHistoryItem {
   to: string;
 }
 
-// We should only be storing TimePickerHistoryItem, but in the past we also stored TimeRange
-type LSTimePickerHistoryItem = TimePickerHistoryItem | TimeRange;
-
 export const TimePickerWithHistory = (props: Props) => {
   return (
-    <LocalStorageValueProvider<LSTimePickerHistoryItem[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
-      {(rawValues, onSaveToStore) => {
-        const values = migrateHistory(rawValues);
-        const history = deserializeHistory(values);
+    <LocalStorageValueProvider<unknown> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
+      {(values, onSaveToStore) => {
+        const validHistory = getValidHistory(values);
+        const history = deserializeHistory(validHistory);
 
         return (
           <TimeRangePicker
             {...props}
             history={history}
             onChange={(value) => {
-              onAppendToHistory(value, values, onSaveToStore);
+              onAppendToHistory(value, validHistory, onSaveToStore);
               props.onChange(value);
             }}
             onError={(error?: string) =>
@@ -48,21 +44,26 @@ export const TimePickerWithHistory = (props: Props) => {
   );
 };
 
-function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
-  // The history is saved in UTC and with the default date format, so we need to pass those values to the convertRawToRange
-  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
+function getValidHistory(values: unknown): TimePickerHistoryItem[] {
+  const result: TimePickerHistoryItem[] = [];
+
+  if (!Array.isArray(values)) {
+    return result;
+  }
+  // Check if the values are already in the correct format
+
+  for (let item of values) {
+    const parsed = getValidHistoryItem(item);
+    if (parsed) {
+      result.push(parsed);
+    }
+  }
+
+  return result;
 }
 
-function migrateHistory(values: LSTimePickerHistoryItem[]): TimePickerHistoryItem[] {
-  return values.map((item) => {
-    const fromValue = typeof item.from === 'string' ? item.from : item.from.toISOString();
-    const toValue = typeof item.to === 'string' ? item.to : item.to.toISOString();
-
-    return {
-      from: fromValue,
-      to: toValue,
-    };
-  });
+export function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
+  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
 }
 
 function onAppendToHistory(
@@ -70,24 +71,66 @@ function onAppendToHistory(
   values: TimePickerHistoryItem[],
   onSaveToStore: (values: TimePickerHistoryItem[]) => void
 ) {
-  if (!isAbsolute(newTimeRange)) {
+  if (!isAbsoluteTimeRange(newTimeRange)) {
+    // If the time range is not absolute, do not append it to history, ex: last 5 minutes
     return;
   }
 
   // Convert DateTime objects to strings
   const toAppend = {
-    from: typeof newTimeRange.raw.from === 'string' ? newTimeRange.raw.from : newTimeRange.raw.from.toISOString(),
-    to: typeof newTimeRange.raw.to === 'string' ? newTimeRange.raw.to : newTimeRange.raw.to.toISOString(),
+    from: convertToISOString(newTimeRange.raw.from),
+    to: convertToISOString(newTimeRange.raw.to),
   };
 
   const toStore = limit([toAppend, ...values]);
   onSaveToStore(toStore);
 }
 
-function isAbsolute(value: TimeRange): boolean {
+function isAbsoluteTimeRange(value: TimeRange): boolean {
   return isDateTime(value.raw.from) || isDateTime(value.raw.to);
 }
 
 function limit(value: TimePickerHistoryItem[]): TimePickerHistoryItem[] {
-  return uniqBy(value, (v) => v.from + v.to).slice(0, 4);
+  return uniqBy(value, (v) => v.from + v.to).slice(0, MAX_HISTORY_ITEMS);
+}
+
+/**
+ * Check if the value is a valid TimePickerHistoryItem. If it doesn't match the format exactly, it will return false.
+ * @returns true if the value match exactly to TimePickerHistoryItem, false otherwise
+ */
+export function getValidHistoryItem(value: unknown): TimePickerHistoryItem | null {
+  // First check if it's a valid object
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+
+  // Check if it has exactly two properties
+  if (Object.keys(value).length !== 2) {
+    return null;
+  }
+
+  // Check if it has the required properties
+  if (!('from' in value) || !('to' in value)) {
+    return null;
+  }
+
+  const { from, to } = value;
+  // Check if both properties are strings
+  if (typeof from === 'string' && typeof to === 'string') {
+    return { from, to };
+  }
+
+  return null;
+}
+
+function convertToISOString(value: DateTime | string): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (!value?.toISOString) {
+    throw console.error('Invalid DateTime object passed to convertToISOString');
+  }
+
+  return value.toISOString();
 }

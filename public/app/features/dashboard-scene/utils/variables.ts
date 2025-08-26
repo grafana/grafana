@@ -1,4 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, TypedVariableModel } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -10,9 +10,10 @@ import {
   QueryVariable,
   SceneVariable,
   SceneVariableSet,
+  ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 
@@ -33,6 +34,10 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // TODO: Remove filter
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
+
+  if (config.featureToggles.scopeFilters) {
+    variableObjects.push(new ScopesVariable({ enable: true }));
+  }
 
   return new SceneVariableSet({
     variables: variableObjects,
@@ -128,6 +133,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     description: variable.description,
   };
   if (variable.type === 'adhoc') {
+    const originFilters: AdHocVariableFilter[] = [];
+    const filters: AdHocVariableFilter[] = [];
+    variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+
     return new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.description,
@@ -135,10 +144,11 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       datasource: variable.datasource,
       applyMode: 'auto',
-      filters: variable.filters ?? [],
+      originFilters,
+      filters,
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
-      allowCustomValue: variable.allowCustomValue ?? true,
+      allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
       supportsMultiValueOperators: Boolean(
@@ -159,7 +169,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultToAll: Boolean(variable.includeAll),
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-      allowCustomValue: variable.allowCustomValue ?? true,
+      allowCustomValue: variable.allowCustomValue,
     });
   } else if (variable.type === 'query') {
     return new QueryVariable({
@@ -179,7 +189,12 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
       definition: variable.definition,
-      allowCustomValue: variable.allowCustomValue ?? true,
+      allowCustomValue: variable.allowCustomValue,
+      staticOptions: variable.staticOptions?.map((option) => ({
+        label: String(option.text),
+        value: String(option.value),
+      })),
+      staticOptionsOrder: variable.staticOptionsOrder,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
@@ -195,7 +210,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.multi,
       hide: variable.hide,
       defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
-      allowCustomValue: variable.allowCustomValue ?? true,
+      allowCustomValue: variable.allowCustomValue,
     });
   } else if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
@@ -246,7 +261,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       // @ts-expect-error
       defaultOptions: variable.options,
-      allowCustomValue: variable.allowCustomValue ?? true,
+      defaultValue: variable.defaultValue,
+      allowCustomValue: variable.allowCustomValue,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);

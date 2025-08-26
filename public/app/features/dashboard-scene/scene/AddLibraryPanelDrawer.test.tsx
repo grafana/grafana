@@ -32,6 +32,7 @@ describe('AddLibraryPanelWidget', () => {
     const panelInfo: LibraryPanel = {
       uid: 'uid',
       model: {
+        title: 'model title',
         type: 'timeseries',
       },
       name: 'name',
@@ -47,6 +48,8 @@ describe('AddLibraryPanelWidget', () => {
     expect(panels.length).toBe(1);
     expect(panel.state.$behaviors![0]).toBeInstanceOf(LibraryPanelBehavior);
     expect(panel.state.key).toBe('panel-1');
+    expect(panel.state.title).toBe('model title');
+    expect(panel.state.hoverHeader).toBe(false);
   });
 
   it('should add library panel from menu and enter edit mode in a dashboard that is not already in edit mode', async () => {
@@ -69,6 +72,7 @@ describe('AddLibraryPanelWidget', () => {
     const panelInfo: LibraryPanel = {
       uid: 'uid',
       model: {
+        title: 'model title',
         type: 'timeseries',
       },
       name: 'name',
@@ -88,15 +92,16 @@ describe('AddLibraryPanelWidget', () => {
     expect(panels.length).toBe(1);
     expect(panel.state.$behaviors![0]).toBeInstanceOf(LibraryPanelBehavior);
     expect(panel.state.key).toBe('panel-1');
+    expect(panel.state.title).toBe('model title');
     expect(dashboard.state.isEditing).toBe(true);
   });
 
   it('should replace grid item when grid item state is passed', async () => {
     const libPanel = new VizPanel({
-      title: 'Panel Title',
+      title: 'Some panel title',
       pluginId: 'table',
       key: 'panel-1',
-      $behaviors: [new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: 'uid' })],
+      $behaviors: [new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: 'uid' })],
     });
 
     addLibPanelDrawer = new AddLibraryPanelDrawer({ panelToReplaceRef: libPanel.getRef() });
@@ -115,6 +120,7 @@ describe('AddLibraryPanelWidget', () => {
     const panelInfo: LibraryPanel = {
       uid: 'new_uid',
       model: {
+        title: 'model title',
         type: 'timeseries',
       },
       name: 'new_name',
@@ -132,6 +138,28 @@ describe('AddLibraryPanelWidget', () => {
     expect(behavior).toBeInstanceOf(LibraryPanelBehavior);
     expect(behavior.state.uid).toBe('new_uid');
     expect(behavior.state.name).toBe('new_name');
+    expect(panels[0].state.title).toBe('model title');
+    expect(panels[0].state.key).toBe('panel-1'); // Key should be preserved from original panel
+  });
+
+  it('should set hoverHeader to true if the library panel title is empty', () => {
+    const panelInfo: LibraryPanel = {
+      uid: 'uid',
+      model: {
+        title: '',
+        type: 'timeseries',
+      },
+      name: 'name',
+      version: 1,
+      type: 'timeseries',
+    };
+
+    addLibPanelDrawer.onAddLibraryPanel(panelInfo);
+
+    const panels = dashboard.state.body.getVizPanels();
+    const panel = panels[0];
+    expect(panel.state.title).toBe('');
+    expect(panel.state.hoverHeader).toBe(true);
   });
 });
 

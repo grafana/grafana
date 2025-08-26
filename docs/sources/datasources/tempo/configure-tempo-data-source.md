@@ -48,7 +48,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/provision
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+      destination: /docs/grafana/next/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
@@ -80,6 +80,13 @@ Refer to [Provision the data source](#provision-the-data-source) for next steps.
 ## Add or modify a data source
 
 You can use these procedures to configure a new Tempo data source or to edit an existing one.
+
+{{< admonition type="note" >}}
+You can't modify a provisioned data source using the Tempo data source settings in Grafana Cloud.
+
+If you want to modify any capabilities of a provisioned data source, you can clone the provisioned data source and then edit the new data source in the Grafana UI.
+Refer to [Clone a provisioned data source for Grafana Cloud](#clone-a-provisioned-data-source-for-grafana-cloud) for more information.
+{{< /admonition >}}
 
 ### Add a new data source
 
@@ -131,7 +138,7 @@ To use streaming, you need to:
 - Run Tempo version 2.2 or later, or Grafana Enterprise Traces (GET) version 2.2 or later, or use Grafana Cloud Traces.
 - Tempo must have `stream_over_http_enabled: true` for streaming to work.
 
-  For more information, refer to [Tempo GRPC API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#tempo-grpc-api).
+  For more information, refer to [Tempo gRPC API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#tempo-grpc-api).
 
 - For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be deactivated.
 
@@ -235,7 +242,6 @@ To use custom queries with the configuration, follow these steps:
 1. Specify a custom query to be used to query metrics data.
 
    Each linked query consists of:
-
    - **Link Label:** _(Optional)_ Descriptive label for the linked query.
    - **Query:** The query ran when navigating from a trace to the metrics data source.
      Interpolate tags using the `$__tags` keyword.
@@ -321,6 +327,22 @@ You can configure this setting as follows:
 | **Time shift start**  | Time shift for start of search. Default: `30m`.             |
 | **Time shift end**    | Time shift for end of search. Default: `30m`.               |
 
+### Tags time range
+
+The **Tags time range** feature controls how tag and tag-value queries are executed by specifying the time window applied to these requests. You can select one of the following options to constrain your queries:
+
+| Name                | Description                        |
+| ------------------- | ---------------------------------- |
+| **Last 30 minutes** | Last 30 minutes of selected range. |
+| **Last 3 hours**    | Last 3 hours of selected range.    |
+| **Last 24 hours**   | Last 24 hours of selected range.   |
+| **Last 3 days**     | Last 3 days of selected range.     |
+| **Last 7 days**     | Last 7 days of selected range.     |
+
+### Tag limit
+
+The **Tag limit** setting modifies the max number of tags and tag values to retrieve from Tempo. Default: 5000
+
 ### Span bar
 
 The **Span bar** setting helps you display additional information in the span bar row.
@@ -382,8 +404,8 @@ datasources:
         query: 'method="$${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
@@ -402,11 +424,29 @@ datasources:
         hide: false
       traceQuery:
         timeShiftEnabled: true
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
       spanBar:
         type: 'Tag'
         tag: 'http.path'
       streamingEnabled:
         search: true
 ```
+
+### Clone a provisioned data source for Grafana Cloud
+
+If you have a data source that is provisioned by a configuration file in Grafana Cloud, you can clone that provisioned data source and then edit the new data source in the Grafana UI.
+
+For example, let's say you want to edit the **Trace to log**s settings in your Tempo data source that is provisioned on Grafana Cloud.
+You'd like to enable traceID and spanID but you can't because the data source is provisioned.
+By cloning the data source, you'd be able to edit these capabilities.
+
+To clone a provisioned data source, follow these steps:
+
+1. Create a viewer [Cloud Access Policy token](https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/) in the Grafana Cloud Portal, making sure it has read permissions at least for the data types you are trying to clone.
+1. [Create a new data source](#add-a-new-data-source) of the same type you want to clone.
+1. Copy all of the settings from the existing provisioned data source into the new data source while replacing the password with the API key you created.
+
+The easiest way to do this is to open separate browser windows with the provisioned data source in one and the newly created data source in another.
+
+Of course, after copying the HTTP and Auth section details, pasting the Cloud Access Policy token into the Password field, and changing any of the other options that you want, you can save and test the data source.

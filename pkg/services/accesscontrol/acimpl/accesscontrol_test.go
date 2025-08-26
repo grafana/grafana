@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -66,7 +65,7 @@ func TestAccessControl_Evaluate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets), zanzana.NewNoopClient())
+			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 			if tt.scopeResolver != nil {
 				ac.RegisterScopeAttributeResolver(tt.resolverPrefix, tt.scopeResolver)

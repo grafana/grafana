@@ -1,8 +1,11 @@
-import { config } from '@grafana/runtime';
-import { LinkButton } from '@grafana/ui';
+import { PluginExtensionPoints } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv } from '@grafana/runtime';
+import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
-import { useDataSource } from '../state';
+import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
+import { useDataSource } from '../state/hooks';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -10,29 +13,106 @@ interface Props {
   uid: string;
 }
 
+const FavoriteButton = ({ uid }: { uid: string }) => {
+  const favoriteDataSources = useFavoriteDatasources();
+  const dataSourceInstance = getDataSourceSrv().getInstanceSettings(uid);
+  const isFavorite = dataSourceInstance ? favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) : false;
+
+  return (
+    favoriteDataSources.enabled &&
+    dataSourceInstance &&
+    !dataSourceInstance.meta.builtIn && (
+      <IconButton
+        key={`favorite-${isFavorite ? 'favorite-mono' : 'star-default'}`}
+        name={isFavorite ? 'favorite' : 'star'}
+        iconType={isFavorite ? 'mono' : 'default'}
+        onClick={() =>
+          isFavorite
+            ? favoriteDataSources.removeFavoriteDatasource(dataSourceInstance)
+            : favoriteDataSources.addFavoriteDatasource(dataSourceInstance)
+        }
+        disabled={favoriteDataSources.isLoading}
+        tooltip={
+          isFavorite
+            ? t('datasources.edit-data-source-actions.remove-favorite', 'Remove from favorites')
+            : t('datasources.edit-data-source-actions.add-favorite', 'Add to favorites')
+        }
+        data-testid="favorite-button"
+      />
+    )
+  );
+};
+
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
 
+  // Fetch plugin extension links
+  const { links: allLinks, isLoading } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigActions,
+    context: {
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+        typeName: dataSource.typeName,
+      },
+    },
+    limitPerPlugin: 1,
+  });
+
+  const links = allLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+
+  // Only render dropdown if there are multiple actions to show
+  const hasActions = !isLoading && links.length > 0;
+
+  const handleExploreClick = () => {
+    trackDsConfigClicked('explore');
+    trackExploreClicked({
+      grafana_version: config.buildInfo.version,
+      datasource_uid: dataSource.uid,
+      plugin_name: dataSource.typeName,
+      path: window.location.pathname,
+    });
+  };
+
+  const exploreMenu = (
+    <Menu>
+      <Menu.Item
+        label={t('datasources.edit-data-source-actions.open-in-explore', 'Open in Explore View')}
+        url={constructDataSourceExploreUrl(dataSource)}
+        onClick={handleExploreClick}
+        icon="compass"
+      />
+      {links.map((link) => (
+        <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
+      ))}
+    </Menu>
+  );
+
   return (
     <>
+      <FavoriteButton uid={uid} />
       {hasExploreRights && (
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          href={constructDataSourceExploreUrl(dataSource)}
-          onClick={() => {
-            trackDsConfigClicked('explore');
-            trackExploreClicked({
-              grafana_version: config.buildInfo.version,
-              datasource_uid: dataSource.uid,
-              plugin_name: dataSource.typeName,
-              path: location.pathname,
-            });
-          }}
-        >
-          Explore data
-        </LinkButton>
+        <>
+          {!hasActions ? (
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              href={constructDataSourceExploreUrl(dataSource)}
+              onClick={handleExploreClick}
+            >
+              <Trans i18nKey="datasources.edit-data-source-actions.explore-data">Explore data</Trans>
+            </LinkButton>
+          ) : (
+            <Dropdown overlay={exploreMenu}>
+              <Button variant="secondary" size="sm">
+                <Trans i18nKey="datasources.edit-data-source-actions.explore-data">Explore data</Trans>
+                <Icon name="angle-down" />
+              </Button>
+            </Dropdown>
+          )}
+        </>
       )}
       <LinkButton
         size="sm"
@@ -44,11 +124,11 @@ export function EditDataSourceActions({ uid }: Props) {
             grafana_version: config.buildInfo.version,
             datasource_uid: dataSource.uid,
             plugin_name: dataSource.typeName,
-            path: location.pathname,
+            path: window.location.pathname,
           });
         }}
       >
-        Build a dashboard
+        <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
       </LinkButton>
     </>
   );

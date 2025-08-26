@@ -3,8 +3,9 @@ import { groupBy } from 'lodash';
 import { FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -27,31 +28,50 @@ type StateHistoryMap = Record<string, StateHistoryRowItem[]>;
 type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface Props {
-  alertId: string;
+  ruleUID: string;
 }
 
-const StateHistory = ({ alertId }: Props) => {
+const StateHistory = ({ ruleUID }: Props) => {
   const [textFilter, setTextFilter] = useState<string>('');
   const handleTextFilter = useCallback((event: FormEvent<HTMLInputElement>) => {
     setTextFilter(event.currentTarget.value);
   }, []);
 
-  const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
+  const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID);
 
   const styles = useStyles2(getStyles);
 
   if (loading && !error) {
-    return <LoadingPlaceholder text={'Loading history...'} />;
+    return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }
 
   if (error && !loading) {
-    return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
+    return (
+      <Alert
+        title={t(
+          'alerting.state-history.title-failed-to-fetch-alert-state-history',
+          'Failed to fetch alert state history'
+        )}
+      >
+        {error.message}
+      </Alert>
+    );
   }
 
   const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [
-    { id: 'state', label: 'State', size: 'max-content', renderCell: renderStateCell },
+    {
+      id: 'state',
+      label: t('alerting.state-history.columns.label.state', 'State'),
+      size: 'max-content',
+      renderCell: renderStateCell,
+    },
     { id: 'value', label: '', size: 'auto', renderCell: renderValueCell },
-    { id: 'timestamp', label: 'Time', size: 'max-content', renderCell: renderTimestampCell },
+    {
+      id: 'timestamp',
+      label: t('alerting.state-history.columns.label.time', 'Time'),
+      size: 'max-content',
+      renderCell: renderTimestampCell,
+    },
   ];
 
   // group the state history list by unique set of labels
@@ -84,12 +104,19 @@ const StateHistory = ({ alertId }: Props) => {
           label={
             <Label>
               <Stack gap={0.5} alignItems="center">
-                <span>Filter group</span>
+                <span>
+                  <Trans i18nKey="alerting.state-history.filter-group">Filter group</Trans>
+                </span>
                 <Tooltip
                   content={
                     <div>
-                      Filter each state history group either by exact match or a regular expression, ex:{' '}
-                      <code>{`region=eu-west-1`}</code> or <code>{`/region=us-.+/`}</code>
+                      <Trans i18nKey="alerting.state-history.filter-group-tooltip">
+                        Filter each state history group either by exact match or a regular expression, for example:
+                      </Trans>
+                      <div>
+                        <code>{`region=eu-west-1`}</code>
+                        <code>{`/region=us-.+/`}</code>
+                      </div>
                     </div>
                   }
                 >
@@ -99,7 +126,11 @@ const StateHistory = ({ alertId }: Props) => {
             </Label>
           }
         >
-          <Input prefix={<Icon name={'search'} />} onChange={handleTextFilter} placeholder="Search" />
+          <Input
+            prefix={<Icon name={'search'} />}
+            onChange={handleTextFilter}
+            placeholder={t('alerting.state-history.placeholder-search', 'Search')}
+          />
         </Field>
       </nav>
       {tables}

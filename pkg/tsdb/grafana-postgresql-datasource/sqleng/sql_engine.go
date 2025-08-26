@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -88,6 +89,7 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 	userError              string
+	pool                   *pgxpool.Pool
 }
 
 type QueryJson struct {
@@ -235,6 +237,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		emptyFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: query,
 		})
+		if isDownstreamError(err) {
+			source = backend.ErrorSourceDownstream
+		}
 		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
 		queryResult.dataResponse.ErrorSource = source
 		queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
@@ -444,7 +449,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 			}
 		}
 
-		if qm.Format == dataQueryFormatTable && col == "timeend" {
+		if qm.Format == dataQueryFormatTable && strings.EqualFold(col, "timeend") {
 			qm.timeEndIndex = i
 			continue
 		}
@@ -486,6 +491,7 @@ type dataQueryModel struct {
 	Interval          time.Duration
 	columnNames       []string
 	columnTypes       []*sql.ColumnType
+	columnTypesPGX    []string
 	timeIndex         int
 	timeEndIndex      int
 	metricIndex       int
@@ -642,4 +648,21 @@ func epochPrecisionToMS(value float64) float64 {
 	}
 
 	return value
+}
+
+func isDownstreamError(err error) bool {
+	if backend.IsDownstreamError(err) {
+		return true
+	}
+	resultProcessingDownstreamErrors := []error{
+		data.ErrorInputFieldsWithoutRows,
+		data.ErrorSeriesUnsorted,
+		data.ErrorNullTimeValues,
+	}
+	for _, e := range resultProcessingDownstreamErrors {
+		if errors.Is(err, e) {
+			return true
+		}
+	}
+	return false
 }

@@ -137,7 +137,7 @@ To export alert rules from the Grafana UI, complete the following steps.
 
 ### Modify alert rule and export rule group without saving changes
 
-{{% admonition type="note" %}} This feature is for Grafana-managed alert rules only. It is available to Admin, Viewer, and Editor roles. {{% /admonition %}}
+{{< admonition type="note" >}} This feature is for Grafana-managed alert rules only. It is available to Admin, Viewer, and Editor roles. {{< /admonition >}}
 
 Use the **Modify export** mode to edit and export an alert rule without updating it. The exported data includes all alert rules within the same alert group.
 
@@ -155,7 +155,7 @@ To export a modified alert rule without saving the modifications, complete the f
 
 ### Export a new alert rule definition without saving changes
 
-{{% admonition type="note" %}} You can only export in Terraform (HCL) format. {{% /admonition %}}
+{{< admonition type="note" >}} You can only export in Terraform (HCL) format. {{< /admonition >}}
 
 Add a new alert rule definition to an existing provisioned rule group rather than creating the code manually. You can then copy it to your Terraform pipeline, and quickly deploy and manage alert rules as part of your infrastructure as code.
 
@@ -197,11 +197,7 @@ However, you can export it by manually copying the content and name of the notif
 
 All notification policies are provisioned through a single resource: the root of the notification policy tree.
 
-{{% admonition type="warning" %}}
-
-Since the policy tree is a single resource, provisioning it overwrites a policy tree created through any other means.
-
-{{< /admonition >}}
+{{< docs/shared lookup="alerts/warning-provisioning-tree.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 To export the notification policy tree from the Grafana UI, complete the following steps.
 

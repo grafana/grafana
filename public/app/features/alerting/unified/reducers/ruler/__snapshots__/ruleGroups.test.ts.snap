@@ -104,10 +104,6 @@ exports[`removing a rule should remove a Data source managed ruler rule without 
       },
     },
     {
-      "alert": "alert1",
-      "annotations": {
-        "summary": "test alert",
-      },
       "expr": "up = 1",
       "labels": {
         "severity": "warning",

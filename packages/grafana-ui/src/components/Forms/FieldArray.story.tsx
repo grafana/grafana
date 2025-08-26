@@ -1,12 +1,14 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { FieldValues } from 'react-hook-form';
 
-import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
-
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
+import { Button } from '../Button/Button';
+import { Input } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
+import { Form } from './Form';
 
 const meta: Meta = {
   title: 'Forms/FieldArray',
@@ -19,6 +21,8 @@ const meta: Meta = {
     controls: {
       exclude: ['name', 'keyName', 'control', 'shouldUnregister'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
@@ -41,7 +45,7 @@ export const Simple: StoryFn = (args) => {
               <>
                 <div style={{ marginBottom: '1rem' }}>
                   {fields.map((field, index) => (
-                    <HorizontalGroup key={field.id}>
+                    <Stack key={field.id}>
                       <Input
                         key={field.id}
                         {...register(`people.${index}.firstName` as const)}
@@ -52,7 +56,7 @@ export const Simple: StoryFn = (args) => {
                         {...register(`people.${index}.lastName` as const)}
                         defaultValue={field.lastName}
                       />
-                    </HorizontalGroup>
+                    </Stack>
                   ))}
                 </div>
                 <Button

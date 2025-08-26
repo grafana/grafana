@@ -42,6 +42,7 @@ type keySetHTTP struct {
 	url             string
 	log             log.Logger
 	client          *http.Client
+	bearerTokenPath string
 	cache           *remotecache.RemoteCache
 	cacheKey        string
 	cacheExpiration time.Duration
@@ -70,6 +71,8 @@ func (s *AuthService) checkKeySetConfiguration() error {
 	return nil
 }
 
+// initKeySet creates a provider for JWKSet, either file, or https
+// nolint:gocyclo
 func (s *AuthService) initKeySet() error {
 	if err := s.checkKeySetConfiguration(); err != nil {
 		return err
@@ -155,13 +158,42 @@ func (s *AuthService) initKeySet() error {
 		if urlParsed.Scheme != "https" && s.Cfg.Env != setting.Dev {
 			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
+
+		var caCertPool *x509.CertPool
+		if s.Cfg.JWTAuth.TlsClientCa != "" {
+			s.log.Debug("reading ca from TlsClientCa path")
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `tlsClientCa` comes from grafana configuration file
+			caCert, err := os.ReadFile(s.Cfg.JWTAuth.TlsClientCa)
+			if err != nil {
+				s.log.Error("Failed to read TlsClientCa", "path", s.Cfg.JWTAuth.TlsClientCa, "error", err)
+				return fmt.Errorf("failed to read TlsClientCa: %w", err)
+			}
+
+			caCertPool = x509.NewCertPool()
+			if !caCertPool.AppendCertsFromPEM(caCert) {
+				s.log.Error("failed to decode provided PEM certs", "path", s.Cfg.JWTAuth.TlsClientCa)
+				return fmt.Errorf("failed to decode provided PEM certs file from TlsClientCa")
+			}
+		}
+
+		// Read Bearer token from file during init
+		if s.Cfg.JWTAuth.JWKSetBearerTokenFile != "" {
+			if _, err := getBearerToken(s.Cfg.JWTAuth.JWKSetBearerTokenFile); err != nil {
+				return err
+			}
+		}
+
 		s.keySet = &keySetHTTP{
-			url: urlStr,
-			log: s.log,
+			url:             urlStr,
+			log:             s.log,
+			bearerTokenPath: s.Cfg.JWTAuth.JWKSetBearerTokenFile,
 			client: &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
-						Renegotiation: tls.RenegotiateFreelyAsClient,
+						Renegotiation:      tls.RenegotiateFreelyAsClient,
+						InsecureSkipVerify: s.Cfg.JWTAuth.TlsSkipVerify,
+						RootCAs:            caCertPool,
 					},
 					Proxy: http.ProxyFromEnvironment,
 					DialContext: (&net.Dialer{
@@ -188,6 +220,27 @@ func (ks *keySetJWKS) Key(ctx context.Context, keyID string) ([]jose.JSONWebKey,
 	return ks.JSONWebKeySet.Key(keyID), nil
 }
 
+func getBearerToken(bearerTokenPath string) (string, error) {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning as `bearerTokenPath` originates from grafana configuration file
+	bytes, err := os.ReadFile(bearerTokenPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read JWKSetBearerTokenFile: %w", err)
+	}
+
+	t := strings.TrimSpace(string(bytes))
+	if len(t) == 0 {
+		return "", fmt.Errorf("empty file configured for JWKSetBearerTokenFile")
+	}
+
+	if strings.HasPrefix(t, "Bearer ") {
+		return t, nil
+	}
+
+	// Prefix with Bearer if missing
+	return fmt.Sprintf("Bearer %s", t), nil
+}
+
 func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	var jwks keySetJWKS
 
@@ -207,6 +260,17 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ks.url, nil)
 	if err != nil {
 		return jwks, err
+	}
+
+	if ks.bearerTokenPath != "" {
+		// Always read the token before fetching JWKS to handle potential key rotation (e.g. short-lived kubernetes ServiceAccount tokens)
+		token, err := getBearerToken(ks.bearerTokenPath)
+		if err != nil {
+			return jwks, err
+		}
+
+		ks.log.Debug("adding Authorization header", "token_len", len(token))
+		req.Header.Set("Authorization", token)
 	}
 
 	resp, err := ks.client.Do(req)

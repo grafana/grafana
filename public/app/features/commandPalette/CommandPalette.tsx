@@ -2,47 +2,64 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import {
-  KBarAnimator,
-  KBarPortal,
-  KBarPositioner,
-  KBarSearch,
-  VisualState,
-  useRegisterActions,
-  useKBar,
-  ActionImpl,
-} from 'kbar';
-import { useEffect, useMemo, useRef } from 'react';
+import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
+import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import useActions from './actions/useActions';
+import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
+import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
+  useRegisterStaticActions();
+  return (
+    <KBarPortal>
+      <CommandPaletteContents />
+    </KBarPortal>
+  );
+}
+
+/**
+ * Actual contents of the command palette. As KBarPortal controls the mount of this component this is split so that
+ * we can run code only after command palette is opened.
+ * @constructor
+ */
+function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, showing, searchQuery } = useKBar((state) => ({
+  const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
+    currentRootActionId: state.currentRootActionId,
   }));
 
-  const actions = useActions(searchQuery);
-  useRegisterActions(actions, [actions]);
-  const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
+  useRegisterRecentDashboardsActions();
+  useRegisterRecentScopesActions();
+
+  const queryToggle = useCallback(() => query.toggle(), [query]);
+  const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
+
+  // This searches dashboards and folders it shows only if we are not in some specific category (and there is no
+  // dashboards category right now, so if any category is selected, we don't show these).
+  // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
+  // the currentRootActionId. Because these search results are manually added to the list later, they would show every
+  // time.
+  const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
-    { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
+    { isOpen: true, onClose: () => query.setVisualState(VisualState.animatingOut) },
     ref
   );
 
@@ -50,34 +67,65 @@ export function CommandPalette() {
 
   // Report interaction when opened
   useEffect(() => {
-    showing && reportInteraction('command_palette_opened');
-  }, [showing]);
+    reportInteraction('command_palette_opened');
+  }, []);
 
-  return actions.length > 0 ? (
-    <KBarPortal>
-      <KBarPositioner className={styles.positioner}>
-        <KBarAnimator className={styles.animator}>
-          <FocusScope contain autoFocus restoreFocus>
-            <div {...overlayProps} {...dialogProps}>
-              <div className={styles.searchContainer}>
-                <Icon name="search" size="md" />
-                <KBarSearch
-                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
-                  className={styles.search}
-                />
-                <div className={styles.loadingBarContainer}>
-                  {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
-                </div>
-              </div>
-              <div className={styles.resultsContainer}>
-                <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
+  return (
+    <KBarPositioner className={styles.positioner}>
+      <KBarAnimator className={styles.animator}>
+        <FocusScope contain autoFocus restoreFocus>
+          <div {...overlayProps} {...dialogProps}>
+            <div className={styles.searchContainer}>
+              <Icon name="search" size="md" className={styles.searchIcon} />
+              <AncestorBreadcrumbs />
+              <KBarSearch
+                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
+                className={styles.search}
+              />
+              <div className={styles.loadingBarContainer}>
+                {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
               </div>
             </div>
-          </FocusScope>
-        </KBarAnimator>
-      </KBarPositioner>
-    </KBarPortal>
-  ) : null;
+            {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
+            <div className={styles.resultsContainer}>
+              <RenderResults isFetchingSearchResults={isFetchingSearchResults} searchResults={searchResults} />
+            </div>
+          </div>
+        </FocusScope>
+      </KBarAnimator>
+    </KBarPositioner>
+  );
+}
+
+/**
+ * Breadcrumbs for selected actions or categories in the command palette. This has to be a separate component
+ * from the one that is registering actions because we need actions prop from kbar and doing both in the same component
+ * creates rerender loop.
+ * @constructor
+ */
+function AncestorBreadcrumbs() {
+  const lateralSpace = getCommandPalettePosition();
+  const styles = useStyles2(getSearchStyles, lateralSpace);
+
+  const { actions, currentRootActionId } = useKBar((state) => ({
+    actions: state.actions,
+    currentRootActionId: state.currentRootActionId,
+  }));
+
+  // To show breadcrumbs of actions selected if they are nested
+  const ancestorActions = currentRootActionId
+    ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
+    : [];
+
+  return (
+    ancestorActions.length > 0 && (
+      <span className={styles.breadcrumbs}>
+        {ancestorActions.map((action, index) => (
+          <React.Fragment key={action.id || index}>{action.name}&nbsp;/&nbsp;</React.Fragment>
+        ))}
+      </span>
+    )
+  );
 }
 
 interface RenderResultsProps {
@@ -89,6 +137,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   const { results: kbarResults, rootActionId } = useMatches();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
+
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually
@@ -122,6 +171,9 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
+  useEffect(() => {
+    showEmptyState && reportInteraction('grafana_empty_state_shown', { source: 'command_palette' });
+  }, [showEmptyState]);
 
   return showEmptyState ? (
     <EmptyState
@@ -158,8 +210,6 @@ const getCommandPalettePosition = () => {
 };
 
 const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
-  const isSingleTopNav = config.featureToggles.singleTopNav;
-
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -173,7 +223,6 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
         bottom: 0,
         left: 0,
         background: theme.components.overlay.background,
-        backdropFilter: 'blur(1px)',
       },
     }),
     animator: css({
@@ -185,15 +234,13 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      ...(isSingleTopNav && {
-        [theme.breakpoints.up('lg')]: {
-          position: 'fixed',
-          right: lateralSpace,
-          left: lateralSpace,
-          maxWidth: 'unset',
-          width: 'unset',
-        },
-      }),
+      [theme.breakpoints.up('lg')]: {
+        position: 'fixed',
+        right: lateralSpace,
+        left: lateralSpace,
+        maxWidth: 'unset',
+        width: 'unset',
+      },
     }),
     loadingBarContainer: css({
       position: 'absolute',
@@ -206,9 +253,9 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       background: theme.components.input.background,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
-      gap: theme.spacing(1),
       padding: theme.spacing(1, 2),
       position: 'relative',
+      justifyContent: 'space-between',
     }),
     search: css({
       fontSize: theme.typography.fontSize,
@@ -236,6 +283,41 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       paddingBottom: theme.spacing(1),
       borderTop: 'none',
       marginTop: 0,
+    }),
+    breadcrumbs: css({
+      label: 'breadcrumbs',
+      fontSize: theme.typography.body.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.body.lineHeight,
+      color: theme.colors.text.primary,
+      display: 'flex',
+      alignItems: 'center',
+      whiteSpace: 'nowrap',
+    }),
+    scopesText: css({
+      label: 'scopesText',
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+    }),
+    searchIcon: css({
+      marginRight: theme.spacing(1),
+    }),
+    selectedScope: css({
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0, 0.5),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+      display: 'inline-flex',
+      alignItems: 'center',
+      position: 'relative',
+      border: `1px solid ${theme.colors.background.secondary}`,
+      whiteSpace: 'nowrap',
+      marginRight: theme.spacing(0.5),
     }),
   };
 };

@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { VizPanel } from '@grafana/scenes';
 import { LibraryPanel, defaultDashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
@@ -83,7 +83,14 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
 }
 
 export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
-  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(`/api/library-elements/name/${name}`);
+  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(
+    `/api/library-elements/name/${name}`,
+    undefined,
+    undefined,
+    {
+      validatePath: true,
+    }
+  );
   return result;
 }
 

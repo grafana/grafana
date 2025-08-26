@@ -1,17 +1,15 @@
 {
   "key": {
     "namespace": "default",
-    "group": "dashboard.grafana.app",
-    "resource": "dashboards",
+    "group": "playlist.grafana.app",
+    "resource": "playlists",
     "name": "aaa"
   },
+  "name": "aaa",
   "rv": 1234,
-  "title": "aaa",
+  "title": "Test AAA",
+  "title_ngram": "Test AAA",
+  "title_phrase": "test aaa",
   "created": 1731336353000,
-  "createdBy": "user:t000000001",
-  "repository": {
-    "name": "UI",
-    "path": "/playlists/new",
-    "hash": "Grafana v11.4.0-pre (c0de407fee)"
-  }
+  "createdBy": "user:t000000001"
 }

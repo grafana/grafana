@@ -38,6 +38,7 @@ describe('trackDashboardLoaded', () => {
     expect(reportInteractionSpy).toHaveBeenCalledWith('dashboards_init_dashboard_completed', {
       duration: 200,
       isScene: false,
+      isDynamicDashboard: false,
       uid: 'dashboard-123',
       title: 'Test Dashboard',
       schemaVersion: model.schemaVersion, // This value is based on public/app/features/dashboard/state/DashboardMigrator.ts#L81
@@ -47,10 +48,8 @@ describe('trackDashboardLoaded', () => {
       version_before_migration: 16,
       panel_type_row_count: 1,
       panel_type_stat_count: 1,
-      panel_type_graph_count: 2,
-      panel_type_timeseries_count: 1,
-      'panel_type_grafana-worldmap-panel_count': 1,
-      panel_type_geomap_count: 1,
+      panel_type_timeseries_count: 3,
+      panel_type_geomap_count: 2,
       settings_nowdelay: '1m',
       settings_livenow: true,
     });

@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions';
-import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
@@ -90,7 +91,6 @@ export const windTurbineItem: CanvasElementItem = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -106,12 +106,12 @@ export const windTurbineItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Wind Turbine'];
+    const category = [t('canvas.wind-turbine-item.category-wind-turbine', 'Wind Turbine')];
     builder.addCustomEditor({
       category,
       id: 'rpm',
       path: 'config.rpm',
-      name: 'RPM',
+      name: t('canvas.wind-turbine-item.name-rpm', 'RPM'),
       editor: ScalarDimensionEditor,
     });
   },

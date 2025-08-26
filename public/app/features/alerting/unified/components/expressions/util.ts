@@ -15,20 +15,29 @@ import { isCloudRulesSource } from '../../utils/datasource';
  */
 
 const getSeriesName = (frame: DataFrame): string | undefined => {
-  const firstField = frame.fields[0];
+  const firstField = frame.fields.at(0);
 
   const displayNameFromDS = firstField?.config?.displayNameFromDS;
   return displayNameFromDS ?? frame.name ?? firstField?.labels?.__name__;
 };
 
 const getSeriesValue = (frame: DataFrame) => {
-  const value = frame.fields[0]?.values[0];
+  return frame.fields.at(0)?.values.at(0);
+};
 
-  if (Number.isFinite(value)) {
-    return roundDecimals(value, 5);
+const smallNumberFormatter = new Intl.NumberFormat(undefined, {
+  maximumSignificantDigits: 5,
+});
+
+const formatSeriesValue = (value: unknown): string => {
+  if (Number.isFinite(value) && typeof value === 'number') {
+    const absValue = Math.abs(value);
+    if (absValue < 1) {
+      return smallNumberFormatter.format(value);
+    }
+    return roundDecimals(value, 5).toString(10);
   }
-
-  return value;
+  return String(value);
 };
 
 const getSeriesLabels = (frame: DataFrame): Record<string, string> => {
@@ -103,5 +112,6 @@ export {
   getSeriesLabels,
   getSeriesName,
   getSeriesValue,
+  formatSeriesValue,
   isEmptySeries,
 };

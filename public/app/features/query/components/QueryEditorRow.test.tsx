@@ -5,23 +5,43 @@ import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from
 import { DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { DataSourceType } from '../../alerting/unified/utils/datasource';
-
 import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',
-  type: DataSourceType.Alertmanager,
+  type: 'testdata',
 });
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve(mockDS),
-      getList: () => {},
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+
+// Mock the QueryLibraryContext
+const mockQueryLibraryContext = {
+  queryLibraryEnabled: true,
+  renderQueryLibraryEditingHeader: jest.fn(),
+  renderSaveQueryButton: jest.fn(() => null),
+  openDrawer: jest.fn(),
+  closeDrawer: jest.fn(),
+  isDrawerOpen: false,
+  context: 'test',
+};
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: () => mockQueryLibraryContext,
+}));
+
+// Mock the internationalization function
+jest.mock('@grafana/i18n', () => ({
+  ...jest.requireActual('@grafana/i18n'),
+  t: (key: string, defaultValue: string) => defaultValue,
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve(mockDS),
+    getList: () => {},
+    getInstanceSettings: () => mockDS,
+  }),
+}));
+
 // Draggable fails to render in tests, so we mock it out
 jest.mock('app/core/components/QueryOperationRow/QueryOperationRow', () => ({
   QueryOperationRow: (props: PropsWithChildren) => <div>{props.children}</div>,
@@ -170,7 +190,7 @@ describe('filterPanelDataToQuery', () => {
 });
 
 describe('frame results with warnings', () => {
-  const meta = {
+  const metaWarning = {
     notices: [
       {
         severity: 'warning',
@@ -178,25 +198,79 @@ describe('frame results with warnings', () => {
       },
     ],
   };
+  const metaInfo = {
+    notices: [
+      {
+        severity: 'info',
+        text: 'For your info, something is up.',
+      },
+    ],
+  };
+  const metaWarningAndInfo = {
+    notices: [
+      {
+        severity: 'warning',
+        text: 'Reduce operation is not needed. Input query or expression A is already reduced data.',
+      },
+      {
+        severity: 'info',
+        text: 'For your info, something is up.',
+      },
+    ],
+  };
 
-  const dataWithWarnings: PanelData = {
+  const dataWithWarningsAndInfo: PanelData = {
     state: LoadingState.Done,
     series: [
       toDataFrame({
         refId: 'B',
         fields: [{ name: 'B1' }],
-        meta,
+        meta: metaWarningAndInfo,
       }),
       toDataFrame({
         refId: 'B',
         fields: [{ name: 'B2' }],
-        meta,
+        meta: metaWarningAndInfo,
       }),
     ],
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   };
 
-  const dataWithoutWarnings: PanelData = {
+  const dataWithWarningsOnly: PanelData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B1' }],
+        meta: metaWarning,
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B2' }],
+        meta: metaWarning,
+      }),
+    ],
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  };
+
+  const dataWithInfosOnly: PanelData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B1' }],
+        meta: metaInfo,
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B2' }],
+        meta: metaInfo,
+      }),
+    ],
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  };
+
+  const dataWithoutWarningsOrInfo: PanelData = {
     state: LoadingState.Done,
     series: [
       toDataFrame({
@@ -213,33 +287,79 @@ describe('frame results with warnings', () => {
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   };
 
-  it('should show a warning badge and de-duplicate warning messages', () => {
+  it('should show both badges and de-duplicate messages', () => {
     // @ts-ignore: there are _way_ too many props to inject here :(
     const editorRow = new QueryEditorRow({
-      data: dataWithWarnings,
+      data: dataWithWarningsAndInfo,
       query: {
         refId: 'B',
       },
     });
 
-    const warningsComponent = editorRow.renderWarnings();
+    const warningsComponent = editorRow.renderWarnings('warning');
     expect(warningsComponent).not.toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).not.toBe(null);
+
+    render(warningsComponent!);
+    render(infosComponent!);
+    expect(screen.getByText('1 warning')).toBeInTheDocument();
+    expect(screen.getByText('1 info')).toBeInTheDocument();
+  });
+
+  it('should show a warning badge and de-duplicate warning messages', () => {
+    // @ts-ignore: there are _way_ too many props to inject here :(
+    const editorRow = new QueryEditorRow({
+      data: dataWithWarningsOnly,
+      query: {
+        refId: 'B',
+      },
+    });
+
+    const warningsComponent = editorRow.renderWarnings('warning');
+    expect(warningsComponent).not.toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).toBe(null);
 
     render(warningsComponent!);
     expect(screen.getByText('1 warning')).toBeInTheDocument();
   });
 
-  it('should not show a warning badge when there are no warnings', () => {
+  it('should show an info badge and de-duplicate info messages', () => {
     // @ts-ignore: there are _way_ too many props to inject here :(
     const editorRow = new QueryEditorRow({
-      data: dataWithoutWarnings,
+      data: dataWithInfosOnly,
       query: {
         refId: 'B',
       },
     });
 
-    const warningsComponent = editorRow.renderWarnings();
+    const warningsComponent = editorRow.renderWarnings('warning');
     expect(warningsComponent).toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).not.toBe(null);
+
+    render(infosComponent!);
+    expect(screen.getByText('1 info')).toBeInTheDocument();
+  });
+
+  it('should not show any badge when there are no warnings or info', () => {
+    // @ts-ignore: there are _way_ too many props to inject here :(
+    const editorRow = new QueryEditorRow({
+      data: dataWithoutWarningsOrInfo,
+      query: {
+        refId: 'B',
+      },
+    });
+
+    const warningsComponent = editorRow.renderWarnings('warning');
+    expect(warningsComponent).toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).toBe(null);
   });
 });
 describe('QueryEditorRow', () => {
@@ -253,7 +373,9 @@ describe('QueryEditorRow', () => {
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
     onRemoveQuery: jest.fn(),
+    onReplace: jest.fn(),
     index: 0,
+    range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
   it('should display error message in corresponding panel', async () => {
     const data = {
@@ -286,6 +408,52 @@ describe('QueryEditorRow', () => {
     render(<QueryEditorRow {...props(data)} />);
     await waitFor(() => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Query Library Integration', () => {
+    let testData: PanelData;
+    let mockOnCancelEdit: jest.MockedFunction<() => void>;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockQueryLibraryContext.renderQueryLibraryEditingHeader.mockReturnValue(null);
+      mockOnCancelEdit = jest.fn();
+
+      // Standard test data for QueryEditorRow
+      testData = {
+        series: [],
+        timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+        state: LoadingState.Done,
+      };
+    });
+
+    it('should render query library editing header when queryLibraryRef is provided', async () => {
+      render(
+        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onCancelQueryLibraryEdit={mockOnCancelEdit} />
+      );
+
+      // Wait for async datasource loading and component rendering
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          'test-ref', // queryLibraryRef
+          mockOnCancelEdit, // onCancelEdit
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function) // onSelectQuery
+        );
+      });
+    });
+
+    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+      render(<QueryEditorRow {...props(testData)} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('query-editor-row')).toBeInTheDocument();
+      });
+
+      expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();
     });
   });
 });

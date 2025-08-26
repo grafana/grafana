@@ -1,4 +1,5 @@
 import { VariableRefresh } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 import {
   DeepPartial,
   EmbeddedScene,
@@ -13,21 +14,42 @@ import {
 } from '@grafana/scenes';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
+  const loadSnapshotMock = (spy || jest.fn()).mockResolvedValue(rsp);
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: loadDashboardMock,
+    loadSnapshot: loadSnapshotMock,
+  } as unknown as DashboardLoaderSrv);
+  return loadDashboardMock;
+}
+export function setupLoadDashboardMockReject(rsp: DeepPartial<FetchError>, spy?: jest.Mock) {
+  const loadDashboardMock = (spy || jest.fn()).mockRejectedValue(rsp);
   // disabling type checks since this is a test util
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
+}
+
+export function setupLoadDashboardRuntimeErrorMock() {
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: () => {
+      throw new Error('Runtime error');
+    },
+  } as unknown as DashboardLoaderSrv);
 }
 
 export function mockResizeObserver() {
@@ -121,6 +143,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       new VizPanel({
         title: 'Panel $server',
         pluginId: 'timeseries',
+        key: 'panel-1',
       }),
     x: options.x || 0,
     y: options.y || 0,

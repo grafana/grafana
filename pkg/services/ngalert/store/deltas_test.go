@@ -4,21 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 func TestCalculateChanges(t *testing.T) {
-	orgId := int64(rand.Int31())
+	orgId := int64(rand.Int32())
 	gen := models.RuleGen
 
 	t.Run("detects alerts that need to be added", func(t *testing.T) {
@@ -81,7 +83,7 @@ func TestCalculateChanges(t *testing.T) {
 		submittedMap := groupByUID(t, rules)
 		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
 		for _, rule := range rules {
-			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule})
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasEditorSettings: true})
 		}
 
 		fakeStore := fakes.NewRuleStore(t)
@@ -115,8 +117,8 @@ func TestCalculateChanges(t *testing.T) {
 			r := models.CopyRule(rule)
 
 			// Ignore difference in the following fields as submitted models do not have them set
-			r.ID = int64(rand.Int31())
-			r.Version = int64(rand.Int31())
+			r.ID = int64(rand.Int32())
+			r.Version = int64(rand.Int32())
 			r.Updated = r.Updated.Add(1 * time.Minute)
 
 			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *r})
@@ -169,6 +171,12 @@ func TestCalculateChanges(t *testing.T) {
 					r.For = 0
 				},
 			},
+			{
+				name: "GUID is empty",
+				mutator: func(r *models.AlertRule) {
+					r.GUID = ""
+				},
+			},
 		}
 
 		dbRule := gen.With(gen.WithOrgID(orgId)).GenerateRef()
@@ -216,7 +224,7 @@ func TestCalculateChanges(t *testing.T) {
 		submittedMap := groupByUID(t, rules)
 		submitted := make([]*models.AlertRuleWithOptionals, 0, len(rules))
 		for _, rule := range rules {
-			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule})
+			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *rule, HasEditorSettings: true})
 		}
 
 		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
@@ -240,14 +248,19 @@ func TestCalculateChanges(t *testing.T) {
 		require.Len(t, changes.AffectedGroups[sourceGroupKey], len(inDatabase))
 	})
 
-	t.Run("should fail when submitted rule has UID that does not exist in db", func(t *testing.T) {
+	t.Run("should add rule when submitted rule has UID that does not exist in db", func(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := gen.With(gen.WithOrgID(orgId), simulateSubmitted).Generate()
 		require.NotEqual(t, "", submitted.UID)
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
-		require.Error(t, err)
+		diff, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRuleWithOptionals{{AlertRule: submitted}})
+		require.NoError(t, err)
+
+		require.Len(t, diff.New, 1)
+		require.Empty(t, diff.Delete)
+		require.Empty(t, diff.Update)
+		require.Equal(t, submitted, *diff.New[0])
 	})
 
 	t.Run("should fail if cannot fetch current rules in the group", func(t *testing.T) {
@@ -288,7 +301,7 @@ func TestCalculateChanges(t *testing.T) {
 }
 
 func TestCalculateAutomaticChanges(t *testing.T) {
-	orgID := rand.Int63()
+	orgID := rand.Int64()
 	gen := models.RuleGen
 
 	t.Run("should mark all rules in affected groups", func(t *testing.T) {
@@ -348,7 +361,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		group2 := models.GenerateGroupKey(orgID)
 		rules2 := gen.With(gen.WithGroupKey(group2), gen.WithSequentialGroupIndex()).GenerateManyRef(4)
 
-		movedIndex := rand.Intn(len(rules2))
+		movedIndex := rand.IntN(len(rules2))
 		movedRule := rules2[movedIndex]
 		copyRule := models.CopyRule(movedRule)
 		copyRule.RuleGroup = group.RuleGroup
@@ -423,6 +436,91 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 	})
 }
 
+func TestCalculateRuleGroupsDelete(t *testing.T) {
+	orgId := int64(rand.Int32())
+	gen := models.RuleGen
+
+	t.Run("returns ErrAlertRuleGroupNotFound when namespace has no rules", func(t *testing.T) {
+		fakeStore := fakes.NewRuleStore(t)
+		otherRules := gen.With(gen.WithOrgID(orgId), gen.WithNamespaceUID("ns-1")).GenerateManyRef(3)
+		fakeStore.Rules[orgId] = otherRules
+
+		query := &models.ListAlertRulesQuery{
+			NamespaceUIDs: []string{"ns-2"},
+		}
+		deltas, err := CalculateRuleGroupsDelete(context.Background(), fakeStore, orgId, query)
+		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
+		require.Nil(t, deltas)
+	})
+
+	t.Run("returns deltas for all affected groups in namespace", func(t *testing.T) {
+		fakeStore := fakes.NewRuleStore(t)
+		folder := randFolder()
+
+		// Create rules in two groups in target namespace
+		group1Key := models.AlertRuleGroupKey{
+			OrgID:        orgId,
+			NamespaceUID: folder.UID,
+			RuleGroup:    util.GenerateShortUID(),
+		}
+		group2Key := models.AlertRuleGroupKey{
+			OrgID:        orgId,
+			NamespaceUID: folder.UID,
+			RuleGroup:    util.GenerateShortUID(),
+		}
+
+		group1Rules := gen.With(gen.WithGroupKey(group1Key)).GenerateManyRef(3)
+		group2Rules := gen.With(gen.WithGroupKey(group2Key)).GenerateManyRef(2)
+		allNamespaceRules := append(group1Rules, group2Rules...)
+
+		// Create rules in different namespace
+		otherRules := gen.With(gen.WithOrgID(orgId), gen.WithNamespaceUIDNotIn(folder.UID)).GenerateManyRef(3)
+
+		fakeStore.Rules[orgId] = append(allNamespaceRules, otherRules...)
+
+		query := &models.ListAlertRulesQuery{
+			NamespaceUIDs: []string{folder.UID},
+		}
+
+		deltas, err := CalculateRuleGroupsDelete(context.Background(), fakeStore, orgId, query)
+		require.NoError(t, err)
+
+		require.Len(t, deltas, 2, "expected deltas for two groups")
+
+		// Verify each group's delta
+		for _, delta := range deltas {
+			require.True(t, delta.GroupKey == group1Key || delta.GroupKey == group2Key)
+			require.Empty(t, delta.Update)
+			require.Empty(t, delta.New)
+
+			require.Contains(t, delta.AffectedGroups, delta.GroupKey)
+			if delta.GroupKey == group1Key {
+				require.ElementsMatch(t, group1Rules, delta.Delete)
+				require.ElementsMatch(t, group1Rules, delta.AffectedGroups[delta.GroupKey])
+			} else {
+				require.ElementsMatch(t, group2Rules, delta.Delete)
+				require.ElementsMatch(t, group2Rules, delta.AffectedGroups[delta.GroupKey])
+			}
+		}
+	})
+
+	t.Run("fails if store returns error", func(t *testing.T) {
+		fakeStore := fakes.NewRuleStore(t)
+		expectedErr := errors.New("store error")
+		fakeStore.Hook = func(cmd any) error {
+			switch cmd.(type) {
+			case models.ListAlertRulesQuery:
+				return expectedErr
+			}
+			return nil
+		}
+
+		deltas, err := CalculateRuleGroupsDelete(context.Background(), fakeStore, orgId, nil)
+		require.ErrorIs(t, err, expectedErr)
+		require.Nil(t, deltas)
+	})
+}
+
 func TestCalculateRuleGroupDelete(t *testing.T) {
 	gen := models.RuleGen
 	fakeStore := fakes.NewRuleStore(t)
@@ -444,13 +542,13 @@ func TestCalculateRuleGroupDelete(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, groupKey, delta.GroupKey)
-		assert.EqualValues(t, groupRules, delta.Delete)
+		assert.ElementsMatch(t, groupRules, delta.Delete)
 
 		assert.Empty(t, delta.Update)
 		assert.Empty(t, delta.New)
 
 		assert.Len(t, delta.AffectedGroups, 1)
-		assert.Equal(t, models.RulesGroup(groupRules), delta.AffectedGroups[delta.GroupKey])
+		assert.ElementsMatch(t, groupRules, delta.AffectedGroups[delta.GroupKey])
 	})
 }
 
@@ -633,6 +731,80 @@ func TestCalculateRuleCreate(t *testing.T) {
 		assert.Empty(t, delta.Update)
 		assert.Len(t, delta.New, 1)
 		assert.Equal(t, rule, delta.New[0])
+	})
+}
+
+func TestDeltaAffectsQuery(t *testing.T) {
+	t.Run("returns false when there are no diffs", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{},
+		}
+		assert.False(t, delta.AffectsQuery())
+	})
+	t.Run("returns true when diff contains a field that affects query", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Data",
+					Left:  reflect.ValueOf("old value"),
+					Right: reflect.ValueOf("new value"),
+				},
+			},
+		}
+		assert.True(t, delta.AffectsQuery())
+	})
+	t.Run("returns false when diff contains only fields that do not affect query", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Title",
+					Left:  reflect.ValueOf("old title"),
+					Right: reflect.ValueOf("new title"),
+				},
+			},
+		}
+		assert.False(t, delta.AffectsQuery())
+	})
+	t.Run("returns true when diff contains multiple fields, including one that affects query", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Title",
+					Left:  reflect.ValueOf("old title"),
+					Right: reflect.ValueOf("new title"),
+				},
+				{
+					Path:  "IntervalSeconds",
+					Left:  reflect.ValueOf(10),
+					Right: reflect.ValueOf(20),
+				},
+			},
+		}
+		assert.True(t, delta.AffectsQuery())
+	})
+	t.Run("handles nested paths in diff", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Data[0].Query",
+					Left:  reflect.ValueOf("old query"),
+					Right: reflect.ValueOf("new query"),
+				},
+			},
+		}
+		assert.True(t, delta.AffectsQuery())
+	})
+	t.Run("returns false for empty diff paths", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "",
+					Left:  reflect.ValueOf("old value"),
+					Right: reflect.ValueOf("new value"),
+				},
+			},
+		}
+		assert.False(t, delta.AffectsQuery())
 	})
 }
 

@@ -2,15 +2,15 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import * as analytics from '../../Analytics';
 
 import { NewRuleFromPanelButton } from './NewRuleFromPanelButton';
 
-jest.mock('app/types', () => {
-  const original = jest.requireActual('app/types');
+jest.mock('app/types/store', () => {
+  const original = jest.requireActual('app/types/store');
   return {
     ...original,
     useSelector: jest.fn(),

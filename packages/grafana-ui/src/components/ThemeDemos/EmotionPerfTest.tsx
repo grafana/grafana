@@ -1,14 +1,13 @@
-/* eslint-disable @grafana/no-untranslated-strings */
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 /** @jsxImportSource @emotion/react */
-/** @jsxRuntime classic */
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
-import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
+import React, { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
-import { Button } from '../Button';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
 export function EmotionPerfTest() {

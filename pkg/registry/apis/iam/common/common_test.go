@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -24,12 +24,12 @@ func (i item) AuthID() string {
 }
 
 func TestList(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	t.Run("should allow all items if no access client is passed", func(t *testing.T) {
 		ctx := newContext("stacks-1", newIdent())
 
-		res, err := List(ctx, "items", nil, Pagination{Limit: 2}, func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
+		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), nil, Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
 			return &ListResponse[item]{
 				Items: []item{{"1"}, {"2"}},
 			}, nil
@@ -45,7 +45,7 @@ func TestList(t *testing.T) {
 			Resource: "items",
 			Attr:     "uid",
 		})
-		res, err := List(ctx, "items", a, Pagination{Limit: 2}, func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
+		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
 			return &ListResponse[item]{
 				Items: []item{{"1"}, {"2"}},
 			}, nil
@@ -67,7 +67,7 @@ func TestList(t *testing.T) {
 
 		var called bool
 
-		res, err := List(ctx, "items", a, Pagination{Limit: 2}, func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
+		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
 			if called {
 				return &ListResponse[item]{
 					Items: []item{{"3"}},

@@ -18,13 +18,14 @@ type store interface {
 	DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error)
 	DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error)
+	GetIPLoginAttemptCount(ctx context.Context, query GetIPLoginAttemptCountQuery) (int64, error)
 }
 
 func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) (result loginattempt.LoginAttempt, err error) {
 	err = xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
-			IpAddress: cmd.IpAddress,
+			IpAddress: cmd.IPAddress,
 			Created:   xs.now().Unix(),
 		}
 
@@ -70,6 +71,22 @@ func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query GetUser
 		loginAttempt := new(loginattempt.LoginAttempt)
 		total, queryErr = dbSession.
 			Where("username = ?", query.Username).
+			And("created >= ?", query.Since.Unix()).
+			Count(loginAttempt)
+
+		return queryErr
+	})
+
+	return total, err
+}
+
+func (xs *xormStore) GetIPLoginAttemptCount(ctx context.Context, query GetIPLoginAttemptCountQuery) (int64, error) {
+	var total int64
+	err := xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var queryErr error
+		loginAttempt := new(loginattempt.LoginAttempt)
+		total, queryErr = dbSession.
+			Where("ip_address = ?", query.IPAddress).
 			And("created >= ?", query.Since.Unix()).
 			Count(loginAttempt)
 

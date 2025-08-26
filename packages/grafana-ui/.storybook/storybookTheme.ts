@@ -1,9 +1,7 @@
-import { GrafanaTheme2, createTheme } from '@grafana/data';
-//@ts-ignore
+import { GrafanaTheme2 } from '@grafana/data';
 import { create } from '@storybook/theming';
-import '../../../public/app/core/icons/iconBundle';
 
-const createStorybookTheme = (theme: GrafanaTheme2) => {
+export const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({
     base: theme.colors.mode,
     colorPrimary: theme.colors.primary.main,
@@ -39,8 +37,3 @@ const createStorybookTheme = (theme: GrafanaTheme2) => {
     brandImage: `public/img/grafana_text_logo-${theme.colors.mode}.svg`,
   });
 };
-
-const GrafanaLight = createStorybookTheme(createTheme({ colors: { mode: 'light' } }));
-const GrafanaDark = createStorybookTheme(createTheme({ colors: { mode: 'dark' } }));
-
-export { GrafanaLight, GrafanaDark };

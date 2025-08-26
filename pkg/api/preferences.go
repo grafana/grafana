@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/kinds/preferences"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -22,16 +22,16 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", err)
 	}
 
 	cmd.UserID = userID
-	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.OrgID = c.GetOrgID()
 
-	// the default value of HomeDashboardID is taken from input, when HomeDashboardID is set also,
-	// UID is used in preference to identify dashboard
+	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
+	// nolint:staticcheck
 	dashboardID := cmd.HomeDashboardID
 	if cmd.HomeDashboardUID != nil {
 		query := dashboards.GetDashboardQuery{UID: *cmd.HomeDashboardUID}
@@ -44,8 +44,16 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 			}
 			dashboardID = queryResult.ID
 		}
+	} else if cmd.HomeDashboardID != 0 { // nolint:staticcheck
+		// make sure uid is always set if id is set
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{ID: cmd.HomeDashboardID, OrgID: cmd.OrgID}) // nolint:staticcheck
+		if err != nil {
+			return response.Error(http.StatusNotFound, "Dashboard not found", err)
+		}
+		cmd.HomeDashboardUID = &queryResult.UID
 	}
 
+	// nolint:staticcheck
 	cmd.HomeDashboardID = dashboardID
 
 	if err := hs.preferenceService.Save(c.Req.Context(), &cmd); err != nil {
@@ -64,19 +72,19 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
+		return response.Error(http.StatusUnauthorized, "Not a valid identity", err)
 	}
 
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, c.SignedInUser.GetOrgID(), userID, 0)
+	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0)
 }
 
 // swagger:route PUT /user/preferences user_preferences updateUserPreferences
 //
 // Update user preferences.
 //
-// Omitting a key (`theme`, `homeDashboardId`, `timezone`) will cause the current value to be replaced with the system default value.
+// Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.
 //
 // Responses:
 // 200: okResponse
@@ -89,13 +97,13 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
 	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService,
-		hs.preferenceService, c.SignedInUser.GetOrgID(), userID, 0, &dtoCmd)
+		hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /user/preferences user_preferences patchUserPreferences
@@ -113,12 +121,12 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
-	return hs.patchPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), userID, 0, &dtoCmd)
+	return hs.patchPreferencesFor(c.Req.Context(), c.GetOrgID(), userID, 0, &dtoCmd)
 }
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
@@ -127,6 +135,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	}
 
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
+	// nolint:staticcheck
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
@@ -141,7 +150,16 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 			}
 			dashboardID = &queryResult.ID
 		}
+	} else if dtoCmd.HomeDashboardID != nil {
+		// make sure uid is always set if id is set
+		queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: *dtoCmd.HomeDashboardID, OrgID: orgID}) // nolint:staticcheck
+		if err != nil {
+			return response.Error(http.StatusNotFound, "Dashboard not found", err)
+		}
+		dtoCmd.HomeDashboardUID = &queryResult.UID
 	}
+
+	// nolint:staticcheck
 	dtoCmd.HomeDashboardID = dashboardID
 
 	patchCmd := pref.PatchPreferenceCommand{
@@ -151,8 +169,10 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Theme:             dtoCmd.Theme,
 		Timezone:          dtoCmd.Timezone,
 		WeekStart:         dtoCmd.WeekStart,
-		HomeDashboardID:   dtoCmd.HomeDashboardID,
+		HomeDashboardID:   dtoCmd.HomeDashboardID, // nolint:staticcheck
+		HomeDashboardUID:  dtoCmd.HomeDashboardUID,
 		Language:          dtoCmd.Language,
+		RegionalFormat:    dtoCmd.RegionalFormat,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
@@ -175,7 +195,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, c.SignedInUser.GetOrgID(), 0, 0)
+	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
 }
 
 // swagger:route PUT /org/preferences org_preferences updateOrgPreferences
@@ -194,7 +214,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, c.SignedInUser.GetOrgID(), 0, 0, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org_preferences patchOrgPreferences
@@ -212,7 +232,7 @@ func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.R
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.patchPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, 0, &dtoCmd)
+	return hs.patchPreferencesFor(c.Req.Context(), c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:parameters  updateUserPreferences
@@ -232,7 +252,7 @@ type UpdateOrgPreferencesParams struct {
 // swagger:response getPreferencesResponse
 type GetPreferencesResponse struct {
 	// in:body
-	Body preferences.Spec `json:"body"`
+	Body preferences.PreferencesSpec `json:"body"`
 }
 
 // swagger:parameters patchUserPreferences

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -75,7 +74,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			resSpan.End()
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
-			result.Responses[target.RefID] = errorsource.Response(errorsource.DownstreamError(errors.New(errResult), false))
+			result.Responses[target.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(errors.New(errResult)))
 			continue
 		}
 
@@ -209,7 +208,12 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
 	setPreferredVisType(frame, data.VisTypeLogs)
-	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize))
+
+	var total int
+	if res.Hits.Total != nil {
+		total = res.Hits.Total.Value
+	}
+	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize), total)
 	frames = append(frames, frame)
 	queryRes.Frames = frames
 
@@ -1193,7 +1197,7 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	frame.Meta.PreferredVisualization = visType
 }
 
-func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int) {
+func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int, total int) {
 	i := 0
 	searchWordsList := make([]string, len(searchWords))
 	for searchWord := range searchWords {
@@ -1213,6 +1217,7 @@ func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
 		"limit":       limit,
+		"total":       total,
 	}
 }
 

@@ -2,8 +2,10 @@ package folderimpl
 
 import (
 	"context"
+	"path"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -11,7 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -23,42 +26,19 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 	}
-	t.Run("Given dashboard and folder with the same title", func(t *testing.T) {
-		setup()
-		var orgId int64 = 1
-		title := "Very Unique Name"
-		var sqlStore db.DB
-		var folder1, folder2 *dashboards.Dashboard
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore)
-		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
-		_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, folder2.UID, "prod")
-		folder1 = insertTestFolder(t, dashboardStore, title, orgId, "", "prod")
-
-		t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
-			result, err := folderStore.GetFolderByTitle(context.Background(), orgId, title, nil)
-			require.NoError(t, err)
-			require.Equal(t, folder1.UID, result.UID)
-		})
-
-		t.Run("GetFolderByTitle should find the folder by folderUID", func(t *testing.T) {
-			folder3 := insertTestFolder(t, dashboardStore, title, orgId, folder2.UID, "prod")
-			result, err := folderStore.GetFolderByTitle(context.Background(), orgId, title, &folder2.UID)
-			require.NoError(t, err)
-			require.Equal(t, folder3.UID, result.UID)
-		})
-	})
 
 	t.Run("GetFolderByUID", func(t *testing.T) {
 		setup()
@@ -133,6 +113,160 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	dash.Data.Set("id", dash.ID)
 	dash.Data.Set("uid", dash.UID)
 	return dash
+}
+
+func TestIntegrationGetDashFolderStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
+	dashboardStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	require.NoError(t, err)
+	dashFolderStore := ProvideDashboardFolderStore(db)
+
+	orgID := CreateOrg(t, db, cfg)
+
+	// create folder
+	d, err := dashboardStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:    orgID,
+		IsFolder: true,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": folderTitle,
+		}),
+	})
+	require.NoError(t, err)
+	uid1 := d.UID
+	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:       folderTitle,
+		Description: folderDsc,
+		OrgID:       orgID,
+		UID:         uid1,
+	})
+	require.NoError(t, err)
+	d2, err := dashboardStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:     orgID,
+		FolderUID: uid1,
+		IsFolder:  true,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": folderTitle,
+		}),
+	})
+	require.NoError(t, err)
+	uid2 := d2.UID
+	subfolderWithSameName, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:       folderTitle,
+		Description: folderDsc,
+		OrgID:       orgID,
+		UID:         uid2,
+		ParentUID:   f.UID,
+	})
+	require.NoError(t, err)
+
+	t.Run("should gently fail in case of bad request", func(t *testing.T) {
+		_, err = dashFolderStore.Get(context.Background(), folder.GetFolderQuery{})
+		require.Error(t, err)
+	})
+
+	t.Run("get folder by UID should succeed", func(t *testing.T) {
+		ff, err := dashFolderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:   &f.UID,
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, f.UID, ff.UID)
+		assert.Equal(t, f.OrgID, ff.OrgID)
+		assert.Equal(t, f.Title, ff.Title)
+		assert.Equal(t, f.Description, ff.Description)
+		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
+
+	t.Run("get folder by title should succeed", func(t *testing.T) {
+		ff, err := dashFolderStore.Get(context.Background(), folder.GetFolderQuery{
+			Title: &f.Title,
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, f.UID, ff.UID)
+		assert.Equal(t, f.OrgID, ff.OrgID)
+		assert.Equal(t, f.Title, ff.Title)
+		assert.Equal(t, f.Description, ff.Description)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
+
+	t.Run("get folder by title and parent UID should succeed", func(t *testing.T) {
+		ff, err := dashFolderStore.Get(context.Background(), folder.GetFolderQuery{
+			Title:     &f.Title,
+			OrgID:     orgID,
+			ParentUID: &uid1,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, subfolderWithSameName.ParentUID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
+
+	t.Run("get folder by UID should succeed", func(t *testing.T) {
+		ff, err := dashFolderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:   &f.UID,
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, f.UID, ff.UID)
+		assert.Equal(t, f.OrgID, ff.OrgID)
+		assert.Equal(t, f.Title, ff.Title)
+		assert.Equal(t, f.Description, ff.Description)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
+
+	t.Run("get folder with fullpath should set fullpath as expected", func(t *testing.T) {
+		ff, err := dashFolderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:          &subfolderWithSameName.UID,
+			OrgID:        orgID,
+			WithFullpath: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, path.Join(f.Title, subfolderWithSameName.Title), ff.Fullpath)
+		assert.Equal(t, f.UID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
+
+	t.Run("get folder withFullpathUIDs should set fullpathUIDs as expected", func(t *testing.T) {
+		ff, err := dashFolderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:              &subfolderWithSameName.UID,
+			OrgID:            orgID,
+			WithFullpathUIDs: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, path.Join(f.UID, subfolderWithSameName.UID), ff.FullpathUIDs)
+		assert.Equal(t, f.UID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
 }
 
 func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderUID string, tags ...any) *dashboards.Dashboard {

@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type PostgresDialect struct {
@@ -17,8 +18,8 @@ type PostgresDialect struct {
 
 func NewPostgresDialect() Dialect {
 	d := PostgresDialect{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = Postgres
+	d.dialect = &d
+	d.driverName = Postgres
 	return &d
 }
 
@@ -30,12 +31,23 @@ func (db *PostgresDialect) Quote(name string) string {
 	return "\"" + name + "\""
 }
 
-func (db *PostgresDialect) LikeStr() string {
-	return "ILIKE"
+func (db *PostgresDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := pattern
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("%s ILIKE ?", column), param
 }
 
 func (db *PostgresDialect) AutoIncrStr() string {
 	return ""
+}
+
+func (db *PostgresDialect) BooleanValue(value bool) any {
+	return value
 }
 
 func (db *PostgresDialect) BooleanStr(value bool) string {
@@ -74,7 +86,7 @@ func (db *PostgresDialect) SQLType(c *Column) string {
 	case DB_NVarchar:
 		res = DB_Varchar
 	case DB_Uuid:
-		res = DB_Uuid
+		return DB_Uuid // do not add the length options
 	case DB_Blob, DB_TinyBlob, DB_MediumBlob, DB_LongBlob:
 		return DB_Bytea
 	case DB_Double:
@@ -136,7 +148,7 @@ func (db *PostgresDialect) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *PostgresDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}

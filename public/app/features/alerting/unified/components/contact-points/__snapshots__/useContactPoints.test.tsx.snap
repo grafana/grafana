@@ -30,6 +30,17 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "id": "grafana-default-email",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "false",
+          "grafana.com/access/canWrite": "false",
+          "grafana.com/inUse/routes": "1",
+          "grafana.com/inUse/rules": "1",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "grafana-default-email",
+      },
       "name": "grafana-default-email",
       "policies": [
         {
@@ -69,6 +80,17 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "id": "lotsa-emails",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "lotsa-emails",
+      },
       "name": "lotsa-emails",
       "policies": [],
       "provisioned": false,
@@ -84,16 +106,27 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "type": "oncall",
           Symbol(receiver_status): undefined,
           Symbol(receiver_metadata): {
-            "description": "Sends notifications to Grafana OnCall",
-            "name": "Grafana OnCall",
+            "description": "Sends notifications to Grafana IRM",
+            "name": "Grafana IRM",
           },
           Symbol(receiver_plugin_metadata): {
-            "icon": "public/img/alerting/oncall_logo.svg",
+            "icon": "__DEFAULT_MOCK_IMAGE_CONTENT__",
             "title": "Grafana OnCall",
           },
         },
       ],
       "id": "OnCall Conctact point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "OnCall Conctact point",
+      },
       "name": "OnCall Conctact point",
       "policies": [],
       "provisioned": false,
@@ -125,6 +158,17 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "id": "provisioned-contact-point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "api",
+        },
+        "uid": "provisioned-contact-point",
+      },
       "name": "provisioned-contact-point",
       "policies": [
         {
@@ -186,6 +230,17 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "id": "Slack with multiple channels",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "Slack with multiple channels",
+      },
       "name": "Slack with multiple channels",
       "policies": [],
       "provisioned": false,
@@ -226,6 +281,17 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "id": "grafana-default-email",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "false",
+          "grafana.com/access/canWrite": "false",
+          "grafana.com/inUse/routes": "1",
+          "grafana.com/inUse/rules": "1",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "grafana-default-email",
+      },
       "name": "grafana-default-email",
       "policies": [
         {
@@ -265,6 +331,17 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "id": "lotsa-emails",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "lotsa-emails",
+      },
       "name": "lotsa-emails",
       "policies": [],
       "provisioned": false,
@@ -280,19 +357,30 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "type": "oncall",
           Symbol(receiver_status): undefined,
           Symbol(receiver_metadata): {
-            "description": "Sends notifications to Grafana OnCall",
-            "name": "Grafana OnCall",
+            "description": "Sends notifications to Grafana IRM",
+            "name": "Grafana IRM",
           },
           Symbol(receiver_plugin_metadata): {
             "description": "grafana-integration",
             "externalUrl": "/a/grafana-oncall-app/integrations/ABC123",
-            "icon": "public/img/alerting/oncall_logo.svg",
+            "icon": "__DEFAULT_MOCK_IMAGE_CONTENT__",
             "title": "Grafana OnCall",
             "warning": undefined,
           },
         },
       ],
       "id": "OnCall Conctact point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "OnCall Conctact point",
+      },
       "name": "OnCall Conctact point",
       "policies": [],
       "provisioned": false,
@@ -324,6 +412,17 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "id": "provisioned-contact-point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "api",
+        },
+        "uid": "provisioned-contact-point",
+      },
       "name": "provisioned-contact-point",
       "policies": [
         {
@@ -385,6 +484,17 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "id": "Slack with multiple channels",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "Slack with multiple channels",
+      },
       "name": "Slack with multiple channels",
       "policies": [],
       "provisioned": false,

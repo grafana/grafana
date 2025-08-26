@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -239,11 +239,11 @@ func TestPluginProxy(t *testing.T) {
 	})
 
 	t.Run("When proxying a request should set expected response headers", func(t *testing.T) {
-		requestHandled := false
+		requestHandled := make(chan struct{})
 		backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
 			_, _ = w.Write([]byte("I am the backend"))
-			requestHandled = true
+			close(requestHandled)
 		}))
 		t.Cleanup(backendServer.Close)
 
@@ -267,14 +267,14 @@ func TestPluginProxy(t *testing.T) {
 			SecureJSONData: map[string][]byte{},
 		}
 		cfg := &setting.Cfg{}
-		proxy, err := NewPluginProxy(ps, routes, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures())
+		proxy, err := NewPluginProxy(ps, routes, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		proxy.HandleRequest()
 
-		for {
-			if requestHandled {
-				break
-			}
+		select {
+		case <-requestHandled:
+		case <-t.Context().Done():
+			t.Fatal("timeout waiting for request to be handled")
 		}
 
 		require.Equal(t, "sandbox", ctx.Resp.Header().Get("Content-Security-Policy"))
@@ -423,14 +423,12 @@ func TestPluginProxyRoutes(t *testing.T) {
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures(tc.withFeatures...))
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures(tc.withFeatures...))
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for {
-				if requestHandled || ctx.Resp.Written() {
-					break
-				}
+			for !requestHandled && !ctx.Resp.Written() {
+
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
@@ -557,14 +555,12 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 				SecureJSONData: map[string][]byte{},
 			}
 			cfg := &setting.Cfg{}
-			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
+			proxy, err := NewPluginProxy(ps, testRoutes, ctx, tc.proxyPath, cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 			require.NoError(t, err)
 			proxy.HandleRequest()
 
-			for {
-				if requestHandled || ctx.Resp.Written() {
-					break
-				}
+			for !requestHandled && !ctx.Resp.Written() {
+
 			}
 
 			require.Equal(t, tc.expectedStatus, ctx.Resp.Status())
@@ -588,7 +584,7 @@ func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsServic
 			ReqRole: org.RoleEditor,
 		}
 	}
-	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), featuremgmt.WithFeatures())
+	proxy, err := NewPluginProxy(ps, []*plugins.Route{}, ctx, "", cfg, secretsService, tracing.InitializeTracerForTest(), &http.Transport{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)

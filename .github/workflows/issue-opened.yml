@@ -10,22 +10,24 @@ on:
 concurrency:
   group: issue-opened-${{ github.event.issue.number }}
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      id-token: write
     steps:
 
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # v4.2.2
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+          persist-credentials: false
 
       - name: Install Actions
         run: npm install --production --prefix ./actions
@@ -37,76 +39,85 @@ jobs:
 
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.2.1 # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+            GITHUB_APP_ID=grafana_pr_automation_app:app_id
+            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
 
-      - name: "Generate token"
+      - name: Generate token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         with:
-          app_id: ${{ env.GH_APP_ID }}
-          private_key: ${{ env.GH_APP_PEM }}
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          permission-issues: write
 
       - name: Run Commands
         uses: ./actions/commands
         with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
           token: ${{ steps.generate_token.outputs.token }}
           configPath: "issue-opened"
 
   auto-triage:
     needs: [main]
-    if: github.repository == 'grafana/grafana' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
+    permissions:
+      contents: read
+      id-token: write
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     steps:
 
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.2.1 # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
           repo_secrets: |
             AUTOTRIAGER_OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
             AUTOTRIAGER_SLACK_WEBHOOK_URL=plugins_platform_issue_triager:AUTOTRIAGER_SLACK_WEBHOOK_URL
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+            GITHUB_APP_ID=plugins_platform_issue_triager_github_bot:app_id
+            GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem
 
-      - name: "Generate token"
+      - name: Generate token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         with:
-          app_id: ${{ env.GH_APP_ID }}
-          private_key: ${{ env.GH_APP_PEM }}
-
-      - name: Checkout auto-triager repository
-        uses: actions/checkout@v4
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          permission-members: read
+          permission-issues: write
+      - name: Check if member of grafana org
+        id: check-if-grafana-org-member
+        continue-on-error: true
+        run: gh api https://api.github.com/orgs/grafana/members/${{ env.ACTOR }} >/dev/null 2>&1 && echo "is_grafana_org_member=true" >> "$GITHUB_OUTPUT"
+        env:
+            GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+            ACTOR: ${{ github.actor }}
+      - name: Checkout
+        if: steps.check-if-grafana-org-member.outputs.is_grafana_org_member != 'true' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
+        uses: actions/checkout@v4 # v4.2.2
         with:
-          repository: grafana/auto-triager
-          path: auto-triager
-          token:  ${{ steps.generate_token.outputs.token }}
-
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/auto-triager
       - name: Send issue to the auto triager action
         id: auto_triage
-        # https://github.com/grafana/auto-triager/blob/main/action.yml
-        #uses: grafana/auto-triager@main
-        uses: ./auto-triager
+        if: steps.check-if-grafana-org-member.outputs.is_grafana_org_member != 'true' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
+        uses: grafana/auto-triager@main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
           openai_api_key: ${{ env.AUTOTRIAGER_OPENAI_API_KEY }}
           add_labels: true
-
-      - name: Labels from auto triage
-        run: |
-          echo ${{ steps.auto_triage.outputs.triage_labels }}
+          labels_file: ${{ github.workspace }}/.github/workflows/auto-triager/labels.txt
+          types_file: ${{ github.workspace }}/.github/workflows/auto-triager/types.txt
+          prompt_file: ${{ github.workspace }}/.github/workflows/auto-triager/prompt.txt
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
         with:
           payload: >
             {
@@ -118,3 +129,41 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}
+  auto-label-internal-issues:
+    needs: [main]
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      id-token: write
+    steps:
+        - name: "Get vault secrets"
+          id: vault-secrets
+          uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.2.1 # zizmor: ignore[unpinned-uses]
+          with:
+            # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
+            repo_secrets: |
+              GITHUB_APP_ID=plugins_platform_issue_triager_github_bot:app_id
+              GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem  
+        - name: Generate token
+          id: generate_token
+          uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+          with:
+            app-id: ${{ env.GITHUB_APP_ID }}
+            private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+            permission-members: read
+        - name: Check if member of grafana org
+          id: check-if-grafana-org-member
+          continue-on-error: true
+          run: gh api https://api.github.com/orgs/grafana/members/${{ env.ACTOR }} >/dev/null 2>&1 && echo "is_grafana_org_member=true" >> "$GITHUB_OUTPUT"
+          env:
+              GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+              ACTOR: ${{ github.actor }}
+        - name: "Auto label internal issues"
+          if:  steps.check-if-grafana-org-member.outputs.is_grafana_org_member == 'true' || github.event.issue.author_association == 'MEMBER' || github.event.issue.author_association == 'OWNER'
+          run: gh issue edit "$NUMBER" --add-label "$LABELS"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_REPO: ${{ github.repository }}
+            NUMBER: ${{ github.event.issue.number }}
+            LABELS: internal

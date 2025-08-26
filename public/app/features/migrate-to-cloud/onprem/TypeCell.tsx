@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { CellProps } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ResourceTableItem } from './types';
 
@@ -23,6 +23,10 @@ export function prettyTypeName(type: ResourceTableItem['type']) {
       return t('migrate-to-cloud.resource-type.notification_policy', 'Notification Policy');
     case 'ALERT_RULE':
       return t('migrate-to-cloud.resource-type.alert_rule', 'Alert Rule');
+    case 'ALERT_RULE_GROUP':
+      return t('migrate-to-cloud.resource-type.alert_rule_group', 'Alert Rule Group');
+    case 'PLUGIN':
+      return t('migrate-to-cloud.resource-type.plugin', 'Plugin');
     default:
       return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }

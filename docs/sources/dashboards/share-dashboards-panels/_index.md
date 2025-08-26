@@ -41,17 +41,32 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
+      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
   configure-report:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-or-update-a-report
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-a-report
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-or-update-a-report
+      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-a-report
   image-rendering-config:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
+  max-width:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width
+  max-height:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height
+  max-scale:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor
 ---
 
 # Share dashboards and panels
@@ -66,12 +81,10 @@ Grafana enables you to share dashboards and panels with other users within your 
 - Reports
 - Library panels
 
-You must have an authorized viewer permission to see an image rendered by a direct link.
-
-The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
+You must have an authorized viewer permission to see an image rendered by a direct link. The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-Anonymous access permission is not available in Grafana Cloud.
+Anonymous access permission is not available in Grafana Cloud. This feature is only supported for Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 ## Share dashboards {#share-a-dashboard}
@@ -125,7 +138,7 @@ Learn how to configure and manage externally shared dashboards in [Externally sh
 ### Schedule a report
 
 {{< admonition type="note" >}}
-This feature is only available in Grafana Enterprise.
+This feature is only available on Grafana Enterprise.
 {{< /admonition >}}
 
 To share your dashboard as a report, follow these steps:
@@ -189,6 +202,10 @@ In addition to sharing dashboards as links, reports, and snapshots, you can expo
 
 ### Export a dashboard as PDF
 
+{{< admonition type="note" >}}
+This feature is only available on Grafana Enterprise.
+{{< /admonition >}}
+
 To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click **Dashboards** in the main menu.
@@ -239,20 +256,28 @@ To share a personalized, direct link to your panel within your organization, fol
    - **Lock time range** - Change the current relative time range to an absolute time range. This option is enabled by default.
    - **Shorten link** - Shorten the panel link. This option is disabled by default.
 1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
-1. Do one or both of the following:
-   - Click **Copy link**.
-   - Click **Render image**, which [renders the panel as a PNG image](ref:image-rendering).
-1. Send the copied link or image URL to a Grafana user with authorization to view it.
+1. Click **Copy link**.
+1. Send the copied link to a Grafana user with authorization to view it.
+1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering), customize the image settings:
+   - **Width** - In pixels. The default is 1000.
+   - **Height** - In pixels. The default is 500.
+   - **Scale factor** - The default is 1.
+
+   There are maximums for [width](ref:max-width), [height](ref:max-height), and [scale factor](ref:max-scale) in the image renderer configuration that you can customize if needed.
+
+1. (Optional) Click **Generate image** to see a preview of the panel image.
+1. (Optional) Click **Download image**.
+1. Send the copied image to a Grafana user with authorization to view it.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 #### Query string parameters for server-side rendered images
 
-When you click **Render image** in the panel link settings, Grafana generates a PNG image of the panel with the following default parameters:
+When you click **Generate image** in the panel link settings, Grafana generates a PNG image of the panel with the following default parameters:
 
 | Parameter | Description                                                                                                                    |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| width     | Width in pixels. Default is 800.                                                                                               |
-| height    | Height in pixels. Default is 400.                                                                                              |
+| width     | Width in pixels. Default is 1000.                                                                                              |
+| height    | Height in pixels. Default is 500.                                                                                              |
 | tz        | Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC.                              |
 | timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.             |
 | scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). |
@@ -267,10 +292,10 @@ https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&t
 
 ### Share an embed
 
-You can share a panel by embedding it on another website using an iframe. Users must be signed into Grafana to view the panel.
+You can share a panel by embedding it on another website using an iframe. Users must be signed into Grafana to view the panel unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-Anonymous access permission is no longer available for Grafana Cloud.
+Panel embedding and anonymous access permissions are not available in Grafana Cloud, even for panels in [externally shared dashboards](ref:shared-dashboards). These capabilities are only supported in Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 To create a panel that can be embedded, follow these steps:

@@ -29,6 +29,14 @@
       {
         "name": "GitHub Project",
         "url": "https://github.com/grafana/pyroscope"
+      },
+      {
+        "name": "Raise issue",
+        "url": "https://github.com/grafana/pyroscope/issues/new"
+      },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/datasources/pyroscope/"
       }
     ],
     "version": "%VERSION%"

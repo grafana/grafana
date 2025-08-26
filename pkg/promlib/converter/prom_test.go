@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	jsoniter "github.com/json-iterator/go"
@@ -29,10 +30,14 @@ var files = []string{
 	"prom-series",
 	"prom-warnings",
 	"prom-warnings-no-data",
+	"prom-infos",
+	"prom-infos-no-data",
 	"prom-error",
 	"prom-exemplars-a",
 	"prom-exemplars-b",
 	"prom-exemplars-diff-labels",
+	"prom-query-range",
+	"prom-query-range-big",
 	"loki-streams-a",
 	"loki-streams-b",
 	"loki-streams-c",
@@ -62,13 +67,35 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		if strings.Contains(name, "warnings") {
 			hasWarning := false
 			for _, frame := range rsp.Frames {
-				if len(frame.Meta.Notices) > 0 {
-					hasWarning = true
+				for _, notice := range frame.Meta.Notices {
+					if notice.Severity == data.NoticeSeverityWarning {
+						hasWarning = true
+						break
+					}
+				}
+				if hasWarning {
 					break
 				}
 			}
 
 			require.True(t, hasWarning)
+		}
+
+		if strings.Contains(name, "infos") {
+			hasInfo := false
+			for _, frame := range rsp.Frames {
+				for _, notice := range frame.Meta.Notices {
+					if notice.Severity == data.NoticeSeverityInfo {
+						hasInfo = true
+						break
+					}
+				}
+				if hasInfo {
+					break
+				}
+			}
+
+			require.True(t, hasInfo)
 		}
 
 		require.NoError(t, rsp.Error)

@@ -15,15 +15,20 @@ import {
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
-import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
-import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
-import { ColorIndicator, ColorPlacement, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
+import {
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipWrapper,
+  VizTooltipItem,
+  ColorIndicator,
+  ColorPlacement,
+} from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
+import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
 import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
@@ -50,12 +55,23 @@ interface HeatmapTooltipProps {
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   if (props.seriesIdx === 2) {
+    const dispValuesAndLinks = getDisplayValuesAndLinks(props.dataRef.current!.exemplars!, props.dataIdxs[2]!);
+
+    if (dispValuesAndLinks == null) {
+      return null;
+    }
+
+    const { displayValues, links } = dispValuesAndLinks;
+
     return (
-      <DataHoverView
-        data={props.dataRef.current!.exemplars}
-        rowIndex={props.dataIdxs[2]}
-        header={'Exemplar'}
-        padding={8}
+      <ExemplarTooltip
+        items={displayValues.map((dispVal) => ({
+          label: dispVal.name,
+          value: dispVal.valueString,
+        }))}
+        links={links}
+        maxHeight={props.maxHeight}
+        isPinned={props.isPinned}
       />
     );
   }

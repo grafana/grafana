@@ -1,16 +1,18 @@
 import { ReactNode } from 'react';
 
-import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
-import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
-import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
-import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
-import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
+import {
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipWrapper,
+  getContentItems,
+  VizTooltipItem,
+  AdHocFilterModel,
+} from '@grafana/ui/internal';
 
-import { getDataLinks, getFieldActions } from '../status-history/utils';
-import { fmt } from '../xychart/utils';
+import { getFieldActions } from '../status-history/utils';
 
 import { isTooltipScrollable } from './utils';
 
@@ -37,6 +39,9 @@ export interface TimeSeriesTooltipProps {
   maxHeight?: number;
 
   replaceVariables?: InterpolateFunction;
+  dataLinks: LinkModel[];
+  hideZeros?: boolean;
+  adHocFilters?: AdHocFilterModel[];
 }
 
 export const TimeSeriesTooltip = ({
@@ -49,7 +54,10 @@ export const TimeSeriesTooltip = ({
   isPinned,
   annotate,
   maxHeight,
-  replaceVariables,
+  replaceVariables = (str) => str,
+  dataLinks,
+  hideZeros,
+  adHocFilters,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -61,35 +69,31 @@ export const TimeSeriesTooltip = ({
     seriesIdx,
     mode,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum
+    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    hideZeros,
+    _rest
   );
-
-  _rest?.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.tooltip) {
-      contentItems.push({
-        label: field.state?.displayName ?? field.name,
-        value: fmt(field, field.values[dataIdxs[0]!]),
-      });
-    }
-  });
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
+  if (seriesIdx != null) {
     const field = series.fields[seriesIdx];
-    const dataIdx = dataIdxs[seriesIdx]!;
-    const links = getDataLinks(field, dataIdx);
-    const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
+    const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
-    footer = <VizTooltipFooter dataLinks={links} actions={actions} annotate={annotate} />;
+    if (isPinned || hasOneClickLink) {
+      const dataIdx = dataIdxs[seriesIdx]!;
+      const actions = getFieldActions(series, field, replaceVariables, dataIdx);
+
+      footer = (
+        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
+      );
+    }
   }
 
-  const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
-    ? null
-    : {
-        label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
-        value: xVal,
-      };
+  const headerItem: VizTooltipItem = {
+    label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
+    value: xVal,
+  };
 
   return (
     <VizTooltipWrapper>

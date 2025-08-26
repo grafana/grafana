@@ -14,8 +14,9 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, ErrorWithStack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -29,11 +30,13 @@ import {
   useAddedLinksRegistry,
   useAddedComponentsRegistry,
   useExposedComponentsRegistry,
+  useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
+import { importAppPlugin } from '../pluginLoader';
 import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
 import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
+import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
 interface Props {
@@ -60,6 +63,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const addedLinksRegistry = useAddedLinksRegistry();
   const addedComponentsRegistry = useAddedComponentsRegistry();
   const exposedComponentsRegistry = useExposedComponentsRegistry();
+  const addedFunctionsRegistry = useAddedFunctionsRegistry();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -92,28 +96,43 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   if (!plugin.root) {
     return (
       <Page navModel={navModel ?? getWarningNav('Plugin load error')}>
-        <div>No root app page component found</div>
+        <div>
+          <Trans i18nKey="plugins.app-root-page.no-root-app-page-component-found">
+            No root app page component found
+          </Trans>
+        </div>
       </Page>
     );
   }
 
   const pluginRoot = plugin.root && (
     <PluginContextProvider meta={plugin.meta}>
-      <ExtensionRegistriesProvider
-        registries={{
-          addedLinksRegistry: addedLinksRegistry.readOnly(),
-          addedComponentsRegistry: addedComponentsRegistry.readOnly(),
-          exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
-        }}
+      <PluginErrorBoundary
+        fallback={({ error, errorInfo }) => (
+          <ErrorWithStack
+            title={t('plugins.app-root-page.error-loading-plugin', 'Plugin failed to load')}
+            error={error}
+            errorInfo={errorInfo}
+          />
+        )}
       >
-        <plugin.root
-          meta={plugin.meta}
-          basename={location.pathname}
-          onNavChanged={onNavChanged}
-          query={queryParams}
-          path={location.pathname}
-        />
-      </ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider
+          registries={{
+            addedLinksRegistry: addedLinksRegistry.readOnly(),
+            addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+            exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+            addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
+          }}
+        >
+          <plugin.root
+            meta={plugin.meta}
+            basename={location.pathname}
+            onNavChanged={onNavChanged}
+            query={queryParams}
+            path={location.pathname}
+          />
+        </ExtensionRegistriesProvider>
+      </PluginErrorBoundary>
     </PluginContextProvider>
   );
 
@@ -132,7 +151,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     }
 
     // Check if action exists and give access if user has the required permission.
-    if (pluginInclude?.action && config.featureToggles.accessControlOnCall) {
+    if (pluginInclude?.action) {
       return contextSrv.hasPermission(pluginInclude.action);
     }
 
@@ -150,8 +169,10 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const AccessDenied = () => {
     return (
-      <Alert severity="warning" title="Access denied">
-        You do not have permission to see this page.
+      <Alert severity="warning" title={t('plugins.app-root-page.access-denied.title-access-denied', 'Access denied')}>
+        <Trans i18nKey="plugins.app-root-page.access-denied.permission">
+          You do not have permission to see this page.
+        </Trans>
       </Alert>
     );
   };

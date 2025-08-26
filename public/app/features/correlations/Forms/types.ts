@@ -1,16 +1,17 @@
 import { DeepMap, FieldError, FieldErrors } from 'react-hook-form';
 
 import { SupportedTransformationType } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { CorrelationExternal, CorrelationQuery } from '@grafana/runtime';
 
-import { CorrelationConfigExternal, CorrelationConfigQuery, OmitUnion } from '../types';
+import { OmitUnion } from '../types';
 
 export interface FormExternalDTO {
   sourceUID: string;
   label: string;
   description: string;
   type: 'external';
-  config: CorrelationConfigExternal;
+  config: CorrelationExternal['config'];
 }
 
 export interface FormQueryDTO {
@@ -19,7 +20,7 @@ export interface FormQueryDTO {
   label: string;
   description: string;
   type: 'query';
-  config: CorrelationConfigQuery;
+  config: CorrelationQuery['config'];
 }
 
 export type FormDTO = FormExternalDTO | FormQueryDTO;

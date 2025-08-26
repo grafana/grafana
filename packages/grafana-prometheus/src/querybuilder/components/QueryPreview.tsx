@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/QueryPreview.tsx
-import { EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 
-import promqlGrammar from '../../promql';
+import { promqlGrammar } from '../../promql';
 import { RawQuery } from '../shared/RawQuery';
 
-export interface QueryPreviewProps {
+interface QueryPreviewProps {
   query: string;
 }
 

@@ -1,4 +1,5 @@
-import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types';
+import { config } from '@grafana/runtime';
+import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types/alerting';
 
 import { option } from './notifier-types';
 
@@ -68,6 +69,54 @@ const httpConfigOption: NotificationChannelOption = option(
     ],
   }
 );
+
+const jiraNotifier: NotifierDTO<CloudNotifierType> = {
+  name: 'Jira',
+  description: 'Send notifications to Jira Service Management',
+  type: 'jira',
+  info: '',
+  heading: 'Jira settings',
+  options: [
+    option('api_url', 'API URL', 'The host to send Jira API requests to', { required: true }),
+    option('project', 'Project Key', 'The project key where issues are created', { required: true }),
+    option('summary', 'Summary', 'Issue summary template', { placeholder: '{{ template "jira.default.summary" . }}' }),
+    option('description', 'Description', 'Issue description template', {
+      placeholder: '{{ template "jira.default.description" . }}',
+    }),
+    option('labels', 'Labels', ' Labels to be added to the issue', { element: 'string_array' }),
+    option('priority', 'Priority', 'Priority of the issue', {
+      placeholder: '{{ template "jira.default.priority" . }}',
+    }),
+    option('issue_type', 'Issue Type', 'Type of the issue (e.g. Bug)', { required: true }),
+    option(
+      'reopen_transition',
+      'Reopen transition',
+      'Name of the workflow transition to reopen an issue. The target status should not have the category "done"'
+    ),
+    option(
+      'resolve_transition',
+      'Resolve transition',
+      'Name of the workflow transition to resolve an issue. The target status must have the category "done"'
+    ),
+    option(
+      'wont_fix_resolution',
+      "Won't fix resolution",
+      'If "Reopen transition" is defined, ignore issues with that resolution'
+    ),
+    option(
+      'reopen_duration',
+      'Reopen duration',
+      'If "Reopen transition" is defined, reopen the issue when it is not older than this value (rounded down to the nearest minute)',
+      {
+        placeholder: 'Use duration format, for example: 1.2s, 100ms',
+      }
+    ),
+    option('fields', 'Fields', 'Other issue and custom fields', {
+      element: 'key_value_map',
+    }),
+    httpConfigOption,
+  ],
+};
 
 export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
   {
@@ -266,6 +315,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       httpConfigOption,
     ],
   },
+  ...(config.featureToggles?.alertingJiraIntegration ? [jiraNotifier] : []),
   {
     name: 'OpsGenie',
     description: 'Send notifications to OpsGenie',
@@ -348,6 +398,14 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
             const integer = Number(value);
             return Number.isFinite(integer) ? integer : 0;
           },
+        }
+      ),
+      option(
+        'timeout',
+        'Timeout',
+        'The maximum time to wait for a webhook request to complete, before failing the request and allowing it to be retried. The default value of 0s indicates that no timeout should be applied. NOTE: This will have no effect if set higher than the group_interval.',
+        {
+          placeholder: 'Use duration format, for example: 1.2s, 100ms',
         }
       ),
       httpConfigOption,

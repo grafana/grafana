@@ -31,7 +31,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 	}
 
 	builder := NewServiceAPIBuilder()
-	apiregistration.RegisterAPI(NewServiceAPIBuilder())
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
@@ -68,6 +68,10 @@ func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *ServiceAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
+
 func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	scheme := opts.Scheme
 	optsGetter := opts.OptsGetter
@@ -87,9 +91,4 @@ func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 
 func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return service.GetOpenAPIDefinitions
-}
-
-// Register additional routes with the server
-func (b *ServiceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }

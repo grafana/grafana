@@ -3,7 +3,7 @@ import { forwardRef, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */
@@ -36,7 +36,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabs: css({
     position: 'relative',
     display: 'flex',
-    height: `${theme.components.menuTabs.height}px`,
     alignItems: 'center',
   }),
 });

@@ -110,13 +110,23 @@ You can also use thresholds to:
 
 You can set thresholds in the following visualizations:
 
-|                                |                                      |                                      |
-| ------------------------------ | ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
-| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
-| [Candlestick](ref:candlestick) | [Stat](ref:stat)                     | [Time series](ref:time-series)       |
-| [Canvas](ref:canvas)           | [State timeline](ref:state-timeline) | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Histogram](ref:histogram)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+
+{{< /column-list >}}
 
 ## Default thresholds
 
@@ -125,7 +135,7 @@ On visualizations that support thresholds, Grafana has the following default thr
 - 80 = red
 - Base = green
 - Mode = Absolute
-- Show thresholds = Off (for some visualizations); for more information, see the [Show thresholds](#show-threshold) option.
+- Show thresholds = Off (for some visualizations); for more information, see the [Show thresholds](#show-thresholds) option.
 
 ## Thresholds options
 
@@ -178,28 +188,3 @@ You can add as many thresholds to a visualization as you want. Grafana automatic
 1. Click **Back to dashboard** and then **Exit edit**.
 
 To delete a threshold, navigate to the panel that contains the threshold and click the trash icon next to the threshold you want to remove.
-
-## Add a threshold to a legacy graph panel
-
-{{< admonition type="caution" >}}
-Starting with Grafana v11, the legacy graph panel will be deprecated along with all other Angular panel plugins. For more information, refer to [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/).
-{{< /admonition >}}
-
-In the Graph panel visualization, thresholds enable you to add lines or sections to a graph to make it easier to recognize when the graph crosses a threshold.
-
-1. Navigate to the graph panel to which you want to add a threshold.
-1. On the **Panel** tab, click **Thresholds**.
-1. Click **Add threshold**.
-1. Complete the following fields:
-   - **T1 -** Both values are required to display a threshold.
-     - **lt** or **gt** - Select **lt** for less than or **gt** for greater than to indicate what the threshold applies to.
-     - **Value -** Enter a threshold value. Grafana draws a threshold line along the Y-axis at that value.
-   - **Color -** Choose a condition that corresponds to a color, or define your own color.
-     - **custom -** You define the fill color and line color.
-     - **critical -** Fill and line color are red.
-     - **warning -** Fill and line color are yellow.
-     - **ok -** Fill and line color are green.
-   - **Fill -** Toggle the display of the threshold fill.
-   - **Line -** Toggle the display of the threshold line.
-   - **Y-Axis -** Choose to display the y-axis on either the **left** or **right** of the panel.
-1. Click **Save** to save the changes in the dashboard.

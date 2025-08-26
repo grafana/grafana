@@ -1,13 +1,14 @@
 import { useCallback, useMemo } from 'react';
 
-import { BootData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { Combobox, ComboboxOption } from '../Combobox/Combobox';
+import { Combobox } from '../Combobox/Combobox';
+import { ComboboxOption } from '../Combobox/types';
 
 export interface Props {
-  onChange: (weekStart: string) => void;
-  value: string;
+  onChange: (weekStart?: WeekStart) => void;
+  value?: WeekStart;
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
@@ -16,21 +17,9 @@ export interface Props {
 }
 
 export type WeekStart = 'saturday' | 'sunday' | 'monday';
-const weekStarts: ComboboxOption[] = [
-  { value: '', label: 'Default' },
-  { value: 'saturday', label: 'Saturday' },
-  { value: 'sunday', label: 'Sunday' },
-  { value: 'monday', label: 'Monday' },
-];
 
-const isWeekStart = (value: string): value is WeekStart => {
+export function isWeekStart(value: string): value is WeekStart {
   return ['saturday', 'sunday', 'monday'].includes(value);
-};
-
-declare global {
-  interface Window {
-    grafanaBootData?: BootData;
-  }
 }
 
 /**
@@ -52,17 +41,26 @@ export function getWeekStart(override?: string): WeekStart {
 
 export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
+  const weekStarts: ComboboxOption[] = useMemo(
+    () => [
+      { value: '', label: t('grafana-ui.week-start-picker.weekStarts-label-default', 'Default') },
+      { value: 'saturday', label: t('grafana-ui.week-start-picker.weekStarts-label-saturday', 'Saturday') },
+      { value: 'sunday', label: t('grafana-ui.week-start-picker.weekStarts-label-sunday', 'Sunday') },
+      { value: 'monday', label: t('grafana-ui.week-start-picker.weekStarts-label-monday', 'Monday') },
+    ],
+    []
+  );
 
   const onChangeWeekStart = useCallback(
     (selectable: ComboboxOption | null) => {
       if (selectable && selectable.value !== undefined) {
-        onChange(selectable.value);
+        onChange(isWeekStart(selectable.value) ? selectable.value : undefined);
       }
     },
     [onChange]
   );
 
-  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? null, [value]);
+  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? '', [value, weekStarts]);
 
   return (
     <Combobox

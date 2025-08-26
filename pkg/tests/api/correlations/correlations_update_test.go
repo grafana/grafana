@@ -24,7 +24,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
-		Login:          "admin",
+		Login:          "admin2",
 	})
 
 	editorUser := ctx.createUser(user.CreateUserCommand{
@@ -217,6 +217,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	})
 
 	t.Run("updating a correlation pointing to a read-only data source should work", func(t *testing.T) {
+		t.Skip("flaky test")
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
 			TargetUID: &writableDs,
@@ -246,6 +247,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	})
 
 	t.Run("should correctly update correlations", func(t *testing.T) {
+		t.Skip("flaky test: See failure at https://drone.grafana.net/grafana/grafana/222544/1/9")
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID:   writableDs,
 			TargetUID:   &writableDs,

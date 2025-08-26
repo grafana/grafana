@@ -5,21 +5,23 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PublicDashboardFooter } from 'app/features/dashboard/components/PublicDashboard/PublicDashboardsFooter';
+import { useGetPublicDashboardConfig } from 'app/features/dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { PublicDashboardNotAvailable } from 'app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import {
   PublicDashboardPageRouteParams,
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+import { getDashboardScenePageStateManager, LoadError } from './DashboardScenePageStateManager';
 
 const selectors = e2eSelectors.pages.PublicDashboardScene;
 
@@ -42,21 +44,16 @@ export function PublicDashboardScenePage({ route }: Props) {
     };
   }, [stateManager, accessToken, route.routeName]);
 
+  if (loadError) {
+    return <PublicDashboardScenePageError error={loadError} />;
+  }
+
   if (!dashboard) {
     return (
       <Page layout={PageLayoutType.Custom} className={styles.loadingPage} data-testid={selectors.loadingPage}>
         {isLoading && <PageLoader />}
-        {loadError && <h2>{loadError}</h2>}
       </Page>
     );
-  }
-
-  if (dashboard.state.meta.publicDashboardEnabled === false) {
-    return <PublicDashboardNotAvailable paused />;
-  }
-
-  if (dashboard.state.meta.dashboardNotFound) {
-    return <PublicDashboardNotAvailable />;
   }
 
   // if no time picker render without url sync
@@ -73,10 +70,10 @@ export function PublicDashboardScenePage({ route }: Props) {
 
 function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const [isActive, setIsActive] = useState(false);
-  const { controls, title } = model.useState();
+  const { controls, title, body } = model.useState();
   const { timePicker, refreshPicker, hideTimeControls } = controls!.useState();
-  const bodyToRender = model.getBodyToRender();
   const styles = useStyles2(getStyles);
+  const conf = useGetPublicDashboardConfig();
 
   useEffect(() => {
     return refreshPicker.activate();
@@ -95,9 +92,11 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
     <Page layout={PageLayoutType.Custom} className={styles.page} data-testid={selectors.page}>
       <div className={styles.controls}>
         <Stack alignItems="center">
-          <div className={styles.iconTitle}>
-            <Icon name="grafana" size="lg" aria-hidden />
-          </div>
+          {!conf.headerLogoHide && (
+            <div className={styles.iconTitle}>
+              <Icon name="grafana" size="lg" aria-hidden />
+            </div>
+          )}
           <span className={styles.title}>{title}</span>
         </Stack>
         {!hideTimeControls && (
@@ -108,7 +107,7 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
         )}
       </div>
       <div className={styles.body}>
-        <bodyToRender.Component model={bodyToRender} />
+        <body.Component model={body} />
       </div>
       <PublicDashboardFooter />
     </Page>
@@ -161,4 +160,36 @@ function getStyles(theme: GrafanaTheme2) {
       overflowY: 'auto',
     }),
   };
+}
+
+function PublicDashboardScenePageError({ error }: { error: LoadError }) {
+  const styles = useStyles2(getStyles);
+  const statusCode = error.status;
+  const messageId = error.messageId;
+  const message = error.message;
+
+  const isPublicDashboardPaused = statusCode === 403 && messageId === 'publicdashboards.notEnabled';
+  const isPublicDashboardNotFound = statusCode === 404 && messageId === 'publicdashboards.notFound';
+  const isDashboardNotFound = statusCode === 404 && messageId === 'publicdashboards.dashboardNotFound';
+
+  const publicDashboardEnabled = isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused;
+  const dashboardNotFound = isPublicDashboardNotFound || isDashboardNotFound;
+
+  if (publicDashboardEnabled === false) {
+    return <PublicDashboardNotAvailable paused />;
+  }
+
+  if (dashboardNotFound) {
+    return <PublicDashboardNotAvailable />;
+  }
+
+  return (
+    <Page layout={PageLayoutType.Custom} className={styles.loadingPage} data-testid={selectors.loadingPage}>
+      <Box paddingY={4} display="flex" direction="column" alignItems="center">
+        <Alert severity={AppNotificationSeverity.Error} title={message}>
+          {message}
+        </Alert>
+      </Box>
+    </Page>
+  );
 }

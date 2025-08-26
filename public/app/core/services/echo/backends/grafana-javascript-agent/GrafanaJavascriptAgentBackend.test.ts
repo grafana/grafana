@@ -1,11 +1,16 @@
 import { BuildInfo } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { GrafanaEdition } from '@grafana/data/internal';
 import { Faro, Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
-import { BrowserConfig, FetchTransport } from '@grafana/faro-web-sdk';
+import { BrowserConfig, FetchTransport, SessionInstrumentation } from '@grafana/faro-web-sdk';
+import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
-import { GrafanaJavascriptAgentBackend, GrafanaJavascriptAgentBackendOptions } from './GrafanaJavascriptAgentBackend';
+import {
+  GrafanaJavascriptAgentBackend,
+  GrafanaJavascriptAgentBackendOptions,
+  TRACKING_URLS,
+} from './GrafanaJavascriptAgentBackend';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;
@@ -28,7 +33,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       error: jest.fn(),
     };
 
-    initializeFaroMock = jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValueOnce({
+    initializeFaroMock = jest.spyOn(faroWebSdkModule, 'initializeFaro').mockReturnValue({
       ...faroWebSdkModule.faro,
       api: {
         ...faroWebSdkModule.faro.api,
@@ -50,8 +55,10 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   });
 
   const buildInfo: BuildInfo = {
+    buildstamp: 12345,
     version: '1.0',
     commit: 'abcd123',
+    commitShort: 'abc',
     env: 'production',
     versionString: 'Grafana v1.0 (abcd123)',
     edition: GrafanaEdition.OpenSource,
@@ -93,8 +100,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(initializeFaroMock.mock.calls[0][0].transports?.[0]).toBeInstanceOf(EchoSrvTransport);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[0].getIgnoreUrls()).toEqual([
       /.*\/log-grafana-javascript-agent.*/,
-      /.*.google-analytics.com*.*/,
-      /.*.googletagmanager.com*.*/,
+      /\.(google-analytics|googletagmanager)\.com/,
       /frontend-metrics/,
       /\/collect(?:\/[\w]*)?$/,
     ]);
@@ -114,6 +120,38 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
         orgId: '1',
       },
     });
+  });
+
+  test('will ensure the performance of TRACKING_URLS', async () => {
+    // 10e6 is based on true events
+    const longString = Array.from({ length: 10e6 }, () => Math.random().toString(36)[2]).join('');
+    const maxExecutionTime = 500;
+
+    const start = performance.now();
+    TRACKING_URLS.some((u) => u && longString.match(u) !== null);
+    const end = performance.now();
+    expect(end - start).toBeLessThanOrEqual(maxExecutionTime);
+  });
+
+  it('correctly set instrumentation based on options', async () => {
+    let opts = {
+      ...options,
+      allInstrumentationsEnabled: false,
+      errorInstrumentalizationEnabled: false,
+      consoleInstrumentalizationEnabled: false,
+      webVitalsInstrumentalizationEnabled: false,
+      tracingInstrumentalizationEnabled: false,
+    };
+    new GrafanaJavascriptAgentBackend(opts);
+    expect(initializeFaroMock.mock.calls[0][0].instrumentations?.length).toEqual(1);
+    expect(initializeFaroMock.mock.calls[0][0].instrumentations?.[0]).toBeInstanceOf(SessionInstrumentation);
+
+    opts.tracingInstrumentalizationEnabled = true;
+
+    new GrafanaJavascriptAgentBackend(opts);
+    expect(initializeFaroMock.mock.calls[1][0].instrumentations?.length).toEqual(2);
+    expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[0]).toBeInstanceOf(TracingInstrumentation);
+    expect(initializeFaroMock.mock.calls[1][0].instrumentations?.[1]).toBeInstanceOf(SessionInstrumentation);
   });
 
   //@FIXME - make integration test work

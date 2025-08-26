@@ -1,20 +1,21 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import { config, createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { ExploreItemState } from 'app/types';
+import {
+  config,
+  CorrelationData,
+  CorrelationsData,
+  createMonitoringLogger,
+  getBackendSrv,
+  getDataSourceSrv,
+} from '@grafana/runtime';
+import { ExploreItemState } from 'app/types/explore';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 import { parseLogsFrame } from '../logs/logsFrame';
 
 import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
-import {
-  CorrelationData,
-  CorrelationsData,
-  CorrelationsResponse,
-  getData,
-  toEnrichedCorrelationsData,
-} from './useCorrelations';
+import { CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
 
@@ -85,7 +86,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
 };
 
 /*
-If a correlation was made based on the log line field prior to the loki data plane, they would use the field "Line" 
+If a correlation was made based on the log line field prior to the loki data plane, they would use the field "Line"
 
 Change it to use whatever the body field name is post-loki data plane
 */

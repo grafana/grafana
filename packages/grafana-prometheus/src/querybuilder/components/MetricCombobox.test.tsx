@@ -3,10 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import '@testing-library/jest-dom';
 
-import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { DataSourceInstanceSettings } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 import { PromOptions } from '../../types';
 
 import { MetricCombobox, MetricComboboxProps } from './MetricCombobox';
@@ -35,34 +37,14 @@ describe('MetricCombobox', () => {
     jsonData: { httpMethod: 'GET' },
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
-  const mockDatasource = new PrometheusDatasource(instanceSettings);
-  const mockValues = [{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }];
+  const mockLanguageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
+  const mockDatasource = new PrometheusDatasource(instanceSettings, undefined, mockLanguageProvider);
 
-  // Mock metricFindQuery which will call backend API
-  mockDatasource.metricFindQuery = jest.fn((query: string) => {
-    // return Promise.resolve([]);
-    // Use the label values regex to get the values inside the label_values function call
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
-    const queryValueArray = query.match(labelValuesRegex) as RegExpMatchArray;
-    const queryValueRaw = queryValueArray[1];
-
-    // Remove the wrapping regex
-    const queryValue = queryValueRaw.substring(queryValueRaw.indexOf('".*') + 3, queryValueRaw.indexOf('.*"'));
-
-    // Run the regex that we'd pass into prometheus API against the strings in the test
-    return Promise.resolve(
-      mockValues
-        .filter((value) => value.label.match(queryValue))
-        .map((result) => {
-          return {
-            text: result.label,
-          };
-        }) as MetricFindValue[]
-    );
-  });
+  // Options returned when user first opens the combobox - returned by onGetMetrics
+  const initialMockValues = [{ label: 'top_metric_one' }, { label: 'top_metric_two' }, { label: 'top_metric_three' }];
+  const mockOnGetMetrics = jest.fn(() => Promise.resolve(initialMockValues.map((v) => ({ value: v.label }))));
 
   const mockOnChange = jest.fn();
-  const mockOnGetMetrics = jest.fn(() => Promise.resolve(mockValues.map((v) => ({ value: v.label }))));
 
   const defaultProps: MetricComboboxProps = {
     metricLookupDisabled: false,
@@ -76,6 +58,7 @@ describe('MetricCombobox', () => {
     datasource: mockDatasource,
     labelsFilters: [],
     variableEditor: false,
+    timeRange: getMockTimeRange(),
   };
 
   beforeEach(() => {
@@ -93,13 +76,17 @@ describe('MetricCombobox', () => {
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
 
-    expect(mockOnGetMetrics).toHaveBeenCalledTimes(1);
-
-    const item = await screen.findByRole('option', { name: 'random_metric' });
+    const item = await screen.findByRole('option', { name: 'top_metric_one' });
     expect(item).toBeInTheDocument();
+
+    // This should be asserted by the above check, but double check anyway
+    expect(mockOnGetMetrics).toHaveBeenCalledTimes(1);
   });
 
   it('fetches metrics for the users query', async () => {
+    // Mock the queryLabelValues to return the expected metric
+    mockDatasource.languageProvider.queryLabelValues = jest.fn().mockResolvedValue(['unique_metric']);
+
     render(<MetricCombobox {...defaultProps} />);
 
     const combobox = screen.getByPlaceholderText('Select metric');
@@ -109,8 +96,13 @@ describe('MetricCombobox', () => {
     const item = await screen.findByRole('option', { name: 'unique_metric' });
     expect(item).toBeInTheDocument();
 
-    const negativeItem = screen.queryByRole('option', { name: 'random_metric' });
-    expect(negativeItem).not.toBeInTheDocument();
+    // This should be asserted by the above check, but double check anyway
+    // This is the actual argument, created by formatKeyValueStrings()
+    expect(mockDatasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(
+      expect.anything(),
+      '__name__',
+      '{__name__=~".*unique.*"}'
+    );
   });
 
   it('calls onChange with the correct value when a metric is selected', async () => {
@@ -119,35 +111,41 @@ describe('MetricCombobox', () => {
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
 
-    const item = await screen.findByRole('option', { name: 'random_metric' });
+    const item = await screen.findByRole('option', { name: 'top_metric_two' });
     await userEvent.click(item);
 
-    expect(mockOnChange).toHaveBeenCalledWith({ metric: 'random_metric', labels: [], operations: [] });
+    expect(mockOnChange).toHaveBeenCalledWith({ metric: 'top_metric_two', labels: [], operations: [] });
   });
 
-  it("doesn't show the metrics explorer button by default", () => {
+  it('shows the metrics explorer button by default', () => {
     render(<MetricCombobox {...defaultProps} />);
-    expect(screen.queryByRole('button', { name: /open metrics explorer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open metrics explorer/i })).toBeInTheDocument();
   });
 
-  describe('when metrics explorer toggle is enabled', () => {
-    beforeAll(() => {
-      jest.replaceProperty(config, 'featureToggles', {
-        prometheusMetricEncyclopedia: true,
-      });
-    });
+  it('displays the default metric value from query prop', () => {
+    // Render with a query that has a default metric value
+    render(
+      <MetricCombobox
+        {...defaultProps}
+        query={{
+          metric: 'default_metric_value',
+          labels: [],
+          operations: [],
+        }}
+      />
+    );
 
-    afterAll(() => {
-      jest.restoreAllMocks();
-    });
+    // The Combobox should display the default metric value
+    const combobox = screen.getByPlaceholderText('Select metric');
+    expect(combobox).toHaveValue('default_metric_value');
+  });
 
-    it('opens the metrics explorer when the button is clicked', async () => {
-      render(<MetricCombobox {...defaultProps} onGetMetrics={() => Promise.resolve([])} />);
+  it('opens the metrics explorer when the button is clicked', async () => {
+    render(<MetricCombobox {...defaultProps} onGetMetrics={() => Promise.resolve([])} />);
 
-      const button = screen.getByRole('button', { name: /open metrics explorer/i });
-      await userEvent.click(button);
+    const button = screen.getByRole('button', { name: /open metrics explorer/i });
+    await userEvent.click(button);
 
-      expect(screen.getByText('Metrics explorer')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Metrics explorer')).toBeInTheDocument();
   });
 });

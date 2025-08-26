@@ -3,7 +3,9 @@ import { Observable } from 'rxjs';
 
 import { DataSourceRef } from '@grafana/schema';
 
+import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+import { throwIfAngular } from '../utils/throwIfAngular';
 
 import { ScopedVars } from './ScopedVars';
 import { WithAccessControlMetadata } from './accesscontrol';
@@ -17,6 +19,7 @@ import { DataQuery } from './query';
 import { Scope } from './scopes';
 import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
+import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<
@@ -50,12 +53,16 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated it will be removed in a future release */
   setConfigCtrl(ConfigCtrl: any) {
+    deprecationWarning('DataSourcePlugin', 'setConfigCtrl');
     this.angularConfigCtrl = ConfigCtrl;
     return this;
   }
 
+  /** @deprecated it will be removed in a future release */
   setQueryCtrl(QueryCtrl: any) {
+    deprecationWarning('DataSourcePlugin', 'setQueryCtrl');
     this.components.QueryCtrl = QueryCtrl;
     return this;
   }
@@ -115,7 +122,7 @@ export class DataSourcePlugin<
   }
 
   setComponentsFromLegacyExports(pluginExports: System.Module) {
-    this.angularConfigCtrl = pluginExports.ConfigCtrl;
+    throwIfAngular(pluginExports);
 
     this.components.QueryCtrl = pluginExports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
@@ -161,7 +168,9 @@ export interface DataSourcePluginComponents<
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   TSecureOptions = {},
 > {
+  /** @deprecated it will be removed in a future release */
   QueryCtrl?: any;
+  /** @deprecated it will be removed in a future release */
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
@@ -230,6 +239,11 @@ abstract class DataSourceApi<
    */
   interval?: string;
 
+  /**
+   * Initialized in datasource_srv.ts
+   */
+  userStorage?: UserStorage;
+
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -291,6 +305,11 @@ abstract class DataSourceApi<
    * Variable query action.
    */
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
+
+  /**
+   * Verify adhoc filters applicability based on queries and current filters
+   */
+  getFiltersApplicability?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<FiltersApplicability[]>;
 
   /**
    * Get tag keys for adhoc filters
@@ -557,8 +576,10 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
+  panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   headers?: Record<string, string>;
 
   /** Filters to dynamically apply to all queries */
@@ -622,11 +643,22 @@ export interface MetricFindValue {
   expandable?: boolean;
 }
 
+export interface FiltersApplicability {
+  key: string;
+  applicable: boolean;
+  // message explaining why the filter is not applicable
+  reason?: string;
+  // needed to differentiate between filters with same key
+  // but different origin
+  origin?: string;
+}
+
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
 }

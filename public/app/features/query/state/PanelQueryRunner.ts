@@ -31,13 +31,13 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
-import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
-import { PanelModel } from '../../dashboard/state';
+import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard/runSharedRequest';
+import { PanelModel } from '../../dashboard/state/PanelModel';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
@@ -50,8 +50,10 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
+  panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -258,8 +260,10 @@ export class PanelQueryRunner {
       timezone,
       datasource,
       panelId,
+      panelName,
       panelPluginId,
       dashboardUID,
+      dashboardTitle,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -283,8 +287,10 @@ export class PanelQueryRunner {
       requestId: getNextRequestId(),
       timezone,
       panelId,
+      panelName,
       panelPluginId,
       dashboardUID,
+      dashboardTitle,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -327,6 +333,9 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
       request.filters = this.templateSrv.getAdhocFilters(ds.name, true);
+
+      request.panelId = panelId;
+      request.panelName = panelName;
 
       this.lastRequest = request;
 

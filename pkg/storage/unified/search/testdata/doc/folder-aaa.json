@@ -1,6 +1,6 @@
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v0alpha1",
+  "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
     "name": "aaa",
     "namespace": "default",
@@ -8,7 +8,7 @@
     "creationTimestamp": "2024-11-01T19:42:22Z",
     "annotations": {
       "grafana.app/createdBy": "user:1",
-      "grafana.app/originName": "SQL"
+      "grafana.app/repoName": "MyGIT"
     }
   },
   "spec": {

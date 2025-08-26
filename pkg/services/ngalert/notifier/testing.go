@@ -224,7 +224,7 @@ func NewFakeOrgStore(t *testing.T, orgs []int64) *FakeOrgStore {
 	}
 }
 
-func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
+func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
@@ -233,6 +233,13 @@ type NoValidation struct {
 
 func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
+}
+
+type RejectingValidation struct {
+}
+
+func (n RejectingValidation) Validate(s models.NotificationSettings) error {
+	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.Receiver}}
 }
 
 var errInvalidState = fmt.Errorf("invalid state")

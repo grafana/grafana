@@ -10,19 +10,26 @@ import (
 // InstanceStore represents the ability to fetch and write alert instances.
 type InstanceStore interface {
 	InstanceReader
+	InstanceWriter
+}
 
+// InstanceReader provides methods to fetch alert instances.
+type InstanceReader interface {
+	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
+}
+
+// InstanceWriter provides methods to write alert instances.
+type InstanceWriter interface {
 	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
 	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
 	// SaveAlertInstancesForRule overwrites the state for the given rule.
 	SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error
-	FullSync(ctx context.Context, instances []models.AlertInstance) error
+	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error
 }
 
-// InstanceReader provides methods to fetch alert instances.
-type InstanceReader interface {
+type OrgReader interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
-	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
 }
 
 // RuleReader represents the ability to fetch alert rules.

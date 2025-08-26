@@ -2,12 +2,12 @@ import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes'
 import { DataSourceRef } from '@grafana/schema';
 
 import { INSTANCE_ID, overrideToFixedColor } from '../../home/Insights';
-import { InsightsRatingModal } from '../RatingModal';
+import { InsightsMenuButton } from '../InsightsMenuButton';
 export function getInstanceStatByStatusScene(
   datasource: DataSourceRef,
   panelTitle: string,
   panelDescription: string,
-  status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error'
+  status: 'alerting' | 'pending' | 'nodata' | 'normal' | 'error' | 'recovering'
 ) {
   const expr = INSTANCE_ID
     ? `sum by (state) (grafanacloud_grafana_instance_alerting_alerts{state="${status}", id="${INSTANCE_ID}"})`
@@ -33,7 +33,7 @@ export function getInstanceStatByStatusScene(
       .setData(query)
       .setOverrides((b) => b.matchFieldsWithName(status).overrideColor(overrideToFixedColor(status)))
       .setNoValue('0')
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

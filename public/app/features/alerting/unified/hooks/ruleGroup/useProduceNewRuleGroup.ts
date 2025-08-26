@@ -1,13 +1,16 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { notFoundToNullOrThrow } from '../../api/util';
-import { ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
+import { addRuleAction, ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
+import { getDatasourceAPIUid } from '../../utils/datasource';
+
+const PREFER_CACHE_VALUE = true;
 
 const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -39,10 +42,11 @@ export function useProduceNewRuleGroup() {
    * │ fetch latest rule group │─▶│ apply reducer │─▶│  new rule group  │
    * └─────────────────────────┘  └───────────────┘  └──────────────────┘
    */
-  const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, action: Action) => {
+  const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, actions: Action[]) => {
     const { dataSourceName, groupName, namespaceName } = ruleGroup;
 
-    const { rulerConfig } = await discoverDataSourceFeatures({ rulesSourceName: dataSourceName }).unwrap();
+    const ruleSourceUid = dataSourceName === 'grafana' ? GrafanaRulesSourceSymbol : getDatasourceAPIUid(dataSourceName);
+    const { rulerConfig } = await discoverDataSourceFeatures({ uid: ruleSourceUid }, PREFER_CACHE_VALUE).unwrap();
     if (!rulerConfig) {
       throw RulerNotSupportedError(dataSourceName);
     }
@@ -57,10 +61,16 @@ export function useProduceNewRuleGroup() {
       .unwrap()
       .catch(notFoundToNullOrThrow);
 
-    const newRuleGroupDefinition = ruleGroupReducer(
-      latestRuleGroupDefinition ?? createBlankRuleGroup(ruleGroup.groupName),
-      action
-    );
+    const initialRuleGroupDefinition = latestRuleGroupDefinition ?? createBlankRuleGroup(groupName);
+    const newRuleGroupDefinition = actions.reduce((ruleGroup, action) => {
+      // This is a workaround to ensure that the interval is set correctly when adding a rule to an existing rule group.
+      // The interval is set to default for DMA rules even for existing rule groups with a non-default interval.
+      // We no longer allow setting the interval for existing groups, but still allow that when you create a new rule group.
+      if (latestRuleGroupDefinition && addRuleAction.match(action)) {
+        action.payload.interval = latestRuleGroupDefinition.interval;
+      }
+      return ruleGroupReducer(ruleGroup, action);
+    }, initialRuleGroupDefinition);
 
     return { newRuleGroupDefinition, rulerConfig };
   };

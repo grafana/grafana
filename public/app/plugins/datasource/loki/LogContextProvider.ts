@@ -14,6 +14,7 @@ import {
   LogRowContextQueryDirection,
   LogRowContextOptions,
   dateTime,
+  ScopedVars,
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 
@@ -70,7 +71,7 @@ export class LogContextProvider {
       this.cachedContextFilters = filters;
     }
 
-    return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
+    return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery, options?.timeWindowMs);
   }
 
   getLogRowContextQuery = async (
@@ -79,6 +80,9 @@ export class LogContextProvider {
     origQuery?: LokiQuery,
     cacheFilters = true
   ): Promise<LokiQuery> => {
+    if (origQuery && options?.scopedVars) {
+      origQuery = this.datasource.applyTemplateVariables(origQuery, options?.scopedVars);
+    }
     const { query } = await this.getQueryAndRange(row, options, origQuery, cacheFilters);
 
     if (!cacheFilters) {
@@ -94,6 +98,9 @@ export class LogContextProvider {
     options?: LogRowContextOptions,
     origQuery?: LokiQuery
   ): Promise<{ data: DataFrame[] }> => {
+    if (origQuery && options?.scopedVars) {
+      origQuery = this.datasource.applyTemplateVariables(origQuery, options?.scopedVars);
+    }
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const { query, range } = await this.getQueryAndRange(row, options, origQuery);
 
@@ -129,11 +136,10 @@ export class LogContextProvider {
     row: LogRowModel,
     limit: number,
     direction: LogRowContextQueryDirection,
-    origQuery?: LokiQuery
+    origQuery?: LokiQuery,
+    timeWindowMs = 2 * 60 * 60 * 1000
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
     const expr = this.prepareExpression(this.cachedContextFilters, origQuery);
-
-    const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
     const queryDirection =
       direction === LogRowContextQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
@@ -167,11 +173,11 @@ export class LogContextProvider {
             // because the are before but came it he response that should return only rows after.
             from: timestamp,
             // convert to ns, we lose some precision here but it is not that important at the far points of the context
-            to: toUtc(row.timeEpochMs + contextTimeBuffer),
+            to: toUtc(row.timeEpochMs + timeWindowMs),
           }
         : {
             // convert to ns, we lose some precision here but it is not that important at the far points of the context
-            from: toUtc(row.timeEpochMs - contextTimeBuffer),
+            from: toUtc(row.timeEpochMs - timeWindowMs),
             to: timestamp,
           };
 
@@ -185,7 +191,15 @@ export class LogContextProvider {
     };
   }
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, origQuery?: LokiQuery): React.ReactNode {
+  getLogRowContextUi(
+    row: LogRowModel,
+    runContextQuery?: () => void,
+    origQuery?: LokiQuery,
+    scopedVars?: ScopedVars
+  ): React.ReactNode {
+    if (origQuery && scopedVars) {
+      origQuery = this.datasource.applyTemplateVariables(origQuery, scopedVars);
+    }
     const updateFilter = (contextFilters: ContextFilter[]) => {
       this.cachedContextFilters = contextFilters;
 

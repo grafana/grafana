@@ -1,6 +1,7 @@
-import { t } from 'i18next';
-
-import { getBackendSrv } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
 import { validationSrv } from '../services/ValidationSrv';
 
@@ -47,13 +48,24 @@ export const validateTitle = (newTitle: string, folderUid: string) => {
 };
 
 export const validateUid = (value: string) => {
-  return getBackendSrv()
-    .get(`/api/dashboards/uid/${value}`)
+  return getDashboardAPI()
+    .getDashboardDTO(value)
     .then((existingDashboard) => {
-      return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same UID`;
+      const isV2 = isDashboardV2Resource(existingDashboard);
+      const dashboard = isV2 ? existingDashboard.spec : existingDashboard.dashboard;
+      const folderTitle = isV2
+        ? existingDashboard.metadata.annotations?.[AnnoKeyFolderTitle]
+        : existingDashboard.meta.folderTitle;
+      return `Dashboard named '${dashboard.title}' in folder '${folderTitle}' has the same UID`;
     })
     .catch((error) => {
       error.isHandled = true;
+
+      // when Editor user tries to import admin only dashboard (with same uid) he gets an unhelpful 403 error
+      //  therefore handling this use case to return some indication of whats wrong
+      if (error.status === 403) {
+        return 'Dashboard with the same UID already exists';
+      }
       return true;
     });
 };

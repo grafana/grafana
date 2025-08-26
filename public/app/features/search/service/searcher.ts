@@ -14,11 +14,11 @@ export function getGrafanaSearcher(): GrafanaSearcher {
 
     const useBluge = config.featureToggles.panelTitleSearch;
     searcher = useBluge ? new BlugeSearcher(sqlSearcher) : sqlSearcher;
-    if (useBluge && location.search.includes('do-frontend-query')) {
+    if (useBluge && window.location.search.includes('do-frontend-query')) {
       return new FrontendSearcher(searcher);
     }
 
-    const useUnifiedStorageSearch = config.featureToggles.unifiedStorageSearch;
+    const useUnifiedStorageSearch = config.featureToggles.unifiedStorageSearchUI;
     searcher = useUnifiedStorageSearch ? new UnifiedSearcher(sqlSearcher) : sqlSearcher;
   }
   return searcher!;

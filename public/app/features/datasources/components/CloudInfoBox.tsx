@@ -1,7 +1,7 @@
-import { DataSourceSettings } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { Alert } from '@grafana/ui';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import { DataSourceSettings, LocalStorageValueProvider } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, TextLink } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 const LOCAL_STORAGE_KEY = 'datasources.settings.cloudInfoBox.isDismissed';
@@ -45,25 +45,26 @@ export function CloudInfoBox({ dataSource }: Props) {
         }
         return (
           <Alert
-            title={`Configure your ${mainDS} data source below`}
+            title={t('datasources.cloud-info-box.title-alert', 'Configure your {{mainDS}} data source below', {
+              mainDS,
+            })}
             severity="info"
             bottomSpacing={4}
             onRemove={() => {
               onDismiss(true);
             }}
           >
-            Or skip the effort and get {mainDS} (and {extraDS}) as fully-managed, scalable, and hosted data sources from
-            Grafana Labs with the{' '}
-            <a
-              className="external-link"
-              href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
-              target="_blank"
-              rel="noreferrer"
-              title="The free plan includes 10k active metrics and 50gb storage."
-            >
-              free-forever Grafana Cloud plan
-            </a>
-            .
+            <Trans i18nKey="datasources.cloud-info-box.body-alert">
+              Or skip the effort and get {{ mainDS }} (and {{ extraDS }}) as fully-managed, scalable, and hosted data
+              sources from Grafana Labs with the{' '}
+              <TextLink
+                href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
+                external
+              >
+                free-forever Grafana Cloud plan
+              </TextLink>
+              .
+            </Trans>
           </Alert>
         );
       }}

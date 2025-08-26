@@ -2,9 +2,9 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -84,7 +84,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderStore folder.Store, service accesscontrol.Service,
+	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
@@ -98,20 +98,22 @@ func ProvideFolderPermissions(
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
 			defer span.End()
 
-			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-			queryResult, err := dashboardStore.GetDashboard(ctx, query)
+			ctx, ident := identity.WithServiceIdentity(ctx, orgID)
+			_, err := folderService.Get(ctx, &folder.GetFolderQuery{
+				UID:          &resourceID,
+				OrgID:        orgID,
+				SignedInUser: ident,
+			})
+
 			if err != nil {
 				return err
-			}
-
-			if !queryResult.IsFolder {
-				return errors.New("not found")
 			}
 
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderStore)
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
+			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
@@ -124,8 +126,8 @@ func ProvideFolderPermissions(
 			"Edit":  append(getDashboardEditActions(features), FolderEditActions...),
 			"Admin": append(getDashboardAdminActions(features), FolderAdminActions...),
 		},
-		ReaderRoleName: "Folder permission reader",
-		WriterRoleName: "Folder permission writer",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
 		RoleGroup:      "Folders",
 	}
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)

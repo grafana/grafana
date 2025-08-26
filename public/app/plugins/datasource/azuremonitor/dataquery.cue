@@ -27,6 +27,7 @@ composableKinds: DataQuery: {
 			schema: {
 				#AzureMonitorQuery: common.DataQuery & {
 					// Azure subscription containing the resource(s) to be queried.
+					// Also used for template variable queries
 					subscription?: string
 
 					// Subscriptions to be queried via Azure Resource Graph.
@@ -43,20 +44,30 @@ composableKinds: DataQuery: {
 					// @deprecated Legacy template variable support.
 					grafanaTemplateVariableFn?: #GrafanaTemplateVariableQuery
 
-					// Template variables params. These exist for backwards compatiblity with legacy template variables.
+					// Resource group used in template variable queries
 					resourceGroup?: string
-					namespace?:     string
-					resource?:      string
-					region?:        string
+					// Namespace used in template variable queries
+					namespace?: string
+					// Resource used in template variable queries
+					resource?: string
+					// Region used in template variable queries
+					region?: string
+					// Custom namespace used in template variable queries
+					customNamespace?: string
 					// Azure Monitor query type.
 					// queryType: #AzureQueryType
 
 					// Used only for exemplar queries from Prometheus
 					query?: string
+
+					// Used to configure the HTTP request timeout
+					timeout?: number
+
+					keepCookies?: [...string]
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
-				#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Traces" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" | "traceql" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|AzureTraces|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn|TraceExemplar")
+				#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Traces" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" | "traceql" | "Azure Custom Namespaces" | "Azure Custom Metric Names" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|AzureTraces|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn|TraceExemplar|CustomNamespacesQuery|CustomMetricNamesQuery")
 
 				#AzureMetricQuery: {
 					// Array of resource URIs to be queried.
@@ -122,6 +133,10 @@ composableKinds: DataQuery: {
 					basicLogsQuery?: bool
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
+					// Denotes if logs query editor is in builder mode
+					mode?: #LogsEditorMode
+					// Builder query to be executed.
+					builderQuery?: #BuilderQueryExpression
 
 					// @deprecated Use resources instead 
 					resource?: string
@@ -154,13 +169,118 @@ composableKinds: DataQuery: {
 					filters: [...string]
 				} @cuetsy(kind="interface")
 
-				#ResultFormat: "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
+				#ResultFormat:   "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
+				#LogsEditorMode: "builder" | "raw"                          @cuetsy(kind="enum", memberNames="Builder|Raw")
 
+				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
+				#BuilderQueryEditorPropertyType:   "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval"               @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
+				#BuilderQueryEditorOrderByOptions: "asc" | "desc"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
+
+				#BuilderQueryEditorProperty: {
+					type: #BuilderQueryEditorPropertyType
+					name: string
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorPropertyExpression: {
+					property: #BuilderQueryEditorProperty
+					type:     #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorColumnsExpression: {
+					columns?: [...string]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#SelectableValue: {
+					label: string
+					value: string
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorOperatorType: string | bool | number | #SelectableValue @cuetsy(kind="type")
+
+				#BuilderQueryEditorOperator: {
+					name:        string
+					value:       string
+					labelValue?: string
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorWhereExpressionItems: {
+					property: #BuilderQueryEditorProperty
+					operator: #BuilderQueryEditorOperator
+					type:     #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorWhereExpression: {
+					type: #BuilderQueryEditorExpressionType
+					expressions: [...#BuilderQueryEditorWhereExpressionItems]
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorWhereExpressionArray: {
+					expressions: [...#BuilderQueryEditorWhereExpression]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorFunctionParameterExpression: {
+					value:     string
+					fieldType: #BuilderQueryEditorPropertyType
+					type:      #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorReduceExpression: {
+					property?: #BuilderQueryEditorProperty
+					reduce?:   #BuilderQueryEditorProperty
+					parameters?: [...#BuilderQueryEditorFunctionParameterExpression]
+					focus?: bool
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorReduceExpressionArray: {
+					expressions: [...#BuilderQueryEditorReduceExpression]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorGroupByExpression: {
+					property?: #BuilderQueryEditorProperty
+					interval?: #BuilderQueryEditorProperty
+					focus?:    bool
+					type?:     #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorGroupByExpressionArray: {
+					expressions: [...#BuilderQueryEditorGroupByExpression]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorOrderByExpression: {
+					property: #BuilderQueryEditorProperty
+					order:    #BuilderQueryEditorOrderByOptions
+					type:     #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryEditorOrderByExpressionArray: {
+					expressions: [...#BuilderQueryEditorOrderByExpression]
+					type: #BuilderQueryEditorExpressionType
+				} @cuetsy(kind="interface")
+
+				#BuilderQueryExpression: {
+					from?:        #BuilderQueryEditorPropertyExpression
+					columns?:     #BuilderQueryEditorColumnsExpression
+					where?:       #BuilderQueryEditorWhereExpressionArray
+					reduce?:      #BuilderQueryEditorReduceExpressionArray
+					groupBy?:     #BuilderQueryEditorGroupByExpressionArray
+					limit?:       int
+					orderBy?:     #BuilderQueryEditorOrderByExpressionArray
+					fuzzySearch?: #BuilderQueryEditorWhereExpressionArray
+					timeFilter?:  #BuilderQueryEditorWhereExpressionArray
+				} @cuetsy(kind="interface")
+
+				#ARGScope:   "subscription" | "directory" @cuetsy(kind="enum", memberNames="Subscription|Directory")
 				#AzureResourceGraphQuery: {
 					// Azure Resource Graph KQL query to be executed.
 					query?: string
 					// Specifies the format results should be returned as. Defaults to table.
 					resultFormat?: string
+					// Specifies the scope of the query. Defaults to subscription.
+					scope?: #ARGScope
 				} @cuetsy(kind="interface")
 
 				#AzureMonitorResource: {

@@ -30,3 +30,13 @@ The following directories and their subdirectories are licensed under their orig
 ```
 public/vendor/
 ```
+
+## MIT license
+
+The following files are licensed under MIT License:
+
+```
+.github/workflows/actionlint-format.txt
+  -> Vendored: https://github.com/rhysd/actionlint/blob/2ab3a12c7848f6c15faca9a92612ef4261d0e370/testdata/format/sarif_template.txt
+  -> The workflow that uses it is AGPL-3.0-only.
+```

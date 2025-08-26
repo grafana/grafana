@@ -1,35 +1,32 @@
 module resource
 
-extend type folder
+type group_resource
   relations
-    define resource_view: [user, team#member, role#assignee] or resource_edit or resource_view from parent
-    define resource_edit: [user, team#member, role#assignee] or resource_admin or resource_edit from parent
-    define resource_admin: [user, team#member, role#assignee] or resource_admin from parent
+    define view: [user, service-account, render, team#member, role#assignee] or edit
+    define edit: [user, service-account, team#member, role#assignee] or admin
+    define admin: [user, service-account, team#member, role#assignee]
 
-    define resource_read: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_view or resource_read from parent
-    define resource_create: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_create from parent
-    define resource_write: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_write from parent
-    define resource_delete: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_delete from parent
-    define resource_permissions_read: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_permissions_read from parent
-    define resource_permissions_write: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_permissions_write from parent
+    define get: [user, service-account, render, team#member, role#assignee] or view
+    define create: [user, service-account, team#member, role#assignee] or edit
+    define update: [user, service-account, team#member, role#assignee] or edit
+    define delete: [user, service-account, team#member, role#assignee] or edit
+
+    define get_permissions: [user, service-account, render, team#member, role#assignee] or admin
+    define set_permissions: [user, service-account, render, team#member, role#assignee] or admin
 
 type resource
   relations
-    define view: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
-    define edit: [user  with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
-    define admin: [user with group_filter, team#member with group_filter, role#assignee with group_filter]
+    define view: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define edit: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define admin: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter]
 
-    define read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or view
-    define create: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
-    define write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
-    define delete: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
-    define permissions_read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
-    define permissions_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define get: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or view
+    define update: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define delete: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+
+    define get_permissions: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define set_permissions: [user with group_filter, service-account with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
 
 condition group_filter(requested_group: string, group_resource: string) {
   requested_group == group_resource
-}
-
-condition folder_group_filter(requested_group: string, group_resources: list<string>) {
-  requested_group in group_resources
 }

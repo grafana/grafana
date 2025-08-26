@@ -1,7 +1,7 @@
 import Skeleton from 'react-loading-skeleton';
 
+import { Trans } from '@grafana/i18n';
 import { Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 interface Props {
   hasToken: boolean;

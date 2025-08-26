@@ -3,15 +3,16 @@ import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 
 interface Props {
   panel: PanelModel;
@@ -48,10 +49,13 @@ export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
           </span>
           <div className="flex-grow-1" />
           <IconButton
-            aria-label="Close 'Add Panel' widget"
+            aria-label={t(
+              'dashboard.add-library-panel-widget.aria-label-close-add-panel-widget',
+              "Close 'Add Panel' widget"
+            )}
             name="times"
             onClick={onCancelAddPanel}
-            tooltip="Close widget"
+            tooltip={t('dashboard.add-library-panel-widget.tooltip-close-widget', 'Close widget')}
           />
         </div>
         <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />

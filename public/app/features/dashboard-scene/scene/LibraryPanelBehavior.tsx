@@ -1,19 +1,22 @@
 import { PanelPlugin, PanelProps } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { panelLinksBehavior } from './PanelMenuBehavior';
+import { PanelNotices } from './PanelNotices';
 import { PanelTimeRange } from './PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
-  // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
-  title?: string;
   uid: string;
   name: string;
   isLoaded?: boolean;
@@ -48,14 +51,36 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const libPanelModel = new PanelModel(libPanel.model);
 
+    // Use dashboard panel ID for data layer filtering
+    const dashboardPanelId = getPanelIdForVizPanel(vizPanel);
+    libPanelModel.id = dashboardPanelId;
+
+    const titleItems: SceneObject[] = [];
+
+    titleItems.push(
+      new VizPanelLinks({
+        rawLinks: libPanelModel.links,
+        menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+      })
+    );
+    titleItems.push(new PanelNotices());
+
+    let title;
+    if (config.featureToggles.preferLibraryPanelTitle) {
+      title = libPanelModel.title ?? vizPanel.state.title;
+    } else {
+      title = vizPanel.state.title ?? libPanelModel.title;
+    }
+
     const vizPanelState: VizPanelState = {
-      title: libPanelModel.title,
+      title,
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,
       pluginVersion: libPanelModel.pluginVersion,
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
+      titleItems: titleItems,
       $data: createPanelDataProvider(libPanelModel),
     };
 
@@ -70,7 +95,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
 
     const layoutElement = vizPanel.parent!;
 

@@ -3,11 +3,12 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
 import { SaveDashboardData, SaveDashboardOptions } from '../types';
@@ -72,7 +73,10 @@ export const SaveDashboardForm = ({
                 saveTimerange: !options.saveTimerange,
               })
             }
-            label="Save current time range as dashboard default"
+            label={t(
+              'dashboard.save-dashboard-form.label-current-range-dashboard-default',
+              'Save current time range as dashboard default'
+            )}
             aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
           />
         )}
@@ -85,7 +89,10 @@ export const SaveDashboardForm = ({
                 saveVariables: !options.saveVariables,
               })
             }
-            label="Save current variable values as dashboard default"
+            label={t(
+              'dashboard.save-dashboard-form.label-current-variable-values-dashboard-default',
+              'Save current variable values as dashboard default'
+            )}
             aria-label={selectors.pages.SaveDashboardModal.saveVariables}
           />
         )}
@@ -104,7 +111,6 @@ export const SaveDashboardForm = ({
             />
           )}
           <TextArea
-            aria-label="message"
             value={message}
             onChange={(e) => {
               onOptionsChange({
@@ -113,7 +119,10 @@ export const SaveDashboardForm = ({
               });
               setMessage(e.currentTarget.value);
             }}
-            placeholder="Add a note to describe your changes."
+            placeholder={t(
+              'dashboard.save-dashboard-form.placeholder-describe-changes',
+              'Add a note to describe your changes.'
+            )}
             autoFocus
             rows={5}
           />
@@ -121,7 +130,7 @@ export const SaveDashboardForm = ({
 
         <Stack alignItems="center">
           <Button variant="secondary" onClick={onCancel} fill="outline">
-            Cancel
+            <Trans i18nKey="dashboard.save-dashboard-form.cancel">Cancel</Trans>
           </Button>
           <Button
             type="submit"
@@ -129,9 +138,15 @@ export const SaveDashboardForm = ({
             icon={saving ? 'spinner' : undefined}
             aria-label={selectors.pages.SaveDashboardModal.save}
           >
-            {isLoading ? 'Saving...' : 'Save'}
+            {isLoading
+              ? t('dashboard.save-dashboard-form.saving', 'Saving...')
+              : t('dashboard.save-dashboard-form.save', 'Save')}
           </Button>
-          {!saveModel.hasChanges && <div>No changes to save</div>}
+          {!saveModel.hasChanges && (
+            <div>
+              <Trans i18nKey="dashboard.save-dashboard-form.no-changes-to-save">No changes to save</Trans>
+            </div>
+          )}
         </Stack>
       </Stack>
     </form>

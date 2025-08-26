@@ -20,26 +20,11 @@
     {
       "cells": [
         "aaa (dash)",
-        "ns/g/dash/bbb"
+        "ns/dashboard.grafana.app/dashboards/aaa"
       ],
       "object": {
-        "kind": "dash",
-        "apiVersion": "g",
-        "metadata": {
-          "name": "bbb",
-          "namespace": "ns",
-          "creationTimestamp": null
-        }
-      }
-    },
-    {
-      "cells": [
-        "bbb (dash)",
-        "ns/g/dash/aaa"
-      ],
-      "object": {
-        "kind": "dash",
-        "apiVersion": "g",
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "aaa",
           "namespace": "ns",
@@ -49,12 +34,27 @@
     },
     {
       "cells": [
-        "ccc (dash)",
-        "ns/g/dash/ccc"
+        "bbb (dash)",
+        "ns/dashboard.grafana.app/dashboards/bbb"
       ],
       "object": {
-        "kind": "dash",
-        "apiVersion": "g",
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
+        "metadata": {
+          "name": "bbb",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ccc (dash)",
+        "ns/dashboard.grafana.app/dashboards/ccc"
+      ],
+      "object": {
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "ccc",
           "namespace": "ns",
@@ -65,11 +65,11 @@
     {
       "cells": [
         "yyy (folder)",
-        "ns/g/folder/yyy"
+        "ns/folder.grafana.app/folders/yyy"
       ],
       "object": {
-        "kind": "folder",
-        "apiVersion": "g",
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "yyy",
           "namespace": "ns",
@@ -80,11 +80,11 @@
     {
       "cells": [
         "zzz (folder)",
-        "ns/g/folder/zzz"
+        "ns/folder.grafana.app/folders/zzz"
       ],
       "object": {
-        "kind": "folder",
-        "apiVersion": "g",
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "zzz",
           "namespace": "ns",

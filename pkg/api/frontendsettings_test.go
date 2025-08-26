@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -24,6 +25,10 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
@@ -33,7 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -87,15 +93,16 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		SQLStore:              db.InitTestDB(t),
 		SettingsProvider:      setting.ProvideProvider(cfg),
 		pluginStore:           pluginStore,
-		grafanaUpdateChecker:  &updatechecker.GrafanaService{},
+		grafanaUpdateChecker:  &updatemanager.GrafanaService{},
 		AccessControl:         accesscontrolmock.New(),
 		PluginSettings:        pluginsSettings,
 		pluginsCDNService:     pluginsCDN,
 		pluginAssets:          pluginsAssets,
 		namespacer:            request.GetNamespaceMapper(cfg),
-		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
+		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
 		managedPluginsService: managedplugins.NewNoop(),
 		tracer:                tracing.InitializeTracerForTest(),
+		DataSourcesService:    &datafakes.FakeDataSourceService{},
 	}
 
 	m := web.New()
@@ -106,7 +113,10 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	return m, hs
 }
 
-func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
+func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`
@@ -160,7 +170,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			hs.Cfg.AnonymousHideVersion = test.hideVersion
+			hs.Cfg.Anonymous.HideVersion = test.hideVersion
 			expected := test.expected
 
 			recorder := httptest.NewRecorder()
@@ -175,7 +185,10 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	}
 }
 
-func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
+func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type settings struct {
 		PluginsCDNBaseURL string `json:"pluginsCDNBaseURL"`
 	}
@@ -225,7 +238,10 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 	}
 }
 
-func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
+func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type settings struct {
 		Apps map[string]*plugins.AppDTO `json:"apps"`
 	}
@@ -452,6 +468,236 @@ func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 			PluginID: id,
 			Enabled:  enabled,
 		},
+	}
+}
+
+func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	type settings struct {
+		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
+		Panels      map[string]*plugins.PanelDTO     `json:"panels"`
+		Apps        map[string]*plugins.AppDTO       `json:"apps"`
+	}
+
+	tests := []struct {
+		desc         string
+		pluginStore  func() pluginstore.Store
+		expected     settings
+		signedInUser *user.SignedInUser
+	}{
+		{
+			desc: "built in datasource plugin with translations",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeDataSource,
+								BuiltIn: true,
+							},
+							Translations: map[string]string{
+								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+							},
+						},
+					},
+				}
+			},
+			expected: settings{
+				Datasources: map[string]plugins.DataSourceDTO{
+					"": {
+						Type:     string(plugins.TypeDataSource),
+						JSONData: make(map[string]any),
+						PluginMeta: &plugins.PluginMetaDTO{
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeDataSource,
+								BuiltIn: true,
+							},
+							Module: "/test-app/module.js",
+							Translations: map[string]string{
+								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+							},
+						},
+					},
+				},
+				Panels: map[string]*plugins.PanelDTO{},
+				Apps:   map[string]*plugins.AppDTO{},
+			},
+		},
+		{
+			desc: "non-builtin datasource plugin with translations",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:   "test-app",
+								Info: plugins.Info{Version: "0.5.0"},
+								Type: plugins.TypeDataSource,
+							},
+							Translations: map[string]string{
+								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+							},
+						},
+					},
+				}
+			},
+			signedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+			expected: settings{
+				Datasources: map[string]plugins.DataSourceDTO{
+					"test-app": {
+						Type:     "test-app",
+						Name:     "test-app",
+						JSONData: make(map[string]any),
+						Module:   "/test-app/module.js",
+						PluginMeta: &plugins.PluginMetaDTO{
+							Module: "/test-app/module.js",
+							JSONData: plugins.JSONData{
+								ID:   "test-app",
+								Info: plugins.Info{Version: "0.5.0"},
+								Type: plugins.TypeDataSource,
+							},
+							LoadingStrategy: "script",
+							Translations: map[string]string{
+								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+							},
+						},
+					},
+				},
+				Panels: map[string]*plugins.PanelDTO{},
+				Apps:   map[string]*plugins.AppDTO{},
+			},
+		},
+		{
+			desc: "panel plugin with translations",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:   "test-app",
+								Info: plugins.Info{Version: "0.5.0"},
+								Type: plugins.TypePanel,
+							},
+							Translations: map[string]string{
+								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+							},
+						},
+					},
+				}
+			},
+			expected: settings{
+				Datasources: map[string]plugins.DataSourceDTO{},
+				Panels: map[string]*plugins.PanelDTO{
+					"test-app": {
+						ID:              "test-app",
+						Info:            plugins.Info{Version: "0.5.0"},
+						Sort:            100,
+						Module:          "/test-app/module.js",
+						LoadingStrategy: "script",
+						ModuleHash:      "",
+						Translations: map[string]string{
+							"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+							"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+						},
+					},
+				},
+				Apps: map[string]*plugins.AppDTO{},
+			},
+		},
+		{
+			desc: "app plugin with translations",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:   "test-app",
+								Info: plugins.Info{Version: "0.5.0"},
+								Type: plugins.TypeApp,
+							},
+							Translations: map[string]string{
+								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+							},
+						},
+					},
+				}
+			},
+			expected: settings{
+				Datasources: map[string]plugins.DataSourceDTO{},
+				Panels:      map[string]*plugins.PanelDTO{},
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:              "test-app",
+						LoadingStrategy: "script",
+						ModuleHash:      "",
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						Translations: map[string]string{
+							"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
+							"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), nil, nil)
+
+			// Create a request with the appropriate context
+			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+			recorder := httptest.NewRecorder()
+
+			if test.signedInUser != nil {
+				_, err := hs.DataSourcesService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+					Name:  "test-app",
+					Type:  "test-app",
+					OrgID: 1,
+				})
+				require.NoError(t, err)
+				m.UseMiddleware(func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						ctx := r.Context()
+						reqContext := &contextmodel.ReqContext{
+							Context:                    web.FromContext(ctx),
+							SignedInUser:               test.signedInUser,
+							PublicDashboardAccessToken: "test-token",
+						}
+						ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
+						*reqContext.Req = *reqContext.Req.WithContext(ctx)
+						next.ServeHTTP(w, r.WithContext(ctx))
+					})
+				})
+			}
+
+			m.ServeHTTP(recorder, req)
+			var got settings
+			err := json.Unmarshal(recorder.Body.Bytes(), &got)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.EqualValues(t, test.expected, got)
+		})
 	}
 }
 

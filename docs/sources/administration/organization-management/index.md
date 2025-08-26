@@ -39,14 +39,14 @@ The following table summarizes the resources you can share and/or isolate using 
 | Notification channels    | Isolate only     |
 | Annotations              | Isolate only     |
 | Reports                  | Isolate only     |
-| API keys                 | Isolate only     |
+| Service accounts         | Isolate only     |
 | Authentication providers | Share only       |
 | Configuration settings   | Share only       |
 | Licenses                 | Share            |
 
 The member of one organization cannot view dashboards assigned to another organization. However, a user can belong to multiple organizations.
 
-Grafana Server Administrators are responsible for creating organizations. For more information about the Grafana Server Administrator role, refer to [Grafana server administrators]({{< relref "../roles-and-permissions/#grafana-server-administrators" >}}).
+Grafana Server Administrators are responsible for creating organizations. For more information about the Grafana Server Administrator role, refer to [Grafana server administrators](../roles-and-permissions/#grafana-server-administrators).
 
 ## View a list of organizations
 
@@ -80,17 +80,17 @@ Create an organization when you want to isolate dashboards and other resources f
 
 1. In the Preferences section, select a home dashboard, time zone, and week start.
 
-   For more information about preferences, refer to [Preferences]({{< relref "../organization-preferences/" >}}).
+   For more information about preferences, refer to [Preferences](../organization-preferences/).
 
-For more information about adding users to an organization, refer to [Add a user to an organization]({{< relref "../user-management/server-user-management/add-remove-user-to-org/" >}}).
+For more information about adding users to an organization, refer to [Add a user to an organization](../user-management/server-user-management/add-remove-user-to-org/).
 
 ## Delete an organization
 
 This action permanently removes an organization from your Grafana server.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Deleting the organization also deletes all teams and dashboards associated the organization.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Before you begin
 

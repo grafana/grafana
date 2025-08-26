@@ -15,12 +15,18 @@ type ITestDB interface {
 	Logf(format string, args ...any)
 	Log(args ...any)
 	Cleanup(func())
+	Skipf(format string, args ...any)
 }
 
 type TestDB struct {
 	DriverName string
 	ConnStr    string
 	Path       string
+	Host       string
+	Port       string
+	User       string
+	Password   string
+	Database   string
 	Cleanup    func()
 }
 
@@ -110,7 +116,8 @@ func sqLite3TestDB() (*TestDB, error) {
 
 	ret.ConnStr = "file:" + sqliteDb + "?cache=private&mode=rwc"
 	if os.Getenv("SQLITE_JOURNAL_MODE") != "false" {
-		ret.ConnStr += "&_journal_mode=WAL"
+		// For tests, set sync=OFF for faster commits. Reference: https://www.sqlite.org/pragma.html#pragma_synchronous.
+		ret.ConnStr += "&_journal_mode=WAL&_synchronous=OFF"
 	}
 	ret.Path = sqliteDb
 
@@ -130,6 +137,11 @@ func mySQLTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "mysql",
 		ConnStr:    conn_str,
+		Host:       host,
+		Port:       port,
+		User:       "grafana",
+		Password:   "password",
+		Database:   "grafana_tests",
 		Cleanup:    func() {},
 	}, nil
 }
@@ -147,6 +159,11 @@ func postgresTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "postgres",
 		ConnStr:    connStr,
+		Host:       host,
+		Port:       port,
+		User:       "grafanatest",
+		Password:   "grafanatest",
+		Database:   "grafanatest",
 		Cleanup:    func() {},
 	}, nil
 }

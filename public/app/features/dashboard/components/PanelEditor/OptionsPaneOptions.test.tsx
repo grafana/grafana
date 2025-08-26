@@ -13,11 +13,11 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { OptionsPaneOptions } from './OptionsPaneOptions';
@@ -141,6 +141,29 @@ describe('OptionsPaneOptions', () => {
     scenario.render();
 
     expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).not.toBeInTheDocument();
+  });
+
+  it('should render options that are specifically not marked as hidden from defaults', () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+
+    scenario.plugin = getPanelPlugin({
+      id: 'TestPanel',
+    }).useFieldConfig({
+      standardOptions: {},
+      useCustomConfig: (b) => {
+        b.addBooleanSwitch({
+          name: 'CustomBool',
+          path: 'CustomBool',
+        }).addBooleanSwitch({
+          name: 'HiddenFromDef',
+          path: 'HiddenFromDef',
+          hideFromDefaults: false,
+        });
+      },
+    });
+
+    scenario.render();
+    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).toBeInTheDocument();
   });
 
   it('should create categories for field options with category', () => {

@@ -23,9 +23,9 @@ title: Query and Resource Caching HTTP API
 
 # Query and resource caching API
 
-{{% admonition type="note" %}}
-If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+{{< /admonition >}}
 
 ## Enable caching for a data source
 
@@ -33,7 +33,7 @@ If you are running Grafana Enterprise, for some endpoints you'll need to have sp
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) for an explanation.
+See note in the [introduction](#query-and-resource-caching-api) for an explanation.
 
 | Action                    | Scope          |
 | ------------------------- | -------------- |
@@ -83,7 +83,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) for an explanation.
+See note in the [introduction](#query-and-resource-caching-api) for an explanation.
 
 | Action                    | Scope          |
 | ------------------------- | -------------- |
@@ -135,7 +135,7 @@ Will clean cached data for _all_ data sources with caching enabled. The `dataSou
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) for an explanation.
+See note in the [introduction](#query-and-resource-caching-api) for an explanation.
 
 | Action                    | Scope          |
 | ------------------------- | -------------- |
@@ -185,7 +185,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) for an explanation.
+See note in the [introduction](#query-and-resource-caching-api) for an explanation.
 
 | Action                    | Scope          |
 | ------------------------- | -------------- |
@@ -256,7 +256,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#query-and-resource-caching-api" >}}) for an explanation.
+See note in the [introduction](#query-and-resource-caching-api) for an explanation.
 
 | Action                   | Scope          |
 | ------------------------ | -------------- |

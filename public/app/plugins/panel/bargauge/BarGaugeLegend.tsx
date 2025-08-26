@@ -1,10 +1,9 @@
 import { memo } from 'react';
 
-import { cacheFieldDisplayNames, DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
-import { Field } from '@grafana/data/';
+import { Field, cacheFieldDisplayNames, DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
 import { AxisPlacement, VizLegendOptions } from '@grafana/schema';
 import { useTheme2, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem } from '@grafana/ui';
-import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
+import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
 
 interface BarGaugeLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];

@@ -54,6 +54,8 @@ func TestSuccessResponse(t *testing.T) {
 
 		{name: "parse structured metadata", filepath: "streams_structured_metadata", query: streamsQuery},
 		{name: "parse structured metadata different labels each log line", filepath: "streams_structured_metadata_2", query: streamsQuery},
+
+		{name: "parse warnings", filepath: "warning", query: streamsQuery},
 	}
 
 	runTest := func(folder string, path string, query lokiQuery, responseOpts ResponseOpts) {
@@ -64,7 +66,7 @@ func TestSuccessResponse(t *testing.T) {
 		bytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
-		dr, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil, false), &query, responseOpts, backend.NewLoggerWith("logger", "test"))
+		dr, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &query, responseOpts, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
 
 		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, false)
@@ -123,7 +125,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			dr, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil, false), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, backend.NewLoggerWith("logger", "test"))
+			dr, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, backend.NewLoggerWith("logger", "test"))
 			require.NoError(t, err)
 			require.Len(t, dr.Frames, 0)
 			require.Equal(t, dr.Error.Error(), test.errorMessage)
@@ -170,7 +172,7 @@ func TestErrorsFromResponseCodes(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			dr, _ := runQuery(context.Background(), makeMockedAPI(test.statusCode, contentType, []byte(errorString), nil, false), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, backend.NewLoggerWith("logger", "test"))
+			dr, _ := runQuery(context.Background(), makeMockedAPI(test.statusCode, contentType, []byte(errorString), nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, backend.NewLoggerWith("logger", "test"))
 			require.Len(t, dr.Frames, 0)
 			require.Equal(t, dr.Error.Error(), errorString)
 			require.Equal(t, dr.ErrorSource, test.errorSource)

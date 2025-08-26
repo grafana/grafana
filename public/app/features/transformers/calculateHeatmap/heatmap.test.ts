@@ -1,5 +1,4 @@
-import { FieldType } from '@grafana/data';
-import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
+import { FieldType, toDataFrame } from '@grafana/data';
 import { HeatmapCalculationOptions } from '@grafana/schema';
 
 import { rowsToCellsHeatmap, calculateHeatmapFromData } from './heatmap';

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,7 +21,6 @@ func ProvideDashboardUpdater(bus bus.Bus, pluginStore pluginstore.Store, pluginD
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
 	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
 		pluginSettingsService, dashboardPluginService, dashboardService)
-	du.updateAppDashboards()
 	return du
 }
 
@@ -52,7 +52,12 @@ type DashboardUpdater struct {
 	logger                 log.Logger
 }
 
-func (du *DashboardUpdater) updateAppDashboards() {
+func (du *DashboardUpdater) Run(ctx context.Context) error {
+	du.updateAppDashboards(ctx)
+	return nil
+}
+
+func (du *DashboardUpdater) updateAppDashboards(ctx context.Context) {
 	du.logger.Debug("Looking for app dashboard updates")
 
 	pluginSettings, err := du.pluginSettingsService.GetPluginSettings(context.Background(), &pluginsettings.GetArgs{OrgID: 0})
@@ -67,9 +72,10 @@ func (du *DashboardUpdater) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exists := du.pluginStore.Plugin(context.Background(), pluginSetting.PluginID); exists {
+		serviceCtx, _ := identity.WithServiceIdentity(ctx, pluginSetting.OrgID)
+		if pluginDef, exists := du.pluginStore.Plugin(serviceCtx, pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgID)
+				du.syncPluginDashboards(serviceCtx, pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}
@@ -95,7 +101,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 		if dash.Removed {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", plugin.ID, "dashboard", dash.Slug)
 
-			if err := du.dashboardService.DeleteDashboard(ctx, dash.DashboardId, orgID); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.DashboardId, dash.UID, orgID); err != nil {
 				du.logger.Error("Failed to auto update app dashboard", "pluginId", plugin.ID, "error", err)
 				return
 			}
@@ -133,6 +139,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 
 func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
 	du.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+	ctx, _ = identity.WithServiceIdentity(ctx, event.OrgId)
 
 	if event.Enabled {
 		p, exists := du.pluginStore.Plugin(ctx, event.PluginId)
@@ -150,7 +157,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 
 		for _, dash := range queryResult {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
-			if err := du.dashboardService.DeleteDashboard(ctx, dash.ID, dash.OrgID); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.ID, dash.UID, dash.OrgID); err != nil {
 				return err
 			}
 		}

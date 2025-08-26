@@ -40,40 +40,25 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
-	var continuationToken string
-
-	for {
-		res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
-			PageSize:          &wrapperspb.Int32Value{Value: 100},
-			ContinuationToken: continuationToken,
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
-		}
-
-		for _, s := range res.GetStores() {
-			if s.GetName() == namespace {
-				return s, nil
-			}
-		}
-
-		// we have no more stores to check
-		if res.GetContinuationToken() == "" {
-			break
-		}
-
-		continuationToken = res.GetContinuationToken()
+	res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
 	}
 
-	res, err := s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
+	for _, s := range res.GetStores() {
+		if s.GetName() == namespace {
+			return s, nil
+		}
+	}
+
+	createStoreRes, err := s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
 	if err != nil {
 		return nil, err
 	}
 
 	return &openfgav1.Store{
-		Id:   res.GetId(),
-		Name: res.GetName(),
+		Id:   createStoreRes.GetId(),
+		Name: createStoreRes.GetName(),
 	}, nil
 }
 

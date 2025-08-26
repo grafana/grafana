@@ -1,8 +1,9 @@
 import { Fragment, useEffect } from 'react';
 
-import { Alert, LoadingPlaceholder, Text, Box } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
 
@@ -19,6 +20,7 @@ import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const AlertGroups = () => {
   const { selectedAlertmanager } = useAlertmanager();
@@ -54,17 +56,29 @@ const AlertGroups = () => {
   return (
     <>
       <AlertGroupFilter groups={results} />
-      {loading && <LoadingPlaceholder text="Loading notifications" />}
+      {loading && (
+        <LoadingPlaceholder text={t('alerting.alert-groups.text-loading-notifications', 'Loading notifications')} />
+      )}
       {error && !loading && (
-        <Alert title={'Error loading notifications'} severity={'error'}>
+        <Alert
+          title={t('alerting.alert-groups.title-error-loading-notifications', 'Error loading notifications')}
+          severity={'error'}
+        >
           {error.message || 'Unknown error'}
         </Alert>
       )}
 
       {grafanaAmDeliveryDisabled && (
-        <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
-          Grafana is configured to send alerts to external alertmanagers only. No alerts are expected to be available
-          here for the selected Alertmanager.
+        <Alert
+          title={t(
+            'alerting.alert-groups.title-grafana-alerts-delivered-alertmanager',
+            'Grafana alerts are not delivered to Grafana Alertmanager'
+          )}
+        >
+          <Trans i18nKey="alerting.alert-groups.body-grafana-alerted-delivered">
+            Grafana is configured to send alerts to external alertmanagers only. No alerts are expected to be available
+            here for the selected Alertmanager.
+          </Trans>
         </Alert>
       )}
 
@@ -76,7 +90,12 @@ const AlertGroups = () => {
                 (index === 0 && Object.keys(group.labels).length > 0)) && (
                 <Box paddingY={2}>
                   <Text element="h2" variant="body">
-                    Grouped by: {Object.keys(group.labels).join(', ')}
+                    <Trans
+                      i18nKey="alerting.alert-groups.grouped-by"
+                      values={{ labels: Object.keys(group.labels).join(', ') }}
+                    >
+                      Grouped by: {'{{labels}}'}
+                    </Trans>
                   </Text>
                 </Box>
               )}
@@ -84,15 +103,21 @@ const AlertGroups = () => {
             </Fragment>
           );
         })}
-      {results && !filteredAlertGroups.length && <p>No results.</p>}
+      {results && !filteredAlertGroups.length && (
+        <p>
+          <Trans i18nKey="alerting.alert-groups.no-results">No results.</Trans>
+        </p>
+      )}
     </>
   );
 };
 
-const AlertGroupsPage = () => (
-  <AlertmanagerPageWrapper navId="groups" accessType="instance">
-    <AlertGroups />
-  </AlertmanagerPageWrapper>
-);
+function AlertGroupsPage() {
+  return (
+    <AlertmanagerPageWrapper navId="groups" accessType="instance">
+      <AlertGroups />
+    </AlertmanagerPageWrapper>
+  );
+}
 
-export default AlertGroupsPage;
+export default withPageErrorBoundary(AlertGroupsPage);

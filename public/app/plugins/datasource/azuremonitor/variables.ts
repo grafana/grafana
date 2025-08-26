@@ -1,3 +1,4 @@
+import { startsWith } from 'lodash';
 import { from, lastValueFrom, Observable } from 'rxjs';
 
 import {
@@ -9,12 +10,31 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
+import UrlBuilder from './azure_monitor/url_builder';
+import { parseResourceURI } from './components/ResourcePicker/utils';
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
 import { migrateQuery } from './grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType } from './types';
+import { AzureMonitorQuery, AzureQueryType } from './types/query';
 import { GrafanaTemplateVariableQuery } from './types/templateVariables';
+import { RawAzureResourceItem } from './types/types';
 import messageFromError from './utils/messageFromError';
+
+export function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {
+  return resources.map((r) => {
+    if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
+      return {
+        text: r.name + '/default',
+        value: r.name + '/default',
+      };
+    }
+
+    return {
+      text: r.name,
+      value: parseResourceURI(r.id).resourceName,
+    };
+  });
+}
 
 export class VariableSupport extends CustomVariableSupport<DataSource, AzureMonitorQuery> {
   constructor(
@@ -52,22 +72,28 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             return { data: [] };
           case AzureQueryType.NamespacesQuery:
             if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
-              const rgs = await this.datasource.getMetricNamespaces(queryObj.subscription, queryObj.resourceGroup);
+              const namespaces = await this.datasource.getMetricNamespaces(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                undefined,
+                false,
+                true
+              );
               return {
-                data: rgs?.length ? [toDataFrame(rgs)] : [],
+                data: namespaces?.length ? [toDataFrame(namespaces)] : [],
               };
             }
             return { data: [] };
           case AzureQueryType.ResourceNamesQuery:
             if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
-              const rgs = await this.datasource.getResourceNames(
+              const resources = await this.datasource.getResourceNames(
                 queryObj.subscription,
                 queryObj.resourceGroup,
                 queryObj.namespace,
                 queryObj.region
               );
               return {
-                data: rgs?.length ? [toDataFrame(rgs)] : [],
+                data: resources?.length ? [toDataFrame(parseResourceNamesAsTemplateVariable(resources))] : [],
               };
             }
             return { data: [] };
@@ -119,6 +145,58 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
                 data: res?.length ? [toDataFrame(res)] : [],
               };
             }
+          case AzureQueryType.CustomNamespacesQuery:
+            if (
+              queryObj.subscription &&
+              queryObj.resourceGroup &&
+              queryObj.namespace &&
+              queryObj.resource &&
+              this.hasValue(queryObj.subscription, queryObj.resourceGroup, queryObj.namespace, queryObj.resource)
+            ) {
+              const resourceUri = UrlBuilder.buildResourceUri(this.templateSrv, {
+                subscription: queryObj.subscription,
+                resourceGroup: queryObj.resourceGroup,
+                metricNamespace: queryObj.namespace,
+                resourceName: queryObj.resource,
+              });
+              const res = await this.datasource.getMetricNamespaces(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                resourceUri,
+                true
+              );
+              return {
+                data: res?.length ? [toDataFrame(res)] : [],
+              };
+            }
+            return { data: [] };
+          case AzureQueryType.CustomMetricNamesQuery:
+            if (
+              queryObj.subscription &&
+              queryObj.resourceGroup &&
+              queryObj.namespace &&
+              queryObj.resource &&
+              queryObj.customNamespace &&
+              this.hasValue(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                queryObj.namespace,
+                queryObj.resource,
+                queryObj.customNamespace
+              )
+            ) {
+              const rgs = await this.datasource.getMetricNames(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                queryObj.namespace,
+                queryObj.resource,
+                queryObj.customNamespace
+              );
+              return {
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
+              };
+            }
+            return { data: [] };
           default:
             request.targets[0] = queryObj;
             const queryResp = await lastValueFrom(this.datasource.query(request));
@@ -142,15 +220,28 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'ResourceGroupsQuery') {
-      return this.datasource.getResourceGroups(this.replaceVariable(query.subscription));
+      return this.datasource.getResourceGroups(this.replaceVariable(query.subscription)).then((rgs) => {
+        if (rgs.length > 0) {
+          return rgs.map((rg) => ({ text: rg.resourceGroupName, value: rg.resourceGroupName }));
+        }
+
+        return [];
+      });
     }
 
     if (query.kind === 'ResourceNamesQuery') {
-      return this.datasource.getResourceNames(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricNamespace)
-      );
+      return this.datasource
+        .getResourceNames(
+          this.replaceVariable(query.subscription),
+          this.replaceVariable(query.resourceGroup),
+          this.replaceVariable(query.metricNamespace)
+        )
+        .then((resources) => {
+          if (resources.length > 0) {
+            return parseResourceNamesAsTemplateVariable(resources, query.metricNamespace);
+          }
+          return [];
+        });
     }
 
     if (query.kind === 'MetricNamespaceQuery') {

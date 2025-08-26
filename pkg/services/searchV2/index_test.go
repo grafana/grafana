@@ -12,21 +12,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -72,7 +62,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -432,9 +422,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       2,
-		uid:      "2",
-		folderID: 1,
+		id:        2,
+		uid:       "2",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 1",
 			Nested: []*entity.EntitySummary{
@@ -444,9 +435,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       3,
-		uid:      "3",
-		folderID: 1,
+		id:        3,
+		uid:       "3",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 2",
 			Nested: []*entity.EntitySummary{
@@ -739,81 +731,5 @@ func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
 				DashboardQuery{Query: tt.query},
 			)
 		})
-	}
-}
-
-func setupIntegrationEnv(t *testing.T, folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStore) (*StandardSearchService, *user.SignedInUser, error) {
-	err := populateDB(folderCount, dashboardsPerFolder, sqlStore)
-	require.NoError(t, err, "error when populating the database for integration test")
-
-	// load all dashboards and folders
-	dbLoadingBatchSize := (dashboardsPerFolder + 1) * folderCount
-	cfg := &setting.Cfg{Search: setting.SearchSettings{DashboardLoadingBatchSize: dbLoadingBatchSize}}
-	features := featuremgmt.WithFeatures()
-	orgSvc := &orgtest.FakeOrgService{
-		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
-	}
-	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, folder.NewFakeStore()).(*StandardSearchService)
-	require.True(t, ok)
-
-	err = runSearchService(searchService)
-	require.NoError(t, err, "error when running search service for integration test")
-
-	user := getSignedInUser(folderCount, dashboardsPerFolder)
-
-	return searchService, user, nil
-}
-
-func TestIntegrationSoftDeletion(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	// Set up search v2.
-	folderCount := 1
-	dashboardsPerFolder := 1
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	searchService, testUser, err := setupIntegrationEnv(t, folderCount, dashboardsPerFolder, sqlStore)
-	require.NoError(t, err)
-
-	// Query search v2 to ensure "dashboard2" is present.
-	result := searchService.doDashboardQuery(context.Background(), testUser, 1, DashboardQuery{Kind: []string{string(entityKindDashboard)}})
-	require.NoError(t, result.Error)
-	require.NotZero(t, len(result.Frames))
-	for _, field := range result.Frames[0].Fields {
-		if field.Name == "uid" {
-			require.Equal(t, dashboardsPerFolder, field.Len())
-			break
-		}
-	}
-
-	// Set up dashboard store.
-	quotaService := quotatest.New(false, nil)
-	featureToggles := featuremgmt.WithFeatures(
-		featuremgmt.FlagPanelTitleSearch,
-		featuremgmt.FlagDashboardRestore,
-		featuremgmt.FlagMysqlParseTime,
-	)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
-	require.NoError(t, err)
-
-	// Soft delete "dashboard2".
-	err = dashboardStore.SoftDeleteDashboard(context.Background(), 1, "dashboard2")
-	require.NoError(t, err)
-
-	// Reindex to ensure "dashboard2" is excluded from the index.
-	searchService.dashboardIndex.reIndexFromScratch(context.Background())
-
-	// Query search v2 to ensure "dashboard2" is no longer present.
-	expectedResultCount := dashboardsPerFolder - 1
-	result2 := searchService.doDashboardQuery(context.Background(), testUser, 1, DashboardQuery{Kind: []string{string(entityKindDashboard)}})
-	require.NoError(t, result2.Error)
-	require.NotZero(t, len(result2.Frames))
-	for _, field := range result2.Frames[0].Fields {
-		if field.Name == "uid" {
-			require.Equal(t, expectedResultCount, field.Len())
-			break
-		}
 	}
 }

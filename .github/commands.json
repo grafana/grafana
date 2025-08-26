@@ -96,7 +96,7 @@
     "name": "datasource/Prometheus",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/112"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -128,7 +128,7 @@
     "name": "datasource/Loki",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/203"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -136,7 +136,7 @@
     "name": "datasource/Tempo",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -152,7 +152,7 @@
     "name": "datasource/Parca",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -160,7 +160,7 @@
     "name": "datasource/Elasticsearch",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/97"
+      "url": "https://github.com/orgs/grafana/projects/190"
     }
   },
   {
@@ -168,7 +168,7 @@
     "name": "datasource/Jaeger",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -176,7 +176,7 @@
     "name": "datasource/Zipkin",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/221"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -472,7 +472,7 @@
     "name": "type/build-packaging",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/509"
+      "url": "https://github.com/orgs/grafana/projects/632"
     }
   },
   {
@@ -488,7 +488,23 @@
     "name": "area/transformations",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/correlations",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/expressions/sql",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
     }
   },
   {
@@ -568,15 +584,15 @@
     "name": "area/public-dashboards",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/482"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
     "type": "label",
-    "name": "area/exploremetrics",
+    "name": "area/metricsdrilldown",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/112"
+      "url": "https://github.com/orgs/grafana/projects/516"
     }
   },
   {
@@ -616,7 +632,7 @@
     "name": "area/security",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/470"
+      "url": "https://github.com/orgs/grafana/projects/476"
     }
   },
   {
@@ -640,7 +656,7 @@
     "name": "area/configuration",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/96"
+      "url": "https://github.com/orgs/grafana/projects/665"
     }
   },
   {
@@ -648,7 +664,7 @@
     "name": "area/frontend/library-panels",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
+      "url": "https://github.com/orgs/grafana/projects/482"
     }
   },
   {
@@ -680,7 +696,7 @@
     "name": "area/navigation",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -688,7 +704,7 @@
     "name": "area/search",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -736,7 +752,7 @@
     "name": "area/image-rendering",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/482"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
@@ -744,7 +760,7 @@
     "name": "area/backend/db/postgres",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/96"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -880,7 +896,7 @@
     "name": "area/dashboard/library-panel",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
+      "url": "https://github.com/orgs/grafana/projects/482"
     }
   },
   {
@@ -929,6 +945,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/gitsync",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/792"
     }
   },
   {
@@ -984,7 +1008,7 @@
     "name": "area/frontend/login",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/78"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -1016,7 +1040,7 @@
     "name": "area/panel/dashboard-list",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
+      "url": "https://github.com/orgs/grafana/projects/911"
     }
   },
   {
@@ -1117,14 +1141,6 @@
   },
   {
     "type": "label",
-    "name": "area/editor",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/grafana/grafana/projects/21"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/data/export",
     "action": "addToProject",
     "addToProject": {
@@ -1201,6 +1217,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/699"
+    }
+  },
+  {
+    "type": "label",
+    "name": "type/docs",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/69"
     }
   }
 ]

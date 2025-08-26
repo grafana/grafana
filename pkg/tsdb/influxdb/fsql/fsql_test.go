@@ -7,11 +7,12 @@ import (
 	"net"
 	"testing"
 
-	"github.com/apache/arrow/go/v15/arrow/flight"
-	"github.com/apache/arrow/go/v15/arrow/flight/flightsql"
-	"github.com/apache/arrow/go/v15/arrow/flight/flightsql/example"
-	"github.com/apache/arrow/go/v15/arrow/memory"
+	"github.com/apache/arrow-go/v18/arrow/flight"
+	"github.com/apache/arrow-go/v18/arrow/flight/flightsql"
+	"github.com/apache/arrow-go/v18/arrow/flight/flightsql/example"
+	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -55,6 +56,9 @@ func (suite *FSQLTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func TestFSQLTestSuite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	suite.Run(t, new(FSQLTestSuite))
 }
 
@@ -70,6 +74,7 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 				Version:      "test",
 				HTTPMode:     "proxy",
 				InsecureGrpc: true,
+				ProxyClient:  proxy.New(nil),
 			},
 			backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
@@ -126,4 +131,87 @@ func freeport(t *testing.T) (addr string, err error) {
 	}()
 	a := l.Addr().(*net.TCPAddr)
 	return a.String(), nil
+}
+
+func TestInvalidSchema(t *testing.T) {
+	resp, _ := Query(
+		context.Background(),
+		&models.DatasourceInfo{
+			HTTPClient:   nil,
+			Token:        "secret",
+			URL:          "http://127.0.0.1:1234",
+			DbName:       "influxdb",
+			Version:      "test",
+			HTTPMode:     "proxy",
+			InsecureGrpc: true,
+			ProxyClient:  proxy.New(nil),
+		},
+		backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					RefID: "A",
+					JSON:  []byte(`this is not valid JSON`),
+				},
+			},
+		},
+	)
+	require.Equal(t, backend.ErrorSourceDownstream, resp.Responses["A"].ErrorSource)
+}
+
+func TestParseURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+		hasError bool
+	}{
+		{
+			name:     "empty URL",
+			input:    "",
+			expected: "",
+			hasError: true,
+		},
+		{
+			name:     "URL without scheme",
+			input:    "example.com",
+			expected: "example.com",
+			hasError: false,
+		},
+		{
+			name:     "URL without scheme and with port",
+			input:    "example.com:8181",
+			expected: "example.com:8181",
+			hasError: false,
+		},
+		{
+			name:     "URL without port",
+			input:    "http://example.com",
+			expected: "example.com:443",
+			hasError: false,
+		},
+		{
+			name:     "URL with http scheme",
+			input:    "http://example.com:8080",
+			expected: "example.com:8080",
+			hasError: false,
+		},
+		{
+			name:     "URL with https scheme",
+			input:    "https://example.com:8443",
+			expected: "example.com:8443",
+			hasError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ParseURL(tt.input)
+			if tt.hasError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, result)
+			}
+		})
+	}
 }

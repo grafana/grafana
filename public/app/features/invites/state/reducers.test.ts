@@ -1,6 +1,6 @@
 import { keyBy } from 'lodash';
 
-import { getMockInvitees } from 'app/features/users/__mocks__/userMocks';
+import { getMockInvitees } from 'app/features/users/mocks/userMocks';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 

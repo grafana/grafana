@@ -1,20 +1,15 @@
 import { StoryFn, Meta } from '@storybook/react';
 
-import { Button, VerticalGroup, HorizontalGroup } from '@grafana/ui';
-
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
+import { Button } from '../Button/Button';
 
-import { Layout, LayoutProps } from './Layout';
+import { HorizontalGroup, Layout, LayoutProps, VerticalGroup } from './Layout';
 import mdx from './Layout.mdx';
 
 const meta: Meta = {
-  title: 'Layout/Groups',
+  title: 'Layout/Deprecated/Groups',
   component: Layout,
   decorators: [withStoryContainer],
-  // SB7 has broken subcomponent types due to dropping support for the feature
-  // https://github.com/storybookjs/storybook/issues/20782
-  // @ts-ignore
-  subcomponents: { HorizontalGroup, VerticalGroup },
   parameters: {
     docs: {
       page: mdx,
@@ -62,8 +57,9 @@ export default meta;
 export const Horizontal: StoryFn<LayoutProps> = (args) => {
   return (
     <HorizontalGroup {...args}>
+      <Button variant="secondary">Cancel</Button>
+      <Button variant="destructive">Delete</Button>
       <Button>Save</Button>
-      <Button>Cancel</Button>
     </HorizontalGroup>
   );
 };
@@ -71,8 +67,9 @@ export const Horizontal: StoryFn<LayoutProps> = (args) => {
 export const Vertical: StoryFn<LayoutProps> = (args) => {
   return (
     <VerticalGroup {...args}>
+      <Button variant="secondary">Cancel</Button>
+      <Button variant="destructive">Delete</Button>
       <Button>Save</Button>
-      <Button>Cancel</Button>
     </VerticalGroup>
   );
 };

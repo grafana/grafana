@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"math/rand/v2"
+	"net"
 	"net/http"
 	"reflect"
 	"slices"
@@ -12,77 +13,17 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
-
-func TestValidateSettings(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		settings setting.RecordingRuleSettings
-		err      bool
-	}{
-		{
-			name: "invalid url",
-			settings: setting.RecordingRuleSettings{
-				URL: "invalid url",
-			},
-			err: true,
-		},
-		{
-			name: "missing password",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-			},
-			err: true,
-		},
-		{
-			name: "timeout is 0",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-				BasicAuthPassword: "password",
-				Timeout:           0,
-			},
-			err: true,
-		},
-		{
-			name: "valid settings w/ auth",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-				BasicAuthPassword: "password",
-				Timeout:           10,
-			},
-			err: false,
-		},
-		{
-			name: "valid settings w/o auth",
-			settings: setting.RecordingRuleSettings{
-				URL:     "http://localhost:9090",
-				Timeout: 10,
-			},
-			err: false,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			err := validateSettings(tc.settings)
-			if tc.err {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
 
 func TestPointsFromFrames(t *testing.T) {
 	extraLabels := map[string]string{"extra": "label"}
@@ -169,6 +110,27 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
 	})
 
+	t.Run("handle connection failures", func(t *testing.T) {
+		dnsErr := &net.DNSError{
+			Err:        "no such host",
+			Name:       "host.example.com",
+			Server:     "10.0.0.1:53",
+			IsTimeout:  false,
+			IsNotFound: true,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, testClientWriteError{
+				statusCode: 0,
+				err:        dnsErr,
+			}
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrConnectionFailure)
+		require.Contains(t, err.Error(), dnsErr.Error())
+	})
+
 	t.Run("writes expected points", func(t *testing.T) {
 		client.writeSeriesFunc = func(ctx context.Context, tslist promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
 			require.Len(t, tslist, len(series))
@@ -190,7 +152,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	})
 
 	t.Run("ignores client error when status code is 400 and message contains duplicate timestamp error", func(t *testing.T) {
-		for _, msg := range DuplicateTimestampErrors {
+		for _, msg := range IgnoredErrors {
 			t.Run(msg, func(t *testing.T) {
 				clientErr := testClientWriteError{
 					statusCode: http.StatusBadRequest,
@@ -207,7 +169,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	})
 
 	t.Run("bad labels fit under the client error category", func(t *testing.T) {
-		msg := MimirInvalidLabelError
+		msg := MimirSeriesInvalidLabelError
 		clientErr := testClientWriteError{
 			statusCode: http.StatusBadRequest,
 			msg:        &msg,
@@ -221,6 +183,131 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
+
+	t.Run("max series limit fit under the client error category ", func(t *testing.T) {
+		msg := "send data to ingesters: failed pushing to ingester ingester-1: user=1: per-user series limit of 10 exceeded (err-mimir-max-series-per-user). To adjust the related per-tenant limit, configure -ingester.max-global-series-per-user, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("too long labels fit under the client error category", func(t *testing.T) {
+		msg := "received a series whose label value length exceeds the limit, label: 'label-1', value: 'value-1' (truncated) series: 'some_series' (err-mimir-label-value-too-long). To adjust the related per-tenant limit, configure -validation.max-length-label-value, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("too many labels fit under the client error category", func(t *testing.T) {
+		msg := "received a series whose number of labels exceeds the limit (actual: 50, limit: 40) series: 'some_series' (err-mimir-max-label-names-per-series). To adjust the related per-tenant limit, configure -validation.max-label-names-per-series, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+}
+
+func TestExtractActualError(t *testing.T) {
+	testCases := []struct {
+		name     string
+		inputErr promremote.WriteError
+		expected string
+	}{
+		{
+			name:     "nil error",
+			inputErr: nil,
+			expected: "",
+		},
+		{
+			name: "non-JSON error message",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("body=non-JSON error"),
+			},
+			expected: "non-JSON error",
+		},
+		{
+			name: "no body=",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`test message {"message":"some message"}`),
+			},
+			expected: `test message {"message":"some message"}`,
+		},
+		{
+			name: "error message with body= and valid JSON with error field",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`error body={"error":"nested error message"}`),
+			},
+			expected: "nested error message",
+		},
+		{
+			name: "error message with body= and invalid JSON",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusBadRequest,
+				msg:        util.Pointer(`body={"error":"some error`), // Missing closing brace
+			},
+			expected: `{"error":"some error`,
+		},
+		{
+			name: "error message with nothing after body=",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("random error without body="),
+			},
+			expected: "random error without body=",
+		},
+		{
+			name: "error message with string body",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("random error body=invalid-json-content"),
+			},
+			expected: "invalid-json-content",
+		},
+		{
+			name: "error message with body and valid JSON without error field",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`error body={"key":"value"}`),
+			},
+			expected: `{"key":"value"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := extractActualError(tc.inputErr)
+			require.Equal(t, tc.expected, result)
+		})
+	}
 }
 
 func extractValue(t *testing.T, frames data.Frames, labels map[string]string, frameType data.FrameType) float64 {
@@ -412,6 +499,7 @@ func (c *testClient) WriteTimeSeries(
 type testClientWriteError struct {
 	statusCode int
 	msg        *string
+	err        error
 }
 
 func (e testClientWriteError) StatusCode() int {
@@ -419,8 +507,11 @@ func (e testClientWriteError) StatusCode() int {
 }
 
 func (e testClientWriteError) Error() string {
-	if e.msg == nil {
-		return "test error"
+	if e.err != nil {
+		return e.err.Error()
 	}
-	return *e.msg
+	if e.msg != nil {
+		return *e.msg
+	}
+	return "test client error"
 }

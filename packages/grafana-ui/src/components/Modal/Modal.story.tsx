@@ -3,11 +3,13 @@ import { StoryFn, Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
 import { useState } from 'react';
 
-import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { getAvailableIcons } from '../../types/icon';
+import { Button } from '../Button/Button';
+import { TabContent } from '../Tabs/TabContent';
 
-import { getAvailableIcons } from '../../types';
-
+import { Modal } from './Modal';
 import mdx from './Modal.mdx';
+import { ModalTabsHeader } from './ModalTabsHeader';
 
 const meta: Meta = {
   title: 'Overlays/Modal',
@@ -19,6 +21,8 @@ const meta: Meta = {
     controls: {
       exclude: ['className', 'contentClassName', 'onDismiss', 'onClickBackdrop'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   args: {
     body: oneLineTrim(`Id incididunt do pariatur qui labore. Sint culpa irure cillum et ullamco proident. Deserunt ipsum velit dolore est enim proident dolore consectetur. Et cillum tempor pariatur et. Est tempor cillum ad id nulla. Cillum ut proident

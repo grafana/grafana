@@ -1,9 +1,16 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
+import {
+  Spec as DashboardV2Spec,
+  QueryVariableKind,
+  PanelQueryKind,
+  AnnotationQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { ThunkResult } from 'app/types/store';
 
 import {
   Input,
@@ -13,11 +20,11 @@ import {
 } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
-import { DashboardSearchHit } from '../../search/types';
 import { DashboardJson } from '../types';
 
 import {
   clearDashboard,
+  DataSourceInput,
   fetchDashboard,
   fetchFailed,
   ImportDashboardDTO,
@@ -53,6 +60,13 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
     await dispatch(processElements(dashboard));
     await dispatch(processJsonDashboard(dashboard));
     dispatch(processInputs());
+  };
+}
+
+export function importDashboardV2Json(dashboard: DashboardV2Spec): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(setJsonDashboard(dashboard));
+    dispatch(processV2Datasources(dashboard));
   };
 }
 
@@ -139,6 +153,38 @@ function processElements(dashboardJson?: { __elements?: Record<string, LibraryEl
   return async function (dispatch) {
     const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
+  };
+}
+
+export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
+  return async function (dispatch) {
+    const { elements, variables, annotations } = dashboard;
+    // get elements from dashboard
+    // each element can only be a panel
+    let inputs: Record<string, DataSourceInput> = {};
+    for (const element of Object.values(elements)) {
+      if (element.kind !== 'Panel') {
+        throw new Error('Only panels are currenlty supported in v2 dashboards');
+      }
+
+      if (element.spec.data.spec.queries.length > 0) {
+        for (const query of element.spec.data.spec.queries) {
+          inputs = await processV2DatasourceInput(query.spec, inputs);
+        }
+      }
+    }
+
+    for (const variable of variables) {
+      if (variable.kind === 'QueryVariable') {
+        inputs = await processV2DatasourceInput(variable.spec, inputs);
+      }
+    }
+
+    for (const annotation of annotations) {
+      inputs = await processV2DatasourceInput(annotation.spec, inputs);
+    }
+
+    dispatch(setInputs(Object.values(inputs)));
   };
 }
 
@@ -260,29 +306,44 @@ const getDataSourceDescription = (input: { usage?: InputUsage }): string | undef
   return undefined;
 };
 
-/** @deprecated Use RTK Query methods from features/browse-dashboards/api/browseDashboardsAPI.ts instead */
-export function createFolder(payload: any) {
-  return getBackendSrv().post('/api/folders', payload);
-}
+export async function processV2DatasourceInput(
+  spec: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
+  inputs: Record<string, DataSourceInput> = {}
+) {
+  const datasourceRef = spec.query.datasource;
+  let dataSourceInput: DataSourceInput | undefined;
+  const dsType = spec.query.group;
 
-export const SLICE_FOLDER_RESULTS_TO = 1000;
+  if (!datasourceRef) {
+    // if dsType is grafana, it means we are using a built-in annotation or default grafana datasource, in those
+    // cases we don't need to map it
+    // "datasource" type is what we call "--Dashboard--" datasource <.-.>
+    if (dsType === 'grafana' || dsType === 'datasource') {
+      return inputs;
+    }
+  }
 
-export function searchFolders(
-  query: any,
-  permission?: PermissionLevelString,
-  type: SearchQueryType = SearchQueryType.Folder
-): Promise<DashboardSearchHit[]> {
-  return getBackendSrv().get('/api/search', {
-    query,
-    type: type,
-    permission,
-    limit: SLICE_FOLDER_RESULTS_TO,
-  });
-}
-
-export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
-  return getBackendSrv().get(`/api/folders/${uid}`);
-}
-export function getFolderById(id: number): Promise<{ id: number; title: string }> {
-  return getBackendSrv().get(`/api/folders/id/${id}`);
+  const datasource = await getDatasourceSrv().get({ type: dsType });
+  if (datasource) {
+    dataSourceInput = {
+      name: datasource.name,
+      label: datasource.name,
+      info: `Select a ${datasource.name} data source`,
+      value: datasource.uid,
+      type: InputType.DataSource,
+      pluginId: datasource.meta?.id,
+    };
+    inputs[datasource.meta?.id] = dataSourceInput;
+  } else {
+    dataSourceInput = {
+      name: dsType,
+      label: dsType,
+      info: `No data sources of type ${dsType} found`,
+      value: '',
+      type: InputType.DataSource,
+      pluginId: dsType,
+    };
+    inputs[dsType] = dataSourceInput;
+  }
+  return inputs;
 }

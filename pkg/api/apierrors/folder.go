@@ -10,12 +10,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
-	var dashboardErr dashboards.DashboardErr
+	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, err.Error(), err)
 	}
@@ -39,8 +41,18 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
-	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
+	if errors.Is(err, dashboards.ErrFolderVersionMismatch) ||
+		k8sErrors.IsAlreadyExists(err) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
+	}
+
+	if errors.Is(err, folder.ErrMaximumDepthReached) {
+		return response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": folder.ErrMaximumDepthReached.Error()})
+	}
+
+	var statusErr *k8sErrors.StatusError
+	if errors.As(err, &statusErr) {
+		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", err)
@@ -81,4 +93,8 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 			Code:    int32(normResp.Status()),
 		},
 	}
+}
+
+func IsForbidden(err error) bool {
+	return k8sErrors.IsForbidden(err) || errors.Is(err, dashboards.ErrFolderAccessDenied)
 }

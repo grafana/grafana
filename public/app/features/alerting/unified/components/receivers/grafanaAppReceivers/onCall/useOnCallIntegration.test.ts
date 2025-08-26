@@ -1,4 +1,4 @@
-import { renderHook, waitFor, getWrapper } from 'test/test-utils';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
@@ -70,16 +70,16 @@ describe('useOnCallIntegration', () => {
       const { onCallFormValidators } = result.current;
 
       const gfValidationResult = await waitFor(() => onCallFormValidators.integration_name('grafana-integration'));
-      expect(gfValidationResult).toBe('Integration of this name already exists in OnCall');
+      expect(gfValidationResult).toBe('Integration of this name already exists in IRM');
 
       const amValidationResult = await waitFor(() => onCallFormValidators.integration_name('alertmanager-integration'));
-      expect(amValidationResult).toBe('Integration of this name already exists in OnCall');
+      expect(amValidationResult).toBe('Integration of this name already exists in IRM');
 
       // ULR validator should check if the provided URL already exists
       expect(onCallFormValidators.url('https://oncall.com/grafana-integration')).toBe(true);
 
       expect(onCallFormValidators.url('https://oncall.com/alertmanager-integration')).toBe(
-        'Selection of existing OnCall integration is required'
+        'Selection of existing IRM integration is required'
       );
     });
 

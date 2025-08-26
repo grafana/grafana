@@ -2,16 +2,14 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 
 import { UnitPicker, UnitPickerProps } from './UnitPicker';
-import mdx from './UnitPicker.mdx';
 
 const meta: Meta<typeof UnitPicker> = {
-  title: 'Pickers and Editors/UnitPicker',
+  title: 'Pickers/UnitPicker',
   component: UnitPicker,
   parameters: {
     controls: {
       exclude: ['onChange', 'value'],
     },
-    docs: mdx,
   },
 };
 

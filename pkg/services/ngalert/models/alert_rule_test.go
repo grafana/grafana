@@ -15,8 +15,10 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
@@ -262,7 +264,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				name: "No metadata",
 				mutator: func(r *AlertRuleWithOptionals) {
 					r.Metadata = AlertRuleMetadata{}
-					r.HasMetadata = false
+					r.HasEditorSettings = false
 				},
 			},
 		}
@@ -385,6 +387,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 	})
 }
 
+// nolint:gocyclo
 func TestDiff(t *testing.T) {
 	t.Run("should return nil if there is no diff", func(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
@@ -405,9 +408,11 @@ func TestDiff(t *testing.T) {
 
 	t.Run("should find diff in simple fields", func(t *testing.T) {
 		rule1 := RuleGen.GenerateRef()
-		rule2 := RuleGen.GenerateRef()
+		rule2 := RuleGen.With(
+			RuleGen.WithMissingSeriesEvalsToResolve(*rule1.MissingSeriesEvalsToResolve + 1),
+		).GenerateRef()
 
-		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings") // these fields will be tested separately
+		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings", "Metadata") // these fields will be tested separately
 
 		difCnt := 0
 		if rule1.ID != rule2.ID {
@@ -417,6 +422,15 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.ID, diff[0].Right.Int())
 			difCnt++
 		}
+
+		if rule1.GUID != rule2.GUID {
+			diff := diffs.GetDiffsForField("GUID")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.GUID, diff[0].Left.String())
+			assert.Equal(t, rule2.GUID, diff[0].Right.String())
+			difCnt++
+		}
+
 		if rule1.OrgID != rule2.OrgID {
 			diff := diffs.GetDiffsForField("OrgID")
 			assert.Len(t, diff, 1)
@@ -443,6 +457,11 @@ func TestDiff(t *testing.T) {
 			assert.Len(t, diff, 1)
 			assert.Equal(t, rule1.Updated, diff[0].Left.Interface())
 			assert.Equal(t, rule2.Updated, diff[0].Right.Interface())
+			difCnt++
+		}
+		if rule1.UpdatedBy != rule2.UpdatedBy {
+			diff := diffs.GetDiffsForField("UpdatedBy")
+			assert.Len(t, diff, 1)
 			difCnt++
 		}
 		if rule1.IntervalSeconds != rule2.IntervalSeconds {
@@ -511,6 +530,13 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.For, diff[0].Right.Interface())
 			difCnt++
 		}
+		if rule1.KeepFiringFor != rule2.KeepFiringFor {
+			diff := diffs.GetDiffsForField("KeepFiringFor")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.KeepFiringFor, diff[0].Left.Interface())
+			assert.Equal(t, rule2.KeepFiringFor, diff[0].Right.Interface())
+			difCnt++
+		}
 		if rule1.RuleGroupIndex != rule2.RuleGroupIndex {
 			diff := diffs.GetDiffsForField("RuleGroupIndex")
 			assert.Len(t, diff, 1)
@@ -523,6 +549,13 @@ func TestDiff(t *testing.T) {
 			assert.Len(t, diff, 1)
 			assert.Equal(t, rule1.Record, diff[0].Left.String())
 			assert.Equal(t, rule2.Record, diff[0].Right.String())
+			difCnt++
+		}
+		if rule1.MissingSeriesEvalsToResolve != rule2.MissingSeriesEvalsToResolve {
+			diff := diffs.GetDiffsForField("MissingSeriesEvalsToResolve")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, *rule1.MissingSeriesEvalsToResolve, diff[0].Left.Int())
+			assert.Equal(t, *rule2.MissingSeriesEvalsToResolve, diff[0].Right.Int())
 			difCnt++
 		}
 
@@ -817,6 +850,22 @@ func TestDiff(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:                 "should detect changes in ActiveTimeIntervals",
+				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
+				diffs: []cmputil.Diff{
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[0]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[0]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[0] + "-modified"),
+					},
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[1]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[1]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[1] + "-modified"),
+					},
+				},
+			},
 		}
 
 		for _, tt := range testCases {
@@ -833,6 +882,39 @@ func TestDiff(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("should detect changes in Metadata.EditorSettings", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: false,
+			SimplifiedNotificationsSection:       false,
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: true,
+			SimplifiedNotificationsSection:       true,
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection",
+			"Metadata.EditorSettings.SimplifiedNotificationsSection",
+		}, diff.Paths())
+	})
+
+	t.Run("should detect changes in Metadata.PrometheusStyleRule", func(t *testing.T) {
+		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
+
+		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "updated data",
+		}}))
+
+		diff := rule1.Diff(rule2)
+		assert.ElementsMatch(t, []string{
+			"Metadata.PrometheusStyleRule.OriginalRuleDefinition",
+		}, diff.Paths())
 	})
 }
 
@@ -913,4 +995,407 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 		}
 		require.Equal(t, expected, rule.GetKeyWithGroup())
 	})
+}
+
+func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
+	t.Run("should return the default 2 if MissingSeriesEvalsToResolve is nil", func(t *testing.T) {
+		rule := RuleGen.GenerateRef()
+		rule.MissingSeriesEvalsToResolve = nil
+		require.Equal(t, int64(2), rule.GetMissingSeriesEvalsToResolve())
+	})
+
+	t.Run("should return the correct value", func(t *testing.T) {
+		rule := RuleGen.With(
+			RuleMuts.WithMissingSeriesEvalsToResolve(3),
+		).GenerateRef()
+		require.Equal(t, int64(3), rule.GetMissingSeriesEvalsToResolve())
+	})
+}
+
+func TestAlertRuleCopy(t *testing.T) {
+	t.Run("should return a copy of the rule", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			rule := RuleGen.GenerateRef()
+			copied := rule.Copy()
+			require.Empty(t, rule.Diff(copied))
+		}
+	})
+
+	t.Run("should create a copy of the prometheus rule definition from the metadata", func(t *testing.T) {
+		rule := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+			OriginalRuleDefinition: "data",
+		}})).GenerateRef()
+		copied := rule.Copy()
+		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
+	})
+}
+
+// This test makes sure the default generator
+func TestGeneratorFillsAllFields(t *testing.T) {
+	ignoredFields := map[string]struct{}{
+		"ID":       {},
+		"IsPaused": {},
+		"Record":   {},
+	}
+
+	tpe := reflect.TypeOf(AlertRule{})
+	fields := make(map[string]struct{}, tpe.NumField())
+	for i := 0; i < tpe.NumField(); i++ {
+		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+			continue
+		}
+		fields[tpe.Field(i).Name] = struct{}{}
+	}
+
+	for i := 0; i < 1000; i++ {
+		rule := RuleGen.Generate()
+		v := reflect.ValueOf(rule)
+
+		for j := 0; j < tpe.NumField(); j++ {
+			field := tpe.Field(j)
+			value := v.Field(j)
+			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+				continue
+			}
+			delete(fields, field.Name)
+			if len(fields) == 0 {
+				return
+			}
+		}
+	}
+
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+}
+
+func TestValidateAlertRule(t *testing.T) {
+	t.Run("keepFiringFor", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			keepFiringFor time.Duration
+			expectedErr   error
+		}{
+			{
+				name:          "should accept zero keep firing for",
+				keepFiringFor: 0,
+				expectedErr:   nil,
+			},
+			{
+				name:          "should accept positive keep firing for",
+				keepFiringFor: 1 * time.Minute,
+				expectedErr:   nil,
+			},
+			{
+				name:          "should reject negative keep firing for",
+				keepFiringFor: -1 * time.Minute,
+				expectedErr:   fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation),
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				rule := RuleGen.With(
+					RuleGen.WithKeepFiringFor(tc.keepFiringFor),
+					RuleGen.WithIntervalSeconds(10),
+				).GenerateRef()
+
+				err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
+
+				if tc.expectedErr == nil {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+					require.Equal(t, tc.expectedErr.Error(), err.Error())
+				}
+			})
+		}
+	})
+
+	t.Run("missingSeriesEvalsToResolve", func(t *testing.T) {
+		testCases := []struct {
+			name                        string
+			missingSeriesEvalsToResolve *int64
+			expectedErrorContains       string
+		}{
+			{
+				name:                        "should allow nil value",
+				missingSeriesEvalsToResolve: nil,
+			},
+			{
+				name:                        "should reject negative value",
+				missingSeriesEvalsToResolve: util.Pointer[int64](-1),
+				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+			},
+			{
+				name:                        "should reject 0",
+				missingSeriesEvalsToResolve: util.Pointer[int64](0),
+				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+			},
+			{
+				name:                        "should accept positive value",
+				missingSeriesEvalsToResolve: util.Pointer[int64](2),
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				baseIntervalSeconds := int64(10)
+				cfg := setting.UnifiedAlertingSettings{
+					BaseInterval: time.Duration(baseIntervalSeconds) * time.Second,
+				}
+
+				rule := RuleGen.With(
+					RuleMuts.WithIntervalSeconds(baseIntervalSeconds * 2),
+				).Generate()
+				rule.MissingSeriesEvalsToResolve = tc.missingSeriesEvalsToResolve
+
+				err := rule.ValidateAlertRule(cfg)
+
+				if tc.expectedErrorContains != "" {
+					require.Error(t, err)
+					require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+					require.Contains(t, err.Error(), tc.expectedErrorContains)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
+
+	t.Run("ExecErrState & NoDataState", func(t *testing.T) {
+		testCases := []struct {
+			name         string
+			execErrState string
+			noDataState  string
+			error        bool
+		}{
+			{
+				name:         "invalid error state",
+				execErrState: "invalid",
+				error:        true,
+			},
+			{
+				name:        "invalid no data state",
+				noDataState: "invalid",
+				error:       true,
+			},
+			{
+				name:  "valid states",
+				error: false,
+			},
+		}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				rule := RuleGen.With(
+					RuleMuts.WithIntervalSeconds(10),
+				).Generate()
+				if tc.execErrState != "" {
+					rule.ExecErrState = ExecutionErrorState(tc.execErrState)
+				}
+				if tc.noDataState != "" {
+					rule.NoDataState = NoDataState(tc.noDataState)
+				}
+
+				err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
+				if tc.error {
+					require.Error(t, err)
+					require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
+}
+
+func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
+	tests := []struct {
+		name             string
+		rule             AlertRule
+		expectedResult   string
+		expectedErrorMsg string
+	}{
+		{
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+					},
+				},
+			},
+			expectedResult:   "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
+			expectedErrorMsg: "",
+		},
+		{
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+		{
+			name:             "rule with empty metadata",
+			rule:             AlertRule{},
+			expectedResult:   "",
+			expectedErrorMsg: "prometheus rule definition is missing",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.rule.PrometheusRuleDefinition()
+			isPrometheusRule := tt.rule.HasPrometheusRuleDefinition()
+
+			if tt.expectedErrorMsg != "" {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedErrorMsg, err.Error())
+				require.False(t, isPrometheusRule)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedResult, result)
+				require.True(t, isPrometheusRule)
+			}
+		})
+	}
+}
+
+func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
+	tests := []struct {
+		name     string
+		rule     AlertRule
+		expected bool
+	}{
+		{
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with converted prometheus rule label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with both prometheus definition and converted label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expected: false,
+		},
+		{
+			name:     "rule with empty metadata",
+			rule:     AlertRule{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.rule.ImportedPrometheusRule()
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestWithoutPrivateLabels(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			name:     "nil map",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "empty map",
+			input:    map[string]string{},
+			expected: map[string]string{},
+		},
+		{
+			name: "removes only specific private labels",
+			input: map[string]string{
+				ConvertedPrometheusRuleLabel:        "removed",
+				AutogeneratedRouteLabel:             "removed",
+				AutogeneratedRouteReceiverNameLabel: "removed",
+				AutogeneratedRouteSettingsHashLabel: "removed",
+				DashboardUIDAnnotation:              "kept",
+				PanelIDAnnotation:                   "kept",
+				"__custom_label__":                  "kept", // User-defined labels with __ are kept
+				"normal_label":                      "kept",
+				"another_label":                     "kept",
+			},
+			expected: map[string]string{
+				"__custom_label__":     "kept",
+				"normal_label":         "kept",
+				"another_label":        "kept",
+				DashboardUIDAnnotation: "kept",
+				PanelIDAnnotation:      "kept",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inputCopy := maps.Clone(tt.input)
+
+			result := WithoutPrivateLabels(tt.input)
+
+			require.Equal(t, tt.expected, result)
+			require.Equal(t, inputCopy, tt.input, "input map should not be modified")
+		})
+	}
 }

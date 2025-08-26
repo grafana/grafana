@@ -17,26 +17,62 @@ export interface ThemeVisualizationColors {
 /**
  * @alpha
  */
-export interface ThemeVizColor {
+export interface ThemeVizColor<T extends ThemeVizColorName> {
   color: string;
-  name: string;
+  name: ThemeVizColorShadeName<T>;
   aliases?: string[];
   primary?: boolean;
 }
 
+type ThemeVizColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
+
+type ThemeVizColorShadeName<T extends ThemeVizColorName> =
+  | `super-light-${T}`
+  | `light-${T}`
+  | T
+  | `semi-dark-${T}`
+  | `dark-${T}`;
+
+type ThemeVizHueGeneric<T> = T extends ThemeVizColorName
+  ? {
+      name: T;
+      shades: Array<ThemeVizColor<T>>;
+    }
+  : never;
+
 /**
  * @alpha
  */
-export interface ThemeVizHue {
-  name: string;
-  shades: ThemeVizColor[];
-}
+export type ThemeVizHue = ThemeVizHueGeneric<ThemeVizColorName>;
+
+export type ThemeVisualizationColorsInput = {
+  hues?: ThemeVizHue[];
+  palette?: string[];
+};
 
 /**
  * @internal
  */
-export function createVisualizationColors(colors: ThemeColors): ThemeVisualizationColors {
-  const hues = colors.mode === 'light' ? getLightHues() : getDarkHues();
+export function createVisualizationColors(
+  colors: ThemeColors,
+  options: ThemeVisualizationColorsInput = {}
+): ThemeVisualizationColors {
+  const baseHues = colors.mode === 'light' ? getLightHues() : getDarkHues();
+  const { palette = getClassicPalette(), hues: hueOverrides = [] } = options;
+
+  const hues = [...baseHues];
+  // override hues with user provided
+  for (const hueOverride of hueOverrides) {
+    const existingHue = hues.find((hue) => hue.name === hueOverride.name);
+    if (existingHue) {
+      for (const shadeOverride of hueOverride.shades) {
+        const existingShade = existingHue.shades.find((shade) => shade.name === shadeOverride.name);
+        if (existingShade) {
+          existingShade.color = shadeOverride.color;
+        }
+      }
+    }
+  }
 
   const byNameIndex: Record<string, string> = {};
 
@@ -82,8 +118,6 @@ export function createVisualizationColors(colors: ThemeColors): ThemeVisualizati
 
     return colorName;
   };
-
-  const palette = getClassicPalette();
 
   return {
     hues,
@@ -226,16 +260,24 @@ function getClassicPalette() {
   // Todo replace these with named colors (as many as possible)
 
   return [
-    'green', // '#7EB26D', // 0: pale green
-    'semi-dark-yellow', // '#EAB839', // 1: mustard
-    'light-blue', // #6ED0E0', // 2: light blue
-    'semi-dark-orange', // '#EF843C', // 3: orange
-    'red', // '#E24D42', // 4: red
-    'blue', // #1F78C1', // 5: ocean
-    'purple', // '#BA43A9', // 6: purple
-    '#705DA0', // 7: violet
-    'dark-green', // '#508642', // 8: dark green
-    'yellow', //'#CCA300', // 9: dark sand
+    'green',
+    'yellow',
+    'blue',
+    'orange',
+    'red',
+    'purple',
+    'dark-green',
+    'dark-yellow',
+    'dark-blue',
+    'dark-orange',
+    'dark-red',
+    'dark-purple',
+    'super-light-green',
+    'super-light-yellow',
+    'super-light-blue',
+    'super-light-orange',
+    'super-light-red',
+    'super-light-purple',
     '#447EBC',
     '#C15C17',
     '#890F02',

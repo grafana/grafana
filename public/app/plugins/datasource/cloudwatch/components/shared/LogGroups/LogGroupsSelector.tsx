@@ -1,8 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
-import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, Select, Space, useStyles2 } from '@grafana/ui';
+import { EditorField } from '@grafana/plugin-ui';
+import {
+  Button,
+  Checkbox,
+  Icon,
+  Label,
+  LoadingPlaceholder,
+  Modal,
+  Select,
+  Space,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
 
 import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../../resources/types';
 import { LogGroup } from '../../../types';
@@ -146,13 +157,12 @@ export const LogGroupsSelector = ({
                 search.
                 <p>
                   A{' '}
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <TextLink
+                    external
                     href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html"
                   >
                     maximum{' '}
-                  </a>{' '}
+                  </TextLink>{' '}
                   of 50 Cloudwatch log groups can be queried at one time.
                 </p>
               </div>

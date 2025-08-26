@@ -79,6 +79,9 @@ func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.Cal
 	if req.Path == "labelValues" {
 		return d.labelValues(ctx, req, sender)
 	}
+	if req.Path == "profileMetadata" {
+		return d.profileMetadata(ctx, req, sender)
+	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
 	})
@@ -119,7 +122,7 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -167,7 +170,7 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -207,13 +210,39 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 		return err
 	}
 
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
 	}
 
 	return nil
+}
+
+// profileMetadata returns the embedded profile-metrics.json data containing metadata
+// for all known profile types, including their aggregation type (cumulative/instant),
+// units, descriptions, and grouping information.
+func (d *PyroscopeDatasource) profileMetadata(ctx context.Context, _ *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
+
+	registry := GetProfileMetadataRegistry()
+
+	jsonData, err := json.Marshal(registry.profiles)
+	if err != nil {
+		ctxLogger.Error("Failed to marshal profile metadata", "error", err, "function", logEntrypoint())
+		return sender.Send(&backend.CallResourceResponse{
+			Status: 500,
+			Body:   []byte(`{"error": "Failed to marshal profile metadata"}`),
+		})
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status: 200,
+		Body:   jsonData,
+		Headers: map[string][]string{
+			"Content-Type": {"application/json"},
+		},
+	})
 }
 
 // QueryData handles multiple queries and returns multiple responses.
@@ -253,8 +282,8 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 
 	// Since this is a health check mechanism and we only care about whether the
 	// request succeeded or failed, we set the window to be small.
-	start := time.Now().Add(-5 * time.Minute).UnixMilli()
-	end := time.Now().UnixMilli()
+	start := time.Unix(1, 0).UnixMilli()
+	end := time.Unix(4, 0).UnixMilli()
 	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()

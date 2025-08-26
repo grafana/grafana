@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistCard } from './PlaylistCard';
-import { Playlist } from './types';
 
 interface Props {
   setStartPlaylist: (playlistItem: Playlist) => void;
@@ -17,8 +18,8 @@ const PlaylistPageListComponent = ({ playlists, setStartPlaylist, setPlaylistToD
   const styles = useStyles2(getStyles);
   return (
     <ul className={styles.list}>
-      {playlists.map((playlist: Playlist) => (
-        <li className={styles.listItem} key={playlist.uid}>
+      {playlists.map((playlist) => (
+        <li className={styles.listItem} key={playlist.metadata?.name}>
           <PlaylistCard
             playlist={playlist}
             setStartPlaylist={setStartPlaylist}

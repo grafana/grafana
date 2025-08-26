@@ -13,22 +13,47 @@ on:
       - '**.go'
 permissions:
   contents: write
+  id-token: write
 jobs:
   update:
     runs-on: "ubuntu-latest"
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:
+    - name: Retrieve GitHub App secrets
+      id: get-secrets
+      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
+      with:
+        repo_secrets: |
+          APP_ID=grafana-go-workspace-bot:app-id
+          APP_INSTALLATION_ID=grafana-go-workspace-bot:app-installation-id
+          PRIVATE_KEY=grafana-go-workspace-bot:private-key
+
+    - name: Generate GitHub App token
+      id: generate_token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ env.APP_ID }}
+        private-key: ${{ env.PRIVATE_KEY }}
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.ref }}
+        token: ${{ steps.generate_token.outputs.token }}
+        persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
       with:
         go-version-file: go.mod
+
+    - name: Configure Git
+      run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local --add --bool push.autoSetupRemote true
 
     - name: Update workspace
       run: make update-workspace
@@ -38,12 +63,7 @@ jobs:
         BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
       run: |
         if ! git diff --exit-code --quiet; then
-          git config --local user.name "Grot"
-          git config --local user.email "grot@grafana.com"
-          git config --local --add --bool push.autoSetupRemote true
           echo "Committing and pushing workspace changes"
-          git remote
-          git branch -l
           git commit -a -m "update workspace"
-          git push origin $BRANCH_NAME
+          git push origin "$BRANCH_NAME"
         fi

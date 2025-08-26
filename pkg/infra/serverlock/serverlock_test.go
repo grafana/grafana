@@ -30,12 +30,16 @@ func createTestableServerLock(t *testing.T) *ServerLockService {
 	}
 }
 
-func TestServerLock(t *testing.T) {
+func TestIntegrationServerLock(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sl := createTestableServerLock(t)
 	operationUID := "test-operation"
 
 	first, err := sl.getOrCreate(context.Background(), operationUID)
 	require.NoError(t, err)
+	require.NotZero(t, first.Id)
 
 	t.Run("trying to create three new row locks", func(t *testing.T) {
 		expectedLastExecution := first.LastExecution
@@ -44,8 +48,8 @@ func TestServerLock(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			latest, err = sl.getOrCreate(context.Background(), operationUID)
 			require.NoError(t, err)
-			assert.Equal(t, operationUID, first.OperationUID)
-			assert.Equal(t, int64(1), first.Id)
+			assert.Equal(t, first.OperationUID, operationUID)
+			assert.Equal(t, first.Id, latest.Id)
 		}
 
 		assert.Equal(t,
@@ -65,7 +69,10 @@ func TestServerLock(t *testing.T) {
 	})
 }
 
-func TestLockAndRelease(t *testing.T) {
+func TestIntegrationLockAndRelease(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	operationUID := "test-operation-release"
 
 	t.Run("create lock and then release it", func(t *testing.T) {
@@ -114,7 +121,7 @@ func TestLockAndRelease(t *testing.T) {
 			affectedRows, err := sess.Insert(&lock)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), affectedRows)
-			require.Equal(t, int64(1), lock.Id)
+			require.NotZero(t, lock.Id)
 			return nil
 		})
 		require.NoError(t, err)

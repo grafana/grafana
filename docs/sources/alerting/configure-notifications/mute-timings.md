@@ -4,7 +4,7 @@ aliases:
   - ../unified-alerting/notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/notifications/mute-timings/
   - ../manage-notifications/mute-timings/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/mute-timings/
 canonical: /docs/grafana/latest/alerting/configure-notifications/mute-timings/
-description: Create mute timings to prevent alerts from firing during a specific and reoccurring period of time
+description: Use mute timings and active intervals to manage notification handling during a specific and reoccurring period of time
 keywords:
   - grafana
   - alerting
@@ -12,58 +12,81 @@ keywords:
   - mute
   - mute timings
   - mute time interval
+  - active intervals
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Configure mute timings
-weight: 450
+title: Configure mute timings and active time intervals
+weight: 430
 refs:
-  external-alertmanager:
+  alertmanager-architecture:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+  shared-silences:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
+  shared-mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
 
-# Configure mute timings
+# Configure mute timings and active intervals
 
-A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
+Mute timing and active time intervals let you determine how your alert notifications are handled during designated periods of time. After you create a time interval, you can apply it as either a mute or active time interval for your notifications policies.
 
-Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
+A mute timing is a recurring interval that stops notifications for one or multiple notification policies during a specified period. It suppresses notifications but does not interrupt alert evaluation.
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager](ref:external-alertmanager).
+Use mute timings to temporarily pause notifications for a specific recurring period, such as a regular maintenance window or weekends.
 
-## Mute timings vs silences
+The active time interval provide the opposite functionality, where alerts handled by a notification policy are suppressed unless the notification happens at a time that matches the time interval. Use active time intervals for periods where you want to reduce alert noise.
+
+{{< admonition type="note" >}}
+Mute timings and active time intervals are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
+{{< /admonition >}}
+
+## Mute and active timings vs silences
+
+[Mute and active timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
 
 The following table highlights the key differences between mute timings and silences.
 
-| Mute timing                                        | Silence                                                                      |
-| -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Uses time interval definitions that can reoccur    | Has a fixed start and end time                                               |
-| Is created and then added to notification policies | Uses labels to match against an alert to determine whether to silence or not |
+|            | Mute timing                                                 | Silence                                                          |
+| ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
+| **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
 
-## Add mute timings
+[//]: <> ({{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}})
+
+## Add time intervals
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies** and then the **Mute Timings** tab.
+1. Click **Notification policies** and then the **Time intervals** tab.
 1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. Click **+ Add mute timing**.
-1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute timing.
-1. Save your mute timing.
+1. Click **+ Add time interval**.
+1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute or active timing.
+1. Save your changes.
 
-## Add mute timing to a notification policy
+## Assign a time interval to a notification policy
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies** and make sure you are on the **Notification Policies** tab.
-1. Find the notification policy you would like to add the mute timing to and click **...** -> **Edit**.
-1. From the **Mute timings** dropdown, choose the mute timings you would like to add to the policy.
+1. Find the notification policy you would like to add the time intervals to and click **...** -> **Edit**.
+1. From either the **Mute timings** or **Active timings** dropdowns, choose the notification timings you would like to add to the policy.
 1. Save your changes.
 
 ## Time intervals
 
 A time interval is a specific duration during which alerts are suppressed. The duration typically consists of a specific time range and the days of the week, month, or year.
+
+A mute or active timing can contain multiple time intervals.
 
 Supported time interval options are:
 
@@ -76,9 +99,13 @@ Supported time interval options are:
 
 All fields are lists; to match the field, at least one list element must be satisfied. Fields also support ranges using `:` (e.g., `monday:thursday`).
 
-If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
+If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match.
 
-If you want to specify an exact duration, specify all the options. For example, if you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
+If you want to specify an exact duration, specify all the options.
+
+**Example**
+
+If you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
 
 - Time range:
   - Start time: `12:00`

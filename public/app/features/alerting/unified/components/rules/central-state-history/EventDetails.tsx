@@ -3,8 +3,8 @@ import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { trackUseCentralHistoryExpandRow } from '../../../Analytics';
@@ -180,7 +180,8 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
     return null;
   }
 
-  const numberOfTransitions = dataFrames[0]?.fields[0]?.values?.length - 1 ?? 0; // we subtract 1 as the first value is the initial state
+  // we subtract 1 as the first value is the initial state
+  const numberOfTransitions = dataFrames[0]?.fields[0]?.values?.length - 1 || 0;
 
   return (
     <>
@@ -219,19 +220,17 @@ const Annotations = ({ rule }: AnnotationsProps) => {
     return null;
   }
   return (
-    <>
-      <div className={styles.metadataWrapper}>
-        {Object.entries(annotations).map(([name, value]) => {
-          const capitalizedName = capitalize(name);
-          return (
-            <MetaText direction="column" key={capitalizedName}>
-              {capitalizedName}
-              <AnnotationValue value={value} />
-            </MetaText>
-          );
-        })}
-      </div>
-    </>
+    <div className={styles.metadataWrapper}>
+      {Object.entries(annotations).map(([name, value]) => {
+        const capitalizedName = capitalize(name);
+        return (
+          <MetaText direction="column" key={capitalizedName}>
+            {capitalizedName}
+            <AnnotationValue value={value} />
+          </MetaText>
+        );
+      })}
+    </div>
   );
 };
 interface ValueInTransitionProps {

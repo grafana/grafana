@@ -26,13 +26,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetFolders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -57,10 +59,10 @@ func TestGetFolders(t *testing.T) {
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
-		Login:          "admin",
+		Login:          "admin2",
 	})
 
-	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+	adminClient := tests.GetClient(grafanaListedAddr, "admin2", "admin")
 	editorClient := tests.GetClient(grafanaListedAddr, "editor", "editor")
 	viewerClient := tests.GetClient(grafanaListedAddr, "viewer", "viewer")
 

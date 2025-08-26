@@ -1,6 +1,7 @@
+import { OrgRole } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { OrgRole, TeamPermissionLevel } from '../../../types';
-import { getMockTeam } from '../../teams/__mocks__/teamMocks';
+import { getMockTeam } from '../../teams/mocks/teamMocks';
 
 import {
   initialUserState,
@@ -92,13 +93,13 @@ describe('userReducer', () => {
         .givenReducer(userReducer, { ...initialUserState, teamsAreLoading: true })
         .whenActionIsDispatched(
           teamsLoaded({
-            teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
+            teams: [getMockTeam(1, 'aaaaaa')],
           })
         )
         .thenStateShouldEqual({
           ...initialUserState,
           teamsAreLoading: false,
-          teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
+          teams: [getMockTeam(1, 'aaaaaa')],
         });
     });
   });

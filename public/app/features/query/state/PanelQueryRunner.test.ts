@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi, TypedVariableModel } from '@grafana/data';
+import { DataSourceApi, dateTime, TypedVariableModel } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -155,11 +155,12 @@ function describeQueryRunnerScenario(
         minInterval: ctx.minInterval,
         maxDataPoints: ctx.maxDataPoints ?? Infinity,
         timeRange: {
-          from: grafanaData.dateTime().subtract(1, 'days'),
-          to: grafanaData.dateTime(),
+          from: dateTime('2023-01-01T12:00:00Z'),
+          to: dateTime('2023-01-02T12:00:00Z'),
           raw: { from: '1d', to: 'now' },
         },
         panelId: 1,
+        panelName: 'PanelName',
         queries: [{ refId: 'A' }],
       } as QueryRunnerOptions;
 
@@ -197,6 +198,11 @@ describe('PanelQueryRunner', () => {
       expect(ctx.queryCalledWith?.scopedVars.server!.text).toBe('Server1');
       expect(ctx.queryCalledWith?.scopedVars.__interval!.text).toBe('5m');
       expect(ctx.queryCalledWith?.scopedVars.__interval_ms!.text).toBe('300000');
+    });
+
+    it('should pass the panel id and name', async () => {
+      expect(ctx.queryCalledWith?.panelId).toBe(1);
+      expect(ctx.queryCalledWith?.panelName).toBe('PanelName');
     });
   });
 

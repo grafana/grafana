@@ -84,13 +84,19 @@ When you hover your cursor over a visualization, Grafana can display tooltips th
 
 You can configure tooltips for the following visualizations:
 
-|                                      |                                      |
-| ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)           | [Status history](ref:status-history) |
-| [Candlestick](ref:candlestick)       | [Time series](ref:time-series)       |
-| [Heatmap](ref:heatmap)               | [Trend](ref:trend)                   |
-| [Pie chart](ref:pie-chart)           | [XY chart](ref:xy-chart)             |
-| [State timeline](ref:state-timeline) |                                      |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Candlestick](ref:candlestick)
+- [Heatmap](ref:heatmap)
+- [Pie chart](ref:pie-chart)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+- [XY chart](ref:xy-chart)
+
+{{< /column-list >}}
 
 Some visualizations, for example [candlestick](ref:candlestick) and [flame graph](ref:flame-graph), have tooltips, but they aren't configurable. These visualizations don't have a **Tooltip** section in the panel editor pane. [Geomaps](ref:geomaps) provide you the option to have tooltips triggered upon click or hover under the **Map controls** options in the panel editor pane.
 
@@ -100,9 +106,9 @@ Some visualizations, for example [candlestick](ref:candlestick) and [flame graph
 
 You can find the following options under the **Tooltip** section in the panel edit pane.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Not all of the options listed apply to all visualizations with tooltips.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Tooltip mode
 
@@ -121,6 +127,10 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 - **None** - Grafana automatically sorts the values displayed in a tooltip.
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
+
+### Hide zeros
+
+When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option controls whether or not series with `0` values are shown in the list in the tooltip.
 
 ### Hover proximity
 

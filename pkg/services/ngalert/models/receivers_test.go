@@ -68,6 +68,9 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 }
 
 func TestIntegration_Redact(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	redactFn := func(key string) string {
 		return "TESTREDACTED"
 	}
@@ -99,6 +102,10 @@ func TestIntegration_Redact(t *testing.T) {
 
 func TestIntegration_Validate(t *testing.T) {
 	// Test that all known integration types are valid.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
@@ -114,6 +121,10 @@ func TestIntegration_Validate(t *testing.T) {
 
 func TestIntegration_WithExistingSecureFields(t *testing.T) {
 	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	testCases := []struct {
 		name         string
 		integration  Integration
@@ -232,6 +243,10 @@ func TestIntegration_WithExistingSecureFields(t *testing.T) {
 
 func TestIntegrationConfig(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			config, err := IntegrationConfigFromType(integrationType)
@@ -244,11 +259,14 @@ func TestIntegrationConfig(t *testing.T) {
 				allSecrets[key] = struct{}{}
 			}
 
-			for field := range config.Fields {
-				_, isSecret := allSecrets[field]
-				assert.Equalf(t, isSecret, config.IsSecureField(NewIntegrationFieldPath(field)), "field '%s' is expected to be secret", field)
+			secretFields := config.GetSecretFields()
+			for _, path := range secretFields {
+				_, isSecret := allSecrets[path.String()]
+				assert.Equalf(t, isSecret, config.IsSecureField(path), "field '%s' is expected to be secret", path)
+				delete(allSecrets, path.String())
 			}
 			assert.False(t, config.IsSecureField(IntegrationFieldPath{"__--**unknown_field**--__"}))
+			assert.Empty(t, allSecrets, "mismatched secret fields for integration type %s: %v", integrationType, allSecrets)
 		})
 	}
 
@@ -260,6 +278,10 @@ func TestIntegrationConfig(t *testing.T) {
 
 func TestIntegration_SecureFields(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {
@@ -331,7 +353,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 	completelyDifferentReceiver.Integrations[0].Config = IntegrationConfig{Type: completelyDifferentReceiver.Integrations[0].Config.Type} // Remove all fields except Type.
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "a3402fdaba03030c" // If this is a valid fingerprint generation change, update the expected value.
+		expectedFingerprint := "c0c82936be34b183" // If this is a valid fingerprint generation change, update the expected value.
 		assert.Equal(t, expectedFingerprint, baseReceiver.Fingerprint())
 	})
 	t.Run("stable across clones", func(t *testing.T) {

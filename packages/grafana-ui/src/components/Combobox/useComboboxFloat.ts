@@ -1,9 +1,8 @@
-import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
+import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
-import { measureText } from '../../utils';
+import { measureText } from '../../utils/measureText';
 
-import { ComboboxOption } from './Combobox';
 import {
   MENU_ITEM_FONT_SIZE,
   MENU_ITEM_FONT_WEIGHT,
@@ -11,6 +10,7 @@ import {
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
+import { ComboboxOption } from './types';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
@@ -18,24 +18,26 @@ const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 // Clearance around the popover to prevent it from being too close to the edge of the viewport
 const POPOVER_PADDING = 16;
 
-export const useComboboxFloat = (
-  items: Array<ComboboxOption<string | number>>,
-  range: { startIndex: number; endIndex: number } | null,
-  isOpen: boolean
-) => {
+const SCROLL_CONTAINER_PADDING = 8;
+
+export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number } | undefined>(undefined);
+  const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number }>({
+    width: 0,
+    height: 0,
+  }); // set initial values to prevent infinite size, briefly removing the list virtualization
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
   // the order of middleware is important!
   const middleware = [
-    flip({
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: true,
+    autoPlacement({
+      // see https://floating-ui.com/docs/autoplacement
+      allowedPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
       boundary: document.body,
+      crossAxis: true,
     }),
     size({
       apply({ availableWidth, availableHeight }) {
@@ -70,16 +72,16 @@ export const useComboboxFloat = (
 
     const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    return size + MENU_ITEM_PADDING * 2 + scrollbarWidth;
+    return size + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {
     ...floatingStyles,
     width: longestItemWidth,
-    maxWidth: popoverMaxSize?.width,
+    maxWidth: popoverMaxSize.width,
     minWidth: inputRef.current?.offsetWidth,
 
-    maxHeight: popoverMaxSize?.height,
+    maxHeight: popoverMaxSize.height,
   };
 
   return { inputRef, floatingRef, scrollRef, floatStyles };

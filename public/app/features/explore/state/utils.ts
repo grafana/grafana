@@ -20,25 +20,22 @@ import {
   URLRange,
   URLRangeValue,
 } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExplorePanelData, StoreState } from 'app/types';
-import { ExploreItemState, RichHistoryQuery } from 'app/types/explore';
+import { ExploreItemState, ExplorePanelData, RichHistoryQuery } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
 
 import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
-export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
+import { DEFAULT_RANGE } from './constants';
 
-export const DEFAULT_RANGE = {
-  from: `now-${config.exploreDefaultTimeOffset}`,
-  to: 'now',
-};
+export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
 
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
@@ -78,6 +75,7 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
+  compact: false,
   ...overrides,
 });
 

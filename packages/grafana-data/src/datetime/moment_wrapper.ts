@@ -1,4 +1,5 @@
 import moment, { Moment, MomentInput, DurationInputArg1, DurationInputArg2 } from 'moment';
+import { tz } from 'moment-timezone';
 
 import { TimeZone } from '../types/time';
 /* eslint-disable id-blacklist, no-restricted-imports */
@@ -130,9 +131,9 @@ export const dateTimeForTimeZone = (
     let result: moment.Moment;
 
     if (typeof input === 'string' && formatInput) {
-      result = moment.tz(input, formatInput, timezone);
+      result = tz(input, formatInput, timezone);
     } else {
-      result = moment.tz(input, timezone);
+      result = tz(input, timezone);
     }
 
     if (isDateTime(result)) {
@@ -157,7 +158,7 @@ export const setWeekStart = (weekStart?: string) => {
   const language = getLocale().replace(suffix, '');
   const dow = weekStart ? getWeekdayIndexByEnglishName(weekStart) : -1;
   if (dow !== -1) {
-    moment.locale(language + suffix, {
+    moment.updateLocale(language + suffix, {
       parentLocale: language,
       week: {
         dow,

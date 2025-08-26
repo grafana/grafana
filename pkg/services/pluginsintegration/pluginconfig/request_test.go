@@ -302,13 +302,16 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		},
 		UserIdentityEnabled: true,
 		UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
-			TokenUrl:          "mock_user_identity_token_url",
-			ClientId:          "mock_user_identity_client_id",
-			ClientSecret:      "mock_user_identity_client_secret",
-			UsernameAssertion: true,
+			TokenUrl:                    "mock_user_identity_token_url",
+			ClientAuthentication:        "mock_user_client_authentication",
+			ClientId:                    "mock_user_identity_client_id",
+			ClientSecret:                "mock_user_identity_client_secret",
+			ManagedIdentityClientId:     "mock_user_identity_managed_identity_client_id",
+			FederatedCredentialAudience: "mock_user_identity_federated_credential_audience",
+			UsernameAssertion:           true,
 		},
 		UserIdentityFallbackCredentialsEnabled: true,
-		ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"},
+		ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql", "grafana-azureprometheus-datasource"},
 		AzureEntraPasswordCredentialsEnabled:   true,
 	}
 
@@ -330,8 +333,11 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
 			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
 			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION":                "mock_user_client_authentication",
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID":           "mock_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE":        "mock_user_identity_federated_credential_audience",
 			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
 		})
 	})
@@ -362,8 +368,11 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
 			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
 			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION":                "mock_user_client_authentication",
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID":           "mock_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE":        "mock_user_identity_federated_credential_audience",
 			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
 		})
 	})
@@ -387,8 +396,11 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_ENABLED")
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED")
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_TOKEN_URL")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION")
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_ID")
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_CLIENT_SECRET")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID")
+		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE")
 		require.NotContains(t, m, "GFAZPL_USER_IDENTITY_ASSERTION")
 		require.NotContains(t, m, "GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED")
 	})
@@ -412,8 +424,11 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
 			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
 			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION":                "mock_user_client_authentication",
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID":           "mock_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE":        "mock_user_identity_federated_credential_audience",
 			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
 			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
 		})

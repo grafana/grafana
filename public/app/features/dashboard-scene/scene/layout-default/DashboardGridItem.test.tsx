@@ -1,5 +1,4 @@
-import { VariableRefresh } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -32,15 +31,18 @@ describe('PanelRepeaterGridItem', () => {
 
     activateFullSceneTree(scene);
 
-    expect(repeater.state.repeatedPanels?.length).toBe(5);
+    expect(repeater.state.repeatedPanels?.length).toBe(4);
 
-    const panel1 = repeater.state.repeatedPanels![0];
-    const panel2 = repeater.state.repeatedPanels![1];
+    const panel1 = repeater.state.body;
+    const panel2 = repeater.state.repeatedPanels![0];
 
     // Panels should have scoped variables
     expect(panel1.state.$variables?.state.variables[0].getValue()).toBe('1');
     expect(panel1.state.$variables?.state.variables[0].getValueText?.()).toBe('A');
     expect(panel2.state.$variables?.state.variables[0].getValue()).toBe('2');
+
+    expect(panel1.state.repeatSourceKey).toBe(undefined);
+    expect(panel2.state.repeatSourceKey).toBe(repeater.state.body.state.key);
   });
 
   it('Should wait for variable to load', async () => {
@@ -52,45 +54,28 @@ describe('PanelRepeaterGridItem', () => {
 
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(repeater.state.repeatedPanels?.length).toBe(5);
+    expect(repeater.state.repeatedPanels?.length).toBe(4);
   });
 
-  it('Should update panels on refresh if variables load on time range change', async () => {
-    const { scene, repeater } = buildPanelRepeaterScene({
-      variableQueryTime: 0,
-      variableRefresh: VariableRefresh.onTimeRangeChanged,
-    });
-
-    const notifyPanelsSpy = jest.spyOn(repeater, 'notifyRepeatedPanelsWaitingForVariables');
-
-    activateFullSceneTree(scene);
-
-    expect(repeater.state.repeatedPanels?.length).toBe(5);
-
-    expect(notifyPanelsSpy).toHaveBeenCalledTimes(0);
-
-    scene.state.$timeRange?.onRefresh();
-
-    //make sure notifier is called
-    expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
-
-    //make sure getQueryRunner is called for each repeated panel
-    expect(mockGetQueryRunnerFor).toHaveBeenCalledTimes(5);
-
-    notifyPanelsSpy.mockRestore();
-    mockGetQueryRunnerFor.mockClear();
-  });
-
-  it('Should display a panel when there are no options', async () => {
-    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1, numberOfOptions: 0 });
+  it('Should pass isMulti/includeAll values if variable is multi variable and has them set', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1 });
 
     activateFullSceneTree(scene);
 
     expect(repeater.state.repeatedPanels?.length).toBe(0);
 
-    await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 10));
 
-    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    expect(repeater.state.repeatedPanels?.length).toBe(4);
+
+    // LocalValueVariableState is not exposed, so we build this type casting
+    const variableState = repeater.state.repeatedPanels![0].state.$variables?.state.variables[0].state as {
+      isMulti?: boolean;
+      includeAll?: boolean;
+    };
+
+    expect(variableState.isMulti).toBe(true);
+    expect(variableState.includeAll).toBe(true);
   });
 
   it('Should redo the repeat when editing panel and then returning to dashboard', async () => {
@@ -132,7 +117,7 @@ describe('PanelRepeaterGridItem', () => {
 
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(panel.state.repeatedPanels?.length).toBe(5);
+    expect(panel.state.repeatedPanels?.length).toBe(4);
 
     const vizPanel = panel.state.body as VizPanel;
 
@@ -152,7 +137,7 @@ describe('PanelRepeaterGridItem', () => {
 
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(panel.state.repeatedPanels?.length).toBe(5);
+    expect(panel.state.repeatedPanels?.length).toBe(4);
     expect((panel.state.repeatedPanels![0] as VizPanel).state.title).toBe('Changed');
   });
 
@@ -205,7 +190,7 @@ describe('PanelRepeaterGridItem', () => {
 
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(panel.state.repeatedPanels?.length).toBe(5);
+    expect(panel.state.repeatedPanels?.length).toBe(4);
 
     const vizPanel = panel.state.body as VizPanel;
 
@@ -228,25 +213,8 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     expect(performRepeatMock).toHaveBeenCalledTimes(1); // only for the edited panel
-    expect(panel.state.repeatedPanels?.length).toBe(5);
+    expect(panel.state.repeatedPanels?.length).toBe(4);
     expect((panel.state.repeatedPanels![0] as VizPanel).state.title).toBe('Changed');
-  });
-
-  it('Should display a panel when there are variable errors', () => {
-    const { scene, repeater } = buildPanelRepeaterScene({
-      variableQueryTime: 0,
-      numberOfOptions: 0,
-      throwError: 'Error',
-    });
-
-    // we expect console.error when variable encounters an error
-    const origError = console.error;
-    console.error = jest.fn();
-
-    activateFullSceneTree(scene);
-
-    expect(repeater.state.repeatedPanels?.length).toBe(1);
-    console.error = origError;
   });
 
   it('Should display a panel when there are variable errors async query', async () => {
@@ -264,7 +232,7 @@ describe('PanelRepeaterGridItem', () => {
 
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    expect(repeater.state.body.state.$variables?.state.variables[0].getValue()).toBe('');
     console.error = origError;
   });
 
@@ -348,14 +316,14 @@ describe('PanelRepeaterGridItem', () => {
 
     variable.changeValueTo(['1', '3'], ['A', 'C']);
 
-    expect(repeater.state.repeatedPanels?.length).toBe(2);
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
   });
 
   it('Should fall back to default variable if specified variable cannot be found', () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 });
     scene.setState({ $variables: undefined });
     activateFullSceneTree(scene);
-    expect(repeater.state.repeatedPanels?.[0].state.$variables?.state.variables[0].state.name).toBe(
+    expect(repeater.state.body.state.$variables?.state.variables[0].state.name).toBe(
       '_____default_sys_repeat_var_____'
     );
   });

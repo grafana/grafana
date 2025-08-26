@@ -1,13 +1,24 @@
 import * as React from 'react';
+import { first, firstValueFrom, take } from 'rxjs';
 
-import { PluginExtensionAddedComponentConfig, PluginExtensionAddedLinkConfig } from '@grafana/data';
+import {
+  type PluginExtensionAddedLinkConfig,
+  type PluginExtensionAddedComponentConfig,
+  PluginExtensionTypes,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { getPluginExtensions } from './getPluginExtensions';
+import {
+  getObservablePluginComponents,
+  getObservablePluginExtensions,
+  getObservablePluginLinks,
+  getPluginExtensions,
+} from './getPluginExtensions';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
+import { pluginExtensionRegistries } from './registry/setup';
 import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
@@ -61,9 +72,9 @@ describe('getPluginExtensions()', () => {
   const extensionPoint3 = 'grafana/datasources/config/v1';
   const pluginId = 'grafana-basic-app';
   // Sample extension configs that are used in the tests below
-  let link1: PluginExtensionAddedLinkConfig,
-    link2: PluginExtensionAddedLinkConfig,
-    component1: PluginExtensionAddedComponentConfig;
+  let link1: PluginExtensionAddedLinkConfig;
+  let link2: PluginExtensionAddedLinkConfig;
+  let component1: PluginExtensionAddedComponentConfig;
 
   beforeEach(() => {
     link1 = {
@@ -562,5 +573,267 @@ describe('getPluginExtensions()', () => {
         description: component1.description,
       })
     );
+  });
+});
+
+describe('getObservablePluginExtensions()', () => {
+  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
+  const pluginId = 'grafana-basic-app';
+
+  beforeEach(() => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    pluginExtensionRegistries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Component 1',
+          description: 'Component 1 description',
+          targets: extensionPointId,
+          component: () => {
+            return <div>Hello world!</div>;
+          },
+        },
+      ],
+    });
+  });
+
+  it('should emit the initial state when no changes are made to the registries', async () => {
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+
+    await expect(observable).toEmitValuesWith((received) => {
+      const { extensions } = received[0];
+      expect(extensions).toHaveLength(2);
+      expect(extensions[0].pluginId).toBe(pluginId);
+      expect(extensions[1].pluginId).toBe(pluginId);
+    });
+  });
+
+  it('should emit the new state when the registries change', async () => {
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(take(2));
+
+    setTimeout(() => {
+      pluginExtensionRegistries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            title: 'Link 2',
+            description: 'Link 2 description',
+            path: `/a/${pluginId}/declare-incident`,
+            targets: extensionPointId,
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+    }, 0);
+
+    await expect(observable).toEmitValuesWith((received) => {
+      const { extensions } = received[0];
+      expect(extensions).toHaveLength(2);
+      expect(extensions[0].pluginId).toBe(pluginId);
+      expect(extensions[1].pluginId).toBe(pluginId);
+
+      const { extensions: extensions2 } = received[1];
+      expect(extensions2).toHaveLength(3);
+      expect(extensions2[0].pluginId).toBe(pluginId);
+      expect(extensions2[1].pluginId).toBe(pluginId);
+      expect(extensions2[2].pluginId).toBe(pluginId);
+    });
+  });
+});
+
+describe('getObservablePluginLinks()', () => {
+  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
+  const pluginId = 'grafana-basic-app';
+
+  beforeEach(() => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    pluginExtensionRegistries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Component 1',
+          description: 'Component 1 description',
+          targets: extensionPointId,
+          component: () => {
+            return <div>Hello world!</div>;
+          },
+        },
+      ],
+    });
+  });
+
+  it('should only emit the links', async () => {
+    const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
+
+    await expect(observable).toEmitValuesWith((received) => {
+      const links = received[0];
+      expect(links).toHaveLength(1);
+      expect(links[0].pluginId).toBe(pluginId);
+      expect(links[0].type).toBe(PluginExtensionTypes.link);
+    });
+  });
+
+  it('should be possible to get the last value from the observable', async () => {
+    const observable = getObservablePluginLinks({ extensionPointId });
+    const links = await firstValueFrom(observable);
+
+    expect(links).toHaveLength(1);
+    expect(links[0].pluginId).toBe(pluginId);
+    expect(links[0].type).toBe(PluginExtensionTypes.link);
+  });
+
+  it('should be possible to receive the last state of the registry', async () => {
+    // Register a new link
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Link 2',
+          description: 'Link 2 description',
+          path: `/a/${pluginId}/declare-incident`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const observable = getObservablePluginLinks({ extensionPointId });
+    const links = await firstValueFrom(observable);
+
+    expect(links).toHaveLength(2);
+    expect(links[0].pluginId).toBe(pluginId);
+    expect(links[0].type).toBe(PluginExtensionTypes.link);
+    expect(links[1].pluginId).toBe(pluginId);
+    expect(links[1].type).toBe(PluginExtensionTypes.link);
+  });
+
+  it('should receive an empty array if there are no links', async () => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+
+    const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
+    const links = await firstValueFrom(observable);
+
+    expect(links).toHaveLength(0);
+  });
+});
+
+describe('getObservablePluginComponents()', () => {
+  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
+  const pluginId = 'grafana-basic-app';
+
+  beforeEach(() => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          targets: extensionPointId,
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    pluginExtensionRegistries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Component 1',
+          description: 'Component 1 description',
+          targets: extensionPointId,
+          component: () => {
+            return <div>Hello world!</div>;
+          },
+        },
+      ],
+    });
+  });
+
+  it('should only emit the components', async () => {
+    const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
+
+    await expect(observable).toEmitValuesWith((received) => {
+      const components = received[0];
+      expect(components).toHaveLength(1);
+      expect(components[0].pluginId).toBe(pluginId);
+      expect(components[0].type).toBe(PluginExtensionTypes.component);
+    });
+  });
+
+  it('should be possible to get the last value from the observable', async () => {
+    const observable = getObservablePluginComponents({ extensionPointId });
+    const components = await firstValueFrom(observable);
+
+    expect(components).toHaveLength(1);
+    expect(components[0].pluginId).toBe(pluginId);
+    expect(components[0].type).toBe(PluginExtensionTypes.component);
+  });
+
+  it('should be possible to receive the last state of the registry', async () => {
+    // Register a new component
+    pluginExtensionRegistries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Component 2',
+          description: 'Component 2 description',
+          targets: extensionPointId,
+          component: () => {
+            return <div>Hello world2!</div>;
+          },
+        },
+      ],
+    });
+
+    const observable = getObservablePluginComponents({ extensionPointId });
+    const components = await firstValueFrom(observable);
+
+    expect(components).toHaveLength(2);
+    expect(components[0].pluginId).toBe(pluginId);
+    expect(components[0].type).toBe(PluginExtensionTypes.component);
+    expect(components[1].pluginId).toBe(pluginId);
+    expect(components[1].type).toBe(PluginExtensionTypes.component);
+  });
+
+  it('should receive an empty array if there are no components', async () => {
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+
+    const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
+    const components = await firstValueFrom(observable);
+
+    expect(components).toHaveLength(0);
   });
 });

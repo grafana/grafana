@@ -1,0 +1,98 @@
+syntax = "proto3";
+package resource;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
+
+import "resource.proto";
+
+//----------------------------
+// Blob Support
+//----------------------------
+
+message PutBlobRequest {
+  enum Method {
+    // Use the inline raw []byte
+    GRPC = 0;
+
+    // Get a signed URL and PUT the value
+    HTTP = 1;
+  }
+
+  // The resource that will use this blob
+  // NOTE: the name may not yet exist, but group+resource are required
+  ResourceKey resource = 1;
+
+  // How to upload
+  Method method = 2;
+
+  // Content type header
+  string content_type = 3;
+
+  // Raw value to write
+  // Not valid when method == HTTP
+  bytes value = 4;
+}
+
+message PutBlobResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The blob uid.  This must be saved into the resource to support access
+  string uid = 2;
+
+  // The URL where this value can be PUT
+  string url = 3;
+
+  // Size of the uploaded blob
+  int64 size = 4;
+
+  // Content hash used for an etag
+  string hash = 5;
+
+  // Validated mimetype (from content_type)
+  string mime_type = 6;
+
+  // Validated charset (from content_type)
+  string charset = 7;
+}
+
+message GetBlobRequest {
+  ResourceKey resource = 1;
+
+  // The new resource version
+  int64 resource_version = 2;
+
+  // Do not return a pre-signed URL (when possible)
+  bool must_proxy_bytes = 3;
+
+  // The blob UID -- when empty, the value is loaded from annotations in the matching resource
+  string uid = 4;
+}
+
+message GetBlobResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // (optional) When possible, the system will return a presigned URL
+  // that can be used to actually read the full blob+metadata
+  // When this is set, neither info nor value will be set
+  string url = 2;
+
+  // Content type
+  string content_type = 3;
+
+  // The raw object value
+  bytes value = 4;
+}
+
+service BlobStore {
+  // Upload a blob that will be saved in a resource
+  rpc PutBlob(PutBlobRequest) returns (PutBlobResponse);
+
+  // Get blob contents.  When possible, this will return a signed URL
+  // For large payloads, signed URLs are required to avoid protobuf message size limits
+  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
+
+  // NOTE: there is no direct access to delete blobs
+  // >> cleanup will be managed via garbage collection or direct access to the underlying storage
+}

@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
-import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import { hasCredentials } from '@grafana/azure-sdk';
+import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
+import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { AlertingSettingsOverhaul, PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { Alert, FieldValidationMessage, useTheme2 } from '@grafana/ui';
+import { Alert, FieldValidationMessage, TextLink, useTheme2 } from '@grafana/ui';
 
 import { AzureAuthSettings } from './AzureAuthSettings';
-import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { AzurePromDataSourceSettings, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaulPackage';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
@@ -20,8 +21,8 @@ export const ConfigEditor = (props: Props) => {
 
   const azureAuthSettings = {
     azureAuthSupported: config.azureAuthEnabled,
-    getAzureAuthEnabled: (config: DataSourceSettings): boolean => hasCredentials(config),
-    setAzureAuthEnabled: (config: DataSourceSettings, enabled: boolean) =>
+    getAzureAuthEnabled: (config: AzurePromDataSourceSettings): boolean => hasCredentials(config),
+    setAzureAuthEnabled: (config: AzurePromDataSourceSettings, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
     azureSettingsUI: AzureAuthSettings,
   };
@@ -38,7 +39,7 @@ export const ConfigEditor = (props: Props) => {
       )}
       <DataSourceDescription
         dataSourceName="Prometheus"
-        docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/"
       />
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
       <DataSourcehttpSettingsOverhaul
@@ -77,9 +78,9 @@ export function docsTip(url?: string) {
   const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source';
 
   return (
-    <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">
+    <TextLink href={url ? url : docsUrl} external>
       Visit docs for more details here.
-    </a>
+    </TextLink>
   );
 }
 

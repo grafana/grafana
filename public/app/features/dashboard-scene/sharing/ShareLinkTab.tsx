@@ -1,19 +1,20 @@
-import { dateTime } from '@grafana/data';
+import { dateTime, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch, TextLink } from '@grafana/ui';
 import { createDashboardShareUrl, createShortLink, getShareUrlParams } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
+import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState, ShareView } from './types';
+
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
 }
@@ -55,7 +56,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     this.onThemeChange = this.onThemeChange.bind(this);
   }
 
-  async buildUrl() {
+  buildUrl = async (queryOptions?: UrlQueryMap) => {
     this.setState({ isBuildUrlLoading: true });
     const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
     const dashboard = getDashboardSceneFor(this);
@@ -75,15 +76,15 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     let imageQueryParams = urlParamsUpdate;
     if (panel) {
       delete imageQueryParams.viewPanel;
-      imageQueryParams.panelId = panel.state.key;
+      imageQueryParams.panelId = panel.getPathId();
       // force solo route to use scenes
       imageQueryParams['__feature.dashboardSceneSolo'] = true;
     }
 
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
-      currentQueryParams: location.search,
-      updateQuery: { ...urlParamsUpdate, panelId: panel?.state.key },
+      currentQueryParams: window.location.search,
+      updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId() },
       absolute: true,
       soloRoute: true,
       render: true,
@@ -91,7 +92,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     });
 
     this.setState({ shareUrl, imageUrl, isBuildUrlLoading: false });
-  }
+  };
 
   public getTabLabel() {
     return t('share-modal.tab-title.link', 'Link');
@@ -213,15 +214,10 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
           bottomSpacing={0}
         >
           <Trans i18nKey="share-modal.link.render-instructions">
-            To render a panel image, you must install the{' '}
-            <a
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="external-link"
-            >
+            To render an image, you must install the{' '}
+            <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
               Grafana image renderer plugin
-            </a>
+            </TextLink>
             . Please contact your Grafana administrator to install the plugin.
           </Trans>
         </Alert>

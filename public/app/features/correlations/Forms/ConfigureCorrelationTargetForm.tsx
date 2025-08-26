@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { CorrelationExternal } from '@grafana/runtime';
 import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CorrelationType, ExternalTypeTarget } from '../types';
+import { CorrelationType } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
@@ -76,7 +77,10 @@ export const ConfigureCorrelationTargetForm = () => {
                 value={correlationType}
                 onChange={(value) => onChange(value.value)}
                 options={Object.values(CORR_TYPES_SELECT)}
-                aria-label="correlation type"
+                aria-label={t(
+                  'correlations.configure-correlation-target-form.aria-label-correlation-type',
+                  'Correlation type'
+                )}
               />
             </Field>
           )}
@@ -146,7 +150,7 @@ export const ConfigureCorrelationTargetForm = () => {
                 },
               }}
               render={({ field: { onChange, value } }) => {
-                const castVal = value as ExternalTypeTarget; // the target under "query" type can contain anything a datasource query contains
+                const castVal = value as CorrelationExternal['config']['target']; // the target under "query" type can contain anything a datasource query contains
                 return (
                   <Field
                     label={t('correlations.target-form.target-label', 'Target')}

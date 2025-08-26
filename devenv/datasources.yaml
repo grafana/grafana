@@ -27,21 +27,21 @@ datasources:
     access: proxy
     url: http://localhost:8180
     jsonData:
-      graphiteVersion: "1.1"
+      graphiteVersion: '1.1'
 
   - name: gdev-graphite-1.0
     type: graphite
     access: proxy
     url: http://localhost:8280
     jsonData:
-      graphiteVersion: "1.0"
+      graphiteVersion: '1.0'
 
   - name: gdev-graphite-0.9
     type: graphite
     access: proxy
     url: http://localhost:8380
     jsonData:
-      graphiteVersion: "0.9"
+      graphiteVersion: '0.9'
 
   - name: gdev-alertmanager
     type: alertmanager
@@ -64,8 +64,8 @@ datasources:
       prometheusType: Prometheus #Cortex | Mimir | Prometheus | Thanos
       prometheusVersion: 2.40.0
       exemplarTraceIdDestinations:
-      - name: traceID
-        datasourceUid: gdev-tempo
+        - name: traceID
+          datasourceUid: gdev-tempo
     secureJsonData:
       basicAuthPassword: admin #https://grafana.com/docs/grafana/latest/administration/provisioning/#using-environment-variables
 
@@ -84,6 +84,7 @@ datasources:
       basicAuthPassword: admin #https://grafana.com/docs/grafana/latest/administration/provisioning/#using-environment-variables
 
   - name: gdev-testdata
+    uid: PD8C576611E62080A
     isDefault: true
     type: testdata
 
@@ -116,9 +117,9 @@ datasources:
     url: http://localhost:8086
     jsonData:
       dbName: mybucket
-      httpHeaderName1: "Authorization"
+      httpHeaderName1: 'Authorization'
     secureJsonData:
-      httpHeaderValue1: "Token mytoken"
+      httpHeaderValue1: 'Token mytoken'
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -136,15 +137,23 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 3
 
+  - name: gdev-opentsdb-v2.4
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    jsonData:
+      tsdbResolution: 1
+      tsdbVersion: 4
+
   - name: gdev-elasticsearch
     type: elasticsearch
     uid: gdev-elasticsearch
     access: proxy
     url: http://localhost:9200
     jsonData:
-      index: "[logs-]YYYY.MM.DD"
+      index: '[logs-]YYYY.MM.DD'
       interval: Daily
-      timeField: "@timestamp"
+      timeField: '@timestamp'
       logLevelField: level
       logMessageField: line
 
@@ -153,10 +162,10 @@ datasources:
     access: proxy
     url: http://localhost:9200
     jsonData:
-      index: "[filebeat-]YYYY.MM.DD"
+      index: '[filebeat-]YYYY.MM.DD'
       interval: Daily
-      timeField: "@timestamp"
-      timeInterval: "10s"
+      timeField: '@timestamp'
+      timeInterval: '10s'
       logMessageField: message
       logLevelField: fields.level
 
@@ -165,10 +174,10 @@ datasources:
     access: proxy
     url: http://localhost:9200
     jsonData:
-      index: "[metricbeat-]YYYY.MM.DD"
+      index: '[metricbeat-]YYYY.MM.DD'
       interval: Daily
-      timeField: "@timestamp"
-      timeInterval: "10s"
+      timeField: '@timestamp'
+      timeInterval: '10s'
 
   - name: gdev-mysql
     type: mysql
@@ -203,7 +212,7 @@ datasources:
     user: grafana
     jsonData:
       database: grafana
-      encrypt: "true"
+      encrypt: 'true'
       tlsSkipVerify: true
     secureJsonData:
       password: Password!
@@ -224,7 +233,7 @@ datasources:
     secureJsonData:
       password: password
     jsonData:
-      sslmode: "disable"
+      sslmode: 'disable'
       database: grafana
 
   - name: gdev-postgres-ds-tests
@@ -234,54 +243,56 @@ datasources:
     secureJsonData:
       password: grafanatest
     jsonData:
-      sslmode: "disable"
+      sslmode: 'disable'
       database: grafanadstest
 
   - name: gdev-cloudwatch
+    uid: gdev-cloudwatch
     type: cloudwatch
     editable: true
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
-      customMetricsNamespaces: "CWAgent"
+      customMetricsNamespaces: 'CWAgent'
 
   - name: gdev-loki
+    uid: gdev-loki
     type: loki
     access: proxy
     url: http://localhost:3100
     editable: false
     correlations:
       - targetUID: gdev-jaeger
-        label: "Jaeger traces"
-        description: "Related traces stored in Jaeger"
+        label: 'Jaeger traces'
+        description: 'Related traces stored in Jaeger'
       - targetUID: gdev-zipkin
-        label: "Zipkin traces"
-        description: "Related traces stored in Zipkin"
+        label: 'Zipkin traces'
+        description: 'Related traces stored in Zipkin'
       - targetUID: gdev-tempo
-        label: "Tempo traces"
-        description: "Related traces stored in Tempo"
+        label: 'Tempo traces'
+        description: 'Related traces stored in Tempo'
       - targetUID: gdev-prometheus
-        label: "Logs to metrics"
-        description: "Related metrics stored in Prometheus"
+        label: 'Logs to metrics'
+        description: 'Related metrics stored in Prometheus'
         config:
           type: query
           target:
-            expr: "{ job=\"test\" }"
-          field: "traceID"
+            expr: '{ job="test" }'
+          field: 'traceID'
     jsonData:
       manageAlerts: false
       derivedFields:
-        - name: "traceID"
+        - name: 'traceID'
           matcherRegex: "traceID=(\\w+)"
-          url: "$${__value.raw}"
+          url: '$${__value.raw}'
           datasourceUid: gdev-jaeger
-        - name: "traceID"
+        - name: 'traceID'
           matcherRegex: "traceID=(\\w+)"
-          url: "$${__value.raw}"
+          url: '$${__value.raw}'
           datasourceUid: gdev-zipkin
-        - name: "traceID"
+        - name: 'traceID'
           matcherRegex: "traceID=(\\w+)"
-          url: "$${__value.raw}"
+          url: '$${__value.raw}'
           datasourceUid: gdev-tempo
 
   - name: gdev-jaeger
@@ -304,16 +315,36 @@ datasources:
     access: proxy
     url: http://localhost:3200
     editable: false
+    correlations:
+      - targetUID: gdev-loki
+        label: 'Logs (correlation)'
+        description: 'Correlation to logs stored in Loki'
+        config:
+          type: query
+          target:
+            expr: '{ job="job" }'
+          field: 'traceID'
     jsonData:
       tracesToLogsV2:
-          datasourceUid: gdev-loki
-          spanStartTimeShift: '5m'
-          spanEndTimeShift: '-5m'
-          customQuery: true
-          query: '{filename="/var/log/grafana/grafana.log"} |="$${__span.traceId}"'
+        datasourceUid: gdev-loki
+        spanStartTimeShift: '5m'
+        spanEndTimeShift: '-5m'
+        customQuery: true
+        query: '{filename="/var/log/grafana/grafana.log"} |="$${__span.traceId}"'
       tracesToProfiles:
         datasourceUid: gdev-pyroscope
-        profileTypeId: "process_cpu:cpu:nanoseconds:cpu:nanoseconds"
+        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
+      tracesToMetrics:
+        datasourceUid: gdev-prometheus
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: [{ key: 'job' }]
+        queries:
+          - name: 'Metrics'
+            query: 'sum(rate({$$__tags}[5m]))'
+      serviceMap:
+        datasourceUid: 'gdev-prometheus'
+        histogramType: 'both' # 'classic' or 'native' or 'both'
 
   - name: gdev-pyroscope
     type: grafana-pyroscope-datasource
@@ -321,7 +352,6 @@ datasources:
     access: proxy
     url: http://localhost:4040
     editable: false
-
 
   - name: gdev-e2etestdatasource
     type: grafana-e2etest-datasource

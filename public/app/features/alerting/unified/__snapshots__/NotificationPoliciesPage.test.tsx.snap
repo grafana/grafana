@@ -1,0 +1,288 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Non-Grafana alertmanagers Keeps matchers for non-grafana alertmanager sources 1`] = `
+[
+  "hello="world"",
+  "foo!="bar"",
+]
+`;
+
+exports[`findRoutesMatchingFilters should not match non-existing 1`] = `
+{
+  "filtersApplied": true,
+  "matchedRoutesWithPath": Map {},
+}
+`;
+
+exports[`findRoutesMatchingFilters should work with all filters 1`] = `
+{
+  "filtersApplied": true,
+  "matchedRoutesWithPath": Map {
+    {
+      "id": "1",
+      "matchers": [
+        "hello=world",
+        "foo!=bar",
+      ],
+      "receiver": "simple-receiver",
+      "routes": [
+        {
+          "id": "2",
+          "matchers": [
+            "bar=baz",
+          ],
+          "receiver": "simple-receiver",
+          "routes": undefined,
+        },
+      ],
+    } => [
+      {
+        "id": "0",
+        "receiver": "default-receiver",
+        "routes": [
+          {
+            "id": "1",
+            "matchers": [
+              "hello=world",
+              "foo!=bar",
+            ],
+            "receiver": "simple-receiver",
+            "routes": [
+              {
+                "id": "2",
+                "matchers": [
+                  "bar=baz",
+                ],
+                "receiver": "simple-receiver",
+                "routes": undefined,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        "id": "1",
+        "matchers": [
+          "hello=world",
+          "foo!=bar",
+        ],
+        "receiver": "simple-receiver",
+        "routes": [
+          {
+            "id": "2",
+            "matchers": [
+              "bar=baz",
+            ],
+            "receiver": "simple-receiver",
+            "routes": undefined,
+          },
+        ],
+      },
+    ],
+  },
+}
+`;
+
+exports[`findRoutesMatchingFilters should work with non-intersecting filters 1`] = `
+{
+  "filtersApplied": true,
+  "matchedRoutesWithPath": Map {},
+}
+`;
+
+exports[`findRoutesMatchingFilters should work with only contact point and inheritance 1`] = `
+{
+  "filtersApplied": true,
+  "matchedRoutesWithPath": Map {
+    {
+      "id": "1",
+      "matchers": [
+        "hello=world",
+        "foo!=bar",
+      ],
+      "receiver": "simple-receiver",
+      "routes": [
+        {
+          "id": "2",
+          "matchers": [
+            "bar=baz",
+          ],
+          "receiver": "simple-receiver",
+          "routes": undefined,
+        },
+      ],
+    } => [
+      {
+        "id": "0",
+        "receiver": "default-receiver",
+        "routes": [
+          {
+            "id": "1",
+            "matchers": [
+              "hello=world",
+              "foo!=bar",
+            ],
+            "receiver": "simple-receiver",
+            "routes": [
+              {
+                "id": "2",
+                "matchers": [
+                  "bar=baz",
+                ],
+                "receiver": "simple-receiver",
+                "routes": undefined,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        "id": "1",
+        "matchers": [
+          "hello=world",
+          "foo!=bar",
+        ],
+        "receiver": "simple-receiver",
+        "routes": [
+          {
+            "id": "2",
+            "matchers": [
+              "bar=baz",
+            ],
+            "receiver": "simple-receiver",
+            "routes": undefined,
+          },
+        ],
+      },
+    ],
+    {
+      "id": "2",
+      "matchers": [
+        "bar=baz",
+      ],
+      "receiver": "simple-receiver",
+      "routes": undefined,
+    } => [
+      {
+        "id": "0",
+        "receiver": "default-receiver",
+        "routes": [
+          {
+            "id": "1",
+            "matchers": [
+              "hello=world",
+              "foo!=bar",
+            ],
+            "receiver": "simple-receiver",
+            "routes": [
+              {
+                "id": "2",
+                "matchers": [
+                  "bar=baz",
+                ],
+                "receiver": "simple-receiver",
+                "routes": undefined,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        "id": "1",
+        "matchers": [
+          "hello=world",
+          "foo!=bar",
+        ],
+        "receiver": "simple-receiver",
+        "routes": [
+          {
+            "id": "2",
+            "matchers": [
+              "bar=baz",
+            ],
+            "receiver": "simple-receiver",
+            "routes": undefined,
+          },
+        ],
+      },
+      {
+        "id": "2",
+        "matchers": [
+          "bar=baz",
+        ],
+        "receiver": "simple-receiver",
+        "routes": undefined,
+      },
+    ],
+  },
+}
+`;
+
+exports[`findRoutesMatchingFilters should work with only label matchers 1`] = `
+{
+  "filtersApplied": true,
+  "matchedRoutesWithPath": Map {
+    {
+      "id": "1",
+      "matchers": [
+        "hello=world",
+        "foo!=bar",
+      ],
+      "receiver": "simple-receiver",
+      "routes": [
+        {
+          "id": "2",
+          "matchers": [
+            "bar=baz",
+          ],
+          "receiver": "simple-receiver",
+          "routes": undefined,
+        },
+      ],
+    } => [
+      {
+        "id": "0",
+        "receiver": "default-receiver",
+        "routes": [
+          {
+            "id": "1",
+            "matchers": [
+              "hello=world",
+              "foo!=bar",
+            ],
+            "receiver": "simple-receiver",
+            "routes": [
+              {
+                "id": "2",
+                "matchers": [
+                  "bar=baz",
+                ],
+                "receiver": "simple-receiver",
+                "routes": undefined,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        "id": "1",
+        "matchers": [
+          "hello=world",
+          "foo!=bar",
+        ],
+        "receiver": "simple-receiver",
+        "routes": [
+          {
+            "id": "2",
+            "matchers": [
+              "bar=baz",
+            ],
+            "receiver": "simple-receiver",
+            "routes": undefined,
+          },
+        ],
+      },
+    ],
+  },
+}
+`;

@@ -1,70 +1,45 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
-import { Stack, useStyles2 } from '@grafana/ui';
-import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
-import { DummySelectedObject } from './DummySelectedObject';
+import { DashboardEditPane } from './DashboardEditPane';
+import { EditPaneHeader } from './EditPaneHeader';
 
 export interface Props {
-  obj: SceneObject;
+  element: EditableDashboardElement;
+  editPane: DashboardEditPane;
+  isNewElement: boolean;
 }
 
-export function ElementEditPane({ obj }: Props) {
-  const element = getEditableElementFor(obj);
-  const categories = element.useEditPaneOptions();
+export function ElementEditPane({ element, editPane, isNewElement }: Props) {
+  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(isNewElement) : [];
   const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={0}>
-      {element.renderActions && (
-        <OptionsPaneCategory
-          id="selected-item"
-          title={element.getTypeName()}
-          isOpenDefault={true}
-          className={styles.noBorderTop}
-        >
-          <div className={styles.actionsBox}>{element.renderActions()}</div>
-        </OptionsPaneCategory>
-      )}
-      {categories.map((cat) => cat.render())}
-    </Stack>
+    <div className={styles.wrapper}>
+      <EditPaneHeader element={element} editPane={editPane} />
+      <ScrollContainer showScrollIndicators={true}>
+        <div className={styles.categories}>{categories.map((cat) => cat.render())}</div>
+      </ScrollContainer>
+    </div>
   );
-}
-
-function getEditableElementFor(obj: SceneObject): EditableDashboardElement {
-  if (isEditableDashboardElement(obj)) {
-    return obj;
-  }
-
-  for (const behavior of obj.state.$behaviors ?? []) {
-    if (isEditableDashboardElement(behavior)) {
-      return behavior;
-    }
-  }
-
-  // Temp thing to show somethin in edit pane
-  if (obj instanceof DashboardScene) {
-    return new DummySelectedObject(obj);
-  }
-
-  throw new Error("Can't find editable element for selected object");
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    noBorderTop: css({
-      borderTop: 'none',
-    }),
-    actionsBox: css({
+    wrapper: css({
       display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      paddingBottom: theme.spacing(1),
+      flexDirection: 'column',
+      flex: '1 1 0',
+      height: '100%',
+    }),
+    categories: css({
+      display: 'flex',
+      flexDirection: 'column',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 }
