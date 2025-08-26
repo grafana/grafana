@@ -6400,8 +6400,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "点击<2>此处</2>了解有关此错误的更多信息。",
-    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11219,11 +11218,15 @@
     },
     "delete-repository-button": {
       "button-delete": "删除",
-      "confirm-delete-repository": "您确定要删除存储库配置吗？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "删除存储库失败",
       "success-repository-deleted": "等待删除的存储库设置",
-      "title-delete-repository": "删除存储库配置",
-      "tooltip-delete-this-repository": "删除此存储库"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "回到存储库",
@@ -13015,6 +13018,7 @@
         "name-point-size": "点大小",
         "name-show-points": "显示点",
         "name-show-thresholds": "显示阈值",
+        "name-show-values": "",
         "name-style": "样式",
         "name-transform": "转换",
         "transform-options": {

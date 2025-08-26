@@ -6421,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicken Sie <2>hier</2>, um mehr über diesen Fehler zu erfahren.",
-    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -11254,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Löschen",
-      "confirm-delete-repository": "Sind Sie sicher, dass Sie die Repository-Konfiguration löschen möchten?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Das Repository konnte nicht gelöscht werden",
       "success-repository-deleted": "Repository-Einstellungen zum Löschen in die Warteschlange gestellt",
-      "title-delete-repository": "Repository-Konfiguration löschen",
-      "tooltip-delete-this-repository": "Dieses Repository löschen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
@@ -13056,6 +13059,7 @@
         "name-point-size": "Punktgröße",
         "name-show-points": "Punkte zeigen",
         "name-show-thresholds": "Schwellenwerte anzeigen",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Transformieren",
         "transform-options": {

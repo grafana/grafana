@@ -197,10 +197,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-  */
-  provisioningSecretsService?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -531,9 +527,13 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Enables Query Library feature in Explore
+  * Renamed feature toggle, enables Saved queries feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enables Saved Queries feature
+  */
+  savedQueries?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
