@@ -2097,23 +2097,39 @@ func ConfigForIntegrationType(contactPointType string) (VersionedNotifierPlugin,
 func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
 	v1 := GetAvailableNotifiers()
 	m := make(map[string]VersionedNotifierPlugin, len(v1))
-	for _, n := range v1 {
-		pl := VersionedNotifierPlugin{
-			Type:           n.Type,
-			Name:           n.Name,
-			Description:    n.Description,
-			Heading:        n.Heading,
-			Info:           n.Info,
-			CurrentVersion: "v1",
-			Versions: []NotifierPluginVersion{
-				{
-					Version:   "v1",
-					CanCreate: true,
-					Options:   n.Options,
-					Info:      "",
-				},
-			},
+	newPlugin := func(n *NotifierPlugin) VersionedNotifierPlugin {
+		return VersionedNotifierPlugin{
+			Type:        n.Type,
+			Name:        n.Name,
+			Description: n.Description,
+			Heading:     n.Heading,
+			Info:        n.Info,
 		}
+	}
+	for _, n := range v1 {
+		pl := newPlugin(n)
+		pl.CurrentVersion = "v1"
+		pl.Versions = append(pl.Versions, NotifierPluginVersion{
+			Version:   "v1",
+			CanCreate: true,
+			Options:   n.Options,
+			Info:      "",
+		})
+		m[n.Type] = pl
+	}
+	v0 := GetAvailableMimirNotifiers()
+	for _, n := range v0 {
+		pl, ok := m[n.Type]
+		if !ok {
+			pl = newPlugin(n)
+			pl.CurrentVersion = "v0"
+		}
+		pl.Versions = append(pl.Versions, NotifierPluginVersion{
+			Version:   "v0",
+			CanCreate: false,
+			Options:   n.Options,
+			Info:      "",
+		})
 		m[n.Type] = pl
 	}
 	return maps.Values(m)
