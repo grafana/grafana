@@ -227,6 +227,7 @@
       "select-resource": "Select a resource"
     },
     "resource-picker": {
+      "browse-tab": "Browse",
       "button-apply": "Apply",
       "button-cancel": "Cancel",
       "header-location": "Location",
@@ -234,12 +235,17 @@
       "header-type": "Type",
       "heading-selection": "Selection",
       "locations-filter": "Locations",
+      "locations-filter-placeholder": "Select a location",
+      "recent-tab": "Recent",
       "result-limit": "Showing first {{numResults}} results",
       "subscriptions-filter": "Subscriptions",
+      "subscriptions-filter-placeholder": "Select a subscription",
       "text-loading": "Loading...",
+      "text-no-recent-resources": "No recent resources found",
       "text-no-resources": "No resources found",
       "title-error-occurred": "An error occurred while requesting resources from Azure Monitor",
-      "types-filter": "Resource Types"
+      "types-filter": "Resource Types",
+      "types-filter-placeholder": "Select a resource type"
     },
     "scope-selector": {
       "label": "Scope"
