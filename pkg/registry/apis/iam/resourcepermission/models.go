@@ -56,45 +56,6 @@ type flatResourcePermission struct {
 	RoleName         string    `xorm:"role_name"`
 }
 
-// generateMeaningfulNameForManagedRole creates a readable name for managed roles
-// based on the permissions they contain
-func generateMeaningfulNameForManagedRole(flatPerms []flatResourcePermission) string {
-	if len(flatPerms) == 0 {
-		return "unknown-role"
-	}
-
-	// Analyze the actions to determine the permission level
-	actions := make(map[string]bool)
-	for _, perm := range flatPerms {
-		actions[perm.Action] = true
-	}
-
-	// Determine permission level based on actions
-	hasRead := actions["dashboards:read"]
-	hasWrite := actions["dashboards:write"]
-	hasDelete := actions["dashboards:delete"]
-	hasPermissions := actions["dashboards.permissions:read"] || actions["dashboards.permissions:write"]
-
-	if hasPermissions {
-		return "dashboard-admin-role"
-	} else if hasDelete && hasWrite && hasRead {
-		return "dashboard-editor-role"
-	} else if hasRead {
-		return "dashboard-viewer-role"
-	}
-
-	// Fallback based on first action
-	firstAction := flatPerms[0].Action
-	if strings.Contains(firstAction, ":") {
-		parts := strings.Split(firstAction, ":")
-		if len(parts) >= 2 {
-			return fmt.Sprintf("%s-%s-role", parts[0], parts[1])
-		}
-	}
-
-	return "managed-role"
-}
-
 func toV0ResourcePermission(flatPerms []flatResourcePermission, namespace string) *v0alpha1.ResourcePermission {
 
 	if len(flatPerms) == 0 {
@@ -108,9 +69,9 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission, namespace string
 		return nil
 	}
 
-	// Use the ResourcePermission name directly
-	// Use simple names like CoreRoles for authorization
-	name := fmt.Sprintf("rp_%d", first.ID) // Simple name like "rp_123"
+	// Use the original ResourcePermission name from the SubjectUID
+	// This preserves the CRD name that was used when creating the ResourcePermission
+	name := first.SubjectUID
 
 	// Collect all actions and organize by role patterns to determine permission subject and verbs
 	actionsBySubject := make(map[string][]string)
@@ -185,7 +146,6 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission, namespace string
 	// Scope format is typically like "dashboards:uid:abc123"
 	var apiGroup, resourceType, resourceName string
 
-	// Parse the scope from the first permission to get resource details
 	if len(flatPerms) > 0 && flatPerms[0].Scope != "" {
 		scopeParts := strings.Split(flatPerms[0].Scope, ":")
 		if len(scopeParts) >= 1 {
@@ -199,8 +159,8 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission, namespace string
 			resourceName = "*"
 		}
 	} else {
-		resourceType = "dashboards" // fallback
-		resourceName = "*"          // fallback
+		resourceType = "dashboards" 
+		resourceName = "*"          
 	}
 
 	// Set the appropriate API group based on resource type

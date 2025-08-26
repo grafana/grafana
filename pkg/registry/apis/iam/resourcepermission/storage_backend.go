@@ -104,7 +104,7 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 	listRV := int64(0)
 	namespace := namespaceInfo.Value
 	if namespace == "" {
-		namespace = "default"
+		namespace = fmt.Sprintf("org-%d", orgID)
 	}
 
 	rows, err := s.newResourcePermissionIterator(ctx, sql, query, namespace)
@@ -123,19 +123,6 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 	}
 
 	return listRV, err
-}
-
-func getApiGroupForResource(resourceType string) string {
-	switch resourceType {
-	case "dashboards":
-		return "dashboard.grafana.app"
-	case "folders":
-		return "folder.grafana.app"
-	case "datasources":
-		return "datasource.grafana.app"
-	default:
-		return "core.grafana.app"
-	}
 }
 
 func (s *ResourcePermissionSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
@@ -251,7 +238,7 @@ func (s *ResourcePermissionSqlBackend) WriteEvent(ctx context.Context, event res
 			return 0, err
 		}
 	case resourcepb.WatchEvent_MODIFIED:
-		// For now, treat updates the same as creates - replace all permissions
+		// Handle updates with proper update logic
 		var v0resourceperm *v0alpha1.ResourcePermission
 		v0resourceperm, err = getResourcePermissionFromEvent(event)
 		if err != nil {
@@ -274,10 +261,10 @@ func (s *ResourcePermissionSqlBackend) WriteEvent(ctx context.Context, event res
 			return 0, err
 		}
 
-		// For now, use the same create method - this could be optimized later with proper update logic
-		rv, err = s.createResourcePermission(ctx, dbHelper, ns, v0resourceperm)
+		// Use proper update logic that replaces existing managed roles and permissions
+		rv, err = s.updateResourcePermission(ctx, dbHelper, ns, v0resourceperm)
 		if err != nil {
-			if errors.Is(err, ErrEmptyResourcePermissionName) || errors.Is(err, ErrInvalidResourcePermissionSpec) {
+			if errors.Is(err, ErrEmptyResourcePermissionName) || errors.Is(err, ErrInvalidResourcePermissionSpec) || errors.Is(err, ErrResourcePermissionNotFound) {
 				return 0, apierrors.NewBadRequest(err.Error())
 			}
 			return 0, err
@@ -403,8 +390,4 @@ func (l *listIteratorFromSlice) Namespace() string {
 
 func (l *listIteratorFromSlice) ResourceVersion() int64 {
 	return 0
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

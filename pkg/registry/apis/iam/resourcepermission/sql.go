@@ -88,8 +88,15 @@ func (s *ResourcePermissionSqlBackend) newResourcePermissionIterator(ctx context
 }
 
 func (s *ResourcePermissionSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, name string, namespace string) (*v0alpha1.ResourcePermission, error) {
+	// Parse namespace to get OrgID
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse namespace %s: %w", namespace, err)
+	}
+
 	query := &ListResourcePermissionsQuery{
-		UID: name,
+		UID:   name,
+		OrgID: ns.OrgID,
 		Pagination: common.Pagination{
 			Limit:    100, // Get enough permissions for this specific resource
 			Continue: 0,   // No continuation token
@@ -137,6 +144,79 @@ func (s *ResourcePermissionSqlBackend) createResourcePermission(ctx context.Cont
 
 	// Implement proper managed role pattern
 	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		for _, perm := range v0ResourcePerm.Spec.Permissions {
+			// For each verb, create the appropriate managed roles
+			for _, verb := range perm.Verbs {
+				managedRoles := s.expandVerbToManagedRoles(verb, perm.Kind, perm.Name, ns.OrgID)
+
+				for _, managedRole := range managedRoles {
+					// Get or create the managed role
+					roleID, err := s.getOrCreateManagedRole(ctx, tx, dbHelper, ns.OrgID, managedRole.Name, managedRole.RoleAdder, v0ResourcePerm.Name)
+					if err != nil {
+						return fmt.Errorf("creating managed role %s: %w", managedRole.Name, err)
+					}
+
+					// Create permissions for this role
+					permissions := s.createPermissionsForManagedRole(v0ResourcePerm, managedRole.Actions)
+					if len(permissions) > 0 {
+						permissionInsert, permissionInsertArgs, err := buildResourcePermissionInsertQuery(dbHelper, permissions, roleID)
+						if err != nil {
+							return err
+						}
+
+						_, err = tx.Exec(ctx, permissionInsert, permissionInsertArgs...)
+						if err != nil {
+							return fmt.Errorf("inserting permissions for role %d: %w", roleID, err)
+						}
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	// Return a timestamp as resource version
+	return int64(time.Now().UnixMilli()), nil
+}
+
+// updateResourcePermission updates a resource permission by replacing all its managed roles and permissions
+func (s *ResourcePermissionSqlBackend) updateResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
+	if v0ResourcePerm == nil {
+		return 0, fmt.Errorf("resource permission cannot be nil")
+	}
+	if v0ResourcePerm.Name == "" {
+		return 0, ErrEmptyResourcePermissionName
+	}
+	if len(v0ResourcePerm.Spec.Permissions) == 0 {
+		return 0, ErrInvalidResourcePermissionSpec
+	}
+
+	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		// First, check if the resource permission exists by looking for its managed roles
+		oldRoleDescription := fmt.Sprintf("Managed role for ResourcePermission: %s", v0ResourcePerm.Name)
+
+		managedRoles, err := s.queryManagedRoles(ctx, tx, dbHelper, ns.OrgID, oldRoleDescription)
+		if err != nil {
+			return fmt.Errorf("failed to find existing managed roles for resource permission %s: %w", v0ResourcePerm.Name, err)
+		}
+
+		if len(managedRoles) == 0 {
+			return fmt.Errorf("resource permission %s not found: %w", v0ResourcePerm.Name, ErrResourcePermissionNotFound)
+		}
+
+		// Delete all existing managed roles and their permissions
+		for _, role := range managedRoles {
+			if err := s.deleteManagedRole(ctx, tx, dbHelper, ns.OrgID, role.ID, role.Name); err != nil {
+				return fmt.Errorf("failed to delete existing managed role %s (ID: %d): %w", role.Name, role.ID, err)
+			}
+		}
+
+		// Create new managed roles with the updated permissions
 		for _, perm := range v0ResourcePerm.Spec.Permissions {
 			// For each verb, create the appropriate managed roles
 			for _, verb := range perm.Verbs {
@@ -477,10 +557,8 @@ func (s *ResourcePermissionSqlBackend) expandVerbToManagedRoles(verb string, per
 	return roles
 }
 
-// lookupUserIDByName looks up user ID by username
-// TODO: This is a simplified test implementation - in production this should use the user service
+// TODO: user query
 func (s *ResourcePermissionSqlBackend) lookupUserIDByName(username string, orgID int64) (int64, error) {
-	// Simplified implementation for testing/development
 	switch username {
 	case "testuser":
 		return 2, nil
@@ -488,7 +566,7 @@ func (s *ResourcePermissionSqlBackend) lookupUserIDByName(username string, orgID
 		return 1, nil
 	default:
 		// Fallback to admin user for unknown users
-		_ = orgID // Avoid unused variable warning
+		_ = orgID
 		return 1, nil
 	}
 }
@@ -599,9 +677,6 @@ func (s *ResourcePermissionSqlBackend) assignManagedRole(ctx context.Context, tx
 	} else if strings.HasPrefix(roleName, "managed:users:") {
 		// Extract user ID from patterns like:
 		// "managed:users:1:permissions" -> userID = 1
-		// "managed:users:1:viewer:permissions" -> userID = 1
-		// "managed:users:1:editor:permissions" -> userID = 1
-		// "managed:users:1:admin:permissions" -> userID = 1
 		parts := strings.Split(roleName, ":")
 		if len(parts) >= 3 {
 			userID, err := strconv.ParseInt(parts[2], 10, 64)

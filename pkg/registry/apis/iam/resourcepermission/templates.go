@@ -13,13 +13,14 @@ import (
 
 // Templates setup.
 var (
-	//go:embed *.sql queries/*.sql
+	//go:embed *.sql
 	sqlTemplatesFS embed.FS
 
-	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `*.sql`, `queries/*.sql`))
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `*.sql`))
 
 	resourcePermissionsQueryTplt = mustTemplate("resource_permission_query.sql")
 	resourcePermissionInsertTplt = mustTemplate("resourcepermission_insert.sql")
+	resourcePermissionUpdateTplt = mustTemplate("resource_permission_update.sql")
 
 	// Delete operation templates
 	managedRolesQueryTplt            = mustTemplate("managed_roles_query.sql")
@@ -185,5 +186,20 @@ type teamRoleAssignmentsDeleteTemplate struct {
 }
 
 func (r teamRoleAssignmentsDeleteTemplate) Validate() error {
+	return nil
+}
+
+// Update operation template structure
+
+type resourcePermissionUpdateTemplate struct {
+	sqltemplate.SQLTemplate
+	RoleTable                 string
+	OrgID                     int64
+	RoleDescription           string
+	OldRoleDescriptionPattern string
+	Now                       string
+}
+
+func (r resourcePermissionUpdateTemplate) Validate() error {
 	return nil
 }
