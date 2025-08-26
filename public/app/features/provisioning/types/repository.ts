@@ -42,7 +42,6 @@ export interface UseRepositoryFetchingResult {
   error: string | null;
 }
 
-// Git provider response types
 export interface GitHubRepository {
   full_name: string;
   clone_url: string;

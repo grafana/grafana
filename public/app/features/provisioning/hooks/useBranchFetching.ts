@@ -4,22 +4,22 @@ import { isSupportedGitProvider } from '../guards';
 import { BranchInfo, RepositoryInfo, UseBranchFetchingProps } from '../types/repository';
 import { createApiRequest, getErrorMessage, makeApiRequest } from '../utils/httpUtils';
 
-const GITHUB_URL_REGEX = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
-const GITLAB_URL_REGEX = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
-const BITBUCKET_URL_REGEX = /^https:\/\/bitbucket\.org\/([^\/]+)\/([^\/]+)\/?$/;
+const githubUrlRegex = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
+const gitlabUrlRegex = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
+const bitbucketUrlRegex = /^https:\/\/bitbucket\.org\/([^\/]+)\/([^\/]+)\/?$/;
 
 function parseRepositoryUrl(url: string, type: string): RepositoryInfo | null {
   let match: RegExpMatchArray | null = null;
 
   switch (type) {
     case 'github':
-      match = url.match(GITHUB_URL_REGEX);
+      match = url.match(githubUrlRegex);
       break;
     case 'gitlab':
-      match = url.match(GITLAB_URL_REGEX);
+      match = url.match(gitlabUrlRegex);
       break;
     case 'bitbucket':
-      match = url.match(BITBUCKET_URL_REGEX);
+      match = url.match(bitbucketUrlRegex);
       break;
     default:
       return null;
@@ -77,31 +77,28 @@ export function useBranchFetching({
     try {
       const apiConfig = createApiRequest(repositoryType, trimmedToken);
       const data = await makeApiRequest(apiConfig.branches(repoInfo.owner, repoInfo.repo));
+
       let branchData: BranchInfo[] = [];
 
       if (repositoryType === 'github') {
         if (Array.isArray(data)) {
           branchData = data.map((branch: { name: string }) => ({
             name: branch.name,
-            isDefault: branch.name === 'main' || branch.name === 'master',
           }));
         }
       } else if (repositoryType === 'gitlab') {
         if (Array.isArray(data)) {
-          branchData = data.map((branch: { name: string; default?: boolean }) => ({
+          branchData = data.map((branch: { name: string }) => ({
             name: branch.name,
-            isDefault: branch.default || branch.name === 'main' || branch.name === 'master',
           }));
         }
       } else if (repositoryType === 'bitbucket') {
         if (data && Array.isArray(data.values)) {
           branchData = data.values.map((branch: { name: string }) => ({
             name: branch.name,
-            isDefault: branch.name === 'main' || branch.name === 'master',
           }));
         }
       }
-
       setBranches(branchData);
     } catch (err: unknown) {
       console.error('Failed to fetch branches:', err);
