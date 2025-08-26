@@ -1,29 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isSupportedGitProvider } from './constants';
-import { createApiRequest, getErrorMessage, makeApiRequest } from './httpUtils';
+import { isBitbucketResponse, isGitHubResponse, isGitLabResponse, isSupportedGitProvider } from '../guards';
 import {
-  BitbucketResponse,
-  GitHubRepository,
-  GitLabProject,
   GitProviderApiResponse,
   RepositoryOption,
   UseRepositoryFetchingProps,
   UseRepositoryFetchingResult,
-} from './types';
-
-// Type guards for different Git provider responses
-function isGitHubResponse(data: GitProviderApiResponse): data is GitHubRepository[] {
-  return Array.isArray(data) && (data.length === 0 || 'clone_url' in data[0]);
-}
-
-function isGitLabResponse(data: GitProviderApiResponse): data is GitLabProject[] {
-  return Array.isArray(data) && (data.length === 0 || 'path_with_namespace' in data[0]);
-}
-
-function isBitbucketResponse(data: GitProviderApiResponse): data is BitbucketResponse {
-  return !Array.isArray(data) && 'values' in data && Array.isArray(data.values);
-}
+} from '../types/repository';
+import { createApiRequest, getErrorMessage, makeApiRequest } from '../utils/httpUtils';
 
 export function useRepositoryFetching({
   repositoryType,

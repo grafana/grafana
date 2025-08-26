@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isSupportedGitProvider } from './constants';
-import { createApiRequest, getErrorMessage, makeApiRequest } from './httpUtils';
-import { BranchInfo, RepositoryInfo, UseBranchFetchingProps, UseBranchFetchingResult } from './types';
+import { isSupportedGitProvider } from '../guards';
+import { BranchInfo, RepositoryInfo, UseBranchFetchingProps, UseBranchFetchingResult } from '../types/repository';
+import { createApiRequest, getErrorMessage, makeApiRequest } from '../utils/httpUtils';
 
 const GITHUB_URL_REGEX = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
 const GITLAB_URL_REGEX = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
