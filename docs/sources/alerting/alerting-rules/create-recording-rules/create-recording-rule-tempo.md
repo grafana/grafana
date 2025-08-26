@@ -37,7 +37,7 @@ For additional information, refer to [Grafana-managed recording rules](https://g
     - **Name**: A human-readable identifier for the recording rule.
     - **Metric**: The Prometheus-compatible name of the new metric series that will be generated.
     - **Target data source**:
-        - Must be a **Prometheus** data source with *write* permissions (to store the rule’s results).
+        - Must be a **Prometheus** data source with *write* permissions to store the rule’s results.
         - Ensure your Prometheus or Mimir/Loki metrics backend allows Grafana to write the new series.
 
 
