@@ -93,6 +93,7 @@ COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
 COPY apps/plugins apps/plugins
 COPY apps/shorturl apps/shorturl
+COPY apps/preferences apps/preferences
 COPY apps/provisioning apps/provisioning
 COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations

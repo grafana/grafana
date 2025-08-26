@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { createFieldConfigRegistry, SetFieldConfigOptionsArgs } from '@grafana/data';
 import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
-import { Stack, Field, useStyles2 } from '@grafana/ui';
+import { Field, useStyles2, Stack } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
@@ -52,7 +52,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
   const values = { ...defaultSparklineCellConfig, ...cellOptions };
 
   return (
-    <Stack direction="column" gap={0}>
+    <Stack direction="column">
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
         if (item.showIf && !item.showIf(values)) {
           return null;
