@@ -5,7 +5,7 @@ import { Fragment, memo, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Icon, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { Label } from '../../Label';
@@ -130,15 +130,7 @@ export const LogRecordViewerByTimestamp = memo(
                     </div>
                     {isErrorRow && (
                       <div className={styles.errorRow} data-testid="state-history-error">
-                        <Box
-                          display="flex"
-                          borderStyle="solid"
-                          borderColor="info"
-                          backgroundColor="info"
-                          paddingY={1}
-                          paddingX={2}
-                          borderRadius="default"
-                        >
+                        <div className={styles.errorContainer}>
                           <div
                             className={isExpanded ? styles.errorMessageExpanded : styles.errorMessageCollapsed}
                             ref={(el) => {
@@ -171,7 +163,7 @@ export const LogRecordViewerByTimestamp = memo(
                               </button>
                             </div>
                           )}
-                        </Box>
+                        </div>
                       </div>
                     )}
                   </Fragment>
@@ -270,6 +262,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     marginTop: theme.spacing(0.5),
     display: 'block',
+  }),
+  errorContainer: css({
+    display: 'flex',
+    background: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    gap: theme.spacing(2),
   }),
   errorMessageCollapsed: css({
     // default wrapping for single-line
