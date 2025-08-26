@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Create recording rules for Tempo
-title: Grafana-managed recording rules for Tempo
+title: Create Grafana-managed recording rules for Tempo
 weight: 1000
 _build:
   list: false
