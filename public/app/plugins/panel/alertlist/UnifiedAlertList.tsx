@@ -25,6 +25,7 @@ import {
   fetchAllPromAndRulerRulesAction,
   fetchPromAndRulerRulesAction,
 } from 'app/features/alerting/unified/state/actions';
+import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';
@@ -322,6 +323,33 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
         ? ({ dataSourceName }) => dataSourceName === GRAFANA_RULES_SOURCE_NAME
         : ({ dataSourceName }) => dataSourceName === options.datasource
     );
+  }
+
+  // Apply alertInstanceLabelFilter to filter rules based on their alert instances
+  if (options.alertInstanceLabelFilter) {
+    const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
+    if (replacedLabelFilter) {
+      filteredRules = filteredRules.filter((rule) => {
+        const alertingRule = getAlertingRule(rule);
+        if (!alertingRule || !alertingRule.alerts || alertingRule.alerts.length === 0) {
+          return false;
+        }
+
+        // Check if any alert instance matches the label filter
+        return alertingRule.alerts.some((alert) => {
+          try {
+            const matchers = parsePromQLStyleMatcherLooseSafe(replacedLabelFilter);
+            return labelsMatchMatchers(alert.labels, matchers);
+          } catch (error) {
+            // If parsing fails, fall back to simple string matching
+            return Object.entries(alert.labels).some(
+              ([key, value]) =>
+                replacedLabelFilter.includes(`${key}="${value}"`) || replacedLabelFilter.includes(`${key}=~"${value}"`)
+            );
+          }
+        });
+      });
+    }
   }
 
   // // Remove rules having 0 instances
