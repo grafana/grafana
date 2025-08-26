@@ -2212,6 +2212,13 @@
       "preview": "预览",
       "previewCondition": "预览提醒规则条件"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "添加联络点集成",
       "body-attention": "由于尚未配置默认策略，此联络点将自动设置为默认值。",
@@ -3530,7 +3537,6 @@
       "button-cancel": "取消",
       "button-move": "移动",
       "button-moving": "正在移动…",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3731,7 +3737,7 @@
         }
       }
     },
-    "category-arrow-direction": "箭头方向",
+    "category-arrow-direction": "",
     "category-background": "背景",
     "category-border": "边框",
     "category-canvas": "画布",
@@ -3763,15 +3769,17 @@
         "auto": "自动"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "启用实验元素类型的选择",
     "description-inline-editing": "启用直接编辑面板",
     "description-pan-zoom": "启用平移和缩放",
-    "direction-options": {
-      "label-both": "两个",
-      "label-forward": "前进",
-      "label-none": "无",
-      "label-reverse": "反转"
-    },
     "drone-front-item": {
       "category-drone-front": "无人机正面",
       "name-roll-angle": "横滚角"
@@ -5196,6 +5204,9 @@
       "save-json-to-file": "将 JSON 保存到文件",
       "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。"
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "载入配置"
     },
@@ -5467,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "更改可视化",
@@ -6106,9 +6120,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "切换共享菜单"
     },
-    "solo-panel-page": {
-      "loading": "正在加载"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "用于帮助解决可视化问题的数据面板 JSON"
@@ -6392,8 +6403,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "点击<2>此处</2>了解有关此错误的更多信息。",
-    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6643,6 +6653,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "固定颜色",
       "noOptionsMessage-no-fields-found": "未找到字段"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "上传"
@@ -7110,7 +7128,7 @@
     "rich-history-card": {
       "add-comment-form": "添加备注表单",
       "add-comment-tooltip": "添加备注",
-      "add-to-library": "添加到库",
+      "add-to-library": "",
       "cancel": "取消",
       "confirm-delete": "删除",
       "copy-query-tooltip": "将查询复制到剪贴板",
@@ -7222,7 +7240,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "从库添加查询",
+      "add-from-query-library": "",
       "query-add-button": "添加查询",
       "query-add-button-aria-label": "添加查询",
       "query-history-button": "查询历史记录",
@@ -7520,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9447,6 +9466,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9487,6 +9508,12 @@
       "show-context": "显示上下文",
       "show-log-line": "显示日志行",
       "sidebar-mode": "锚定到右侧",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "取消固定日志"
     },
     "log-line-menu": {
@@ -9718,7 +9745,8 @@
       "message-name-required": "名称为必填项",
       "message-reserved-name": "这是保留名称，不能用于文件夹。",
       "message-same-name": "已存在同名的数据面板或文件夹",
-      "message-same-name-general": "通用文件夹中已存在同名的文件夹或数据面板"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10662,10 +10690,6 @@
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
   },
-  "panel-search": {
-    "no-matches": "未找到匹配内容",
-    "unsupported-layout": "不支持的布局"
-  },
   "panel-type-filter": {
     "clear-button": "清除类型",
     "select-aria-label": "面板类型筛选器",
@@ -11200,11 +11224,15 @@
     },
     "delete-repository-button": {
       "button-delete": "删除",
-      "confirm-delete-repository": "您确定要删除存储库配置吗？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "删除存储库失败",
       "success-repository-deleted": "等待删除的存储库设置",
-      "title-delete-repository": "删除存储库配置",
-      "tooltip-delete-this-repository": "删除此存储库"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "回到存储库",
@@ -11850,7 +11878,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "折叠查询行",
       "datasource-help": "显示数据源帮助",
       "drag-and-drop": "拖放以重新排序",
@@ -11858,14 +11885,10 @@
       "expand-row": "展开查询行",
       "hide-response": "隐藏回复",
       "remove-query": "删除查询",
-      "replace-query-from-library": "替换为来自库的查询",
+      "replace-query-from-library": "",
       "show-response": "显示回复"
     },
-    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
   },
   "recently-deleted": {
     "buttons": {
@@ -12707,6 +12730,9 @@
       "label-alt-text": "替代文本",
       "label-title-text": "标题文本"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12998,6 +13024,7 @@
         "name-point-size": "点大小",
         "name-show-points": "显示点",
         "name-show-thresholds": "显示阈值",
+        "name-show-values": "",
         "name-style": "样式",
         "name-transform": "转换",
         "transform-options": {

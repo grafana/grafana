@@ -18,7 +18,7 @@ type ConcurrentJobDriver struct {
 	leaseRenewalInterval time.Duration
 	store                Store
 	repoGetter           RepoGetter
-	historicJobs         History
+	historicJobs         HistoryWriter
 	workers              []Worker
 	notifications        chan struct{}
 }
@@ -29,7 +29,7 @@ func NewConcurrentJobDriver(
 	jobTimeout, cleanupInterval, jobInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
-	historicJobs History,
+	historicJobs HistoryWriter,
 	notifications chan struct{},
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
