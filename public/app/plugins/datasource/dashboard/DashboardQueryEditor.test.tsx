@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import config from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -16,6 +17,7 @@ import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 import { DashboardQueryEditor, INVALID_PANEL_DESCRIPTION } from './DashboardQueryEditor';
 import { SHARED_DASHBOARD_QUERY } from './constants';
 import { DashboardDatasource } from './datasource';
+import { DashboardQuery } from './types';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
@@ -27,6 +29,9 @@ jest.mock('app/core/config', () => ({
         },
       },
     },
+  },
+  featureToggles: {
+    dashboardDsAdHocFiltering: false, // Default to false, can be overridden in tests
   },
 }));
 
@@ -163,5 +168,26 @@ describe('DashboardQueryEditor', () => {
     expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
       INVALID_PANEL_DESCRIPTION
     );
+  });
+
+  describe('AdHoc Filters Toggle', () => {
+    it('shows the AdHoc Filters toggle when feature toggle is enabled', async () => {
+      config.featureToggles.dashboardDsAdHocFiltering = true;
+
+      const query: DashboardQuery = { refId: 'A', panelId: 1, useAdHocFilters: false };
+
+      render(
+        <DashboardQueryEditor
+          datasource={{} as DashboardDatasource}
+          query={query}
+          data={mockPanelData}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQueries}
+        />
+      );
+
+      const adhocFiltersToggle = await screen.findByText('AdHoc Filters');
+      expect(adhocFiltersToggle).toBeInTheDocument();
+    });
   });
 });
