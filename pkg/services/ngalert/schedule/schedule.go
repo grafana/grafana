@@ -169,7 +169,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 
 func (sch *schedule) Run(ctx context.Context) error {
 	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.maxAttempts)
-	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
+	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker, sch.log)
 	defer t.Stop()
 
 	if err := sch.schedulePeriodic(ctx, t); err != nil {
