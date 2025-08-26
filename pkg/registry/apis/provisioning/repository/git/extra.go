@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -31,13 +30,9 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("git configuration is required")
 	}
 
-	var token commonMeta.RawSecureValue
-	if r.Secure.Token.IsZero() {
-		t, err := secure.Token(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decrypt token: %w", err)
-		}
-		token = t
+	token, err := secure.Token(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
 	return NewRepository(ctx, r, RepositoryConfig{
