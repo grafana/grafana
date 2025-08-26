@@ -9,6 +9,63 @@ import (
 func TestV16(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "should handle repeatIteration null",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse":        false,
+						"showTitle":       true,
+						"title":           "Overview",
+						"type":            "row",
+						"repeat":          nil,
+						"repeatIteration": nil,
+						"repeatRowId":     nil,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    2,
+								"type":  "stat",
+								"span":  12,
+								"title": "Customer Stats",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					// The stat panel should be processed and added
+					map[string]interface{}{
+						"id":    2,
+						"type":  "stat",
+						"title": "Customer Stats",
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 1,
+							"w": 24,
+							"h": 7, // default height
+						},
+					},
+					// The row panel should be created because showTitle is true
+					map[string]interface{}{
+						"id":        3, // Next ID after max panel ID (2)
+						"type":      "row",
+						"title":     "Overview",
+						"collapsed": false,
+						"repeat":    "",
+						"panels":    []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0,
+							"y": 0,
+							"w": 24,
+							"h": 7, // default height
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "should create proper grid",
 			input: map[string]interface{}{
 				"schemaVersion": 15,
