@@ -264,7 +264,7 @@ describe('SharedPreferences', () => {
 
       // Change date format to international
       const dateFormatSelect = await screen.findByRole('combobox', { name: /date style/i });
-      selectComboboxOptionInTest(dateFormatSelect, /international/i);
+      await selectComboboxOptionInTest(dateFormatSelect, /international/i);
 
       await userEvent.click(screen.getByText('Save'));
 
