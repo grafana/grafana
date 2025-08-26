@@ -5204,6 +5204,9 @@
       "save-json-to-file": "将 JSON 保存到文件",
       "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。"
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "载入配置"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "更改可视化",
@@ -6113,9 +6119,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "切换共享菜单"
-    },
-    "solo-panel-page": {
-      "loading": "正在加载"
     },
     "support-snapshot-service": {
       "description": {
@@ -7535,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9504,6 +9508,12 @@
       "show-context": "显示上下文",
       "show-log-line": "显示日志行",
       "sidebar-mode": "锚定到右侧",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "取消固定日志"
     },
     "log-line-menu": {
@@ -10679,10 +10689,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
-  },
-  "panel-search": {
-    "no-matches": "未找到匹配内容",
-    "unsupported-layout": "不支持的布局"
   },
   "panel-type-filter": {
     "clear-button": "清除类型",
@@ -13018,6 +13024,7 @@
         "name-point-size": "点大小",
         "name-show-points": "显示点",
         "name-show-thresholds": "显示阈值",
+        "name-show-values": "",
         "name-style": "样式",
         "name-transform": "转换",
         "transform-options": {

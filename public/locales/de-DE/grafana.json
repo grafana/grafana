@@ -5223,6 +5223,9 @@
       "save-json-to-file": "JSON in Datei speichern",
       "see-docs": "Weitere Informationen zur Bereitstellung finden Sie in der <2>Dokumentation</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Konfiguration wird geladen"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisierung ändern",
@@ -6134,9 +6140,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Freigabe-Menü umschalten"
-    },
-    "solo-panel-page": {
-      "loading": "Wird geladen"
     },
     "support-snapshot-service": {
       "description": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "Kontext anzeigen",
       "show-log-line": "Log-Linie anzeigen",
       "sidebar-mode": "Rechts verankern",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Log nicht mehr anheften"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"
     }
-  },
-  "panel-search": {
-    "no-matches": "Keine Treffer gefunden",
-    "unsupported-layout": "Nicht unterstütztes Layout"
   },
   "panel-type-filter": {
     "clear-button": "Typen zurücksetzen",
@@ -13059,6 +13065,7 @@
         "name-point-size": "Punktgröße",
         "name-show-points": "Punkte zeigen",
         "name-show-thresholds": "Schwellenwerte anzeigen",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Transformieren",
         "transform-options": {

@@ -5223,6 +5223,9 @@
       "save-json-to-file": "Spara JSON till fil",
       "see-docs": "Se <2>dokumentationen</2> för mer information om provisionering."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Läser in konfiguration"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ändra visualisering",
@@ -6134,9 +6140,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Växla delningsmenyn"
-    },
-    "solo-panel-page": {
-      "loading": "Laddar"
     },
     "support-snapshot-service": {
       "description": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "Visa sammanhang",
       "show-log-line": "Visa loggrad",
       "sidebar-mode": "Förankra till höger",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Frigör logg"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"
     }
-  },
-  "panel-search": {
-    "no-matches": "Inga träffar hittades",
-    "unsupported-layout": "Layout som inte stöds"
   },
   "panel-type-filter": {
     "clear-button": "Rensa typer",
@@ -13059,6 +13065,7 @@
         "name-point-size": "Punktstorlek",
         "name-show-points": "Visa poäng",
         "name-show-thresholds": "Visa trösklar",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Omvandla",
         "transform-options": {

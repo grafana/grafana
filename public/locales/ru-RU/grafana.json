@@ -5261,6 +5261,9 @@
       "save-json-to-file": "Сохранить модель JSON в файл",
       "see-docs": "Подробнее о подготовке см. в <2>документации</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Загрузка конфигурации"
     },
@@ -5532,6 +5535,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Изменить визуализацию",
@@ -6176,9 +6182,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Переключить меню общего доступа"
-    },
-    "solo-panel-page": {
-      "loading": "Загрузка"
     },
     "support-snapshot-service": {
       "description": {
@@ -7598,6 +7601,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9591,6 +9595,12 @@
       "show-context": "Показать контекст",
       "show-log-line": "Показать строку журнала",
       "sidebar-mode": "Привязать справа",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Открепить журнал"
     },
     "log-line-menu": {
@@ -10775,10 +10785,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Не удалось найти данные, соответствующие вашему запросу"
     }
-  },
-  "panel-search": {
-    "no-matches": "Совпадений не найдено",
-    "unsupported-layout": "Неподдерживаемый макет"
   },
   "panel-type-filter": {
     "clear-button": "Очистить типы",
@@ -13141,6 +13147,7 @@
         "name-point-size": "Размер точек",
         "name-show-points": "Показывать точки",
         "name-show-thresholds": "Показывать пороговые значения",
+        "name-show-values": "",
         "name-style": "Стиль",
         "name-transform": "Преобразовать",
         "transform-options": {

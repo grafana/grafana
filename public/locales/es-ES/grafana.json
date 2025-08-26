@@ -5223,6 +5223,9 @@
       "save-json-to-file": "Guardar JSON en un archivo",
       "see-docs": "Consulta la <2>documentación</2> para obtener más información sobre el aprovisionamiento."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Cargando configuración"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambiar visualización",
@@ -6134,9 +6140,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menú de compartir"
-    },
-    "solo-panel-page": {
-      "loading": "Cargando"
     },
     "support-snapshot-service": {
       "description": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "Mostrar contexto",
       "show-log-line": "Mostrar línea de log",
       "sidebar-mode": "Anclar a la derecha",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Desanclar log"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "No se ha encontrado nada que coincida con tu consulta"
     }
-  },
-  "panel-search": {
-    "no-matches": "No se han encontrado coincidencias",
-    "unsupported-layout": "Diseño no compatible"
   },
   "panel-type-filter": {
     "clear-button": "Borrar tipos",
@@ -13059,6 +13065,7 @@
         "name-point-size": "Tamaño de punto",
         "name-show-points": "Mostrar puntos",
         "name-show-thresholds": "Mostrar umbrales",
+        "name-show-values": "",
         "name-style": "Estilo",
         "name-transform": "Transformar",
         "transform-options": {

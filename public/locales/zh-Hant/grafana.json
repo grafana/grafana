@@ -5204,6 +5204,9 @@
       "save-json-to-file": "將 JSON 儲存至檔案",
       "see-docs": "有關佈建的更多資訊，請參閱<2>文件</2>。"
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "正在匯入設定"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "變更視覺效果",
@@ -6113,9 +6119,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "切換分享選單"
-    },
-    "solo-panel-page": {
-      "loading": "正在載入"
     },
     "support-snapshot-service": {
       "description": {
@@ -7535,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9504,6 +9508,12 @@
       "show-context": "顯示前後文",
       "show-log-line": "顯示紀錄行",
       "sidebar-mode": "錨定到右側",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "取消固定紀錄"
     },
     "log-line-menu": {
@@ -10679,10 +10689,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "找不到符合您查詢的內容"
     }
-  },
-  "panel-search": {
-    "no-matches": "沒有找到符合的項目",
-    "unsupported-layout": "不支援的版面配置"
   },
   "panel-type-filter": {
     "clear-button": "清除類型",
@@ -13018,6 +13024,7 @@
         "name-point-size": "點大小",
         "name-show-points": "顯示點",
         "name-show-thresholds": "顯示閾值",
+        "name-show-values": "",
         "name-style": "樣式",
         "name-transform": "轉變",
         "transform-options": {

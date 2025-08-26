@@ -5223,6 +5223,9 @@
       "save-json-to-file": "JSON'u dosyaya kaydet",
       "see-docs": "Sağlama hakkında daha fazla bilgi için <2>belgelere</2> bakın. "
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Yapılandırma yükleniyor"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Görselleştirmeyi değiştir",
@@ -6134,9 +6140,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Paylaşım menüsünü aç/kapat"
-    },
-    "solo-panel-page": {
-      "loading": "Yükleniyor"
     },
     "support-snapshot-service": {
       "description": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "İçeriği göster",
       "show-log-line": "Günlük satırını göster",
       "sidebar-mode": "Sağa sabitle",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Günlüğü sabitlemeyi kaldır"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
     }
-  },
-  "panel-search": {
-    "no-matches": "Sonuç bulunamadı",
-    "unsupported-layout": "Desteklenmeyen düzen"
   },
   "panel-type-filter": {
     "clear-button": "Türleri temizle",
@@ -13059,6 +13065,7 @@
         "name-point-size": "Nokta boyutu",
         "name-show-points": "Noktaları göster",
         "name-show-thresholds": "Eşikleri göster",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Dönüştür",
         "transform-options": {

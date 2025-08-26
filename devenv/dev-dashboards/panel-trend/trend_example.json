@@ -57,6 +57,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": true,
             "spanNulls": false,
             "stacking": {
               "group": "A",
