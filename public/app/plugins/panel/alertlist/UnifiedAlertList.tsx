@@ -341,11 +341,30 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
             const matchers = parsePromQLStyleMatcherLooseSafe(replacedLabelFilter);
             return labelsMatchMatchers(alert.labels, matchers);
           } catch (error) {
-            // If parsing fails, fall back to simple string matching
-            return Object.entries(alert.labels).some(
-              ([key, value]) =>
-                replacedLabelFilter.includes(`${key}="${value}"`) || replacedLabelFilter.includes(`${key}=~"${value}"`)
-            );
+            // Enhanced fallback for more matcher types
+            return Object.entries(alert.labels).some(([key, value]) => {
+              // Handle exact match: key="value"
+              if (replacedLabelFilter.includes(`${key}="${value}"`)) {
+                return true;
+              }
+
+              // Handle negative exact match: key!="value"
+              if (replacedLabelFilter.includes(`${key}!="${value}"`)) {
+                return false; // This label value should NOT match
+              }
+
+              // Handle regex match: key=~"value"
+              if (replacedLabelFilter.includes(`${key}=~"${value}"`)) {
+                return true;
+              }
+
+              // Handle negative regex match: key!~"value"
+              if (replacedLabelFilter.includes(`${key}!~"${value}"`)) {
+                return false; // This label value should NOT match regex
+              }
+
+              return false;
+            });
           }
         });
       });
