@@ -42,41 +42,14 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 	var client zanzana.Client
 	switch cfg.ZanzanaClient.Mode {
 	case setting.ZanzanaModeClient:
-		tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            cfg.ZanzanaClient.Token,
-			TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
-		}
-
-		if cfg.StackID == "" {
-			return nil, fmt.Errorf("missing stack ID")
-		}
-
-		transportCredentials := insecure.NewCredentials()
-		if cfg.ZanzanaClient.ServerCertFile != "" {
-			transportCredentials, err = credentials.NewClientTLSFromFile(cfg.ZanzanaClient.ServerCertFile, "")
-			if err != nil {
-				return nil, fmt.Errorf("failed to initialize TLS certificate: %w", err)
-			}
-		}
-		dialOptions := []grpc.DialOption{
-			grpc.WithTransportCredentials(transportCredentials),
-			grpc.WithPerRPCCredentials(
-				NewGRPCTokenAuth(AuthzServiceAudience, fmt.Sprintf("stacks-%s", cfg.StackID), tokenClient),
-			),
-		}
-
-		conn, err := grpc.NewClient(cfg.ZanzanaClient.Addr, dialOptions...)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
-		}
-
-		client, err = zanzana.NewClient(conn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
-		}
+		return NewZanzanaClient(
+			fmt.Sprintf("stacks-%s", cfg.StackID),
+			ZanzanaClientConfig{
+				Address:          cfg.ZanzanaClient.Addr,
+				Token:            cfg.ZanzanaClient.Token,
+				TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
+				ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+			})
 	case setting.ZanzanaModeEmbedded:
 		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
@@ -115,6 +88,54 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.ZanzanaClient.Mode)
+	}
+
+	return client, nil
+}
+
+type ZanzanaClientConfig struct {
+	Address          string
+	Token            string
+	TokenExchangeURL string
+	ServerCertFile   string
+}
+
+func NewZanzanaClient(namespace string, cfg ZanzanaClientConfig) (zanzana.Client, error) {
+	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		Token:            cfg.Token,
+		TokenExchangeURL: cfg.TokenExchangeURL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+
+	transportCredentials := insecure.NewCredentials()
+	if cfg.ServerCertFile != "" {
+		transportCredentials, err = credentials.NewClientTLSFromFile(cfg.ServerCertFile, "")
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize TLS certificate: %w", err)
+		}
+	}
+
+	dialOptions := []grpc.DialOption{
+		grpc.WithTransportCredentials(transportCredentials),
+		grpc.WithPerRPCCredentials(
+			NewGRPCTokenAuth(
+				AuthzServiceAudience,
+				namespace,
+				tokenClient,
+			),
+		),
+	}
+
+	conn, err := grpc.NewClient(cfg.Address, dialOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
+	}
+
+	client, err := zanzana.NewClient(conn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 	}
 
 	return client, nil

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/plugin/kubeconfig"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/grafana/grafana/pkg/services/authz"
 )
 
 const (
@@ -19,7 +20,7 @@ type Config struct {
 	OTelConfig       simple.OpenTelemetryConfig
 	WebhookServer    WebhookServerConfig
 	KubeConfig       *kubeconfig.NamespacedConfig
-	ZanzanaClient    ZanzanaClientConfig
+	ZanzanaClient    authz.ZanzanaClientConfig
 	FolderReconciler FolderReconcilerConfig
 }
 
@@ -27,10 +28,6 @@ type WebhookServerConfig struct {
 	Port        int
 	TLSCertPath string
 	TLSKeyPath  string
-}
-
-type ZanzanaClientConfig struct {
-	Addr string
 }
 
 type FolderReconcilerConfig struct {
@@ -112,7 +109,10 @@ func LoadConfigFromEnv() (*Config, error) {
 		cfg.KubeConfig = kubeConfig
 	}
 
-	cfg.ZanzanaClient.Addr = os.Getenv("ZANZANA_ADDR")
+	cfg.ZanzanaClient.Address = os.Getenv("ZANZANA_ADDR")
+	cfg.ZanzanaClient.Token = os.Getenv("ZANZANA_TOKEN")
+	cfg.ZanzanaClient.TokenExchangeURL = os.Getenv("ZANZANA_TOKEN_EXCHANGE_URL")
+	cfg.ZanzanaClient.ServerCertFile = os.Getenv("ZANZANA_SERVER_CERT_FILE")
 
 	cfg.FolderReconciler.Namespace = os.Getenv("FOLDER_RECONCILER_NAMESPACE")
 
