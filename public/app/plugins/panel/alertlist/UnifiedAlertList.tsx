@@ -16,7 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import alertDef from 'app/features/alerting/state/alertDef';
+// import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
@@ -25,6 +25,7 @@ import {
   fetchAllPromAndRulerRulesAction,
   fetchPromAndRulerRulesAction,
 } from 'app/features/alerting/unified/state/actions';
+import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';
@@ -257,8 +258,25 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
 function sortRules(sortOrder: SortOrder, rules: CombinedRuleWithLocation[]) {
   if (sortOrder === SortOrder.Importance) {
-    // @ts-ignore
-    return sortBy(rules, (rule) => alertDef.alertStateSortScore[rule.state]);
+    // Enhanced importance sorting: Critical (Firing) first, then Warning (Pending), then Normal (Inactive)
+    return sortBy(rules, (rule) => {
+      const alertingRule = getAlertingRule(rule);
+      if (!alertingRule) {
+        return 999; // Put rules without alerting data at the end
+      }
+
+      // Priority order: Firing (Critical) = 1, Pending (Warning) = 2, Inactive (Normal) = 3
+      switch (alertingRule.state) {
+        case PromAlertingRuleState.Firing:
+          return 1; // Highest priority - Critical alerts
+        case PromAlertingRuleState.Pending:
+          return 2; // Medium priority - Warning alerts
+        case PromAlertingRuleState.Inactive:
+          return 3; // Lowest priority - Normal/OK alerts
+        default:
+          return 999; // Unknown states at the end
+      }
+    });
   } else if (sortOrder === SortOrder.TimeAsc) {
     return sortBy(rules, (rule) => {
       //at this point rules are all AlertingRule, this check is only needed for Typescript checks
@@ -322,6 +340,52 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
         ? ({ dataSourceName }) => dataSourceName === GRAFANA_RULES_SOURCE_NAME
         : ({ dataSourceName }) => dataSourceName === options.datasource
     );
+  }
+
+  // Apply alertInstanceLabelFilter to filter rules based on their alert instances
+  if (options.alertInstanceLabelFilter) {
+    const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
+    if (replacedLabelFilter) {
+      filteredRules = filteredRules.filter((rule) => {
+        const alertingRule = getAlertingRule(rule);
+        if (!alertingRule || !alertingRule.alerts || alertingRule.alerts.length === 0) {
+          return false;
+        }
+
+        // Check if any alert instance matches the label filter
+        return alertingRule.alerts.some((alert) => {
+          try {
+            const matchers = parsePromQLStyleMatcherLooseSafe(replacedLabelFilter);
+            return labelsMatchMatchers(alert.labels, matchers);
+          } catch (error) {
+            // Enhanced fallback for more matcher types
+            return Object.entries(alert.labels).some(([key, value]) => {
+              // Handle exact match: key="value"
+              if (replacedLabelFilter.includes(`${key}="${value}"`)) {
+                return true;
+              }
+
+              // Handle negative exact match: key!="value"
+              if (replacedLabelFilter.includes(`${key}!="${value}"`)) {
+                return false; // This label value should NOT match
+              }
+
+              // Handle regex match: key=~"value"
+              if (replacedLabelFilter.includes(`${key}=~"${value}"`)) {
+                return true;
+              }
+
+              // Handle negative regex match: key!~"value"
+              if (replacedLabelFilter.includes(`${key}!~"${value}"`)) {
+                return false; // This label value should NOT match regex
+              }
+
+              return false;
+            });
+          }
+        });
+      });
+    }
   }
 
   // // Remove rules having 0 instances
