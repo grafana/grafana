@@ -61,7 +61,7 @@ For additional information, refer to [Grafana-managed recording rules](https://g
     - Labels can help group or filter rules later.
     - Folders provide UI organization and RBAC scoping.
 
-1. Set evaluation behavior
+1. Set evaluation behavior.
 
     Recording rules are executed by evaluation groups at fixed intervals. Align this interval with the query’s time range.
 
