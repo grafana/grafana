@@ -405,7 +405,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQueryFromLibrary}
               >
-                <Trans i18nKey={'dashboards.panel-queries.add-query-from-library'}>Add query from library</Trans>
+                <Trans i18nKey={'dashboards.panel-queries.add-from-saved-queries'}>Add from saved queries</Trans>
               </Button>
             )}
           </>
