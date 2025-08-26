@@ -2858,19 +2858,19 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 #### `sql_expression_cell_limit`
 
-Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`. A setting of `0` means no limit.
 
 #### `sql_expression_output_cell_limit`
 
-Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
+Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`. A setting of `0` means no limit.
 
 ### `sql_expression_query_length_limit`
 
-Set the maximum length of a SQL query that can be used in a SQL expression. Default is `10000` characters.
+Set the maximum length of a SQL query that can be used in a SQL expression. Default is `10000` characters. A setting of `0` means no limit.
 
 #### `sql_expression_timeout`
 
-The duration a SQL expression will run before being cancelled. The default is `10s`.
+The duration a SQL expression will run before being cancelled. The default is `10s`. A setting of `0s` means no limit.
 
 ### `[geomap]`
 
