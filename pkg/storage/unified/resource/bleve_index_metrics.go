@@ -74,7 +74,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		UpdatedDocuments: promauto.With(reg).NewSummary(prometheus.SummaryOpts{
-			Name: "index_server_update_documents_total",
+			Name: "index_server_update_documents",
 			Help: "Number of documents indexed during index update",
 		}),
 		SearchUpdateWaitTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
