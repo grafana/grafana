@@ -11443,8 +11443,7 @@
       "title-delete-all-configured-repositories": "Delete all configured repositories",
       "title-legacy-storage-detected": "Legacy storage detected"
     },
-    "inline-secure-values-warning-body": "The method to save secure values has changed. This requires re-saving all secrets.",
-    "inline-secure-values-warning-title": "Access tokens need to be saved again",
+    "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
     "inline-token-warning-badge-text": "Token needs to be saved again",
     "job-status": {
       "label-view-details": "View details",
