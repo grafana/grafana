@@ -169,6 +169,7 @@ alertingAIGenAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
 alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
+alertingRuleNotificationMessageSectionExtension,experimental,@grafana/alerting-squad,false,false,false
 alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false

@@ -687,6 +687,10 @@ const (
 	// Enable AI-generated alerting templates.
 	FlagAlertingAIGenTemplates = "alertingAIGenTemplates"
 
+	// FlagAlertingRuleNotificationMessageSectionExtension
+	// Enable rule notification message section extension.
+	FlagAlertingRuleNotificationMessageSectionExtension = "alertingRuleNotificationMessageSectionExtension"
+
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"

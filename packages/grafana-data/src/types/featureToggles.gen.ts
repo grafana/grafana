@@ -756,6 +756,11 @@ export interface FeatureToggles {
   */
   alertingAIGenTemplates?: boolean;
   /**
+  * Enable rule notification message section extension.
+  * @default false
+  */
+  alertingRuleNotificationMessageSectionExtension?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */

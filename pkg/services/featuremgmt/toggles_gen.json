@@ -410,6 +410,21 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleNotificationMessageSectionExtension",
+        "resourceVersion": "1756193222535",
+        "creationTimestamp": "2025-08-26T07:27:02Z"
+      },
+      "spec": {
+        "description": "Enable rule notification message section extension.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-04-03T11:18:25Z"

@@ -1298,6 +1298,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingRuleNotificationMessageSectionExtension",
+			Description:       "Enable rule notification message section extension.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIAnalyzeCentralStateHistory",
 			Description:       "Enable AI-analyze central state history.",
 			Stage:             FeatureStageExperimental,
