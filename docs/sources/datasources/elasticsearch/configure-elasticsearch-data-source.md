@@ -32,6 +32,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+  provisioning-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/#provision-the-data-source
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/elasticsearch/#provision-the-data-source
 ---
 
 # Configure the Elasticsearch data source
@@ -42,7 +47,7 @@ You can create a variety of queries to visualize logs or metrics stored in Elast
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 
 Only users with the organization `administrator` role can add data sources.
-Administrators can also [configure the data source via YAML](ref:provisioning-data-sources) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](ref:provisioning-data-source) with Grafana's provisioning system.
 
 ## Configuring permissions
 

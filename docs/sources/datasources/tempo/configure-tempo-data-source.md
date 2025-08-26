@@ -47,8 +47,8 @@ refs:
   provisioning-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/provision
-      destination: /docs/grafana/next/administration/provisioning/#data-sources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/

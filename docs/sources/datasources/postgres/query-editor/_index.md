@@ -17,22 +17,27 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
   add-template-variables-interval:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__interval
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana-cloud/visualizations/explore/
   query-transform-data:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+  configure-standard-options-display-name:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/panels-visualizations/configure-standard-options/#display-name
   query-editor:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
@@ -53,6 +58,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#templates
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/#templates
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # PostgreSQL query editor
