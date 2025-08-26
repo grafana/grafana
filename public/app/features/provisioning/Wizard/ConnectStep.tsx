@@ -5,6 +5,7 @@ import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useBranchFetching } from '../hooks/useBranchFetching';
+import { useRepositoryFetching } from '../hooks/useRepositoryFetching';
 import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -29,6 +30,16 @@ export function ConnectStep() {
   const repositoryToken = watch('repository.token') || '';
   const isGitBased = isGitProvider(type);
 
+  // Fetch repositories for Git providers
+  const {
+    repositories,
+    loading: repositoriesLoading,
+    error: repositoriesError,
+  } = useRepositoryFetching({
+    repositoryType: type,
+    repositoryToken,
+  });
+
   // Fetch branches for Git providers
   const {
     branches,
@@ -39,6 +50,14 @@ export function ConnectStep() {
     repositoryUrl,
     repositoryToken,
   });
+
+  // Create options for repository selector
+  const repositoryOptions = useMemo(() => {
+    return repositories.map((repo) => ({
+      label: repo.fullName,
+      value: repo.url,
+    }));
+  }, [repositories]);
 
   // Create options for branch selector
   const branchOptions = useMemo(() => {
@@ -107,14 +126,26 @@ export function ConnectStep() {
             noMargin
             label={gitFields.urlConfig.label}
             description={gitFields.urlConfig.description}
-            error={errors?.repository?.url?.message}
-            invalid={!!errors?.repository?.url?.message}
+            error={errors?.repository?.url?.message || repositoriesError}
+            invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
             required={gitFields.urlConfig.required}
           >
-            <Input
-              {...register('repository.url', gitFields.urlConfig.validation)}
-              id="url"
-              placeholder={gitFields.urlConfig.placeholder}
+            <Controller
+              name="repository.url"
+              control={control}
+              rules={gitFields.urlConfig.validation}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
+                  onChange={(option) => onChange(option?.value || '')}
+                  placeholder={gitFields.urlConfig.placeholder}
+                  options={repositoryOptions}
+                  loading={repositoriesLoading}
+                  createCustomValue={true}
+                  isClearable
+                  {...field}
+                />
+              )}
             />
           </Field>
 

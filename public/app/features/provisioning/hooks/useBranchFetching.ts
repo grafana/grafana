@@ -1,42 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { RepoType } from '../Wizard/types';
-
-interface BranchInfo {
-  name: string;
-  isDefault?: boolean;
-}
-
-interface HttpError extends Error {
-  status?: number;
-}
-
-function isHttpError(err: unknown): err is HttpError {
-  return err instanceof Error && 'status' in err;
-}
-
-interface UseBranchFetchingProps {
-  repositoryType: RepoType;
-  repositoryUrl: string;
-  repositoryToken: string;
-}
-
-interface UseBranchFetchingResult {
-  branches: BranchInfo[];
-  loading: boolean;
-  error: string | null;
-}
-
-interface RepositoryInfo {
-  owner: string;
-  repo: string;
-}
+import { isSupportedGitProvider } from './constants';
+import { createApiRequest, getErrorMessage, makeApiRequest } from './httpUtils';
+import { BranchInfo, RepositoryInfo, UseBranchFetchingProps, UseBranchFetchingResult } from './types';
 
 const GITHUB_URL_REGEX = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
 const GITLAB_URL_REGEX = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
 const BITBUCKET_URL_REGEX = /^https:\/\/bitbucket\.org\/([^\/]+)\/([^\/]+)\/?$/;
 
-function parseRepositoryUrl(url: string, type: RepoType): RepositoryInfo | null {
+export function parseRepositoryUrl(url: string, type: string): RepositoryInfo | null {
   let match: RegExpMatchArray | null = null;
 
   switch (type) {
@@ -73,9 +45,7 @@ export function useBranchFetching({
   const [error, setError] = useState<string | null>(null);
 
   const hasRequiredData = useMemo(() => {
-    // Only attempt to fetch branches for supported Git providers
-    const supportedProviders = ['github', 'gitlab', 'bitbucket'];
-    if (!supportedProviders.includes(repositoryType)) {
+    if (!isSupportedGitProvider(repositoryType)) {
       return false;
     }
 
@@ -104,41 +74,8 @@ export function useBranchFetching({
     setError(null);
 
     try {
-      let apiUrl = '';
-      const headers: Record<string, string> = {};
-
-      switch (repositoryType) {
-        case 'github':
-          apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/branches`;
-          headers['Authorization'] = `Bearer ${trimmedToken}`;
-          break;
-        case 'gitlab':
-          const encodedPath = encodeURIComponent(`${repoInfo.owner}/${repoInfo.repo}`);
-          apiUrl = `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches`;
-          headers['Private-Token'] = trimmedToken;
-          break;
-        case 'bitbucket':
-          apiUrl = `https://api.bitbucket.org/2.0/repositories/${repoInfo.owner}/${repoInfo.repo}/refs/branches`;
-          headers['Authorization'] = `Bearer ${trimmedToken}`;
-          break;
-        default:
-          throw new Error(`Unsupported repository type: ${repositoryType}`);
-      }
-
-      const response = await window.fetch(apiUrl, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('API Error Response:', errorData);
-        const error: HttpError = new Error(`HTTP ${response.status}: ${response.statusText}`);
-        error.status = response.status;
-        throw error;
-      }
-
-      const data = await response.json();
+      const apiConfig = createApiRequest(repositoryType, trimmedToken);
+      const data = await makeApiRequest(apiConfig.branches(repoInfo.owner, repoInfo.repo));
       let branchData: BranchInfo[] = [];
 
       if (repositoryType === 'github') {
@@ -167,21 +104,7 @@ export function useBranchFetching({
       setBranches(branchData);
     } catch (err: unknown) {
       console.error('Failed to fetch branches:', err);
-      let errorMessage = 'Failed to fetch branches';
-
-      if (isHttpError(err)) {
-        if (err.status === 401) {
-          errorMessage = 'Authentication failed. Please check your access token.';
-        } else if (err.status === 404) {
-          errorMessage = 'Repository not found. Please check the repository URL.';
-        } else if (err.status === 403) {
-          errorMessage = 'Access denied. Please check your token permissions.';
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-      }
-
-      setError(errorMessage);
+      setError(getErrorMessage(err));
       setBranches([]);
     } finally {
       setLoading(false);
