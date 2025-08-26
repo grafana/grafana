@@ -763,9 +763,9 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 	metrics := resource.ProvideIndexMetrics(reg)
 
 	backend, err := NewBleveBackend(BleveOptions{
-		Root:             dir,
-		FileThreshold:    int64(fileThreshold),
-		IndexCacheTTL:    cacheTTL,
+		Root:          dir,
+		FileThreshold: int64(fileThreshold),
+		IndexCacheTTL: cacheTTL,
 	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -1511,7 +1511,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 		Resource:  "resource",
 	}
 
-	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "", false)
+	be, _ := setupBleveBackend(t, 5, 1*time.Minute, "")
 
 	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		var items []*resource.BulkIndexItem
