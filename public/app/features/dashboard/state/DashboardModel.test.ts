@@ -8,6 +8,7 @@ import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { createQueryVariable } from '../../variables/state/__tests__/fixtures';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
@@ -1156,6 +1157,25 @@ describe('DashboardModel', () => {
       });
       const panel = dashboard.getPanelById(2);
       expect(dashboard.canEditPanel(panel)).toBe(true);
+    });
+  });
+
+  describe('hasVariableErrors', () => {
+    it('returns false if the dashboard has no variables', () => {
+      const dashboard = createDashboardModelFixture({}, undefined, () => []);
+      expect(dashboard.hasVariableErrors()).toBe(false);
+    });
+
+    it('returns false if no variables has errors', () => {
+      const dashboard = createDashboardModelFixture({}, undefined, () => [createQueryVariable()]);
+      expect(dashboard.hasVariableErrors()).toBe(false);
+    });
+
+    it('returns true if one or more variables has errors', () => {
+      const dashboard = createDashboardModelFixture({}, undefined, () => [
+        createQueryVariable({ error: new Error('Something went wrong') }),
+      ]);
+      expect(dashboard.hasVariableErrors()).toBe(true);
     });
   });
 });

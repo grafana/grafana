@@ -149,6 +149,8 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator?: DashboardLayoutOrchestrator;
+  /** Whether the dashboard has one or more variable errors */
+  variableErrors?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -414,6 +416,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         dashboardRef: this.getRef(),
         saveAsCopy,
         onSaveSuccess,
+        showVariablesWarning: this.state.variableErrors,
       }),
     });
   }
@@ -828,5 +831,11 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
         this._dashboard.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
       }
     }
+
+    const variableErrors = Boolean(
+      this._dashboard.state.$variables?.state.variables.find((v) => Boolean(v.state.error))
+    );
+
+    this._dashboard.setState({ variableErrors });
   }
 }
