@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
