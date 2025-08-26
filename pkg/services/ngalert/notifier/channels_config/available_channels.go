@@ -14,6 +14,13 @@ import (
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
+type NotifierVersion string
+
+const (
+	V0 NotifierVersion = "v0mimir1"
+	V1 NotifierVersion = "v1"
+)
+
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
 	hostname, _ := os.Hostname()
@@ -2055,14 +2062,24 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 }
 
 // GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
-func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
-	notifiers := GetAvailableNotifiers()
-	for _, n := range notifiers {
-		if strings.EqualFold(n.Type, contactPointType) {
-			return getSecretFields("", n.Options), nil
+func GetSecretKeysForContactPointType(contactPointType string, version NotifierVersion) ([]string, error) {
+	if version == V1 {
+		notifiers := GetAvailableNotifiers()
+		for _, n := range notifiers {
+			if strings.EqualFold(n.Type, contactPointType) {
+				return getSecretFields("", n.Options), nil
+			}
 		}
 	}
-	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+	if version == V0 {
+		notifiers := GetAvailableMimirNotifiers()
+		for _, n := range notifiers {
+			if strings.EqualFold(n.Type, contactPointType) {
+				return getSecretFields("", n.Options), nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("no secrets configured for type '%s' of version %s", contactPointType, version)
 }
 
 func getSecretFields(parentPath string, options []NotifierOption) []string {
@@ -2108,9 +2125,9 @@ func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
 	}
 	for _, n := range v1 {
 		pl := newPlugin(n)
-		pl.CurrentVersion = "v1"
+		pl.CurrentVersion = V1
 		pl.Versions = append(pl.Versions, NotifierPluginVersion{
-			Version:   "v1",
+			Version:   V1,
 			CanCreate: true,
 			Options:   n.Options,
 			Info:      "",
@@ -2122,10 +2139,10 @@ func GetAvailableNotifiersV2() iter.Seq[VersionedNotifierPlugin] {
 		pl, ok := m[n.Type]
 		if !ok {
 			pl = newPlugin(n)
-			pl.CurrentVersion = "v0"
+			pl.CurrentVersion = V0
 		}
 		pl.Versions = append(pl.Versions, NotifierPluginVersion{
-			Version:   "v0",
+			Version:   V0,
 			CanCreate: false,
 			Options:   n.Options,
 			Info:      "",

@@ -223,14 +223,14 @@ func IntegrationConfigFromType(integrationType string, version *string) (Integra
 		versionConfig = config.GetCurrentVersion()
 	} else {
 		var ok bool
-		versionConfig, ok = config.GetVersion(*version)
+		versionConfig, ok = config.GetVersion(channels_config.NotifierVersion(*version))
 		if !ok {
 			return IntegrationConfig{}, fmt.Errorf("version %s not found in config", *version)
 		}
 	}
 	integrationConfig := IntegrationConfig{
 		Type:    config.Type,
-		Version: versionConfig.Version,
+		Version: string(versionConfig.Version),
 		Fields:  make(map[string]IntegrationField, len(versionConfig.Options)),
 	}
 	for _, option := range versionConfig.Options {
