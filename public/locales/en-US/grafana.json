@@ -9643,7 +9643,9 @@
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
-      "wrap-lines": "Wrap lines"
+      "wrap-json-lines": "Wrap lines and expand JSON",
+      "wrap-lines": "Wrap lines",
+      "wrap-lines-plus": "+"
     },
     "logs-navigation": {
       "newer-logs": "Newer logs",
