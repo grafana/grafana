@@ -5204,6 +5204,9 @@
       "save-json-to-file": "Simpan JSON ke file",
       "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Memuat konfigurasi"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ubah visualisasi",
@@ -6113,9 +6119,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
-    },
-    "solo-panel-page": {
-      "loading": "Memuat"
     },
     "support-snapshot-service": {
       "description": {
@@ -7535,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9504,6 +9508,12 @@
       "show-context": "Tampilkan konteks",
       "show-log-line": "Tampilkan baris log",
       "sidebar-mode": "Jangkarkan ke kanan",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Buka sematan log"
     },
     "log-line-menu": {
@@ -10679,10 +10689,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Tidak dapat menemukan sesuatu yang cocok dengan kueri Anda"
     }
-  },
-  "panel-search": {
-    "no-matches": "Tidak ditemukan kecocokan",
-    "unsupported-layout": "Tata letak tidak didukung"
   },
   "panel-type-filter": {
     "clear-button": "Hapus jenis",
