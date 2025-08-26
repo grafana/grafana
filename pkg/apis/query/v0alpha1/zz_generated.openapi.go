@@ -276,16 +276,8 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnectionRef(ref common.Reference
 							Format:  "",
 						},
 					},
-					"plugin": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The plugin -- NOTE, this has a 1:1 mapping with apiGroup and should likely be removed",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"group", "version", "name", "plugin"},
+				Required: []string{"group", "version", "name"},
 			},
 		},
 	}

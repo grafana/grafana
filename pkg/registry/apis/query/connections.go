@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -105,13 +104,13 @@ func (q *connectionsProvider) GetConnection(ctx context.Context, namespace strin
 }
 
 func (q *connectionsProvider) ListConnections(ctx context.Context, namespace string) (*queryV0.DataSourceConnectionList, error) {
-	info, err := authlib.ParseNamespace(namespace)
+	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	dss, err := q.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
-		OrgID:           info.OrgID,
+		OrgID:           ns.OrgID,
 		DataSourceLimit: 10000,
 	})
 	if err != nil {
@@ -121,7 +120,6 @@ func (q *connectionsProvider) ListConnections(ctx context.Context, namespace str
 		Items: []queryV0.DataSourceConnection{},
 	}
 	for _, ds := range dss {
-		// TODO, access control?!
 		v, err := q.asConnection(ds, namespace)
 		if err != nil {
 			return nil, err
@@ -134,12 +132,7 @@ func (q *connectionsProvider) ListConnections(ctx context.Context, namespace str
 func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string) (v *queryV0.DataSourceConnection, err error) {
 	gv, err := q.registry.GetDatasourceGroupVersion(ds.Type)
 	if err != nil {
-		// how does this happen? (grafana-e2etest-datasource)
-		gv = schema.GroupVersion{
-			Group:   "unknown-" + ds.Type,
-			Version: "unknown",
-		}
-		err = nil
+		return nil, fmt.Errorf("datasource type %q does not map to an apiserver %w", ds.Type, err)
 	}
 
 	v = &queryV0.DataSourceConnection{
@@ -155,7 +148,6 @@ func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string
 			Group:   gv.Group,
 			Version: gv.Version,
 			Name:    ds.UID,
-			Plugin:  ds.Type,
 		},
 	}
 	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server

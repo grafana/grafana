@@ -12,7 +12,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceConnection struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitzero,omitempty"`
 
 	// The configured display name
 	Title string `json:"title"`
@@ -25,9 +25,6 @@ type DataSourceConnectionRef struct {
 	Group   string `json:"group"`
 	Version string `json:"version"`
 	Name    string `json:"name"`
-
-	// The plugin -- NOTE, this has a 1:1 mapping with apiGroup and should likely be removed
-	Plugin string `json:"plugin"`
 }
 
 // The valid connection name for a group + identifier
@@ -39,7 +36,7 @@ func DataSourceConnectionName(group, name string) string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceConnectionList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
 
 	Items []DataSourceConnection `json:"items"`
 }
@@ -61,7 +58,7 @@ type DataSourceApiServerRegistry interface {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceApiServer struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitzero,omitempty"`
 
 	// The display name
 	Title string `json:"title"`
@@ -80,7 +77,7 @@ type DataSourceApiServer struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceApiServerList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
 
 	Items []DataSourceApiServer `json:"items"`
 }
