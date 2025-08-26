@@ -1,7 +1,6 @@
 ---
 aliases:
-  - cli/ # docs/grafana/latest/adminsitration/cli
-  - ../cli/ # docs/grafana/latest/cli
+  - ../cli/ # /docs/grafana/latest/cli/
 description: Guide to using grafana server cli
 keywords:
   - grafana
