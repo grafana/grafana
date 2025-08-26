@@ -21,7 +21,7 @@ _build:
 
 Grafana-managed recording rules let you pre-compute query results and store them as new time series metrics. These metrics can then be reused in dashboards, alerts, or downstream queries, improving performance and reliability.
 
-This guide explains how to configure recording rules for the **Tempo data source**. It highlights Tempo-specific considerations, such as TraceQL metrics queries, time range alignment, and evaluation delays.
+This guide explains how to configure recording rules for the **Tempo data source**, including product-specific considerations, such as TraceQL metrics queries, time range alignment, and evaluation delays.
 
 For background, see [Grafana-managed recording rules](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/).
 
