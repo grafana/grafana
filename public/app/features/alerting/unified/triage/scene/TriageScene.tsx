@@ -1,7 +1,8 @@
 import {
-  CustomVariable,
+  AdHocFiltersVariable,
   EmbeddedScene,
   FormatVariable,
+  GroupByVariable,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
@@ -18,10 +19,10 @@ import {
 
 import { summaryChart } from './SummaryChart';
 import { WorkbenchSceneObject } from './Workbench';
-import { DEFAULT_FIELDS, METRIC_NAME, defaultTimeRange, getQueryRunner } from './utils';
+import { DEFAULT_FIELDS, DS_UID, METRIC_NAME, defaultTimeRange, getQueryRunner } from './utils';
 
 export const triageScene = new EmbeddedScene({
-  $behaviors: [registerAlertsGroupByMacro, registerFilterExpressionMacro],
+  $behaviors: [registerAlertsGroupByMacro],
   controls: [
     new VariableValueSelectors({}),
     new SceneControlsSpacer(),
@@ -32,11 +33,30 @@ export const triageScene = new EmbeddedScene({
   $timeRange: new SceneTimeRange(defaultTimeRange),
   $variables: new SceneVariableSet({
     variables: [
-      new CustomVariable({
+      new GroupByVariable({
         name: 'groupBy',
-        isMulti: true,
+        label: 'Group by',
+        datasource: {
+          type: 'prometheus',
+          uid: DS_UID,
+        },
         allowCustomValue: true,
-        noValueOnClear: true,
+        applyMode: 'manual',
+      }),
+      new AdHocFiltersVariable({
+        name: 'filters',
+        label: 'Filters',
+        datasource: {
+          type: 'prometheus',
+          uid: DS_UID,
+        },
+        applyMode: 'auto',
+        allowCustomValue: true,
+        useQueriesAsFilterForOptions: true,
+        supportsMultiValueOperators: true,
+        filters: [],
+        baseFilters: [],
+        layout: 'horizontal',
       }),
     ],
   }),
@@ -57,7 +77,7 @@ export const triageScene = new EmbeddedScene({
 export const TriageScene = () => <triageScene.Component model={triageScene} />;
 
 function getTriageQuery(): SceneQueryRunner {
-  return getQueryRunner(`count by ($\{__alertsGroupBy\}) (${METRIC_NAME}{$\{__promFilter.groupBy\}})`, {
+  return getQueryRunner(`count by (\${__alertsGroupBy}) (${METRIC_NAME}{\${__alertsGroupBy.filters}})`, {
     format: 'table',
   });
 }
@@ -72,75 +92,38 @@ class AlertsGroupByMacro implements FormatVariable {
     this.state = { name, type: '__alertsGroupBy' };
   }
 
-  public getValue(_fieldPath?: string) {
-    const groupingFields = [...DEFAULT_FIELDS];
-
-    const groupBy = sceneGraph.lookupVariable('groupBy', this._context);
-    const groupByValues = groupBy?.getValue();
-
-    if (Array.isArray(groupByValues)) {
-      const validGroupByValues = groupByValues.filter((value): value is string => typeof value === 'string');
-      groupingFields.push(...validGroupByValues);
+  public getValue(fieldPath?: string) {
+    if (fieldPath === 'filters') {
+      return this.getGroupByKeys()
+        .map((key) => `${key}!=""`)
+        .join(',');
     }
 
-    return groupingFields.join(',');
+    const customGroupByKeys = this.getGroupByKeys();
+    return DEFAULT_FIELDS.concat(customGroupByKeys).join(',');
   }
 
   getValueText?(fieldPath?: string): string {
     return '';
+  }
+
+  getGroupByKeys(): string[] {
+    const groupBy = sceneGraph.lookupVariable('groupBy', this._context);
+    const groupByValues = groupBy?.getValue();
+
+    const groupByKeys = [];
+    if (Array.isArray(groupByValues)) {
+      const validGroupByValues = groupByValues.filter((value): value is string => typeof value === 'string');
+      // Add only new fields that aren't already in DEFAULT_FIELDS
+      const newFields = validGroupByValues.filter((field) => !DEFAULT_FIELDS.includes(field));
+      groupByKeys.push(...newFields);
+    }
+
+    return groupByKeys;
   }
 }
 
 function registerAlertsGroupByMacro() {
   const unregister = sceneUtils.registerVariableMacro('__alertsGroupBy', AlertsGroupByMacro);
-  return () => unregister();
-}
-
-/**
- * This is a macro which converts a variable into a PromQL filter expression
- * The filter excludes series that don't have any values for the given variable.
- *
- * Example:
- * - groupBy: ['alertname', 'instance']
- * - __promFilter.groupBy: 'alertname,instance' -> 'alertname!="",instance!=""'
- *
- * Docs: https://grafana.com/developers/scenes/advanced-variables#custom-variable-macros
- */
-class FilterExpressionMacro implements FormatVariable {
-  public state: { name: string; type: string };
-
-  constructor(
-    name: string,
-    private _context: SceneObject
-  ) {
-    this.state = { name, type: '__promFilter' };
-  }
-
-  public getValue(fieldPath?: string) {
-    if (!fieldPath) {
-      return undefined;
-    }
-
-    const filterBy = sceneGraph.lookupVariable(fieldPath, this._context);
-    const filterByValues = filterBy?.getValue();
-
-    if (!filterByValues) {
-      return undefined;
-    }
-
-    if (Array.isArray(filterByValues)) {
-      return filterByValues.map((key) => `${key}!=""`).join(',');
-    }
-
-    return `${filterByValues}!=""`;
-  }
-
-  getValueText?(fieldPath?: string): string {
-    return '';
-  }
-}
-
-function registerFilterExpressionMacro() {
-  const unregister = sceneUtils.registerVariableMacro('__promFilter', FilterExpressionMacro);
   return () => unregister();
 }

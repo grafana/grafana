@@ -12,7 +12,7 @@ import { METRIC_NAME, getQueryRunner } from './utils';
 export const summaryChart = PanelBuilders.timeseries()
   .setDescription('@TODO decription here')
   .setData(
-    getQueryRunner(`count by (alertstate) (${METRIC_NAME}{})`, {
+    getQueryRunner(`count by (alertstate) (${METRIC_NAME}{\${__alertsGroupBy.filters}})`, {
       // this is important to make the overrides below work properly since this will parse
       // the results as {alertstate="firing"} -> firing
       legendFormat: '__auto',
