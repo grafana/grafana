@@ -23,7 +23,7 @@ spec:
     spec:
       serviceAccount: operator
       containers:
-        - image: localhost/github.com/grafana/grafana/apps/iam/operator:latest
+        - image: grafana-iam-operator
           imagePullPolicy: IfNotPresent
           name: iam-app-operator
           command: ["/bin/sh"]
@@ -31,6 +31,8 @@ spec:
             - -c
             - exec /usr/bin/operator
           env:
+            - name: KUBE_FEATURE_WatchListClient
+              value: "false"
             - name: ZANZANA_ADDR
               value: zanzana.default.svc.cluster.local:50051
             - name: FOLDER_APP_URL
