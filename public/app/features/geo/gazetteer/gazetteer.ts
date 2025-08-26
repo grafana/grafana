@@ -180,8 +180,9 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
 const registry: KeyValue<Gazetteer> = {};
 
-// TODO what to do when no CDN path?
-export const COUNTRIES_GAZETTEER_PATH = `${window.public_cdn_path}gazetteer/countries.json`;
+export const COUNTRIES_GAZETTEER_PATH = window.public_cdn_path
+  ? `${window.public_cdn_path}gazetteer/countries.json`
+  : 'public/gazetteer/countries.json';
 
 /**
  * Given a path to a file return a cached lookup function
