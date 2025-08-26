@@ -8,6 +8,7 @@ import { SceneTimeRange, SceneVariableSet, TestVariable, VariableValueOption, Pa
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
+import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -158,6 +159,8 @@ function renderScene(
   });
 
   const tabToRepeat = tabs[0];
+
+  activateFullSceneTree(scene);
 
   render(<scene.Component model={scene} />);
 
