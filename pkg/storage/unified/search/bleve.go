@@ -64,6 +64,10 @@ type BleveOptions struct {
 
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	IndexCacheTTL time.Duration
+
+	// Enable strong consistency for searches. When enabled, index is always updated with latest changes before
+	// search, and index will not be rebuilt as long as there is an RV stored within it
+	SearchAfterWrite bool
 }
 
 type bleveBackend struct {
@@ -76,6 +80,8 @@ type bleveBackend struct {
 
 	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
+
+	searchAfterWrite bool
 }
 
 func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -97,12 +103,13 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	}
 
 	be := &bleveBackend{
-		log:          slog.Default().With("logger", "bleve-backend"),
-		tracer:       tracer,
-		cache:        map[resource.NamespacedResource]*bleveIndex{},
-		opts:         opts,
-		features:     features,
-		indexMetrics: indexMetrics,
+		log:              slog.Default().With("logger", "bleve-backend"),
+		tracer:           tracer,
+		cache:            map[resource.NamespacedResource]*bleveIndex{},
+		opts:             opts,
+		features:         features,
+		indexMetrics:     indexMetrics,
+		searchAfterWrite: opts.SearchAfterWrite,
 	}
 
 	go be.updateIndexSizeMetric(opts.Root)
@@ -529,7 +536,8 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		if indexRV < resourceVersion {
+		// if searchAfterWrite is enabled, we don't need to re-build the index, as it will be updated at request time
+		if !b.searchAfterWrite && indexRV < resourceVersion {
 			b.log.Debug("indexRV is less than requested resourceVersion. ignoring index", "indexDir", indexDir, "rv", indexRV, "resourceVersion", resourceVersion)
 			_ = idx.Close()
 			continue
