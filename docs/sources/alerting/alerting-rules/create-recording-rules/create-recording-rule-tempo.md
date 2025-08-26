@@ -48,7 +48,7 @@ For additional information, refer to [Grafana-managed recording rules](https://g
         - **Time range**:
             - TraceQL metrics queries are executed as **instant queries** over a window of time.
             - The range you select defines the aggregation window. For example, use `from: now-5m` to `now-4m` for a `1`-minute recording-rule interval. The TraceQL query will run over the selected interval.
-            - Always include a **delay** of a few minutes (e.g. 2–5 minutes) to account for traces still in flight. This avoids missing late-arriving spans.
+            - Always include a **delay** of a few minutes (for example, 2–5 minutes) to account for traces still in flight. This avoids missing late-arriving spans.
         - **Max data points** and **Interval** are not relevant for TraceQL instant queries.
     - **Query**: Enter a valid **TraceQL metrics query**.
         ```
