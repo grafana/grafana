@@ -58,5 +58,5 @@ func (s *AmazonPromMigrationService) Migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return s.promMigrationService.applyMigration(ctx, "grafana-amazonprometheus-datasource", pds)
+	return s.applyMigration(ctx, "grafana-amazonprometheus-datasource", pds)
 }
