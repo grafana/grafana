@@ -41,7 +41,7 @@ export const triageScene = new EmbeddedScene({
           uid: DS_UID,
         },
         allowCustomValue: true,
-        applyMode: 'manual',
+        applyMode: 'auto',
       }),
       new AdHocFiltersVariable({
         name: 'filters',
@@ -56,7 +56,7 @@ export const triageScene = new EmbeddedScene({
         supportsMultiValueOperators: true,
         filters: [],
         baseFilters: [],
-        layout: 'horizontal',
+        layout: 'combobox',
       }),
     ],
   }),

@@ -98,7 +98,7 @@ export function Workbench({ domain, data }: WorkbenchProps) {
           </EditorColumnHeader>
         </div>
         {/* Render actual data */}
-        {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, index))}
+        {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index)))}
       </div>
     </div>
   );
@@ -107,6 +107,18 @@ export function Workbench({ domain, data }: WorkbenchProps) {
 // Helper function to determine if a row is an AlertRuleRow
 function isAlertRuleRow(row: WorkbenchRow): row is AlertRuleRow {
   return 'timeline' in row;
+}
+
+// Generate unique keys for WorkbenchRow items
+function generateRowKey(row: WorkbenchRow, fallbackIndex: number): string {
+  if (isAlertRuleRow(row)) {
+    // Use ruleUID as primary key for AlertRuleRow
+    return `alert-${row.metadata.ruleUID}`;
+  } else {
+    // For GenericGroupedRow, create key from label and value
+    const groupedRow = row as GenericGroupedRow;
+    return `group-${groupedRow.metadata.label}-${groupedRow.metadata.value}`;
+  }
 }
 
 // Helper function to render a WorkbenchRow
@@ -131,9 +143,9 @@ function renderWorkbenchRow(row: WorkbenchRow, width: number, domain: Domain, ke
         }
         content={<StateChangeChart domain={domain} timeline={row.timeline} />}
       >
-        {row.rows.map(() => (
-          <>{null}</>
-        ))}
+        {/* {row.rows.map(() => (
+        ))} */}
+        <Stack>NEED TO RENDER CUSTOM SCENE OBJECT HERE</Stack>
       </GroupRow>
     );
   } else {
@@ -148,7 +160,7 @@ function renderWorkbenchRow(row: WorkbenchRow, width: number, domain: Domain, ke
         content={<StateChangeChart domain={domain} />}
       >
         {groupedRow.rows.map((childRow, childIndex) =>
-          renderWorkbenchRow(childRow, width, domain, `${key}-${childIndex}`)
+          renderWorkbenchRow(childRow, width, domain, `${key}-${generateRowKey(childRow, childIndex)}`)
         )}
       </GroupRow>
     );

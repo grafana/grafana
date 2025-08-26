@@ -27,7 +27,7 @@ export const TimelineHeader = ({ domain }: TimelineProps) => {
     <div ref={ref} style={{ width: '100%' }}>
       <Stack flex={1} direction="row" justifyContent="space-between">
         {ticks.map((tick) => (
-          <Text variant="bodySmall" color="secondary">
+          <Text key={`${tick.value}-${tick.xOffset}`} variant="bodySmall" color="secondary">
             {tick.value}
           </Text>
         ))}

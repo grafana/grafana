@@ -1,9 +1,16 @@
 import { uniq, without } from 'lodash';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneVariableSetState,
+  sceneGraph,
+  sceneUtils,
+} from '@grafana/scenes';
 
 import { Workbench } from '../Workbench';
-import { AlertRuleQueryData, AlertRuleRow, Domain, Filter, WorkbenchRow } from '../types';
+import { AlertRuleQueryData, AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from '../types';
 
 interface WorkbenchState extends SceneObjectState {
   groupBy: string[];
@@ -33,35 +40,44 @@ export class WorkbenchSceneObject extends SceneObjectBase<WorkbenchState> {
     });
   }
 
-  // @TODO add functions for filters
+  public getGroupByKeys(): string[] {
+    const groupBy = sceneGraph.getVariables(this).getByName('groupBy');
+
+    if (groupBy && sceneUtils.isGroupByVariable(groupBy)) {
+      const groupByValue = groupBy.getValue();
+
+      if (Array.isArray(groupByValue)) {
+        return groupByValue.filter((key): key is string => typeof key === 'string');
+      }
+    }
+
+    return [];
+  }
 }
 
 export function WorkbenchRenderer({ model }: SceneComponentProps<WorkbenchSceneObject>) {
-  const { filterBy, groupBy } = model.useState();
-
   const $timeRange = sceneGraph.getTimeRange(model).useState();
   const $data = sceneGraph.getData(model).useState();
 
+  const groupByKeys = model.getGroupByKeys();
   let data: WorkbenchRow[] = [];
 
-  console.log($data);
   if ($data?.data?.series?.length ?? 0 > 0) {
-    data = convertToWorkbenchRows($data);
-    console.log(data);
+    data = convertToWorkbenchRows($data as unknown as AlertRuleQueryData, groupByKeys);
   }
 
   // convert timeRange to a domain for the workbench
   // @TODO why can't the types infer timerange is not undefined?
   const domain: Domain = [$timeRange.value.from.toDate(), $timeRange.value.to.toDate()];
 
-  return <Workbench data={data} domain={domain} groupBy={groupBy} filterBy={filterBy} />;
+  return <Workbench data={data} domain={domain} />;
 }
 
-function convertToWorkbenchRows(data: AlertRuleQueryData): WorkbenchRow[] {
+export function convertToWorkbenchRows(data: AlertRuleQueryData, groupBy: string[] = []): WorkbenchRow[] {
   const series = data.data.series[0];
   const fields = series.fields;
 
-  // Find field indices
+  // Find required fields
   const timeField = fields.find((f) => f.name === 'Time');
   const alertnameField = fields.find((f) => f.name === 'alertname');
   const alertstateField = fields.find((f) => f.name === 'alertstate');
@@ -72,7 +88,60 @@ function convertToWorkbenchRows(data: AlertRuleQueryData): WorkbenchRow[] {
     return [];
   }
 
-  // Group data by rule UID
+  // Create a map of all available fields for grouping
+  const fieldMap = new Map<string, any>();
+  fields.forEach((field) => {
+    fieldMap.set(field.name, field);
+  });
+
+  // Collect all data with their field values
+  const allDataPoints: Array<{
+    timestamp: number;
+    alertname: string;
+    alertstate: 'firing' | 'pending';
+    folder: string;
+    ruleUID: string;
+    fieldValues: Map<string, any>;
+  }> = [];
+
+  for (let i = 0; i < timeField.values.length; i++) {
+    const fieldValues = new Map<string, any>();
+
+    // Collect all field values for this data point
+    fields.forEach((field) => {
+      fieldValues.set(field.name, field.values[i]);
+    });
+
+    allDataPoints.push({
+      timestamp: timeField.values[i] as number,
+      alertname: alertnameField.values[i] as string,
+      alertstate: alertstateField.values[i] as 'firing' | 'pending',
+      folder: folderField.values[i] as string,
+      ruleUID: ruleUidField.values[i] as string,
+      fieldValues,
+    });
+  }
+
+  // If no grouping is specified, return the original flat structure
+  if (groupBy.length === 0) {
+    return createAlertRuleRowsFromDataPoints(allDataPoints);
+  }
+
+  // Build hierarchical structure based on groupBy
+  return buildHierarchicalGroups(allDataPoints, groupBy, 0);
+}
+
+export function createAlertRuleRowsFromDataPoints(
+  dataPoints: Array<{
+    timestamp: number;
+    alertname: string;
+    alertstate: 'firing' | 'pending';
+    folder: string;
+    ruleUID: string;
+    fieldValues: Map<string, any>;
+  }>
+): AlertRuleRow[] {
+  // Group data points by rule UID
   const ruleGroups = new Map<
     string,
     {
@@ -83,35 +152,36 @@ function convertToWorkbenchRows(data: AlertRuleQueryData): WorkbenchRow[] {
     }
   >();
 
-  // Process each data point
-  for (let i = 0; i < timeField.values.length; i++) {
-    const timestamp = timeField.values[i] as number;
-    const alertname = alertnameField.values[i] as string;
-    const alertstate = alertstateField.values[i] as 'firing' | 'pending';
-    const folder = folderField.values[i] as string;
-    const ruleUID = ruleUidField.values[i] as string;
-
-    if (!ruleGroups.has(ruleUID)) {
-      ruleGroups.set(ruleUID, {
-        alertname,
-        folder,
-        ruleUID,
+  dataPoints.forEach((dp) => {
+    if (!ruleGroups.has(dp.ruleUID)) {
+      ruleGroups.set(dp.ruleUID, {
+        alertname: dp.alertname,
+        folder: dp.folder,
+        ruleUID: dp.ruleUID,
         dataPoints: [],
       });
     }
 
-    ruleGroups.get(ruleUID)!.dataPoints.push({
-      timestamp,
-      state: alertstate,
+    ruleGroups.get(dp.ruleUID)!.dataPoints.push({
+      timestamp: dp.timestamp,
+      state: dp.alertstate,
     });
-  }
+  });
 
-  // Convert to WorkbenchRow format
-  const workbenchRows: WorkbenchRow[] = [];
+  // Convert to AlertRuleRow format
+  const alertRuleRows: AlertRuleRow[] = [];
 
   for (const [_ruleUID, group] of ruleGroups) {
-    // Create timeline from data points
-    const timeline: Array<[number, 'firing' | 'pending']> = group.dataPoints.map((dp) => [dp.timestamp, dp.state]);
+    // Sort data points by timestamp and deduplicate
+    const sortedDataPoints = group.dataPoints
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .filter((dp, index, arr) => {
+        // TODO firing should take precedence over pending
+        // Remove duplicates: keep only if this is the first occurrence of this timestamp
+        return index === 0 || arr[index - 1].timestamp !== dp.timestamp;
+      });
+
+    const timeline: Array<[number, 'firing' | 'pending']> = sortedDataPoints.map((dp) => [dp.timestamp, dp.state]);
 
     const alertRuleRow: AlertRuleRow = {
       metadata: {
@@ -123,8 +193,61 @@ function convertToWorkbenchRows(data: AlertRuleQueryData): WorkbenchRow[] {
       rows: [],
     };
 
-    workbenchRows.push(alertRuleRow);
+    alertRuleRows.push(alertRuleRow);
   }
 
-  return workbenchRows;
+  return alertRuleRows;
+}
+
+export function buildHierarchicalGroups(
+  dataPoints: Array<{
+    timestamp: number;
+    alertname: string;
+    alertstate: 'firing' | 'pending';
+    folder: string;
+    ruleUID: string;
+    fieldValues: Map<string, any>;
+  }>,
+  groupBy: string[],
+  currentDepth: number
+): WorkbenchRow[] {
+  // If we've reached the end of groupBy array, create AlertRuleRows
+  if (currentDepth >= groupBy.length) {
+    return createAlertRuleRowsFromDataPoints(dataPoints);
+  }
+
+  const currentGroupField = groupBy[currentDepth];
+
+  // Group data points by the current field value
+  const groups = new Map<string, typeof dataPoints>();
+
+  dataPoints.forEach((dp) => {
+    const groupValue = dp.fieldValues.get(currentGroupField);
+    const groupKey = String(groupValue ?? 'undefined');
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, []);
+    }
+    groups.get(groupKey)!.push(dp);
+  });
+
+  // Create GenericGroupedRow for each group
+  const result: WorkbenchRow[] = [];
+
+  for (const [groupValue, groupDataPoints] of groups) {
+    // Recursively build the next level
+    const childRows = buildHierarchicalGroups(groupDataPoints, groupBy, currentDepth + 1);
+
+    const genericGroupedRow: GenericGroupedRow = {
+      metadata: {
+        label: currentGroupField,
+        value: groupValue,
+      },
+      rows: childRows,
+    };
+
+    result.push(genericGroupedRow);
+  }
+
+  return result;
 }
