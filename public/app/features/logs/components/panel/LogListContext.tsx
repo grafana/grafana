@@ -24,7 +24,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
@@ -34,6 +34,7 @@ import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
+import { reportInteractionOnce } from './analytics';
 import { LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
 
@@ -709,15 +710,6 @@ export function getDetailsScrollPosition(log: LogListModel) {
 export function removeDetailsScrollPosition(log: LogListModel) {
   detailsScrollMap.delete(log.uid);
 }
-
-const reportInteractionOnce = (interactionName: string, properties?: Record<string, unknown>) => {
-  const key = `logs.log-list-context.events.${interactionName}`;
-  if (sessionStorage.getItem(key)) {
-    return;
-  }
-  sessionStorage.setItem(key, '1');
-  reportInteraction(interactionName, properties);
-};
 
 async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
   const datasource = await getDataSourceSrv().get(log.datasourceUid);

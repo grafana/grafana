@@ -10,12 +10,13 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
 import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogListContext } from './LogListContext';
+import { reportInteractionOnce } from './analytics';
 
 export const LogLineDetailsDisplayedFields = () => {
   const { displayedFields, setDisplayedFields } = useLogListContext();
 
   const reorganizeDisplayedFields = useCallback(
-    (srcIndex: number, destIndex: number) => {
+    (srcIndex: number, destIndex: number, mode: 'drag' | 'button') => {
       const newDisplayedFields = [...displayedFields];
       const element = displayedFields[srcIndex];
 
@@ -23,6 +24,11 @@ export const LogLineDetailsDisplayedFields = () => {
       newDisplayedFields.splice(destIndex, 0, element);
 
       setDisplayedFields?.(newDisplayedFields);
+
+      reportInteractionOnce('logs_log_line_details_organized_fields', {
+        quantity: newDisplayedFields.length,
+        mode,
+      });
     },
     [displayedFields, setDisplayedFields]
   );
@@ -32,7 +38,7 @@ export const LogLineDetailsDisplayedFields = () => {
       if (result.destination == null) {
         return;
       }
-      reorganizeDisplayedFields(result.source.index, result.destination.index);
+      reorganizeDisplayedFields(result.source.index, result.destination.index, 'drag');
     },
     [reorganizeDisplayedFields]
   );
@@ -65,7 +71,7 @@ export const LogLineDetailsDisplayedFields = () => {
 interface DraggableDisplayedFieldProps {
   field: string;
   index: number;
-  moveField: (srcIndex: number, destIndex: number) => void;
+  moveField: (srcIndex: number, destIndex: number, mode: 'drag' | 'button') => void;
 }
 
 const DraggableDisplayedField = ({ field, index, moveField }: DraggableDisplayedFieldProps) => {
@@ -99,12 +105,12 @@ const DisplayedField = ({
             <>
               <IconButton
                 name="arrow-down"
-                onClick={() => moveField(index, nextIndex)}
+                onClick={() => moveField(index, nextIndex, 'button')}
                 tooltip={t('logs.log-line-details.move-displayed-field-down', 'Move down')}
               />
               <IconButton
                 name="arrow-up"
-                onClick={() => moveField(index, prevIndex)}
+                onClick={() => moveField(index, prevIndex, 'button')}
                 tooltip={t('logs.log-line-details.move-displayed-field-up', 'Move up')}
               />
             </>
