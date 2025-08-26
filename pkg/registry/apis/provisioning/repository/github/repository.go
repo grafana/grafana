@@ -42,7 +42,7 @@ type GithubRepository interface {
 	Client() Client
 }
 
-func NewGitHub(
+func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,

@@ -106,9 +106,7 @@ func TestMutator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mutator := Mutator()
-			err := mutator(context.Background(), tt.obj)
-
+			err := Mutate(context.Background(), tt.obj)
 			if tt.expectedError != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)

@@ -42,7 +42,7 @@ type gitRepository struct {
 	client    nanogit.Client
 }
 
-func NewGitRepository(
+func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
