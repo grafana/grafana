@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -282,6 +283,7 @@ func TestRunInQueue(t *testing.T) {
 		s, q := newTestServerWithQueue(t, 1, 1)
 		// Task 1: This will be picked up by the worker and block it.
 		blocker := make(chan struct{})
+		defer close(blocker)
 		blockingRunnable := func() {
 			<-blocker
 		}
@@ -289,17 +291,20 @@ func TestRunInQueue(t *testing.T) {
 		require.NoError(t, err)
 		err = q.Enqueue(context.Background(), testTenantID, blockingRunnable)
 		require.NoError(t, err)
-		defer close(blocker)
 
 		// Task 2: This runnable should never execute because the queue is full.
-		executed := make(chan struct{}, 1)
+		mu := sync.Mutex{}
+		executed := false
 		runnable := func(ctx context.Context) {
-			executed <- struct{}{}
+			mu.Lock()
+			defer mu.Unlock()
+			executed = true
 		}
 
 		err = s.runInQueue(context.Background(), testTenantID, runnable)
 		require.Error(t, err)
 		require.ErrorIs(t, err, scheduler.ErrTenantQueueFull)
+		require.False(t, executed, "runnable should not have been executed")
 	})
 }
 
