@@ -214,7 +214,6 @@ func transformSearchResponse(pCtx backend.PluginContext, response *SearchRespons
 			traceDurationMs = nil
 		}
 
-		backend.Logger.Error("NEW WITH NIL?")
 		tracesFrame.Fields[0].Append(trace.TraceID)
 		tracesFrame.Fields[2].Append(trace.RootServiceName)
 		tracesFrame.Fields[3].Append(trace.RootTraceName)
