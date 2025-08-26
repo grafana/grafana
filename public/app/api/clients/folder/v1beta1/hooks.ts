@@ -12,7 +12,6 @@ import {
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { dispatch } from 'app/store/store';
 import { FolderDTO, NewFolder } from 'app/types/folders';
-import { useDispatch } from 'app/types/store';
 
 import kbn from '../../../../core/utils/kbn';
 import {
@@ -27,6 +26,7 @@ import {
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
+import { useDispatch } from '../../../../types/store';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
 import { isProvisionedFolderCheck } from './utils';
