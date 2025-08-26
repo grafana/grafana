@@ -141,6 +141,15 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    optionInfo: css({
+      label: 'combobox-option-info',
+      color: theme.colors.text.disabled,
+      cursor: 'not-allowed',
+      pointerEvents: 'none',
+      '&:hover': {
+        background: 'transparent',
+      },
+    }),
     clear: css({
       label: 'combobox-clear',
       cursor: 'pointer',

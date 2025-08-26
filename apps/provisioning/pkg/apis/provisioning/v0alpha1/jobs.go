@@ -4,6 +4,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// When this code is changed, make sure to update the code generation.
+// As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
+// If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
+// +genclient
+
 // The repository name and type are stored as labels
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Job struct {
@@ -199,6 +204,9 @@ type JobStatus struct {
 
 	// Summary of processed actions
 	Summary []*JobResourceSummary `json:"summary,omitempty"`
+
+	// URLs contains URLs for the reference branch or commit if applicable.
+	URLs *RepositoryURLs `json:"url,omitempty"`
 }
 
 // Convert a JOB to a
@@ -231,19 +239,27 @@ type JobResourceSummary struct {
 	Errors []string `json:"errors,omitempty"`
 }
 
+// HistoricJob is an append only log, saving all jobs that have been processed.
+//
+// NOTE: This should not be used directly by any external consumer.
+// When there is a more stable integration with loki (an appropriate append only store)
+// this may be removed without notice.
+//
+// The repository name and type are stored as labels.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type WebhookResponse struct {
+// +genclient
+type HistoricJob struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   JobSpec   `json:"spec,omitempty"`
+	Status JobStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type HistoricJobList struct {
 	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// HTTP Status code
-	// 200 implies that the payload was understood but nothing is required
-	// 202 implies that an async job has been scheduled to handle the request
-	Code int `json:"code,omitempty"`
-
-	// Optional message
-	Message string `json:"added,omitempty"`
-
-	// Jobs to be processed
-	// When the response is 202 (Accepted) the queued jobs will be returned
-	Job *JobSpec `json:"job,omitempty"`
+	Items []HistoricJob `json:"items,omitempty"`
 }

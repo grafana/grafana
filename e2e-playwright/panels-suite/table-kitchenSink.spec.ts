@@ -1,6 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -39,6 +39,21 @@ const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
     throw new Error(`Could not find the "${columnName}" column in the table`);
   }
   return result;
+};
+
+const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
+  // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
+  const wrapTextToggle = loc.locator(
+    `[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`
+  );
+  const count = await wrapTextToggle.count();
+
+  for (let i = 0; i < count; i++) {
+    const toggle = wrapTextToggle.nth(i);
+    if ((await toggle.locator('//preceding-sibling::input').getAttribute('checked')) !== null) {
+      await toggle.click();
+    }
+  }
 };
 
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
@@ -118,6 +133,15 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await displayNameInput.fill('State (renamed)');
     await displayNameInput.press('Enter');
     expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
+
+    // toggle the "State" column visibility again to hide it again. this confirms that we avoid bugs related to
+    // array lengths between the fields array and the column widths array.
+    await hideStateColumnSwitch.click();
+    expect(page.getByRole('row').nth(0)).not.toContainText('State');
+
+    // since the previous assertion is just for the absence of text, let's also confirm that the table is
+    // actually still on the page and that an error has not been throw.
+    await waitForTableLoad(page);
   });
 
   // we test niche cases for sorting, filtering, pagination, etc. in a unit tests already.
@@ -214,11 +238,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // because of text wrapping, we're guaranteed to only be showing a single row when we enable pagination.
     await expect(page.getByText(/([\d]+) - ([\d]+) of ([\d]+) rows/)).toBeVisible();
 
-    // FIXME horrible selector for the "Wrap text" toggle for the "Long text" column.
-    await page
-      .locator('[id="Override 13"]')
-      .locator(`[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`)
-      .click();
+    await disableAllTextWrap(page, selectors);
 
     // any number of rows that is not "1" is allowed here, we don't want to police the exact number of rows that
     // are rendered since there are tons of factors which could effect this. we do want to grab this number for comparison
@@ -281,13 +301,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).toBeVisible();
 
-    // disable text wrapping for this test to make it easier to click the links, the long lorem ipsum
-    // can push the links off the screen.
-    // FIXME very bad selector to get the correct "wrap text" toggle here.
-    await page
-      .locator('[id="Override 13"]')
-      .locator(`[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`)
-      .click();
+    await disableAllTextWrap(page, selectors);
 
     const infoColumnIdx = await getColumnIdx(page, 'Info');
     const pillColIdx = await getColumnIdx(page, 'Pills');
@@ -348,10 +362,73 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // TODO -- saving for another day.
   });
 
+  test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    const firstCaret = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Caret)
+      .first();
+
+    // test hovering over and blurring the caret, and whether the tooltip appears and disappears as expected.
+    await firstCaret.hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking outside of it should close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking inside of it should NOT close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper
+    );
+    await tooltip.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+  });
+
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '2' }),
+      queryParams: new URLSearchParams({ editPanel: '3' }),
     });
 
     await expect(

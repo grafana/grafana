@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +20,10 @@ import (
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -80,7 +83,6 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
-		DecryptServerType:         "local",
 		CurrentEncryptionProvider: "secret_key.v1",
 		ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 	}
@@ -123,7 +125,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService, nil)
+	secureValueValidator := validator.ProvideSecureValueValidator()
+	secureValueMutator := mutator.ProvideSecureValueMutator()
+
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, keeperService, nil)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
@@ -131,9 +136,6 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	testCfg := setting.NewCfg()
-	testCfg.SecretsManagement = setting.SecretsManagerSettings{
-		DecryptServerType: "local",
-	}
 
 	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)
@@ -286,4 +288,41 @@ func CreateOBOAuthContext(
 	}
 
 	return types.WithAuthInfo(ctx, requester)
+}
+
+type TestCertPaths struct {
+	ClientCert string
+	ClientKey  string
+	ServerCert string
+	ServerKey  string
+	CA         string
+}
+
+func CreateX509TestDir(t *testing.T) TestCertPaths {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	ca := testcerts.NewCA()
+	caCertFile, _, err := ca.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	serverKp, err := ca.NewKeyPair("localhost")
+	require.NoError(t, err)
+
+	serverCertFile, serverKeyFile, err := serverKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	clientKp, err := ca.NewKeyPair()
+	require.NoError(t, err)
+	clientCertFile, clientKeyFile, err := clientKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	return TestCertPaths{
+		ClientCert: clientCertFile.Name(),
+		ClientKey:  clientKeyFile.Name(),
+		ServerCert: serverCertFile.Name(),
+		ServerKey:  serverKeyFile.Name(),
+		CA:         caCertFile.Name(),
+	}
 }

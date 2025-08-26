@@ -4,11 +4,14 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
+
+var logger = logging.DefaultLogger.With("logger", "dashboard.conversion")
 
 func RegisterConversions(s *runtime.Scheme) error {
 	// v0 conversions

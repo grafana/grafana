@@ -2,6 +2,8 @@ import { render, RenderResult } from '@testing-library/react';
 
 import { Field, FieldType, MappingType, createTheme } from '@grafana/data';
 
+import { getTextColorForBackground } from '../../../../utils/colors';
+
 import { PillCell } from './PillCell';
 
 describe('PillCell', () => {
@@ -26,38 +28,94 @@ describe('PillCell', () => {
   describe('Color by hash (classic palette)', () => {
     it('single value', () => {
       expectHTML(
-        render(<PillCell field={fieldWithValues(['value1'])} rowIdx={0} theme={theme} />),
-        `<span style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>`
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['value1'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        `<span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>`
       );
     });
 
     it('empty string', () => {
-      expectHTML(render(<PillCell field={fieldWithValues([''])} rowIdx={0} theme={theme} />), '');
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues([''])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        ''
+      );
     });
 
     it('null', () => {
-      const { container } = render(<PillCell field={fieldWithValues([])} rowIdx={0} theme={theme} />);
+      const { container } = render(
+        <PillCell
+          getTextColorForBackground={getTextColorForBackground}
+          field={fieldWithValues([])}
+          rowIdx={0}
+          theme={theme}
+        />
+      );
       expect(container).toBeEmptyDOMElement();
     });
 
     it('CSV values', () => {
       expectHTML(
-        render(<PillCell field={fieldWithValues(['value1,value2,value3'])} rowIdx={0} theme={theme} />),
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['value1,value2,value3'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
+        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
+        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
         `
       );
     });
 
     it('JSON array values', () => {
       expectHTML(
-        render(<PillCell field={fieldWithValues(['["value1","value2","value3"]'])} rowIdx={0} theme={theme} />),
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['["value1","value2","value3"]'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
+        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
+        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        `
+      );
+    });
+
+    it('non-string values', () => {
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['[100,200,300]'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        `
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">100</span>
+        <span style="background-color: rgb(222, 218, 247); color: rgb(32, 34, 38);">200</span>
+        <span style="background-color: rgb(249, 217, 249); color: rgb(32, 34, 38);">300</span>
         `
       );
     });
@@ -96,12 +154,14 @@ describe('PillCell', () => {
       } satisfies Field;
 
       expectHTML(
-        render(<PillCell field={field} rowIdx={0} theme={theme} />),
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
         `
-        <span style="background-color: rgb(0, 255, 0); color: rgb(0, 0, 0);">success</span>
-        <span style="background-color: rgb(255, 0, 0); color: rgb(0, 0, 0);">error</span>
-        <span style="background-color: rgb(255, 255, 0); color: rgb(0, 0, 0);">warning</span>
-        <span style="background-color: rgb(255, 120, 10); color: rgb(0, 0, 0);">unknown</span>
+        <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">success</span>
+        <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">error</span>
+        <span style="background-color: rgb(255, 255, 0); color: rgb(32, 34, 38);">warning</span>
+        <span style="background-color: rgb(255, 120, 10); color: rgb(247, 248, 250);">unknown</span>
         `
       );
     });

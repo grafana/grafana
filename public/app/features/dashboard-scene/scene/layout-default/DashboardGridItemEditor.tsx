@@ -8,6 +8,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -50,7 +51,15 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
       })
     );
 
-  return [repeatCategory];
+  const conditionalRenderingCategory = useConditionalRenderingEditor(
+    undefined,
+    t(
+      'dashboard.conditional-rendering.editor.not-supported-for-custom-grid',
+      'Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.'
+    )
+  );
+
+  return [repeatCategory, conditionalRenderingCategory];
 }
 
 interface OptionComponentProps {

@@ -12,15 +12,7 @@ import {
   TextDimensionConfig,
   ScalarDimensionConfig,
 } from '@grafana/schema';
-import {
-  ColorPicker,
-  Field,
-  HorizontalGroup,
-  InlineField,
-  InlineFieldRow,
-  InlineLabel,
-  RadioButtonGroup,
-} from '@grafana/ui';
+import { ColorPicker, Field, Stack, InlineField, InlineFieldRow, InlineLabel, RadioButtonGroup } from '@grafana/ui';
 import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -338,7 +330,7 @@ export const StyleEditor = (props: Props) => {
 
       {hasTextLabel && (
         <>
-          <HorizontalGroup>
+          <Stack>
             <Field label={t('geomap.style-editor.label-font-size', 'Font size')}>
               <NumberValueEditor
                 value={value?.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
@@ -363,7 +355,7 @@ export const StyleEditor = (props: Props) => {
                 item={{} as FieldConfigPropertyItem}
               />
             </Field>
-          </HorizontalGroup>
+          </Stack>
           <Field label={t('geomap.style-editor.label-align', 'Align')}>
             <RadioButtonGroup
               value={value?.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}

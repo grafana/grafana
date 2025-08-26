@@ -12,8 +12,13 @@ services:
     ports:
       - '3000:80' # Gateway
       - '3010:81' # CDN
+    depends_on:
+      - grafana-api
+      - frontend-service
+    labels:
+      - 'alloy.logs=true'
 
-  backend:
+  grafana-api:
     image: grafana-fs-dev
     build:
       context: ../..
@@ -25,15 +30,22 @@ services:
       - ./provisioning/dashboards:/grafana/conf/provisioning/dashboards
       - ../dev-dashboards:/grafana/conf/dev-dashboards
     environment:
+      OTEL_BSP_SCHEDULE_DELAY: 500
+      GF_DEFAULT_APP_MODE: development
+      GF_PANELS_ENABLE_ALPHA: true
       GF_SERVER_CDN_URL: http://localhost:3010
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
-      GF_DATABASE_TYPE: postgres
-      GF_DATABASE_HOST: postgres
-      GF_DATABASE_NAME: grafana
-      GF_DATABASE_USER: grafana
-      GF_DATABASE_PASSWORD: grafana
+      GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
+      GF_SERVER_ROUTER_LOGGING: true
+      GF_LOG_LEVEL: info
+      GF_AUTH_LOGIN_COOKIE_NAME: grafana_fs_dev_login # set a custom cookie name to not conflict with other instances running on localhost
+      OTEL_SERVICE_NAME: grafana-api
+      GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
+      GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c
     ports:
       - '3011:3000'
+    labels:
+      - 'alloy.logs=true'
 
   frontend-service:
     image: grafana-fs-dev
@@ -43,11 +55,19 @@ services:
     entrypoint: ['bin/grafana', 'server', 'target']
     ports:
       - '3012:3000'
+    labels:
+      - 'alloy.logs=true'
     environment:
+      OTEL_BSP_SCHEDULE_DELAY: 500
       GF_DEFAULT_APP_MODE: development
       GF_DEFAULT_TARGET: frontend-server
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
       GF_SERVER_CDN_URL: http://localhost:3010
+      GF_SERVER_ROUTER_LOGGING: true
+      GF_LOG_LEVEL: info
+      OTEL_SERVICE_NAME: frontend-service
+      GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
+      GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: jaeger,w3c
 
   postgres:
     image: postgres:16.1-alpine3.19
@@ -57,7 +77,57 @@ services:
       POSTGRES_DB: grafana
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    labels:
+      - 'alloy.logs=true'
+
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./configs/alloy:/alloy-config
+      - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
+      - alloy-data:/var/lib/alloy/data
+    ports:
+      - '12346:12345' # Alloy UI
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /alloy-config
+    depends_on:
+      - loki
+
+  loki:
+    image: grafana/loki
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    labels:
+      - 'alloy.logs=true'
+
+  tempo-init:
+    image: grafana/tempo
+    user: root
+    entrypoint:
+      - 'chown'
+      - '10001:10001'
+      - '/var/tempo'
+    volumes:
+      - tempo-data:/var/tempo
+
+  tempo:
+    image: grafana/tempo
+    volumes:
+      - tempo-data:/var/lib/tempo
+      - ./configs/tempo.yaml:/etc/tempo/tempo.yaml
+    command: ['-config.file=/etc/tempo/tempo.yaml']
+
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
 
 volumes:
   backend-data:
   postgres-data:
+  alloy-data:
+  loki-data:
+  tempo-data:
