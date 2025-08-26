@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
-import { BranchSelector } from '../Shared/BranchSelector';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { useBranchFetching } from '../hooks/useBranchFetching';
 import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -28,6 +28,25 @@ export function ConnectStep() {
   const repositoryUrl = watch('repository.url') || '';
   const repositoryToken = watch('repository.token') || '';
   const isGitBased = isGitProvider(type);
+
+  // Fetch branches for Git providers
+  const {
+    branches,
+    loading: branchesLoading,
+    error: branchesError,
+  } = useBranchFetching({
+    repositoryType: type,
+    repositoryUrl,
+    repositoryToken,
+  });
+
+  // Create options for branch selector
+  const branchOptions = useMemo(() => {
+    return branches.map((branch) => ({
+      label: branch.name,
+      value: branch.name,
+    }));
+  }, [branches]);
 
   // Get field configurations based on a provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -104,21 +123,22 @@ export function ConnectStep() {
             label={gitFields.branchConfig.label}
             description={gitFields.branchConfig.description}
             error={errors?.repository?.branch?.message}
-            invalid={!!errors?.repository?.branch?.message}
             required={gitFields.branchConfig.required}
+            invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
           >
             <Controller
               name="repository.branch"
               control={control}
               rules={gitFields.branchConfig.validation}
-              render={({ field: { ref, ...field } }) => (
-                <BranchSelector
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+                  onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.branchConfig.placeholder}
-                  invalid={!!errors?.repository?.branch?.message}
-                  repositoryType={type}
-                  repositoryUrl={repositoryUrl}
-                  repositoryToken={repositoryToken}
+                  options={branchOptions}
+                  loading={branchesLoading}
                   createCustomValue={true}
+                  isClearable
                   {...field}
                 />
               )}
