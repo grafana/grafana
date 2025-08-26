@@ -5204,6 +5204,9 @@
       "save-json-to-file": "將 JSON 儲存至檔案",
       "see-docs": "有關佈建的更多資訊，請參閱<2>文件</2>。"
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "正在匯入設定"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "變更視覺效果",
@@ -6114,9 +6120,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "切換分享選單"
     },
-    "solo-panel-page": {
-      "loading": "正在載入"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "用於協助排除視覺化問題的儀表板 JSON"
@@ -6400,8 +6403,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "點選<2>此處</2>，了解更多關於此錯誤的資訊。",
-    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7536,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9505,6 +9508,12 @@
       "show-context": "顯示前後文",
       "show-log-line": "顯示紀錄行",
       "sidebar-mode": "錨定到右側",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "取消固定紀錄"
     },
     "log-line-menu": {
@@ -10681,10 +10690,6 @@
       "could-anything-matching-query": "找不到符合您查詢的內容"
     }
   },
-  "panel-search": {
-    "no-matches": "沒有找到符合的項目",
-    "unsupported-layout": "不支援的版面配置"
-  },
   "panel-type-filter": {
     "clear-button": "清除類型",
     "select-aria-label": "面板類型篩選器",
@@ -11219,11 +11224,15 @@
     },
     "delete-repository-button": {
       "button-delete": "刪除",
-      "confirm-delete-repository": "確定要刪除儲存庫設定嗎？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "無法刪除儲存庫",
       "success-repository-deleted": "儲存庫設定已排入刪除佇列",
-      "title-delete-repository": "刪除儲存庫設定",
-      "tooltip-delete-this-repository": "刪除此儲存庫"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "返回至儲存庫",
@@ -13015,6 +13024,7 @@
         "name-point-size": "點大小",
         "name-show-points": "顯示點",
         "name-show-thresholds": "顯示閾值",
+        "name-show-values": "",
         "name-style": "樣式",
         "name-transform": "轉變",
         "transform-options": {

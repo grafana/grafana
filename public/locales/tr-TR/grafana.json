@@ -5223,6 +5223,9 @@
       "save-json-to-file": "JSON'u dosyaya kaydet",
       "see-docs": "Sağlama hakkında daha fazla bilgi için <2>belgelere</2> bakın. "
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Yapılandırma yükleniyor"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Görselleştirmeyi değiştir",
@@ -6135,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Paylaşım menüsünü aç/kapat"
     },
-    "solo-panel-page": {
-      "loading": "Yükleniyor"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Görselleştirme sorunlarının giderilmesine yardımcı olmak için kullanılan Pano JSON'u"
@@ -6421,8 +6424,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Bu hata hakkında daha fazla bilgi edinmek için <2>buraya</2> tıklayın.",
-    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7557,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9534,6 +9537,12 @@
       "show-context": "İçeriği göster",
       "show-log-line": "Günlük satırını göster",
       "sidebar-mode": "Sağa sabitle",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Günlüğü sabitlemeyi kaldır"
     },
     "log-line-menu": {
@@ -10713,10 +10722,6 @@
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
     }
   },
-  "panel-search": {
-    "no-matches": "Sonuç bulunamadı",
-    "unsupported-layout": "Desteklenmeyen düzen"
-  },
   "panel-type-filter": {
     "clear-button": "Türleri temizle",
     "select-aria-label": "Panel tipi filtresi",
@@ -11254,11 +11259,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Sil",
-      "confirm-delete-repository": "Depo yapılandırmasını silmek istediğinize emin misiniz?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Depo silinemedi",
       "success-repository-deleted": "Depo ayarları silinmek üzere kuyruğa alındı",
-      "title-delete-repository": "Depo yapılandırmasını sil",
-      "tooltip-delete-this-repository": "Bu depoyu sil"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Depolara geri dön",
@@ -13056,6 +13065,7 @@
         "name-point-size": "Nokta boyutu",
         "name-show-points": "Noktaları göster",
         "name-show-thresholds": "Eşikleri göster",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Dönüştür",
         "transform-options": {

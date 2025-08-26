@@ -5223,6 +5223,9 @@
       "save-json-to-file": "JSON opslaan naar bestand",
       "see-docs": "Bekijk de <2>documentatie</2> voor meer informatie over provisioning."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Configuratie laden"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisatie wijzigen",
@@ -6135,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Menu delen in-/uitschakelen"
     },
-    "solo-panel-page": {
-      "loading": "Bezig met laden"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON gebruikt om problemen met visualisatie op te lossen"
@@ -6421,8 +6424,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>hier</2> voor meer informatie over deze fout.",
-    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7557,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9534,6 +9537,12 @@
       "show-context": "Context tonen",
       "show-log-line": "Logregel weergeven",
       "sidebar-mode": "Anker naar rechts",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Log vastzetten ongedaan maken"
     },
     "log-line-menu": {
@@ -10713,10 +10722,6 @@
       "could-anything-matching-query": "Kon niets vinden dat overeenkomt met je query"
     }
   },
-  "panel-search": {
-    "no-matches": "Geen resultaten gevonden",
-    "unsupported-layout": "Niet-ondersteunde lay-out"
-  },
   "panel-type-filter": {
     "clear-button": "Types wissen",
     "select-aria-label": "Paneeltypefilter",
@@ -11254,11 +11259,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Verwijderen",
-      "confirm-delete-repository": "Weet je zeker dat je de repository-configuratie wilt verwijderen?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Kan de repository niet verwijderen",
       "success-repository-deleted": "Repository-instellingen in de wachtrij voor verwijdering",
-      "title-delete-repository": "Repository-configuratie verwijderen",
-      "tooltip-delete-this-repository": "Deze repository verwijderen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Terug naar repositories",
@@ -13056,6 +13065,7 @@
         "name-point-size": "Puntgrootte",
         "name-show-points": "Punten tonen",
         "name-show-thresholds": "Drempels weergeven",
+        "name-show-values": "",
         "name-style": "Stijl",
         "name-transform": "Transformeren",
         "transform-options": {

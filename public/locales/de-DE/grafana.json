@@ -5223,6 +5223,9 @@
       "save-json-to-file": "JSON in Datei speichern",
       "see-docs": "Weitere Informationen zur Bereitstellung finden Sie in der <2>Dokumentation</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Konfiguration wird geladen"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisierung ändern",
@@ -6135,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Freigabe-Menü umschalten"
     },
-    "solo-panel-page": {
-      "loading": "Wird geladen"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard-JSON zur Fehlerbehebung bei Visualisierungsproblemen"
@@ -6421,8 +6424,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicken Sie <2>hier</2>, um mehr über diesen Fehler zu erfahren.",
-    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7557,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9534,6 +9537,12 @@
       "show-context": "Kontext anzeigen",
       "show-log-line": "Log-Linie anzeigen",
       "sidebar-mode": "Rechts verankern",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Log nicht mehr anheften"
     },
     "log-line-menu": {
@@ -10713,10 +10722,6 @@
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"
     }
   },
-  "panel-search": {
-    "no-matches": "Keine Treffer gefunden",
-    "unsupported-layout": "Nicht unterstütztes Layout"
-  },
   "panel-type-filter": {
     "clear-button": "Typen zurücksetzen",
     "select-aria-label": "Panel-Typ-Filter",
@@ -11254,11 +11259,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Löschen",
-      "confirm-delete-repository": "Sind Sie sicher, dass Sie die Repository-Konfiguration löschen möchten?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Das Repository konnte nicht gelöscht werden",
       "success-repository-deleted": "Repository-Einstellungen zum Löschen in die Warteschlange gestellt",
-      "title-delete-repository": "Repository-Konfiguration löschen",
-      "tooltip-delete-this-repository": "Dieses Repository löschen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
@@ -13056,6 +13065,7 @@
         "name-point-size": "Punktgröße",
         "name-show-points": "Punkte zeigen",
         "name-show-thresholds": "Schwellenwerte anzeigen",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Transformieren",
         "transform-options": {

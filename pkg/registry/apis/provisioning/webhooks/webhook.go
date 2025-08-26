@@ -21,6 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 )
 
+type WebhookRepository interface {
+	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
+}
+
 // Webhook endpoint max size (25MB)
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
