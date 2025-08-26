@@ -447,10 +447,6 @@ const (
 	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
-	// FlagExpressionParser
-	// Enable new expression parser
-	FlagExpressionParser = "expressionParser"
-
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"

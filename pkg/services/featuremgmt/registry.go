@@ -834,13 +834,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:            "expressionParser",
-			Description:     "Enable new expression parser",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:              "groupByVariable",
 			Description:       "Enable groupBy variable support in scenes dashboards",
 			Stage:             FeatureStageExperimental,

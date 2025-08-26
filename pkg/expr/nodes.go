@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -137,31 +135,6 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 			refID: rn.RefID,
 		},
 		CMDType: commandType,
-	}
-
-	if toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
-		rn.QueryType, err = getExpressionCommandTypeString(rn.Query)
-		if err != nil {
-			return nil, err // should not happen because the command was parsed first thing
-		}
-
-		// NOTE: this structure of this is weird now, because it is targeting a structure
-		// where this is actually run in the root loop, however we want to verify the individual
-		// node parsing before changing the full tree parser
-		reader := NewExpressionQueryReader(toggles)
-		iter, err := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
-		if err != nil {
-			return nil, err
-		}
-		q, err := reader.ReadQuery(ctx, data.NewDataQuery(map[string]any{
-			"refId": rn.RefID,
-			"type":  rn.QueryType,
-		}), iter)
-		if err != nil {
-			return nil, err
-		}
-		node.Command = q.Command
-		return node, err
 	}
 
 	switch commandType {

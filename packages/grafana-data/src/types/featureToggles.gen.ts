@@ -494,10 +494,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable new expression parser
-  */
-  expressionParser?: boolean;
-  /**
   * Enable groupBy variable support in scenes dashboards
   */
   groupByVariable?: boolean;
