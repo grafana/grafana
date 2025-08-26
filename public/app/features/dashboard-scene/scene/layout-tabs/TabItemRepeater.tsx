@@ -30,6 +30,7 @@ export function TabItemRepeater({
   const { repeatedTabs } = tab.useState();
   const styles = useStyles2(getStyles);
 
+  // Subscribe to variable state changes and perform repeats when the variable changes
   useEffect(() => {
     const variableChangeSub = variable.subscribeToState(() => performTabRepeats(variable, tab, false));
     const editEventSub = tab.subscribeToEvent(DashboardStateChangedEvent, () => performTabRepeats(variable, tab, true));
@@ -64,12 +65,6 @@ export function TabItemRepeater({
     </>
   );
 }
-
-const getStyles = () => ({
-  spinnerWrapper: css({
-    alignSelf: 'center',
-  }),
-});
 
 export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, contentChanged: boolean) {
   if (sceneGraph.hasVariableDependencyInLoadingState(variable)) {
@@ -172,3 +167,9 @@ export function createTabRepeats({
   }
   return repeats;
 }
+
+const getStyles = () => ({
+  spinnerWrapper: css({
+    alignSelf: 'center',
+  }),
+});
