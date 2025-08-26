@@ -309,7 +309,7 @@ abstract class DataSourceApi<
   /**
    * Verify adhoc filters applicability based on queries and current filters
    */
-  getFiltersApplicability?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<FiltersApplicability[]>;
+  getFiltersApplicability?(options?: DataSourceGetFiltersApplicabilityOptions<TQuery>): Promise<FiltersApplicability[]>;
 
   /**
    * Get tag keys for adhoc filters
