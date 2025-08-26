@@ -2864,6 +2864,10 @@ Set the maximum number of cells that can be passed to a SQL expression. Default 
 
 Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
 
+### `sql_expression_query_length_limit`
+
+Set the maximum length of a SQL query that can be used in a SQL expression. Default is `10000` characters.
+
 #### `sql_expression_timeout`
 
 The duration a SQL expression will run before being cancelled. The default is `10s`.
