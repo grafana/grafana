@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import {
+  MultiValueVariable,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
@@ -21,6 +23,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
+import { performTabRepeats } from './TabItemRepeater';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -60,6 +63,29 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       tabs: state.tabs ?? [new TabItem()],
       currentTabIndex: state.currentTabIndex ?? 0,
     });
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    this.state.tabs.forEach((tab) => {
+      const { repeatByVariable } = tab.state;
+
+      if (repeatByVariable) {
+        const variable = sceneGraph.lookupVariable(repeatByVariable, this);
+
+        if (variable instanceof MultiValueVariable) {
+          performTabRepeats(variable, tab, false);
+        }
+      }
+
+      const urlState = locationService.getSearchObject();
+      const tabFromUrl = urlState[this.getUrlKey()];
+      const currentTabIndex = this.getTabs().findIndex((tab) => tab.getSlug() === tabFromUrl);
+      if (currentTabIndex !== -1) {
+        this.setState({ currentTabIndex });
+      }
+    });
   }
 
   public duplicate(): DashboardLayoutManager {
@@ -74,6 +100,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public getUrlState() {
     const key = this.getUrlKey();
+    const { repeatByVariable, repeatedTabs } = this.getCurrentTab().state;
+    if (repeatByVariable && repeatedTabs === undefined) {
+      return {};
+    }
+
     return { [key]: this.getCurrentTab().getSlug() };
   }
 
