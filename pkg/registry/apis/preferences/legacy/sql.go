@@ -38,11 +38,12 @@ type preferenceModel struct {
 }
 
 type LegacySQL struct {
-	db legacysql.LegacyDatabaseProvider
+	db      legacysql.LegacyDatabaseProvider
+	startup time.Time
 }
 
 func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
-	return &LegacySQL{db: db}
+	return &LegacySQL{db: db, startup: time.Now()}
 }
 
 // NOTE: this does not support paging -- lets check if that will be a problem in cloud
@@ -124,6 +125,7 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 ) ([]preferences.Preferences, int64, error) {
 	var results []preferences.Preferences
 	var rv sql.NullTime
+	var max sql.NullString
 
 	sql, err := s.db(ctx)
 	if err != nil {
@@ -180,16 +182,20 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 	}
 
 	if needsRV {
-		fmt.Printf("TODO... get RV\n")
-		// req.Reset()
-		// q, err = sqltemplate.Execute(sqlPreferencesRV, req)
-		// if err != nil {
-		// 	return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
-		// }
-		// err = sess.Get(ctx, &rv, q)
-		// if err != nil {
-		// 	return nil, 0, fmt.Errorf("unable to get RV %w", err)
-		// }
+		req.Reset()
+		q, err = sqltemplate.Execute(sqlPreferencesRV, req)
+		if err != nil {
+			return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
+		}
+		err = sess.Get(ctx, &max, q)
+		if err != nil {
+			return nil, 0, fmt.Errorf("unable to get RV %w", err)
+		}
+		if max.Valid && max.String != "" {
+			fmt.Printf("max RV: %s\n", max.String)
+		} else {
+			rv.Time = s.startup
+		}
 	}
 	return results, rv.Time.UnixMilli(), err
 }

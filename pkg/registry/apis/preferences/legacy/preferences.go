@@ -118,9 +118,12 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 	if p.TeamUID.Valid {
 		owner.Owner = utils.TeamResourceOwner
 		owner.Name = p.TeamUID.String
-	} else {
+	} else if p.UserUID.Valid {
 		owner.Owner = utils.UserResourceOwner
 		owner.Name = p.UserUID.String
+	} else {
+		owner.Owner = utils.NamespaceResourceOwner
+		owner.Name = ""
 	}
 	obj := preferences.Preferences{
 		ObjectMeta: metav1.ObjectMeta{

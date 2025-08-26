@@ -12,4 +12,4 @@ SELECT p.id, p.org_id,
  LEFT JOIN `grafana`.`team` as t ON p.team_id = t.id
 WHERE p.org_id = 1 
   AND t.uid = 'ttt'
-ORDER BY p.user_id asc, p.team_id asc
+ORDER BY p.user_id asc, p.team_id asc, p.org_id asc

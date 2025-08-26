@@ -2,6 +2,7 @@ package preferences
 
 import (
 	"context"
+	"slices"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -27,6 +28,9 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			switch name.Owner {
+			case utils.NamespaceResourceOwner:
+				return authorizer.DecisionAllow, "", nil
+
 			case utils.UserResourceOwner:
 				if user.GetUID() == name.Name {
 					return authorizer.DecisionAllow, "", nil
@@ -39,14 +43,10 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				if err != nil {
 					return authorizer.DecisionDeny, "error fetching teams", err
 				}
-				for _, team := range teams {
-					if team == name.Name {
-						return authorizer.DecisionAllow, "", nil
-					}
+				if slices.Contains(teams, name.Name) {
+					return authorizer.DecisionAllow, "", nil
 				}
 				return authorizer.DecisionDeny, "not a team member", nil
-
-			default:
 			}
 
 			return authorizer.DecisionDeny, "invalid name", nil

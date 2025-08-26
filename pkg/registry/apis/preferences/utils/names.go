@@ -22,7 +22,7 @@ type OwnerReference struct {
 }
 
 func (o OwnerReference) AsName() string {
-	if o.Name == "" {
+	if o.Name == "" || o.Owner == NamespaceResourceOwner {
 		return string(o.Owner)
 	}
 	return string(o.Owner) + ":" + o.Name

@@ -17,7 +17,8 @@ WHERE p.org_id = {{ .Arg .OrgID }}
   AND (u.uid = {{ .Arg .UserUID }}
   {{ if .UserTeams }}
     OR t.uid IN ({{ .ArgList .UserTeams }})
+    OR p.user_id = 0
   {{ end }}
   )
 {{ end }}
-ORDER BY p.user_id asc, p.team_id asc
+ORDER BY p.user_id asc, p.team_id asc, p.org_id asc

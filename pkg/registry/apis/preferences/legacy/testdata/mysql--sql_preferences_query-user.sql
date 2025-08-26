@@ -13,4 +13,4 @@ SELECT p.id, p.org_id,
 WHERE p.org_id = 1 
   AND (u.uid = 'uuu'
   )
-ORDER BY p.user_id asc, p.team_id asc
+ORDER BY p.user_id asc, p.team_id asc, p.org_id asc
