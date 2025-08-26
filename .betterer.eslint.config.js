@@ -2,12 +2,15 @@
 const emotionPlugin = require('@emotion/eslint-plugin');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
+// @ts-expect-error
 const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
+// @ts-expect-error
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 
+// @ts-expect-error
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
@@ -16,7 +19,7 @@ const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 // as we just want to pull in all of the necessary configuration but not run the rules
 // (this should only be concerned with checking rules that we want to improve,
 // so there's no need to try and run the rules that will be linted properly anyway)
-const mappedBaseConfigs = grafanaConfig.map((config) => {
+const mappedBaseConfigs = grafanaConfig.map((/** @type {import('eslint').Linter.Config} */ config) => {
   const { rules, ...baseConfig } = config;
   return baseConfig;
 });
