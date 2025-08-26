@@ -32,6 +32,13 @@ const (
 	cacheCleanupInterval = 10 * time.Minute
 )
 
+type backendType string
+
+const (
+	grafanaCloudPromType backendType = "grafanacloud-prom"
+	prometheusType       backendType = "prometheus"
+)
+
 type DatasourceWriterConfig struct {
 	// Timeout is the maximum time to wait for a remote write to succeed.
 	Timeout time.Duration
@@ -203,6 +210,13 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		headers.Add(k, v)
 	}
 
+	var backend backendType
+	if dsUID == string(grafanaCloudPromType) {
+		backend = grafanaCloudPromType
+	} else {
+		backend = prometheusType
+	}
+
 	cfg := PrometheusWriterConfig{
 		URL: u.String(),
 		HTTPOptions: httpclient.Options{
@@ -212,7 +226,8 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			Header:       headers,
 			ProxyOptions: ho.ProxyOptions,
 		},
-		Timeout: w.cfg.Timeout,
+		Timeout:     w.cfg.Timeout,
+		BackendType: backend,
 	}
 	if err != nil {
 		return nil, err

@@ -20,7 +20,6 @@ import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 import { DashboardGridItemRenderer } from './DashboardGridItemRenderer';
@@ -173,7 +172,10 @@ export class DashboardGridItem
       const isSource = index === 0;
       const clone = isSource
         ? panelToRepeat
-        : panelToRepeat.clone({ key: getCloneKey(panelToRepeat.state.key!, index) });
+        : panelToRepeat.clone({
+            key: getCloneKey(panelToRepeat.state.key!, index),
+            repeatSourceKey: panelToRepeat.state.key,
+          });
 
       clone.setState({ $variables: getLocalVariableValueSet(variable, variableValues[index], variableTexts[index]) });
 
@@ -206,8 +208,6 @@ export class DashboardGridItem
     }
 
     this._prevRepeatValues = values;
-
-    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   public handleVariableName() {

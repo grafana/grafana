@@ -1,6 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
+import memoize from 'micro-memoize';
 import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Cell,
@@ -9,6 +10,7 @@ import {
   DataGridHandle,
   DataGridProps,
   RenderCellProps,
+  Renderers,
   RenderRowProps,
   Row,
   SortColumn,
@@ -27,6 +29,7 @@ import { Trans } from '@grafana/i18n';
 import { FieldColorModeId, TableCellTooltipPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
@@ -42,6 +45,7 @@ import { TableCellTooltip } from './components/TableCellTooltip';
 import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
+  useColWidths,
   useFilteredRows,
   useFooterCalcs,
   useHeaderHeight,
@@ -51,6 +55,7 @@ import {
   useSortedRows,
 } from './hooks';
 import {
+  getCellActionStyles,
   getDefaultCellStyles,
   getFooterStyles,
   getGridStyles,
@@ -58,18 +63,26 @@ import {
   getLinkStyles,
   getTooltipStyles,
 } from './styles';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, InspectCellProps, TableCellStyleOptions } from './types';
+import {
+  TableNGProps,
+  TableRow,
+  TableSummaryRow,
+  TableColumn,
+  InspectCellProps,
+  TableCellStyleOptions,
+  FromFieldsResult,
+  CellRootRenderer,
+} from './types';
 import {
   applySort,
   canFieldBeColorized,
-  computeColWidths,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
   frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
-  getCellColorInlineStyles,
+  getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
   getDefaultRowHeight,
@@ -84,7 +97,7 @@ import {
   withDataLinksActionsTooltip,
 } from './utils';
 
-type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+const EXPANDED_COLUMN_KEY = 'expanded';
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -111,10 +124,7 @@ export function TableNG(props: TableNGProps) {
   } = props;
 
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, {
-    enablePagination,
-    transparent,
-  });
+  const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
 
   const getCellActions = useCallback(
@@ -135,6 +145,7 @@ export function TableNG(props: TableNGProps) {
 
   const rows = useMemo(() => frameToRecords(data), [data]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const {
     rows: filteredRows,
@@ -151,6 +162,7 @@ export function TableNG(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
+  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
@@ -165,6 +177,11 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
     [width, hasNestedFrames, scrollbarWidth]
   );
+  const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
+  const applyToRowBgFn = useMemo(
+    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
+    [data.fields, getCellColorInlineStyles]
+  );
   const typographyCtx = useMemo(
     () =>
       createTypographyContext(
@@ -174,20 +191,9 @@ export function TableNG(props: TableNGProps) {
       ),
     [theme]
   );
-  const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
-  const numColsFullyInView = useMemo(
-    () =>
-      widths.reduce(
-        ([count, remainingWidth], nextWidth) => {
-          if (remainingWidth - nextWidth >= 0) {
-            return [count + 1, remainingWidth - nextWidth];
-          }
-          return [count, 0];
-        },
-        [0, availableWidth]
-      )[0],
-    [widths, availableWidth]
-  );
+
+  const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
+
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
@@ -228,7 +234,6 @@ export function TableNG(props: TableNGProps) {
     footerOptions,
     isCountRowsSet,
   });
-  const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -273,15 +278,84 @@ export function TableNG(props: TableNGProps) {
     [enableVirtualization, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
   );
 
-  interface Schema {
-    columns: TableColumn[];
-    cellRootRenderers: Record<string, CellRootRenderer>;
-    colsWithTooltip: Record<string, boolean>;
-  }
+  const buildNestedTableExpanderColumn = useCallback(
+    (
+      nestedColumns: TableColumn[],
+      hasNestedHeaders: boolean,
+      renderers: Renderers<TableRow, TableSummaryRow>
+    ): TableColumn => ({
+      key: EXPANDED_COLUMN_KEY,
+      name: '',
+      field: {
+        name: '',
+        type: FieldType.other,
+        config: {},
+        values: [],
+      },
+      cellClass(row) {
+        if (row.__depth !== 0) {
+          return styles.cellNested;
+        }
+        return;
+      },
+      colSpan(args) {
+        return args.type === 'ROW' && args.row.__depth === 1 ? data.fields.length : 1;
+      },
+      renderCell: ({ row }) => {
+        if (row.__depth === 0) {
+          const rowIdx = row.__index;
 
-  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
-    const fromFields = (f: Field[], widths: number[]) => {
-      const result: Schema = {
+          return (
+            <RowExpander
+              isExpanded={expandedRows.has(rowIdx)}
+              onCellExpand={() => {
+                if (expandedRows.has(rowIdx)) {
+                  expandedRows.delete(rowIdx);
+                } else {
+                  expandedRows.add(rowIdx);
+                }
+                setExpandedRows(new Set(expandedRows));
+              }}
+            />
+          );
+        }
+
+        // Type guard to check if data exists as it's optional
+        const nestedData = row.data;
+        if (!nestedData) {
+          return null;
+        }
+
+        const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
+        if (!expandedRecords.length) {
+          return (
+            <div className={styles.noDataNested}>
+              <Trans i18nKey="grafana-ui.table.nested-table.no-data">No data</Trans>
+            </div>
+          );
+        }
+
+        return (
+          <DataGrid<TableRow, TableSummaryRow>
+            {...commonDataGridProps}
+            className={clsx(styles.grid, styles.gridNested)}
+            headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+            headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
+            columns={nestedColumns}
+            rows={expandedRecords}
+            renderers={renderers}
+          />
+        );
+      },
+      width: COLUMN.EXPANDER_WIDTH,
+      minWidth: COLUMN.EXPANDER_WIDTH,
+    }),
+    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles]
+  );
+
+  const fromFields = useCallback(
+    (f: Field[], widths: number[]): FromFieldsResult => {
+      const result: FromFieldsResult = {
         columns: [],
         cellRootRenderers: {},
         colsWithTooltip: {},
@@ -328,7 +402,7 @@ export function TableNG(props: TableNGProps) {
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
-        const renderFieldCell = getCellRenderer(field, cellOptions);
+        const CellType = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
@@ -337,11 +411,7 @@ export function TableNG(props: TableNGProps) {
 
         // helps us avoid string cx and emotion per-cell
         const cellActionClassName = showActions
-          ? clsx(
-              'table-cell-actions',
-              styles.cellActions,
-              justifyContent === 'flex-end' ? styles.cellActionsEnd : styles.cellActionsStart
-            )
+          ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
           : undefined;
 
         const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
@@ -375,14 +445,12 @@ export function TableNG(props: TableNGProps) {
             }
           }
 
-          let style: CSSProperties | undefined;
-
-          if (rowCellStyle.color != null || rowCellStyle.background != null) {
-            style = rowCellStyle;
-          } else if (canBeColorized) {
+          let style: CSSProperties = { ...rowCellStyle };
+          if (canBeColorized) {
             const value = props.row[props.column.key];
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            style = getCellColorInlineStyles(theme, cellOptions, displayValue);
+            const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
+            Object.assign(style, cellColorStyles);
           }
 
           return (
@@ -409,21 +477,22 @@ export function TableNG(props: TableNGProps) {
 
           return (
             <>
-              {renderFieldCell({
-                cellOptions,
-                frame,
-                field,
-                height,
-                rowIdx,
-                theme,
-                value,
-                width,
-                timeRange,
-                cellInspect,
-                showFilters,
-                getActions: getCellActions,
-                disableSanitizeHtml,
-              })}
+              <CellType
+                cellOptions={cellOptions}
+                frame={frame}
+                field={field}
+                height={height}
+                rowIdx={rowIdx}
+                theme={theme}
+                value={value}
+                width={width}
+                timeRange={timeRange}
+                cellInspect={cellInspect}
+                showFilters={showFilters}
+                getActions={getCellActions}
+                disableSanitizeHtml={disableSanitizeHtml}
+                getTextColorForBackground={getTextColorForBackground}
+              />
               {showActions && (
                 <TableCellActions
                   field={field}
@@ -486,6 +555,7 @@ export function TableNG(props: TableNGProps) {
               disableSanitizeHtml,
               field: tooltipField,
               getActions: getCellActions,
+              getTextColorForBackground,
               gridRef,
               placement,
               renderer: tooltipFieldRenderer,
@@ -496,15 +566,20 @@ export function TableNG(props: TableNGProps) {
 
             renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
               // cached so we don't care about multiple calls.
-              const height = rowHeightFn(props.row);
-              let tooltipStyle: CSSProperties | undefined;
+              const tooltipHeight = rowHeightFn(props.row);
+              let tooltipStyle: CSSProperties = { ...rowCellStyle };
               if (tooltipCanBeColorized) {
-                const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]); // this is yet another call to field.display() for the tooltip field
-                tooltipStyle = getCellColorInlineStyles(theme, tooltipCellOptions, tooltipDisplayValue);
+                const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]);
+                const tooltipCellColorStyles = getCellColorInlineStyles(
+                  tooltipCellOptions,
+                  tooltipDisplayValue,
+                  applyToRowBgFn != null
+                );
+                Object.assign(tooltipStyle, tooltipCellColorStyles);
               }
 
               return (
-                <TableCellTooltip {...tooltipProps} height={height} rowIdx={props.rowIdx} style={tooltipStyle}>
+                <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.rowIdx} style={tooltipStyle}>
                   {renderBasicCellContent(props)}
                 </TableCellTooltip>
               );
@@ -512,13 +587,13 @@ export function TableNG(props: TableNGProps) {
           }
         }
 
-        const column: TableColumn = {
+        result.columns.push({
           field,
           key: displayName,
           name: displayName,
           width,
           headerCellClass,
-          frozen: Math.min(frozenColumns, numColsFullyInView) > i,
+          frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
           renderCell: renderCellContent,
           renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
@@ -546,136 +621,80 @@ export function TableNG(props: TableNGProps) {
             }
             return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
           },
-        };
-
-        result.columns.push(column);
+        });
       });
 
       return result;
-    };
+    },
+    [
+      applyToRowBgFn,
+      crossFilterOrder,
+      crossFilterRows,
+      data,
+      disableSanitizeHtml,
+      filter,
+      footerCalcs,
+      frozenColumns,
+      getCellActions,
+      getCellColorInlineStyles,
+      getTextColorForBackground,
+      isCountRowsSet,
+      numFrozenColsFullyInView,
+      onCellFilterAdded,
+      rowHeight,
+      rowHeightFn,
+      rows,
+      setFilter,
+      showTypeIcons,
+      theme,
+      timeRange,
+    ]
+  );
 
+  // set up the first row's nested data and the nest field widths using useColWidths to avoid
+  // unnecessary re-renders on re-size.
+  const firstRowNestedData = useMemo(
+    () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
+    [hasNestedFrames, rows]
+  );
+  const [nestedFieldWidths] = useColWidths(firstRowNestedData?.fields ?? [], availableWidth);
+
+  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
     const result = fromFields(visibleFields, widths);
 
-    // handle nested frames rendering from here.
-    if (!hasNestedFrames) {
+    // if nested frames are present, augment the columns to include the nested table expander column.
+    if (!firstRowNestedData) {
       return result;
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const firstNestedData = rows.find((r) => r.data)?.data;
-    if (!firstNestedData) {
-      return result;
-    }
-
-    const hasNestedHeaders = firstNestedData.meta?.custom?.noHeader !== true;
-    const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
+    const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
+    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
-      firstNestedData.fields,
-      computeColWidths(firstNestedData.fields, availableWidth)
+      firstRowNestedData.fields,
+      nestedFieldWidths
     );
 
-    const renderCellRoot: CellRootRenderer = (key, props) => nestedCellRootRenderers[props.column.key](key, props);
-
-    result.cellRootRenderers.expanded = (key, props) => <Cell key={key} {...props} />;
+    const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
+    result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
 
     // If we have nested frames, we need to add a column for the row expansion
-    result.columns.unshift({
-      key: 'expanded',
-      name: '',
-      field: {
-        name: '',
-        type: FieldType.other,
-        config: {},
-        values: [],
-      },
-      cellClass(row) {
-        if (row.__depth !== 0) {
-          return styles.cellNested;
-        }
-        return;
-      },
-      colSpan(args) {
-        return args.type === 'ROW' && args.row.__depth === 1 ? data.fields.length : 1;
-      },
-      renderCell: ({ row }) => {
-        if (row.__depth === 0) {
-          const rowIdx = row.__index;
-
-          return (
-            <RowExpander
-              isExpanded={expandedRows.has(rowIdx)}
-              onCellExpand={() => {
-                if (expandedRows.has(rowIdx)) {
-                  expandedRows.delete(rowIdx);
-                } else {
-                  expandedRows.add(rowIdx);
-                }
-                setExpandedRows(new Set(expandedRows));
-              }}
-            />
-          );
-        }
-
-        // Type guard to check if data exists as it's optional
-        const nestedData = row.data;
-        if (!nestedData) {
-          return null;
-        }
-
-        const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
-        if (!expandedRecords.length) {
-          return (
-            <div className={styles.noDataNested}>
-              <Trans i18nKey="grafana-ui.table.nested-table.no-data">No data</Trans>
-            </div>
-          );
-        }
-
-        return (
-          <DataGrid<TableRow, TableSummaryRow>
-            {...commonDataGridProps}
-            className={clsx(styles.grid, styles.gridNested)}
-            headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
-            headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
-            columns={nestedColumns}
-            rows={expandedRecords}
-            renderers={{ renderRow, renderCell: renderCellRoot }}
-          />
-        );
-      },
-      width: COLUMN.EXPANDER_WIDTH,
-      minWidth: COLUMN.EXPANDER_WIDTH,
-    });
+    result.columns.unshift(
+      buildNestedTableExpanderColumn(nestedColumns, hasNestedHeaders, {
+        renderRow,
+        renderCell: (key, props) => nestedCellRootRenderers[props.column.key](key, props),
+      })
+    );
 
     return result;
   }, [
-    applyToRowBgFn,
-    availableWidth,
-    commonDataGridProps,
-    crossFilterOrder,
-    crossFilterRows,
-    data,
-    disableSanitizeHtml,
+    buildNestedTableExpanderColumn,
     enableSharedCrosshair,
     expandedRows,
-    filter,
-    footerCalcs,
-    frozenColumns,
-    getCellActions,
-    hasNestedFrames,
-    isCountRowsSet,
-    numColsFullyInView,
-    onCellFilterAdded,
+    firstRowNestedData,
+    fromFields,
+    nestedFieldWidths,
     panelContext,
-    rowHeight,
-    rowHeightFn,
-    rows,
-    setFilter,
-    showTypeIcons,
-    sortColumns,
-    styles,
-    timeRange,
-    theme,
     visibleFields,
     widths,
   ]);
@@ -683,17 +702,15 @@ export function TableNG(props: TableNGProps) {
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const structureRevColumns = useMemo(() => columns, [columns, structureRev]);
+  const renderCellRoot: CellRootRenderer = useCallback(
+    (key, props) => cellRootRenderers[props.column.key](key, props),
+    [cellRootRenderers]
+  );
 
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
-
-  const renderCellRoot: CellRootRenderer = (key, props) => {
-    return cellRootRenderers[props.column.key](key, props);
-  };
-
-  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
 
   return (
     <>
@@ -790,6 +807,7 @@ export function TableNG(props: TableNGProps) {
  */
 const renderRowFactory =
   (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
+  // eslint-disable-next-line react/display-name
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;

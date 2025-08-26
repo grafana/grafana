@@ -380,7 +380,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 }
 
 func (s *secureValueMetadataStorage) SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetExternalID", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetVersionToActive", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 		attribute.Int64("version", version),
@@ -417,7 +417,7 @@ func (s *secureValueMetadataStorage) SetVersionToActive(ctx context.Context, nam
 }
 
 func (s *secureValueMetadataStorage) SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetExternalID", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetVersionToInactive", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 		attribute.Int64("version", version),

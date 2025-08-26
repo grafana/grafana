@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Disattivazione audio, raggruppamento e orari"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nessuna fonte dati trovata"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Anteprima",
       "previewCondition": "Anteprima condizione regola di avviso"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Aggiungi integrazione del punto di contatto",
       "body-attention": "Poiché non è ancora stato configurato un criterio predefinito, questo punto di contatto verrà automaticamente impostato come predefinito.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "Nessuna regola trovata",
       "error-button": "Errore",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Annulla ricerca",
         "no-more-results": "Nessun altro risultato: {{numberOfRules}} regole trovate",
@@ -3537,7 +3550,6 @@
       "button-cancel": "Annulla",
       "button-move": "Sposta",
       "button-moving": "Spostamento in corso...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3743,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Direzione della freccia",
+    "category-arrow-direction": "",
     "category-background": "Sfondo",
     "category-border": "Bordo",
     "category-canvas": "Tela",
@@ -3775,15 +3787,17 @@
         "auto": "Automatico"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Abilita la selezione di tipi di elementi sperimentali",
     "description-inline-editing": "Abilita la modifica diretta del pannello",
     "description-pan-zoom": "Abilita panoramica e zoom",
-    "direction-options": {
-      "label-both": "Entrambe",
-      "label-forward": "Inoltra",
-      "label-none": "Nessuno",
-      "label-reverse": "Inverti"
-    },
     "drone-front-item": {
       "category-drone-front": "Parte anteriore del drone",
       "name-roll-angle": "Angolo di rollio"
@@ -4171,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Fonti dei dati",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nessun risultato trovato corrisponde alla tua ricerca",
       "request-data-source": "Richiedi una nuova origine dati",
       "roadmap": "Visualizza roadmap"
@@ -5208,6 +5223,9 @@
       "save-json-to-file": "Salva JSON nel file",
       "see-docs": "Consulta la <2>documentazione</2> per ulteriori informazioni sul provisioning."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Caricamento configurazione"
     },
@@ -5479,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambia visualizzazione",
@@ -6120,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Attiva/disattiva il menu di condivisione"
     },
-    "solo-panel-page": {
-      "loading": "Caricamento"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON dashboard utilizzato per risolvere i problemi di visualizzazione"
@@ -6406,8 +6424,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Fai clic <2>qui</2> per saperne di più su questo errore.",
-    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6545,9 +6562,11 @@
       "explore": "Esplora"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Crea una dashboard",
       "explore-data": "Esplora i dati",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Maggiori dettagli sull'errore"
@@ -6655,6 +6674,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Colore fisso",
       "noOptionsMessage-no-fields-found": "Nessun campo trovato"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Carica"
@@ -7122,7 +7149,7 @@
     "rich-history-card": {
       "add-comment-form": "Aggiungi modulo di commento",
       "add-comment-tooltip": "Aggiungi commento",
-      "add-to-library": "Aggiungi alla libreria",
+      "add-to-library": "",
       "cancel": "Annulla",
       "confirm-delete": "Elimina",
       "copy-query-tooltip": "Copia la query negli appunti",
@@ -7234,7 +7261,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Aggiungi query dalla libreria",
+      "add-from-query-library": "",
       "query-add-button": "Aggiungi query",
       "query-add-button-aria-label": "Aggiungi query",
       "query-history-button": "Cronologia query",
@@ -7532,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9467,6 +9495,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9507,6 +9537,12 @@
       "show-context": "Mostra contesto",
       "show-log-line": "Mostra riga registro",
       "sidebar-mode": "Ancoraggio a destra",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Sblocca registro"
     },
     "log-line-menu": {
@@ -9738,7 +9774,8 @@
       "message-name-required": "Il nome è obbligatorio",
       "message-reserved-name": "Questo è un nome riservato e non può essere utilizzato per una cartella.",
       "message-same-name": "Esiste già una dashboard o una cartella con lo stesso nome",
-      "message-same-name-general": "Esiste già una cartella o una dashboard nella cartella generale con lo stesso nome"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10685,10 +10722,6 @@
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
     }
   },
-  "panel-search": {
-    "no-matches": "Nessuna corrispondenza trovata",
-    "unsupported-layout": "Layout non supportato"
-  },
   "panel-type-filter": {
     "clear-button": "Cancella tipi",
     "select-aria-label": "Filtro del tipo di pannello",
@@ -11226,11 +11259,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Elimina",
-      "confirm-delete-repository": "Desideri davvero eliminare la configurazione del repository?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Impossibile eliminare il repository",
       "success-repository-deleted": "Impostazioni del repository in coda per l'eliminazione",
-      "title-delete-repository": "Elimina configurazione repository",
-      "tooltip-delete-this-repository": "Elimina questo repository"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Torna ai repository",
@@ -11877,7 +11914,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Riduci riga della query",
       "datasource-help": "Mostra la guida dell'origine dati",
       "drag-and-drop": "Trascina e rilascia per riordinare",
@@ -11885,14 +11921,10 @@
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
       "remove-query": "Rimuovi query",
-      "replace-query-from-library": "Sostituisci con query dalla libreria",
+      "replace-query-from-library": "",
       "show-response": "Mostra la risposta"
     },
-    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
   },
   "recently-deleted": {
     "buttons": {
@@ -12739,6 +12771,9 @@
       "label-alt-text": "Testo alternativo",
       "label-title-text": "Testo del titolo"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -13030,6 +13065,7 @@
         "name-point-size": "Dimensione punto",
         "name-show-points": "Mostra punti",
         "name-show-thresholds": "Mostra soglie",
+        "name-show-values": "",
         "name-style": "Stile",
         "name-transform": "Trasforma",
         "transform-options": {
