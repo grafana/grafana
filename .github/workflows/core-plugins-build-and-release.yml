@@ -62,7 +62,7 @@ jobs:
         with:
           credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a'
+        uses: 'google-github-actions/setup-gcloud@26f734c2779b00b7dda794207734c511110a4368'
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
