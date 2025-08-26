@@ -4,16 +4,13 @@ const restrictedGlobals = require('confusing-browser-globals');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
 const jestDomPlugin = require('eslint-plugin-jest-dom');
-// @ts-expect-error
 const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
-// @ts-expect-error
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
-// @ts-expect-error
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
