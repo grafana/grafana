@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -69,7 +70,9 @@ import (
 
 var provisioningExtras = wire.NewSet(
 	webhooks.ProvideWebhooks,
+	repository.ProvideFactory,
 	extras.ProvideProvisioningOSSExtras,
+	extras.ProvideProvisioningOSSRepositoryExtras,
 )
 
 var configProviderExtras = wire.NewSet(
