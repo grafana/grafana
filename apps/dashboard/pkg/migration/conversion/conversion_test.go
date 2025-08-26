@@ -122,7 +122,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			require.Equal(t, dashv0.GROUP, gv.Group)
 
 			// Validate that the input file starts with the apiVersion declared in the object
-			expectedPrefix := fmt.Sprintf("%s.", sourceVersion)
+			expectedPrefix := fmt.Sprintf("%s.", gv.Version)
 			if !strings.HasPrefix(file.Name(), expectedPrefix) {
 				t.Fatalf(
 					"Input file %s does not match its declared apiVersion %s. "+

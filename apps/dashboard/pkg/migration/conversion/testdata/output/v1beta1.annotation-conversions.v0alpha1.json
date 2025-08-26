@@ -1,4 +1,6 @@
 {
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
   "metadata": {
     "name": "annotation-conversions-test",
     "creationTimestamp": null,
@@ -214,8 +216,7 @@
   "status": {
     "conversion": {
       "failed": false,
-      "storedVersion": "v1beta1",
-      "error": ""
+      "storedVersion": "v1beta1"
     }
   }
 }
