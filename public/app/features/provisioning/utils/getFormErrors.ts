@@ -13,7 +13,18 @@ export type FormErrorTuple = [RepositoryFormPath | null, { message: string } | n
  * @returns Tuple with form field path and error message
  */
 export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
-  const fieldsToValidate = ['local.path', 'github.branch', 'github.url', 'github.token'];
+  const fieldsToValidate = [
+    'local.path',
+    'github.branch',
+    'github.url',
+    'secure.token',
+    'gitlab.branch',
+    'gitlab.url',
+    'bitbucket.branch',
+    'bitbucket.url',
+    'git.branch',
+    'git.url',
+  ];
   const fieldMap: Record<string, RepositoryFormPath> = {
     path: 'repository.path',
     branch: 'repository.branch',

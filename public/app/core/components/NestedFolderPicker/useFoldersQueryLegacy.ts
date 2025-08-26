@@ -7,10 +7,11 @@ import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-da
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { FolderListItemDTO, PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
+import { FolderListItemDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { ROOT_FOLDER_ITEM } from './utils';
+import { getRootFolderItem } from './utils';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;
 type ListFoldersRequest = QueryActionCreatorResult<
@@ -47,7 +48,9 @@ function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undef
 export function useFoldersQueryLegacy(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
-  permission?: PermissionLevelString
+  permission?: PermissionLevelString,
+  /* rootFolderUID: configure which folder to start browsing from */
+  rootFolderUID?: string
 ) {
   const dispatch = useDispatch();
 
@@ -177,11 +180,13 @@ export function useFoldersQueryLegacy(
       return flatList;
     }
 
-    const rootFlatTree = createFlatList(undefined, state.rootPages, 1);
-    rootFlatTree.unshift(ROOT_FOLDER_ITEM);
+    const startingPages = rootFolderUID ? state.pagesByParent[rootFolderUID] : state.rootPages;
+
+    const rootFlatTree = createFlatList(rootFolderUID ?? undefined, startingPages ?? [], 1);
+    rootFlatTree.unshift(getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID]);
 
   return {
     items: treeList,

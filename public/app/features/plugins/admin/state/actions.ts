@@ -3,8 +3,9 @@ import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { Settings } from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-import { StoreState, ThunkResult } from 'app/types';
+import { StoreState, ThunkResult } from 'app/types/store';
 
 import { invalidatePluginInCache } from '../../loader/cache';
 import {
@@ -18,7 +19,7 @@ import {
   getProvisionedPlugins,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
-import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
+import { mapLocalToCatalog, mergeLocalsAndRemotes } from '../helpers';
 import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin, PluginStatus } from '../types';
 
 // Fetches
@@ -278,3 +279,11 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
     return plugin;
   };
 };
+
+function updatePanels() {
+  return getBackendSrv()
+    .get('/api/frontend/settings')
+    .then((settings: Settings) => {
+      config.panels = settings.panels;
+    });
+}

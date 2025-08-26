@@ -14,8 +14,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
@@ -172,7 +172,7 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 	eventAge := time.Since(lastEvent)
 
 	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
-		patchOp := map[string]interface{}{
+		patchOp := map[string]any{
 			"op":    "replace",
 			"path":  "/status/webhook/lastEvent",
 			"value": time.Now().UnixMilli(),

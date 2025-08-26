@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
@@ -16,15 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	ErrMissingSQLQuery = errutil.BadRequest("sql-missing-query").Errorf("missing SQL query")
-	ErrInvalidSQLQuery = errutil.BadRequest("sql-invalid-sql").MustTemplate(
-		"invalid SQL query: {{ .Private.query }} err: {{ .Error }}",
-		errutil.WithPublic(
-			"Invalid SQL query: {{ .Public.error }}",
-		),
-	)
-)
+const SQLLoggerName = "expr.sql"
 
 // SQLCommand is an expression to run SQL over results
 type SQLCommand struct {
@@ -37,31 +34,25 @@ type SQLCommand struct {
 	inputLimit  int64
 	outputLimit int64
 	timeout     time.Duration
+	logger      log.Logger
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
+func NewSQLCommand(ctx context.Context, logger log.Logger, refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
+	sqlLogger := backend.NewLoggerWith("logger", SQLLoggerName).FromContext(ctx)
 	if rawSQL == "" {
-		return nil, ErrMissingSQLQuery
+		return nil, sql.MakeErrEmptyQuery(refID)
 	}
-	tables, err := sql.TablesList(rawSQL)
+	tables, err := sql.TablesList(ctx, rawSQL)
 	if err != nil {
-		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
-		return nil, ErrInvalidSQLQuery.Build(errutil.TemplateData{
-			Error: err,
-			Public: map[string]any{
-				"error": err.Error(),
-			},
-			Private: map[string]any{
-				"query": rawSQL,
-			},
-		})
+		sqlLogger.Warn("invalid sql query", "sql", rawSQL, "error", err)
+		return nil, sql.MakeErrInvalidQuery(refID, err)
 	}
 	if len(tables) == 0 {
-		logger.Warn("no tables found in SQL query", "sql", rawSQL)
+		sqlLogger.Warn("no tables found in SQL query", "sql", rawSQL)
 	}
 	if tables != nil {
-		logger.Debug("REF tables", "tables", tables, "sql", rawSQL)
+		sqlLogger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
 
 	return &SQLCommand{
@@ -72,31 +63,33 @@ func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64,
 		outputLimit: outputLimit,
 		timeout:     timeout,
 		format:      format,
+		logger:      sqlLogger,
 	}, nil
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
+func UnmarshalSQLCommand(ctx context.Context, rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
+	sqlLogger := backend.NewLoggerWith("logger", SQLLoggerName).FromContext(ctx)
 	if rn.TimeRange == nil {
-		logger.Error("time range must be specified for refID", "refID", rn.RefID)
+		sqlLogger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
 
 	expressionRaw, ok := rn.Query["expression"]
 	if !ok {
-		logger.Error("no expression in the query", "query", rn.Query)
+		sqlLogger.Error("no expression in the query", "query", rn.Query)
 		return nil, errors.New("no expression in the query")
 	}
 	expression, ok := expressionRaw.(string)
 	if !ok {
-		logger.Error("expected sql expression to be type string", "expression", expressionRaw)
+		sqlLogger.Error("expected sql expression to be type string", "expression", expressionRaw)
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
-	return NewSQLCommand(rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
+	return NewSQLCommand(ctx, sqlLogger, rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -112,17 +105,30 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	start := time.Now()
 	tc := int64(0)
 	rsp := mathexp.Results{}
+	errorType := "none"
 
 	defer func() {
-		span.End()
 		duration := float64(time.Since(start).Milliseconds())
-
 		statusLabel := "ok"
 		if rsp.Error != nil {
+			e := &sql.ErrorWithCategory{}
+			if errors.As(rsp.Error, &e) {
+				errorType = e.Category()
+			} else {
+				errorType = "unknown"
+			}
 			statusLabel = "error"
+			span.AddEvent("exception", trace.WithAttributes(
+				semconv.ExceptionType(errorType),
+				semconv.ExceptionMessage(rsp.Error.Error()),
+			))
+			span.SetAttributes(attribute.String("error.category", errorType))
+			span.SetStatus(codes.Error, errorType)
+			gr.logger.Error("SQL command execution failed", "error", rsp.Error.Error(), "error_type", errorType)
 		}
+		span.End()
 
-		metrics.SqlCommandCount.WithLabelValues(statusLabel).Inc()
+		metrics.SqlCommandCount.WithLabelValues(statusLabel, errorType).Inc()
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
 		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
@@ -131,7 +137,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	for _, ref := range gr.varsToQuery {
 		results, ok := vars[ref]
 		if !ok {
-			logger.Warn("no results found for", "ref", ref)
+			gr.logger.Warn("no results found for", "ref", ref)
 			continue
 		}
 		frames := results.Values.AsDataFrames(ref)
@@ -142,25 +148,20 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	// limit of 0 or less means no limit (following convention)
 	if gr.inputLimit > 0 && tc > gr.inputLimit {
-		rsp.Error = fmt.Errorf(
-			"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
-			gr.inputLimit,
-			tc,
-		)
+		rsp.Error = sql.MakeInputLimitExceededError(gr.refID, gr.inputLimit)
 		return rsp, nil
 	}
 
-	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
+	gr.logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 
 	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames, sql.WithMaxOutputCells(gr.outputLimit), sql.WithTimeout(gr.timeout))
-
 	if err != nil {
-		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
 		return rsp, nil
 	}
-	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
+
+	gr.logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
 
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{
@@ -287,7 +288,7 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	}
 
 	if len(duplicates) > 0 {
-		return nil, makeDuplicateStringColumnError(duplicates)
+		return nil, sql.MakeDuplicateStringColumnError(duplicates)
 	}
 
 	// Build final result
@@ -300,4 +301,133 @@ func extractNumberSetFromSQLForAlerting(frame *data.Frame) ([]mathexp.Number, er
 	}
 
 	return numbers, nil
+}
+
+// handleSqlInput normalizes input DataFrames into a single dataframe with no labels so it can represent a table for use with SQL expressions.
+//
+// It handles three cases:
+//  1. If the input declares a supported time series or numeric kind in the wide or multi format (via FrameMeta.Type), it converts to a full-long formatted table using ConvertToFullLong.
+//  2. If the input is a single frame (no labels, no declared type), it passes through as-is.
+//  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
+//
+// The returned bool indicates if the input was (attempted to be) converted or passed through as-is.
+func handleSqlInput(ctx context.Context, tracer trace.Tracer, refID string, forRefIDs map[string]struct{}, dsType string, dataFrames data.Frames) (mathexp.Results, bool) {
+	_, span := tracer.Start(ctx, "SSE.HandleConvertSQLInput")
+	start := time.Now()
+	var result mathexp.Results
+	errorType := "none"
+	var metaType data.FrameType
+
+	defer func() {
+		duration := float64(time.Since(start).Milliseconds())
+		statusLabel := "ok"
+		if result.Error != nil {
+			statusLabel = "error"
+		}
+		dataType := categorizeFrameInputType(dataFrames)
+		span.SetAttributes(
+			attribute.String("status", statusLabel),
+			attribute.Float64("duration", duration),
+			attribute.String("data.type", dataType),
+			attribute.String("datasource.type", dsType),
+		)
+
+		if result.Error != nil {
+			e := &sql.ErrorWithCategory{}
+			if errors.As(result.Error, &e) {
+				errorType = e.Category()
+			} else {
+				errorType = "unknown"
+			}
+			span.AddEvent("exception", trace.WithAttributes(
+				semconv.ExceptionType(errorType),
+				semconv.ExceptionMessage(result.Error.Error()),
+			))
+			span.SetAttributes(attribute.String("error.category", errorType))
+			span.SetStatus(codes.Error, errorType)
+		}
+		span.End()
+	}()
+
+	if len(dataFrames) == 0 {
+		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, false
+	}
+
+	first := dataFrames[0]
+
+	// Single Frame no data case
+	// Note: In the case of a support Frame Type, we may want to return the matching schema
+	// with no rows (e.g. include the `__value__` column). But not sure about this at this time.
+	if len(dataFrames) == 1 && len(first.Fields) == 0 {
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: first},
+		}
+
+		return result, false
+	}
+
+	if first.Meta != nil {
+		metaType = first.Meta.Type
+	}
+
+	if supportedToLongConversion(metaType) {
+		convertedFrames, err := ConvertToFullLong(dataFrames)
+		if err != nil {
+			result.Error = sql.MakeInputConvertError(err, refID, forRefIDs, dsType)
+		}
+
+		if len(convertedFrames) == 0 {
+			result.Error = fmt.Errorf("conversion succeeded but returned no frames")
+			return result, true
+		}
+
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: convertedFrames[0]},
+		}
+
+		return result, true
+	}
+
+	// If we don't have a supported type for conversion, see if we can pass through as a table (no labels, and only a single frame)
+	var frameTypeIssue string
+	if metaType == "" {
+		frameTypeIssue = "is missing the data type (frame.meta.type)"
+	} else {
+		frameTypeIssue = fmt.Sprintf("has an unsupported data type [%s]", metaType)
+	}
+
+	// If meta.type is not supported, but there are labels or more than 1 frame error
+	if len(dataFrames) > 1 {
+		result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response %s and has more than one dataframe that can not be automatically mapped to a single table", frameTypeIssue), refID, forRefIDs, dsType)
+		return result, false
+	}
+	for _, frame := range dataFrames {
+		for _, field := range frame.Fields {
+			if len(field.Labels) > 0 {
+				result.Error = sql.MakeInputConvertError(fmt.Errorf("can not convert because the response %s and has labels in the response that can not be mapped to a table", frameTypeIssue), refID, forRefIDs, dsType)
+				return result, false
+			}
+		}
+	}
+
+	// Can pass through as table without conversion
+	result.Values = mathexp.Values{
+		mathexp.TableData{Frame: first},
+	}
+	return result, false
+}
+
+func categorizeFrameInputType(dataFrames data.Frames) string {
+	switch {
+	case len(dataFrames) == 0:
+		return "missing"
+	case dataFrames[0].Meta == nil:
+		return "missing"
+	case dataFrames[0].Meta.Type == "":
+		return "missing"
+	case dataFrames[0].Meta.Type.IsKnownType():
+		return string(dataFrames[0].Meta.Type)
+	default:
+		return "unknown"
+	}
 }

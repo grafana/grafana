@@ -2,7 +2,7 @@ import { gte, SemVer } from 'semver';
 
 import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { ElasticsearchQuery, MetricAggregation, MetricAggregationWithInlineScript } from './types';
+import { ElasticsearchDataQuery, MetricAggregation, MetricAggregationWithInlineScript } from './dataquery.gen';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -103,7 +103,7 @@ export const unsupportedVersionMessage =
   'Support for Elasticsearch versions after their end-of-life (currently versions < 7.16) was removed. Using unsupported version of Elasticsearch may lead to unexpected and incorrect results.';
 
 // To be considered a time series query, the last bucked aggregation must be a Date Histogram
-export const isTimeSeriesQuery = (query: ElasticsearchQuery): boolean => {
+export const isTimeSeriesQuery = (query: ElasticsearchDataQuery): boolean => {
   return query?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
 };
 

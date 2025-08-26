@@ -9,7 +9,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -45,6 +45,8 @@ export interface RowItemState extends SceneObjectState {
   conditionalRendering?: ConditionalRendering;
   repeatByVariable?: string;
   repeatedRows?: RowItem[];
+  /** Marks object as a repeated object and a key pointer to source object */
+  repeatSourceKey?: string;
 }
 
 export class RowItem

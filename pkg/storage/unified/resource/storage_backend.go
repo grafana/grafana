@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math/rand/v2"
 	"net/http"
 	"sort"
@@ -63,6 +64,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 	rv := k.snowflake.Generate().Int64()
 
+	obj := event.Object
 	// Write data.
 	var action DataAction
 	switch event.Type {
@@ -87,8 +89,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		action = DataActionUpdated
 	case resourcepb.WatchEvent_DELETED:
 		action = DataActionDeleted
+		obj = event.ObjectOld
 	default:
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
+	}
+
+	if obj == nil {
+		return 0, fmt.Errorf("object is nil")
 	}
 
 	// Build the search document
@@ -119,7 +126,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			Name:            event.Key.Name,
 			ResourceVersion: rv,
 			Action:          action,
-			Folder:          event.Object.GetFolder(),
+			Folder:          obj.GetFolder(),
 		},
 		Value: MetaData{
 			IndexableDocument: *doc,
@@ -137,7 +144,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
-		Folder:          event.Object.GetFolder(),
+		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
 	})
 	if err != nil {
@@ -442,6 +449,12 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 		}
 	}
 	return pagedKeys
+}
+
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.

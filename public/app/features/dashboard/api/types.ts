@@ -1,8 +1,8 @@
 import { UrlQueryMap } from '@grafana/data';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { ListOptions, Resource, ResourceList } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types';
+import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
@@ -40,19 +40,19 @@ export interface DashboardVersionError extends Error {
   status: number;
   data: {
     // The version which was stored when the dashboard was created / updated.
-    // Currently known versions are: 'v2alpha1' | 'v1beta1' | 'v0alpha1'
+    // Currently known versions are: 'v2beta1' | 'v1beta1' | 'v0alpha1'
     storedVersion: string;
     message: string;
   };
 }
 
 export class DashboardVersionError extends Error {
-  constructor(storedVersion: string, message = 'Dashboard version mismatch') {
+  constructor(storedVersion: string | undefined, message = 'Dashboard version mismatch') {
     super(message);
     this.name = 'DashboardVersionError';
     this.status = 200;
     this.data = {
-      storedVersion,
+      storedVersion: storedVersion ?? 'unknown',
       message,
     };
   }

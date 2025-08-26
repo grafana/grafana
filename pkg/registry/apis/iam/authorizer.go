@@ -32,6 +32,7 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 	// Access specific resources
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.RoleInfo.GetName()] = authorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }
@@ -56,8 +57,10 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 			Resource: legacyiamv0.UserResourceInfo.GetName(),
 			Attr:     "id",
 			Mapping: map[string]string{
-				utils.VerbGet:  accesscontrol.ActionOrgUsersRead,
-				utils.VerbList: accesscontrol.ActionOrgUsersRead,
+				utils.VerbCreate: accesscontrol.ActionUsersCreate,
+				utils.VerbDelete: accesscontrol.ActionUsersDelete,
+				utils.VerbGet:    accesscontrol.ActionOrgUsersRead,
+				utils.VerbList:   accesscontrol.ActionOrgUsersRead,
 			},
 			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns authlib.NamespaceInfo, name string) ([]string, error) {
 				res, err := store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{

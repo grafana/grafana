@@ -11,8 +11,8 @@ import {
 import type { AppPluginConfig } from '@grafana/runtime';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
+import { importAppPlugin } from './pluginLoader';
 import { clearPreloadedPluginsCache, preloadPlugins } from './pluginPreloader';
-import { importAppPlugin } from './plugin_loader';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -26,7 +26,7 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
 
-jest.mock('./plugin_loader', () => ({
+jest.mock('./pluginLoader', () => ({
   importAppPlugin: jest.fn(),
 }));
 

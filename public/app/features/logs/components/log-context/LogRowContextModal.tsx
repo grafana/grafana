@@ -24,7 +24,7 @@ import { Button, Modal, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';

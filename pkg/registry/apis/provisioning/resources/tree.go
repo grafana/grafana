@@ -3,13 +3,12 @@ package resources
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
@@ -95,10 +94,8 @@ func (t *folderTree) Walk(ctx context.Context, fn WalkFunc) error {
 		toWalk = append(toWalk, folder)
 	}
 
-	// sort by depth of the paths
-	sort.Slice(toWalk, func(i, j int) bool {
-		return safepath.Depth(toWalk[i].Path) < safepath.Depth(toWalk[j].Path)
-	})
+	// sort by depth (shallowest first)
+	safepath.SortByDepth(toWalk, func(f Folder) string { return f.Path }, true)
 
 	for _, folder := range toWalk {
 		if err := fn(ctx, folder, t.tree[folder.ID]); err != nil {

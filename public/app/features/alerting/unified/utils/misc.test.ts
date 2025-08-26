@@ -125,12 +125,12 @@ describe('create links', () => {
 
 describe('stringifyErrorLike', () => {
   it('should stringify error with cause', () => {
-    const error = new Error('Something went strong', { cause: new Error('database did not respond') });
-    expect(stringifyErrorLike(error)).toBe('Something went strong, cause: database did not respond');
+    const error = new Error('Something went wrong', { cause: new Error('database did not respond') });
+    expect(stringifyErrorLike(error)).toBe('Something went wrong, cause: database did not respond');
   });
 
   it('should stringify error with cause being a code', () => {
-    const error = new Error('Something went strong', { cause: ERROR_NEWER_CONFIGURATION });
+    const error = new Error('Something went wrong', { cause: ERROR_NEWER_CONFIGURATION });
     expect(stringifyErrorLike(error)).toBe(getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION));
   });
 
@@ -195,5 +195,72 @@ describe('stringifyErrorLike', () => {
     } satisfies FetchError;
 
     expect(stringifyErrorLike(error)).toBe('POST /my/url failed with 404: not found');
+  });
+
+  it('should prioritize data.message over statusText when both are present', () => {
+    const error = {
+      status: 500,
+      data: { message: 'API error message' },
+      statusText: 'Internal Server Error',
+      config: { url: '/api/test', method: 'GET' },
+    } satisfies FetchError;
+
+    expect(stringifyErrorLike(error)).toBe('GET /api/test failed with 500: API error message');
+  });
+
+  it('should fall back to statusText when data.message is not available', () => {
+    const error = {
+      status: 404,
+      data: { error: 'some other field' },
+      statusText: 'Not Found',
+      config: { url: '/api/test', method: 'GET' },
+    } satisfies FetchError;
+
+    expect(stringifyErrorLike(error)).toBe('Not Found');
+  });
+
+  it('should handle null data safely without crashing', () => {
+    const error = {
+      status: 500,
+      data: null,
+      statusText: 'Internal Server Error',
+      config: { url: '/api/test', method: 'POST' },
+    } satisfies FetchError<null>;
+
+    expect(stringifyErrorLike(error)).toBe('Internal Server Error');
+  });
+
+  it('should handle undefined data safely without crashing', () => {
+    const error = {
+      status: 500,
+      data: undefined,
+      statusText: 'Internal Server Error',
+      config: { url: '/api/test', method: 'PUT' },
+    } satisfies FetchError<undefined>;
+
+    expect(stringifyErrorLike(error)).toBe('Internal Server Error');
+  });
+
+  it('should handle data without message property safely', () => {
+    const error = {
+      status: 400,
+      data: { error: 'validation failed', code: 400 },
+      statusText: 'Bad Request',
+      config: { url: '/api/validate', method: 'POST' },
+    } satisfies FetchError;
+
+    expect(stringifyErrorLike(error)).toBe('Bad Request');
+  });
+
+  it('should prioritize error.message over data.message', () => {
+    const error = {
+      status: 403,
+      message: 'Error message property',
+      data: { message: 'Data message property' },
+      statusText: 'Forbidden',
+      config: { url: '/api/test', method: 'POST' },
+    } satisfies FetchError;
+
+    expect(stringifyErrorLike(error)).toBe('Error message property');
   });
 });

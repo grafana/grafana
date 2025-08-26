@@ -11,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -63,8 +64,8 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	res, err := common.List(
-		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.Team], error) {
+		ctx, resource, s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.Team], error) {
 			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
 				Pagination: p,
 			})
@@ -73,12 +74,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			teams := make([]iamv0.Team, 0, len(found.Teams))
+			teams := make([]iamv0alpha1.Team, 0, len(found.Teams))
 			for _, t := range found.Teams {
 				teams = append(teams, toTeamObject(t, ns))
 			}
 
-			return &common.ListResponse[iamv0.Team]{
+			return &common.ListResponse[iamv0alpha1.Team]{
 				Items:    teams,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -90,7 +91,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, fmt.Errorf("failed to list teams: %w", err)
 	}
 
-	list := &iamv0.TeamList{Items: res.Items}
+	list := &iamv0alpha1.TeamList{Items: res.Items}
 	list.Continue = common.OptionalFormatInt(res.Continue)
 	list.ResourceVersion = common.OptionalFormatInt(res.RV)
 
@@ -119,18 +120,17 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	return &obj, nil
 }
 
-func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0.Team {
-	obj := iamv0.Team{
+func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {
+	obj := iamv0alpha1.Team{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              t.UID,
 			Namespace:         ns.Value,
 			CreationTimestamp: metav1.NewTime(t.Created),
 			ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
 		},
-		Spec: iamv0.TeamSpec{
-			Title:      t.Name,
-			Email:      t.Email,
-			InternalID: t.ID,
+		Spec: iamv0alpha1.TeamSpec{
+			Title: t.Name,
+			Email: t.Email,
 		},
 	}
 	meta, _ := utils.MetaAccessor(&obj)

@@ -35,6 +35,7 @@ const (
 	TestGetResourceStats          = "get resource stats"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
+	TestListModifiedSince         = "list events since rv"
 	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 )
@@ -78,6 +79,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
+		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 	}
 
 	for _, tc := range cases {
@@ -479,6 +481,77 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
+	})
+}
+
+func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	ns := nsPrefix + "-history-ns"
+	rvCreated, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.Greater(t, rvCreated, int64(0))
+	rvUpdated, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvUpdated, rvCreated)
+	rvDeleted, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDeleted, rvUpdated)
+
+	t.Run("will list latest modified event when resource has multiple events", func(t *testing.T) {
+		key := resource.NamespacedResource{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		}
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		require.Greater(t, latestRv, rvCreated)
+
+		counter := 0
+		for res, err := range seq {
+			require.NoError(t, err)
+			require.Equal(t, rvDeleted, res.ResourceVersion)
+			counter++
+		}
+		require.Equal(t, 1, counter) // only one event should be returned
+	})
+
+	t.Run("no events if none after the given resource version", func(t *testing.T) {
+		key := resource.NamespacedResource{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		}
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		require.GreaterOrEqual(t, latestRv, rvDeleted)
+
+		counter := 0
+		for _, _ = range seq {
+			counter++
+		}
+		require.Equal(t, 0, counter) // no events should be returned
+	})
+
+	t.Run("will only return modified events for the given key", func(t *testing.T) {
+		key := resource.NamespacedResource{
+			Namespace: "other-ns",
+			Group:     "group",
+			Resource:  "resource",
+		}
+
+		// Write an event for another tenant for the same resource
+		rvCreatedOtherTenant, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
+		require.NoError(t, err)
+
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		require.Greater(t, latestRv, rvCreated)
+
+		counter := 0
+		for res, err := range seq {
+			require.NoError(t, err)
+			require.Equal(t, rvCreatedOtherTenant, res.ResourceVersion)
+			require.Equal(t, key.Namespace, res.Key.Namespace)
+			counter++
+		}
+		require.Equal(t, 1, counter) // only one event should be returned
 	})
 }
 
@@ -1106,7 +1179,7 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 	}
 	meta.SetFolder(options.Folder)
 
-	return store.WriteEvent(ctx, resource.WriteEvent{
+	event := resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
 		GUID:  uuid.New().String(),
@@ -1116,8 +1189,32 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 			Resource:  options.Resource,
 			Name:      name,
 		},
-		Object: meta,
-	})
+	}
+	switch action {
+	case resourcepb.WatchEvent_DELETED:
+		event.ObjectOld = meta
+
+		obj, err := utils.MetaAccessor(res)
+		if err != nil {
+			return 0, err
+		}
+		now := metav1.Now()
+		obj.SetDeletionTimestamp(&now)
+		obj.SetUpdatedTimestamp(&now.Time)
+		obj.SetManagedFields(nil)
+		obj.SetFinalizers(nil)
+		obj.SetGeneration(utils.DeletedGeneration)
+		obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
+		event.Object = obj
+	case resourcepb.WatchEvent_ADDED:
+		event.Object = meta
+	case resourcepb.WatchEvent_MODIFIED:
+		event.Object = meta //
+		event.ObjectOld = meta
+	default:
+		panic(fmt.Sprintf("invalid action: %s", action))
+	}
+	return store.WriteEvent(ctx, event)
 }
 
 func newServer(t *testing.T, b resource.StorageBackend) resource.ResourceServer {

@@ -74,7 +74,7 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
-          noOptionsMessage="No fields found"
+          noOptionsMessage={t('dimensions.color-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
           isClearable={item.settings?.isClearable}
           placeholder={item.settings?.placeholder}
         />

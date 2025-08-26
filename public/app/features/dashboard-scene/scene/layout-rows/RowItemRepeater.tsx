@@ -1,19 +1,12 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import {
-  MultiValueVariable,
-  SceneVariableSet,
-  LocalValueVariable,
-  sceneGraph,
-  VariableValueSingle,
-} from '@grafana/scenes';
+import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
-import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -61,7 +54,9 @@ export function RowItemRepeater({
   return (
     <>
       <row.Component model={row} key={row.state.key!} />
-      {repeatedRows?.map((rowClone) => <rowClone.Component model={rowClone} key={rowClone.state.key!} />)}
+      {repeatedRows?.map((rowClone) => (
+        <rowClone.Component model={rowClone} key={rowClone.state.key!} />
+      ))}
     </>
   );
 }
@@ -101,23 +96,18 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
     const rowCloneKey = getCloneKey(row.state.key!, rowIndex);
     const rowClone = isSourceRow
       ? row
-      : row.clone({ repeatByVariable: undefined, repeatedRows: undefined, layout: undefined });
+      : row.clone({
+          key: rowCloneKey,
+          repeatSourceKey: row.state.key,
+          repeatByVariable: undefined,
+          repeatedRows: undefined,
+          layout: undefined,
+        });
 
     const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
 
     rowClone.setState({
-      key: rowCloneKey,
-      $variables: new SceneVariableSet({
-        variables: [
-          new LocalValueVariable({
-            name: variable.state.name,
-            value: variableValues[rowIndex],
-            text: String(variableTexts[rowIndex]),
-            isMulti: variable.state.isMulti,
-            includeAll: variable.state.includeAll,
-          }),
-        ],
-      }),
+      $variables: getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]),
       layout,
     });
 
@@ -127,7 +117,6 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   }
 
   row.setState({ repeatedRows: clonedRows });
-  row.publishEvent(new DashboardRepeatsProcessedEvent({ source: row }), true);
 }
 
 /**

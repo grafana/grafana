@@ -10,13 +10,12 @@ import { StarButton } from './actions/StarButton';
 import { getDynamicActions, renderActionElements } from './utils';
 
 export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const { editview, editPanel, isEditing, uid, meta, viewPanelScene } = dashboard.useState();
+  const { editview, editPanel, isEditing, uid, meta, viewPanel } = dashboard.useState();
 
   const hasEditView = Boolean(editview);
-  const isViewingPanel = Boolean(viewPanelScene);
+  const isViewingPanel = Boolean(viewPanel);
   const isEditingDashboard = Boolean(isEditing);
   const isEditingPanel = Boolean(editPanel);
-  const isPublicDashboard = Boolean(meta.publicDashboardEnabled);
   const hasUid = Boolean(uid);
   const canEdit = Boolean(meta.canEdit);
   const canStar = Boolean(meta.canStar);
@@ -37,7 +36,7 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         key: 'public-dashboard-badge',
         component: PublicDashboardBadge,
         group: 'actions',
-        condition: isPublicDashboard && hasUid && canStar && isShowingDashboard && !isEditingDashboard,
+        condition: hasUid && canStar && isShowingDashboard && !isEditingDashboard,
       },
       {
         key: 'managed-dashboard-badge',

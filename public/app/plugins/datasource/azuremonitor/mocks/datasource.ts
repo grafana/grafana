@@ -1,7 +1,7 @@
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import Datasource from '../datasource';
-import { AzureMonitorDataSourceInstanceSettings } from '../types';
+import { AzureMonitorDataSourceInstanceSettings } from '../types/types';
 
 import { createMockInstanceSetttings } from './instanceSettings';
 import { DeepPartial } from './utils';

@@ -52,6 +52,7 @@
       "button-use-query": "Gunakan kueri ini",
       "label-categories": "Kategori",
       "label-query-results": "Hasil kueri: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "Tidak dapat mencantumkan semua kategori",
       "placeholder-all-categories": "Semua kategori",
       "placeholder-search-logs": "Pencarian kueri Log",
       "text-loading": "Memuat..."
@@ -71,10 +72,8 @@
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
     "config-editor": {
-      "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini mencakup Secure Socks Proxy.",
-      "description-request-timeout": "Atur batas waktu permintaan dalam hitungan detik. Default-nya 30 detik.",
-      "title-additional-settings": "Pengaturan tambahan",
-      "title-request-timeout": "Batas Waktu Permintaan"
+      "description-additional-settings": "",
+      "title-additional-settings": "Pengaturan tambahan"
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Kredensial fallback telah dinonaktifkan. Karena autentikasi berbasis pengguna hanya mendukung permintaan dengan pengguna dalam cakupannya, fitur seperti peringatan, kueri yang direkam, atau pelaporan tidak akan berfungsi seperti yang diharapkan. Silakan tinjau <2>dokumentasi</2> untuk detail selengkapnya.",
@@ -114,9 +113,12 @@
       "aria-label-column": "Kolom",
       "aria-label-column-value": "Nilai kolom",
       "aria-label-operator": "Operator",
+      "aria-label-remove-filter": "",
       "label-or": "ATAU"
     },
     "filter-section": {
+      "aria-label-add-filter": "",
+      "aria-label-add-or-filter": "",
       "label-add-group": "Tambah grup",
       "label-and": "DAN",
       "label-filters": "Filter",
@@ -129,6 +131,8 @@
       "label-format-as": "Format sebagai"
     },
     "fuzzy-search": {
+      "aria-label-add-fuzzy-search": "",
+      "aria-label-remove-fuzzy-search": "",
       "aria-label-select-column": "Pilih Kolom",
       "label-fuzzy-search": "Pencarian Fuzzy",
       "placeholder-search-team": "Masukkan kata kunci",
@@ -143,6 +147,7 @@
       "aria-label-remove": "Hapus"
     },
     "group-by-section": {
+      "aria-label-add-group-by": "",
       "label-group-by": "Kelompokkan berdasarkan",
       "tooltip-group-by": "Atur hasil ke dalam kategori berdasarkan kolom yang ditentukan. \"Kelompokkan berdasarkan\" dapat digunakan secara mandiri untuk membuat daftar nilai unik di kolom-kolom yang dipilih, atau digabungkan dengan fungsi agregat untuk menghasilkan statistik ringkasan untuk setiap kelompok. Saat digunakan sendiri, fungsi ini menghasilkan kombinasi yang berbeda dari kolom yang ditentukan."
     },
@@ -161,6 +166,8 @@
       "tooltip-limit": "Batasi jumlah baris yang dikembalikan (default-nya adalah 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "Yakin ingin beralih ke Log Dasar?",
+      "confirmText-confirm": "Konfirmasi",
       "description-basic-logs-queries": "Kueri Log Dasar dikenakan biaya berdasarkan jumlah data yang dipindai.",
       "label-logs": "Log",
       "title-basic-logs-queries": "Kueri Log Dasar",
@@ -183,8 +190,10 @@
       "text-loading": "Memuat..."
     },
     "order-by-section": {
+      "aria-label-add-order-by": "",
       "aria-label-order-by-column": "Urutkan berdasarkan kolom",
       "aria-label-order-direction": "Arah Urutan",
+      "aria-label-remove-order-by": "",
       "label-by": "BERDASARKAN",
       "label-order-by": "Urutkan Berdasarkan",
       "tooltip-order-by": "Urutkan hasil berdasarkan satu atau beberapa kolom dalam urutan naik atau turun."
@@ -194,8 +203,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Tombol kueri untuk memulai menggunakan log Azure",
+      "body-switching-to-builder": "Beralih ke Builder akan membuang kueri KQL Anda saat ini dan menghapus editor KQL. Anda yakin?",
+      "body-switching-to-kql": "Beralih ke KQL akan membuang pengaturan pembangun Anda saat ini. Anda yakin?",
       "button-kick-start-your-query": "Mulai kueri Anda",
       "button-run-query": "Jalankan kueri",
+      "confirmText-switch-to": "Beralih ke {{newMode}}",
+      "editor-modes": {
+        "label-builder": "Pembangun",
+        "label-kql": "KQL"
+      },
       "label-service": "Layanan",
       "placeholder-service": "Melayani...",
       "title-switch-mode": "Beralih ke mode editor?"
@@ -223,7 +239,7 @@
       "title-error-occurred": "Terjadi kesalahan saat meminta sumber daya dari Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Ruang Lingkup"
     },
     "search": {
       "aria-label-resource-search": "Pencarian sumber daya",
@@ -239,7 +255,8 @@
       "label-columns": "Kolom",
       "label-table": "Tabel",
       "placeholder-select-columns": "Pilih kolom",
-      "placeholder-select-table": "Pilih tabel"
+      "placeholder-select-table": "Pilih tabel",
+      "tooltip-remove-all-columns": ""
     },
     "time-grain-field": {
       "label-time-grain": "Interval waktu"

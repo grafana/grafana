@@ -2,6 +2,7 @@
 import { useState } from 'react';
 
 import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../shared/param_utils';
@@ -12,7 +13,7 @@ import { PromVisualQuery, PromQueryModellerInterface } from '../types';
  * Props for the LabelParamEditor component.
  * This editor specifically requires a Prometheus query modeller instance.
  */
-export interface LabelParamEditorProps extends Omit<QueryBuilderOperationParamEditorProps, 'queryModeller'> {
+interface LabelParamEditorProps extends Omit<QueryBuilderOperationParamEditorProps, 'queryModeller'> {
   queryModeller: PromQueryModellerInterface;
 }
 
@@ -47,8 +48,14 @@ export function LabelParamEditor({
       }}
       isLoading={state.isLoading}
       allowCustomValue
-      noOptionsMessage="No labels found"
-      loadingMessage="Loading labels"
+      noOptionsMessage={t(
+        'grafana-prometheus.querybuilder.label-param-editor.noOptionsMessage-no-labels-found',
+        'No labels found'
+      )}
+      loadingMessage={t(
+        'grafana-prometheus.querybuilder.label-param-editor.loadingMessage-loading-labels',
+        'Loading labels'
+      )}
       options={state.options}
       value={toOption(value as string)}
       onChange={(value) => onChange(index, value.value!)}

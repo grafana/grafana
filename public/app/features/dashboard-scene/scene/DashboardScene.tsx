@@ -16,7 +16,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -31,7 +31,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardMeta, KioskMode, SaveDashboardResponseDTO, DashboardDTO } from 'app/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -59,13 +59,12 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
-import { historySrv } from '../settings/version-history';
+import { historySrv } from '../settings/version-history/HistorySrv';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { isInCloneChain } from '../utils/clone';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
-import { getViewPanelUrl } from '../utils/urlBuilders';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -81,13 +80,13 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import { getIsLazy } from './layouts-shared/utils';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
 
@@ -130,8 +129,8 @@ export interface DashboardSceneState extends SceneObjectState {
   version?: number;
   /** Panel to inspect */
   inspectPanelKey?: string;
-  /** Panel to view in fullscreen */
-  viewPanelScene?: ViewPanelScene;
+  /** Panel key to view in fullscreen */
+  viewPanel?: string;
   /** Edit view */
   editview?: DashboardEditView;
   /** Edit panel */
@@ -198,7 +197,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
+      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([], getIsLazy(state.preload)),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
@@ -383,13 +382,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    let versionRsp;
-    if (config.featureToggles.kubernetesClientDashboardsFolders) {
-      // the id here is the resource version in k8s, use this instead to get the specific version
-      versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
-    } else {
-      versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
-    }
+    // the id here is the resource version in k8s, use this instead to get the specific version
+    let versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
 
     if (!Number.isInteger(versionRsp.version)) {
       return false;
@@ -433,7 +427,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene, editPanel, title, uid } = this.state;
+    const { meta, viewPanel, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
 
     let pageNav: NavModelItem = {
@@ -462,11 +456,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
     }
 
-    if (viewPanelScene) {
+    if (viewPanel) {
       pageNav = {
         text: t('dashboard-scene.dashboard-scene.text.view-panel', 'View panel'),
         parentItem: pageNav,
-        url: getViewPanelUrl(viewPanelScene.state.panelRef.resolve()),
+        url: locationUtil.getUrlForPartial(locationService.getLocation(), {
+          viewPanel: viewPanel,
+          editPanel: undefined,
+        }),
       };
     }
 
@@ -478,13 +475,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     return pageNav;
-  }
-
-  /**
-   * Returns the body (layout) or the full view panel
-   */
-  public getBodyToRender(): SceneObject {
-    return this.state.viewPanelScene ?? this.state.body;
   }
 
   public getInitialState(): DashboardSceneState | undefined {
@@ -666,9 +656,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (isInCloneChain(panel.state.key)) {
+      if (isRepeatCloneOrChildOf(panel)) {
         // We check if any of the panel ancestors are clones because we can't use the original panel ID in this case
-        panelId = djb2Hash(panel?.state.key);
+        panelId = djb2Hash(panel.getPathId());
       } else {
         // Otherwise, it's the absolute original panel, and we can use the key directly
         // getPanelIdForVizPanel extracts the panel ID from the key so we don't need to do it manually
@@ -757,7 +747,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const { meta } = this.state;
     const spec = this.getSaveAsModel(options);
 
-    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2alpha1' : 'v1beta1'; // get from the dashboard?
+    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2beta1' : 'v1beta1'; // get from the dashboard?
     return {
       apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',

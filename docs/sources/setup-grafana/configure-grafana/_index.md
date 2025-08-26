@@ -703,12 +703,16 @@ PostgreSQL, MySQL, and MSSQL data sources don't use the proxy and are not affect
 
 Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout).
 Default is `false`.
-An existing user's account is unable to login for five minutes if all login attempts are spent within a 5 minute window.
+Login is blocked for five minutes if all login attempts are spent within a 5 minute window.
 
 #### `brute_force_login_protection_max_attempts`
 
-Configure how many login attempts a user can have within a five minute window before their account is locked.
+Configure how many login attempts can be made within a five minute window before being blocked.
 Default is `5`.
+
+#### `disable_username_login_protection`
+
+Set to `true` to disable [brute force login protection by username](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. User will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
 
 #### `disable_ip_address_login_protection`
 
@@ -792,7 +796,7 @@ The following example limits access to the backend of a single plugin:
 
 #### `angular_support_enabled`
 
-This is set to false by default, meaning that the angular framework and support components aren't be loaded.
+This is set to false by default, meaning that the angular framework and support components aren't loaded.
 This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
 
 The core features that depend on angular are:
@@ -1547,7 +1551,7 @@ Use spaces to separate multiple modes, for example, `console file`.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
+Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`. Default is `info`.
 
 #### `filters`
 
@@ -1576,7 +1580,7 @@ Only applicable when `console` is used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1590,7 +1594,7 @@ Only applicable when `file` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1625,7 +1629,7 @@ Only applicable when `syslog` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -2655,8 +2659,6 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 
 Load an external version of a core plugin if it has been installed.
 
-Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
-
 <hr>
 
 ### `[plugin.grafana-image-renderer]`
@@ -2838,22 +2840,14 @@ For example:
 
 ```ini
 [time_picker]
-quick_ranges = [
-  {
-    "display": "Last 5 minutes",
-    "from": "now-5m",
-    "to": "now",
-  },
-  {
-    "display": "Yesterday",
-    "from": "now-1d/d",
-  },
-  {
-    "display": "Today so far",
-    "from": "now/d",
-    "to": "now",
-  }
-]
+quick_ranges = """[
+{"from":"now-6s","to":"now","display":"Last 6 seconds"},
+{"from":"now-10m","to":"now","display":"Last 10 minutes"},
+{"from":"now-25h","to":"now","display":"Last 24 hours"},
+{"from":"now/w","to":"now/w","display":"This week"},
+{"from":"now-1w/w","to":"now-1w/w","display":"Last week"},
+{"from":"now-10d","to":"now","display":"Last 10 days"}
+]"""
 ```
 
 ### `[expressions]`
@@ -2866,7 +2860,7 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
 
-#### `sql_expression_cell_output_limit`
+#### `sql_expression_output_cell_limit`
 
 Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
 

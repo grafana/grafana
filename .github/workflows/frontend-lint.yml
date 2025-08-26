@@ -16,6 +16,7 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
+      prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +35,7 @@ jobs:
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-prettier-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -55,7 +56,7 @@ jobs:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -138,3 +139,70 @@ jobs:
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - run: yarn run betterer:ci
+  lint-frontend-api-clients:
+    permissions:
+      contents: read
+      id-token: write
+    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
+    # the `lint-frontend-api-clients-enterprise` workflow will run instead
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    name: Verify API clients
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - name: Generate API clients
+      run: |
+        extract_error_message='ERROR! API client generation failed!'
+        yarn generate-apis || (echo "${extract_error_message}" && false)
+    - name: Verify generated clients
+      run: |
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        file_diff="$(git diff ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi
+  lint-frontend-api-clients-enterprise:
+    permissions:
+      contents: read
+      id-token: write
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    name: Verify API clients (enterprise)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - name: Setup Enterprise
+      uses: ./.github/actions/setup-enterprise
+      with:
+        github-app-name: 'grafana-ci-bot'
+    - run: yarn install --immutable --check-cache
+    - name: Generate API clients
+      run: |
+        extract_error_message='ERROR! API client generation failed!'
+        yarn generate-apis || (echo "${extract_error_message}" && false)
+    - name: Verify generated clients
+      run: |
+        uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+        file_diff="$(git diff ':!conf')"
+        if [ -n "$file_diff" ]; then
+            echo "$file_diff"
+            echo "${uncommited_error_message}"
+            exit 1
+        fi

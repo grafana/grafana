@@ -6,20 +6,22 @@ import { ScopesContext } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
     controls,
     overlay,
     editview,
+    body,
     editPanel,
-    viewPanelScene,
+    viewPanel,
     panelSearch,
     panelsPerRow,
     isEditing,
@@ -30,23 +32,23 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const scopesContext = useContext(ScopesContext);
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
-  const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, `dashboards/${type === 'snapshot' ? 'snapshots' : 'browse'}`);
   const isSettingsOpen = editview !== undefined;
+  const soloPanelContext = useDefineSoloPanelContext(viewPanel);
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {
-    if (viewPanelScene || isSettingsOpen || editPanel) {
+    if (viewPanel || isSettingsOpen || editPanel) {
       model.rememberScrollPos();
     }
-  }, [isSettingsOpen, editPanel, viewPanelScene, model]);
+  }, [isSettingsOpen, editPanel, viewPanel, model]);
 
   // Restore scroll pos when coming back
   useEffect(() => {
-    if (!viewPanelScene && !isSettingsOpen && !editPanel) {
+    if (!viewPanel && !isSettingsOpen && !editPanel) {
       model.restoreScrollPos();
     }
-  }, [isSettingsOpen, editPanel, viewPanelScene, model]);
+  }, [isSettingsOpen, editPanel, viewPanel, model]);
 
   useEffect(() => {
     if (scopesContext && isEditing) {
@@ -70,11 +72,19 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
-    if (!viewPanelScene && (panelSearch || panelsPerRow)) {
+    if (!viewPanel && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
 
-    return <bodyToRender.Component model={bodyToRender} />;
+    if (soloPanelContext) {
+      return (
+        <SoloPanelContextProvider value={soloPanelContext} singleMatch={true} dashboard={model}>
+          <body.Component model={body} />
+        </SoloPanelContextProvider>
+      );
+    }
+
+    return <body.Component model={body} />;
   }
 
   return (

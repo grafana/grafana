@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -11,14 +10,11 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
-import {
-  RevisionsModel,
-  VersionHistoryComparison,
-  VersionHistoryHeader,
-  VersionHistoryTable,
-  VersionsHistoryButtons,
-  historySrv,
-} from './version-history';
+import { RevisionsModel, historySrv } from './version-history/HistorySrv';
+import { VersionsHistoryButtons } from './version-history/VersionHistoryButtons';
+import { VersionHistoryComparison } from './version-history/VersionHistoryComparison';
+import { VersionHistoryHeader } from './version-history/VersionHistoryHeader';
+import { VersionHistoryTable } from './version-history/VersionHistoryTable';
 
 export const VERSIONS_FETCH_LIMIT = 10;
 
@@ -117,7 +113,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       .then((result) => {
         this.setState({
           isLoading: false,
-          versions: [...(this.state.versions ?? []), ...this.decorateVersions(result.versions)],
+          versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(result.versions)],
         });
         this._start += this._limit;
         // Update the continueToken for the next request, if available
@@ -139,15 +135,9 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     if (!this._dashboard.state.uid) {
       return;
     }
-    let lhs, rhs;
-    if (config.featureToggles.kubernetesClientDashboardsFolders) {
-      // the id here is the resource version in k8s, use this instead to get the specific version
-      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.id);
-      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.id);
-    } else {
-      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
-      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
-    }
+    // the id here is the resource version in k8s, use this instead to get the specific version
+    let lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.id);
+    let rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.id);
 
     this.setState({
       baseInfo,
@@ -207,10 +197,10 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const showButtons = model.versions.length > 1;
   const hasMore = model.versions.length >= model.limit;
   // older versions may have been cleaned up in the db, so also check if the last page is less than the limit, if so, we are at the end
-  let isLastPage = model.versions.find((rev) => rev.version === 1) || model.versions.length % model.limit !== 0;
-  if (config.featureToggles.kubernetesClientDashboardsFolders) {
-    isLastPage = isLastPage || model.continueToken === '';
-  }
+  let isLastPage =
+    model.versions.find((rev) => rev.version === 1) ||
+    model.versions.length % model.limit !== 0 ||
+    model.continueToken === '';
 
   const viewModeCompare = (
     <>

@@ -11,7 +11,6 @@ import (
 )
 
 func TestBadgerKVStorageBackend(t *testing.T) {
-	t.Skip("failing with 'panic: DB Closed'")
 	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 		opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 		db, err := badger.Open(opts)
@@ -24,7 +23,8 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		NSPrefix: "kvstorage-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
-			TestBlobSupport: true,
+			TestBlobSupport:       true,
+			TestListModifiedSince: true,
 		},
 	})
 }

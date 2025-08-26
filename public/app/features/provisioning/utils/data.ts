@@ -22,15 +22,28 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     title: data.title || '',
     workflows: getWorkflows(data),
   };
+
+  const baseConfig = {
+    url: data.url || '',
+    branch: data.branch,
+    path: data.path,
+  };
+
   switch (data.type) {
     case 'github':
       spec.github = {
+        ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
-        url: data.url || '',
-        branch: data.branch,
-        token: data.token,
-        path: data.path,
       };
+      break;
+    case 'gitlab':
+      spec.gitlab = baseConfig;
+      break;
+    case 'bitbucket':
+      spec.bitbucket = baseConfig;
+      break;
+    case 'git':
+      spec.git = baseConfig;
       break;
     case 'local':
       spec.local = {
@@ -45,14 +58,37 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
+  const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+
   return structuredClone({
     ...spec,
-    ...spec.github,
+    ...remoteConfig,
     ...spec.local,
-    branch: spec.github?.branch || '',
-    url: spec.github?.url || '',
+    branch: remoteConfig?.branch || '',
+    url: remoteConfig?.url || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
-    prWorkflow: spec.workflows.includes('write'),
+    prWorkflow: spec.workflows.includes('branch'),
   });
+};
+
+export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
+  switch (repository.type) {
+    case 'github':
+      const name = repository.url ?? 'github';
+      return name.replace('https://github.com/', '');
+    case 'gitlab':
+      const gitlabName = repository.url ?? 'gitlab';
+      return gitlabName.replace('https://gitlab.com/', '');
+    case 'bitbucket':
+      const bitbucketName = repository.url ?? 'bitbucket';
+      return bitbucketName.replace('https://bitbucket.org/', '');
+    case 'git':
+      const gitName = repository.url ?? 'git';
+      return gitName.replace(/^https?:\/\/[^\/]+\//, '');
+    case 'local':
+      return repository.path ?? 'local';
+    default:
+      return '';
+  }
 };

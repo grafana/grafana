@@ -1,4 +1,4 @@
-import { sortBy } from 'lodash';
+import { isString, sortBy } from 'lodash';
 
 import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -34,7 +34,12 @@ import {
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
-import { SupportedErrors, getErrorMessageFromCode, isApiMachineryError } from './k8s/errors';
+import {
+  KnownErrorCodes,
+  getErrorMessageFromApiMachineryErrorResponse,
+  getErrorMessageFromCode,
+  isApiMachineryError,
+} from './k8s/errors';
 import { getMatcherQueryParams } from './matchers';
 import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
@@ -129,7 +134,8 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const dataSource = queryParams.dataSource === undefined ? undefined : String(queryParams.dataSource);
   const ruleType = queryParams.ruleType === undefined ? undefined : String(queryParams.ruleType);
   const groupBy = queryParams.groupBy === undefined ? undefined : String(queryParams.groupBy).split(',');
-  return { queryString, alertState, dataSource, groupBy, ruleType };
+  const receivers = queryParams.receivers === undefined ? undefined : String(queryParams.receivers).split(',');
+  return { queryString, alertState, dataSource, groupBy, ruleType, receivers };
 };
 
 export const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => {
@@ -282,15 +288,37 @@ export function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
-export function getErrorCode(error: Error): unknown {
+// Small composable guards to safely inspect nested shapes without broad assertions
+function isObject(value: unknown): value is object {
+  return typeof value === 'object' && value !== null;
+}
+
+function hasData(value: unknown): value is { data: unknown } {
+  return isObject(value) && 'data' in value;
+}
+
+function hasMessage(value: unknown): value is { message: string } {
+  if (!isObject(value)) {
+    return false;
+  }
+  const desc = Object.getOwnPropertyDescriptor(value, 'message');
+  return typeof desc?.value === 'string';
+}
+
+export function getErrorCode(error: unknown): string | undefined {
   if (isApiMachineryError(error) && error.data.details) {
     return error.data.details.uid;
   }
-  return error.cause;
+
+  if (isErrorLike(error) && isString(error.cause)) {
+    return error.cause;
+  }
+
+  return;
 }
 
 /* this function will check if the error passed as the first argument contains an error code */
-export function isErrorMatchingCode(error: Error | undefined, code: SupportedErrors): boolean {
+export function isErrorMatchingCode(error: Error | undefined, code: KnownErrorCodes): boolean {
   if (!error) {
     return false;
   }
@@ -299,10 +327,9 @@ export function isErrorMatchingCode(error: Error | undefined, code: SupportedErr
 }
 
 export function stringifyErrorLike(error: unknown): string {
-  const fetchError = isFetchError(error);
-  if (fetchError) {
-    if (isApiMachineryError(error) && error.data.details) {
-      const message = getErrorMessageFromCode(error.data.details.uid);
+  if (isFetchError(error)) {
+    if (isApiMachineryError(error)) {
+      const message = getErrorMessageFromApiMachineryErrorResponse(error);
       if (message) {
         return message;
       }
@@ -312,7 +339,8 @@ export function stringifyErrorLike(error: unknown): string {
       return error.message;
     }
 
-    if ('message' in error.data && typeof error.data.message === 'string') {
+    // Runtime check for error.data.message without narrow typing - prioritize over statusText
+    if (hasData(error) && hasMessage(error.data)) {
       const status = getStatusFromError(error);
       const message = getMessageFromError(error);
 

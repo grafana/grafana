@@ -263,7 +263,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               </small>
             </Stack>
           }
-          confirmText="Reset"
+          confirmText={t('auth-config.provider-config-form.confirmText-reset', 'Reset')}
           onDismiss={() => setResetConfig(false)}
           onConfirm={async () => {
             await onResetConfig();

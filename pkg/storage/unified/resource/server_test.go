@@ -14,8 +14,7 @@ import (
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	claims "github.com/grafana/authlib/types"
-
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -23,14 +22,14 @@ import (
 
 func TestSimpleServer(t *testing.T) {
 	testUserA := &identity.StaticRequester{
-		Type:           claims.TypeUser,
+		Type:           authlib.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
-	ctx := claims.WithAuthInfo(context.Background(), testUserA)
+	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
 
 	bucket := memblob.OpenBucket(nil)
 	if false {

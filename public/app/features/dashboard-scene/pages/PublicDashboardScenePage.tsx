@@ -16,7 +16,7 @@ import {
   PublicDashboardPageRouteParams,
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
-import { AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -70,9 +70,8 @@ export function PublicDashboardScenePage({ route }: Props) {
 
 function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const [isActive, setIsActive] = useState(false);
-  const { controls, title } = model.useState();
+  const { controls, title, body } = model.useState();
   const { timePicker, refreshPicker, hideTimeControls } = controls!.useState();
-  const bodyToRender = model.getBodyToRender();
   const styles = useStyles2(getStyles);
   const conf = useGetPublicDashboardConfig();
 
@@ -108,7 +107,7 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
         )}
       </div>
       <div className={styles.body}>
-        <bodyToRender.Component model={bodyToRender} />
+        <body.Component model={body} />
       </div>
       <PublicDashboardFooter />
     </Page>

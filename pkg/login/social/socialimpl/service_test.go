@@ -29,6 +29,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationSocialService_ProvideService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		name                                string
 		setup                               func(t *testing.T)
@@ -36,7 +39,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 		expectedGenericOAuthSkipOrgRoleSync bool
 	}{
 		{
-			name:                                "should load all social connectors when ssoSettingsApi is enabled",
+			name:                                "should load all social connectors",
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
 		},
@@ -125,6 +128,9 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 }
 
 func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		name                        string
 		rawIniContent               string

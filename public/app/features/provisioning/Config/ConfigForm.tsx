@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   Button,
   Checkbox,
-  Combobox,
   ControlledCollapse,
   Field,
   Input,
@@ -19,26 +18,22 @@ import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
+import { getHasTokenInstructions } from '../utils/git';
+import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
-const getOptions = () => {
-  const typeOptions = [
-    { value: 'github', label: t('provisioning.config-form.option-github', 'GitHub') },
-    { value: 'local', label: t('provisioning.config-form.option-local', 'Local') },
-  ];
-
-  const targetOptions = [
+const getTargetOptions = () => {
+  return [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
   ];
-
-  return [typeOptions, targetOptions];
 };
 
 export interface ConfigFormProps {
@@ -59,10 +54,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const isEdit = Boolean(data?.metadata?.name);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const [typeOptions, targetOptions] = useMemo(() => getOptions(), []);
-  const [isLoading, setIsLoading] = useState(false);
+  const targetOptions = useMemo(() => getTargetOptions(), []);
+  const isGitBased = isGitProvider(type);
+
+  // Get field configurations based on provider type
+  const gitFields = isGitBased ? getGitProviderFields(type) : null;
+  const localFields = type === 'local' ? getLocalProviderFields(type) : null;
+  const hasTokenInstructions = getHasTokenInstructions(type);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -76,217 +77,214 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);
-    const spec = dataToSpec(form);
-    if (spec.github) {
-      spec.github.token = form.token || data?.spec?.github?.token;
-      // If we're still keeping this as GitHub, persist the old token. If we set a new one, it'll be re-encrypted into here.
-      spec.github.encryptedToken = data?.spec?.github?.encryptedToken;
+    try {
+      const spec = dataToSpec(form);
+      await submitData(spec, form.token);
+    } finally {
+      setIsLoading(false);
     }
-    await submitData(spec);
-    setIsLoading(false);
   };
 
-  // NOTE: We do not want the lint option to be listed.
   return (
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
-      <Field label={t('provisioning.config-form.label-repository-type', 'Repository type')}>
-        <Controller
-          name={'type'}
-          control={control}
-          render={({ field: { ref, onChange, ...field } }) => {
-            return (
-              <Combobox
-                options={typeOptions}
-                onChange={(value) => onChange(value?.value)}
-                placeholder={t('provisioning.config-form.placeholder-select-repository-type', 'Select repository type')}
-                disabled={!!data?.spec}
-                {...field}
-              />
-            );
-          }}
-        />
-      </Field>
-      <Field
-        label={t('provisioning.config-form.label-title', 'Title')}
-        description={t('provisioning.config-form.description-title', 'A human-readable name for the config')}
-        invalid={!!errors.title}
-        error={errors?.title?.message}
-      >
-        <Input
-          {...register('title', {
-            required: t('provisioning.config-form.error-required', 'This field is required.'),
-          })}
-          placeholder={t('provisioning.config-form.placeholder-my-config', 'My config')}
-        />
-      </Field>
-      {type === 'github' && (
-        <>
-          <Field
-            label={t('provisioning.config-form.label-github-token', 'GitHub token')}
-            required
-            error={errors?.token?.message}
-            invalid={!!errors.token}
-          >
-            <Controller
-              name={'token'}
-              control={control}
-              rules={{
-                required: isEdit ? false : t('provisioning.config-form.error-required', 'This field is required.'),
-              }}
-              render={({ field: { ref, ...field } }) => {
-                return (
-                  <SecretInput
-                    {...field}
-                    id={'token'}
-                    placeholder={t(
-                      'provisioning.config-form.placeholder-github-token',
-                      'ghp_yourTokenHere1234567890abcdEFGHijklMNOP'
-                    )}
-                    isConfigured={tokenConfigured}
-                    onReset={() => {
-                      setValue('token', '');
-                      setTokenConfigured(false);
-                    }}
-                  />
-                );
-              }}
-            />
-          </Field>
-          <TokenPermissionsInfo />
-          <Field
-            label={t('provisioning.config-form.label-repository-url', 'Repository URL')}
-            error={errors?.url?.message}
-            invalid={!!errors?.url}
-            description={t('provisioning.config-form.description-repository-url', 'Enter the GitHub repository URL')}
-            required
-          >
-            <Input
-              {...register('url', {
-                required: t('provisioning.config-form.error-required', 'This field is required.'),
-                pattern: {
-                  value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
-                  message: t(
-                    'provisioning.config-form.error-valid-github-url',
-                    'Please enter a valid GitHub repository URL'
-                  ),
-                },
-              })}
-              placeholder={t(
-                'provisioning.config-form.placeholder-github-url',
-                'https://github.com/username/repo-name'
-              )}
-            />
-          </Field>
-          <Field label={t('provisioning.config-form.label-branch', 'Branch')}>
-            <Input {...register('branch')} placeholder={t('provisioning.config-form.placeholder-branch', 'main')} />
-          </Field>
-          <Field
-            label={t('provisioning.config-form.label-path', 'Path')}
-            description={t('provisioning.config-form.description-path', 'Path to a subdirectory in the Git repository')}
-          >
-            <Input {...register('path')} />
-          </Field>
-        </>
-      )}
-
-      {type === 'local' && (
+      <Stack direction="column" gap={2}>
+        <Field noMargin label={t('provisioning.config-form.label-repository-type', 'Repository type')}>
+          <Input value={getRepositoryTypeConfig(type)?.label || type} disabled />
+        </Field>
         <Field
-          label={t('provisioning.config-form.label-local-path', 'Local path')}
-          error={errors?.path?.message}
-          invalid={!!errors?.path}
+          noMargin
+          label={t('provisioning.config-form.label-title', 'Title')}
+          description={t('provisioning.config-form.description-title', 'A human-readable name for the config')}
+          invalid={!!errors.title}
+          error={errors?.title?.message}
         >
           <Input
-            {...register('path', {
+            {...register('title', {
               required: t('provisioning.config-form.error-required', 'This field is required.'),
             })}
-            placeholder={t('provisioning.config-form.placeholder-local-path', '/path/to/repo')}
+            placeholder={t('provisioning.config-form.placeholder-my-config', 'My config')}
           />
         </Field>
-      )}
-
-      <Field>
-        <Checkbox
-          {...register('readOnly', {
-            onChange: (e) => {
-              if (e.target.checked) {
-                setValue('prWorkflow', false);
-              }
-            },
-          })}
-          label={t('provisioning.finish-step.label-read-only', 'Read only')}
-          description={t(
-            'provisioning.config-form.description-read-only',
-            "Resources can't be modified through Grafana."
-          )}
-        />
-      </Field>
-
-      <Field>
-        <Checkbox
-          disabled={readOnly}
-          {...register('prWorkflow')}
-          label={t('provisioning.config-form.label-pr-workflow', 'Enable pull request option when saving')}
-          description={
-            <Trans i18nKey="provisioning.finish-step.description-webhooks-enable">
-              Allows users to choose whether to open a pull request when saving changes. If the repository does not
-              allow direct changes to the main branch, a pull request may still be required.
-            </Trans>
-          }
-        />
-      </Field>
-      {type === 'github' && <ConfigFormGithubCollapse register={register} />}
-
-      <ControlledCollapse
-        label={t('provisioning.config-form.label-automatic-pulling', 'Automatic pulling')}
-        isOpen={false}
-      >
-        <Field
-          label={t('provisioning.config-form.label-enabled', 'Enabled')}
-          description={t(
-            'provisioning.config-form.description-enabled',
-            'Once automatic pulling is enabled, the target cannot be changed.'
-          )}
-        >
-          <Switch {...register('sync.enabled')} id={'sync.enabled'} />
-        </Field>
-        <Field
-          label={t('provisioning.config-form.label-target', 'Target')}
-          required
-          error={errors?.sync?.target?.message}
-          invalid={!!errors?.sync?.target}
-        >
-          <Controller
-            name={'sync.target'}
-            control={control}
-            rules={{ required: t('provisioning.config-form.error-required', 'This field is required.') }}
-            render={({ field: { ref, onChange, ...field } }) => {
-              return (
-                <RadioButtonGroup
-                  options={targetOptions}
-                  onChange={onChange}
-                  disabled={Boolean(data?.status?.sync.state)}
-                  {...field}
+        {gitFields && (
+          <>
+            <Field
+              noMargin
+              label={gitFields.tokenConfig.label}
+              required={gitFields.tokenConfig.required}
+              error={errors?.token?.message}
+              invalid={!!errors.token}
+              description={gitFields.tokenConfig.description}
+            >
+              <Controller
+                name={'token'}
+                control={control}
+                rules={{
+                  required: isEdit ? false : gitFields.tokenConfig.validation?.required,
+                }}
+                render={({ field: { ref, ...field } }) => {
+                  return (
+                    <SecretInput
+                      {...field}
+                      id={'token'}
+                      placeholder={gitFields.tokenConfig.placeholder}
+                      isConfigured={tokenConfigured}
+                      onReset={() => {
+                        setValue('token', '');
+                        setTokenConfigured(false);
+                      }}
+                    />
+                  );
+                }}
+              />
+            </Field>
+            {gitFields.tokenUserConfig && (
+              <Field
+                noMargin
+                label={gitFields.tokenUserConfig.label}
+                required={gitFields.tokenUserConfig.required}
+                error={errors?.tokenUser?.message}
+                invalid={!!errors?.tokenUser}
+                description={gitFields.tokenUserConfig.description}
+              >
+                <Input
+                  {...register('tokenUser', {
+                    required: gitFields.tokenUserConfig.validation?.required,
+                  })}
+                  placeholder={gitFields.tokenUserConfig.placeholder}
                 />
-              );
-            }}
-          />
-        </Field>
-        <Field label={t('provisioning.config-form.label-interval-seconds', 'Interval (seconds)')}>
-          <Input
-            {...register('sync.intervalSeconds', { valueAsNumber: true })}
-            type={'number'}
-            placeholder={t('provisioning.config-form.placeholder-interval-seconds', '60')}
-          />
-        </Field>
-      </ControlledCollapse>
+              </Field>
+            )}
+            {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+            <Field
+              noMargin
+              label={gitFields.urlConfig.label}
+              error={errors?.url?.message}
+              invalid={!!errors?.url}
+              description={gitFields.urlConfig.description}
+              required={gitFields.urlConfig.required}
+            >
+              <Input
+                {...register('url', {
+                  required: gitFields.urlConfig.validation?.required,
+                  pattern: gitFields.urlConfig.validation?.pattern,
+                })}
+                placeholder={gitFields.urlConfig.placeholder}
+              />
+            </Field>
+            <Field noMargin label={gitFields.branchConfig.label} description={gitFields.branchConfig.description}>
+              <Input {...register('branch')} placeholder={gitFields.branchConfig.placeholder} />
+            </Field>
+            <Field noMargin label={gitFields.pathConfig.label} description={gitFields.pathConfig.description}>
+              <Input {...register('path')} />
+            </Field>
+          </>
+        )}
 
-      <Stack gap={2}>
-        <Button type={'submit'} disabled={isLoading}>
-          {isLoading
-            ? t('provisioning.config-form.button-saving', 'Saving...')
-            : t('provisioning.config-form.button-save', 'Save')}
-        </Button>
+        {localFields && (
+          <Field
+            noMargin
+            label={localFields.pathConfig.label}
+            error={errors?.path?.message}
+            invalid={!!errors?.path}
+            description={localFields.pathConfig.description}
+            required={localFields.pathConfig.required}
+          >
+            <Input
+              {...register('path', {
+                required: localFields.pathConfig.validation?.required,
+              })}
+              placeholder={localFields.pathConfig.placeholder}
+            />
+          </Field>
+        )}
+
+        <Field noMargin>
+          <Checkbox
+            {...register('readOnly', {
+              onChange: (e) => {
+                if (e.target.checked) {
+                  setValue('prWorkflow', false);
+                }
+              },
+            })}
+            label={t('provisioning.finish-step.label-read-only', 'Read only')}
+            description={t(
+              'provisioning.config-form.description-read-only',
+              "Resources can't be modified through Grafana."
+            )}
+          />
+        </Field>
+
+        {gitFields && (
+          <Field noMargin>
+            <Checkbox
+              disabled={readOnly}
+              {...register('prWorkflow')}
+              label={gitFields.prWorkflowConfig.label}
+              description={gitFields.prWorkflowConfig.description}
+            />
+          </Field>
+        )}
+        {type === 'github' && <ConfigFormGithubCollapse register={register} />}
+
+        {isGitBased && (
+          <ControlledCollapse
+            label={t('provisioning.config-form.label-automatic-pulling', 'Automatic pulling')}
+            isOpen={false}
+          >
+            <Stack direction="column" gap={2}>
+              <Field
+                noMargin
+                label={t('provisioning.config-form.label-enabled', 'Enabled')}
+                description={t(
+                  'provisioning.config-form.description-enabled',
+                  'Once automatic pulling is enabled, the target cannot be changed.'
+                )}
+              >
+                <Switch {...register('sync.enabled')} id={'sync.enabled'} />
+              </Field>
+              <Field
+                noMargin
+                label={t('provisioning.config-form.label-target', 'Target')}
+                required
+                error={errors?.sync?.target?.message}
+                invalid={!!errors?.sync?.target}
+              >
+                <Controller
+                  name={'sync.target'}
+                  control={control}
+                  rules={{ required: t('provisioning.config-form.error-required', 'This field is required.') }}
+                  render={({ field: { ref, onChange, ...field } }) => {
+                    return (
+                      <RadioButtonGroup
+                        options={targetOptions}
+                        onChange={onChange}
+                        disabled={Boolean(data?.status?.sync.state)}
+                        {...field}
+                      />
+                    );
+                  }}
+                />
+              </Field>
+              <Field noMargin label={t('provisioning.config-form.label-interval-seconds', 'Interval (seconds)')}>
+                <Input
+                  {...register('sync.intervalSeconds', { valueAsNumber: true })}
+                  type={'number'}
+                  placeholder={t('provisioning.config-form.placeholder-interval-seconds', '60')}
+                />
+              </Field>
+            </Stack>
+          </ControlledCollapse>
+        )}
+
+        <Stack gap={2}>
+          <Button type={'submit'} disabled={isLoading}>
+            {isLoading
+              ? t('provisioning.config-form.button-saving', 'Saving...')
+              : t('provisioning.config-form.button-save', 'Save')}
+          </Button>
+        </Stack>
       </Stack>
     </form>
   );

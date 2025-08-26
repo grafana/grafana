@@ -1276,6 +1276,22 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication":      "client_secret_post",
+					"client_id":                  "client-id",
+					"client_secret":              "client_secret",
+					"allowed_groups":             "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1315,6 +1331,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "select_account",
 				},
 			},
 			expectError: false,
@@ -1322,6 +1339,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "select_account",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",

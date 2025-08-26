@@ -6,8 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
-
-import { Role } from '../../../types';
+import { Role } from 'app/types/accessControl';
 
 import { ValueContainer } from './ValueContainer';
 import { ROLE_PICKER_WIDTH } from './constants';
@@ -117,7 +116,9 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
         <Tooltip
           content={
             <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => <p key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</p>)}
+              {appliedRoles?.map((role) => (
+                <p key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</p>
+              ))}
             </div>
           }
         >

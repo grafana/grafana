@@ -7,30 +7,33 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 type secureValueDB struct {
 	// Kubernetes Metadata
-	GUID        string
-	Name        string
-	Namespace   string
-	Annotations string // map[string]string
-	Labels      string // map[string]string
-	Created     int64
-	CreatedBy   string
-	Updated     int64
-	UpdatedBy   string
+	GUID                     string
+	Name                     string
+	Namespace                string
+	Annotations              string // map[string]string
+	Labels                   string // map[string]string
+	Created                  int64
+	CreatedBy                string
+	Updated                  int64
+	UpdatedBy                string
+	OwnerReferenceAPIGroup   sql.NullString
+	OwnerReferenceAPIVersion sql.NullString
+	OwnerReferenceKind       sql.NullString
+	OwnerReferenceName       sql.NullString
 
 	// Kubernetes Status
-	Phase   string
-	Message sql.NullString
+	Active  bool
+	Version int64
 
 	// Spec
 	Description string
@@ -40,12 +43,8 @@ type secureValueDB struct {
 	ExternalID  string
 }
 
-func (*secureValueDB) TableName() string {
-	return migrator.TableNameSecureValue
-}
-
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
-func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
+func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	annotations := make(map[string]string, 0)
 	if sv.Annotations != "" {
 		if err := json.Unmarshal([]byte(sv.Annotations), &annotations); err != nil {
@@ -68,14 +67,14 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 		}
 	}
 
-	resource := &secretv0alpha1.SecureValue{
-		Spec: secretv0alpha1.SecureValueSpec{
+	resource := &secretv1beta1.SecureValue{
+		Spec: secretv1beta1.SecureValueSpec{
 			Description: sv.Description,
 			Decrypters:  decrypters,
 		},
-		Status: secretv0alpha1.SecureValueStatus{
-			Phase:      secretv0alpha1.SecureValuePhase(sv.Phase),
+		Status: secretv1beta1.SecureValueStatus{
 			ExternalID: sv.ExternalID,
+			Version:    sv.Version,
 		},
 	}
 
@@ -85,11 +84,6 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	if sv.Ref.Valid {
 		resource.Spec.Ref = &sv.Ref.String
 	}
-	if sv.Message.Valid {
-		resource.Status.Message = sv.Message.String
-	}
-	resource.Status.Phase = secretv0alpha1.SecureValuePhase(sv.Phase)
-	resource.Status.ExternalID = sv.ExternalID
 
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)
@@ -110,11 +104,25 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	meta.SetUpdatedTimestamp(&updated)
 	meta.SetResourceVersionInt64(sv.Updated)
 
+	hasOwnerReference := sv.OwnerReferenceAPIGroup.Valid && sv.OwnerReferenceAPIGroup.String != "" &&
+		sv.OwnerReferenceAPIVersion.Valid && sv.OwnerReferenceAPIVersion.String != "" &&
+		sv.OwnerReferenceKind.Valid && sv.OwnerReferenceKind.String != "" &&
+		sv.OwnerReferenceName.Valid && sv.OwnerReferenceName.String != ""
+	if hasOwnerReference {
+		meta.SetOwnerReferences([]metav1.OwnerReference{
+			{
+				APIVersion: schema.GroupVersion{Group: sv.OwnerReferenceAPIGroup.String, Version: sv.OwnerReferenceAPIVersion.String}.String(),
+				Kind:       sv.OwnerReferenceKind.String,
+				Name:       sv.OwnerReferenceName.String,
+			},
+		})
+	}
+
 	return resource, nil
 }
 
 // toCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueDB, error) {
+func toCreateRow(sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
 	row, err := toRow(sv, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
@@ -131,26 +139,8 @@ func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueD
 	return row, nil
 }
 
-// toUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
-func toUpdateRow(currentRow *secureValueDB, newSecureValue *secretv0alpha1.SecureValue, actorUID, externalID string) (*secureValueDB, error) {
-	row, err := toRow(newSecureValue, externalID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create: %w", err)
-	}
-
-	now := time.Now().UTC().Unix()
-
-	row.GUID = currentRow.GUID
-	row.Created = currentRow.Created
-	row.CreatedBy = currentRow.CreatedBy
-	row.Updated = now
-	row.UpdatedBy = actorUID
-
-	return row, nil
-}
-
 // toRow maps a Kubernetes resource into a DB row.
-func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, error) {
+func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, error) {
 	var annotations string
 	if len(sv.Annotations) > 0 {
 		cleanedAnnotations := xkube.CleanAnnotations(sv.Annotations)
@@ -201,24 +191,50 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
-	var statusMessage *string
-	if sv.Status.Message != "" {
-		statusMessage = &sv.Status.Message
+	var (
+		ownerReferenceAPIGroup   sql.NullString
+		ownerReferenceAPIVersion sql.NullString
+		ownerReferenceKind       sql.NullString
+		ownerReferenceName       sql.NullString
+	)
+
+	ownerReferences := meta.GetOwnerReferences()
+	if len(ownerReferences) > 1 {
+		return nil, fmt.Errorf("only one owner reference is supported, found %d", len(ownerReferences))
+	}
+	if len(ownerReferences) == 1 {
+		ownerReference := ownerReferences[0]
+
+		gv, err := schema.ParseGroupVersion(ownerReference.APIVersion)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse owner reference API version %s: %w", ownerReference.APIVersion, err)
+		}
+		if gv.Group == "" {
+			return nil, fmt.Errorf("malformed api version %s requires <group>/<version> format", ownerReference.APIVersion)
+		}
+
+		ownerReferenceAPIGroup = toNullString(&gv.Group)
+		ownerReferenceAPIVersion = toNullString(&gv.Version)
+		ownerReferenceKind = toNullString(&ownerReference.Kind)
+		ownerReferenceName = toNullString(&ownerReference.Name)
 	}
 
 	return &secureValueDB{
-		GUID:        string(sv.UID),
-		Name:        sv.Name,
-		Namespace:   sv.Namespace,
-		Annotations: annotations,
-		Labels:      labels,
-		Created:     meta.GetCreationTimestamp().UnixMilli(),
-		CreatedBy:   meta.GetCreatedBy(),
-		Updated:     updatedTimestamp,
-		UpdatedBy:   meta.GetUpdatedBy(),
+		GUID:                     string(sv.UID),
+		Name:                     sv.Name,
+		Namespace:                sv.Namespace,
+		Annotations:              annotations,
+		Labels:                   labels,
+		Created:                  meta.GetCreationTimestamp().UnixMilli(),
+		CreatedBy:                meta.GetCreatedBy(),
+		Updated:                  updatedTimestamp,
+		UpdatedBy:                meta.GetUpdatedBy(),
+		OwnerReferenceAPIGroup:   ownerReferenceAPIGroup,
+		OwnerReferenceAPIVersion: ownerReferenceAPIVersion,
+		OwnerReferenceKind:       ownerReferenceKind,
+		OwnerReferenceName:       ownerReferenceName,
 
-		Phase:   string(sv.Status.Phase),
-		Message: toNullString(statusMessage),
+		Version: sv.Status.Version,
 
 		Description: sv.Spec.Description,
 		Keeper:      toNullString(sv.Spec.Keeper),
@@ -226,38 +242,6 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Ref:         toNullString(sv.Spec.Ref),
 		ExternalID:  externalID,
 	}, nil
-}
-
-// DTO for `secureValueForDecrypt` query result, only what we need.
-type secureValueForDecrypt struct {
-	Keeper     sql.NullString
-	Decrypters sql.NullString
-	Ref        sql.NullString
-	ExternalID string
-}
-
-// to Decrypt maps a DB row into a DecryptSecureValue object needed for decryption.
-func (sv *secureValueForDecrypt) toDecrypt() (*contracts.DecryptSecureValue, error) {
-	decrypters := make([]string, 0)
-	if sv.Decrypters.Valid && sv.Decrypters.String != "" {
-		if err := json.Unmarshal([]byte(sv.Decrypters.String), &decrypters); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
-		}
-	}
-
-	decryptSecureValue := &contracts.DecryptSecureValue{
-		Decrypters: decrypters,
-		ExternalID: sv.ExternalID,
-	}
-
-	if sv.Keeper.Valid && sv.Keeper.String != "" {
-		decryptSecureValue.Keeper = &sv.Keeper.String
-	}
-	if sv.Ref.Valid && sv.Ref.String != "" {
-		decryptSecureValue.Ref = sv.Ref.String
-	}
-
-	return decryptSecureValue, nil
 }
 
 // toNullString returns a sql.NullString struct given a *string

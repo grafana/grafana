@@ -1,6 +1,5 @@
-import { Property } from 'csstype';
-import { SyntheticEvent } from 'react';
-import { Column } from 'react-data-grid';
+import { FC, SyntheticEvent } from 'react';
+import { CellRendererProps, Column } from 'react-data-grid';
 
 import {
   DataFrame,
@@ -10,7 +9,6 @@ import {
   TimeRange,
   FieldConfigSource,
   ActionModel,
-  InterpolateFunction,
   FieldType,
   DataFrameWithValue,
   SelectableValue,
@@ -19,6 +17,8 @@ import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
+
+import { TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -30,12 +30,9 @@ export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: 
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (
-  frame: DataFrame,
-  field: Field,
-  rowIndex: number,
-  replaceVariables?: InterpolateFunction
-) => ActionModel[];
+export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
@@ -132,9 +129,11 @@ export interface BaseTableProps {
   onCellFilterAdded?: TableFilterActionCallback;
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
+  frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;
+  transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
@@ -142,16 +141,18 @@ export interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  replaceVariables?: InterpolateFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
+  // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
+  disableSanitizeHtml?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
+export type TableCellRenderer = FC<TableCellRendererProps>;
+
 export interface TableCellRendererProps {
-  actions?: ActionModel[];
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -164,15 +165,15 @@ export interface TableCellRendererProps {
   theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
-  justifyContent: Property.JustifyContent;
+  getActions?: GetActionsFunctionLocal;
+  disableSanitizeHtml?: boolean;
+  getTextColorForBackground: (color: string) => string;
 }
 
-export type ContextMenuProps = {
+export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
-  top?: number;
-  left?: number;
 };
 
 export interface TableCellActionsProps {
@@ -182,22 +183,19 @@ export interface TableCellActionsProps {
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
-  setIsInspecting: React.Dispatch<React.SetStateAction<boolean>>;
-  setContextMenuProps: React.Dispatch<React.SetStateAction<ContextMenuProps | null>>;
+  setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
-  height: number;
   onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -205,7 +203,7 @@ export interface SparklineCellProps {
   width: number;
 }
 
-export interface BarGaugeCellProps extends ActionCellProps {
+export interface BarGaugeCellProps {
   field: Field;
   height: number;
   rowIdx: number;
@@ -214,19 +212,10 @@ export interface BarGaugeCellProps extends ActionCellProps {
   width: number;
 }
 
-export interface ImageCellProps extends ActionCellProps {
+export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
-  rowIdx: number;
-}
-
-export interface JSONCellProps extends ActionCellProps {
-  justifyContent: Property.JustifyContent;
-  value: TableCellValue;
-  field: Field;
   rowIdx: number;
 }
 
@@ -237,27 +226,41 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
 }
 
-export interface ActionCellProps {
-  actions?: ActionModel[];
-}
-
-export interface CellColors {
-  textColor?: string;
-  bgColor?: string;
-  bgHoverColor?: string;
-}
-
-export interface AutoCellProps extends ActionCellProps {
-  value: TableCellValue;
+export interface AutoCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
+  value: TableCellValue;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
+
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
+  disableSanitizeHtml?: boolean;
+}
+
+export interface ActionCellProps {
+  field: Field;
+  rowIdx: number;
+  getActions: GetActionsFunctionLocal;
+}
+
+export interface PillCellProps {
+  theme: GrafanaTheme2;
+  field: Field;
+  rowIdx: number;
+  getTextColorForBackground: (color: string) => string;
+}
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
@@ -271,4 +274,45 @@ export type ColumnTypes = Record<string, FieldType>;
 export interface ScrollPosition {
   x: number;
   y: number;
+}
+
+export interface TypographyCtx {
+  ctx: CanvasRenderingContext2D;
+  fontFamily: string;
+  letterSpacing: number;
+  avgCharWidth: number;
+  estimateHeight: MeasureCellHeight;
+  measureHeight: MeasureCellHeight;
+}
+
+export type MeasureCellHeight = (
+  value: unknown,
+  width: number,
+  field: Field,
+  rowIdx: number,
+  lineHeight: number
+) => number;
+export interface MeasureCellHeightEntry {
+  /**
+   * given a values and the available width, returns the line count for that value
+   */
+  measure: MeasureCellHeight;
+  /**
+   * if getting an accurate line count is expensive, you can provide an estimate method
+   * which will be used when looping over the row. the method will only be invoked
+   * for the cell which is the maximum line count for the row.
+   */
+  estimate?: MeasureCellHeight;
+  /**
+   * indicates which field indexes of the visible fields this measurer applies to.
+   */
+  fieldIdxs: number[];
+}
+
+export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+
+export interface FromFieldsResult {
+  columns: TableColumn[];
+  cellRootRenderers: Record<string, CellRootRenderer>;
+  colsWithTooltip: Record<string, boolean>;
 }

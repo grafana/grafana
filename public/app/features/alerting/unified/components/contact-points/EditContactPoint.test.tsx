@@ -4,7 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, within } from 'test/test-utils';
 
 import EditContactPoint from 'app/features/alerting/unified/components/contact-points/EditContactPoint';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -44,7 +44,8 @@ beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
-const getTemplatePreviewContent = async () => within(screen.getByTestId('template-preview')).findByTestId('mockeditor');
+const getTemplatePreviewContent = async () =>
+  within(await screen.findByTestId('template-preview')).findByTestId('mockeditor');
 
 const templatesSelectorTestId = 'existing-templates-selector';
 

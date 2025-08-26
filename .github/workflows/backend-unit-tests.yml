@@ -16,6 +16,8 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -46,7 +48,7 @@ jobs:
       fail-fast: false
 
     name: Grafana (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest
     continue-on-error: true
     permissions:
       contents: read
@@ -57,7 +59,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
       - name: Run unit tests
@@ -81,7 +83,7 @@ jobs:
       fail-fast: false
 
     name: Grafana Enterprise (${{ matrix.shard }})
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
       id-token: write
@@ -92,7 +94,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v5.5.0
         with:
           go-version-file: go.mod
       - name: Setup Enterprise

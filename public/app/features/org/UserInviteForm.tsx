@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form';
 
-import { locationUtil, SelectableValue } from '@grafana/data';
+import { locationUtil, OrgRole, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
@@ -18,7 +18,7 @@ import {
   Stack,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { OrgRole, useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { Form } from '../../core/components/Form/Form';
 import { addInvitee } from '../invites/state/actions';

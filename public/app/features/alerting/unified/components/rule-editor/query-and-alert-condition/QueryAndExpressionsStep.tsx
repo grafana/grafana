@@ -37,7 +37,7 @@ import {
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
@@ -422,7 +422,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
-      setValue('dataSourceName', null); // set data source name back to "null"
+      setValue('dataSourceName', GRAFANA_RULES_SOURCE_NAME);
 
       prevExpressions.length > 0 && restoreExpressionsInQueries();
       prevCondition && setValue('condition', prevCondition);
@@ -718,7 +718,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
             <br />
           </div>
         }
-        confirmText="Deactivate"
+        confirmText={t('alerting.query-and-expressions-step.confirmText-deactivate', 'Deactivate')}
         icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings.simplifiedQueryEditor', true);

@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestValidateRepository(t *testing.T) {
@@ -431,7 +431,7 @@ func TestFromFieldError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := fromFieldError(tt.fieldError)
+			result := FromFieldError(tt.fieldError)
 
 			require.NotNil(t, result)
 			require.Equal(t, tt.expectedCode, result.Code)
