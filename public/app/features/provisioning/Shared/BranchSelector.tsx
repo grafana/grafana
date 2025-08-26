@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { Combobox, ComboboxOption, Input } from '@grafana/ui';
+import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { RepoType } from '../Wizard/types';
 import { useBranchFetching } from '../hooks/useBranchFetching';
@@ -34,7 +34,6 @@ export function BranchSelector({
     branches,
     loading,
     error: fetchError,
-    canFetchBranches,
   } = useBranchFetching({
     repositoryType,
     repositoryUrl,
@@ -42,11 +41,22 @@ export function BranchSelector({
   });
 
   const options = useMemo<Array<ComboboxOption<string>>>(() => {
-    return branches.map((branch) => ({
+    const branchOptions = branches.map((branch) => ({
       label: branch.name,
       value: branch.name,
     }));
-  }, [branches]);
+
+    // If we have a value that's not in the branches list (custom value),
+    // add it to the options so it displays properly
+    if (value && !branches.some((b) => b.name === value)) {
+      branchOptions.unshift({
+        label: value,
+        value: value,
+      });
+    }
+
+    return branchOptions;
+  }, [branches, value]);
 
   useEffect(() => {
     if (!value && branches.length > 0 && !loading) {
@@ -57,20 +67,7 @@ export function BranchSelector({
     }
   }, [branches, value, loading, onChange]);
 
-  if (!canFetchBranches) {
-    return (
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.currentTarget.value)}
-        onBlur={onBlur}
-        placeholder={placeholder}
-        disabled={disabled}
-        invalid={invalid}
-      />
-    );
-  }
-
-  const currentValue = value ? options.find((option) => option.value === value) || { value, label: value } : null;
+  const currentValue = value ? options.find((option) => option.value === value) : null;
 
   const showError = invalid || !!fetchError;
 

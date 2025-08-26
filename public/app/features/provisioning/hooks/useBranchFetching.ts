@@ -25,7 +25,6 @@ interface UseBranchFetchingResult {
   branches: BranchInfo[];
   loading: boolean;
   error: string | null;
-  canFetchBranches: boolean;
 }
 
 interface RepositoryInfo {
@@ -64,10 +63,6 @@ function parseRepositoryUrl(url: string, type: RepoType): RepositoryInfo | null 
   return null;
 }
 
-function canFetchBranchesForProvider(type: RepoType): boolean {
-  return ['github', 'gitlab', 'bitbucket'].includes(type);
-}
-
 export function useBranchFetching({
   repositoryType,
   repositoryUrl,
@@ -77,12 +72,10 @@ export function useBranchFetching({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canFetchBranches = useMemo(() => {
-    return canFetchBranchesForProvider(repositoryType);
-  }, [repositoryType]);
-
   const hasRequiredData = useMemo(() => {
-    if (!canFetchBranches) {
+    // Only attempt to fetch branches for supported Git providers
+    const supportedProviders = ['github', 'gitlab', 'bitbucket'];
+    if (!supportedProviders.includes(repositoryType)) {
       return false;
     }
 
@@ -91,7 +84,7 @@ export function useBranchFetching({
     const repoInfo = hasUrl ? parseRepositoryUrl(repositoryUrl.trim(), repositoryType) : null;
 
     return hasUrl && hasToken && repoInfo !== null;
-  }, [canFetchBranches, repositoryUrl, repositoryToken, repositoryType]);
+  }, [repositoryUrl, repositoryToken, repositoryType]);
 
   const fetchBranches = useCallback(async () => {
     if (!hasRequiredData) {
@@ -118,7 +111,6 @@ export function useBranchFetching({
         case 'github':
           apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/branches`;
           headers['Authorization'] = `Bearer ${trimmedToken}`;
-          headers['Accept'] = 'application/vnd.github+json';
           break;
         case 'gitlab':
           const encodedPath = encodeURIComponent(`${repoInfo.owner}/${repoInfo.repo}`);
@@ -213,6 +205,5 @@ export function useBranchFetching({
     branches,
     loading,
     error,
-    canFetchBranches,
   };
 }
