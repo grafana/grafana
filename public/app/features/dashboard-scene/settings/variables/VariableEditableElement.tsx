@@ -1,5 +1,4 @@
 import { FormEvent, useId, useMemo, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -47,16 +46,22 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const variable = this.variable;
+    const variableOptionsCategoryId = useId();
+    const variableNameId = useId();
+    const labelId = useId();
+    const descriptionId = useId();
+    const variableHideId = useId();
 
     if (variable instanceof LocalValueVariable) {
       return useLocalVariableOptions(variable);
     }
 
     const basicOptions = useMemo(() => {
-      return new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-options' })
+      return new OptionsPaneCategoryDescriptor({ title: '', id: variableOptionsCategoryId, isOpenDefault: true })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: variableNameId,
             skipField: true,
             render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
           })
@@ -64,7 +69,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.edit-pane.variable.label', 'Label'),
-            id: uuidv4(),
+            id: labelId,
             description: t('dashboard.edit-pane.variable.label-description', 'Optional display name'),
             render: (descriptor) => <VariableLabelInput id={descriptor.props.id} variable={variable} />,
           })
@@ -72,18 +77,19 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.edit-pane.variable.description', 'Description'),
-            id: uuidv4(),
+            id: descriptionId,
             render: (descriptor) => <VariableDescriptionTextArea id={descriptor.props.id} variable={variable} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: variableHideId,
             skipField: true,
             render: () => <VariableHideInput variable={variable} />,
           })
         );
-    }, [variable, isNewElement]);
+    }, [variableOptionsCategoryId, variableNameId, labelId, descriptionId, variableHideId, variable, isNewElement]);
 
     const categories = [basicOptions];
     const typeCategory = useVariableTypeCategory(variable);
@@ -253,6 +259,7 @@ function VariableHideInput({ variable }: VariableInputProps) {
 }
 
 function useVariableTypeCategory(variable: SceneVariable) {
+  const oldVariableId = useId();
   return useMemo(() => {
     const variableEditorDef = getEditableVariableDefinition(variable.state.type);
     const categoryName = t('dashboard.edit-pane.variable.type-category', '{{type}} options', {
@@ -272,6 +279,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
       category.addItem(
         new OptionsPaneItemDescriptor({
           title: '',
+          id: oldVariableId,
           skipField: true,
           render: () => <OpenOldVariableEditButton variable={variable} />,
         })
@@ -279,7 +287,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
     }
 
     return category;
-  }, [variable]);
+  }, [oldVariableId, variable]);
 }
 
 function OpenOldVariableEditButton({ variable }: VariableInputProps) {
@@ -311,15 +319,18 @@ function OpenOldVariableEditButton({ variable }: VariableInputProps) {
 }
 
 function useLocalVariableOptions(variable: LocalValueVariable): OptionsPaneCategoryDescriptor[] {
+  const localVariableOptionsCategoryId = useId();
+  const localVariableId = useId();
   return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: '',
-      id: 'local-variable-options',
+      id: localVariableOptionsCategoryId,
     });
 
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
+        id: localVariableId,
         skipField: true,
         render: () => {
           return (
@@ -338,5 +349,5 @@ function useLocalVariableOptions(variable: LocalValueVariable): OptionsPaneCateg
     );
 
     return [category];
-  }, [variable]);
+  }, [localVariableId, localVariableOptionsCategoryId, variable]);
 }
