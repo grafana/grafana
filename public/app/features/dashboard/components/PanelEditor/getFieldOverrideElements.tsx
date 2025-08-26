@@ -81,7 +81,7 @@ export function getFieldOverrideCategories(
     const overrideName = t('dashboard.get-field-override-categories.override-name', 'Override {{overrideNum}}', {
       overrideNum: idx + 1,
     });
-    const overrideId = `override-${idx}`;
+    const overrideId = `panel-options-override-${idx}`;
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
     const configPropertiesOptions = getOverrideProperties(registry);
     const isSystemOverride = isSystemOverrideGuard(override);
