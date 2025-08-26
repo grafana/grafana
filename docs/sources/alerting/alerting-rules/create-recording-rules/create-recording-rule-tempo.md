@@ -1,5 +1,5 @@
 ---
-description: How to create a Grafana-managed recording rule for the Tempo datasource.
+description: Learn how to create a Grafana-managed recording rule for the Tempo data source.
 keywords:
   - grafana
   - tempo
