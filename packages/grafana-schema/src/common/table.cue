@@ -119,7 +119,7 @@ TableCellTooltipOptions: {
   // The name of the field to get the tooltip content from
   field: string
   // placement of the tooltip
-  placement?: TableCellTooltipPlacement & (*"auto" | _)
+  placement?: TableCellTooltipPlacement
 }
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

@@ -82,7 +82,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 
   return (
     <>
-      {/* TODO: we can remove `value` from this component when tableNextGen is fully rolled out */}
+      {/* TODO: we can remove `value` from this component when TableRT is fully deprecated */}
       {value}
       <Portal zIndex={theme.zIndex.tooltip}>
         <div

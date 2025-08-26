@@ -12708,10 +12708,6 @@
     "login": "Login"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label-wrap-text": "Wrap text"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Gauge display mode",
       "label-value-display": "Value display"
@@ -12739,13 +12735,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
-      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "Apply to entire row",
-      "label-background-display-mode": "Background display mode",
-      "wrap-text": "Wrap text"
+      "label-background-display-mode": "Background display mode"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12763,7 +12754,9 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
+    "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-wrap-header-text": "Enables text wrapping for column headers",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
@@ -12789,50 +12782,6 @@
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
     "name-count-rows": "Count rows",
-    "name-enable-paginations": "Enable pagination",
-    "name-fields": "Fields",
-    "name-hide-in-table": "Hide in table",
-    "name-min-column-width": "Minimum column width",
-    "name-show-table-footer": "Show table footer",
-    "name-show-table-header": "Show table header",
-    "name-wrap-header-text": "Wrap header text",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields",
-    "text-wrap-options": {
-      "label-wrap-text": "Wrap text"
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Cell options",
-    "category-table": "Table",
-    "category-table-footer": "Table footer",
-    "cell-height-options": {
-      "label-large": "Large",
-      "label-medium": "Medium",
-      "label-small": "Small"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Center",
-      "label-left": "Left",
-      "label-right": "Right"
-    },
-    "description-calculation": "Choose a reducer function / calculation",
-    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
-    "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
-    "description-frozen-columns": "Columns are frozen from the left side of the table",
-    "description-min-column-width": "The minimum width for column auto resizing",
-    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
-    "name-calculation": "Calculation",
-    "name-cell-height": "Cell height",
-    "name-cell-type": "Cell type",
-    "name-cell-value-inspect": "Cell value inspect",
-    "name-column-alignment": "Column alignment",
-    "name-column-filter": "Column filter",
-    "name-column-width": "Column width",
-    "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
     "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
@@ -12842,8 +12791,12 @@
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
+    "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-wrap-text": "Wrap text"
+    },
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",

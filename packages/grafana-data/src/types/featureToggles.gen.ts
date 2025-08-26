@@ -616,10 +616,6 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
-  * Allows access to the new react-data-grid based table component.
-  */
-  tableNextGen?: boolean;
-  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
