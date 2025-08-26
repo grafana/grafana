@@ -16,7 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import alertDef from 'app/features/alerting/state/alertDef';
+// import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
@@ -258,8 +258,25 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
 function sortRules(sortOrder: SortOrder, rules: CombinedRuleWithLocation[]) {
   if (sortOrder === SortOrder.Importance) {
-    // @ts-ignore
-    return sortBy(rules, (rule) => alertDef.alertStateSortScore[rule.state]);
+    // Enhanced importance sorting: Critical (Firing) first, then Warning (Pending), then Normal (Inactive)
+    return sortBy(rules, (rule) => {
+      const alertingRule = getAlertingRule(rule);
+      if (!alertingRule) {
+        return 999; // Put rules without alerting data at the end
+      }
+
+      // Priority order: Firing (Critical) = 1, Pending (Warning) = 2, Inactive (Normal) = 3
+      switch (alertingRule.state) {
+        case PromAlertingRuleState.Firing:
+          return 1; // Highest priority - Critical alerts
+        case PromAlertingRuleState.Pending:
+          return 2; // Medium priority - Warning alerts
+        case PromAlertingRuleState.Inactive:
+          return 3; // Lowest priority - Normal/OK alerts
+        default:
+          return 999; // Unknown states at the end
+      }
+    });
   } else if (sortOrder === SortOrder.TimeAsc) {
     return sortBy(rules, (rule) => {
       //at this point rules are all AlertingRule, this check is only needed for Typescript checks
