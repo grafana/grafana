@@ -643,6 +643,14 @@ export interface MetricFindValue {
   expandable?: boolean;
 }
 
+export interface DataSourceGetFiltersApplicabilityOptions<TQuery extends DataQuery = DataQuery> {
+  filters: AdHocVariableFilter[];
+  groupByKeys?: string[];
+  timeRange?: TimeRange;
+  queries?: TQuery[];
+  scopes?: Scope[] | undefined;
+}
+
 export interface FiltersApplicability {
   key: string;
   applicable: boolean;
