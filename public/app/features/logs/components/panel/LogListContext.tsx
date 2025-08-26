@@ -140,13 +140,11 @@ export type LogListState = Pick<
   | 'forceEscape'
   | 'filterLevels'
   | 'pinnedLogs'
-  | 'prettifyJSON'
   | 'showUniqueLabels'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
   | 'timestampResolution'
-  | 'wrapLogMessage'
 >;
 
 export interface Props {
@@ -227,7 +225,9 @@ export const LogListContextProvider = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
-  prettifyJSON,
+  prettifyJSON: prettifyJSONProp = logOptionsStorageKey
+    ? store.getBool(`${logOptionsStorageKey}.prettifyLogMessage`, true)
+    : true,
   setDisplayedFields,
   showControls,
   showTime,
@@ -237,7 +237,7 @@ export const LogListContextProvider = ({
   timestampResolution = logOptionsStorageKey
     ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
     : 'ms',
-  wrapLogMessage,
+  wrapLogMessage: wrapLogMessageProp,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
     dedupStrategy,
@@ -246,13 +246,11 @@ export const LogListContextProvider = ({
     fontSize,
     forceEscape: logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.forceEscape`, false) : false,
     pinnedLogs,
-    prettifyJSON,
     showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
     timestampResolution,
-    wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(
@@ -260,6 +258,8 @@ export const LogListContextProvider = ({
   );
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
   const [isAssistantAvailable, openAssistant] = useAssistant();
+  const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
+  const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
 
   useEffect(() => {
     if (noInteractions) {
@@ -463,13 +463,12 @@ export const LogListContextProvider = ({
 
   const setPrettifyJSON = useCallback(
     (prettifyJSON: boolean) => {
-      setLogListState({ ...logListState, prettifyJSON });
-      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
+      setPrettifyJSONState(prettifyJSON);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
       }
     },
-    [logListState, logOptionsStorageKey, onLogOptionsChange]
+    [logOptionsStorageKey]
   );
 
   const setSyntaxHighlighting = useCallback(
@@ -496,13 +495,12 @@ export const LogListContextProvider = ({
 
   const setWrapLogMessage = useCallback(
     (wrapLogMessage: boolean) => {
-      setLogListState({ ...logListState, wrapLogMessage });
-      onLogOptionsChange?.('wrapLogMessage', wrapLogMessage);
+      setWrapLogMessageState(wrapLogMessage);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.wrapLogMessage`, wrapLogMessage);
       }
     },
-    [logListState, logOptionsStorageKey, onLogOptionsChange]
+    [logOptionsStorageKey]
   );
 
   const downloadLogs = useCallback(
@@ -620,7 +618,7 @@ export const LogListContextProvider = ({
         permalinkedLogId,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
-        prettifyJSON: logListState.prettifyJSON,
+        prettifyJSON,
         setDedupStrategy,
         setDetailsMode,
         setDetailsWidth,
@@ -644,7 +642,7 @@ export const LogListContextProvider = ({
         syntaxHighlighting: logListState.syntaxHighlighting,
         timestampResolution: logListState.timestampResolution,
         toggleDetails,
-        wrapLogMessage: logListState.wrapLogMessage,
+        wrapLogMessage,
         isAssistantAvailable,
         openAssistantByLog,
       }}
