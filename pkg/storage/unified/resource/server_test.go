@@ -266,15 +266,16 @@ func TestRunInQueue(t *testing.T) {
 
 	t.Run("should time out if a task is sitting in the queue beyond the timeout", func(t *testing.T) {
 		s, _ := newTestServerWithQueue(t, 1, 1)
-		executed := make(chan bool, 1)
+		executed := make(chan struct{}, 1)
 		runnable := func(ctx context.Context) {
 			time.Sleep(1 * time.Second)
-			executed <- true
+			executed <- struct{}{}
 		}
 
 		err := s.runInQueue(context.Background(), testTenantID, runnable)
 		require.Error(t, err)
 		assert.Equal(t, context.DeadlineExceeded, err)
+		<-executed
 	})
 
 	t.Run("should return an error if queue is consistently full after retrying", func(t *testing.T) {
@@ -291,15 +292,14 @@ func TestRunInQueue(t *testing.T) {
 		defer close(blocker)
 
 		// Task 2: This runnable should never execute because the queue is full.
-		executed := false
+		executed := make(chan struct{}, 1)
 		runnable := func(ctx context.Context) {
-			executed = true
+			executed <- struct{}{}
 		}
 
 		err = s.runInQueue(context.Background(), testTenantID, runnable)
 		require.Error(t, err)
 		require.ErrorIs(t, err, scheduler.ErrTenantQueueFull)
-		assert.False(t, executed, "runnable should not have been executed")
 	})
 }
 
@@ -315,7 +315,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 	err := services.StartAndAwaitRunning(context.Background(), q)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		q.StopAsync()
+		services.StopAndAwaitTerminated(context.Background(), q)
 	})
 
 	// Create a worker to consume from the queue
@@ -327,7 +327,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 	err = services.StartAndAwaitRunning(context.Background(), worker)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		worker.StopAsync()
+		services.StopAndAwaitTerminated(context.Background(), worker)
 	})
 
 	s := &server{

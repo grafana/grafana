@@ -1416,7 +1416,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
 		if !boff.Ongoing() {
 			// Backoff finished (retries exhausted or context canceled).
-			return fmt.Errorf("failed to enqueue runnable for tenant %s after %d retries: %w", tenantID, s.queueConfig.MaxRetries, err)
+			return fmt.Errorf("failed to enqueue for tenant %s: %w", tenantID, err)
 		}
 		boff.Wait()
 	}
