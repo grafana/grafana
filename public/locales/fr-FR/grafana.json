@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Mise en sourdine, regroupement et horaires"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -1243,20 +1248,6 @@
     "file-export-preview": {
       "copy-code": "Copier le code",
       "download": "Télécharger"
-    },
-    "filter-options": {
-      "label": {
-        "alert-rule": "Règle d'alerte",
-        "all": "Tout",
-        "error": "Erreur",
-        "firing": "Déclenchement",
-        "no-data": "Aucune donnée",
-        "normal": "Normal",
-        "ok": "OK",
-        "pending": "En attente",
-        "recording-rule": "Règle d'enregistrement",
-        "recovering": "En récupération"
-      }
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "liste-de-règles-filtrées"
@@ -2230,6 +2221,13 @@
       "preview": "Aperçu",
       "previewCondition": "Aperçu de la condition de la règle d'alerte"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Ajouter une intégration de point de contact",
       "body-attention": "Comme aucune politique par défaut n’est encore configurée, ce point de contact sera automatiquement défini par défaut.",
@@ -2481,6 +2479,7 @@
       },
       "empty-data-source": "Aucune règle trouvée",
       "error-button": "Erreur",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Annuler la recherche",
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
@@ -2588,11 +2587,27 @@
       "delete-rule": {
         "success": "Règle supprimée avec succès"
       },
+      "health": {
+        "error": "",
+        "no-data": "",
+        "ok": ""
+      },
       "pause-rule": {
         "success": "Évaluation de la règle suspendue"
       },
       "resume-rule": {
         "success": "Évaluation de la règle reprise"
+      },
+      "state": {
+        "firing": "",
+        "normal": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      },
+      "type": {
+        "alert": "",
+        "recording": ""
       },
       "update-rule": {
         "success": "Règle mise à jour avec succès"
@@ -2601,20 +2616,29 @@
     "rules-filter": {
       "clear-filters": "Supprimer les filtres",
       "configured-alert-rules": "Les sources de données contenant des règles d’alerte configurées sont des sources de données Mimir ou Loki où les règles d’alerte sont stockées et évaluées dans la source de données elle-même.",
+      "contact-point-tooltip": "",
+      "contact-point-tooltip-title": "",
       "dashboard": "Tableau de bord",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Aide à la recherche par sources de données",
       "filter-options": {
-        "aria-label-show-filters": "Afficher les filtres",
-        "label-custom-filter": "Filtre personnalisé",
-        "label-saved-searches": "Recherches enregistrées"
+        "aria-label": "",
+        "aria-label-show-filters": "",
+        "placeholder-namespace": "",
+        "placeholder-search-input": ""
       },
+      "grafana-folder": "",
       "health": "Santé",
       "label": {
         "hide": "Masquer",
         "show": "Afficher"
       },
       "manage-alerts": "Dans ces sources de données, vous pouvez sélectionner Gérer les alertes via l’interface utilisateur d’alerte pour pouvoir gérer ces règles d’alerte dans l’interface utilisateur Grafana, ainsi que dans la source de données où elles ont été configurées.",
+      "no-groups": "",
+      "no-namespaces": "",
       "placeholder-all-data-sources": "Toutes les sources de données",
+      "placeholder-contact-point": "",
+      "placeholder-data-sources": "",
+      "placeholder-labels": "",
       "plugin-rules": "Règles de plugin",
       "rule-type": "Type de règle",
       "rulesSearchInput-placeholder-search": "Rechercher",
@@ -2629,9 +2653,6 @@
       "text-federated": "Fédéré",
       "text-provisioned": "Mis en service"
     },
-    "saved-searches": {
-      "text-default": "Par défaut"
-    },
     "search": {
       "property": {
         "data-source": "Source de données",
@@ -2639,11 +2660,10 @@
         "labels": "Étiquettes",
         "namespace": "Dossier/Espace de noms",
         "rule-health": "Santé",
-        "rule-name": "Nom de la règle d'alerte",
+        "rule-name": "",
         "rule-type": "Type",
         "state": "État"
-      },
-      "save-query": "Enregistrer la recherche courante"
+      }
     },
     "search-field-input": {
       "clear": "Effacer",
@@ -3519,26 +3539,17 @@
     "browse-view": {
       "this-folder-is-empty": "Ce dossier est vide"
     },
-    "bulk-action-resources-form": {
-      "all-deleted": "Toutes les ressources ont été supprimées avec succès",
-      "all-moved": "Toutes les ressources ont été déplacées avec succès",
-      "button-done": "Terminé",
-      "progress-title": "Succès",
-      "failed-alert_one": "{{count}} éléments ont échoué",
-      "failed-alert_other": "{{count}} éléments ont échoué"
-    },
     "bulk-delete-resources-form": {
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
       "delete-warning": "Cette opération supprimera les dossiers sélectionnés ainsi que leur contenu. Au total, cela affectera :",
-      "error-path-not-found": "Chemin introuvable"
+      "error-deleting-resources": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annuler",
       "button-move": "Déplacer",
       "button-moving": "Déplacement en cours…",
-      "deleting": "Suppression en cours",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3546,13 +3557,9 @@
         "repository-not-found-message": "",
         "repository-not-found-title": ""
       },
-      "error-file-content-not-found": "Contenu du fichier introuvable",
-      "error-path-not-found": "Chemin introuvable",
-      "error-target-folder-path-missing": "Le chemin du dossier de destination est manquant",
-      "error-title": "Erreur de dossier de destination",
+      "error-moving-resources": "",
+      "error-no-target-folder-path": "",
       "move-warning": "Cette opération déplacera les dossiers sélectionnés ainsi que leur contenu. Au total, cela affectera :",
-      "moving": "Déplacement en cours",
-      "progress": "Progression : {{current}} sur {{total}}",
       "target-folder": "Dossier de destination"
     },
     "counts": {
@@ -3568,6 +3575,9 @@
       "total_other": "{{count}} objets"
     },
     "dashboards-tree": {
+      "checkbox": {
+        "disabled-not-in-same-repo": ""
+      },
       "collapse-folder-button": "Réduire le dossier {{title}}",
       "expand-folder-button": "Développer le dossier {{title}}",
       "name-column": "Nom",
@@ -3634,11 +3644,11 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
+      "error-invalid-characters": "",
       "error-required": "Un nom de dossier est obligatoire",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
       "label-folder-name": "Nom du dossier",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
-      "text-your-folder-will-be-created-as": "Votre dossier sera créé sous le nom {{folderName}}",
       "title-pull-request-created": "Demande de fusion créée",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
@@ -3745,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Direction de la flèche",
+    "category-arrow-direction": "",
     "category-background": "Arrière-plan",
     "category-border": "Bordure",
     "category-canvas": "Canvas",
@@ -3777,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Activer la sélection de types d’éléments expérimentaux",
     "description-inline-editing": "Activer la modification directe du panneau",
     "description-pan-zoom": "Activer le zoom et le déplacement",
-    "direction-options": {
-      "label-both": "Les deux",
-      "label-forward": "Vers l’avant",
-      "label-none": "Aucun",
-      "label-reverse": "Inverse"
-    },
     "drone-front-item": {
       "category-drone-front": "Vue avant du drone",
       "name-roll-angle": "Angle de roulis"
@@ -4105,10 +4117,10 @@
     }
   },
   "common": {
+    "all": "",
     "apply": "Appliquer",
     "cancel": "Annuler",
     "clear": "Effacer",
-    "close": "Fermer",
     "collapse": "Réduire",
     "edit": "Modifier",
     "help": "Aide",
@@ -4173,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Sources de données",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Aucun résultat correspondant à votre requête n'a été trouvé",
       "request-data-source": "Demander une nouvelle source de données",
       "roadmap": "Voir la feuille de route"
@@ -4509,15 +4522,24 @@
           }
         },
         "variable": {
+          "error": {
+            "invalid-regex": ""
+          },
           "info": "Afficher ou masquer le {{type}} de manière dynamique en fonction de la valeur de la variable.",
           "label": "Variable de modèle",
           "name": "Nom",
           "operator": {
             "equals": "Égal à",
-            "not-equals": "Inégaux"
+            "matches": "",
+            "not-equals": "Inégaux",
+            "not-matches": ""
           },
           "value": "Valeur"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "L’élément est masqué en raison du rendu conditionnel."
@@ -5347,6 +5369,7 @@
       "playlist-next": "Accéder au tableau de bord suivant",
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
+      "read-only": "",
       "refresh": "Actualiser le tableau de bord",
       "save": "Enregistrer le tableau de bord",
       "save-dashboard": {
@@ -5399,6 +5422,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Rechercher une transformation",
       "show-images": "Afficher les images",
+      "sql-expressions-message-description": "",
+      "sql-expressions-message-link": "",
+      "sql-expressions-title": "",
       "title-add-another-transformation": "Ajouter une autre transformation",
       "view-all": "Tout afficher"
     },
@@ -6395,8 +6421,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Cliquez <2>ici</2> pour en savoir plus sur cette erreur.",
-    "success-more-details-links": "Ensuite, vous pouvez commencer à visualiser les données en <2>créant un tableau de bord</2> ou en interrogeant les données dans la <5>vue Explorer</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Ensuite, vous pouvez commencer à visualiser les données en <2>créant un tableau de bord</2> ou en interrogeant les données dans la <5>vue Explorer</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6534,9 +6559,11 @@
       "explore": "Explorer"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Créer un tableau de bord",
       "explore-data": "Explorer les données",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Plus de détails sur l’erreur"
@@ -6582,6 +6609,9 @@
       "description": {
         "hosted-graphite-prometheus-and-loki": "Graphite, Prometheus et Loki hébergés"
       }
+    },
+    "list": {
+      "starred": ""
     },
     "new-data-source-view": {
       "cancel": "Annuler",
@@ -6641,6 +6671,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Couleur fixe",
       "noOptionsMessage-no-fields-found": "Aucun champ trouvé"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Charger"
@@ -7108,7 +7146,7 @@
     "rich-history-card": {
       "add-comment-form": "Ajouter un formulaire de commentaire",
       "add-comment-tooltip": "Ajouter un commentaire",
-      "add-to-library": "Ajouter dans la bibliothèque",
+      "add-to-library": "",
       "cancel": "Annuler",
       "confirm-delete": "Supprimer",
       "copy-query-tooltip": "Copier la requête dans le presse-papiers",
@@ -7220,7 +7258,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Ajouter une requête à partir de la bibliothèque",
+      "add-from-query-library": "",
       "query-add-button": "Ajouter une requête",
       "query-add-button-aria-label": "Ajouter une requête",
       "query-history-button": "Historique des requêtes",
@@ -7475,6 +7513,13 @@
       "tooltip-title": "Opérateur mathématique",
       "tooltip-trigger": "Expression"
     },
+    "query-toolbox": {
+      "tooltip-collapse-editor": "",
+      "tooltip-copy-query": "",
+      "tooltip-expand-editor": "",
+      "tooltip-format-query": "",
+      "tooltip-run-query": ""
+    },
     "reduce": {
       "label-function": "Fonction",
       "label-input": "Entrée",
@@ -7490,6 +7535,11 @@
       "label-upsample": "Sur-échantillonner",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
+    "sql-expr": {
+      "button-run-query": "",
+      "modal-title": "",
+      "tooltip-experimental": ""
+    },
     "threshold": {
       "label-input": "Entrée"
     }
@@ -7500,13 +7550,9 @@
     "select-aria-label": "Filtre de dossier",
     "select-placeholder": "Filtrer par dossier"
   },
-  "folder-picker": {
-    "create-instructions": "Appuyez sur Entrée pour créer le nouveau dossier.",
-    "input-placeholder": "Appuyer sur Entrée pour confirmer le nouveau dossier",
-    "loading": "Chargement des dossiers..."
-  },
   "folder-repo": {
-    "badge-tooltip": ""
+    "provisioned-badge": "",
+    "read-only-badge": ""
   },
   "folders": {
     "api": {
@@ -7858,7 +7904,8 @@
       "edit-pane": {
         "go-back": "Retour"
       }
-    }
+    },
+    "select-group": ""
   },
   "grafana-data": {
     "valueFormats": {
@@ -8721,7 +8768,6 @@
       "filter-popup-input-placeholder": "Filtrer les valeurs",
       "filter-popup-match-case": "Respecter la casse",
       "inspect-drawer-title": "Inspecter la valeur",
-      "inspect-menu-label": "Inspecter la valeur",
       "nested-table": {
         "no-data": "Aucune donnée disponible"
       },
@@ -9047,6 +9093,7 @@
       "sign-up": "Inscription"
     }
   },
+  "label-dropdown-info": "",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "Glisser et déposer pour réorganiser",
@@ -9444,6 +9491,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9715,7 +9764,8 @@
       "message-name-required": "Le nom est requis",
       "message-reserved-name": "Ce nom est réservé et ne peut pas être utilisé pour un dossier.",
       "message-same-name": "Un tableau de bord ou un dossier portant le même nom existe déjà",
-      "message-same-name-general": "Un dossier ou un tableau de bord dans le dossier général portant le même nom existe déjà"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10861,7 +10911,6 @@
         "downloads": "Téléchargements",
         "from": "",
         "installedVersion": "Version installée",
-        "lastCommitDate": "Date de la dernière propagation :",
         "latestReleaseDate": "Dernière date de sortie :",
         "latestVersion": "Dernière version",
         "license": "Licence",
@@ -11204,11 +11253,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
-      "confirm-delete-repository": "Voulez-vous vraiment supprimer la configuration du référentiel ?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Échec de la suppression du référentiel",
       "success-repository-deleted": "Paramètres du référentiel mis en attente pour suppression",
-      "title-delete-repository": "Supprimer la configuration du référentiel",
-      "tooltip-delete-this-repository": "Supprimer ce référentiel"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Retour aux référentiels",
@@ -11248,7 +11301,9 @@
     },
     "file-history-page": {
       "back-to-repositories": "Retour aux référentiels",
-      "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration."
+      "history-not-supported": "",
+      "repository-config-exists-configuration": "Assurez-vous que la configuration du référentiel existe dans le fichier de configuration.",
+      "repository-not-found": ""
     },
     "file-status-page": {
       "save": "Enregistrer",
@@ -11414,6 +11469,8 @@
         "subtitle": "Utilisez cette option si vous souhaitez synchroniser et gérer l’ensemble de votre instance Grafana via un stockage externe."
       }
     },
+    "read-only-local-tooltip": "",
+    "read-only-remote-tooltip": "",
     "recent-jobs": {
       "active-jobs": "missions actives",
       "column-action": "Action",
@@ -11432,6 +11489,7 @@
       "get-repository-meta": {
         "webhook": "Webhook"
       },
+      "read-only-badge": "",
       "settings": "Paramètres",
       "view": "Afficher"
     },
@@ -11442,8 +11500,16 @@
       "title-repository-is-unhealthy": "Le référentiel est en mauvais état"
     },
     "repository-link": {
+      "delete-or-move-job": {
+        "compare-branch": "",
+        "open-pull-request": "",
+        "view-branch": "",
+        "view-repository": ""
+      },
       "grafana-repository-synced": "Vos ressources sont maintenant dans votre stockage externe et mises en service dans votre instance. À partir de maintenant, votre instance et le stockage externe seront synchronisés.",
-      "view-repository": "Afficher le référentiel"
+      "sync-job": {
+        "view-repository": ""
+      }
     },
     "repository-overview": {
       "checked": "Vérifié :",
@@ -11849,7 +11915,7 @@
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
       "remove-query": "Supprimer la requête",
-      "replace-query-from-library": "Remplacer par une requête à partir de la bibliothèque",
+      "replace-query-from-library": "",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -12088,7 +12154,7 @@
   "service-accounts": {
     "empty-state": {
       "button-title": "Ajouter un compte de service",
-      "message": "Aucun compte de service trouvé",
+      "message": "",
       "more-info": "N'oubliez pas que vous pouvez fournir des autorisations spécifiques pour l'accès à l'API à d'autres applications",
       "title": "Vous n'avez pas encore créé de comptes de service"
     }
@@ -12482,6 +12548,21 @@
   "sort-picker": {
     "select-aria-label": "Trier"
   },
+  "sql-expressions": {
+    "add-query-tooltip": "",
+    "ai-explain-title": "",
+    "ai-suggestions-title": "",
+    "apply": "",
+    "code-label": "",
+    "copy": "",
+    "explain-empty-query-tooltip": "",
+    "explain-query": "",
+    "explanation-modal-title": "",
+    "sql-ai-interaction": "",
+    "sql-suggestion-history": "",
+    "suggestions": "",
+    "view-explanation": ""
+  },
   "stat": {
     "add-orientation-option": {
       "description-orientation": "Orientation de la mise en page",
@@ -12684,6 +12765,9 @@
       "label-alt-text": "Texte alternatif",
       "label-title-text": "Texte du titre"
     },
+    "link-wrapper": {
+      "menu": ""
+    },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
       "label": {
@@ -12734,6 +12818,7 @@
     "description-fields": "Sélectionner les champs à utiliser pour le calcul",
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
+    "description-tooltip-from-field": "",
     "name-calculation": "Calcul",
     "name-cell-height": "Hauteur de cellule",
     "name-cell-type": "Type de cellule",
@@ -12749,8 +12834,17 @@
     "name-min-column-width": "Largeur minimale de colonne",
     "name-show-table-footer": "Afficher le pied de tableau",
     "name-show-table-header": "Afficher l’en-tête du tableau",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Tous les champs numériques"
+    "placeholder-fields": "Tous les champs numériques",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Effacer les balises",
@@ -12965,6 +13059,7 @@
         "name-point-size": "Taille des points",
         "name-show-points": "Afficher les points",
         "name-show-thresholds": "Afficher les seuils",
+        "name-show-values": "",
         "name-style": "Style",
         "name-transform": "Transformer",
         "transform-options": {

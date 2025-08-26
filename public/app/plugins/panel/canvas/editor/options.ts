@@ -1,10 +1,11 @@
 import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { ConnectionDirection } from 'app/features/canvas/element';
+import { ConnectionDirection, DirectionDimensionMode } from '@grafana/schema';
 import { SVGElements } from 'app/features/canvas/runtime/element';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { DirectionDimensionEditor } from 'app/features/dimensions/editors/DirectionDimensionEditor';
 import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
 
@@ -181,20 +182,18 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addDirection: (builder, context) => {
-    const category = [t('canvas.category-arrow-direction', 'Arrow Direction')];
-    builder.addRadio({
+    const category = [t('canvas.category-arrow-direction', 'Direction')];
+    builder.addCustomEditor({
       category,
+      id: 'direction',
       path: 'direction',
       name: t('canvas.label-direction', 'Direction'),
-      settings: {
-        options: [
-          { value: undefined, label: t('canvas.direction-options.label-forward', 'Forward') },
-          { value: ConnectionDirection.Reverse, label: t('canvas.direction-options.label-reverse', 'Reverse') },
-          { value: ConnectionDirection.Both, label: t('canvas.direction-options.label-both', 'Both') },
-          { value: ConnectionDirection.None, label: t('canvas.direction-options.label-none', 'None') },
-        ],
+      editor: DirectionDimensionEditor,
+      settings: {},
+      defaultValue: {
+        mode: DirectionDimensionMode.Fixed,
+        fixed: ConnectionDirection.Forward,
       },
-      defaultValue: ConnectionDirection.Forward,
     });
   },
 

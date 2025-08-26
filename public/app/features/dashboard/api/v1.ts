@@ -1,4 +1,4 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
@@ -18,6 +18,7 @@ import {
   AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
   ManagerKind,
+  AnnoReloadOnParamsChange,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -114,9 +115,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }));
   }
 
-  async getDashboardDTO(uid: string) {
+  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
+      const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto', params);
 
       // This could come as conversion error from v0 or v2 to V1.
       if (dash.status?.conversion?.failed && isV2StoredVersion(dash.status.conversion.storedVersion)) {
@@ -140,6 +141,12 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
         },
       };
+
+      /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
+      /** Not intended to be used in production, we will be removing this in short-term future */
+      if (dash.metadata.annotations?.[AnnoReloadOnParamsChange]) {
+        result.meta.reloadOnParamsChange = true;
+      }
 
       const annotations = dash.metadata.annotations ?? {};
       const managerKind = annotations[AnnoKeyManagerKind];

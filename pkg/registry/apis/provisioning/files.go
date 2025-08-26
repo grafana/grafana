@@ -58,39 +58,54 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // true adds the {path} component
 }
 
+// For GET operations, allow even unhealthy repositories
+// For write operations (POST, PUT, DELETE), require healthy repository
+func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repository.Repository, error) {
+	if method == http.MethodGet {
+		return c.getter.GetRepository(ctx, name)
+	} else {
+		return c.getter.GetHealthyRepository(ctx, name)
+	}
+}
+
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := c.getter.GetHealthyRepository(ctx, name)
-	if err != nil {
-		logger.Debug("failed to find repository", "error", err)
-		return nil, err
-	}
-
-	readWriter, ok := repo.(repository.ReaderWriter)
-	if !ok {
-		return nil, apierrors.NewBadRequest("repository does not support read-writing")
-	}
-
-	parser, err := c.parsers.GetParser(ctx, readWriter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get parser: %w", err)
-	}
-
-	clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
-	}
-
-	folderClient, err := clients.Folder()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get folder client: %w", err)
-	}
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
 
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		repo, err := c.getRepo(ctx, r.Method, name)
+		if err != nil {
+			logger.Debug("failed to find repository", "error", err)
+			responder.Error(err)
+			return
+		}
+
+		readWriter, ok := repo.(repository.ReaderWriter)
+		if !ok {
+			responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
+			return
+		}
+
+		parser, err := c.parsers.GetParser(ctx, readWriter)
+		if err != nil {
+			responder.Error(fmt.Errorf("failed to get parser: %w", err))
+			return
+		}
+
+		clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
+		if err != nil {
+			responder.Error(fmt.Errorf("failed to get clients: %w", err))
+			return
+		}
+
+		folderClient, err := clients.Folder()
+		if err != nil {
+			responder.Error(fmt.Errorf("failed to get folder client: %w", err))
+			return
+		}
+		folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
+		dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
 			Ref:          query.Get("ref"),
@@ -135,7 +150,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodGet:
 			resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
 			if err != nil {
-				responder.Error(err)
+				respondWithError(responder, err)
 				return
 			}
 			obj = resource.AsResourceWrapper()
@@ -153,7 +168,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 				resource, err := dualReadWriter.MoveResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -169,7 +184,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				var resource *resources.ParsedResource
 				resource, err = dualReadWriter.CreateResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -187,7 +202,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 				resource, err := dualReadWriter.UpdateResource(ctx, opts)
 				if err != nil {
-					responder.Error(err)
+					respondWithError(responder, err)
 					return
 				}
 				obj = resource.AsResourceWrapper()
@@ -195,7 +210,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodDelete:
 			resource, err := dualReadWriter.Delete(ctx, opts)
 			if err != nil {
-				responder.Error(err)
+				respondWithError(responder, err)
 				return
 			}
 			obj = resource.AsResourceWrapper()

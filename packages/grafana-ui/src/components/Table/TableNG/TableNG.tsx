@@ -1,7 +1,8 @@
 import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
-import { CSSProperties, Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import memoize from 'micro-memoize';
+import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -9,6 +10,7 @@ import {
   DataGridHandle,
   DataGridProps,
   RenderCellProps,
+  Renderers,
   RenderRowProps,
   Row,
   SortColumn,
@@ -23,12 +25,11 @@ import {
   getDisplayProcessor,
   ReducerID,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId } from '@grafana/schema';
+import { Trans } from '@grafana/i18n';
+import { FieldColorModeId, TableCellTooltipPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { ContextMenu } from '../../ContextMenu/ContextMenu';
-import { MenuItem } from '../../Menu/MenuItem';
+import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
@@ -40,9 +41,11 @@ import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { HeaderCell } from './components/HeaderCell';
 import { RowExpander } from './components/RowExpander';
 import { TableCellActions } from './components/TableCellActions';
+import { TableCellTooltip } from './components/TableCellTooltip';
 import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
+  useColWidths,
   useFilteredRows,
   useFooterCalcs,
   useHeaderHeight,
@@ -51,18 +54,35 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
-import { getDefaultCellStyles, getFooterStyles, getGridStyles, getHeaderCellStyles, getLinkStyles } from './styles';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps, TableCellStyleOptions } from './types';
+import {
+  getCellActionStyles,
+  getDefaultCellStyles,
+  getFooterStyles,
+  getGridStyles,
+  getHeaderCellStyles,
+  getLinkStyles,
+  getTooltipStyles,
+} from './styles';
+import {
+  TableNGProps,
+  TableRow,
+  TableSummaryRow,
+  TableColumn,
+  InspectCellProps,
+  TableCellStyleOptions,
+  FromFieldsResult,
+  CellRootRenderer,
+} from './types';
 import {
   applySort,
-  computeColWidths,
+  canFieldBeColorized,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
   frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
-  getCellColors,
+  getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
   getDefaultRowHeight,
@@ -71,12 +91,13 @@ import {
   getJustifyContent,
   getVisibleFields,
   isCellInspectEnabled,
+  predicateByName,
   shouldTextOverflow,
   shouldTextWrap,
   withDataLinksActionsTooltip,
 } from './utils';
 
-type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+const EXPANDED_COLUMN_KEY = 'expanded';
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -97,15 +118,13 @@ export function TableNG(props: TableNGProps) {
     onSortByChange,
     showTypeIcons,
     structureRev,
+    timeRange,
     transparent,
     width,
   } = props;
 
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, {
-    enablePagination,
-    transparent,
-  });
+  const styles = useStyles2(getGridStyles, enablePagination, transparent);
   const panelContext = usePanelContext();
 
   const getCellActions = useCallback(
@@ -122,29 +141,11 @@ export function TableNG(props: TableNGProps) {
       footerOptions.reducer[0] === ReducerID.count
   );
 
-  const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps | null>(null);
-  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
-
   const resizeHandler = useColumnResize(onColumnResize);
-
-  useLayoutEffect(() => {
-    if (!isContextMenuOpen) {
-      return;
-    }
-
-    function onClick(_event: MouseEvent) {
-      setIsContextMenuOpen(false);
-    }
-
-    window.addEventListener('click', onClick);
-
-    return () => {
-      window.removeEventListener('click', onClick);
-    };
-  }, [isContextMenuOpen]);
 
   const rows = useMemo(() => frameToRecords(data), [data]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const {
     rows: filteredRows,
@@ -160,7 +161,8 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const [isInspecting, setIsInspecting] = useState(false);
+  const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
+  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
@@ -175,6 +177,11 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
     [width, hasNestedFrames, scrollbarWidth]
   );
+  const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
+  const applyToRowBgFn = useMemo(
+    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
+    [data.fields, getCellColorInlineStyles]
+  );
   const typographyCtx = useMemo(
     () =>
       createTypographyContext(
@@ -184,20 +191,9 @@ export function TableNG(props: TableNGProps) {
       ),
     [theme]
   );
-  const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
-  const numColsFullyInView = useMemo(
-    () =>
-      widths.reduce(
-        ([count, remainingWidth], nextWidth) => {
-          if (remainingWidth - nextWidth >= 0) {
-            return [count + 1, remainingWidth - nextWidth];
-          }
-          return [count, 0];
-        },
-        [0, availableWidth]
-      )[0],
-    [widths, availableWidth]
-  );
+
+  const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
+
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
@@ -238,7 +234,6 @@ export function TableNG(props: TableNGProps) {
     footerOptions,
     isCountRowsSet,
   });
-  const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -266,27 +261,6 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           // draggable: true,
         },
-        onCellContextMenu: ({ row, column }, event) => {
-          // in nested tables, it's possible for this event to trigger in a column header
-          // when holding Ctrl for multi-row sort.
-          if (column.key === 'expanded') {
-            return;
-          }
-
-          event.preventGridDefault();
-          // Do not show the default context menu
-          event.preventDefault();
-
-          const cellValue = row[column.key];
-          setContextMenuProps({
-            // rowIdx: rows.indexOf(row),
-            value: String(cellValue ?? ''),
-            top: event.clientY,
-            left: event.clientX,
-          });
-
-          setIsContextMenuOpen(true);
-        },
         onColumnResize: resizeHandler,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
           setSortColumns(newSortColumns);
@@ -304,255 +278,13 @@ export function TableNG(props: TableNGProps) {
     [enableVirtualization, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
   );
 
-  interface Schema {
-    columns: TableColumn[];
-    cellRootRenderers: Record<string, CellRootRenderer>;
-    colsWithTooltip: Record<string, boolean>;
-  }
-
-  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
-    const fromFields = (f: Field[], widths: number[]) => {
-      const result: Schema = {
-        columns: [],
-        cellRootRenderers: {},
-        colsWithTooltip: {},
-      };
-
-      let lastRowIdx = -1;
-      // shared when whole row will be styled by a single cell's color
-      let rowCellStyle: Partial<CSSProperties> = {
-        color: undefined,
-        background: undefined,
-      };
-
-      f.forEach((field, i) => {
-        const cellOptions = getCellOptions(field);
-        const cellType = cellOptions.type;
-
-        // make sure we use mappings exclusively if they exist, ignore default thresholds mode
-        // we hack this by using the single color mode calculator
-        if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
-          field = {
-            ...field,
-            config: {
-              ...field.config,
-              color: {
-                ...field.config.color,
-                mode: FieldColorModeId.Fixed,
-                fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
-              },
-            },
-          };
-          field.display = getDisplayProcessor({ field, theme });
-        }
-
-        // attach JSONCell custom display function to JSONView cell type
-        if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
-          field.display = displayJsonValue;
-        }
-
-        // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
-        // the text-align css property, and for others, we'll use justify-content to align the cell
-        // contents with flexbox. We always just get both and provide both when styling the cell.
-        const textAlign = getAlignment(field);
-        const justifyContent = getJustifyContent(textAlign);
-        const footerStyles = getFooterStyles(justifyContent);
-        const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
-        const renderFieldCell = getCellRenderer(field, cellOptions);
-
-        const cellInspect = isCellInspectEnabled(field);
-        const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-        const showActions = cellInspect || showFilters;
-        const width = widths[i];
-
-        // helps us avoid string cx and emotion per-cell
-        const cellActionClassName = showActions
-          ? clsx(
-              'table-cell-actions',
-              styles.cellActions,
-              justifyContent === 'flex-end' ? styles.cellActionsEnd : styles.cellActionsStart
-            )
-          : undefined;
-
-        const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
-        const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
-        const withTooltip = withDataLinksActionsTooltip(field, cellType);
-        const canBeColorized =
-          cellType === TableCellDisplayMode.ColorBackground ||
-          cellType === TableCellDisplayMode.ColorText ||
-          Boolean(applyToRowBgFn);
-        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
-
-        result.colsWithTooltip[displayName] = withTooltip;
-
-        const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
-        const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
-        const linkStyles = getLinkStyles(theme, canBeColorized);
-
-        // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
-
-        // this fires first
-        const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
-          const rowIdx = props.row.__index;
-
-          // meh, this should be cached by the renderRow() call?
-          if (rowIdx !== lastRowIdx) {
-            lastRowIdx = rowIdx;
-
-            rowCellStyle.color = undefined;
-            rowCellStyle.background = undefined;
-
-            // generate shared styles for whole row
-            if (applyToRowBgFn != null) {
-              let { textColor, bgColor } = applyToRowBgFn(rowIdx);
-              rowCellStyle.color = textColor;
-              rowCellStyle.background = bgColor;
-            }
-          }
-
-          let style: CSSProperties | undefined;
-
-          if (rowCellStyle.color != null || rowCellStyle.background != null) {
-            style = rowCellStyle;
-          }
-          // apply background for cell types which can have a background and have proper
-          else if (canBeColorized) {
-            const value = props.row[props.column.key];
-            const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            let { textColor, bgColor } = getCellColors(theme, cellOptions, displayValue);
-            style = {
-              color: textColor,
-              background: bgColor,
-            };
-          }
-
-          return (
-            <Cell
-              key={key}
-              {...props}
-              className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
-              style={style}
-            />
-          );
-        };
-
-        result.cellRootRenderers[displayName] = renderCellRoot;
-
-        // this fires second
-        const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-          const rowIdx = props.row.__index;
-          const value = props.row[props.column.key];
-          // TODO: it would be nice to get rid of passing height down as a prop. but this value
-          // is cached so the cost of calling for every cell is low.
-          // NOTE: some cell types still require a height to be passed down, so that's why string-based
-          // cell types are going to just pass down the max cell height as a numeric height for those cells.
-          const height = rowHeightFn(props.row);
-          const frame = data;
-
-          return (
-            <>
-              {renderFieldCell({
-                cellOptions,
-                frame,
-                field,
-                height,
-                rowIdx,
-                theme,
-                value,
-                width,
-                cellInspect,
-                showFilters,
-                getActions: getCellActions,
-                disableSanitizeHtml,
-              })}
-              {showActions && (
-                <TableCellActions
-                  field={field}
-                  value={value}
-                  cellOptions={cellOptions}
-                  displayName={displayName}
-                  cellInspect={cellInspect}
-                  showFilters={showFilters}
-                  className={cellActionClassName}
-                  setIsInspecting={setIsInspecting}
-                  setContextMenuProps={setContextMenuProps}
-                  onCellFilterAdded={onCellFilterAdded}
-                />
-              )}
-            </>
-          );
-        };
-
-        const column: TableColumn = {
-          field,
-          key: displayName,
-          name: displayName,
-          width,
-          headerCellClass,
-          frozen: Math.min(frozenColumns, numColsFullyInView) > i,
-          renderCell: renderCellContent,
-          renderHeaderCell: ({ column, sortDirection }) => (
-            <HeaderCell
-              column={column}
-              rows={rows}
-              field={field}
-              filter={filter}
-              setFilter={setFilter}
-              crossFilterOrder={crossFilterOrder}
-              crossFilterRows={crossFilterRows}
-              direction={sortDirection}
-              showTypeIcons={showTypeIcons}
-            />
-          ),
-          renderSummaryCell: () => {
-            if (isCountRowsSet && i === 0) {
-              return (
-                <div className={footerStyles.footerCellCountRows}>
-                  <span>
-                    <Trans i18nKey="grafana-ui.table.count">Count</Trans>
-                  </span>
-                  <span>{footerCalcs[i]}</span>
-                </div>
-              );
-            }
-            return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
-          },
-        };
-
-        result.columns.push(column);
-      });
-
-      return result;
-    };
-
-    const result = fromFields(visibleFields, widths);
-
-    // handle nested frames rendering from here.
-    if (!hasNestedFrames) {
-      return result;
-    }
-
-    // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const firstNestedData = rows.find((r) => r.data)?.data;
-    if (!firstNestedData) {
-      return result;
-    }
-
-    const hasNestedHeaders = firstNestedData.meta?.custom?.noHeader !== true;
-    const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
-      firstNestedData.fields,
-      computeColWidths(firstNestedData.fields, availableWidth)
-    );
-
-    const renderCellRoot: CellRootRenderer = (key, props) => nestedCellRootRenderers[props.column.key](key, props);
-
-    result.cellRootRenderers.expanded = (key, props) => <Cell key={key} {...props} />;
-
-    // If we have nested frames, we need to add a column for the row expansion
-    result.columns.unshift({
-      key: 'expanded',
+  const buildNestedTableExpanderColumn = useCallback(
+    (
+      nestedColumns: TableColumn[],
+      hasNestedHeaders: boolean,
+      renderers: Renderers<TableRow, TableSummaryRow>
+    ): TableColumn => ({
+      key: EXPANDED_COLUMN_KEY,
       name: '',
       field: {
         name: '',
@@ -611,42 +343,358 @@ export function TableNG(props: TableNGProps) {
             headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
             columns={nestedColumns}
             rows={expandedRecords}
-            renderers={{ renderRow, renderCell: renderCellRoot }}
+            renderers={renderers}
           />
         );
       },
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
-    });
+    }),
+    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles]
+  );
+
+  const fromFields = useCallback(
+    (f: Field[], widths: number[]): FromFieldsResult => {
+      const result: FromFieldsResult = {
+        columns: [],
+        cellRootRenderers: {},
+        colsWithTooltip: {},
+      };
+
+      let lastRowIdx = -1;
+      // shared when whole row will be styled by a single cell's color
+      let rowCellStyle: Partial<CSSProperties> = {
+        color: undefined,
+        background: undefined,
+      };
+
+      f.forEach((field, i) => {
+        const cellOptions = getCellOptions(field);
+        const cellType = cellOptions.type;
+
+        // make sure we use mappings exclusively if they exist, ignore default thresholds mode
+        // we hack this by using the single color mode calculator
+        if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
+          field = {
+            ...field,
+            config: {
+              ...field.config,
+              color: {
+                ...field.config.color,
+                mode: FieldColorModeId.Fixed,
+                fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
+              },
+            },
+          };
+          field.display = getDisplayProcessor({ field, theme });
+        }
+
+        // attach JSONCell custom display function to JSONView cell type
+        if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
+          field.display = displayJsonValue;
+        }
+
+        // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
+        // the text-align css property, and for others, we'll use justify-content to align the cell
+        // contents with flexbox. We always just get both and provide both when styling the cell.
+        const textAlign = getAlignment(field);
+        const justifyContent = getJustifyContent(textAlign);
+        const footerStyles = getFooterStyles(justifyContent);
+        const displayName = getDisplayName(field);
+        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
+        const CellType = getCellRenderer(field, cellOptions);
+
+        const cellInspect = isCellInspectEnabled(field);
+        const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
+        const showActions = cellInspect || showFilters;
+        const width = widths[i];
+
+        // helps us avoid string cx and emotion per-cell
+        const cellActionClassName = showActions
+          ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
+          : undefined;
+
+        const shouldOverflow = rowHeight !== 'auto' && shouldTextOverflow(field);
+        const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
+        const withTooltip = withDataLinksActionsTooltip(field, cellType);
+        const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
+        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
+
+        result.colsWithTooltip[displayName] = withTooltip;
+
+        const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
+        const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
+        const linkStyles = getLinkStyles(theme, canBeColorized);
+
+        // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
+
+        // this fires first
+        const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
+          const rowIdx = props.row.__index;
+
+          // meh, this should be cached by the renderRow() call?
+          if (rowIdx !== lastRowIdx) {
+            lastRowIdx = rowIdx;
+
+            rowCellStyle.color = undefined;
+            rowCellStyle.background = undefined;
+
+            // generate shared styles for whole row
+            if (applyToRowBgFn != null) {
+              rowCellStyle = { ...rowCellStyle, ...applyToRowBgFn(rowIdx) };
+            }
+          }
+
+          let style: CSSProperties = { ...rowCellStyle };
+          if (canBeColorized) {
+            const value = props.row[props.column.key];
+            const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
+            const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
+            Object.assign(style, cellColorStyles);
+          }
+
+          return (
+            <Cell
+              key={key}
+              {...props}
+              className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
+              style={style}
+            />
+          );
+        };
+
+        result.cellRootRenderers[displayName] = renderCellRoot;
+
+        const renderBasicCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+          const rowIdx = props.row.__index;
+          const value = props.row[props.column.key];
+          // TODO: it would be nice to get rid of passing height down as a prop. but this value
+          // is cached so the cost of calling for every cell is low.
+          // NOTE: some cell types still require a height to be passed down, so that's why string-based
+          // cell types are going to just pass down the max cell height as a numeric height for those cells.
+          const height = rowHeightFn(props.row);
+          const frame = data;
+
+          return (
+            <>
+              <CellType
+                cellOptions={cellOptions}
+                frame={frame}
+                field={field}
+                height={height}
+                rowIdx={rowIdx}
+                theme={theme}
+                value={value}
+                width={width}
+                timeRange={timeRange}
+                cellInspect={cellInspect}
+                showFilters={showFilters}
+                getActions={getCellActions}
+                disableSanitizeHtml={disableSanitizeHtml}
+                getTextColorForBackground={getTextColorForBackground}
+              />
+              {showActions && (
+                <TableCellActions
+                  field={field}
+                  value={value}
+                  cellOptions={cellOptions}
+                  displayName={displayName}
+                  cellInspect={cellInspect}
+                  showFilters={showFilters}
+                  className={cellActionClassName}
+                  setInspectCell={setInspectCell}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              )}
+            </>
+          );
+        };
+
+        // renderCellContent fires second.
+        let renderCellContent = renderBasicCellContent;
+
+        const tooltipFieldName = field.config.custom?.tooltip?.field;
+        if (tooltipFieldName) {
+          const tooltipField = data.fields.find(predicateByName(tooltipFieldName));
+          if (tooltipField) {
+            const tooltipDisplayName = getDisplayName(tooltipField);
+            const tooltipCellOptions = getCellOptions(tooltipField);
+            const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+            const tooltipCellStyleOptions = {
+              textAlign: getAlignment(tooltipField),
+              textWrap: shouldTextWrap(tooltipField),
+              shouldOverflow: false,
+            } satisfies TableCellStyleOptions;
+            const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
+            const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
+            const tooltipSpecificStyles = getCellSpecificStyles(
+              tooltipCellOptions.type,
+              tooltipField,
+              theme,
+              tooltipCellStyleOptions
+            );
+            const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
+            const tooltipClasses = getTooltipStyles(theme, textAlign);
+
+            const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
+            const tooltipWidth =
+              placement === TableCellTooltipPlacement.Left || placement === TableCellTooltipPlacement.Right
+                ? tooltipField.config.custom?.width
+                : width;
+
+            const tooltipProps = {
+              cellOptions: tooltipCellOptions,
+              classes: tooltipClasses,
+              className: clsx(
+                tooltipClasses.tooltipContent,
+                tooltipDefaultStyles,
+                tooltipSpecificStyles,
+                tooltipLinkStyles
+              ),
+              data,
+              disableSanitizeHtml,
+              field: tooltipField,
+              getActions: getCellActions,
+              getTextColorForBackground,
+              gridRef,
+              placement,
+              renderer: tooltipFieldRenderer,
+              tooltipField,
+              theme,
+              width: tooltipWidth,
+            } satisfies Partial<React.ComponentProps<typeof TableCellTooltip>>;
+
+            renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+              // cached so we don't care about multiple calls.
+              const tooltipHeight = rowHeightFn(props.row);
+              let tooltipStyle: CSSProperties = { ...rowCellStyle };
+              if (tooltipCanBeColorized) {
+                const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]);
+                const tooltipCellColorStyles = getCellColorInlineStyles(
+                  tooltipCellOptions,
+                  tooltipDisplayValue,
+                  applyToRowBgFn != null
+                );
+                Object.assign(tooltipStyle, tooltipCellColorStyles);
+              }
+
+              return (
+                <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.rowIdx} style={tooltipStyle}>
+                  {renderBasicCellContent(props)}
+                </TableCellTooltip>
+              );
+            };
+          }
+        }
+
+        result.columns.push({
+          field,
+          key: displayName,
+          name: displayName,
+          width,
+          headerCellClass,
+          frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
+          renderCell: renderCellContent,
+          renderHeaderCell: ({ column, sortDirection }) => (
+            <HeaderCell
+              column={column}
+              rows={rows}
+              field={field}
+              filter={filter}
+              setFilter={setFilter}
+              crossFilterOrder={crossFilterOrder}
+              crossFilterRows={crossFilterRows}
+              direction={sortDirection}
+              showTypeIcons={showTypeIcons}
+            />
+          ),
+          renderSummaryCell: () => {
+            if (isCountRowsSet && i === 0) {
+              return (
+                <div className={footerStyles.footerCellCountRows}>
+                  <span>
+                    <Trans i18nKey="grafana-ui.table.count">Count</Trans>
+                  </span>
+                  <span>{footerCalcs[i]}</span>
+                </div>
+              );
+            }
+            return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
+          },
+        });
+      });
+
+      return result;
+    },
+    [
+      applyToRowBgFn,
+      crossFilterOrder,
+      crossFilterRows,
+      data,
+      disableSanitizeHtml,
+      filter,
+      footerCalcs,
+      frozenColumns,
+      getCellActions,
+      getCellColorInlineStyles,
+      getTextColorForBackground,
+      isCountRowsSet,
+      numFrozenColsFullyInView,
+      onCellFilterAdded,
+      rowHeight,
+      rowHeightFn,
+      rows,
+      setFilter,
+      showTypeIcons,
+      theme,
+      timeRange,
+    ]
+  );
+
+  // set up the first row's nested data and the nest field widths using useColWidths to avoid
+  // unnecessary re-renders on re-size.
+  const firstRowNestedData = useMemo(
+    () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
+    [hasNestedFrames, rows]
+  );
+  const [nestedFieldWidths] = useColWidths(firstRowNestedData?.fields ?? [], availableWidth);
+
+  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
+    const result = fromFields(visibleFields, widths);
+
+    // if nested frames are present, augment the columns to include the nested table expander column.
+    if (!firstRowNestedData) {
+      return result;
+    }
+
+    // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
+    const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
+    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
+    const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
+      firstRowNestedData.fields,
+      nestedFieldWidths
+    );
+
+    const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
+    result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
+
+    // If we have nested frames, we need to add a column for the row expansion
+    result.columns.unshift(
+      buildNestedTableExpanderColumn(nestedColumns, hasNestedHeaders, {
+        renderRow,
+        renderCell: (key, props) => nestedCellRootRenderers[props.column.key](key, props),
+      })
+    );
 
     return result;
   }, [
-    applyToRowBgFn,
-    availableWidth,
-    commonDataGridProps,
-    crossFilterOrder,
-    crossFilterRows,
-    data,
-    disableSanitizeHtml,
+    buildNestedTableExpanderColumn,
     enableSharedCrosshair,
     expandedRows,
-    filter,
-    footerCalcs,
-    frozenColumns,
-    getCellActions,
-    hasNestedFrames,
-    isCountRowsSet,
-    numColsFullyInView,
-    onCellFilterAdded,
+    firstRowNestedData,
+    fromFields,
+    nestedFieldWidths,
     panelContext,
-    rowHeight,
-    rowHeightFn,
-    rows,
-    setFilter,
-    showTypeIcons,
-    sortColumns,
-    styles,
-    theme,
     visibleFields,
     widths,
   ]);
@@ -654,17 +702,15 @@ export function TableNG(props: TableNGProps) {
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const structureRevColumns = useMemo(() => columns, [columns, structureRev]);
+  const renderCellRoot: CellRootRenderer = useCallback(
+    (key, props) => cellRootRenderers[props.column.key](key, props),
+    [cellRootRenderers]
+  );
 
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
-
-  const renderCellRoot: CellRootRenderer = (key, props) => {
-    return cellRootRenderers[props.column.key](key, props);
-  };
-
-  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
 
   return (
     <>
@@ -745,29 +791,11 @@ export function TableNG(props: TableNGProps) {
         />
       )}
 
-      {isContextMenuOpen && (
-        <ContextMenu
-          x={contextMenuProps?.left || 0}
-          y={contextMenuProps?.top || 0}
-          renderMenuItems={() => (
-            <MenuItem
-              label={t('grafana-ui.table.inspect-menu-label', 'Inspect value')}
-              onClick={() => setIsInspecting(true)}
-              className={styles.menuItem}
-            />
-          )}
-          focusOnOpen={false}
-        />
-      )}
-
-      {isInspecting && (
+      {inspectCell && (
         <TableCellInspector
-          mode={contextMenuProps?.mode ?? TableCellInspectorMode.text}
-          value={contextMenuProps?.value}
-          onDismiss={() => {
-            setIsInspecting(false);
-            setContextMenuProps(null);
-          }}
+          mode={inspectCell.mode ?? TableCellInspectorMode.text}
+          value={inspectCell.value}
+          onDismiss={() => setInspectCell(null)}
         />
       )}
     </>
@@ -779,6 +807,7 @@ export function TableNG(props: TableNGProps) {
  */
 const renderRowFactory =
   (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
+  // eslint-disable-next-line react/display-name
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;

@@ -14,8 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/utils/ptr"
 
-	authtypes "github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,19 +38,19 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		},
 	}
 
-	ctx := authtypes.WithAuthInfo(context.Background(),
-		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser},
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser},
 	)
 
 	t.Run("Error getting auth info from context", func(t *testing.T) {
-		_, _, err := s.prepareObjectForStorage(context.Background(), nil)
+		_, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing auth info")
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
-		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing name")
 	})
@@ -58,7 +59,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 		dashboard.ResourceVersion = "123"
-		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
 	})
@@ -67,10 +68,10 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		v, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
+		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -106,10 +107,10 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			TimestampMillis: now.UnixMilli(),
 		})
 
-		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
+		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
+		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -133,10 +134,10 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta.SetFolder("aaa")
 		require.NoError(t, err)
 
-		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
+		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		insertedObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
+		insertedObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(insertedObject)
 		require.NoError(t, err)
@@ -148,8 +149,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Nil(t, ts)
 
 		// Change the user... and only update metadata
-		ctx = authtypes.WithAuthInfo(context.Background(),
-			&identity.StaticRequester{UserID: 1, UserUID: "user2", Type: authtypes.TypeUser},
+		ctx = authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "user2", Type: authlib.TypeUser},
 		)
 
 		// Change the status... but generation is the same
@@ -159,7 +160,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		err = meta.SetStatus(dashv1.DashboardStatus{
 			Conversion: &dashv1.DashboardConversionStatus{
 				Failed: true,
-				Error:  "test",
+				Error:  ptr.To("test"),
 			},
 		})
 		require.NoError(t, err)
@@ -189,9 +190,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		v, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
+		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -208,9 +209,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		meta.SetDeprecatedInternalID(1) // nolint:staticcheck
 
-		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
+		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
+		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -225,14 +226,14 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "default")
 
-		encodedData, p, err := s.prepareObjectForStorage(ctx, obj)
+		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
+		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
 		require.Empty(t, meta.GetAnnotation(utils.AnnoKeyGrantPermissions))
-		require.Equal(t, p, "default")
+		require.Equal(t, v.grantPermissions, "default")
 	})
 
 	t.Run("calculate generation", func(t *testing.T) {
@@ -295,23 +296,56 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			require.Equal(t, int64(1), out.GetGeneration()) // still 1
 		})
 	})
+
+	t.Run("should fail invalid input", func(t *testing.T) {
+		_, err := s.prepareObjectForStorage(context.Background(), &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing auth info")
+
+		_, err = s.prepareObjectForUpdate(context.Background(), &dashv1.Dashboard{}, &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing auth info")
+
+		_, err = s.prepareObjectForStorage(ctx, &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "missing name")
+
+		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{}, &dashv1.Dashboard{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "updated object must have a name")
+
+		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name: "test-name",
+		}}, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name: "not-the-same-name",
+		}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "name mismatch between")
+
+		_, err = s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name:            "test-name",
+			ResourceVersion: "123", // RV must not be set
+		}})
+		require.Error(t, err)
+		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
+	})
 }
 
 func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtime.Object, old runtime.Object) utils.GrafanaMetaAccessor {
 	t.Helper()
 
-	var raw []byte
+	var v objectForStorage
 	var err error
 
 	if old == nil {
-		raw, _, err = s.prepareObjectForStorage(ctx, obj)
+		v, err = s.prepareObjectForStorage(ctx, obj)
 	} else {
-		raw, err = s.prepareObjectForUpdate(ctx, obj, old)
+		v, err = s.prepareObjectForUpdate(ctx, obj, old)
 	}
 	require.NoError(t, err)
 
 	out := &unstructured.Unstructured{}
-	err = out.UnmarshalJSON(raw)
+	err = out.UnmarshalJSON(v.raw.Bytes())
 	require.NoError(t, err)
 
 	meta, err := utils.MetaAccessor(out)
@@ -324,7 +358,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 
-	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser})
 
 	dashboard := dashv1.Dashboard{}
 	dashboard.Name = "test-name"
@@ -341,7 +375,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 			},
 		}
 
-		_, _, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Nil(t, err)
 		require.True(t, los.deconstructed)
 	})
@@ -359,7 +393,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 			},
 		}
 
-		_, _, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Nil(t, err)
 		require.False(t, los.deconstructed)
 	})

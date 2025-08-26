@@ -171,10 +171,6 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagProvisioningSecretsService
-	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
-	FlagProvisioningSecretsService = "provisioningSecretsService"
-
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -484,8 +480,12 @@ const (
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
-	// Enables Query Library feature in Explore
+	// Renamed feature toggle, enables Saved queries feature
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagSavedQueries
+	// Enables Saved Queries feature
+	FlagSavedQueries = "savedQueries"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -863,6 +863,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagGrafanaAssistantInProfilesDrilldown
+	// Enables integration with Grafana Assistant in Profiles Drilldown
+	FlagGrafanaAssistantInProfilesDrilldown = "grafanaAssistantInProfilesDrilldown"
+
 	// FlagPostgresDSUsePGX
 	// Enables using PGX instead of libpq for PostgreSQL datasource
 	FlagPostgresDSUsePGX = "postgresDSUsePGX"
@@ -918,6 +922,10 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagAlertingImportAlertmanagerUI
+	// Enables the UI to see imported Alertmanager configuration
+	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
 
 	// FlagSharingDashboardImage
 	// Enables image sharing functionality for dashboards
@@ -990,4 +998,12 @@ const (
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
+
+	// FlagUnifiedStorageSearchAfterWriteExperimentalAPI
+	// Enable experimental search-after-write guarantees to unified-storage search endpoints
+	FlagUnifiedStorageSearchAfterWriteExperimentalAPI = "unifiedStorageSearchAfterWriteExperimentalAPI"
+
+	// FlagTeamFolders
+	// Enables team folders functionality
+	FlagTeamFolders = "teamFolders"
 )

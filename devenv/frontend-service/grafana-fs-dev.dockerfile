@@ -1,5 +1,12 @@
 FROM ubuntu:24.04
 
+RUN --mount=type=cache,target=/var/lib/apt/lists \
+    --mount=type=cache,target=/var/cache/apt \
+    set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates; \
+    update-ca-certificates
+
 WORKDIR /grafana
 
 RUN mkdir -p "conf/provisioning/datasources" \

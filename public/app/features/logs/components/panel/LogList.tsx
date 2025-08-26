@@ -312,9 +312,6 @@ const LogListComponent = ({
   }, [eventBus, filteredLogs]);
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
     setProcessedLogs(
       preProcessLogs(
         logs,
@@ -324,7 +321,7 @@ const LogListComponent = ({
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, grammar, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -376,11 +373,6 @@ const LogListComponent = ({
     [initialScrollPosition, permalinkedLogId, processedLogs]
   );
 
-  if (!containerElement || listHeight == null) {
-    // Wait for container to be rendered
-    return null;
-  }
-
   const handleLogLineClick = useCallback(
     (e: MouseEvent<HTMLElement>, log: LogListModel) => {
       if (handleTextSelection(e, log)) {
@@ -406,6 +398,11 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  if (!containerElement || listHeight == null) {
+    // Wait for container to be rendered
+    return null;
+  }
+
   return (
     <div className={styles.logListContainer}>
       {showControls && <LogListControls eventBus={eventBus} />}
@@ -414,6 +411,8 @@ const LogListComponent = ({
           containerElement={containerElement}
           focusLogLine={focusLogLine}
           logs={filteredLogs}
+          timeRange={timeRange}
+          timeZone={timeZone}
           onResize={handleLogDetailsResize}
         />
       )}
@@ -456,6 +455,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
+          loading={loading}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
