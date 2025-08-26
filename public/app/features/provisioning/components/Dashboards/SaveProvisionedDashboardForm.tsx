@@ -208,7 +208,6 @@ export function SaveProvisionedDashboardForm({
                   render={({ field: { ref, value, onChange, ...field } }) => {
                     return (
                       <ProvisioningAwareFolderPicker
-                        // root folder uid
                         onChange={async (uid?: string, title?: string) => {
                           onChange({ uid, title });
                           // Update folderUid URL param

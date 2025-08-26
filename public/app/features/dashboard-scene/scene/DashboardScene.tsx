@@ -774,6 +774,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getManagerIdentity(): string | undefined {
+    // get repo name if any
     return this.state.meta.k8s?.annotations?.[AnnoKeyManagerIdentity];
   }
 
