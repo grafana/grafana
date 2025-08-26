@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -111,7 +111,7 @@ type service struct {
 	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
 
-	permissionService *reconcilers.ZanzanaPermissionStore
+	zanzanaClient zanzana.Client
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
@@ -133,7 +133,7 @@ func ProvideService(
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
-	permissionService *reconcilers.ZanzanaPermissionStore,
+	zanzanaClient zanzana.Client,
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
@@ -169,7 +169,7 @@ func ProvideService(
 		unified:                           unified,
 		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
-		permissionService:                 permissionService,
+		zanzanaClient:                     zanzanaClient,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
 		appInstallers:                     appInstallers,
@@ -342,7 +342,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider, s.permissionService)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider, s.zanzanaClient)
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
 	}

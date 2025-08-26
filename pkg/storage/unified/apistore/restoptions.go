@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,11 +29,11 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
 
 type RESTOptionsGetter struct {
-	client          resource.ResourceClient
-	secrets         secret.InlineSecureValueSupport
-	permissionStore *reconcilers.ZanzanaPermissionStore
-	original        storagebackend.Config
-	configProvider  RestConfigProvider
+	client         resource.ResourceClient
+	secrets        secret.InlineSecureValueSupport
+	zanzanaClient  zanzana.Client
+	original       storagebackend.Config
+	configProvider RestConfigProvider
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
@@ -44,22 +44,22 @@ func NewRESTOptionsGetterForClient(
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
 	configProvider RestConfigProvider,
-	permissionStore *reconcilers.ZanzanaPermissionStore,
+	zanzanaClient zanzana.Client,
 ) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client:          client,
-		secrets:         secrets,
-		permissionStore: permissionStore,
-		original:        original,
-		options:         make(map[string]StorageOptions),
-		configProvider:  configProvider,
+		client:         client,
+		secrets:        secrets,
+		zanzanaClient:  zanzanaClient,
+		original:       original,
+		options:        make(map[string]StorageOptions),
+		configProvider: configProvider,
 	}
 }
 
 func NewRESTOptionsGetterMemory(
 	originalStorageConfig storagebackend.Config,
 	secrets secret.InlineSecureValueSupport,
-	// folderService folder.Service,
+	zanzanaClient zanzana.Client,
 ) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
@@ -78,16 +78,19 @@ func NewRESTOptionsGetterMemory(
 		secrets,
 		originalStorageConfig,
 		nil,
-		nil,
+		zanzanaClient,
 	), nil
 }
 
 // Optionally, this constructor allows specifying directories
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetterForFileXX(path string,
+func NewRESTOptionsGetterForFileXX(
+	path string,
 	originalStorageConfig storagebackend.Config,
-	features map[string]any) (*RESTOptionsGetter, error) {
+	features map[string]any,
+	zanzanaClient zanzana.Client,
+) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
@@ -116,7 +119,7 @@ func NewRESTOptionsGetterForFileXX(path string,
 		nil, // secrets
 		originalStorageConfig,
 		nil,
-		nil,
+		zanzanaClient,
 	), nil
 }
 
@@ -160,7 +163,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			opts := r.options[resource.String()]
 			opts.SecureValues = r.secrets
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-				trigger, indexers, r.configProvider, opts, r.permissionStore)
+				trigger, indexers, r.configProvider, opts, r.zanzanaClient)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,

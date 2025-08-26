@@ -19,6 +19,7 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,7 +89,7 @@ type Storage struct {
 
 	versioner storage.Versioner
 
-	permissionStore *reconcilers.ZanzanaPermissionStore
+	permissionStore reconcilers.PermissionStore
 
 	// Resource options like large object support
 	opts StorageOptions
@@ -117,7 +118,7 @@ func NewStorage(
 	indexers *cache.Indexers,
 	configProvider RestConfigProvider,
 	opts StorageOptions,
-	permissionStore *reconcilers.ZanzanaPermissionStore,
+	zanzanaClient zanzana.Client,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
 		store:          store,
@@ -136,7 +137,7 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts:            opts,
-		permissionStore: permissionStore,
+		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient), //TODO handle nil clients
 	}
 
 	if opts.RequireDeprecatedInternalID {
