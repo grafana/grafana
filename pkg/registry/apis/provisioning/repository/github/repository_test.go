@@ -82,7 +82,7 @@ func TestNewGitHub(t *testing.T) {
 			gitRepo := git.NewMockGitRepository(t)
 
 			// Call the function under test
-			repo, err := NewGitHub(
+			repo, err := NewRepository(
 				context.Background(),
 				tt.config,
 				gitRepo,

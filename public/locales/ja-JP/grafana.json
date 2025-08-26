@@ -5204,6 +5204,9 @@
       "save-json-to-file": "JSONをファイルに保存",
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。"
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "設定を読み込み中"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "可視化を変更",
@@ -6114,9 +6120,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "共有メニューを切り替え"
     },
-    "solo-panel-page": {
-      "loading": "読込中"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "可視化の問題のトラブルシューティングに役立つダッシュボードJSON"
@@ -6400,8 +6403,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "このエラーの詳細については、<2>こちら</2>をクリックしてください。",
-    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7536,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9505,6 +9508,12 @@
       "show-context": "コンテキストを表示",
       "show-log-line": "ログ行を表示",
       "sidebar-mode": "右に固定",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "ログのピン留めを解除"
     },
     "log-line-menu": {
@@ -10681,10 +10690,6 @@
       "could-anything-matching-query": "クエリに一致するものが見つかりませんでした"
     }
   },
-  "panel-search": {
-    "no-matches": "一致するものが見つかりませんでした",
-    "unsupported-layout": "サポートされていないレイアウト"
-  },
   "panel-type-filter": {
     "clear-button": "タイプをクリア",
     "select-aria-label": "パネルタイプフィルター",
@@ -11219,11 +11224,15 @@
     },
     "delete-repository-button": {
       "button-delete": "削除",
-      "confirm-delete-repository": "リポジトリ設定を削除してもよろしいですか？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "リポジトリの削除に失敗しました",
       "success-repository-deleted": "リポジトリ設定が削除待ちリストに追加されました",
-      "title-delete-repository": "リポジトリ設定を削除",
-      "tooltip-delete-this-repository": "このリポジトリを削除"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "リポジトリに戻る",
@@ -13015,6 +13024,7 @@
         "name-point-size": "ポイントサイズ",
         "name-show-points": "ポイントを表示",
         "name-show-thresholds": "しきい値を表示",
+        "name-show-values": "",
         "name-style": "スタイル",
         "name-transform": "変換",
         "transform-options": {

@@ -5261,6 +5261,9 @@
       "save-json-to-file": "Uložit JSON do souboru",
       "see-docs": "Další informace o zajištění najdete v <2>dokumentaci</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Načítání konfigurace"
     },
@@ -5532,6 +5535,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Změnit vizualizaci",
@@ -6177,9 +6183,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Přepnout nabídku sdílení"
     },
-    "solo-panel-page": {
-      "loading": "Načítání"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Nástěnka JSON používaná k řešení problémů s vizualizací"
@@ -6463,8 +6466,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7599,6 +7601,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9592,6 +9595,12 @@
       "show-context": "Zobrazit kontext",
       "show-log-line": "Zobrazit řádek protokolu",
       "sidebar-mode": "Ukotvit vpravo",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Odepnout protokol"
     },
     "log-line-menu": {
@@ -10777,10 +10786,6 @@
       "could-anything-matching-query": "Nenašly jsme žádnou shodu s vaším dotazem"
     }
   },
-  "panel-search": {
-    "no-matches": "Nebyla nalezena žádná shoda",
-    "unsupported-layout": "Nepodporované rozvržení"
-  },
   "panel-type-filter": {
     "clear-button": "Vymazat typy",
     "select-aria-label": "Filtr typu panelu",
@@ -11324,11 +11329,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
-      "confirm-delete-repository": "Opravdu chcete odstranit konfiguraci úložiště?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Úložiště se nepodařilo odstranit",
       "success-repository-deleted": "Odstranění nastavení úložiště bylo zařazeno do fronty",
-      "title-delete-repository": "Odstranit konfiguraci úložiště",
-      "tooltip-delete-this-repository": "Odstranit toto úložiště"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Zpět na úložiště",
@@ -13138,6 +13147,7 @@
         "name-point-size": "Velikost bodu",
         "name-show-points": "Zobrazit body",
         "name-show-thresholds": "Zobrazit prahové hodnoty",
+        "name-show-values": "",
         "name-style": "Styl",
         "name-transform": "Transformovat",
         "transform-options": {
