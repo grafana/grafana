@@ -133,6 +133,7 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   const { name } = variable.useState();
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const [nameError, setNameError] = useState<string>();
+  const id = useId();
 
   const onChange = (e: FormEvent<HTMLInputElement>) => {
     const result = validateVariableName(variable, e.currentTarget.value);
@@ -148,7 +149,7 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   return (
     <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError}>
       <Input
-        id={useId()}
+        id={id}
         ref={ref}
         value={name}
         onFocus={() => {
