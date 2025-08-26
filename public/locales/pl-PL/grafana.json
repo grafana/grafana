@@ -5261,6 +5261,9 @@
       "save-json-to-file": "Zapisz JSON w pliku",
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Wczytywanie konfiguracji"
     },
@@ -5532,6 +5535,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Zmień wizualizację",
@@ -6176,9 +6182,6 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Przełącz menu udostępniania"
-    },
-    "solo-panel-page": {
-      "loading": "Ładowanie"
     },
     "support-snapshot-service": {
       "description": {
@@ -7598,6 +7601,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9591,6 +9595,12 @@
       "show-context": "Pokaż kontekst",
       "show-log-line": "Pokaż wiersz logu",
       "sidebar-mode": "Zakotwicz po prawej",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Odepnij log"
     },
     "log-line-menu": {
@@ -10775,10 +10785,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
     }
-  },
-  "panel-search": {
-    "no-matches": "Brak wyników",
-    "unsupported-layout": "Nieobsługiwany układ"
   },
   "panel-type-filter": {
     "clear-button": "Wyczyść typy",

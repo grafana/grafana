@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -32,8 +30,9 @@ var (
 
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
-	id    int64
-	refID string
+	id        int64
+	refID     string
+	isInputTo map[string]struct{}
 }
 
 type rawNode struct {
@@ -91,6 +90,17 @@ func (b *baseNode) RefID() string {
 	return b.refID
 }
 
+func (b *baseNode) SetInputTo(refID string) {
+	if b.isInputTo == nil {
+		b.isInputTo = make(map[string]struct{})
+	}
+	b.isInputTo[refID] = struct{}{}
+}
+
+func (b *baseNode) IsInputTo() map[string]struct{} {
+	return b.isInputTo
+}
+
 // NodeType returns the data pipeline node type.
 func (gn *CMDNode) NodeType() NodeType {
 	return TypeCMDNode
@@ -125,31 +135,6 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 			refID: rn.RefID,
 		},
 		CMDType: commandType,
-	}
-
-	if toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
-		rn.QueryType, err = getExpressionCommandTypeString(rn.Query)
-		if err != nil {
-			return nil, err // should not happen because the command was parsed first thing
-		}
-
-		// NOTE: this structure of this is weird now, because it is targeting a structure
-		// where this is actually run in the root loop, however we want to verify the individual
-		// node parsing before changing the full tree parser
-		reader := NewExpressionQueryReader(toggles)
-		iter, err := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
-		if err != nil {
-			return nil, err
-		}
-		q, err := reader.ReadQuery(ctx, data.NewDataQuery(map[string]any{
-			"refId": rn.RefID,
-			"type":  rn.QueryType,
-		}), iter)
-		if err != nil {
-			return nil, err
-		}
-		node.Command = q.Command
-		return node, err
 	}
 
 	switch commandType {
@@ -367,7 +352,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
@@ -457,10 +442,22 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	var result mathexp.Results
 
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+	if dn.isInputToSQLExpr {
+		var converted bool
+		dataType := categorizeFrameInputType(dataFrames)
 
-	if err != nil {
-		err = makeConversionError(dn.refID, err)
+		result, converted = handleSqlInput(ctx, s.tracer, dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
+		status := "ok"
+		if result.Error != nil {
+			status = "error"
+		}
+		s.metrics.SqlCommandInputCount.WithLabelValues(status, fmt.Sprintf("%t", converted), dn.datasource.Type, dataType).Inc()
+	} else {
+		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
+		if err != nil {
+			err = makeConversionError(dn.refID, err)
+		}
 	}
+
 	return result, err
 }

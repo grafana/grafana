@@ -1003,8 +1003,7 @@ github.com/grafana/grafana-app-sdk/logging v0.39.0 h1:3GgN5+dUZYqq74Q+GT9/ET+yo+
 github.com/grafana/grafana-app-sdk/logging v0.39.0/go.mod h1:WhDENSnaGHtyVVwZGVnAR7YLvh2xlLDYR3D7E6h7XVk=
 github.com/grafana/grafana-app-sdk/logging v0.39.1/go.mod h1:WhDENSnaGHtyVVwZGVnAR7YLvh2xlLDYR3D7E6h7XVk=
 github.com/grafana/grafana-app-sdk/logging v0.40.0/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
-github.com/grafana/grafana-app-sdk/logging v0.40.3 h1:2VXsXXEQiqAavRP8wusRDB6rDqf5lufP7A6NfjELqPE=
-github.com/grafana/grafana-app-sdk/logging v0.40.3/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
+github.com/grafana/grafana-app-sdk/logging v0.40.2/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grafana/grafana-app-sdk/plugin v0.41.0 h1:ShUvGpAVzM3UxcsfwS6l/lwW4ytDeTbCQXf8w2P8Yp8=
 github.com/grafana/grafana-app-sdk/plugin v0.41.0/go.mod h1:YIhimVfAqtOp3kdhxOanaSZjypVKh/bYxf9wfFfhDm0=
 github.com/grafana/grafana-aws-sdk v0.38.2 h1:TzQD0OpWsNjtldi5G5TLDlBRk8OyDf+B5ujcoAu4Dp0=
