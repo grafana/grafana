@@ -31,9 +31,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('grid-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -64,9 +62,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('grid-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -126,9 +122,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('grid-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -185,9 +179,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('grid-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -222,9 +214,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('grid-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -279,9 +269,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('grid-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -338,9 +326,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.OptionsGroup.toggle('grid-layout-category'))
-        .click();
+      await page.getByLabel('Expand Group layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
