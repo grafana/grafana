@@ -19,8 +19,8 @@ type alertRule struct {
 	DashboardUID                *string `xorm:"dashboard_uid"`
 	PanelID                     *int64  `xorm:"panel_id"`
 	RuleGroup                   string
-	RuleGroupIndex              int `xorm:"rule_group_idx"`
-	Record                      string
+	RuleGroupIndex              int    `xorm:"rule_group_idx"`
+	Record                      string // FIXME: record is nullable but we don't save it as null when it's nil
 	NoDataState                 string
 	ExecErrState                string
 	For                         time.Duration
