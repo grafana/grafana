@@ -181,32 +181,33 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       });
     }
   } else {
-    let scaleDistr: ScaleDistributionConfig = { ...xField.config.custom?.scaleDistribution };
+    let custom = xField.config.custom;
+    let scaleDistr: ScaleDistributionConfig = { ...custom?.scaleDistribution };
 
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
       direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
-      range: (u, dataMin, dataMax) => {
-        // value match for uPlot.Scale.LogBase
-        if (scaleDistr.type === 'log' && (scaleDistr?.log === 2 || scaleDistr?.log === 10)) {
-          return uPlot.rangeLog(xField.config.min ?? dataMin!, xField.config.max ?? dataMax!, scaleDistr.log, true);
-        } else {
-          return [xField.config.min ?? dataMin, xField.config.max ?? dataMax];
-        }
-      },
       distribution: scaleDistr?.type,
       log: scaleDistr?.log,
       linearThreshold: scaleDistr?.linearThreshold,
+      min: xField.config.min,
+      max: xField.config.max,
+      softMin: custom?.axisSoftMin,
+      softMax: custom?.axisSoftMax,
+      centeredZero: custom?.axisCenteredZero,
+      decimals: xField.config.decimals,
+      padMinBy: 0,
+      padMaxBy: 0,
     });
 
     builder.addAxis({
       scaleKey: xScaleKey,
       placement: xFieldAxisPlacement,
       show: xFieldAxisShow,
-      label: xField.config.custom?.axisLabel,
+      label: custom?.axisLabel,
       theme,
-      grid: { show: xField.config.custom?.axisGridShow },
+      grid: { show: custom?.axisGridShow },
       formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
     });
   }
