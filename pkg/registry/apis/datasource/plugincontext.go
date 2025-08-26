@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -12,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // This provides access to settings saved in the database.
@@ -50,13 +50,15 @@ type PluginContextWrapper interface {
 func ProvideDefaultPluginConfigs(
 	dsService datasources.DataSourceService,
 	dsCache datasources.CacheService,
-	contextProvider *plugincontext.Provider) ScopedPluginDatasourceProvider {
+	contextProvider *plugincontext.Provider,
+	cfg *setting.Cfg,
+) ScopedPluginDatasourceProvider {
 	return &cachingDatasourceProvider{
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
 		converter: &converter{
-			mapper: types.OrgNamespaceFormatter, // TODO -- from cfg!!!
+			mapper: request.GetNamespaceMapper(cfg),
 		},
 	}
 }

@@ -138,7 +138,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 					op.Tags = append(op.Tags, "Route") // Custom resource?
 				}
 			}
-			oas.Paths.Paths[prefix+k] = v // TODO add namespace + name parameters
+			oas.Paths.Paths[prefix+k] = v
 		}
 	}
 	return oas, err

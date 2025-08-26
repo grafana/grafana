@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource/hardcoded"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -42,11 +41,11 @@ type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
 
 	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same pluginid!
+	client          PluginClient // will only ever be called with the same plugin id!
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
-	schemaProvider  func() (*datasourceV0.DataSourceOpenAPIExtension, error) // TODO? include query types
+	schemaProvider  func() (*datasourceV0.DataSourceOpenAPIExtension, error)
 	queryTypes      *queryV0.QueryTypeDefinitionList
 	log             log.Logger
 }
@@ -98,10 +97,10 @@ func RegisterAPIService(
 			return nil, err
 		}
 
-		// HARDCODE schema access
-		if ds.ID == "grafana-testdata-datasource" {
-			builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
-		}
+		// TODO: load the schema provider from a static manifest
+		// if ds.ID == "grafana-testdata-datasource" {
+		// 	builder.schemaProvider = hardcoded.TestdataOpenAPIExtension
+		// }
 
 		apiRegistrar.RegisterAPI(builder)
 	}
