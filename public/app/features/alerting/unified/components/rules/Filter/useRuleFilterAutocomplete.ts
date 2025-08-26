@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { ComboboxOption } from '@grafana/ui';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -11,7 +12,10 @@ import { prometheusApi } from '../../../api/prometheusApi';
 import { useGetLabelsFromDataSourceName } from '../../../components/rule-editor/useAlertRuleSuggestions';
 import {
   GRAFANA_RULES_SOURCE_NAME,
+  getAllRulesSources,
   getRulesDataSources,
+  isCloudRulesSource,
+  isDataSourceManagingAlerts,
   isSupportedExternalPrometheusFlavoredRulesSourceType,
 } from '../../../utils/datasource';
 
@@ -206,5 +210,32 @@ export function useAlertingDataSourceOptions(): Array<ComboboxOption<string>> {
     };
 
     return [...selectable, infoOption];
+  }, []);
+}
+
+/**
+ * Returns options for the DMA "Datasource" picker: supported external rule sources plus Grafana (if available).
+ */
+export function useDMARulesSourceOptions(): Array<ComboboxOption<string>> {
+  return useMemo(() => {
+    const sources = getAllRulesSources();
+    const options: Array<ComboboxOption<string>> = sources.map((src) => {
+      if (isCloudRulesSource(src)) {
+        return { label: src.name, value: src.name };
+      }
+      // Grafana rules source
+      return { label: t('alerting.rules-filter.dma.grafana-label', 'Grafana'), value: GRAFANA_RULES_SOURCE_NAME };
+    });
+    return options;
+  }, []);
+}
+
+/**
+ * Returns options for GMA query datasource filter: alerting-compatible datasources with Manage alerts ON.
+ */
+export function useGMAQueryDataSourceOptions(): Array<ComboboxOption<string>> {
+  return useMemo(() => {
+    const dsList = getDataSourceSrv().getList({ alerting: true });
+    return dsList.filter((ds) => isDataSourceManagingAlerts(ds)).map((ds) => ({ label: ds.name, value: ds.name }));
   }, []);
 }

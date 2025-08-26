@@ -116,12 +116,12 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   // Note: We can't implement these filters from reduceGroups because they rely on rulerRule property
   // which is not available in PromRuleDTO:
   // - contactPoint filter
-  // - dataSourceNames filter
-  if (filterState.dataSourceNames.length > 0) {
+  // - gmaQueryDataSourceNames filter
+  if ((filterState.gmaQueryDataSourceNames?.length || 0) > 0) {
     const isGrafanaRule = prometheusRuleType.grafana.rule(rule);
     if (isGrafanaRule) {
       try {
-        const filterDatasourceUids = mapDataSourceNamesToUids(filterState.dataSourceNames);
+        const filterDatasourceUids = mapDataSourceNamesToUids(filterState.gmaQueryDataSourceNames || []);
         const queriedDatasourceUids = rule.queriedDatasourceUIDs || [];
 
         const queryIncludesDataSource = queriedDatasourceUids.some((uid) => filterDatasourceUids.includes(uid));

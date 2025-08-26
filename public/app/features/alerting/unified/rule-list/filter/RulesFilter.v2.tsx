@@ -35,7 +35,8 @@ import {
 import { PopupCard } from '../../components/HoverCard';
 import { RulesViewModeSelector } from '../../components/rules/Filter/RulesViewModeSelector';
 import {
-  useAlertingDataSourceOptions,
+  useDMARulesSourceOptions,
+  useGMAQueryDataSourceOptions,
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
@@ -256,8 +257,10 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
 
   const { labelOptions, isLoadingGrafanaLabels } = useLabelOptions();
 
-  // Create label options for the multi-select dropdown
-  const dataSourceOptions = useAlertingDataSourceOptions();
+  // DMA datasource options (Prom-compatible + Loki + Grafana)
+  const dmaRulesSourceOptions = useDMARulesSourceOptions();
+  // GMA query datasource options (alerting-compatible, manage alerts ON)
+  const gmaQueryDsOptions = useGMAQueryDataSourceOptions();
 
   // Update form values when filterState changes (e.g., when popup reopens)
   useEffect(() => {
@@ -304,7 +307,12 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
               isLoadingNamespaces={isLoadingNamespaces}
               portalContainer={portalContainer}
             />
-            <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
+            <DmaRulesSourceField dataSourceOptions={dmaRulesSourceOptions} portalContainer={portalContainer} />
+            <GmaQueryDataSourceField
+              dataSourceOptions={gmaQueryDsOptions}
+              portalContainer={portalContainer}
+              dependentOnGrafanaSelection
+            />
             {canRenderContactPointSelector && <ContactPointField portalContainer={portalContainer} />}
             <RuleStateField />
             <RuleTypeField />
@@ -456,7 +464,7 @@ function GroupField({
   );
 }
 
-function DataSourceNamesField({
+function DmaRulesSourceField({
   dataSourceOptions,
   portalContainer,
 }: {
@@ -513,6 +521,46 @@ function DataSourceNamesField({
             width="auto"
             minWidth={40}
             maxWidth={80}
+          />
+        )}
+      />
+    </>
+  );
+}
+
+function GmaQueryDataSourceField({
+  dataSourceOptions,
+  portalContainer,
+  dependentOnGrafanaSelection = true,
+}: {
+  dataSourceOptions: Array<{ label?: string; value: string }>;
+  portalContainer?: HTMLElement;
+  dependentOnGrafanaSelection?: boolean;
+}) {
+  const { control } = useFormContext<AdvancedFilters>();
+  const selectedDataSources = useWatch({ control, name: 'dataSourceNames' }) as string[] | undefined;
+  const grafanaSelected = (selectedDataSources || []).includes('grafana');
+  const disabled = dependentOnGrafanaSelection && !grafanaSelected;
+
+  return (
+    <>
+      <Label>
+        <Trans i18nKey="alerting.search.property.gma-data-source">GMA Datasource query</Trans>
+      </Label>
+      <Controller
+        name="gmaQueryDataSourceNames"
+        control={control}
+        render={({ field }) => (
+          <MultiCombobox
+            options={dataSourceOptions}
+            value={field.value || []}
+            onChange={(selections) => field.onChange(selections.map((s) => s.value))}
+            placeholder={t('alerting.rules-filter.placeholder-gma-data-sources', 'Select Grafana query datasources')}
+            portalContainer={portalContainer}
+            width="auto"
+            minWidth={40}
+            maxWidth={80}
+            disabled={disabled}
           />
         )}
       />

@@ -226,14 +226,22 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       if ('dataSourceNames' in matchesFilterFor) {
-        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState);
-
-          if (doesNotQueryDs) {
-            matchesFilterFor.dataSourceNames = true;
-          }
-        } else {
+        // External rules filtering is handled at namespace level above; always true here
+        if (!rulerRuleType.grafana.rule(rule.rulerRule)) {
           matchesFilterFor.dataSourceNames = true;
+        } else {
+          // For Grafana rules, only honor dedicated GMA query datasource filter if provided, else allow pass-through
+          if ((filterState.gmaQueryDataSourceNames?.length || 0) === 0) {
+            matchesFilterFor.dataSourceNames = true;
+          } else {
+            const queriesMatch = isQueryingDataSource(rule.rulerRule, {
+              ...filterState,
+              dataSourceNames: filterState.gmaQueryDataSourceNames || [],
+            });
+            if (queriesMatch) {
+              matchesFilterFor.dataSourceNames = true;
+            }
+          }
         }
       }
 

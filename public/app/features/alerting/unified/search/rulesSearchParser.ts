@@ -18,6 +18,7 @@ export interface RulesFilter {
   ruleState?: PromAlertingRuleState;
   ruleType?: PromRuleType;
   dataSourceNames: string[];
+  gmaQueryDataSourceNames?: string[];
   labels: string[];
   ruleHealth?: RuleHealth;
   dashboardUid?: string;
@@ -48,7 +49,7 @@ export enum RuleHealth {
 
 // Define how to map parsed tokens into the filter object
 export function getSearchFilterFromQuery(query: string): RulesFilter {
-  const filter: RulesFilter = { labels: [], freeFormWords: [], dataSourceNames: [] };
+  const filter: RulesFilter = { labels: [], freeFormWords: [], dataSourceNames: [], gmaQueryDataSourceNames: [] };
 
   const tokenToFilterMap: QueryFilterMapper = {
     [terms.DataSourceToken]: (value) => filter.dataSourceNames.push(value),

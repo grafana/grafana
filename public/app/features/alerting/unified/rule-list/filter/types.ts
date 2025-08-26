@@ -9,6 +9,7 @@ export type AdvancedFilters = {
   ruleType?: PromRuleType | '*';
   ruleState: PromAlertingRuleState | '*';
   dataSourceNames: string[];
+  gmaQueryDataSourceNames?: string[];
   labels: string[];
   ruleHealth?: RuleHealth | '*';
   dashboardUid?: string;
