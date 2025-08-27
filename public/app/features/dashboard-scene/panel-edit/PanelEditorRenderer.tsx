@@ -120,7 +120,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
-  let { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
+  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'column',
       dragPosition: 'start',
