@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
