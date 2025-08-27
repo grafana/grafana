@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 import { isSupportedGitProvider } from '../guards';
 import { BranchInfo, RepositoryInfo, UseBranchFetchingProps } from '../types/repository';
@@ -40,10 +41,6 @@ export function useBranchFetching({
   repositoryUrl = '',
   repositoryToken = '',
 }: UseBranchFetchingProps) {
-  const [branches, setBranches] = useState<BranchInfo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const trimmedUrl = repositoryUrl.trim();
   const trimmedToken = repositoryToken.trim();
 
@@ -59,22 +56,18 @@ export function useBranchFetching({
     return hasUrl && hasToken && repoInfo !== null;
   }, [trimmedUrl, trimmedToken, repositoryType]);
 
-  const fetchBranches = useCallback(async () => {
-    if (!hasRequiredData) {
-      return;
-    }
+  const fetchBranches = useMemo(
+    () => async (): Promise<BranchInfo[]> => {
+      if (!hasRequiredData) {
+        return [];
+      }
 
-    const repoInfo = parseRepositoryUrl(trimmedUrl, repositoryType);
+      const repoInfo = parseRepositoryUrl(trimmedUrl, repositoryType);
 
-    if (!repoInfo) {
-      setError('Invalid repository URL format');
-      return;
-    }
+      if (!repoInfo) {
+        throw new Error('Invalid repository URL format');
+      }
 
-    setLoading(true);
-    setError(null);
-
-    try {
       const apiConfig = createApiRequest(repositoryType, trimmedToken);
       const data = await makeApiRequest(apiConfig.branches(repoInfo.owner, repoInfo.repo));
 
@@ -99,32 +92,17 @@ export function useBranchFetching({
           }));
         }
       }
-      setBranches(branchData);
-    } catch (err: unknown) {
-      console.error('Failed to fetch branches:', err);
-      setError(getErrorMessage(err));
-      setBranches([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [hasRequiredData, trimmedUrl, trimmedToken, repositoryType]);
 
-  useEffect(() => {
-    if (hasRequiredData) {
-      setError(null);
-      const timeoutId = setTimeout(fetchBranches, 500);
-      return () => clearTimeout(timeoutId);
-    } else {
-      setBranches([]);
-      setError(null);
-      setLoading(false);
-      return undefined;
-    }
-  }, [hasRequiredData, fetchBranches]);
+      return branchData;
+    },
+    [hasRequiredData, trimmedUrl, trimmedToken, repositoryType]
+  );
+
+  const asyncState = useAsync(fetchBranches, [fetchBranches]);
 
   return {
-    branches,
-    loading,
-    error,
+    branches: asyncState.value || [],
+    loading: asyncState.loading,
+    error: asyncState.error ? getErrorMessage(asyncState.error) : null,
   };
 }
