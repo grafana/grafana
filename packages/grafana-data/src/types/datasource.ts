@@ -309,7 +309,7 @@ abstract class DataSourceApi<
   /**
    * Verify adhoc filters applicability based on queries and current filters
    */
-  getFiltersApplicability?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<FiltersApplicability[]>;
+  getFiltersApplicability?(options?: DataSourceGetFiltersApplicabilityOptions<TQuery>): Promise<FiltersApplicability[]>;
 
   /**
    * Get tag keys for adhoc filters
@@ -641,6 +641,14 @@ export interface MetricFindValue {
   value?: string | number;
   group?: string;
   expandable?: boolean;
+}
+
+export interface DataSourceGetFiltersApplicabilityOptions<TQuery extends DataQuery = DataQuery> {
+  filters: AdHocVariableFilter[];
+  groupByKeys?: string[];
+  timeRange?: TimeRange;
+  queries?: TQuery[];
+  scopes?: Scope[] | undefined;
 }
 
 export interface FiltersApplicability {
