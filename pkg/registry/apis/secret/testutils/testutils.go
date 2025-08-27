@@ -21,6 +21,7 @@ import (
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -32,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
-	"github.com/grafana/grafana/pkg/storage/secret/garbagecollectionworker"
+
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
@@ -87,8 +88,11 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
-		CurrentEncryptionProvider: "secret_key.v1",
-		ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
+		CurrentEncryptionProvider:     "secret_key.v1",
+		ConfiguredKMSProviders:        map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
+		GCWorkerEnabled:               false,
+		GCWorkerMaxBatchSize:          2,
+		GCWorkerMaxConcurrentCleanups: 2,
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
@@ -146,17 +150,11 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
 
-	garbageCollectionWorker, err := garbagecollectionworker.NewWorker(
-		garbagecollectionworker.Config{
-			// Arbitrary
-			MaxBatchSize: 2,
-			// Arbitrary
-			MaxConcurrentCleanups: 2,
-		},
+	garbageCollectionWorker := garbagecollectionworker.ProvideWorker(
+		cfg,
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
 		keeperService)
-	require.NoError(t, err)
 
 	return Sut{
 		SecureValueService:          secureValueService,

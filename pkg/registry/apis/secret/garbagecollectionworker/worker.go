@@ -5,51 +5,63 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/semaphore"
 )
-
-type Config struct {
-	// Max number of inactive secure values to fetch from the database.
-	MaxBatchSize uint16
-	// Max number of tasks to delete secure values that can be inflight at a time.
-	MaxConcurrentCleanups uint16
-}
 
 // Secure values have the `active` flag set to false on creation and deletion.
 // The `active` flag is set to true when the creation process succeeds.
 // The worker deletes secure values that are inactive because the creation process failed
 // or because the secure value has been deleted.
 type Worker struct {
-	Cfg                        Config
+	Cfg                        *setting.Cfg
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 }
 
-func NewWorker(
-	cfg Config,
+func ProvideWorker(
+	cfg *setting.Cfg,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keeperService contracts.KeeperService) (*Worker, error) {
-	if cfg.MaxBatchSize == 0 {
-		return nil, fmt.Errorf("MaxBatchSize is required")
-	}
-	if cfg.MaxConcurrentCleanups == 0 {
-		return nil, fmt.Errorf("MaxConcurrentCleanups is required")
-	}
+	keeperService contracts.KeeperService) *Worker {
 	return &Worker{
 		Cfg:                        cfg,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
-		keeperService:              keeperService}, nil
+		keeperService:              keeperService}
+}
+
+func (w *Worker) Run(ctx context.Context) error {
+	if !w.Cfg.SecretsManagement.GCWorkerEnabled {
+		return nil
+	}
+
+	timer := time.NewTicker(w.Cfg.SecretsManagement.GCWorkerPollInterval)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		case <-timer.C:
+			timeoutCtx, cancel := context.WithTimeout(context.Background(), w.Cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout)
+			if _, err := w.CleanupInactiveSecureValues(timeoutCtx); err != nil {
+				logging.FromContext(timeoutCtx).Error("cleaning up inactive secure values", err)
+			}
+			cancel()
+		}
+	}
 }
 
 func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1beta1.SecureValue, error) {
-	secureValues, err := w.secureValueMetadataStorage.LeaseInactiveSecureValues(ctx, w.Cfg.MaxBatchSize)
+	secureValues, err := w.secureValueMetadataStorage.LeaseInactiveSecureValues(ctx, w.Cfg.SecretsManagement.GCWorkerMaxBatchSize)
 	if err != nil {
 		return nil, fmt.Errorf("fetching inactive secure values that need to be cleaned up: %w", err)
 	}
@@ -59,7 +71,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 
 	errs := make([]error, len(secureValues))
 
-	sema := semaphore.NewWeighted(int64(w.Cfg.MaxConcurrentCleanups))
+	sema := semaphore.NewWeighted(int64(w.Cfg.SecretsManagement.GCWorkerMaxConcurrentCleanups))
 	wg := &sync.WaitGroup{}
 	wg.Add(len(secureValues))
 
@@ -90,12 +102,13 @@ func (w *Worker) cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) err
 		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Spec.Keeper, err)
 	}
 
+	// Keeper deletion is idempotent
 	if err := keeper.Delete(ctx, keeperCfg, sv.Namespace, sv.Name, sv.Status.Version); err != nil {
-		// TODO: ignore not found, deleting should be idempotent
 		return fmt.Errorf("deleting secure value from keeper: %w", err)
 	}
 
-	if err := w.secureValueMetadataStorage.Delete(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version); err != nil {
+	// Metadata deletion is not idempotent but not found errors are ignored
+	if err := w.secureValueMetadataStorage.Delete(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version); err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
 		return fmt.Errorf("deleting secure value from metadata storage: %w", err)
 	}
 

@@ -581,18 +581,12 @@ func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Conte
 
 	defer func() {
 		success := err == nil
-		args := []any{
-			"maxBatchSize", strconv.FormatInt(int64(maxBatchSize), 10),
-			"success", success,
-		}
 
 		if !success {
 			span.SetStatus(codes.Error, "SecureValueMetadataStorage.LeaseInactiveSecureValues failed")
 			span.RecordError(err)
-			args = append(args, "error", err)
 		}
 
-		logging.FromContext(ctx).Info("SecureValueMetadataStorage.LeaseInactiveSecureValues", args...)
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 

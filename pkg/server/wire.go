@@ -42,15 +42,16 @@ import (
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	secretinline "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	secretmutator "github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
-	secretclock "github.com/grafana/grafana/pkg//apis/secret/clock/clock"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -313,6 +314,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
+	secretsgarbagecollectionworker.ProvideWorker,
 	grafanads.ProvideService,
 	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),
 	dashsnapstore.ProvideStore,
@@ -445,7 +447,7 @@ var wireBasicSet = wire.NewSet(
 	secretdatabase.ProvideDatabase,
 	secretclock.ProvideClock,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
-	wire.Bind(new(secretcontracts.Clock), new(secretclock.Clock))
+	wire.Bind(new(secretcontracts.Clock), new(*secretclock.Clock)),
 	encryptionManager.ProvideEncryptionManager,
 	cipher.ProvideAESGCMCipherService,
 	// Unified storage

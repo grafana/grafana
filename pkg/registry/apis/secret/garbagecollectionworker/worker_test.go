@@ -68,14 +68,14 @@ func TestBasic(t *testing.T) {
 		// Advance time to wait for grace period
 		sut.Clock.AdvanceBy(10 * time.Minute)
 
-		ids, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+		svs, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 		require.NoError(t, err)
-		require.Equal(t, 1, len(ids))
-		require.Equal(t, sv.UID, ids[0])
+		require.Equal(t, 1, len(svs))
+		require.Equal(t, sv.UID, svs[0].UID)
 
-		ids, err = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+		svs, err = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 		require.NoError(t, err)
-		require.Empty(t, ids)
+		require.Empty(t, svs)
 
 		// Try to get the secreet value again to make sure it's been deleted from the keeper
 		exposedValue, err = keeper.Expose(t.Context(), keeperCfg, sv.Namespace, sv.Name, sv.Status.Version)
@@ -119,9 +119,9 @@ func TestProperty(t *testing.T) {
 				svCopy := deepCopy(sv)
 
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv))
-				require.NoError(t, err)
 				svCopy.UID = createdSv.UID
-				model.create(sut.Clock.Now(), svCopy)
+				modelErr := model.create(sut.Clock.Now(), svCopy)
+				require.ErrorIs(t, err, modelErr)
 			},
 			"delete": func(t *rapid.T) {
 				if len(model.items) == 0 {
@@ -137,7 +137,7 @@ func TestProperty(t *testing.T) {
 			"cleanup": func(t *rapid.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
 				minAge := 300 * time.Second
-				maxBatchSize := sut.GarbageCollectionWorker.Cfg.MaxBatchSize
+				maxBatchSize := sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxBatchSize
 				modelDeleted, modelErr := model.cleanupInactiveSecureValues(sut.Clock.Now(), minAge, maxBatchSize)
 				deleted, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 				require.ErrorIs(t, err, modelErr)
@@ -176,8 +176,7 @@ func newModel() *model {
 	}
 }
 
-func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) {
-	// Creating a new version of a secure value that already exists inactivates older versions
+func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) error {
 	for _, item := range m.items {
 		if item.active && item.Namespace == sv.Namespace && item.Name == sv.Name {
 			item.active = false
@@ -185,6 +184,7 @@ func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) {
 		}
 	}
 	m.items = append(m.items, &modelSecureValue{SecureValue: sv, active: true, created: now})
+	return nil
 }
 
 func (m *model) delete(ns string, name string) error {
