@@ -3,7 +3,7 @@ import { useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { Options, MapViewConfig, GeomapInstanceState } from '../types';
@@ -11,6 +11,7 @@ import { centerPointRegistry, MapCenterID } from '../view';
 
 import { CoordinatesMapViewEditor } from './CoordinatesMapViewEditor';
 import { FitMapViewEditor } from './FitMapViewEditor';
+import { LocationSearch } from './LocationSearch';
 
 export const MapViewEditor = ({
   value,
@@ -76,36 +77,25 @@ export const MapViewEditor = ({
       {value.id === MapCenterID.Fit && (
         <FitMapViewEditor labelWidth={labelWidth} value={value} onChange={onChange} context={context} />
       )}
-
-      <InlineFieldRow>
-        <InlineField
-          label={
-            value?.id === MapCenterID.Fit
-              ? t('geomap.map-view-editor.label-max-zoom', 'Max Zoom')
-              : t('geomap.map-view-editor.label-zoom', 'Zoom')
-          }
-          labelWidth={labelWidth}
-          grow={true}
-        >
-          <NumberInput
-            value={value?.zoom ?? 1}
-            min={1}
-            max={18}
-            step={0.01}
-            onChange={(v) => {
-              onChange({ ...value, zoom: v });
-            }}
-          />
-        </InlineField>
-      </InlineFieldRow>
-
-      <Stack direction="column">
-        <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>
-          <span>
-            <Trans i18nKey="geomap.map-view-editor.use-current-map-settings">Use current map settings</Trans>
-          </span>
-        </Button>
-      </Stack>
+      {value.id !== MapCenterID.Zero && (
+        <InlineFieldRow>
+          <InlineField
+            label={
+              value.id === MapCenterID.Fit
+                ? t('geomap.map-view-editor.label-max-zoom', 'Max Zoom')
+                : t('geomap.map-view-editor.label-zoom', 'Zoom')
+            }
+            labelWidth={labelWidth}
+            grow={true}
+          >
+            <NumberInput value={value.zoom} min={1} max={25} onChange={(v) => onChange({ ...value, zoom: v })} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+      <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>
+        <Trans i18nKey="geomap.map-view-editor.use-current-map-settings">Use current map settings</Trans>
+      </Button>
+      <LocationSearch map={context.instanceState?.map} onChange={onChange} value={value} />
     </>
   );
 };
