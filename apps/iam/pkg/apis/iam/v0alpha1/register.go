@@ -88,11 +88,6 @@ var RoleBindingInfo = utils.NewResourceInfo(GROUP, VERSION,
 				if roleBinding != nil {
 					return []interface{}{
 						roleBinding.Name,
-						roleBinding.Spec.Subject.Kind,
-						roleBinding.Spec.Subject.Name,
-						roleBinding.Spec.Subject.Namespace,
-						roleBinding.Spec.RoleRefs[0].Kind,
-						roleBinding.Spec.RoleRefs[0].Name,
 						roleBinding.CreationTimestamp.UTC().Format(time.RFC3339),
 					}, nil
 				}
