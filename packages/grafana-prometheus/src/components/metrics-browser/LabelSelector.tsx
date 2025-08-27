@@ -12,7 +12,7 @@ import { getStylesLabelSelector } from './styles';
 export function LabelSelector() {
   const styles = useStyles2(getStylesLabelSelector);
   const [labelSearchTerm, setLabelSearchTerm] = useState('');
-  const { labelKeys, isLoadingLabels, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
+  const { labelKeys, isLoadingLabelKeys, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
 
   const filteredLabelKeys = useMemo(() => {
     return labelKeys.filter(
@@ -44,13 +44,12 @@ export function LabelSelector() {
         />
       </div>
       {/* Using fixed height here to prevent jumpy layout */}
-      {!isLoadingLabels && (
+      {!isLoadingLabelKeys && (
         <div className={styles.list} style={{ height: 120 }}>
           {filteredLabelKeys.map((label) => (
             <PromLabel
               key={label}
               name={label}
-              loading={false}
               active={selectedLabelKeys.includes(label)}
               hidden={false}
               facets={undefined}
@@ -64,7 +63,7 @@ export function LabelSelector() {
           ))}
         </div>
       )}
-      {isLoadingLabels && (
+      {isLoadingLabelKeys && (
         <div className={styles.spinner}>
           <Spinner size="xl" />
         </div>
