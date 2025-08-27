@@ -6352,7 +6352,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "라이브러리에서 쿼리 추가"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -12667,10 +12667,6 @@
     "login": "로그인"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "선택한 텍스트가 구성된 열의 텍스트 너비에 맞게 줄 바꿈되는 경우",
-      "label-wrap-text": "자동 줄바꿈"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "게이지 표시 모드",
       "label-value-display": "값 표시"
@@ -12698,13 +12694,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "선택하면 전체 행이 이 셀과 같은 색으로 표시됩니다.",
-      "description-wrap-text": "선택한 텍스트가 구성된 열의 텍스트 너비에 맞게 줄 바꿈되는 경우",
-      "label": {
-        "text-alpha": "알파"
-      },
       "label-apply-to-entire-row": "전체 행에 적용",
-      "label-background-display-mode": "배경 표시 모드",
-      "wrap-text": "자동 줄바꿈"
+      "label-background-display-mode": "배경 표시 모드"
     },
     "column-alignment-options": {
       "label-auto": "자동",
@@ -12722,7 +12713,9 @@
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
     "description-count-rows": "모든 데이터 행에 대한 단일 개수 표시",
     "description-fields": "계산해야 하는 필드 선택",
+    "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "열 헤더에 텍스트 줄 바꿈 사용",
     "image-cell-options-editor": {
       "description-alt-text": "이미지를 표시할 수 없거나 화면 리더를 이용하는 사용자를 위해 표시되는 대체 텍스트",
@@ -12748,51 +12741,7 @@
     "name-column-filter": "열 필터",
     "name-column-width": "열 너비",
     "name-count-rows": "행 개수 계산",
-    "name-enable-paginations": "페이지네이션 활성화",
-    "name-fields": "필드",
-    "name-hide-in-table": "테이블에서 숨기기",
-    "name-min-column-width": "열 최소 너비",
-    "name-show-table-footer": "테이블 바닥글 표시",
-    "name-show-table-header": "테이블 머리말 표시",
-    "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
-    "placeholder-column-width": "자동",
-    "placeholder-fields": "모든 숫자 필드",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "셀 옵션",
-    "category-table": "테이블",
-    "category-table-footer": "테이블 바닥글",
-    "cell-height-options": {
-      "label-large": "대",
-      "label-medium": "중",
-      "label-small": "소"
-    },
-    "column-alignment-options": {
-      "label-auto": "자동",
-      "label-center": "중앙",
-      "label-left": "왼쪽",
-      "label-right": "오른쪽"
-    },
-    "description-calculation": "감속기 함수/계산 선택",
-    "description-cell-value-inspect": "모달 창에서 셀 값 검사 활성화",
-    "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
-    "description-count-rows": "모든 데이터 행에 대한 단일 개수 표시",
-    "description-fields": "계산해야 하는 필드 선택",
-    "description-frozen-columns": "",
-    "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
-    "description-tooltip-from-field": "",
-    "name-calculation": "계산",
-    "name-cell-height": "셀 높이",
-    "name-cell-type": "셀 유형",
-    "name-cell-value-inspect": "셀 값 점검",
-    "name-column-alignment": "열 정렬",
-    "name-column-filter": "열 필터",
-    "name-column-width": "열 너비",
-    "name-count-rows": "행 개수 계산",
-    "name-enable-pagination": "페이지네이션 활성화",
+    "name-enable-pagination": "",
     "name-fields": "필드",
     "name-frozen-columns": "",
     "name-hide-in-table": "테이블에서 숨기기",
@@ -12801,8 +12750,12 @@
     "name-show-table-header": "테이블 머리말 표시",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
     "placeholder-column-width": "자동",
     "placeholder-fields": "모든 숫자 필드",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
