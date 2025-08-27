@@ -2781,6 +2781,7 @@
           "time": "Time"
         }
       },
+      "error-message-prefix": "Error message:",
       "filter-group": "Filter group",
       "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
