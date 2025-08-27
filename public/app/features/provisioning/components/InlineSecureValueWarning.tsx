@@ -9,13 +9,15 @@ interface Props {
 
 // TODO: remove this after 12.2
 export function InlineSecureValueWarning({ repo, items }: Props) {
-  if (repo?.spec?.type === 'local' || repo?.secure?.token?.name) {
+  const isRepoValid = (r?: Repository) => r?.spec?.type === 'local' || !!r?.secure?.token?.name;
+
+  if (isRepoValid(repo)) {
     return null;
   }
 
   // When a list is passed in, show an error if anything is missing
-  if (items?.every((r) => r.spec?.type === 'local' || !!r.secure?.token?.name)) {
-    return null; // all items are valid
+  if (items?.every(isRepoValid)) {
+    return null;
   }
 
   return (

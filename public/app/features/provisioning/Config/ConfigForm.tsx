@@ -69,18 +69,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   // TODO: this should be removed after 12.2 is released
   useEffect(() => {
-    if (data?.spec?.type !== 'local' && !data?.secure?.token) {
+    if (isGitBased && !data?.secure?.token) {
       setTokenConfigured(false);
-      setError(
-        'token',
-        {
-          type: 'manual',
-          message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
-        },
-        { shouldFocus: true }
-      ); // does not seem to focus
+      setError('token', {
+        type: 'manual',
+        message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
+      });
     }
-  }, [data, gitFields, setTokenConfigured, setError]);
+  }, [data, gitFields, setTokenConfigured, setError, isGitBased]);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -144,6 +140,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                   return (
                     <SecretInput
                       {...field}
+                      invalid={!!errors.token}
                       id={'token'}
                       placeholder={gitFields.tokenConfig.placeholder}
                       isConfigured={tokenConfigured}
