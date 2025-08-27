@@ -29,7 +29,7 @@ func TestBasic(t *testing.T) {
 		require.Empty(t, ids)
 	})
 
-	t.Run("inactive secure values are not deleted immediatelly because of the grace period", func(t *testing.T) {
+	t.Run("inactive secure values are not deleted immediately because of the grace period", func(t *testing.T) {
 		t.Parallel()
 		sut := testutils.Setup(t)
 
