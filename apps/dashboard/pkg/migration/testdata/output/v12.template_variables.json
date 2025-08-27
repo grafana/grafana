@@ -1,0 +1,73 @@
+{
+    "graphTooltip": 0,
+    "refresh": "",
+    "schemaVersion": 41,
+    "templating": {
+      "list": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "name": "refresh_true_var",
+          "refresh": 1,
+          "type": "query"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "name": "refresh_false_var",
+          "refresh": 1,
+          "type": "query"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "hide": 2,
+          "name": "hide_variable_var",
+          "refresh": 1,
+          "type": "query"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "hide": 1,
+          "name": "hide_label_var",
+          "refresh": 1,
+          "type": "query"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "hide": 2,
+          "name": "priority_var",
+          "refresh": 1,
+          "type": "query"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "name": "no_properties_var",
+          "refresh": 1,
+          "type": "query"
+        }
+      ]
+    },
+    "title": "V12 Template Variables Migration Test"
+  }
