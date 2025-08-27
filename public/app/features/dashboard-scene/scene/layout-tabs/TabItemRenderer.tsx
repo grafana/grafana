@@ -16,14 +16,13 @@ import { TabItem } from './TabItem';
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, key, isDropTarget } = model.useState();
   const parentLayout = model.getParentLayout();
-  const { currentTabIndex } = parentLayout.useState();
+  const { currentTabSlug } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
-  const myIndex = parentLayout.getTabs().findIndex((tab) => tab === model);
-  const isActive = myIndex === currentTabIndex;
+  const isActive = mySlug === currentTabSlug;
   const location = useLocation();
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
