@@ -1,130 +1,33 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
 import { getJustifyContent, TextAlign } from './utils';
 
-export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
-  const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-  // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
-  // unpredictable for background color cells
-  const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
-
-  return {
-    grid: css({
-      '--rdg-background-color': bgColor,
-      '--rdg-header-background-color': bgColor,
-      '--rdg-border-color': borderColor,
-      '--rdg-color': theme.colors.text.primary,
-      '--rdg-summary-border-color': borderColor,
-      '--rdg-summary-border-width': '1px',
-
-      '--rdg-selection-color': theme.colors.info.transparent,
-
-      // note: this cannot have any transparency since default cells that
-      // overlay/overflow on hover inherit this background and need to occlude cells below
-      '--rdg-row-background-color': bgColor,
-      '--rdg-row-hover-background-color': transparent
-        ? theme.colors.background.primary
-        : theme.colors.background.secondary,
-
-      // TODO: magic 32px number is unfortunate. it would be better to have the content
-      // flow using flexbox rather than hard-coding this size via a calc
-      blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
-      scrollbarWidth: 'thin',
-      scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
-
-      border: 'none',
-
-      '.rdg-cell': {
-        padding: TABLE.CELL_PADDING,
-
-        '&:last-child': {
-          borderInlineEnd: 'none',
-        },
-      },
-
-      // add a box shadow on hover and selection for all body cells
-      '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-        [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
-        // selected cells should appear below hovered cells.
-        '&:hover': { zIndex: theme.zIndex.tooltip - 7 },
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
-      },
-
-      '.rdg-cell.rdg-cell-frozen': {
-        backgroundColor: '--rdg-row-background-color',
-        zIndex: theme.zIndex.tooltip - 4,
-        '&:hover': { zIndex: theme.zIndex.tooltip - 2 },
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
-      },
-
-      '.rdg-header-row, .rdg-summary-row': {
-        '.rdg-cell': {
-          zIndex: theme.zIndex.tooltip - 5,
-          '&.rdg-cell-frozen': {
-            zIndex: theme.zIndex.tooltip - 1,
-          },
-        },
-      },
-
-      '.rdg-summary-row >': {
-        '.rdg-cell': {
-          // 0.75 padding causes "jumping" on hover.
-          paddingBlock: theme.spacing(0.625),
-        },
-        [getActiveCellSelector()]: {
-          whiteSpace: 'pre-line',
-          height: '100%',
-          minHeight: 'fit-content',
-          overflowY: 'visible',
-          boxShadow: theme.shadows.z2,
-        },
-      },
-    }),
-    gridNested: css({
-      height: '100%',
-      width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
-      overflowX: 'scroll',
-      overflowY: 'hidden',
-      marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
-      marginBlock: TABLE.CELL_PADDING,
-    }),
-    cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
-    noDataNested: css({
-      height: TABLE.NESTED_NO_DATA_HEIGHT,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.h4.fontSize,
-    }),
-    headerRow: css({
-      paddingBlockStart: 0,
-      fontWeight: 'normal',
-      '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
-    }),
-    displayNone: css({ display: 'none' }),
-    paginationContainer: css({
-      alignItems: 'center',
-      display: 'flex',
-      justifyContent: 'center',
-      marginTop: '8px',
-      width: '100%',
-    }),
-    paginationSummary: css({
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      display: 'flex',
-      justifyContent: 'flex-end',
-      padding: theme.spacing(0, 1, 0, 2),
-    }),
-    menuItem: css({ maxWidth: '200px' }),
-  };
-};
+export const getGridStyles = (theme: GrafanaTheme2) => ({
+  gridNested: css({
+    height: '100%',
+    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
+    overflowX: 'scroll',
+    overflowY: 'hidden',
+    marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
+    marginBlock: TABLE.CELL_PADDING,
+  }),
+  cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
+  noDataNested: css({
+    height: TABLE.NESTED_NO_DATA_HEIGHT,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.h4.fontSize,
+  }),
+  displayNone: css({ display: 'none' }),
+  menuItem: css({ maxWidth: '200px' }),
+});
 
 export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({
