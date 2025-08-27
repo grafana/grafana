@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,8 +26,9 @@ var (
 )
 
 type ResourcePermSqlBackend struct {
-	dbProvider legacysql.LegacyDatabaseProvider
-	logger     log.Logger
+	dbProvider    legacysql.LegacyDatabaseProvider
+	identityStore legacy.LegacyIdentityStore
+	logger        log.Logger
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
@@ -137,7 +139,7 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 				return 0, err
 			}
 
-			rv, err = s.create(ctx, dbHelper, ns, v0resourceperm)
+			rv, err = s.createResourcePermission(ctx, dbHelper, ns, v0resourceperm)
 			if err != nil {
 				if errors.Is(err, errInvalidSpec) {
 					return 0, apierrors.NewBadRequest(err.Error())
