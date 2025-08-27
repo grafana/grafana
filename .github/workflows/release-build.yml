@@ -49,7 +49,7 @@ jobs:
   setup:
     name: setup
     runs-on: github-hosted-ubuntu-x64-small
-    if: github.repository == 'grafana/grafana'
+    if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
@@ -104,10 +104,11 @@ jobs:
           BUCKET: grafana-prerelease
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
+          REPO: ${{ github.repository }}
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -120,6 +121,7 @@ jobs:
                   "bucket": BUCKET,
                   "grafana-commit": GRAFANA_COMMIT,
                   "source-event": SOURCE_EVENT,
+                  "upstream": REPO,
                 }
             })
 

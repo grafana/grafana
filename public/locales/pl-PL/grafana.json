@@ -5261,6 +5261,9 @@
       "save-json-to-file": "Zapisz JSON w pliku",
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Wczytywanie konfiguracji"
     },
@@ -5532,6 +5535,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Zmień wizualizację",
@@ -6177,9 +6183,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Przełącz menu udostępniania"
     },
-    "solo-panel-page": {
-      "loading": "Ładowanie"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Plik JSON pulpitu używany do rozwiązywania problemów z wizualizacją"
@@ -6412,7 +6415,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Dodaj zapytanie z biblioteki"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -6463,8 +6466,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Kliknij <2>tutaj</2>, aby dowiedzieć się więcej o tym błędzie.",
-    "success-more-details-links": "Następnie możesz rozpocząć wizualizację danych, <2>tworząc pulpit</2> lub tworząc zapytanie dotyczące danych w widoku <5>Eksploruj</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Następnie możesz rozpocząć wizualizację danych, <2>tworząc pulpit</2> lub tworząc zapytanie dotyczące danych w widoku <5>Eksploruj</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7599,6 +7601,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9592,6 +9595,12 @@
       "show-context": "Pokaż kontekst",
       "show-log-line": "Pokaż wiersz logu",
       "sidebar-mode": "Zakotwicz po prawej",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Odepnij log"
     },
     "log-line-menu": {
@@ -10777,10 +10786,6 @@
       "could-anything-matching-query": "Nie znaleziono wyników pasujących do Twojego zapytania"
     }
   },
-  "panel-search": {
-    "no-matches": "Brak wyników",
-    "unsupported-layout": "Nieobsługiwany układ"
-  },
   "panel-type-filter": {
     "clear-button": "Wyczyść typy",
     "select-aria-label": "Filtr typu panelu",
@@ -11324,11 +11329,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Usuń",
-      "confirm-delete-repository": "Czy na pewno chcesz usunąć konfigurację repozytorium?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Nie udało się usunąć repozytorium",
       "success-repository-deleted": "Ustawienia repozytorium zostały dodane do kolejki do usunięcia",
-      "title-delete-repository": "Usuń konfigurację repozytorium",
-      "tooltip-delete-this-repository": "Usuń to repozytorium"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Wróć do repozytoriów",
@@ -12781,10 +12790,6 @@
     "login": "Logowanie"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Jeśli zaznaczony tekst zostanie zawinięty do szerokości tekstu w skonfigurowanej kolumnie",
-      "label-wrap-text": "Zawijaj tekst"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Tryb wyświetlania wskaźników",
       "label-value-display": "Wyświetlanie wartości"
@@ -12812,13 +12817,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "W przypadku zaznaczenia cały wiersz będzie kolorowy, tak jak ta komórka.",
-      "description-wrap-text": "Jeśli zaznaczony tekst zostanie zawinięty do szerokości tekstu w skonfigurowanej kolumnie",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Zastosuj do całego wiersza",
-      "label-background-display-mode": "Tryb wyświetlania tła",
-      "wrap-text": "Zawijaj tekst"
+      "label-background-display-mode": "Tryb wyświetlania tła"
     },
     "column-alignment-options": {
       "label-auto": "Automatycznie",
@@ -12836,7 +12836,9 @@
     "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
     "description-count-rows": "Wyświetl pojedynczą liczbę dla wszystkich wierszy danych",
     "description-fields": "Wybierz pola, które powinny być obliczone",
+    "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Włącza zawijanie tekstu w nagłówkach kolumn",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatywny tekst wyświetlany, jeśli obraz nie może być wyświetlony, lub w przypadku użytkowników korzystających z czytnika ekranu",
@@ -12862,51 +12864,7 @@
     "name-column-filter": "Filtr kolumn",
     "name-column-width": "Szerokość kolumny",
     "name-count-rows": "Policz wiersze",
-    "name-enable-paginations": "Włącz paginację",
-    "name-fields": "Pola",
-    "name-hide-in-table": "Ukryj w tabeli",
-    "name-min-column-width": "Minimalna szerokość kolumny",
-    "name-show-table-footer": "Pokaż stopkę tabeli",
-    "name-show-table-header": "Pokaż nagłówek tabeli",
-    "name-wrap-header-text": "Zawijaj tekst nagłówka",
-    "placeholder-column-width": "automatycznie",
-    "placeholder-fields": "Wszystkie pola numeryczne",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Opcje komórki",
-    "category-table": "Tabela",
-    "category-table-footer": "Stopka tabeli",
-    "cell-height-options": {
-      "label-large": "Duża",
-      "label-medium": "Średnia",
-      "label-small": "Mała"
-    },
-    "column-alignment-options": {
-      "label-auto": "Automatycznie",
-      "label-center": "Pośrodku",
-      "label-left": "Po lewej",
-      "label-right": "Po prawej"
-    },
-    "description-calculation": "Wybierz funkcję reduktora / obliczenia",
-    "description-cell-value-inspect": "Włącz kontrolę wartości komórki w oknie modalnym",
-    "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
-    "description-count-rows": "Wyświetl pojedynczą liczbę dla wszystkich wierszy danych",
-    "description-fields": "Wybierz pola, które powinny być obliczone",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Obliczenie",
-    "name-cell-height": "Wysokość komórki",
-    "name-cell-type": "Typ komórki",
-    "name-cell-value-inspect": "Sprawdź wartość komórki",
-    "name-column-alignment": "Wyrównanie kolumn",
-    "name-column-filter": "Filtr kolumn",
-    "name-column-width": "Szerokość kolumny",
-    "name-count-rows": "Policz wiersze",
-    "name-enable-pagination": "Włącz paginację",
+    "name-enable-pagination": "",
     "name-fields": "Pola",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ukryj w tabeli",
@@ -12915,8 +12873,12 @@
     "name-show-table-header": "Pokaż nagłówek tabeli",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Zawijaj tekst nagłówka",
     "placeholder-column-width": "automatycznie",
     "placeholder-fields": "Wszystkie pola numeryczne",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
@@ -13138,6 +13100,7 @@
         "name-point-size": "Rozmiar punktu",
         "name-show-points": "Pokaż punkty",
         "name-show-thresholds": "Pokaż progi",
+        "name-show-values": "",
         "name-style": "Styl",
         "name-transform": "Przekształć",
         "transform-options": {

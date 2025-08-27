@@ -209,6 +209,7 @@ This option is only available when you're editing the panel.
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
 | Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
+| Wrap text            | Enables text wrapping for cell content. |
 | Max cell height      | <p>Define the maximum height for the row. This option is only displayed if you enable **Wrap text**.</p><p>If you set a maximum height for a specific cell using an override, but the row appears taller than it should, this is likely because another cell in the row is taller than that one due to text wrapping.</p> |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
@@ -289,23 +290,16 @@ The colored background cell type has the following options:
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
-| Wrap text | Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
-<!-- The wrap text, cell value inspect, and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
+<!-- The cell value inspect and tooltip from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Data links
 
 If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable.
 If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override.
-
-Data links cells also support text wrapping.
-Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
-To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
-
-<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 #### Gauge
 
@@ -402,12 +396,6 @@ The **Pill** cell type displays each item in a comma-separated string in a color
 
 The colors applied to each piece of text are maintained throughout the table.
 For example, if the word "test" is first displayed in a red pill, it will always be displayed in a red pill.
-
-Pill cells also support text wrapping.
-Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
-To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
-
-<!-- The wrap text description above should be copied from docs/sources/shared/visualizations/cell-options.md -->
 
 The following data formats are supported for the pill cell type:
 

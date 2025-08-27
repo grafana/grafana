@@ -321,10 +321,6 @@ export interface FeatureToggles {
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
-  * Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
-  */
-  prometheusCodeModeMetricNamesSearch?: boolean;
-  /**
   * Add cumulative and window functions to the add field from calculation transformation
   * @default true
   */
@@ -494,10 +490,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable new expression parser
-  */
-  expressionParser?: boolean;
-  /**
   * Enable groupBy variable support in scenes dashboards
   */
   groupByVariable?: boolean;
@@ -527,9 +519,13 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Enables Query Library feature in Explore
+  * Renamed feature toggle, enables Saved queries feature
   */
   queryLibrary?: boolean;
+  /**
+  * Enables Saved Queries feature
+  */
+  savedQueries?: boolean;
   /**
   * Sets the logs table as default visualisation in logs explore
   */
@@ -615,10 +611,6 @@ export interface FeatureToggles {
   * @default true
   */
   newFiltersUI?: boolean;
-  /**
-  * Allows access to the new react-data-grid based table component.
-  */
-  tableNextGen?: boolean;
   /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */

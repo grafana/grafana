@@ -5204,6 +5204,9 @@
       "save-json-to-file": "將 JSON 儲存至檔案",
       "see-docs": "有關佈建的更多資訊，請參閱<2>文件</2>。"
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "正在匯入設定"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "變更視覺效果",
@@ -6114,9 +6120,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "切換分享選單"
     },
-    "solo-panel-page": {
-      "loading": "正在載入"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "用於協助排除視覺化問題的儀表板 JSON"
@@ -6349,7 +6352,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "從資料庫新增查詢"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -6400,8 +6403,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "點選<2>此處</2>，了解更多關於此錯誤的資訊。",
-    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "接下來，您可以透過<2>建立儀表板</2>或在<5>瀏覽檢視</5>中查詢資料，開始將資料視覺化。"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7536,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9505,6 +9508,12 @@
       "show-context": "顯示前後文",
       "show-log-line": "顯示紀錄行",
       "sidebar-mode": "錨定到右側",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "取消固定紀錄"
     },
     "log-line-menu": {
@@ -10681,10 +10690,6 @@
       "could-anything-matching-query": "找不到符合您查詢的內容"
     }
   },
-  "panel-search": {
-    "no-matches": "沒有找到符合的項目",
-    "unsupported-layout": "不支援的版面配置"
-  },
   "panel-type-filter": {
     "clear-button": "清除類型",
     "select-aria-label": "面板類型篩選器",
@@ -11219,11 +11224,15 @@
     },
     "delete-repository-button": {
       "button-delete": "刪除",
-      "confirm-delete-repository": "確定要刪除儲存庫設定嗎？",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "無法刪除儲存庫",
       "success-repository-deleted": "儲存庫設定已排入刪除佇列",
-      "title-delete-repository": "刪除儲存庫設定",
-      "tooltip-delete-this-repository": "刪除此儲存庫"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "返回至儲存庫",
@@ -12658,10 +12667,6 @@
     "login": "登入"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "若選取，文字將依配置欄位的寬度換行",
-      "label-wrap-text": "文字自動換行"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "儀表顯示模式",
       "label-value-display": "數值顯示"
@@ -12689,13 +12694,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "若選取，整列將以此儲存格的顏色顯示。",
-      "description-wrap-text": "若選取，文字將依配置欄位的寬度換行",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "套用至整列",
-      "label-background-display-mode": "背景顯示模式",
-      "wrap-text": "文字自動換行"
+      "label-background-display-mode": "背景顯示模式"
     },
     "column-alignment-options": {
       "label-auto": "自動",
@@ -12713,7 +12713,9 @@
     "description-column-filter": "啟用/停用表格中的欄位篩選條件",
     "description-count-rows": "顯示所有資料列的單一計數",
     "description-fields": "選擇應計算的欄位",
+    "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "啟用欄標題的文字自動換行功能",
     "image-cell-options-editor": {
       "description-alt-text": "若圖片無法顯示或為使用螢幕閱讀器的使用者顯示的替代文字",
@@ -12739,51 +12741,7 @@
     "name-column-filter": "欄篩選條件",
     "name-column-width": "欄寬",
     "name-count-rows": "計數列",
-    "name-enable-paginations": "啟用分頁",
-    "name-fields": "欄位",
-    "name-hide-in-table": "在表格中隱藏",
-    "name-min-column-width": "最小欄寬",
-    "name-show-table-footer": "顯示表格頁尾",
-    "name-show-table-header": "顯示表格頁首",
-    "name-wrap-header-text": "換行標題文字",
-    "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "儲存格選項",
-    "category-table": "表格",
-    "category-table-footer": "表格頁尾",
-    "cell-height-options": {
-      "label-large": "大",
-      "label-medium": "中",
-      "label-small": "小"
-    },
-    "column-alignment-options": {
-      "label-auto": "自動",
-      "label-center": "置中",
-      "label-left": "靠左",
-      "label-right": "右側"
-    },
-    "description-calculation": "選擇一個歸約函數/計算方式",
-    "description-cell-value-inspect": "在模式視窗中啟用儲存格值檢查",
-    "description-column-filter": "啟用/停用表格中的欄位篩選條件",
-    "description-count-rows": "顯示所有資料列的單一計數",
-    "description-fields": "選擇應計算的欄位",
-    "description-frozen-columns": "",
-    "description-min-column-width": "欄自動調整大小的最小寬度",
-    "description-tooltip-from-field": "",
-    "name-calculation": "計算",
-    "name-cell-height": "儲存格高度",
-    "name-cell-type": "儲存格類型",
-    "name-cell-value-inspect": "儲存格值檢查",
-    "name-column-alignment": "欄對齊方式",
-    "name-column-filter": "欄篩選條件",
-    "name-column-width": "欄寬",
-    "name-count-rows": "計數列",
-    "name-enable-pagination": "啟用分頁",
+    "name-enable-pagination": "",
     "name-fields": "欄位",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隱藏",
@@ -12792,8 +12750,12 @@
     "name-show-table-header": "顯示表格頁首",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "換行標題文字",
     "placeholder-column-width": "自動",
     "placeholder-fields": "所有數值欄位",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
@@ -13015,6 +12977,7 @@
         "name-point-size": "點大小",
         "name-show-points": "顯示點",
         "name-show-thresholds": "顯示閾值",
+        "name-show-values": "",
         "name-style": "樣式",
         "name-transform": "轉變",
         "transform-options": {

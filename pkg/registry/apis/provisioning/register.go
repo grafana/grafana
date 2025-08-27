@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -34,31 +33,26 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	commonMeta "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/loki"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -84,16 +78,19 @@ type JobHistoryConfig struct {
 }
 
 type APIBuilder struct {
+	// onlyApiServer used to disable starting controllers for the standalone API server.
+	// HACK:This will be removed once we have proper wire providers for the controllers.
+	// TODO: Set this up in the standalone API server
+	onlyApiServer bool
+
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
 	getter              rest.Getter
-	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
-	ghFactory           *github.Factory
 	jobs                interface {
 		jobs.Queue
 		jobs.Store
@@ -105,30 +102,27 @@ type APIBuilder struct {
 	legacyMigrator   legacy.LegacyMigrator
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
-	decrypter        repository.Decrypter
+	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
-	mutators         []controller.Mutator
 	statusPatcher    *controller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
-	extras                   []Extra
-	availableRepositoryTypes map[provisioning.RepositoryType]bool
+	extras []Extra
 }
 
 // NewAPIBuilder creates an API builder.
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
-	local *local.LocalFolderResolver,
+	onlyApiServer bool,
+	repoFactory repository.Factory,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
-	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
-	decryptSvc secret.DecryptService,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -138,18 +132,12 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
-	mutators := []controller.Mutator{
-		git.Mutator(),
-		github.Mutator(),
-	}
-
 	b := &APIBuilder{
-		mutators:            mutators,
+		onlyApiServer:       onlyApiServer,
 		tracer:              tracer,
 		usageStats:          usageStats,
-		localFileResolver:   local,
 		features:            features,
-		ghFactory:           ghFactory,
+		repoFactory:         repoFactory,
 		clients:             clients,
 		parsers:             parsers,
 		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
@@ -157,26 +145,12 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
-		decrypter:           repository.DecryptService(decryptSvc),
 		access:              access,
 		jobHistoryConfig:    jobHistoryConfig,
-		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
-			provisioning.LocalRepositoryType:  true,
-			provisioning.GitHubRepositoryType: true,
-		},
 	}
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
-	}
-
-	// Add the available repository types and mutators from the extras
-	for _, extra := range b.extras {
-		for _, t := range extra.RepositoryTypes() {
-			b.availableRepositoryTypes[t] = true
-		}
-
-		b.mutators = append(b.mutators, extra.Mutators()...)
 	}
 
 	return b
@@ -224,29 +198,26 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
-	ghFactory *github.Factory,
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
-	decryptSvc secret.DecryptService,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
+	repoFactory repository.Factory,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}
 
-	folderResolver := &local.LocalFolderResolver{
-		PermittedPrefixes: cfg.PermittedProvisioningPaths,
-		HomePath:          safepath.Clean(cfg.HomePath),
-	}
-	builder := NewAPIBuilder(folderResolver, features,
+	builder := NewAPIBuilder(
+		false, // Run controllers
+		repoFactory,
+		features,
 		client,
-		configProvider, ghFactory,
+		configProvider,
 		legacyMigrator, storageStatus,
 		usageStats,
-		decryptSvc,
 		access,
 		tracer,
 		extraBuilders,
@@ -429,7 +400,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
-	realJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
+	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
@@ -454,19 +425,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
 	}
 
-	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
-	if err != nil {
-		return fmt.Errorf("create job store: %w", err)
-	}
-
-	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
-	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
-
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, &repository.Tester{}, b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoFactory, &repository.Tester{}, b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -476,11 +440,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
-		historic:   jobHistory,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, jobHistory)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -506,6 +466,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	if ok {
 		return nil
 	}
+	// FIXME: Do nothing for Jobs for now
+	_, ok = obj.(*provisioning.Job)
+	if ok {
+		return nil
+	}
 
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
@@ -528,11 +493,9 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	// Mutate the repository with any extra mutators
-	for _, mutator := range b.mutators {
-		if err := mutator(ctx, r); err != nil {
-			return fmt.Errorf("failed to mutate repository: %w", err)
-		}
+	// Extra mutators
+	if err := b.repoFactory.Mutate(ctx, r); err != nil {
+		return fmt.Errorf("failed to mutate repository: %w", err)
 	}
 
 	return nil
@@ -553,6 +516,12 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 
 	// FIXME: Do nothing for HistoryJobs for now
 	_, ok := obj.(*provisioning.HistoricJob)
+	if ok {
+		return nil
+	}
+
+	// FIXME: Do nothing for Jobs for now
+	_, ok = obj.(*provisioning.Job)
 	if ok {
 		return nil
 	}
@@ -661,11 +630,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 			b.repositoryLister = repoInformer.Lister()
 
+			// Initialize the API client-based job store
+			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second)
+			if err != nil {
+				return fmt.Errorf("create API client job store: %w", err)
+			}
+
 			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
 			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
 
 			// if running solely CRUD, skip the rest of the setup
-			if b.localFileResolver == nil {
+			if b.onlyApiServer {
 				return nil
 			}
 
@@ -739,7 +714,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Create JobController to handle job create notifications
-			jobController, err := controller.NewJobController(jobInformer)
+			jobController, err := appcontroller.NewJobController(jobInformer)
 			if err != nil {
 				return err
 			}
@@ -780,7 +755,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
-				b, // repoGetter
+				b.repoFactory,
 				b.resourceLister,
 				b.parsers,
 				b.clients,
@@ -804,7 +779,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
 				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
-				_, err = controller.NewHistoryJobController(
+				_, err = appcontroller.NewHistoryJobController(
 					b.GetClient(),
 					historyJobInformer,
 					historyJobExpiration,
@@ -1282,6 +1257,7 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
 	}
+
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil, fmt.Errorf("expected repository configuration")
@@ -1300,81 +1276,7 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 		}
 	}
 
-	return b.RepositoryFromConfig(ctx, r)
-}
-
-func (b *APIBuilder) RepositoryFromConfig(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	// Prepare a decrypter
-	secure := b.decrypter(r)
-
-	// Try first with any extra
-	for _, extra := range b.extras {
-		r, err := extra.AsRepository(ctx, r, secure)
-		if err != nil {
-			return nil, fmt.Errorf("convert repository for extra %T: %w", extra, err)
-		}
-
-		if r != nil {
-			return r, nil
-		}
-	}
-
-	var token commonMeta.RawSecureValue
-	if r.Secure.Token.IsZero() {
-		t, err := secure.Token(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decrypt token: %w", err)
-		}
-		token = t
-	}
-
-	switch r.Spec.Type {
-	case provisioning.BitbucketRepositoryType:
-		return nil, errors.New("repository type bitbucket is not available")
-	case provisioning.GitLabRepositoryType:
-		return nil, errors.New("repository type gitlab is not available")
-	case provisioning.LocalRepositoryType:
-		return local.NewLocal(r, b.localFileResolver), nil
-	case provisioning.GitRepositoryType:
-		cfg := git.RepositoryConfig{
-			URL:       r.Spec.Git.URL,
-			Branch:    r.Spec.Git.Branch,
-			Path:      r.Spec.Git.Path,
-			TokenUser: r.Spec.Git.TokenUser,
-			Token:     token,
-		}
-
-		return git.NewGitRepository(ctx, r, cfg)
-	case provisioning.GitHubRepositoryType:
-		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
-		logger.Info("Instantiating Github repository")
-
-		ghCfg := r.Spec.GitHub
-		if ghCfg == nil {
-			return nil, fmt.Errorf("github configuration is required for nano git")
-		}
-
-		gitCfg := git.RepositoryConfig{
-			URL:    ghCfg.URL,
-			Branch: ghCfg.Branch,
-			Path:   ghCfg.Path,
-			Token:  token,
-		}
-
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
-		if err != nil {
-			return nil, fmt.Errorf("error creating git repository: %w", err)
-		}
-
-		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, token)
-		if err != nil {
-			return nil, fmt.Errorf("error creating github repository: %w", err)
-		}
-
-		return ghRepo, nil
-	default:
-		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
-	}
+	return b.repoFactory.Build(ctx, r)
 }
 
 func getJSONResponse(ref string) *spec3.Responses {
