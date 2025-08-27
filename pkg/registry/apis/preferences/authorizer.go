@@ -27,6 +27,10 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "invalid name", nil
 			}
 
+			if attr.GetResource() == "stars" && name.Owner != utils.UserResourceOwner {
+				return authorizer.DecisionDeny, "stars only support users", nil
+			}
+
 			switch name.Owner {
 			case utils.NamespaceResourceOwner:
 				return authorizer.DecisionAllow, "", nil
@@ -47,6 +51,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return authorizer.DecisionAllow, "", nil
 				}
 				return authorizer.DecisionDeny, "not a team member", nil
+
+			default:
 			}
 
 			return authorizer.DecisionDeny, "invalid name", nil
