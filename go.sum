@@ -1352,8 +1352,8 @@ github.com/go-task/slim-sprig/v3 v3.0.0 h1:sUs3vkvUymDpBKi3qH1YSqBQk9+9D/8M2mN1v
 github.com/go-task/slim-sprig/v3 v3.0.0/go.mod h1:W848ghGpv3Qj3dhTPRyJypKRiqCdHZiAzKg9hl15HA8=
 github.com/go-test/deep v1.1.1 h1:0r/53hagsehfO4bzD2Pgr/+RgHqhmf+k1Bpse2cTu1U=
 github.com/go-test/deep v1.1.1/go.mod h1:5C2ZWiW0ErCdrYzpqxLbTX7MG14M9iiw8DgHncVwcsE=
-github.com/go-viper/mapstructure/v2 v2.3.0 h1:27XbWsHIqhbdR5TIC911OfYvgSaW93HM+dX7970Q7jk=
-github.com/go-viper/mapstructure/v2 v2.3.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
+github.com/go-viper/mapstructure/v2 v2.4.0 h1:EBsztssimR/CONLSZZ04E8qAkxNYq4Qp9LvH92wZUgs=
+github.com/go-viper/mapstructure/v2 v2.4.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/go-xorm/sqlfiddle v0.0.0-20180821085327-62ce714f951a h1:9wScpmSP5A3Bk8V3XHWUcJmYTh+ZnlHVyc+A4oZYS3Y=
 github.com/go-xorm/sqlfiddle v0.0.0-20180821085327-62ce714f951a/go.mod h1:56xuuqnHyryaerycW3BfssRdxQstACi0Epw/yC5E2xM=
 github.com/go-zookeeper/zk v1.0.4 h1:DPzxraQx7OrPyXq2phlGlNSIyWEsAox0RJmjTseMV6I=
@@ -1603,8 +1603,8 @@ github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNc
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
 github.com/grafana/grafana-app-sdk v0.40.3 h1:JFo7uAfbAJUfZ9neD7/4sODKm1xgu9zhckclH/N4DYU=
 github.com/grafana/grafana-app-sdk v0.40.3/go.mod h1:j0KzHo3Sa6kd+lnwSScBNoV9Vobkg/YY9HtEjxpyPrk=
-github.com/grafana/grafana-app-sdk/logging v0.40.2 h1:HQ1+y9Od92iMbWWB54QxiYpNtCvYGUVpyxvxZ7ywB1k=
-github.com/grafana/grafana-app-sdk/logging v0.40.2/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
+github.com/grafana/grafana-app-sdk/logging v0.40.3 h1:2VXsXXEQiqAavRP8wusRDB6rDqf5lufP7A6NfjELqPE=
+github.com/grafana/grafana-app-sdk/logging v0.40.3/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grafana/grafana-aws-sdk v1.1.0 h1:G0fvwbQmHw14c5RXPd7Gnw9ZQcgzl139LtMDoe0KhmE=
 github.com/grafana/grafana-aws-sdk v1.1.0/go.mod h1:7e+47EdHynteYWGoT5Ere9KeOXQObsk8F0vkOLQ1tz8=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 h1:0TYrkzAc3u0HX+9GK86cGrLTUAcmQfl3/LEB3tL+SOA=

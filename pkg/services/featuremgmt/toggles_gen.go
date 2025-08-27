@@ -447,10 +447,6 @@ const (
 	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
-	// FlagExpressionParser
-	// Enable new expression parser
-	FlagExpressionParser = "expressionParser"
-
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
@@ -480,8 +476,12 @@ const (
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
-	// Enables Query Library feature in Explore
+	// Renamed feature toggle, enables Saved queries feature
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagSavedQueries
+	// Enables Saved Queries feature
+	FlagSavedQueries = "savedQueries"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -558,10 +558,6 @@ const (
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
-
-	// FlagTableNextGen
-	// Allows access to the new react-data-grid based table component.
-	FlagTableNextGen = "tableNextGen"
 
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources

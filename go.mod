@@ -96,7 +96,7 @@ require (
 	github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.40.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.40.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.40.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.1.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.9.0 // @grafana/grafana-operator-experience-squad
@@ -411,7 +411,7 @@ require (
 	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
