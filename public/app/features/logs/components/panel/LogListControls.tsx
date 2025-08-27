@@ -505,6 +505,16 @@ const WrapLogMessageButton = () => {
   const styles = useStyles2(getStyles);
   const { prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage } = useLogListContext();
 
+  /**
+   * This component currently controls two internal states: line wrapping and JSON formatting.
+   * The state transition is as follows:
+   * - Line wrapping and JSON formatting disabled.
+   * - Line wrapping enabled.
+   * - Line wrapping and JSON formatting enabled.
+   *
+   * Line wrapping also controls JSON formatting, because with line wrapping disabled,
+   * JSON formatting has no effect, so one is related with the other.
+   */
   const onWrapLogMessageClick = useCallback(() => {
     if (!wrapLogMessage) {
       setWrapLogMessage(true);
@@ -530,9 +540,7 @@ const WrapLogMessageButton = () => {
         onClick={onWrapLogMessageClick}
       >
         <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
-        {prettifyJSON && (
-          <span className={styles.customControlTag}>+</span>
-        )}
+        {prettifyJSON && <span className={styles.customControlTag}>+</span>}
       </button>
     </Tooltip>
   );
