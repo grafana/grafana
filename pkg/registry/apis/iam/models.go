@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,6 +38,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyAccessClient types.AccessClient
 	// accessClient is used for the core role apis
 	accessClient types.AccessClient
+
+	// used for unistore hooks
+	zanzanaClient zanzana.Client
 
 	reg prometheus.Registerer
 
