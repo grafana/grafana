@@ -226,33 +226,7 @@ make test-go-integration-postgres
 
 Grafana uses [Cypress](https://www.cypress.io/) to end-to-end test core features. Core plugins use [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [in our end-to-end testing style guide](./style-guides/e2e-plugins.md)
 
-#### Run Cypress tests
-
-To run all tests in a headless Chromium browser.
-
-```
-yarn e2e
-```
-
-By default, the end-to-end tests start a Grafana instance listening on `localhost:3001`. To use a different URL, set the `BASE_URL` environment variable:
-
-```
-BASE_URL=http://localhost:3333 yarn e2e
-```
-
-To follow all tests in the browser while they're running, use `yarn e2e:debug`
-
-```
-yarn e2e:debug
-```
-
-To choose a single test to follow in the browser as it runs, use `yarn e2e:dev`
-
-```
-yarn e2e:dev
-```
-
-#### To run the Playwright tests:
+#### Run the Playwright tests:
 
 **Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to use reports to analyze failing tests, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
 
