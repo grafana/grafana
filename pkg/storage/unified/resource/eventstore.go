@@ -164,27 +164,47 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 }
 
 // ListSince returns a sequence of events since the given resource version.
-func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
+func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64) iter.Seq2[string, error] {
 	opts := ListOptions{
 		Sort: SortOrderAsc,
 		StartKey: EventKey{
 			ResourceVersion: sinceRV,
 		}.String(),
 	}
+	return func(yield func(string, error) bool) {
+		for evtKey, err := range n.kv.Keys(ctx, eventsSection, opts) {
+			if err != nil {
+				yield("", err)
+				return
+			}
+			if !yield(evtKey, nil) {
+				return
+			}
+		}
+	}
+}
+
+func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
 	return func(yield func(Event, error) bool) {
-		for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		for evtKey, err := range n.ListKeysSince(ctx, sinceRV) {
 			if err != nil {
+				yield(Event{}, err)
 				return
 			}
-			reader, err := n.kv.Get(ctx, eventsSection, key)
+
+			reader, err := n.kv.Get(ctx, eventsSection, evtKey)
 			if err != nil {
+				yield(Event{}, err)
 				return
 			}
+
 			var event Event
 			if err := json.NewDecoder(reader).Decode(&event); err != nil {
 				_ = reader.Close()
+				yield(Event{}, err)
 				return
 			}
+
 			_ = reader.Close()
 			if !yield(event, nil) {
 				return

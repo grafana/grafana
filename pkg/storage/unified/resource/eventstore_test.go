@@ -274,6 +274,63 @@ func TestEventStore_LastEventKey(t *testing.T) {
 	assert.Equal(t, expectedKey, lastKey)
 }
 
+func TestEventStore_ListKeysSince(t *testing.T) {
+	ctx := context.Background()
+	store := setupTestEventStore(t)
+
+	// Add events with different resource versions
+	events := []Event{
+		{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "resource",
+			Name:            "test-1",
+			ResourceVersion: 1000,
+			Action:          DataActionCreated,
+		},
+		{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "resource",
+			Name:            "test-2",
+			ResourceVersion: 2000,
+			Action:          DataActionUpdated,
+		},
+		{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "resource",
+			Name:            "test-3",
+			ResourceVersion: 3000,
+			Action:          DataActionDeleted,
+		},
+	}
+
+	// Save all events
+	for _, event := range events {
+		err := store.Save(ctx, event)
+		require.NoError(t, err)
+	}
+
+	// List events since RV 1500 (should get events with RV 2000 and 3000)
+	retrievedEvents := make([]string, 0, 2)
+	for eventKey, err := range store.ListKeysSince(ctx, 1500) {
+		require.NoError(t, err)
+		retrievedEvents = append(retrievedEvents, eventKey)
+	}
+
+	// Should return events in descending order of resource version
+	require.Len(t, retrievedEvents, 2)
+	evt1, err := ParseEventKey(retrievedEvents[0])
+	require.NoError(t, err)
+	assert.Equal(t, int64(2000), evt1.ResourceVersion)
+	assert.Equal(t, "test-2", evt1.Name)
+	evt2, err := ParseEventKey(retrievedEvents[1])
+	require.NoError(t, err)
+	assert.Equal(t, int64(3000), evt2.ResourceVersion)
+	assert.Equal(t, "test-3", evt2.Name)
+}
+
 func TestEventStore_ListSince(t *testing.T) {
 	ctx := context.Background()
 	store := setupTestEventStore(t)
@@ -322,7 +379,11 @@ func TestEventStore_ListSince(t *testing.T) {
 	// Should return events in descending order of resource version
 	require.Len(t, retrievedEvents, 2)
 	assert.Equal(t, int64(2000), retrievedEvents[0].ResourceVersion)
+	assert.Equal(t, "test-2", retrievedEvents[0].Name)
+	assert.Equal(t, DataActionUpdated, retrievedEvents[0].Action)
 	assert.Equal(t, int64(3000), retrievedEvents[1].ResourceVersion)
+	assert.Equal(t, "test-3", retrievedEvents[1].Name)
+	assert.Equal(t, DataActionDeleted, retrievedEvents[1].Action)
 }
 
 func TestEventStore_ListSince_Empty(t *testing.T) {

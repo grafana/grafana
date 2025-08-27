@@ -452,9 +452,30 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 }
 
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
-	return 0, func(yield func(*ModifiedResource, error) bool) {
-		yield(nil, errors.New("not implemented"))
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("group, resource, and namespace are required"))
+		}
 	}
+
+	if sinceRv <= 0 {
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("sinceRv must be greater than 0"))
+		}
+	}
+
+	// Generate a new resource version for the list
+	listRV := k.snowflake.Generate().Int64()
+
+	// check if sinceRv is < 1 hour old
+	// if yes -> listkeyssince (implement it) to get all events since sinceRv - loopback period
+	// if no -> use datastore to get all objects since sinceRv - loopback period
+
+	seq := func(yield func(*ModifiedResource, error) bool) {
+
+	}
+
+	return listRV, seq
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
