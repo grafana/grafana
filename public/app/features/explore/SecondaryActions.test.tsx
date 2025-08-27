@@ -2,6 +2,9 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 
+import { OrgRole } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
+
 import { render } from '../../../test/test-utils';
 
 import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
@@ -103,5 +106,48 @@ describe('SecondaryActions', () => {
 
     await user.click(screen.getByRole('button', { name: /Query inspector/i }));
     expect(onClickQueryInspector).toBeCalledTimes(1);
+  });
+
+  it('should render add from saved queries button when saved queries is enabled', () => {
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.getByRole('button', { name: /Add from saved queries/i })).toBeInTheDocument();
+  });
+
+  it('should not render add from saved queries button when saved queries is disabled', () => {
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
+  });
+
+  it('should not render add from saved queries button user has Viewer role', () => {
+    contextSrv.user.orgRole = OrgRole.Viewer;
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
   });
 });

@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -390,7 +391,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             >
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
             </Button>
-            {queryLibraryEnabled && (
+            {queryLibraryEnabled && !contextSrv.hasRole('Viewer') && (
               <Button
                 icon="plus"
                 onClick={() =>

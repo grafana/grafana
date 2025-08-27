@@ -4,6 +4,7 @@ import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useSelector } from 'app/types/store';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
@@ -71,7 +72,7 @@ export function SecondaryActions({
           >
             <Trans i18nKey="explore.secondary-actions.query-add-button">Add query</Trans>
           </ToolbarButton>
-          {queryLibraryEnabled && (
+          {queryLibraryEnabled && !contextSrv.hasRole('Viewer') && (
             <ToolbarButton
               data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add from saved queries')}
