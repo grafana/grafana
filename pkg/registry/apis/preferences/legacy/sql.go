@@ -50,6 +50,7 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 
 // NOTE: this does not support paging -- lets check if that will be a problem in cloud
 func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
+	var max sql.NullString
 	sql, err := s.db(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -112,9 +113,17 @@ func (s *LegacySQL) GetStars(ctx context.Context, orgId int64, user string) ([]d
 		req.Reset()
 		q, err = sqltemplate.Execute(sqlStarsRV, req)
 		if err != nil {
-			return nil, 0, fmt.Errorf("execute template %q: %w", sqlStarsRV.Name(), err)
+			return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
 		}
-		err = sess.Get(ctx, &updated, q)
+		err = sess.Get(ctx, &max, q)
+		if err != nil {
+			return nil, 0, fmt.Errorf("unable to get RV %w", err)
+		}
+		if max.Valid && max.String != "" {
+			fmt.Printf("max RV: %s\n", max.String)
+		} else {
+			updated = s.startup
+		}
 	}
 
 	return stars, updated.UnixMilli(), err

@@ -35,7 +35,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		},
 	})
 
-	t.Run("preferences", func(t *testing.T) {
+	t.Run("legacy preferences api", func(t *testing.T) {
 		ctx := context.Background()
 		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
