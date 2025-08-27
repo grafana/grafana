@@ -13,6 +13,8 @@ import {
   WorkbenchRow,
 } from '../types';
 
+import { getAlertInstanceScene } from './AlertInstanceScene';
+
 interface WorkbenchState extends SceneObjectState {
   groupBy: string[];
   filterBy: Filter[];
@@ -216,6 +218,7 @@ export function createAlertRuleRowsFromDataPoints(
         ruleUID: group.ruleUID,
       },
       timeline,
+      instancesScene: getAlertInstanceScene(group.ruleUID, 350), // TODO How to pass width?
       rows: [],
     };
 

@@ -1,3 +1,5 @@
+import { AlertInstanceScene } from './scene/AlertInstanceScene';
+
 export type Domain = [Date, Date];
 export type Filter = [key: string, operator: '=' | '=!', value: string];
 
@@ -12,6 +14,7 @@ export interface AlertRuleRow {
     ruleUID: string;
   };
   timeline: TimelineEntry[];
+  instancesScene: AlertInstanceScene;
   rows: unknown[];
 }
 

@@ -143,9 +143,7 @@ function renderWorkbenchRow(row: WorkbenchRow, width: number, domain: Domain, ke
         }
         content={<StateChangeChart domain={domain} timeline={row.timeline} />}
       >
-        {/* {row.rows.map(() => (
-        ))} */}
-        <Stack>NEED TO RENDER CUSTOM SCENE OBJECT HERE</Stack>
+        <row.instancesScene.Component model={row.instancesScene} />
       </GroupRow>
     );
   } else {
