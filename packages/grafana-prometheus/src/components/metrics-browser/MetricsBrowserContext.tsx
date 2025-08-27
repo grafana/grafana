@@ -160,7 +160,6 @@ export function MetricsBrowserProvider({
  */
 export function useMetricsBrowser() {
   const context = useContext(MetricsBrowserContext);
-  console.log(context);
   if (context === undefined) {
     throw new Error('useMetricsBrowser must be used within a MetricsBrowserProvider');
   }
