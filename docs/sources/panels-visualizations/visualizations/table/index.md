@@ -210,6 +210,7 @@ This option is only available when you're editing the panel.
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
 | Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
 | Wrap text            | Enables text wrapping for cell content. |
+| Max cell height      | <p>Define the maximum height for the row. This option is only displayed if you enable **Wrap text**.</p><p>If you set a maximum height for a specific cell using an override, but the row appears taller than it should, this is likely because another cell in the row is taller than that one due to text wrapping.</p> |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
 
