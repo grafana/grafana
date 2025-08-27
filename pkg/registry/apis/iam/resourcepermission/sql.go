@@ -131,12 +131,6 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 
 	// Implement proper managed role pattern
 	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
-		// TODO: For each grant
-		//       Check the target managed role exists
-		//          To do so, resolve the identity UID (user, team, service account) to its internal ID
-		//       If not, create it
-		//       If yes, remove its permissions for that resource
-		//       Add the new permissions to the managed role
 		for _, perm := range v0ResourcePerm.Spec.Permissions {
 			// TODO: For now, only one verb per permission is supported
 			//       We should modify the spec to reflect that
