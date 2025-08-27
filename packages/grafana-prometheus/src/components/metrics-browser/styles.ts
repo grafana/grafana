@@ -8,6 +8,12 @@ export const getStylesMetricsBrowser = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1),
     width: '100%',
   }),
+  spinner: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 120,
+  }),
 });
 
 export const getStylesMetricSelector = (theme: GrafanaTheme2) => ({
@@ -43,12 +49,6 @@ export const getStylesLabelSelector = (theme: GrafanaTheme2) => ({
     overflow: 'auto',
     alignContent: 'flex-start',
   }),
-  spinner: css({
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 120,
-  }),
 });
 
 export const getStylesValueSelector = (theme: GrafanaTheme2) => ({
@@ -57,12 +57,6 @@ export const getStylesValueSelector = (theme: GrafanaTheme2) => ({
       margin: `${theme.spacing(2)} 0`,
     },
     position: 'relative',
-  }),
-  spinner: css({
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 120,
   }),
   valueListArea: css({
     display: 'flex',

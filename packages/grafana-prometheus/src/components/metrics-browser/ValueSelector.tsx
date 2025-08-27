@@ -8,10 +8,12 @@ import { BrowserLabel as PromLabel, Input, Label, useStyles2, Spinner } from '@g
 import { LIST_ITEM_SIZE } from '../../constants';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
-import { getStylesValueSelector } from './styles';
+import { getStylesMetricsBrowser, getStylesValueSelector } from './styles';
 
 export function ValueSelector() {
   const styles = useStyles2(getStylesValueSelector);
+  const sharedStyles = useStyles2(getStylesMetricsBrowser);
+
   const [valueSearchTerm, setValueSearchTerm] = useState('');
   const { labelValues, selectedLabelValues, isLoadingLabelValues, onLabelValueClick, onLabelKeyClick } =
     useMetricsBrowser();
@@ -39,7 +41,11 @@ export function ValueSelector() {
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelValuesFilter}
         />
       </div>
-      {!isLoadingLabelValues && (
+      {isLoadingLabelValues ? (
+        <div className={sharedStyles.spinner}>
+          <Spinner size="xl" />
+        </div>
+      ) : (
         <div className={styles.valueListArea}>
           {Object.entries(labelValues).map(([lk, lv]) => {
             if (!lk || !lv) {
@@ -89,11 +95,6 @@ export function ValueSelector() {
               </div>
             );
           })}
-        </div>
-      )}
-      {isLoadingLabelValues && (
-        <div className={styles.spinner}>
-          <Spinner size="xl" />
         </div>
       )}
     </div>

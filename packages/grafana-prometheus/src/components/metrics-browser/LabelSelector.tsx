@@ -7,10 +7,11 @@ import { BrowserLabel as PromLabel, Input, Label, useStyles2, Spinner } from '@g
 import { METRIC_LABEL } from '../../constants';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
-import { getStylesLabelSelector } from './styles';
+import { getStylesLabelSelector, getStylesMetricsBrowser } from './styles';
 
 export function LabelSelector() {
   const styles = useStyles2(getStylesLabelSelector);
+  const sharedStyles = useStyles2(getStylesMetricsBrowser);
   const [labelSearchTerm, setLabelSearchTerm] = useState('');
   const { labelKeys, isLoadingLabelKeys, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();
 
@@ -44,7 +45,11 @@ export function LabelSelector() {
         />
       </div>
       {/* Using fixed height here to prevent jumpy layout */}
-      {!isLoadingLabelKeys && (
+      {isLoadingLabelKeys ? (
+        <div className={sharedStyles.spinner}>
+          <Spinner size="xl" />
+        </div>
+      ) : (
         <div className={styles.list} style={{ height: 120 }}>
           {filteredLabelKeys.map((label) => (
             <PromLabel
@@ -61,11 +66,6 @@ export function LabelSelector() {
               searchTerm={labelSearchTerm}
             />
           ))}
-        </div>
-      )}
-      {isLoadingLabelKeys && (
-        <div className={styles.spinner}>
-          <Spinner size="xl" />
         </div>
       )}
     </div>
