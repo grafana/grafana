@@ -5204,6 +5204,9 @@
       "save-json-to-file": "Simpan JSON ke file",
       "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Memuat konfigurasi"
     },
@@ -5475,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ubah visualisasi",
@@ -6114,9 +6120,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
     },
-    "solo-panel-page": {
-      "loading": "Memuat"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON Dasbor digunakan untuk membantu memecahkan masalah visualisasi"
@@ -6349,7 +6352,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Tambahkan kueri dari pustaka"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -7535,6 +7538,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9504,6 +9508,12 @@
       "show-context": "Tampilkan konteks",
       "show-log-line": "Tampilkan baris log",
       "sidebar-mode": "Jangkarkan ke kanan",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Buka sematan log"
     },
     "log-line-menu": {
@@ -10679,10 +10689,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Tidak dapat menemukan sesuatu yang cocok dengan kueri Anda"
     }
-  },
-  "panel-search": {
-    "no-matches": "Tidak ditemukan kecocokan",
-    "unsupported-layout": "Tata letak tidak didukung"
   },
   "panel-type-filter": {
     "clear-button": "Hapus jenis",
@@ -12661,10 +12667,6 @@
     "login": "Login"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Jika teks yang dipilih akan dipecah sesuai lebar teks di kolom yang telah dikonfigurasi",
-      "label-wrap-text": "Pecah baris teks"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Mode tampilan alat ukur",
       "label-value-display": "Tampilan nilai"
@@ -12692,13 +12694,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Jika dipilih, seluruh baris akan berwarna seperti sel ini.",
-      "description-wrap-text": "Jika teks yang dipilih akan dipecah sesuai lebar teks di kolom yang telah dikonfigurasi",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "Terapkan ke seluruh baris",
-      "label-background-display-mode": "Mode tampilan latar belakang",
-      "wrap-text": "Pecah baris teks"
+      "label-background-display-mode": "Mode tampilan latar belakang"
     },
     "column-alignment-options": {
       "label-auto": "Otomatis",
@@ -12716,7 +12713,9 @@
     "description-column-filter": "Mengaktifkan/menonaktifkan filter bidang di tabel",
     "description-count-rows": "Tampilkan satu hitungan untuk semua baris data",
     "description-fields": "Pilih bidang yang harus dihitung",
+    "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Mengaktifkan pembungkusan teks untuk header kolom",
     "image-cell-options-editor": {
       "description-alt-text": "Teks alternatif yang akan ditampilkan jika gambar tidak dapat ditampilkan atau untuk pengguna yang menggunakan pembaca layar",
@@ -12742,51 +12741,7 @@
     "name-column-filter": "Filter kolom",
     "name-column-width": "Lebar kolom",
     "name-count-rows": "Hitung baris",
-    "name-enable-paginations": "Aktifkan paginasi",
-    "name-fields": "Bidang",
-    "name-hide-in-table": "Sembunyikan di tabel",
-    "name-min-column-width": "Lebar kolom minimum",
-    "name-show-table-footer": "Tampilkan footer tabel",
-    "name-show-table-header": "Tampilkan header tabel",
-    "name-wrap-header-text": "Bungkus teks header",
-    "placeholder-column-width": "otomatis",
-    "placeholder-fields": "Semua Bidang Numerik",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Opsi sel",
-    "category-table": "Tabel",
-    "category-table-footer": "Footer tabel",
-    "cell-height-options": {
-      "label-large": "Besar",
-      "label-medium": "Sedang",
-      "label-small": "Kecil"
-    },
-    "column-alignment-options": {
-      "label-auto": "Otomatis",
-      "label-center": "Pusat",
-      "label-left": "Kiri",
-      "label-right": "Kanan"
-    },
-    "description-calculation": "Pilih fungsi/perhitungan reducer",
-    "description-cell-value-inspect": "Aktifkan pemeriksaan nilai sel di jendela modal",
-    "description-column-filter": "Mengaktifkan/menonaktifkan filter bidang di tabel",
-    "description-count-rows": "Tampilkan satu hitungan untuk semua baris data",
-    "description-fields": "Pilih bidang yang harus dihitung",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Perhitungan",
-    "name-cell-height": "Tinggi sel",
-    "name-cell-type": "Jenis sel",
-    "name-cell-value-inspect": "Pemeriksaan nilai sel",
-    "name-column-alignment": "Perataan kolom",
-    "name-column-filter": "Filter kolom",
-    "name-column-width": "Lebar kolom",
-    "name-count-rows": "Hitung baris",
-    "name-enable-pagination": "Aktifkan paginasi",
+    "name-enable-pagination": "",
     "name-fields": "Bidang",
     "name-frozen-columns": "",
     "name-hide-in-table": "Sembunyikan di tabel",
@@ -12795,8 +12750,12 @@
     "name-show-table-header": "Tampilkan header tabel",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Bungkus teks header",
     "placeholder-column-width": "otomatis",
     "placeholder-fields": "Semua Bidang Numerik",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

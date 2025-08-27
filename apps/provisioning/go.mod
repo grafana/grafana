@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43
-	github.com/grafana/grafana-app-sdk/logging v0.40.2
+	github.com/grafana/grafana-app-sdk/logging v0.40.3
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250804150913-990f1c69ecc2
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v2 v2.27.7
