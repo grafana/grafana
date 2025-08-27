@@ -1,8 +1,10 @@
 package metrics
 
 import (
+	"errors"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -11,6 +13,7 @@ const (
 	subsystem = "storage"
 	// labels
 	successLabel = "success"
+	resultLabel  = "result"
 )
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
@@ -129,7 +132,7 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "decrypt_duration_seconds",
 			Help:      "Duration of decrypt operations",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{successLabel}),
+		}, []string{resultLabel}),
 	}
 }
 
@@ -169,4 +172,19 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 
 func NewTestMetrics() *StorageMetrics {
 	return newStorageMetrics()
+}
+
+// DecryptResultLabel returns a label value for the given decrypt error.
+func DecryptResultLabel(err error) string {
+	if err == nil {
+		return "success"
+	}
+
+	if errors.Is(err, contracts.ErrDecryptNotFound) {
+		return "error_not_found"
+	} else if errors.Is(err, contracts.ErrDecryptNotAuthorized) {
+		return "error_unauthorized"
+	}
+
+	return "error_generic_failure"
 }

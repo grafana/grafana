@@ -216,6 +216,17 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.getByText('Copy log line')).toBeInTheDocument();
     });
+
+    test('The menu can be clicked', async () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
+      );
+      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button'));
+      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+    });
   });
 
   describe('Syntax highlighting', () => {
