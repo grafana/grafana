@@ -165,7 +165,7 @@ import (
 //                     {
 //                         "matcher": { "id": "byName", "options": "Hidden" },
 //                         "properties": [
-//                             { "id": "custom.hidden", "value": true }
+//                             { "id": "custom.hideFrom.viz", "value": true }
 //                         ]
 //                     }
 //                 ]
@@ -436,7 +436,7 @@ func migrateTableStyleToOverride(style map[string]interface{}) map[string]interf
 	// Handle hidden type
 	if styleType, ok := style["type"].(string); ok && styleType == "hidden" {
 		properties = append(properties, map[string]interface{}{
-			"id":    "custom.hidden",
+			"id":    "custom.hideFrom.viz",
 			"value": true,
 		})
 	}

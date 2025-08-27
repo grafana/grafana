@@ -12771,7 +12771,6 @@
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
-    "description-wrap-header-text": "Enables text wrapping for column headers",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -12806,11 +12805,9 @@
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
+    "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
-    "text-wrap-options": {
-      "label-wrap-text": "Wrap text"
-    },
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",

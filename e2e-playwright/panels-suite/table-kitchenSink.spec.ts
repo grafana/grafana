@@ -43,15 +43,13 @@ const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
   // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
-  const wrapTextToggle = loc.locator(
-    `[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`
-  );
+  const wrapTextToggle = loc.getByLabel('Wrap text');
   const count = await wrapTextToggle.count();
 
   for (let i = 0; i < count; i++) {
     const toggle = wrapTextToggle.nth(i);
-    if ((await toggle.locator('//preceding-sibling::input').getAttribute('checked')) !== null) {
-      await toggle.click();
+    if ((await toggle.getAttribute('checked')) !== null) {
+      await toggle.click({ force: true });
     }
   }
 };
@@ -77,7 +75,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await dashboardPage
       .getByGrafanaSelector(selectors.components.OptionsGroup.group('panel-options-override-12'))
-      .getByLabel(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text'))
+      .getByText('Wrap text')
       .click();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
