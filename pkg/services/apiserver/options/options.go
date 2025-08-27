@@ -3,6 +3,7 @@ package options
 import (
 	"net"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -28,11 +29,11 @@ type Options struct {
 	APIOptions               []OptionsProvider
 }
 
-func NewOptions(codec runtime.Codec) *Options {
+func NewOptions(codec runtime.Codec, zanzanaClient zanzana.Client) *Options {
 	return &Options{
 		RecommendedOptions:       NewRecommendedOptions(codec),
 		APIEnablementOptions:     genericoptions.NewAPIEnablementOptions(),
-		GrafanaAggregatorOptions: NewGrafanaAggregatorOptions(),
+		GrafanaAggregatorOptions: NewGrafanaAggregatorOptions(zanzanaClient),
 		StorageOptions:           NewStorageOptions(),
 		ExtraOptions:             NewExtraOptions(),
 	}

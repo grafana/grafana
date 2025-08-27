@@ -3,6 +3,7 @@ package options
 import (
 	"maps"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/openapi"
@@ -22,10 +23,11 @@ import (
 
 // GrafanaAggregatorOptions contains the state for the aggregator apiserver
 type GrafanaAggregatorOptions struct {
+	zanzanaClient zanzana.Client
 }
 
-func NewGrafanaAggregatorOptions() *GrafanaAggregatorOptions {
-	return &GrafanaAggregatorOptions{}
+func NewGrafanaAggregatorOptions(zanzanaClient zanzana.Client) *GrafanaAggregatorOptions {
+	return &GrafanaAggregatorOptions{zanzanaClient: zanzanaClient}
 }
 
 func (o *GrafanaAggregatorOptions) AddFlags(fs *pflag.FlagSet) {
@@ -75,7 +77,7 @@ func (o *GrafanaAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver
 		return err
 	}
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, nil, nil)
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, nil, o.zanzanaClient)
 	if err != nil {
 		return err
 	}

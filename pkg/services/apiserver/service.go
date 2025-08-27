@@ -295,7 +295,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 	groupVersions = append(groupVersions, additionalGroupVersions...)
 
-	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
+	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...), s.zanzanaClient)
 
 	// Register authorizers from app installers
 	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
