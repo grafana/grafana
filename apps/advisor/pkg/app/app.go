@@ -78,7 +78,7 @@ func New(cfg app.Config) (app.App, error) {
 									}
 								}()
 							}
-							if req.Action == resource.AdmissionActionUpdate {
+							if req.Action == resource.AdmissionActionUpdate && retryAnnotationChanged(req.OldObject, req.Object) {
 								go func() {
 									logger := log.WithContext(ctx).With("check", check.ID())
 									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
