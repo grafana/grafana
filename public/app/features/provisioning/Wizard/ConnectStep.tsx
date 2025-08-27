@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
-import { useBranchFetching } from '../hooks/useBranchFetching';
+import { useBranchOptions } from '../hooks/useBranchOptions';
 import { getHasTokenInstructions } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -29,21 +29,14 @@ export function ConnectStep() {
   const isGitBased = isGitProvider(type);
 
   const {
-    branches,
+    options: branchOptions,
     loading: branchesLoading,
     error: branchesError,
-  } = useBranchFetching({
+  } = useBranchOptions({
     repositoryType: type,
     repositoryUrl,
     repositoryToken,
   });
-
-  const branchOptions = useMemo(() => {
-    return branches.map((branch) => ({
-      label: branch.name,
-      value: branch.name,
-    }));
-  }, [branches]);
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;

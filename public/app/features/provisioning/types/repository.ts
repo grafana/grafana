@@ -14,16 +14,11 @@ export interface HttpError extends Error {
   status?: number;
 }
 
-export interface UseBranchFetchingProps {
+
+export interface UseBranchOptionsProps {
   repositoryType: RepoType;
   repositoryUrl: string;
   repositoryToken: string;
-}
-
-export interface UseBranchFetchingResult {
-  branches: BranchInfo[];
-  loading: boolean;
-  error: string | null;
 }
 
 // Repository refs API response types
