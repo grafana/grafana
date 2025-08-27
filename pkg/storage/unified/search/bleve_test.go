@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -766,6 +768,7 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 		Root:          dir,
 		FileThreshold: int64(fileThreshold),
 		IndexCacheTTL: cacheTTL,
+		Logger:        slog.New(logtest.NewNopHandler(t)),
 	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
@@ -1059,6 +1062,7 @@ func TestBuildIndex(t *testing.T) {
 					rv = 101
 				case RVLessThan:
 					rv = 99
+				case RVSame:
 				}
 				backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 1000, tt.rebuild, tt.searchAfterWrite)
 
