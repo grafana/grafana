@@ -389,3 +389,23 @@ func MakeColumnNotFoundError(refID string, err error) CategorizedError {
 
 	return &ErrorWithCategory{category: ErrCategoryColumnNotFound, err: ColumnNotFoundError.Build(data)}
 }
+
+const ErrCategoryQueryTooLong = "query_too_long"
+
+var queryTooLongStr = `sql expression [{{.Public.refId}}] was not run because the SQL query exceeded the configured limit of {{ .Public.queryLengthLimit }} characters`
+
+var QueryTooLongError = errutil.NewBase(
+	errutil.StatusBadRequest, sseErrBase+ErrCategoryQueryTooLong).MustTemplate(
+	queryTooLongStr,
+	errutil.WithPublic(queryTooLongStr))
+
+func MakeQueryTooLongError(refID string, queryLengthLimit int64) CategorizedError {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":            refID,
+			"queryLengthLimit": queryLengthLimit,
+		},
+	}
+
+	return &ErrorWithCategory{category: ErrCategoryQueryTooLong, err: QueryTooLongError.Build(data)}
+}

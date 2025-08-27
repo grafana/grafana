@@ -199,4 +199,15 @@ func TestSQLServiceErrors(t *testing.T) {
 		_, err := s.BuildPipeline(t.Context(), req)
 		require.Error(t, err, "whole pipeline fails when selecting a dependency that does not exist")
 	})
+
+	t.Run("pipeline will fail if query is longer than the configured limit", func(t *testing.T) {
+		s, req := newMockQueryService(resp,
+			newABSQLQueries(`SELECT This is too long and does not need to be valid SQL`),
+		)
+		s.cfg.SQLExpressionQueryLengthLimit = 5
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+		_, err := s.BuildPipeline(t.Context(), req)
+		require.ErrorContains(t, err, "exceeded the configured limit of 5 characters")
+	})
 }

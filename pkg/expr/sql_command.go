@@ -86,6 +86,10 @@ func UnmarshalSQLCommand(ctx context.Context, rn *rawNode, cfg *setting.Cfg) (*S
 		return nil, fmt.Errorf("expected sql expression to be type string, but got type %T", expressionRaw)
 	}
 
+	if cfg.SQLExpressionQueryLengthLimit > 0 && len(expression) > int(cfg.SQLExpressionQueryLengthLimit) {
+		return nil, sql.MakeQueryTooLongError(rn.RefID, cfg.SQLExpressionQueryLengthLimit)
+	}
+
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
