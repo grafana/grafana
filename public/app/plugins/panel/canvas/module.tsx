@@ -105,7 +105,10 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
       },
     },
   })
-  .setMigrationHandler(canvasMigrationHandler)
+  .setMigrationHandler(canvasMigrationHandler, (panel) => {
+    const pluginVersion = panel?.pluginVersion ?? '';
+    return parseFloat(pluginVersion) <= 12.2;
+  })
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;
 

@@ -1,0 +1,39 @@
+name: Test Dockerfile
+
+on:
+  pull_request:
+
+jobs:
+  detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend || steps.detect-changes.outputs.frontend || steps.detect-changes.outputs.dockerfile }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-test-integration.yml
+
+  build-dockerfile:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4
+      - name: Build Dockerfile
+        run: make build-docker-full

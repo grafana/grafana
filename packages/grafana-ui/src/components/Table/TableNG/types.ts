@@ -1,5 +1,5 @@
-import { ReactNode, SyntheticEvent } from 'react';
-import { Column } from 'react-data-grid';
+import { FC, SyntheticEvent } from 'react';
+import { CellRendererProps, Column } from 'react-data-grid';
 
 import {
   DataFrame,
@@ -150,7 +150,7 @@ export interface BaseTableProps {
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
-export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
+export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
   rowIdx: number;
@@ -167,6 +167,7 @@ export interface TableCellRendererProps {
   showFilters: boolean;
   getActions?: GetActionsFunctionLocal;
   disableSanitizeHtml?: boolean;
+  getTextColorForBackground: (color: string) => string;
 }
 
 export type InspectCellProps = {
@@ -250,6 +251,7 @@ export interface PillCellProps {
   theme: GrafanaTheme2;
   field: Field;
   rowIdx: number;
+  getTextColorForBackground: (color: string) => string;
 }
 
 export interface TableCellStyleOptions {
@@ -305,4 +307,12 @@ export interface MeasureCellHeightEntry {
    * indicates which field indexes of the visible fields this measurer applies to.
    */
   fieldIdxs: number[];
+}
+
+export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
+
+export interface FromFieldsResult {
+  columns: TableColumn[];
+  cellRootRenderers: Record<string, CellRootRenderer>;
+  colsWithTooltip: Record<string, boolean>;
 }
