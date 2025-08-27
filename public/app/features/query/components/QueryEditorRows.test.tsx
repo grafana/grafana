@@ -1,12 +1,14 @@
 import { fireEvent, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
 
+import type { DataSourceApi } from '@grafana/data';
+import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import { DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRows, Props } from './QueryEditorRows';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -18,9 +20,9 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
-const dsSrvMock: any = {
-  get: jest.fn(() => Promise.resolve(mockDS)),
-  getList: jest.fn(({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS])),
+const dsSrvMock: Pick<DataSourceSrv, 'get' | 'getList' | 'getInstanceSettings'> = {
+  get: jest.fn(async () => ({ getDefaultQuery: undefined }) as unknown as DataSourceApi),
+  getList: jest.fn((filters?: GetDataSourceListFilters) => (filters?.variables ? [mockDS, mockVariable] : [mockDS])),
   getInstanceSettings: jest.fn(() => mockDS),
 };
 
@@ -161,12 +163,10 @@ describe('QueryEditorRows', () => {
   it('Should call getDefaultQuery when changing datasource with mixed datasource enabled', async () => {
     const onQueriesChangeMock = jest.fn();
 
-    const mixedDsSettings = {
-      ...mockDataSource(),
-      name: MIXED_DATASOURCE_NAME,
-      uid: MIXED_DATASOURCE_NAME,
-      meta: { ...(mockDataSource().meta || {}), mixed: true },
-    } as any;
+    const mixedDsSettings = mockDataSource(
+      { name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME },
+      { mixed: true }
+    );
 
     const component = new QueryEditorRows({
       ...props,
@@ -176,16 +176,16 @@ describe('QueryEditorRows', () => {
 
     const getDefaultQuery = jest.fn(() => ({ defaultFromDS: 'yes' }));
     // Mutate singleton dsSrvMock to return a datasource that has getDefaultQuery
-    dsSrvMock.get = jest.fn(() => Promise.resolve({ getDefaultQuery }));
-    dsSrvMock.getInstanceSettings = jest.fn(() => ({ type: 'alertmanager' }) as any);
+    dsSrvMock.get = jest.fn(() => Promise.resolve({ getDefaultQuery } as unknown as DataSourceApi));
+    dsSrvMock.getInstanceSettings = jest.fn(() => ({ ...mockDS, type: 'alertmanager' }));
 
     // Change to a different type than existing to trigger default query path
-    const newDS = { uid: 'prom', name: 'Prometheus', type: 'prometheus' } as any;
+    const newDS = mockDataSource({ uid: 'prom', name: 'Prometheus', type: 'prometheus' });
     component.onDataSourceChange(newDS, 0);
 
     await waitFor(() => expect(onQueriesChangeMock).toHaveBeenCalled());
 
-    const updatedQueries = onQueriesChangeMock.mock.calls[0][0] as any[];
+    const updatedQueries = onQueriesChangeMock.mock.calls[0][0] as Array<DataQuery & { defaultFromDS?: string }>;
     expect(updatedQueries[0].defaultFromDS).toBe('yes');
     expect(getDefaultQuery).toHaveBeenCalledTimes(1);
   });
