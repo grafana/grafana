@@ -67,10 +67,9 @@ export async function makeApiRequest(request: ApiRequest) {
   return response.json();
 }
 
-// GitHub API limits branches to 100 per page, so we need pagination
-export async function fetchAllGitHubBranches(
-  owner: string,
-  repo: string,
+// Generic pagination helper for APIs that limit to 100 per page
+async function fetchWithPagination(
+  buildUrl: (page: number) => string,
   headers: Record<string, string>
 ): Promise<Array<{ name: string }>> {
   const allBranches = [];
@@ -78,7 +77,7 @@ export async function fetchAllGitHubBranches(
   let hasMorePages = true;
 
   while (hasMorePages && page <= 10) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/branches?per_page=100&page=${page}`;
+    const url = buildUrl(page);
     const data = await makeApiRequest({ url, headers });
 
     if (Array.isArray(data) && data.length > 0) {
@@ -93,31 +92,27 @@ export async function fetchAllGitHubBranches(
   return allBranches;
 }
 
-// GitLab API also limits to 100 per page,, so we need pagination
+export async function fetchAllGitHubBranches(
+  owner: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<Array<{ name: string }>> {
+  return fetchWithPagination(
+    (page) => `https://api.github.com/repos/${owner}/${repo}/branches?per_page=100&page=${page}`,
+    headers
+  );
+}
+
 export async function fetchAllGitLabBranches(
   owner: string,
   repo: string,
   headers: Record<string, string>
 ): Promise<Array<{ name: string }>> {
-  const allBranches = [];
-  let page = 1;
-  let hasMorePages = true;
-
-  while (hasMorePages && page <= 10) {
-    const encodedPath = encodeURIComponent(`${owner}/${repo}`);
-    const url = `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches?per_page=100&page=${page}`;
-    const data = await makeApiRequest({ url, headers });
-
-    if (Array.isArray(data) && data.length > 0) {
-      allBranches.push(...data);
-      hasMorePages = data.length === 100;
-      page++;
-    } else {
-      hasMorePages = false;
-    }
-  }
-
-  return allBranches;
+  const encodedPath = encodeURIComponent(`${owner}/${repo}`);
+  return fetchWithPagination(
+    (page) => `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches?per_page=100&page=${page}`,
+    headers
+  );
 }
 
 export async function fetchAllBitbucketBranches(
