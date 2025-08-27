@@ -12808,6 +12808,10 @@
     "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-max-height": "Max cell height",
+      "placeholder-max-height": "none"
+    },
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",

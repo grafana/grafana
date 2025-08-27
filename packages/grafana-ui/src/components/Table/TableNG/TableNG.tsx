@@ -89,6 +89,7 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getMaxHeight,
   getVisibleFields,
   isCellInspectEnabled,
   predicateByName,
@@ -418,13 +419,15 @@ export function TableNG(props: TableNGProps) {
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
-        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
+        const maxHeight = getMaxHeight(field);
+        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow, maxHeight };
 
         result.colsWithTooltip[displayName] = withTooltip;
 
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
         const linkStyles = getLinkStyles(theme, canBeColorized);
+        const cellParentStyles = clsx(defaultCellStyles, cellSpecificStyles, linkStyles);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -457,13 +460,19 @@ export function TableNG(props: TableNGProps) {
             <Cell
               key={key}
               {...props}
-              className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
+              className={clsx(props.className, { [cellParentStyles]: maxHeight == null })}
               style={style}
             />
           );
         };
 
         result.cellRootRenderers[displayName] = renderCellRoot;
+
+        const clampByMaxHeight = (maxHeight: number, children: ReactNode, cellStyles: string) => (
+          <div className={clsx(styles.cellClamp, cellStyles)} style={{ maxHeight }}>
+            {children}
+          </div>
+        );
 
         const renderBasicCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const rowIdx = props.row.__index;
@@ -475,7 +484,7 @@ export function TableNG(props: TableNGProps) {
           const height = rowHeightFn(props.row);
           const frame = data;
 
-          return (
+          let result = (
             <>
               <CellType
                 cellOptions={cellOptions}
@@ -508,6 +517,12 @@ export function TableNG(props: TableNGProps) {
               )}
             </>
           );
+
+          if (maxHeight != null) {
+            result = clampByMaxHeight(maxHeight, result, cellParentStyles);
+          }
+
+          return result;
         };
 
         // renderCellContent fires second.
@@ -519,11 +534,13 @@ export function TableNG(props: TableNGProps) {
           if (tooltipField) {
             const tooltipDisplayName = getDisplayName(tooltipField);
             const tooltipCellOptions = getCellOptions(tooltipField);
-            const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+            const tooltipMaxHeight = getMaxHeight(tooltipField);
+
             const tooltipCellStyleOptions = {
               textAlign: getAlignment(tooltipField),
               textWrap: shouldTextWrap(tooltipField),
               shouldOverflow: false,
+              maxHeight: tooltipMaxHeight,
             } satisfies TableCellStyleOptions;
             const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
             const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
@@ -535,6 +552,14 @@ export function TableNG(props: TableNGProps) {
             );
             const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
             const tooltipClasses = getTooltipStyles(theme, textAlign);
+            const tooltipBodyClasses = clsx(tooltipDefaultStyles, tooltipSpecificStyles, tooltipLinkStyles);
+
+            let tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+            if (tooltipMaxHeight) {
+              const OrigCellRenderer = tooltipFieldRenderer;
+              tooltipFieldRenderer = (props) =>
+                clampByMaxHeight(tooltipMaxHeight, <OrigCellRenderer {...props} />, tooltipBodyClasses);
+            }
 
             const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
             const tooltipWidth =
@@ -545,12 +570,7 @@ export function TableNG(props: TableNGProps) {
             const tooltipProps = {
               cellOptions: tooltipCellOptions,
               classes: tooltipClasses,
-              className: clsx(
-                tooltipClasses.tooltipContent,
-                tooltipDefaultStyles,
-                tooltipSpecificStyles,
-                tooltipLinkStyles
-              ),
+              className: clsx(tooltipClasses.tooltipContent, { [tooltipBodyClasses]: tooltipMaxHeight == null }),
               data,
               disableSanitizeHtml,
               field: tooltipField,
@@ -579,7 +599,12 @@ export function TableNG(props: TableNGProps) {
               }
 
               return (
-                <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.rowIdx} style={tooltipStyle}>
+                <TableCellTooltip
+                  {...tooltipProps}
+                  height={tooltipHeight}
+                  rowIdx={props.row.__index}
+                  style={tooltipStyle}
+                >
                   {renderBasicCellContent(props)}
                 </TableCellTooltip>
               );
@@ -646,6 +671,7 @@ export function TableNG(props: TableNGProps) {
       rows,
       setFilter,
       showTypeIcons,
+      styles.cellClamp,
       theme,
       timeRange,
     ]

@@ -1009,6 +1009,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
    */
   hideHeader?: boolean;
   inspect: boolean;
+  /**
+   * if set, limit the height in pixels that the wrapped text can flow to
+   */
+  maxHeight?: number;
   minWidth?: number;
   /**
    * Selecting or hovering this field will show a tooltip containing the content within the target field

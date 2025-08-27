@@ -55,7 +55,11 @@ const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGro
 };
 
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
-  test('Tests word wrap, hover overflow, and cell inspect', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Tests word wrap, hover overflow, max cell height, and cell inspect', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -73,10 +77,22 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // text wrapping is enabled by default on this panel.
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.OptionsGroup.group('panel-options-override-12'))
-      .getByText('Wrap text')
-      .click();
+    // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
+    const longTextFieldOverrides = dashboardPage.getByGrafanaSelector(
+      selectors.components.OptionsGroup.group('panel-options-override-12')
+    );
+
+    // TODO: we have added a null value for max height to the field overrides in the JSON,
+    // because there's no good way to add a field override in an e2e at this point.
+    const maxCellHeightInput = longTextFieldOverrides.getByLabel('Max cell height');
+
+    await maxCellHeightInput.fill('80');
+    await expect(async () => {
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+    }).toPass();
+    await maxCellHeightInput.clear();
+
+    await longTextFieldOverrides.getByLabel('Wrap text').click({ force: true });
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.

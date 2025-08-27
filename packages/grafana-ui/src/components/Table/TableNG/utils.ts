@@ -84,6 +84,25 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(field.config.custom?.wrapText);
 }
 
+export function getMaxHeight(field: Field): number | undefined {
+  return field.config?.custom?.maxHeight;
+}
+
+/**
+ * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
+ */
+function clampByMaxHeight(measurer: MeasureCellHeight): MeasureCellHeight {
+  return (value, width, field, rowIdx, lineHeight) => {
+    const rawHeight = measurer(value, width, field, rowIdx, lineHeight);
+    const maxHeight = getMaxHeight(field);
+    if (typeof maxHeight !== 'number') {
+      return rawHeight;
+    }
+
+    return Math.min(rawHeight, maxHeight);
+  };
+}
+
 /**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
@@ -279,8 +298,8 @@ export function buildCellHeightMeasurers(
     if (!result[measurerFactoryKey]) {
       const [measure, estimate] = measurerFactory[measurerFactoryKey]();
       result[measurerFactoryKey] = {
-        measure,
-        estimate,
+        measure: clampByMaxHeight(measure),
+        estimate: estimate != null ? clampByMaxHeight(estimate) : undefined,
         fieldIdxs: [],
       };
     }
