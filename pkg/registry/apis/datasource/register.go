@@ -45,7 +45,6 @@ type DataSourceAPIBuilder struct {
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
-	schemaProvider  func() (*datasourceV0.DataSourceOpenAPIExtension, error)
 	queryTypes      *queryV0.QueryTypeDefinitionList
 	log             log.Logger
 }
