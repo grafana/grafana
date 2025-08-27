@@ -886,209 +886,191 @@ func TestBuildIndex(t *testing.T) {
 
 		tmpDir := t.TempDir()
 
-		t.Run("when search after write IS NOT enabled", func(t *testing.T) {
-			t.Run("and rebuild flag is FALSE", func(t *testing.T) {
-				t.Run("should reuse index on same size and RV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, false)
-					backend1.CloseAllIndexes()
+		type RV string
+		const RVLessThan RV = "less"
+		const RVBiggerThan RV = "more"
+		const RVSame RV = "same"
+		for _, tt := range []struct {
+			searchAfterWrite bool
+			rebuild          bool
+			sameSize         bool
+			rv               RV
+			shouldRebuild    bool
+		}{
+			{
+				searchAfterWrite: false,
+				rebuild:          false,
+				sameSize:         true,
+				rv:               RVSame,
+				shouldRebuild:    false,
+			},
+			{
+				searchAfterWrite: false,
+				rebuild:          false,
+				sameSize:         true,
+				rv:               RVLessThan,
+				shouldRebuild:    false,
+			},
+			{
+				searchAfterWrite: false,
+				rebuild:          false,
+				sameSize:         true,
+				rv:               RVBiggerThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: false,
+				rebuild:          false,
+				sameSize:         false,
+				rv:               RVLessThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: false,
+				rebuild:          true,
+				sameSize:         true,
+				rv:               RVSame,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: false,
+				rebuild:          true,
+				sameSize:         true,
+				rv:               RVLessThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: false,
+				rebuild:          true,
+				sameSize:         true,
+				rv:               RVBiggerThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: false,
+				rebuild:          true,
+				sameSize:         false,
+				rv:               RVLessThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          false,
+				sameSize:         true,
+				rv:               RVSame,
+				shouldRebuild:    false,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          false,
+				sameSize:         true,
+				rv:               RVLessThan,
+				shouldRebuild:    false,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          false,
+				sameSize:         true,
+				rv:               RVBiggerThan,
+				shouldRebuild:    false,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          false,
+				sameSize:         false,
+				rv:               RVLessThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          true,
+				sameSize:         true,
+				rv:               RVLessThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          true,
+				sameSize:         true,
+				rv:               RVSame,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          true,
+				sameSize:         true,
+				rv:               RVBiggerThan,
+				shouldRebuild:    true,
+			},
+			{
+				searchAfterWrite: true,
+				rebuild:          true,
+				sameSize:         false,
+				rv:               RVLessThan,
+				shouldRebuild:    true,
+			},
+		} {
+			testName := ""
+			if tt.shouldRebuild {
+				testName += "should NOT reuse index "
+			} else {
+				testName += "should reuse index "
+			}
 
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 1000, false, false)
+			if tt.sameSize {
+				testName += "on same size "
+			} else {
+				testName += "on different size "
+			}
 
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(10), cnt)
-					backend2.CloseAllIndexes()
-				})
+			switch tt.rv {
+			case RVLessThan:
+				testName += "and documentRV < indexRV "
+			case RVBiggerThan:
+				testName += "and documentRV > indexRV "
+			case RVSame:
+				testName += "and documentRV = indexRV "
+			}
 
-				t.Run("should reuse index on same size and documentRV < indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, false)
-					backend1.CloseAllIndexes()
+			if tt.rebuild {
+				testName += "when rebuild is true "
+			} else {
+				testName += "when rebuild is false "
+			}
 
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 99, 1000, false, false)
+			if tt.searchAfterWrite {
+				testName += "and searchAfterWrite is true"
+			} else {
+				testName += "and searchAfterWrite is false"
+			}
 
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(10), cnt)
-					backend2.CloseAllIndexes()
-				})
+			t.Run(testName, func(t *testing.T) {
+				var size int64 = 10
+				var rv int64 = 100
+				backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, false, false)
+				backend1.CloseAllIndexes()
 
-				t.Run("should NOT reuse index on same size and documentRV > indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, false)
-					backend1.CloseAllIndexes()
+				if !tt.sameSize {
+					size = 101
+				}
+				switch tt.rv {
+				case RVBiggerThan:
+					rv = 101
+				case RVLessThan:
+					rv = 99
+				}
+				backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 1000, tt.rebuild, tt.searchAfterWrite)
 
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 101, 1000, false, false)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
+				cnt, err := idx.DocCount(context.Background(), "")
+				require.NoError(t, err)
+				if tt.shouldRebuild {
 					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on different size", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, false)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 11, 100, 1000, false, false)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
+				} else {
+					require.Equal(t, int64(10), cnt)
+				}
+				backend2.CloseAllIndexes()
 			})
-
-			t.Run("and rebuild flag is TRUE", func(t *testing.T) {
-				t.Run("should NOT reuse index on same size and RV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, false)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 1000, true, false)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on same size and documentRV < indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, false)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 99, 1000, true, false)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on same size and documentRV > indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, false)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 101, 1000, true, false)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on different size", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, false)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 11, 100, 1000, true, false)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-			})
-		})
-
-		t.Run("when search after write IS enabled", func(t *testing.T) {
-			t.Run("and rebuild flag is FALSE", func(t *testing.T) {
-				t.Run("should reuse index on same size and RV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 1000, false, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(10), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should reuse index on same size and documentRV < indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 99, 1000, false, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(10), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should reuse index on same size and documentRV > indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 101, 1000, false, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(10), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on different size", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, false, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 11, 100, 1000, false, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-			})
-
-			t.Run("and rebuild flag is TRUE", func(t *testing.T) {
-				t.Run("should NOT reuse index on same size and RV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 1000, true, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on same size and documentRV < indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 99, 1000, true, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on same size and documentRV > indexRV", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 10, 101, 1000, true, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-
-				t.Run("should NOT reuse index on different size", func(t *testing.T) {
-					backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, 10, 100, 10, true, true)
-					backend1.CloseAllIndexes()
-
-					backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, 11, 100, 1000, true, true)
-
-					cnt, err := idx.DocCount(context.Background(), "")
-					require.NoError(t, err)
-					require.Equal(t, int64(1000), cnt)
-					backend2.CloseAllIndexes()
-				})
-			})
-		})
+		}
 	})
 }
 
