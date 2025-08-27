@@ -80,7 +80,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     const interpolatedUrl = getTemplateSrv().replace(config.src || '');
 
     const source = new VectorSource({
-      url: window.public_cdn_path ? `${window.public_cdn_path}${interpolatedUrl.replace(/^(public\/)/, '')}` : interpolatedUrl,
+      url: `${window.__grafana_public_path__}build/${interpolatedUrl.replace(/^(public\/)/, '')}`,
       format: new GeoJSON(),
     });
 

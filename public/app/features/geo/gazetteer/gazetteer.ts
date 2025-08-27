@@ -180,7 +180,7 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
 const registry: KeyValue<Gazetteer> = {};
 
-export const COUNTRIES_GAZETTEER_PATH = `${window.public_cdn_path ?? 'public/'}gazetteer/countries.json`;
+export const COUNTRIES_GAZETTEER_PATH = `${window.__grafana_public_path__}build/gazetteer/countries.json`;
 
 /**
  * Given a path to a file return a cached lookup function
