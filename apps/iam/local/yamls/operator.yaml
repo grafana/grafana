@@ -39,9 +39,20 @@ spec:
               value: https://host.docker.internal:6446
             - name: AUTH_TOKEN_EXCHANGE_URL
               value: http://host.docker.internal:8080/v1/sign-access-token
-            - name: AUTH_TOKEN
-              value: ""
             - name: FOLDER_APP_NAMESPACE
-              value: "grafana-folder"
+              value: grafana-folder
+            - name: AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: iam-app-operator-secrets
+                  key: auth-token
+            - name: ZANZANA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: iam-app-operator-secrets
+                  key: zanzana-token
             - name: FOLDER_RECONCILER_NAMESPACE
-              value: "default"
+              valueFrom:
+                secretKeyRef:
+                  name: iam-app-operator-secrets
+                  key: folder-reconciler-namespace
