@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
@@ -35,7 +36,8 @@ func scope(resource string, name string) string {
 // createRoleAndAssign creates a new managed role and assigns it to the given user/team/service account/basic role
 func (s *ResourcePermSqlBackend) createRoleAndAssign(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment grant) (int64, error) {
 	// Create the managed role
-	insertRoleQuery, args, err := buildInsertRoleQuery(dbHelper, orgID, "", assignment.RoleName)
+	roleUID := accesscontrol.PrefixedRoleUID(fmt.Sprintf("%s:org:%v", assignment.RoleName, orgID))
+	insertRoleQuery, args, err := buildInsertRoleQuery(dbHelper, orgID, roleUID, assignment.RoleName)
 	if err != nil {
 		return 0, err
 	}

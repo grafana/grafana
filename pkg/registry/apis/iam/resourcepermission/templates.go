@@ -21,7 +21,7 @@ var (
 	roleInsertTplt       = mustTemplate("role_insert.sql")
 	assignmentInsertTplt = mustTemplate("assignment_insert.sql")
 	permissionDeleteTplt = mustTemplate("permission_delete.sql")
-	permissionInsertTplt = mustTemplate("permissions_insert.sql")
+	permissionInsertTplt = mustTemplate("permission_insert.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
