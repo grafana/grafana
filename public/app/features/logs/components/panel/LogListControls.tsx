@@ -488,9 +488,9 @@ const TimestampResolutionButton = () => {
         type="button"
         onClick={onShowTimestampsClick}
       >
-        <Icon name="clock-nine" size="lg" className={styles.customControlButtonTag} />
+        <Icon name="clock-nine" size="lg" className={styles.customControlIcon} />
         {showTime && (
-          <span className={styles.resolutionText}>
+          <span className={styles.customControlTag}>
             {timestampResolution === 'ms'
               ? t('logs.logs-controls.resolution-ms', 'ms')
               : t('logs.logs-controls.resolution-ns', 'ns')}
@@ -529,8 +529,10 @@ const WrapLogMessageButton = () => {
         type="button"
         onClick={onWrapLogMessageClick}
       >
-        <Icon name="wrap-text" size="lg" className={styles.customControlButtonTag} />
-        {prettifyJSON && <span className={styles.resolutionText}>{t('logs.logs-controls.wrap-lines-plus', '+')}</span>}
+        <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
+        {prettifyJSON && (
+          <span className={styles.customControlTag}>{t('logs.logs-controls.wrap-lines-plus', '+')}</span>
+        )}
       </button>
     </Tooltip>
   );
@@ -608,11 +610,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       overflow: 'visible',
     }),
-    customControlButtonTag: css({
+    customControlIcon: css({
       verticalAlign: 'baseline',
     }),
-    resolutionText: css({
-      color: theme.colors.text.primary,
+    customControlTag: css({
+      color: theme.colors.primary.text,
       fontSize: 10,
       position: 'absolute',
       bottom: -4,
