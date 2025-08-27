@@ -286,10 +286,11 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	exprService := expr.ProvideService(
 		&setting.Cfg{
-			ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
-			SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
-			SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
-			SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
+			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
+			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
+			SQLExpressionOutputCellLimit:  instanceConfig.SQLExpressionOutputCellLimit,
+			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
+			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
 		},
 		nil,
 		nil,
