@@ -834,13 +834,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:            "expressionParser",
-			Description:     "Enable new expression parser",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:              "groupByVariable",
 			Description:       "Enable groupBy variable support in scenes dashboards",
 			Stage:             FeatureStageExperimental,
@@ -1066,13 +1059,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
-		},
-		{
-			Name:         "tableNextGen",
-			Description:  "Allows access to the new react-data-grid based table component.",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
 		},
 		{
 			Name:         "alertingPrometheusRulesPrimary",
