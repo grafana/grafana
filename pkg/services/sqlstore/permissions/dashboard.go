@@ -335,7 +335,7 @@ func (f *accessControlDashboardPermissionFilter) With() (string, []any) {
 func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whereUIDSelect string, whereParams []any, orgID int64) {
 	forceIndex := ""
 	if f.dialect.DriverName() == migrator.MySQL {
-		forceIndex = " FORCE INDEX (IDX_folder_org_id_parent_uid_uid) "
+		forceIndex = " FORCE INDEX (IDX_folder_org_id_parent_uid) "
 	}
 
 	if f.recQueries == nil {

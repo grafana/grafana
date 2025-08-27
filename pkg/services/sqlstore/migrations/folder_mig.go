@@ -87,9 +87,9 @@ func addFolderMigrations(mg *migrator.Migrator) {
 		Cols: []string{"org_id", "parent_uid", "title"},
 	}))
 
-	mg.AddMigration("Add index IDX_folder_org_id_parent_uid_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
-		Name: "IDX_folder_org_id_parent_uid_uid",
-		Cols: []string{"org_id", "parent_uid", "uid"},
+	mg.AddMigration("Add index IDX_folder_org_id_parent_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Name: "IDX_folder_org_id_parent_uid",
+		Cols: []string{"org_id", "parent_uid"},
 	}))
 }
 
