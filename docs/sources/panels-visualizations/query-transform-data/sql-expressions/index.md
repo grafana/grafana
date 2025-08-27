@@ -161,7 +161,7 @@ SQL expressions integrates alerting and recording rules, allowing you to define 
 
 For SQL Expressions to work properly with alerting and recording rules, your query must return:
 
-- One numeric column - **_required_**.  This contains the value that triggers alerts or gets recorded.
+- One numeric column - **_required_**. This contains the value that triggers alerts or gets recorded.
 - One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Column names and their row values become labels.
 
 Consider the following query results:
