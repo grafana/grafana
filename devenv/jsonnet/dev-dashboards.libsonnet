@@ -140,4 +140,4 @@
     "xychart-migrations": (import '../dev-dashboards/panel-xychart/xychart-migrations.json'),
     "xychart-tooltip-color-test": (import '../dev-dashboards/panel-xychart/xychart-tooltip-color-test.json'),
   },
-}
+} 
