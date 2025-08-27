@@ -346,6 +346,30 @@ func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 		}
 	}
 
+	// Fill below to
+	if fillBelowTo, ok := seriesMap["fillBelowTo"]; ok {
+		if fillBelowToVal, ok := fillBelowTo.(float64); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.fillBelowTo",
+				"value": fillBelowToVal,
+			})
+		}
+	}
+
+	// Fill gradient
+	if fillGradient, ok := seriesMap["fillGradient"]; ok {
+		if fillGradientVal, ok := fillGradient.(float64); ok && fillGradientVal > 0 {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.fillGradient",
+				"value": "opacity",
+			})
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.fillOpacity",
+				"value": fillGradientVal * 10,
+			})
+		}
+	}
+
 	// Show points
 	if points, ok := seriesMap["points"]; ok {
 		if pointsBool, ok := points.(bool); ok {
@@ -356,27 +380,51 @@ func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 		}
 	}
 
+	// Show values
+	if showValues, ok := seriesMap["showValues"]; ok {
+		if showValuesBool, ok := showValues.(bool); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.showValues",
+				"value": showValuesBool,
+			})
+		}
+	}
+
 	// Draw style (bars)
 	if bars, ok := seriesMap["bars"]; ok {
-		if barsBool, ok := bars.(bool); ok && barsBool {
-			properties = append(properties, map[string]interface{}{
-				"id":    "custom.drawStyle",
-				"value": "bars",
-			})
-			properties = append(properties, map[string]interface{}{
-				"id":    "custom.fillOpacity",
-				"value": 100,
-			})
+		if barsBool, ok := bars.(bool); ok {
+			if barsBool {
+				properties = append(properties, map[string]interface{}{
+					"id":    "custom.drawStyle",
+					"value": "bars",
+				})
+				properties = append(properties, map[string]interface{}{
+					"id":    "custom.fillOpacity",
+					"value": 100,
+				})
+			} else {
+				properties = append(properties, map[string]interface{}{
+					"id":    "custom.drawStyle",
+					"value": "line",
+				})
+			}
 		}
 	}
 
 	// Draw style (lines)
 	if lines, ok := seriesMap["lines"]; ok {
-		if linesBool, ok := lines.(bool); ok && linesBool {
-			properties = append(properties, map[string]interface{}{
-				"id":    "custom.drawStyle",
-				"value": "line",
-			})
+		if linesBool, ok := lines.(bool); ok {
+			if linesBool {
+				properties = append(properties, map[string]interface{}{
+					"id":    "custom.drawStyle",
+					"value": "line",
+				})
+			} else {
+				properties = append(properties, map[string]interface{}{
+					"id":    "custom.lineWidth",
+					"value": 0,
+				})
+			}
 		}
 	}
 
@@ -394,6 +442,67 @@ func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 			properties = append(properties, map[string]interface{}{
 				"id":    "custom.pointSize",
 				"value": 2 + radius*2,
+			})
+		}
+	}
+
+	// Dash length
+	if dashLength, ok := seriesMap["dashLength"]; ok {
+		if dashLengthVal, ok := dashLength.(float64); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.dashLength",
+				"value": dashLengthVal,
+			})
+		}
+	}
+
+	// Space length
+	if spaceLength, ok := seriesMap["spaceLength"]; ok {
+		if spaceLengthVal, ok := spaceLength.(float64); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.spaceLength",
+				"value": spaceLengthVal,
+			})
+		}
+	}
+
+	// Dashes
+	if dashes, ok := seriesMap["dashes"]; ok {
+		if dashesBool, ok := dashes.(bool); ok {
+			properties = append(properties, map[string]interface{}{
+				"id": "custom.lineStyle",
+				"value": map[string]interface{}{
+					"fill": func() string {
+						if dashesBool {
+							return "dash"
+						}
+						return "solid"
+					}(),
+				},
+			})
+		}
+	}
+
+	// Stack
+	if stack, ok := seriesMap["stack"]; ok {
+		if stackStr, ok := stack.(string); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.stacking",
+				"value": stackStr,
+			})
+		}
+	}
+
+	// Transform
+	if transform, ok := seriesMap["transform"]; ok {
+		if transformStr, ok := transform.(string); ok {
+			value := "constant"
+			if transformStr == "negative-Y" {
+				value = "negative-Y"
+			}
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.transform",
+				"value": value,
 			})
 		}
 	}
@@ -427,7 +536,7 @@ func convertThresholds(panel map[string]interface{}) {
 	}
 
 	if oldThresholds, ok := panel["thresholds"].([]interface{}); ok && len(oldThresholds) > 0 {
-		convertExistingThresholds(panel, defaults, oldThresholds)
+		convertExistingThresholds(defaults, oldThresholds)
 	} else {
 		setDefaultThresholds(defaults)
 	}
@@ -436,15 +545,14 @@ func convertThresholds(panel map[string]interface{}) {
 	delete(panel, "thresholds")
 }
 
-func convertExistingThresholds(panel map[string]interface{}, defaults map[string]interface{}, oldThresholds []interface{}) {
-	steps := []interface{}{}
+func convertExistingThresholds(defaults map[string]interface{}, oldThresholds []interface{}) {
 	area, line := extractThresholdStyles(oldThresholds)
 
 	// Sort thresholds by value
 	sortedThresholds := sortThresholdsByValue(oldThresholds)
 
 	// Convert to step-based thresholds
-	steps = buildThresholdSteps(sortedThresholds)
+	steps := buildThresholdSteps(sortedThresholds)
 
 	// Add base transparent step if needed
 	steps = addBaseTransparentStep(steps)
