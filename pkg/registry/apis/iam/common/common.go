@@ -22,11 +22,11 @@ func OptionalFormatInt(num int64) string {
 	return ""
 }
 
-func MapTeamPermission(p team.PermissionType) iamv0alpha1.TeamPermission {
+func MapTeamPermission(p team.PermissionType) iamv0alpha1.TeamBindingTeamPermission {
 	if p == team.PermissionTypeAdmin {
-		return iamv0alpha1.TeamPermissionAdmin
+		return iamv0alpha1.TeamBindingTeamPermissionAdmin
 	} else {
-		return iamv0alpha1.TeamPermissionMember
+		return iamv0alpha1.TeamBindingTeamPermissionMember
 	}
 }
 

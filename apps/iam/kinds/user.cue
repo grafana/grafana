@@ -30,18 +30,19 @@ userv0alpha1: userKind & {
 	schema: {
 		spec: v0alpha1.UserSpec
 	}
-	routes: {
-		"/teams": {
-			"GET": {
-				response: {
-					#UserTeam: {
-						title: string
-						teamRef: v0alpha1.TeamRef
-						permission: v0alpha1.TeamPermission
-					}
-					items: [...#UserTeam]
-				}
-			}
-		}
-	}
+	// TODO: Uncomment when the custom routes implementation is done
+	// routes: {
+	// 	"/teams": {
+	// 		"GET": {
+	// 			response: {
+	// 				#UserTeam: {
+	// 					title: string
+	// 					teamRef: v0alpha1.TeamRef
+	// 					permission: v0alpha1.TeamPermission
+	// 				}
+	// 				items: [...#UserTeam]
+	// 			}
+	// 		}
+	// 	}
+	// }
 }

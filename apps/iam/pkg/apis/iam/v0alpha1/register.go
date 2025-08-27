@@ -197,14 +197,14 @@ func init() {
 			return err
 		}
 
-		err = AddAuthZKnownTypes(s)
+		err = AddAuthNKnownTypes(s)
 		if err != nil {
 			return err
 		}
 
 		metav1.AddToGroupVersion(s, SchemeGroupVersion)
 		return nil
-	})
+	}, addDefaultingFuncs)
 }
 
 func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
@@ -226,20 +226,20 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		// Identity
 		&User{},
 		&UserList{},
-		// &UserTeamList{},
 		&ServiceAccount{},
 		&ServiceAccountList{},
-		// &ServiceAccountTokenList{},
 		&Team{},
 		&TeamList{},
+		&TeamBinding{},
+		&TeamBindingList{},
+		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
+		// &UserTeamList{},
+		// &ServiceAccountTokenList{},
 		// &DisplayList{},
 		// &SSOSetting{},
 		// &SSOSettingList{},
-		&TeamBinding{},
-		&TeamBindingList{},
 		// &TeamMemberList{},
 
-		// What is this about?
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)

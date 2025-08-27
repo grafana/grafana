@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -29,8 +29,7 @@ type LegacyUserTeamREST struct {
 
 // New implements rest.Storage.
 func (s *LegacyUserTeamREST) New() runtime.Object {
-	// return &legacyiamv0.UserTeamList{}
-	return &iamv0alpha1.GetTeams{}
+	return &legacyiamv0.UserTeamList{}
 }
 
 // Destroy implements rest.Storage.
@@ -63,7 +62,7 @@ func (s *LegacyUserTeamREST) Connect(ctx context.Context, name string, options r
 			return
 		}
 
-		list := &iamv0alpha1.GetTeams{Items: make([]iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam, 0, len(res.Items))}
+		list := &legacyiamv0.UserTeamList{Items: make([]legacyiamv0.UserTeam, 0, len(res.Items))}
 
 		for _, m := range res.Items {
 			list.Items = append(list.Items, mapToUserTeam(m))
@@ -85,12 +84,12 @@ func (s *LegacyUserTeamREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func mapToUserTeam(t legacy.UserTeam) iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam {
-	return iamv0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{
+func mapToUserTeam(t legacy.UserTeam) legacyiamv0.UserTeam {
+	return legacyiamv0.UserTeam{
 		Title: t.Name,
-		TeamRef: iamv0alpha1.TeamRef{
+		TeamRef: legacyiamv0.TeamRef{
 			Name: t.UID,
 		},
-		Permission: common.MapTeamPermission(t.Permission),
+		Permission: common.MapUserTeamPermission(t.Permission),
 	}
 }
