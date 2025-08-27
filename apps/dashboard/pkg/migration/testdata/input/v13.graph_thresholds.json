@@ -56,11 +56,7 @@
     {
       "type": "singlestat",
       "id": 5,
-      "title": "Non-Graph Panel",
-      "grid": {
-        "threshold1": 100,
-        "threshold1Color": "red"
-      }
+      "title": "Non-Graph Panel"
     }
   ]
 }

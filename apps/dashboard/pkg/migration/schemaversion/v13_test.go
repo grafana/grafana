@@ -446,10 +446,6 @@ func TestV13(t *testing.T) {
 					map[string]interface{}{
 						"type": "singlestat",
 						"id":   5,
-						"grid": map[string]interface{}{
-							"threshold1":      100,
-							"threshold1Color": "red",
-						},
 					},
 				},
 			},
@@ -460,10 +456,6 @@ func TestV13(t *testing.T) {
 					map[string]interface{}{
 						"type": "singlestat",
 						"id":   5,
-						"grid": map[string]interface{}{
-							"threshold1":      100,
-							"threshold1Color": "red",
-						},
 					},
 				},
 			},

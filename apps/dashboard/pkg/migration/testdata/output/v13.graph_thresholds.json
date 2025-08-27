@@ -369,10 +369,6 @@
         },
         "overrides": []
       },
-      "grid": {
-        "threshold1": 100,
-        "threshold1Color": "red"
-      },
       "id": 5,
       "options": {
         "colorMode": "none",
