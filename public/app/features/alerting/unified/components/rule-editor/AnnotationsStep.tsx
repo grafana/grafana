@@ -208,11 +208,14 @@ const AnnotationsStep = () => {
                     />
                   )}
                 </div>
-                <NotificationMessageSectionExtension />
               </div>
             </div>
           );
         })}
+        
+        {/* Notification Message Section Extension - rendered once outside the annotation loop */}
+        <NotificationMessageSectionExtension />
+        
         <Stack direction="row" gap={1}>
           <div className={styles.addAnnotationsButtonContainer}>
             <Button
