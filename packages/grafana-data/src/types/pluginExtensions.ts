@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, TimeZone } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
-import { RawTimeRange, TimeZone } from './time';
+import { RawTimeRange } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -15,6 +15,7 @@ export enum PluginExtensionTypes {
   link = 'link',
   component = 'component',
   function = 'function',
+  urlRecognizer = 'urlRecognizer',
 }
 
 type PluginExtensionBase = {
@@ -48,7 +49,23 @@ export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBas
   fn: Signature;
 };
 
-export type PluginExtension = PluginExtensionLink | PluginExtensionComponent | PluginExtensionFunction;
+export type UrlMetadata<T = Record<string, unknown>> = {
+  id: string;
+  title: string;
+  description?: string;
+} & T;
+
+export type PluginExtensionUrlRecognizer<T = Record<string, unknown>> = PluginExtensionBase & {
+  type: PluginExtensionTypes.urlRecognizer;
+  recognizer: (url: string) => Promise<UrlMetadata<T> | null>;
+  schema?: Record<string, unknown>;
+};
+
+export type PluginExtension =
+  | PluginExtensionLink
+  | PluginExtensionComponent
+  | PluginExtensionFunction
+  | PluginExtensionUrlRecognizer;
 
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
@@ -150,6 +167,18 @@ export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionC
    * The React component that will be exposed to other plugins
    */
   component: React.ComponentType<Props>;
+};
+
+export type PluginExtensionAddedUrlRecognizerConfig<T = Record<string, unknown>> = PluginExtensionConfigBase & {
+  /**
+   * Function that checks if URL is relevant and returns structured metadata
+   */
+  recognizer: (url: string) => Promise<UrlMetadata<T> | null>;
+
+  /**
+   * Optional JSON Schema for the metadata returned by the recognizer
+   */
+  schema?: Record<string, unknown>;
 };
 
 export type PluginExtensionOpenModalOptions = {

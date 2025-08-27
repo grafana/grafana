@@ -33,6 +33,12 @@ export {
 export { getObservablePluginLinks } from './pluginExtensions/getObservablePluginLinks';
 export { getObservablePluginComponents } from './pluginExtensions/getObservablePluginComponents';
 export {
+  setGetUrlMetadataHook,
+  getUrlMetadata,
+  type GetUrlMetadataOptions,
+  type GetUrlMetadataResult,
+} from './pluginExtensions/getUrlMetadata';
+export {
   isPluginExtensionLink,
   isPluginExtensionComponent,
   getLimitedComponentsToRender,

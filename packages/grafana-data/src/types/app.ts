@@ -10,6 +10,7 @@ import {
   PluginExtensionAddedComponentConfig,
   PluginExtensionAddedLinkConfig,
   PluginExtensionAddedFunctionConfig,
+  PluginExtensionAddedUrlRecognizerConfig,
 } from './pluginExtensions';
 
 /**
@@ -62,6 +63,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   private _addedComponentConfigs: PluginExtensionAddedComponentConfig[] = [];
   private _addedLinkConfigs: PluginExtensionAddedLinkConfig[] = [];
   private _addedFunctionConfigs: PluginExtensionAddedFunctionConfig[] = [];
+  private _addedUrlRecognizerConfigs: PluginExtensionAddedUrlRecognizerConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -117,6 +119,10 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._addedFunctionConfigs;
   }
 
+  get addedUrlRecognizerConfigs() {
+    return this._addedUrlRecognizerConfigs;
+  }
+
   addLink<Context extends object>(linkConfig: PluginExtensionAddedLinkConfig<Context>) {
     this._addedLinkConfigs.push(linkConfig as PluginExtensionAddedLinkConfig);
 
@@ -137,6 +143,12 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 
   exposeComponent<Props = {}>(componentConfig: PluginExtensionExposedComponentConfig<Props>) {
     this._exposedComponentConfigs.push(componentConfig as PluginExtensionExposedComponentConfig);
+
+    return this;
+  }
+
+  addUrlRecognizer<T = Record<string, unknown>>(recognizerConfig: PluginExtensionAddedUrlRecognizerConfig<T>) {
+    this._addedUrlRecognizerConfigs.push(recognizerConfig as PluginExtensionAddedUrlRecognizerConfig);
 
     return this;
   }
