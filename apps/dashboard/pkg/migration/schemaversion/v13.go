@@ -381,7 +381,6 @@ func isAliasRegex(alias string) bool {
 	return false
 }
 
-//nolint:gocyclo
 func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 	properties := []interface{}{}
 
