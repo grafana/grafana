@@ -14,15 +14,16 @@ import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardGridItem } from './DashboardGridItem';
 
 export function getDashboardGridItemOptions(gridItem: DashboardGridItem): OptionsPaneCategoryDescriptor[] {
+  const categoryId = 'repeat-options';
   const repeatCategory = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.default-layout.item-options.repeat.title', 'Repeat options'),
-    id: 'Repeat options',
+    id: categoryId,
     isOpenDefault: false,
   })
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
-        id: 'repeat-by-variable-select',
+        id: `${categoryId}-repeat-by-variable`,
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
@@ -33,6 +34,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.direction.title', 'Repeat direction'),
+        id: `${categoryId}-repeat-direction`,
         useShowIf: () => {
           const { variableName } = gridItem.useState();
           return Boolean(variableName);
@@ -43,11 +45,12 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.max', 'Max per row'),
+        id: `${categoryId}-max-per-row`,
         useShowIf: () => {
           const { variableName, repeatDirection } = gridItem.useState();
           return Boolean(variableName) && repeatDirection === 'h';
         },
-        render: () => <MaxPerRowOption gridItem={gridItem} />,
+        render: (descriptor) => <MaxPerRowOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     );
 
@@ -90,7 +93,7 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
   );
 }
 
-function MaxPerRowOption({ gridItem }: OptionComponentProps) {
+function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { maxPerRow } = gridItem.useState();
   const maxPerRowOptions: Array<SelectableValue<number>> = [2, 3, 4, 6, 8, 12].map((value) => ({
     label: value.toString(),
@@ -99,6 +102,7 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
 
   return (
     <Select
+      id={id}
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
       onChange={(value) => {
