@@ -241,6 +241,7 @@ const LogListComponent = ({
     onClickFilterString,
     onClickFilterOutString,
     permalinkedLogId,
+    prettifyJSON,
     showDetails,
     showTime,
     sortOrder,
@@ -315,13 +316,21 @@ const LogListComponent = ({
     setProcessedLogs(
       preProcessLogs(
         logs,
-        { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone, virtualization, wrapLogMessage },
+        {
+          getFieldLinks,
+          escape: forceEscape ?? false,
+          prettifyJSON,
+          order: sortOrder,
+          timeZone,
+          virtualization,
+          wrapLogMessage,
+        },
         grammar
       )
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
