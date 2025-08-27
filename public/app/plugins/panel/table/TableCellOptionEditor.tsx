@@ -24,9 +24,10 @@ export interface TableCellEditorProps<T> {
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
+  id?: string;
 }
 
-export const TableCellOptionEditor = ({ value, onChange }: Props) => {
+export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
@@ -78,7 +79,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   return (
     <div className={styles.fixBottomMargin}>
       <Field>
-        <Combobox options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
+        <Combobox id={id} options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {cellType === TableCellDisplayMode.Gauge && (
         <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />

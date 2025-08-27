@@ -73,9 +73,10 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // text wrapping is enabled by default on this panel.
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
-    // FIXME very bad selector to get the correct "wrap text" toggle here.
-    // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
-    await page.locator('[id="Override 13"]').getByText('Wrap text').click();
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.OptionsGroup.group('panel-options-override-12'))
+      .getByText('Wrap text')
+      .click();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
@@ -90,8 +91,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Cell options Cell value inspect'))
       .first()
-      .locator('label[for="custom.inspect"]')
-      .click();
+      .getByRole('switch', { name: 'Cell value inspect' })
+      .click({ force: true });
     await loremIpsumCell.hover();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
@@ -112,19 +113,19 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).toBeVisible();
 
+    const stateOverride = dashboardPage.getByGrafanaSelector(
+      selectors.components.OptionsGroup.group('panel-options-override-11')
+    );
+
     // confirm that "State" column is hidden by default.
     expect(page.getByRole('row').nth(0)).not.toContainText('State');
-
-    // toggle the "State" column visibility and test that it appears before re-hiding it.
-    // FIXME this selector is utterly godawful, but there's no way to give testIds or aria-labels or anything to
-    // the panel editor builder. we should fix that to make e2e's easier to write for our team.
-    const hideStateColumnSwitch = page.locator('[id="Override 12"]').locator('label').last();
+    // toggle the "State" column visibility via the override we set up in the kitchen sink panel.
+    const hideStateColumnSwitch = stateOverride.locator('label').last();
     await hideStateColumnSwitch.click();
     expect(page.getByRole('row').nth(0)).toContainText('State');
 
     // now change the display name of the "State" column.
-    // FIXME it would be good to have a better selector here too.
-    const displayNameInput = page.locator('[id="Override 12"]').locator('input[value="State"]').last();
+    const displayNameInput = stateOverride.locator('input[value="State"]').last();
     await displayNameInput.fill('State (renamed)');
     await displayNameInput.press('Enter');
     expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
