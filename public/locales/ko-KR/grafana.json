@@ -489,6 +489,11 @@
       "title-muting-grouping-and-timings": "알림 비활성화, 그룹화 및 타이밍"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
     "alert-menu": {
@@ -2207,6 +2212,13 @@
       "preview": "미리보기",
       "previewCondition": "경고 규칙 조건 미리보기"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "연락처 통합 추가",
       "body-attention": "아직 구성된 기본 정책이 없으므로 이 연락처가 자동으로 기본값으로 설정됩니다.",
@@ -2457,6 +2469,7 @@
       },
       "empty-data-source": "규칙을 찾을 수 없습니다",
       "error-button": "오류",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -3524,7 +3537,6 @@
       "button-cancel": "취소",
       "button-move": "이동",
       "button-moving": "이동 중...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3614,11 +3626,11 @@
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
+      "error-invalid-characters": "",
       "error-required": "폴더 이름은 필수 입력 항목입니다",
       "folder-name-input-placeholder-enter-folder-name": "폴더 이름 입력",
       "label-folder-name": "폴더 이름",
       "text-pull-request-created": "이 폴더에 대한 변경 사항을 포함하는 풀 요청이 생성되었습니다.",
-      "text-your-folder-will-be-created-as": "{{folderName}}(이)라는 이름으로 폴더가 생성됩니다",
       "title-pull-request-created": "풀 요청 생성됨",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다."
     },
@@ -3725,7 +3737,7 @@
         }
       }
     },
-    "category-arrow-direction": "화살표 방향",
+    "category-arrow-direction": "",
     "category-background": "배경",
     "category-border": "테두리",
     "category-canvas": "캔버스",
@@ -3757,15 +3769,17 @@
         "auto": "자동"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "실험적 요소 유형 선택 활성화",
     "description-inline-editing": "패널 직접 편집 활성화",
     "description-pan-zoom": "이동 및 확대/축소 활성화",
-    "direction-options": {
-      "label-both": "둘 다",
-      "label-forward": "앞으로",
-      "label-none": "없음",
-      "label-reverse": "되돌리기"
-    },
     "drone-front-item": {
       "category-drone-front": "드론 전면",
       "name-roll-angle": "롤 각도"
@@ -4153,7 +4167,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "데이터 소스",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "쿼리와 일치하는 결과를 찾을 수 없음",
       "request-data-source": "새 데이터 소스 요청",
       "roadmap": "로드맵 보기"
@@ -4503,6 +4518,10 @@
           },
           "value": "값"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "조건부 렌더링으로 인해 요소가 숨겨져 있습니다."
@@ -5185,6 +5204,9 @@
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "구성 로딩 중"
     },
@@ -5456,6 +5478,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "시각화 변경",
@@ -6095,9 +6120,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "공유 메뉴 토글"
     },
-    "solo-panel-page": {
-      "loading": "로딩 중"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "시각화 문제 해결에 사용되는 대시보드 JSON"
@@ -6330,7 +6352,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "라이브러리에서 쿼리 추가"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -6381,8 +6403,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "이 오류에 대해 자세히 알아보려면 <2>여기</2>를 클릭하세요.",
-    "success-more-details-links": "그런 다음 <2>대시보드를 구축</2>하거나 <5>탐색 보기</5>에서 데이터를 쿼리하여 데이터 시각화를 시작할 수 있습니다.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "그런 다음 <2>대시보드를 구축</2>하거나 <5>탐색 보기</5>에서 데이터를 쿼리하여 데이터 시각화를 시작할 수 있습니다."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6520,9 +6541,11 @@
       "explore": "탐색"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "대시보드 구축",
       "explore-data": "데이터 탐색",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "오류에 대한 자세한 정보"
@@ -6630,6 +6653,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "고정 색상",
       "noOptionsMessage-no-fields-found": "필드를 찾을 수 없습니다"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "업로드"
@@ -7097,7 +7128,7 @@
     "rich-history-card": {
       "add-comment-form": "코멘트 양식 추가",
       "add-comment-tooltip": "코멘트 추가",
-      "add-to-library": "라이브러리에 추가",
+      "add-to-library": "",
       "cancel": "취소",
       "confirm-delete": "삭제",
       "copy-query-tooltip": "쿼리를 클립보드에 복사합니다.",
@@ -7209,7 +7240,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "라이브러리에서 쿼리 추가",
+      "add-from-query-library": "",
       "query-add-button": "쿼리 추가",
       "query-add-button-aria-label": "쿼리 추가",
       "query-history-button": "쿼리 이력",
@@ -7501,17 +7532,13 @@
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
   },
-  "folder-picker": {
-    "create-instructions": "새 폴더를 만들려면 엔터 키를 누르세요.",
-    "input-placeholder": "새 폴더를 확인하려면 엔터 키를 누르세요",
-    "loading": "폴더 로딩 중..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -8724,7 +8751,6 @@
       "filter-popup-input-placeholder": "값 필터링",
       "filter-popup-match-case": "대소문자 일치",
       "inspect-drawer-title": "값 검사",
-      "inspect-menu-label": "값 검사",
       "nested-table": {
         "no-data": "데이터 없음"
       },
@@ -9440,6 +9466,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9480,6 +9508,12 @@
       "show-context": "맥락 보기",
       "show-log-line": "로그 라인 표시",
       "sidebar-mode": "오른쪽에 고정",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "로그 고정 해제"
     },
     "log-line-menu": {
@@ -9711,7 +9745,8 @@
       "message-name-required": "이름은 필수 입력 항목입니다",
       "message-reserved-name": "이 이름은 예약어이므로 폴더에 사용할 수 없습니다.",
       "message-same-name": "동일한 이름의 대시보드 또는 폴더가 이미 존재합니다",
-      "message-same-name-general": "일반 폴더에 동일한 이름의 폴더 또는 대시보드가 이미 존재합니다"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10655,10 +10690,6 @@
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
   },
-  "panel-search": {
-    "no-matches": "일치하는 항목 찾을 수 없음",
-    "unsupported-layout": "지원되지 않는 레이아웃"
-  },
   "panel-type-filter": {
     "clear-button": "유형 초기화",
     "select-aria-label": "패널 유형 필터",
@@ -11193,11 +11224,15 @@
     },
     "delete-repository-button": {
       "button-delete": "삭제",
-      "confirm-delete-repository": "정말 리포지토리 구성을 삭제하시겠어요?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "리포지토리 삭제 실패",
       "success-repository-deleted": "리포지토리 설정이 삭제 대기열에 추가되었습니다",
-      "title-delete-repository": "리포지토리 구성 삭제",
-      "tooltip-delete-this-repository": "이 리포지토리 삭제"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
@@ -11843,7 +11878,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "쿼리 행 접기",
       "datasource-help": "데이터 소스 도움말 표시",
       "drag-and-drop": "드래그 앤 드롭으로 순서 변경",
@@ -11851,14 +11885,10 @@
       "expand-row": "쿼리 행 펼치기",
       "hide-response": "응답 숨기기",
       "remove-query": "쿼리 제거",
-      "replace-query-from-library": "라이브러리의 쿼리로 교체",
+      "replace-query-from-library": "",
       "show-response": "응답 표시"
     },
-    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다.",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
   },
   "recently-deleted": {
     "buttons": {
@@ -12637,10 +12667,6 @@
     "login": "로그인"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "선택한 텍스트가 구성된 열의 텍스트 너비에 맞게 줄 바꿈되는 경우",
-      "label-wrap-text": "자동 줄바꿈"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "게이지 표시 모드",
       "label-value-display": "값 표시"
@@ -12668,13 +12694,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "선택하면 전체 행이 이 셀과 같은 색으로 표시됩니다.",
-      "description-wrap-text": "선택한 텍스트가 구성된 열의 텍스트 너비에 맞게 줄 바꿈되는 경우",
-      "label": {
-        "text-alpha": "알파"
-      },
       "label-apply-to-entire-row": "전체 행에 적용",
-      "label-background-display-mode": "배경 표시 모드",
-      "wrap-text": "자동 줄바꿈"
+      "label-background-display-mode": "배경 표시 모드"
     },
     "column-alignment-options": {
       "label-auto": "자동",
@@ -12692,13 +12713,18 @@
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
     "description-count-rows": "모든 데이터 행에 대한 단일 개수 표시",
     "description-fields": "계산해야 하는 필드 선택",
+    "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "열 헤더에 텍스트 줄 바꿈 사용",
     "image-cell-options-editor": {
       "description-alt-text": "이미지를 표시할 수 없거나 화면 리더를 이용하는 사용자를 위해 표시되는 대체 텍스트",
       "description-title-text": "이미지에 커서를 가져갔을 때 표시되는 텍스트",
       "label-alt-text": "대체 텍스트",
       "label-title-text": "제목 텍스트"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
@@ -12715,58 +12741,28 @@
     "name-column-filter": "열 필터",
     "name-column-width": "열 너비",
     "name-count-rows": "행 개수 계산",
-    "name-enable-paginations": "페이지네이션 활성화",
-    "name-fields": "필드",
-    "name-hide-in-table": "테이블에서 숨기기",
-    "name-min-column-width": "열 최소 너비",
-    "name-show-table-footer": "테이블 바닥글 표시",
-    "name-show-table-header": "테이블 머리말 표시",
-    "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
-    "placeholder-column-width": "자동",
-    "placeholder-fields": "모든 숫자 필드",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "셀 옵션",
-    "category-table": "테이블",
-    "category-table-footer": "테이블 바닥글",
-    "cell-height-options": {
-      "label-large": "대",
-      "label-medium": "중",
-      "label-small": "소"
-    },
-    "column-alignment-options": {
-      "label-auto": "자동",
-      "label-center": "중앙",
-      "label-left": "왼쪽",
-      "label-right": "오른쪽"
-    },
-    "description-calculation": "감속기 함수/계산 선택",
-    "description-cell-value-inspect": "모달 창에서 셀 값 검사 활성화",
-    "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
-    "description-count-rows": "모든 데이터 행에 대한 단일 개수 표시",
-    "description-fields": "계산해야 하는 필드 선택",
-    "description-frozen-columns": "",
-    "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
-    "name-calculation": "계산",
-    "name-cell-height": "셀 높이",
-    "name-cell-type": "셀 유형",
-    "name-cell-value-inspect": "셀 값 점검",
-    "name-column-alignment": "열 정렬",
-    "name-column-filter": "열 필터",
-    "name-column-width": "열 너비",
-    "name-count-rows": "행 개수 계산",
-    "name-enable-pagination": "페이지네이션 활성화",
+    "name-enable-pagination": "",
     "name-fields": "필드",
     "name-frozen-columns": "",
     "name-hide-in-table": "테이블에서 숨기기",
     "name-min-column-width": "열 최소 너비",
     "name-show-table-footer": "테이블 바닥글 표시",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
+    "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
     "placeholder-column-width": "자동",
-    "placeholder-fields": "모든 숫자 필드"
+    "placeholder-fields": "모든 숫자 필드",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "태그 지우기",
@@ -12981,6 +12977,7 @@
         "name-point-size": "포인트 크기",
         "name-show-points": "포인트 표시",
         "name-show-thresholds": "임계값 표시",
+        "name-show-values": "",
         "name-style": "스타일",
         "name-transform": "변환",
         "transform-options": {

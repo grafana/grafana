@@ -4,7 +4,7 @@ import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
-test.use({ viewport: { width: 2000, height: 1080 }, featureToggles: { tableNextGen: true } });
+test.use({ viewport: { width: 2000, height: 1080 } });
 
 // helper utils
 const waitForTableLoad = async (loc: Page | Locator) => {
@@ -75,11 +75,9 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // text wrapping is enabled by default on this panel.
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
-    // FIXME very bad selector to get the correct "wrap text" toggle here.
-    // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
-    await page
-      .locator('[id="Override 13"]')
-      .locator(`[aria-label="${selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text')}"]`)
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.OptionsGroup.group('panel-options-override-12'))
+      .getByLabel(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text'))
       .click();
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
@@ -117,22 +115,31 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).toBeVisible();
 
+    const stateOverride = dashboardPage.getByGrafanaSelector(
+      selectors.components.OptionsGroup.group('panel-options-override-11')
+    );
+
     // confirm that "State" column is hidden by default.
     expect(page.getByRole('row').nth(0)).not.toContainText('State');
-
-    // toggle the "State" column visibility and test that it appears before re-hiding it.
-    // FIXME this selector is utterly godawful, but there's no way to give testIds or aria-labels or anything to
-    // the panel editor builder. we should fix that to make e2e's easier to write for our team.
-    const hideStateColumnSwitch = page.locator('[id="Override 12"]').locator('label').last();
+    // toggle the "State" column visibility via the override we set up in the kitchen sink panel.
+    const hideStateColumnSwitch = stateOverride.locator('label').last();
     await hideStateColumnSwitch.click();
     expect(page.getByRole('row').nth(0)).toContainText('State');
 
     // now change the display name of the "State" column.
-    // FIXME it would be good to have a better selector here too.
-    const displayNameInput = page.locator('[id="Override 12"]').locator('input[value="State"]').last();
+    const displayNameInput = stateOverride.locator('input[value="State"]').last();
     await displayNameInput.fill('State (renamed)');
     await displayNameInput.press('Enter');
     expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
+
+    // toggle the "State" column visibility again to hide it again. this confirms that we avoid bugs related to
+    // array lengths between the fields array and the column widths array.
+    await hideStateColumnSwitch.click();
+    expect(page.getByRole('row').nth(0)).not.toContainText('State');
+
+    // since the previous assertion is just for the absence of text, let's also confirm that the table is
+    // actually still on the page and that an error has not been throw.
+    await waitForTableLoad(page);
   });
 
   // we test niche cases for sorting, filtering, pagination, etc. in a unit tests already.
@@ -351,6 +358,69 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // add an Action to the whole table and check that the action button is added to the tooltip.
     // TODO -- saving for another day.
+  });
+
+  test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    const firstCaret = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Caret)
+      .first();
+
+    // test hovering over and blurring the caret, and whether the tooltip appears and disappears as expected.
+    await firstCaret.hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).hover();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking outside of it should close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
+
+    // when a pinned tooltip is open, clicking inside of it should NOT close it.
+    await firstCaret.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper
+    );
+    await tooltip.click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).toBeVisible();
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink')).click();
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
+    ).not.toBeVisible();
   });
 
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {

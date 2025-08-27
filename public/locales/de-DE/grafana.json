@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Stummschaltung, Gruppierung und Zeitsteuerung"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Keine Datenquellen gefunden"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Vorschau",
       "previewCondition": "Vorschau der Warnregelbedingung"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Kontaktpunkt-Integration hinzufügen",
       "body-attention": "Da noch keine Standardrichtlinie konfiguriert ist, wird dieser Kontaktpunkt automatisch als Standard festgelegt.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "Keine Regeln gefunden",
       "error-button": "Fehler",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Suche abbrechen",
         "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln gefunden",
@@ -3537,7 +3550,6 @@
       "button-cancel": "Abbrechen",
       "button-move": "Verschieben",
       "button-moving": "Wird verschoben ...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3644,11 @@
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
+      "error-invalid-characters": "",
       "error-required": "Ordnername erforderlich",
       "folder-name-input-placeholder-enter-folder-name": "Ordnernamen eingeben",
       "label-folder-name": "Ordnername",
       "text-pull-request-created": "Ein Pull-Request wurde erstellt, mit Änderungen an diesem Ordner:",
-      "text-your-folder-will-be-created-as": "Ihr Ordner wird erstellt als {{folderName}}",
       "title-pull-request-created": "Pull-Request erstellt",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
@@ -3743,7 +3755,7 @@
         }
       }
     },
-    "category-arrow-direction": "Pfeilrichtung",
+    "category-arrow-direction": "",
     "category-background": "Hintergrund",
     "category-border": "Rahmen",
     "category-canvas": "Leinwand",
@@ -3775,15 +3787,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Auswahl experimenteller Elementtypen aktivieren",
     "description-inline-editing": "Direkte Bearbeitung des Panels aktivieren",
     "description-pan-zoom": "Schwenken und Zoomen aktivieren",
-    "direction-options": {
-      "label-both": "Beides",
-      "label-forward": "Vorwärts",
-      "label-none": "Keine",
-      "label-reverse": "Rückwärts"
-    },
     "drone-front-item": {
       "category-drone-front": "Drohne vorne",
       "name-roll-angle": "Rollwinkel"
@@ -4171,7 +4185,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Datenquellen",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Es wurden keine Ergebnisse gefunden, die Ihrer Abfrage entsprechen",
       "request-data-source": "Neue Datenquelle anfordern",
       "roadmap": "Roadmap anzeigen"
@@ -4521,6 +4536,10 @@
           },
           "value": "Wert"
         }
+      },
+      "editor": {
+        "not-supported-for-custom-grid": "",
+        "unsupported-item-type": ""
       },
       "overlay": {
         "tooltip": "Das Element wird aufgrund von bedingtem Rendering ausgeblendet."
@@ -5204,6 +5223,9 @@
       "save-json-to-file": "JSON in Datei speichern",
       "see-docs": "Weitere Informationen zur Bereitstellung finden Sie in der <2>Dokumentation</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Konfiguration wird geladen"
     },
@@ -5475,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Visualisierung ändern",
@@ -6116,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Freigabe-Menü umschalten"
     },
-    "solo-panel-page": {
-      "loading": "Wird geladen"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard-JSON zur Fehlerbehebung bei Visualisierungsproblemen"
@@ -6351,7 +6373,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Abfrage aus Bibliothek hinzufügen"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -6402,8 +6424,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicken Sie <2>hier</2>, um mehr über diesen Fehler zu erfahren.",
-    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6541,9 +6562,11 @@
       "explore": "Entdecken"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Dashboard erstellen",
       "explore-data": "Daten untersuchen",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Weitere Details zum Fehler"
@@ -6651,6 +6674,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Feste Farbe",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Hochladen"
@@ -7118,7 +7149,7 @@
     "rich-history-card": {
       "add-comment-form": "Kommentarformular hinzufügen",
       "add-comment-tooltip": "Kommentar hinzufügen",
-      "add-to-library": "Zur Bibliothek hinzufügen",
+      "add-to-library": "",
       "cancel": "Abbrechen",
       "confirm-delete": "Löschen",
       "copy-query-tooltip": "Abfrage in Zwischenablage kopieren",
@@ -7230,7 +7261,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Abfrage aus Bibliothek hinzufügen",
+      "add-from-query-library": "",
       "query-add-button": "Abfrage hinzufügen",
       "query-add-button-aria-label": "Abfrage hinzufügen",
       "query-history-button": "Abfrageverlauf",
@@ -7522,17 +7553,13 @@
     "select-aria-label": "Ordnerfilter",
     "select-placeholder": "Nach Ordner filtern"
   },
-  "folder-picker": {
-    "create-instructions": "Drücken Sie die Eingabetaste, um den neuen Ordner zu erstellen.",
-    "input-placeholder": "Drücken Sie zur Bestätigung des neuen Ordners die Eingabetaste",
-    "loading": "Ordner werden geladen …"
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -8745,7 +8772,6 @@
       "filter-popup-input-placeholder": "Filterwerte",
       "filter-popup-match-case": "Groß-/Kleinschreibung beachten",
       "inspect-drawer-title": "Wert prüfen",
-      "inspect-menu-label": "Wert prüfen",
       "nested-table": {
         "no-data": "Keine Daten"
       },
@@ -9469,6 +9495,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9509,6 +9537,12 @@
       "show-context": "Kontext anzeigen",
       "show-log-line": "Log-Linie anzeigen",
       "sidebar-mode": "Rechts verankern",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Log nicht mehr anheften"
     },
     "log-line-menu": {
@@ -9740,7 +9774,8 @@
       "message-name-required": "Name ist erforderlich",
       "message-reserved-name": "Dies ist ein reservierter Name und kann nicht für einen Ordner verwendet werden.",
       "message-same-name": "Ein Dashboard oder ein Ordner mit demselben Namen existiert bereits",
-      "message-same-name-general": "Ein Ordner oder Dashboard im allgemeinen Ordner mit demselben Namen existiert bereits"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10687,10 +10722,6 @@
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"
     }
   },
-  "panel-search": {
-    "no-matches": "Keine Treffer gefunden",
-    "unsupported-layout": "Nicht unterstütztes Layout"
-  },
   "panel-type-filter": {
     "clear-button": "Typen zurücksetzen",
     "select-aria-label": "Panel-Typ-Filter",
@@ -11228,11 +11259,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Löschen",
-      "confirm-delete-repository": "Sind Sie sicher, dass Sie die Repository-Konfiguration löschen möchten?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Das Repository konnte nicht gelöscht werden",
       "success-repository-deleted": "Repository-Einstellungen zum Löschen in die Warteschlange gestellt",
-      "title-delete-repository": "Repository-Konfiguration löschen",
-      "tooltip-delete-this-repository": "Dieses Repository löschen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
@@ -11879,7 +11914,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Abfragezeile einklappen",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
@@ -11887,14 +11921,10 @@
       "expand-row": "Suchzeile erweitern",
       "hide-response": "Antwort ausblenden",
       "remove-query": "Abfrage entfernen",
-      "replace-query-from-library": "Mit Abfrage von Bibliothek ersetzen",
+      "replace-query-from-library": "",
       "show-response": "Antwort anzeigen "
     },
-    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
   "recently-deleted": {
     "buttons": {
@@ -12678,10 +12708,6 @@
     "login": "Anmelden"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Wenn dies ausgewählt ist, wird der Text auf die Breite des Textes in der konfigurierten Spalte umgebrochen",
-      "label-wrap-text": "Text umbrechen"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Messanzeigemodus",
       "label-value-display": "Wertanzeige"
@@ -12709,13 +12735,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Wenn dies ausgewählt ist, wird die gesamte Zeile so eingefärbt, wie es diese Zelle wäre.",
-      "description-wrap-text": "Wenn dies ausgewählt ist, wird der Text auf die Breite des Textes in der konfigurierten Spalte umgebrochen",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "Auf gesamte Zeile anwenden",
-      "label-background-display-mode": "Hintergrundanzeigemodus",
-      "wrap-text": "Text umbrechen"
+      "label-background-display-mode": "Hintergrundanzeigemodus"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12733,13 +12754,18 @@
     "description-column-filter": "Aktiviert/deaktiviert Feldfilter in der Tabelle",
     "description-count-rows": "Eine einzelne Anzahl für alle Datenzeilen anzeigen",
     "description-fields": "Wählen Sie die Felder aus, die berechnet werden sollen",
+    "description-frozen-columns": "",
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Aktiviert den Textumbruch für Spaltenüberschriften",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativer Text, der angezeigt wird, wenn ein Bild nicht angezeigt werden kann, oder für Nutzer, die einen Screenreader verwenden",
       "description-title-text": "Text, der angezeigt wird, wenn über dem Bild der Mauszeiger bewegt wird",
       "label-alt-text": "Alt-Text",
       "label-title-text": "Titeltext"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
@@ -12756,58 +12782,28 @@
     "name-column-filter": "Spaltenfilter",
     "name-column-width": "Spaltenbreite",
     "name-count-rows": "Zeilen zählen",
-    "name-enable-paginations": "Seitennummerierung aktivieren",
-    "name-fields": "Felder",
-    "name-hide-in-table": "In Tabelle ausblenden",
-    "name-min-column-width": "Minimale Spaltenbreite",
-    "name-show-table-footer": "Tabellenfußzeile anzeigen",
-    "name-show-table-header": "Tabellenüberschirft anzeigen",
-    "name-wrap-header-text": "Kopfzeilentext umbrechen",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "Alle numerischen Felder",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Zellenoptionen",
-    "category-table": "Tabelle",
-    "category-table-footer": "Tabellenfußzeile",
-    "cell-height-options": {
-      "label-large": "Groß",
-      "label-medium": "Mittel",
-      "label-small": "Klein"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Mitte",
-      "label-left": "Links",
-      "label-right": "Rechts"
-    },
-    "description-calculation": "Wählen Sie eine Reduktionsfunktion/Berechnung",
-    "description-cell-value-inspect": "Zellwertprüfung in einem modalen Fenster aktivieren",
-    "description-column-filter": "Aktiviert/deaktiviert Feldfilter in der Tabelle",
-    "description-count-rows": "Eine einzelne Anzahl für alle Datenzeilen anzeigen",
-    "description-fields": "Wählen Sie die Felder aus, die berechnet werden sollen",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
-    "name-calculation": "Berechnung",
-    "name-cell-height": "Zellenhöhe",
-    "name-cell-type": "Zellentyp",
-    "name-cell-value-inspect": "Zellenwert prüfen",
-    "name-column-alignment": "Spaltenausrichtung",
-    "name-column-filter": "Spaltenfilter",
-    "name-column-width": "Spaltenbreite",
-    "name-count-rows": "Zeilen zählen",
-    "name-enable-pagination": "Seitennummerierung aktivieren",
+    "name-enable-pagination": "",
     "name-fields": "Felder",
     "name-frozen-columns": "",
     "name-hide-in-table": "In Tabelle ausblenden",
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-show-table-footer": "Tabellenfußzeile anzeigen",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
+    "name-wrap-header-text": "Kopfzeilentext umbrechen",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alle numerischen Felder"
+    "placeholder-fields": "Alle numerischen Felder",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Tags löschen",
@@ -13022,6 +13018,7 @@
         "name-point-size": "Punktgröße",
         "name-show-points": "Punkte zeigen",
         "name-show-thresholds": "Schwellenwerte anzeigen",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Transformieren",
         "transform-options": {

@@ -17,9 +17,9 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
@@ -27,16 +27,12 @@ import (
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
-//nolint:gosec // This is a constant for a secret suffix
-const gitTokenSecretSuffix = "-git-token"
-
 type RepositoryConfig struct {
-	URL            string
-	Branch         string
-	TokenUser      string
-	Token          string
-	EncryptedToken []byte
-	Path           string
+	URL       string
+	Branch    string
+	TokenUser string
+	Token     common.RawSecureValue
+	Path      string
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -44,23 +40,21 @@ type gitRepository struct {
 	config    *provisioning.Repository
 	gitConfig RepositoryConfig
 	client    nanogit.Client
-	secrets   secrets.RepositorySecrets
 }
 
-func NewGitRepository(
+func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
-	secrets secrets.RepositorySecrets,
 ) (GitRepository, error) {
 	var opts []options.Option
-	if len(gitConfig.Token) > 0 {
+	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
 		if tokenUser == "" {
 			tokenUser = "git"
 		}
 
-		opts = append(opts, options.WithBasicAuth(tokenUser, gitConfig.Token))
+		opts = append(opts, options.WithBasicAuth(tokenUser, string(gitConfig.Token)))
 	}
 
 	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
@@ -72,7 +66,6 @@ func NewGitRepository(
 		config:    config,
 		gitConfig: gitConfig,
 		client:    client,
-		secrets:   secrets,
 	}, nil
 }
 
@@ -106,10 +99,10 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
 	}
 
-	// If the repository has workflows, we require a token or encrypted token
+	// Readonly repositories may not need a token (if public)
 	if len(r.config.Spec.Workflows) > 0 {
-		if cfg.Token == "" && len(cfg.EncryptedToken) == 0 {
-			list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
+		if cfg.Token == "" && r.config.Secure.Token.IsZero() {
+			list = append(list, field.Required(field.NewPath("secure", "token"), "a git access token is required"))
 		}
 	}
 
@@ -166,7 +159,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", t, "token").String(),
+				Field:  field.NewPath("secure", "token").String(),
 				Detail: detail,
 			}},
 		}, nil
@@ -831,24 +824,4 @@ func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context
 	ctx = log.ToContext(ctx, logger)
 
 	return ctx, logger
-}
-
-func (r *gitRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *gitRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *gitRepository) OnDelete(ctx context.Context) error {
-	logger := logging.FromContext(ctx)
-	secretName := r.config.Name + gitTokenSecretSuffix
-	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
-		return fmt.Errorf("delete git token secret: %w", err)
-	}
-
-	logger.Info("Deleted git token secret", "secretName", secretName)
-
-	return nil
 }
