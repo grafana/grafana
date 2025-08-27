@@ -19,7 +19,7 @@ import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { NotificationMessageSectionExtension } from './alert-rule-form/notificationMessageSectionExtensions/extensions';
+import { NotificationMessageSectionExtension } from './alert-rule-form/extensions/NotificationMessageSectionExtension';
 import { useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
@@ -208,7 +208,6 @@ const AnnotationsStep = () => {
                     />
                   )}
                 </div>
-                <NotificationMessageSectionExtension />
               </div>
             </div>
           );
@@ -234,13 +233,14 @@ const AnnotationsStep = () => {
         </Stack>
         {showPanelSelector && (
           <DashboardPicker
-            isOpen={true}
-            dashboardUid={selectedDashboardUid}
-            panelId={selectedPanelId}
-            onChange={setSelectedDashboardAndPanelId}
-            onDismiss={() => setShowPanelSelector(false)}
+          isOpen={true}
+          dashboardUid={selectedDashboardUid}
+          panelId={selectedPanelId}
+          onChange={setSelectedDashboardAndPanelId}
+          onDismiss={() => setShowPanelSelector(false)}
           />
         )}
+        <NotificationMessageSectionExtension />
       </Stack>
     </RuleEditorSection>
   );

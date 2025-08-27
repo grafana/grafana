@@ -31,6 +31,6 @@
     "public/vendor/**/*.ts",
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"
-  ],
+, "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/extensions/NotificationMessageSectionExtension.tsx"  ],
   "exclude": ["public/app/**/webpack.config.ts"]
 }
