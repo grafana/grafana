@@ -334,7 +334,7 @@ func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json)
 
 			// if query target has no datasource, set it to have the datasource on the panel
 			if _, ok := query.CheckGet("datasource"); !ok {
-				uid := getDataSourceUidFromJson(query)
+				uid := getDataSourceUidFromJson(panel)
 				datasource := map[string]any{"type": "public-ds", "uid": uid}
 				query.Set("datasource", datasource)
 			}
@@ -591,28 +591,47 @@ func getPanelRelativeTimeRange(dashboard *simplejson.Json, panelID int64) string
 
 func getPanelRelativeTimeRangeV2(dashboard *simplejson.Json, panelID int64) string {
 	// In V2, check elements for panel-specific time settings
-	if elements := dashboard.Get("elements"); elements.Interface() != nil {
-		elementsMap := elements.MustMap()
-		for _, element := range elementsMap {
-			element := simplejson.NewFromAny(element)
+	elements := dashboard.Get("elements")
+	if elements.Interface() == nil {
+		return ""
+	}
 
-			// Check if this is the panel we're looking for
-			if element.Get("spec").Get("id").MustInt64() == panelID {
-				// Check for time override in data.spec.queryOptions.timeFrom
-				if spec := element.Get("spec"); spec.Interface() != nil {
-					if data := spec.Get("data"); data.Interface() != nil {
-						if dataSpec := data.Get("spec"); dataSpec.Interface() != nil {
-							if queryOptions := dataSpec.Get("queryOptions"); queryOptions.Interface() != nil {
-								if timeFrom := queryOptions.Get("timeFrom"); timeFrom.Interface() != nil {
-									return timeFrom.MustString()
-								}
-							}
-						}
-					}
-				}
-				break
-			}
+	elementsMap := elements.MustMap()
+	for _, element := range elementsMap {
+		element := simplejson.NewFromAny(element)
+
+		// Check if this is the panel we're looking for
+		if element.Get("spec").Get("id").MustInt64() != panelID {
+			continue
 		}
+
+		// Check for time override in data.spec.queryOptions.timeFrom
+		spec := element.Get("spec")
+		if spec.Interface() == nil {
+			return ""
+		}
+
+		data := spec.Get("data")
+		if data.Interface() == nil {
+			return ""
+		}
+
+		dataSpec := data.Get("spec")
+		if dataSpec.Interface() == nil {
+			return ""
+		}
+
+		queryOptions := dataSpec.Get("queryOptions")
+		if queryOptions.Interface() == nil {
+			return ""
+		}
+
+		timeFrom := queryOptions.Get("timeFrom")
+		if timeFrom.Interface() != nil {
+			return timeFrom.MustString()
+		}
+
+		return ""
 	}
 
 	return ""
