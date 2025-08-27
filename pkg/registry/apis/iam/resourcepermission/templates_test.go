@@ -24,7 +24,19 @@ func TestTemplates(t *testing.T) {
 			OrgID:       orgID,
 			UID:         name,
 			Name:        displayName,
-			Now:         "2025-07-22 15:00:00",
+			Now:         "2025-08-27 21:35:00",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getInsertPermission := func(roleID int64, permission accesscontrol.Permission) sqltemplate.SQLTemplate {
+		v := insertPermissionTemplate{
+			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
+			PermissionTable: nodb.Table("permission"),
+			RoleID:          roleID,
+			Permission:      permission,
+			Now:             "2025-08-27 21:35:00",
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
@@ -42,6 +54,18 @@ func TestTemplates(t *testing.T) {
 						accesscontrol.PrefixedRoleUID("managed:builtins:editor:1:permissions"+":org:8"),
 						"managed:builtins:editor:1:permissions",
 					),
+				},
+			},
+			permissionInsertTplt: {
+				{
+					Name: "insert_permission",
+					Data: getInsertPermission(23, accesscontrol.Permission{
+						Action:     "dashboards:view",
+						Scope:      "dashboard:uid:dash1",
+						Kind:       "dashboard",
+						Attribute:  "uid",
+						Identifier: "dash1",
+					}),
 				},
 			},
 		},

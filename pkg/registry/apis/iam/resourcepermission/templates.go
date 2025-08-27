@@ -133,6 +133,7 @@ type insertPermissionTemplate struct {
 	PermissionTable string
 	RoleID          int64
 	Permission      accesscontrol.Permission
+	Now             string
 }
 
 func (t insertPermissionTemplate) Validate() error {
@@ -145,6 +146,7 @@ func buildInsertPermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, roleID
 		PermissionTable: dbHelper.Table("permission"),
 		RoleID:          roleID,
 		Permission:      permission,
+		Now:             time.Now().Format(time.DateTime),
 	}
 	rawQuery, err := sqltemplate.Execute(permissionInsertTplt, req)
 	if err != nil {
