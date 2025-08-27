@@ -3,6 +3,8 @@ package resourcepermission
 import (
 	"errors"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 var (
@@ -14,9 +16,19 @@ var (
 )
 
 type grant struct {
-	RoleName        string
-	AssigneeID      string
-	AssignmentTable string
-	Action          string
-	Scope           string
+	RoleName         string
+	AssigneeID       any
+	AssignmentTable  string
+	AssignmentColumn string
+	Action           string
+	Scope            string
+}
+
+func (g *grant) permission() accesscontrol.Permission {
+	p := accesscontrol.Permission{
+		Action: g.Action,
+		Scope:  g.Scope,
+	}
+	p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(p.Scope)
+	return p
 }
