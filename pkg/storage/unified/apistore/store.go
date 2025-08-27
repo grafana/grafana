@@ -205,21 +205,21 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
+	// TODO feature toggle?
 	if obj.GetObjectKind().GroupVersionKind().Kind == "Folder" {
 		val, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return err
 		}
-		// TODO run zanzana so this doesn't error
-		// TODO fix wire generation -- register the zanzana service -- might not work even then because of the pointer
-		// folderName = val.GetSpec().(*folderv1.FolderSpec).Title or something like that
-		namespace := val.GetNamespace()
-		folderUid := val.GetName()
 		parentFolderUid := val.GetFolder()
-		folderPermErr := s.permissionStore.SetFolderParent(ctx, namespace, folderUid, parentFolderUid)
-		if folderPermErr != nil {
-			// TODO delete folder?
-			return folderPermErr
+		// Zanzana only cares about parent-child folder relationships, so only set if there's a parent (i.e., folder is not in the root)
+		if parentFolderUid != "" {
+			namespace := val.GetNamespace()
+			folderUid := val.GetName()
+			folderPermErr := s.permissionStore.SetFolderParent(ctx, namespace, folderUid, parentFolderUid)
+			if folderPermErr != nil {
+				logging.FromContext(ctx).Warn("failed to propagate new folder to zanzana", "err", err)
+			}
 		}
 	}
 

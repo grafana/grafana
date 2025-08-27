@@ -128,7 +128,7 @@ func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *folde
 	}
 
 	if (len(parents) == 0 && parentUID == "") || (len(parents) == 1 && parents[0] == parentUID) {
-		// Folder is already reconciled
+		// Folder is already reconciled or folder is at root
 		logger.Info("Folder is already reconciled", "folder", folderUID, "parent", parentUID, "namespace", namespace)
 		return operator.ReconcileResult{}, nil
 	}
