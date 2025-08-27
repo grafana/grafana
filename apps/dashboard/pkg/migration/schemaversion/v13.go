@@ -242,141 +242,176 @@ func convertSeriesOverrides(panel map[string]interface{}) {
 	}
 
 	// Convert aliasColors to overrides
+	overrides = convertAliasColors(panel, overrides)
+
+	// Convert seriesOverrides to field config overrides
+	overrides = convertSeriesOverridesToFieldConfig(panel, overrides)
+
+	fieldConfig["overrides"] = overrides
+}
+
+func convertAliasColors(panel map[string]interface{}, overrides []interface{}) []interface{} {
 	if aliasColors, ok := panel["aliasColors"].(map[string]interface{}); ok {
 		for alias, color := range aliasColors {
 			if colorStr, ok := color.(string); ok && colorStr != "" {
-				override := map[string]interface{}{
-					"matcher": map[string]interface{}{
-						"id":      "byName",
-						"options": alias,
-					},
-					"properties": []interface{}{
-						map[string]interface{}{
-							"id": "color",
-							"value": map[string]interface{}{
-								"mode":       "fixed",
-								"fixedColor": colorStr,
-							},
-						},
-					},
-				}
+				override := createColorOverride(alias, colorStr)
 				overrides = append(overrides, override)
 			}
 		}
 	}
+	return overrides
+}
 
-	// Convert seriesOverrides to field config overrides
+func createColorOverride(alias, colorStr string) map[string]interface{} {
+	return map[string]interface{}{
+		"matcher": map[string]interface{}{
+			"id":      "byName",
+			"options": alias,
+		},
+		"properties": []interface{}{
+			map[string]interface{}{
+				"id": "color",
+				"value": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": colorStr,
+				},
+			},
+		},
+	}
+}
+
+func convertSeriesOverridesToFieldConfig(panel map[string]interface{}, overrides []interface{}) []interface{} {
 	if seriesOverrides, ok := panel["seriesOverrides"].([]interface{}); ok {
 		for _, seriesOverride := range seriesOverrides {
 			if seriesMap, ok := seriesOverride.(map[string]interface{}); ok {
-				alias, hasAlias := seriesMap["alias"].(string)
-				if !hasAlias {
-					continue
-				}
-
-				// Determine if alias is regex
-				aliasIsRegex := false
-				if len(alias) > 2 {
-					firstChar := alias[0]
-					lastChar := alias[len(alias)-1]
-					if (firstChar == '/' || firstChar == '~' || firstChar == '@' || firstChar == ';' || firstChar == '%' || firstChar == '#' || firstChar == '\'') &&
-						firstChar == lastChar {
-						aliasIsRegex = true
-					}
-				}
-
-				override := map[string]interface{}{
-					"matcher": map[string]interface{}{
-						"id":      getMatcherId(aliasIsRegex),
-						"options": alias,
-					},
-					"properties": []interface{}{},
-				}
-
-				properties := []interface{}{}
-
-				// Convert various series override properties
-				if fill, ok := seriesMap["fill"]; ok {
-					if fillNum, ok := fill.(float64); ok {
-						properties = append(properties, map[string]interface{}{
-							"id":    "custom.fillOpacity",
-							"value": fillNum * 10, // was 0-10, new is 0-100
-						})
-					}
-				}
-
-				if points, ok := seriesMap["points"]; ok {
-					if pointsBool, ok := points.(bool); ok {
-						properties = append(properties, map[string]interface{}{
-							"id":    "custom.showPoints",
-							"value": pointsBool,
-						})
-					}
-				}
-
-				if bars, ok := seriesMap["bars"]; ok {
-					if barsBool, ok := bars.(bool); ok {
-						if barsBool {
-							properties = append(properties, map[string]interface{}{
-								"id":    "custom.drawStyle",
-								"value": "bars",
-							})
-							properties = append(properties, map[string]interface{}{
-								"id":    "custom.fillOpacity",
-								"value": 100,
-							})
-						}
-					}
-				}
-
-				if lines, ok := seriesMap["lines"]; ok {
-					if linesBool, ok := lines.(bool); ok {
-						if linesBool {
-							properties = append(properties, map[string]interface{}{
-								"id":    "custom.drawStyle",
-								"value": "line",
-							})
-						}
-					}
-				}
-
-				if linewidth, ok := seriesMap["linewidth"]; ok {
-					properties = append(properties, map[string]interface{}{
-						"id":    "custom.lineWidth",
-						"value": linewidth,
-					})
-				}
-
-				if pointradius, ok := seriesMap["pointradius"]; ok {
-					if radius, ok := pointradius.(float64); ok {
-						properties = append(properties, map[string]interface{}{
-							"id":    "custom.pointSize",
-							"value": 2 + radius*2,
-						})
-					}
-				}
-
-				if color, ok := seriesMap["color"]; ok {
-					if colorStr, ok := color.(string); ok {
-						properties = append(properties, map[string]interface{}{
-							"id": "color",
-							"value": map[string]interface{}{
-								"mode":       "fixed",
-								"fixedColor": colorStr,
-							},
-						})
-					}
-				}
-
-				if len(properties) > 0 {
-					override["properties"] = properties
+				override := createSeriesOverride(seriesMap)
+				if override != nil {
 					overrides = append(overrides, override)
 				}
 			}
 		}
 	}
+	return overrides
+}
 
-	fieldConfig["overrides"] = overrides
+func createSeriesOverride(seriesMap map[string]interface{}) map[string]interface{} {
+	alias, hasAlias := seriesMap["alias"].(string)
+	if !hasAlias {
+		return nil
+	}
+
+	aliasIsRegex := isAliasRegex(alias)
+	properties := extractSeriesProperties(seriesMap)
+
+	if len(properties) == 0 {
+		return nil
+	}
+
+	return map[string]interface{}{
+		"matcher": map[string]interface{}{
+			"id":      getMatcherId(aliasIsRegex),
+			"options": alias,
+		},
+		"properties": properties,
+	}
+}
+
+func isAliasRegex(alias string) bool {
+	if len(alias) <= 2 {
+		return false
+	}
+
+	firstChar := alias[0]
+	lastChar := alias[len(alias)-1]
+
+	regexChars := []byte{'/', '~', '@', ';', '%', '#', '\''}
+	for _, char := range regexChars {
+		if firstChar == char && firstChar == lastChar {
+			return true
+		}
+	}
+	return false
+}
+
+func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
+	properties := []interface{}{}
+
+	// Fill opacity
+	if fill, ok := seriesMap["fill"]; ok {
+		if fillNum, ok := fill.(float64); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.fillOpacity",
+				"value": fillNum * 10, // was 0-10, new is 0-100
+			})
+		}
+	}
+
+	// Show points
+	if points, ok := seriesMap["points"]; ok {
+		if pointsBool, ok := points.(bool); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.showPoints",
+				"value": pointsBool,
+			})
+		}
+	}
+
+	// Draw style (bars)
+	if bars, ok := seriesMap["bars"]; ok {
+		if barsBool, ok := bars.(bool); ok && barsBool {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.drawStyle",
+				"value": "bars",
+			})
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.fillOpacity",
+				"value": 100,
+			})
+		}
+	}
+
+	// Draw style (lines)
+	if lines, ok := seriesMap["lines"]; ok {
+		if linesBool, ok := lines.(bool); ok && linesBool {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.drawStyle",
+				"value": "line",
+			})
+		}
+	}
+
+	// Line width
+	if linewidth, ok := seriesMap["linewidth"]; ok {
+		properties = append(properties, map[string]interface{}{
+			"id":    "custom.lineWidth",
+			"value": linewidth,
+		})
+	}
+
+	// Point radius
+	if pointradius, ok := seriesMap["pointradius"]; ok {
+		if radius, ok := pointradius.(float64); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "custom.pointSize",
+				"value": 2 + radius*2,
+			})
+		}
+	}
+
+	// Color
+	if color, ok := seriesMap["color"]; ok {
+		if colorStr, ok := color.(string); ok {
+			properties = append(properties, map[string]interface{}{
+				"id": "color",
+				"value": map[string]interface{}{
+					"mode":       "fixed",
+					"fixedColor": colorStr,
+				},
+			})
+		}
+	}
+
+	return properties
 }
 
 // convertThresholds converts graph thresholds to the new step-based threshold system
@@ -391,142 +426,200 @@ func convertThresholds(panel map[string]interface{}) {
 		return
 	}
 
-	// Convert old thresholds array to new step-based system
 	if oldThresholds, ok := panel["thresholds"].([]interface{}); ok && len(oldThresholds) > 0 {
-		steps := []interface{}{}
-		area := false
-		line := false
-
-		// Sort thresholds by value
-		sortedThresholds := make([]map[string]interface{}, len(oldThresholds))
-		for i, t := range oldThresholds {
-			if threshold, ok := t.(map[string]interface{}); ok {
-				sortedThresholds[i] = threshold
-			}
-		}
-
-		// Sort by value
-		for i := 0; i < len(sortedThresholds)-1; i++ {
-			for j := i + 1; j < len(sortedThresholds); j++ {
-				if val1, ok1 := sortedThresholds[i]["value"].(float64); ok1 {
-					if val2, ok2 := sortedThresholds[j]["value"].(float64); ok2 {
-						if val1 > val2 {
-							sortedThresholds[i], sortedThresholds[j] = sortedThresholds[j], sortedThresholds[i]
-						}
-					}
-				}
-			}
-		}
-
-		// Convert to step-based thresholds
-		for i, threshold := range sortedThresholds {
-			if fill, ok := threshold["fill"].(bool); ok && fill {
-				area = true
-			}
-			if line, ok := threshold["line"].(bool); ok && line {
-				line = true
-			}
-
-			op, _ := threshold["op"].(string)
-			value, _ := threshold["value"].(float64)
-
-			if op == "gt" {
-				steps = append(steps, map[string]interface{}{
-					"value": value,
-					"color": getThresholdColor(threshold),
-				})
-			} else if op == "lt" {
-				if i == 0 {
-					steps = append(steps, map[string]interface{}{
-						"value": interface{}(nil), // -Infinity equivalent
-						"color": "transparent",
-					})
-				}
-
-				// Check if next threshold is gt and there's a gap
-				if i+1 < len(sortedThresholds) {
-					nextThreshold := sortedThresholds[i+1]
-					if nextOp, ok := nextThreshold["op"].(string); ok && nextOp == "gt" {
-						if nextValue, ok := nextThreshold["value"].(float64); ok && nextValue > value {
-							steps = append(steps, map[string]interface{}{
-								"value": value,
-								"color": "transparent",
-							})
-						}
-					}
-				}
-			}
-		}
-
-		// Add base transparent step if needed
-		if len(steps) > 0 {
-			if firstStep, ok := steps[0].(map[string]interface{}); ok {
-				if firstValue, ok := firstStep["value"].(float64); ok && firstValue != -1e308 {
-					steps = append([]interface{}{
-						map[string]interface{}{
-							"color": "transparent",
-							"value": interface{}(nil),
-						},
-					}, steps...)
-				}
-			}
-		}
-
-		// Set threshold style mode - default to "line" if no fill/line specified
-		displayMode := "line"
-		if area && line {
-			displayMode = "line+area"
-		} else if area {
-			displayMode = "area"
-		} else if line {
-			displayMode = "line"
-		}
-
-		if defaults["custom"] == nil {
-			defaults["custom"] = map[string]interface{}{}
-		}
-		custom, ok := defaults["custom"].(map[string]interface{})
-		if ok {
-			custom["thresholdsStyle"] = map[string]interface{}{
-				"mode": displayMode,
-			}
-		}
-
-		defaults["thresholds"] = map[string]interface{}{
-			"mode":  "absolute",
-			"steps": steps,
-		}
+		convertExistingThresholds(panel, defaults, oldThresholds)
 	} else {
-		// No thresholds specified, add the default timeseries threshold steps
-		// This matches what the frontend timeseries plugin does
-		if defaults["custom"] == nil {
-			defaults["custom"] = map[string]interface{}{}
-		}
-		custom, ok := defaults["custom"].(map[string]interface{})
-		if ok {
-			custom["thresholdsStyle"] = map[string]interface{}{
-				"mode": "off",
-			}
-		}
-
-		// Add default threshold steps that match the timeseries plugin defaults
-		defaults["thresholds"] = map[string]interface{}{
-			"mode": "absolute",
-			"steps": []interface{}{
-				map[string]interface{}{
-					"color": "green",
-					"value": interface{}(nil), // null in JSON, represents -Infinity
-				},
-				map[string]interface{}{
-					"color": "red",
-					"value": 80.0,
-				},
-			},
-		}
+		setDefaultThresholds(defaults)
 	}
 
 	// Clean up old thresholds
 	delete(panel, "thresholds")
+}
+
+func convertExistingThresholds(panel map[string]interface{}, defaults map[string]interface{}, oldThresholds []interface{}) {
+	steps := []interface{}{}
+	area, line := extractThresholdStyles(oldThresholds)
+
+	// Sort thresholds by value
+	sortedThresholds := sortThresholdsByValue(oldThresholds)
+
+	// Convert to step-based thresholds
+	steps = buildThresholdSteps(sortedThresholds)
+
+	// Add base transparent step if needed
+	steps = addBaseTransparentStep(steps)
+
+	// Set threshold style mode
+	setThresholdDisplayMode(defaults, area, line)
+
+	// Set the new thresholds
+	defaults["thresholds"] = map[string]interface{}{
+		"mode":  "absolute",
+		"steps": steps,
+	}
+}
+
+func extractThresholdStyles(oldThresholds []interface{}) (bool, bool) {
+	area, line := false, false
+	for _, t := range oldThresholds {
+		if threshold, ok := t.(map[string]interface{}); ok {
+			if !area {
+				if fill, ok := threshold["fill"].(bool); ok && fill {
+					area = true
+				}
+			}
+			if !line {
+				if lineStyle, ok := threshold["line"].(bool); ok && lineStyle {
+					line = true
+				}
+			}
+
+			if area && line {
+				break
+			}
+		}
+	}
+	return area, line
+}
+
+func sortThresholdsByValue(oldThresholds []interface{}) []map[string]interface{} {
+	sortedThresholds := make([]map[string]interface{}, len(oldThresholds))
+	for i, t := range oldThresholds {
+		if threshold, ok := t.(map[string]interface{}); ok {
+			sortedThresholds[i] = threshold
+		}
+	}
+
+	// Sort by value
+	for i := 0; i < len(sortedThresholds)-1; i++ {
+		for j := i + 1; j < len(sortedThresholds); j++ {
+			if val1, ok1 := sortedThresholds[i]["value"].(float64); ok1 {
+				if val2, ok2 := sortedThresholds[j]["value"].(float64); ok2 {
+					if val1 > val2 {
+						sortedThresholds[i], sortedThresholds[j] = sortedThresholds[j], sortedThresholds[i]
+					}
+				}
+			}
+		}
+	}
+	return sortedThresholds
+}
+
+func buildThresholdSteps(sortedThresholds []map[string]interface{}) []interface{} {
+	steps := []interface{}{}
+
+	for i, threshold := range sortedThresholds {
+		op, _ := threshold["op"].(string)
+		value, _ := threshold["value"].(float64)
+
+		switch op {
+		case "gt":
+			steps = append(steps, map[string]interface{}{
+				"value": value,
+				"color": getThresholdColor(threshold),
+			})
+		case "lt":
+			steps = appendLtThresholdSteps(steps, i, threshold, value, sortedThresholds)
+		}
+	}
+
+	return steps
+}
+
+func appendLtThresholdSteps(steps []interface{}, index int, threshold map[string]interface{}, value float64, sortedThresholds []map[string]interface{}) []interface{} {
+	// Add base transparent step for first lt threshold
+	if index == 0 {
+		steps = append(steps, map[string]interface{}{
+			"value": interface{}(nil), // -Infinity equivalent
+			"color": "transparent",
+		})
+	}
+
+	// Check if next threshold is gt and there's a gap
+	if index+1 < len(sortedThresholds) {
+		nextThreshold := sortedThresholds[index+1]
+		if nextOp, ok := nextThreshold["op"].(string); ok && nextOp == "gt" {
+			if nextValue, ok := nextThreshold["value"].(float64); ok && nextValue > value {
+				steps = append(steps, map[string]interface{}{
+					"value": value,
+					"color": "transparent",
+				})
+			}
+		}
+	}
+
+	return steps
+}
+
+func addBaseTransparentStep(steps []interface{}) []interface{} {
+	if len(steps) == 0 {
+		return steps
+	}
+
+	if firstStep, ok := steps[0].(map[string]interface{}); ok {
+		if firstValue, ok := firstStep["value"].(float64); ok && firstValue != -1e308 {
+			steps = append([]interface{}{
+				map[string]interface{}{
+					"color": "transparent",
+					"value": interface{}(nil),
+				},
+			}, steps...)
+		}
+	}
+
+	return steps
+}
+
+func setThresholdDisplayMode(defaults map[string]interface{}, area, line bool) {
+	displayMode := determineDisplayMode(area, line)
+
+	if defaults["custom"] == nil {
+		defaults["custom"] = map[string]interface{}{}
+	}
+
+	if custom, ok := defaults["custom"].(map[string]interface{}); ok {
+		custom["thresholdsStyle"] = map[string]interface{}{
+			"mode": displayMode,
+		}
+	}
+}
+
+func determineDisplayMode(area, line bool) string {
+	if area && line {
+		return "line+area"
+	} else if area {
+		return "area"
+	} else if line {
+		return "line"
+	}
+	return "line"
+}
+
+func setDefaultThresholds(defaults map[string]interface{}) {
+	if defaults["custom"] == nil {
+		defaults["custom"] = map[string]interface{}{}
+	}
+
+	if custom, ok := defaults["custom"].(map[string]interface{}); ok {
+		custom["thresholdsStyle"] = map[string]interface{}{
+			"mode": "off",
+		}
+	}
+
+	// Add default threshold steps that match the timeseries plugin defaults
+	defaults["thresholds"] = map[string]interface{}{
+		"mode": "absolute",
+		"steps": []interface{}{
+			map[string]interface{}{
+				"color": "green",
+				"value": interface{}(nil), // null in JSON, represents -Infinity
+			},
+			map[string]interface{}{
+				"color": "red",
+				"value": 80.0,
+			},
+		},
+	}
 }
 
 // convertTimeRegions converts graph time regions to annotations
