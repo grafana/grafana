@@ -1,9 +1,40 @@
 import { isHttpError } from '../guards';
-import { HttpError } from '../types/repository';
+import { HttpError, RepositoryInfo } from '../types/repository';
 
 export interface ApiRequest {
   url: string;
   headers: Record<string, string>;
+}
+
+const githubUrlRegex = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
+const gitlabUrlRegex = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
+const bitbucketUrlRegex = /^https:\/\/bitbucket\.org\/([^\/]+)\/([^\/]+)\/?$/;
+
+export function parseRepositoryUrl(url: string, type: string): RepositoryInfo | null {
+  let match: RegExpMatchArray | null = null;
+
+  switch (type) {
+    case 'github':
+      match = url.match(githubUrlRegex);
+      break;
+    case 'gitlab':
+      match = url.match(gitlabUrlRegex);
+      break;
+    case 'bitbucket':
+      match = url.match(bitbucketUrlRegex);
+      break;
+    default:
+      return null;
+  }
+
+  if (match && match[1] && match[2]) {
+    return {
+      owner: match[1],
+      repo: match[2].replace(/\.git$/, ''),
+    };
+  }
+
+  return null;
 }
 
 export function getProviderHeaders(repositoryType: string, token: string): Record<string, string> {
@@ -14,21 +45,6 @@ export function getProviderHeaders(repositoryType: string, token: string): Recor
       return { 'Private-Token': token };
     case 'bitbucket':
       return { Authorization: `Bearer ${token}` };
-    default:
-      throw new Error(`Unsupported repository type: ${repositoryType}`);
-  }
-}
-
-export function getBranchesUrl(repositoryType: string, owner: string, repo: string): string {
-  switch (repositoryType) {
-    case 'github':
-      return `https://api.github.com/repos/${owner}/${repo}/branches`;
-    case 'gitlab': {
-      const encodedPath = encodeURIComponent(`${owner}/${repo}`);
-      return `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches`;
-    }
-    case 'bitbucket':
-      return `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches`;
     default:
       throw new Error(`Unsupported repository type: ${repositoryType}`);
   }
@@ -49,6 +65,94 @@ export async function makeApiRequest(request: ApiRequest) {
   }
 
   return response.json();
+}
+
+// GitHub API limits branches to 100 per page, so we need pagination
+export async function fetchAllGitHubBranches(
+  owner: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<Array<{ name: string }>> {
+  const allBranches = [];
+  let page = 1;
+  let hasMorePages = true;
+
+  while (hasMorePages && page <= 10) {
+    const url = `https://api.github.com/repos/${owner}/${repo}/branches?per_page=100&page=${page}`;
+    const data = await makeApiRequest({ url, headers });
+
+    if (Array.isArray(data) && data.length > 0) {
+      allBranches.push(...data);
+      hasMorePages = data.length === 100;
+      page++;
+    } else {
+      hasMorePages = false;
+    }
+  }
+
+  return allBranches;
+}
+
+// GitLab API also limits to 100 per page,, so we need pagination
+export async function fetchAllGitLabBranches(
+  owner: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<Array<{ name: string }>> {
+  const allBranches = [];
+  let page = 1;
+  let hasMorePages = true;
+
+  while (hasMorePages && page <= 10) {
+    const encodedPath = encodeURIComponent(`${owner}/${repo}`);
+    const url = `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches?per_page=100&page=${page}`;
+    const data = await makeApiRequest({ url, headers });
+
+    if (Array.isArray(data) && data.length > 0) {
+      allBranches.push(...data);
+      hasMorePages = data.length === 100;
+      page++;
+    } else {
+      hasMorePages = false;
+    }
+  }
+
+  return allBranches;
+}
+
+export async function fetchAllBitbucketBranches(
+  owner: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<Array<{ name: string }>> {
+  const url = `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches?pagelen=1000`;
+  const data = await makeApiRequest({ url, headers });
+
+  if (data && Array.isArray(data.values)) {
+    return data.values;
+  }
+
+  return [];
+}
+
+export async function fetchAllBranches(
+  repositoryType: string,
+  owner: string,
+  repo: string,
+  token: string
+): Promise<Array<{ name: string }>> {
+  const headers = getProviderHeaders(repositoryType, token);
+
+  switch (repositoryType) {
+    case 'github':
+      return fetchAllGitHubBranches(owner, repo, headers);
+    case 'gitlab':
+      return fetchAllGitLabBranches(owner, repo, headers);
+    case 'bitbucket':
+      return fetchAllBitbucketBranches(owner, repo, headers);
+    default:
+      throw new Error(`Unsupported repository type: ${repositoryType}`);
+  }
 }
 
 export function getErrorMessage(err: unknown) {

@@ -2,39 +2,8 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { isSupportedGitProvider } from '../guards';
-import { BranchInfo, RepositoryInfo, UseBranchFetchingProps } from '../types/repository';
-import { getBranchesUrl, getErrorMessage, getProviderHeaders, makeApiRequest } from '../utils/httpUtils';
-
-const githubUrlRegex = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
-const gitlabUrlRegex = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
-const bitbucketUrlRegex = /^https:\/\/bitbucket\.org\/([^\/]+)\/([^\/]+)\/?$/;
-
-function parseRepositoryUrl(url: string, type: string): RepositoryInfo | null {
-  let match: RegExpMatchArray | null = null;
-
-  switch (type) {
-    case 'github':
-      match = url.match(githubUrlRegex);
-      break;
-    case 'gitlab':
-      match = url.match(gitlabUrlRegex);
-      break;
-    case 'bitbucket':
-      match = url.match(bitbucketUrlRegex);
-      break;
-    default:
-      return null;
-  }
-
-  if (match && match[1] && match[2]) {
-    return {
-      owner: match[1],
-      repo: match[2].replace(/\.git$/, ''),
-    };
-  }
-
-  return null;
-}
+import { BranchInfo, UseBranchFetchingProps } from '../types/repository';
+import { fetchAllBranches, getErrorMessage, parseRepositoryUrl } from '../utils/httpUtils';
 
 export function useBranchFetching({
   repositoryType,
@@ -68,33 +37,11 @@ export function useBranchFetching({
         throw new Error('Invalid repository URL format');
       }
 
-      const headers = getProviderHeaders(repositoryType, trimmedToken);
-      const url = getBranchesUrl(repositoryType, repoInfo.owner, repoInfo.repo);
-      const data = await makeApiRequest({ url, headers });
+      const branchData = await fetchAllBranches(repositoryType, repoInfo.owner, repoInfo.repo, trimmedToken);
 
-      let branchData: BranchInfo[] = [];
-
-      if (repositoryType === 'github') {
-        if (Array.isArray(data)) {
-          branchData = data.map((branch: { name: string }) => ({
-            name: branch.name,
-          }));
-        }
-      } else if (repositoryType === 'gitlab') {
-        if (Array.isArray(data)) {
-          branchData = data.map((branch: { name: string }) => ({
-            name: branch.name,
-          }));
-        }
-      } else if (repositoryType === 'bitbucket') {
-        if (data && Array.isArray(data.values)) {
-          branchData = data.values.map((branch: { name: string }) => ({
-            name: branch.name,
-          }));
-        }
-      }
-
-      return branchData;
+      return branchData.map((branch) => ({
+        name: branch.name,
+      }));
     },
     [hasRequiredData, trimmedUrl, trimmedToken, repositoryType]
   );
