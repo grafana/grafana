@@ -133,7 +133,7 @@ export function ConnectStep() {
                   placeholder={gitFields.branchConfig.placeholder}
                   options={branchOptions}
                   loading={branchesLoading}
-                  createCustomValue={!isGitBased}
+                  createCustomValue
                   isClearable
                   {...field}
                 />
