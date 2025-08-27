@@ -30,22 +30,14 @@ const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as Partial<
 const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
 
 const setup = ({
-  repoName = 'test-repo',
-  isNonProvisionedFolder = false,
+  repoName = undefined,
   excludeUIDs = undefined,
 }: {
   repoName?: string;
   isNonProvisionedFolder?: boolean;
   excludeUIDs?: string[];
 }) => {
-  render(
-    <ProvisioningAwareFolderPicker
-      repositoryName={repoName}
-      isNonProvisionedFolder={isNonProvisionedFolder}
-      onChange={jest.fn()}
-      excludeUIDs={excludeUIDs}
-    />
-  );
+  render(<ProvisioningAwareFolderPicker repositoryName={repoName} onChange={jest.fn()} excludeUIDs={excludeUIDs} />);
 };
 
 describe('ProvisioningAwareFolderPicker', () => {
@@ -90,12 +82,12 @@ describe('ProvisioningAwareFolderPicker', () => {
     });
 
     it('should exclude provisioned folders for non-provisioned context', () => {
-      setup({ isNonProvisionedFolder: true });
+      setup({ repoName: undefined });
       expect(screen.getByTestId('exclude-uids')).toHaveTextContent('["repo1","repo2","repo3"]');
     });
 
     it('should merge excludeUIDs', () => {
-      setup({ isNonProvisionedFolder: true, excludeUIDs: ['custom1'] });
+      setup({ repoName: undefined, excludeUIDs: ['custom1'] });
 
       const excludeUIDs = JSON.parse(screen.getByTestId('exclude-uids').textContent || '[]');
       expect(excludeUIDs).toEqual(['repo1', 'repo2', 'repo3', 'custom1']);

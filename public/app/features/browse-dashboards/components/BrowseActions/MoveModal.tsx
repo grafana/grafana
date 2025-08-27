@@ -55,7 +55,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
           value={moveTarget}
           excludeUIDs={selectedFolders}
           onChange={setMoveTarget}
-          isNonProvisionedFolder
+          repositoryName={undefined} // is non-provisioned folder
         />
       </Field>
 

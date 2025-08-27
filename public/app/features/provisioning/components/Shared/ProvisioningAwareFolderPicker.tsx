@@ -10,17 +10,25 @@ import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
 interface Props extends NestedFolderPickerProps {
   /* Repository name (uid) or undefined (when it's non-provisioned folder). This decides when to show only one provisioned folder */
   repositoryName?: string;
-  /* this decides when to exclude provisioned folders*/
-  isNonProvisionedFolder?: boolean;
 }
 
-export function ProvisioningAwareFolderPicker({ repositoryName, isNonProvisionedFolder, ...props }: Props) {
+export function ProvisioningAwareFolderPicker({ repositoryName, ...props }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance();
   const provisioningEnabled = config.featureToggles.provisioning;
   const { data: settingsData } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
+  const isNonProvisionedResource = !repositoryName;
 
-  const rootFolderUID = getRootFolderUID(isProvisionedInstance, provisioningEnabled, repositoryName);
-  const excludeUIDs = getExcludeUIDs(isProvisionedInstance, isNonProvisionedFolder, provisioningEnabled, settingsData);
+  const rootFolderUID = getRootFolderUID({
+    isProvisionedInstance,
+    provisioningEnabled,
+    repositoryName,
+  });
+  const excludeUIDs = getExcludeUIDs({
+    isProvisionedInstance,
+    isNonProvisionedResource,
+    provisioningEnabled,
+    settingsData,
+  });
 
   return (
     <FolderPicker
@@ -31,7 +39,15 @@ export function ProvisioningAwareFolderPicker({ repositoryName, isNonProvisioned
   );
 }
 
-function getRootFolderUID(isProvisionedInstance?: boolean, provisioningEnabled?: boolean, repositoryName?: string) {
+function getRootFolderUID({
+  isProvisionedInstance,
+  provisioningEnabled,
+  repositoryName,
+}: {
+  isProvisionedInstance?: boolean;
+  provisioningEnabled?: boolean;
+  repositoryName?: string;
+}) {
   if (isProvisionedInstance) {
     return undefined;
   }
@@ -43,20 +59,27 @@ function getRootFolderUID(isProvisionedInstance?: boolean, provisioningEnabled?:
   return undefined;
 }
 
-function getExcludeUIDs(
-  isProvisionedInstance?: boolean,
-  isNonProvisionedFolder?: boolean,
-  provisioningEnabled?: boolean,
-  settingsData?: RepositoryViewList
-) {
+function getExcludeUIDs({
+  isProvisionedInstance,
+  isNonProvisionedResource,
+  provisioningEnabled,
+  settingsData,
+}: {
+  isProvisionedInstance?: boolean;
+  isNonProvisionedResource?: boolean;
+  provisioningEnabled?: boolean;
+  settingsData?: RepositoryViewList;
+}) {
   if (isProvisionedInstance) {
     return [];
   }
 
-  if (isNonProvisionedFolder) {
+  if (isNonProvisionedResource) {
+    // If provisioning is disabled, we don't want to exclude any folders
     if (!provisioningEnabled) {
       return [];
     }
+    // If provisioning is enabled, we want to exclude all provisionedfolders
     return settingsData?.items.map((repo) => repo.name) || [];
   }
 
