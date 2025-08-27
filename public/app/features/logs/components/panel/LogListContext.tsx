@@ -33,7 +33,7 @@ import { getDisplayedFieldsForLogs } from '../otel/formats';
 import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListFontSize } from './LogList';
+import { LogListControlOptions, LogListFontSize } from './LogList';
 import { reportInteractionOnce } from './analytics';
 import { LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
@@ -147,6 +147,8 @@ export type LogListState = Pick<
   | 'timestampResolution'
 >;
 
+export type LogListOption = keyof LogListState | 'wrapLogMessage' | 'prettifyJSON';
+
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
@@ -172,7 +174,7 @@ export interface Props {
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
+  onLogOptionsChange?: (option: LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
@@ -406,8 +408,9 @@ export const LogListContextProvider = ({
         store.set(`${logOptionsStorageKey}.fontSize`, fontSize);
       }
       setLogListState((logListState) => ({ ...logListState, fontSize }));
+      onLogOptionsChange?.('fontSize', fontSize);
     },
-    [logOptionsStorageKey]
+    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setForceEscape = useCallback(
@@ -467,8 +470,9 @@ export const LogListContextProvider = ({
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
       }
+      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
     },
-    [logOptionsStorageKey]
+    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setSyntaxHighlighting = useCallback(
@@ -499,8 +503,9 @@ export const LogListContextProvider = ({
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.wrapLogMessage`, wrapLogMessage);
       }
+      onLogOptionsChange?.('wrapLogMessage', wrapLogMessage);
     },
-    [logOptionsStorageKey]
+    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const downloadLogs = useCallback(
