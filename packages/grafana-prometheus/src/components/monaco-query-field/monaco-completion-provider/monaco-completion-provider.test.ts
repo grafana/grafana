@@ -349,19 +349,5 @@ describe('monaco-completion-provider', () => {
 
       expect(dataProvider.monacoSettings.setInputInRange).toHaveBeenCalled();
     });
-
-    it('should return incomplete status from data provider', async () => {
-      dataProvider.monacoSettings.suggestionsIncomplete = true;
-      mockGetCompletions.mockResolvedValue([]);
-
-      const model = createMockModel('test');
-      const position = createMockPosition(4);
-
-      const { provider } = getCompletionProvider(monaco, dataProvider, timeRange);
-
-      const result = await (provider.provideCompletionItems as Function)(model, position);
-
-      expect(result?.incomplete).toBe(true);
-    });
   });
 });

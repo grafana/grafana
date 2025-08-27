@@ -146,7 +146,7 @@ export function getCompletionProvider(
           : undefined,
       }));
 
-      return { suggestions, incomplete: dataProvider.monacoSettings.suggestionsIncomplete };
+      return { suggestions };
     });
   };
 
