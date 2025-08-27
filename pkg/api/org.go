@@ -51,7 +51,7 @@ func (hs *HTTPServer) GetOrgByID(c *contextmodel.ReqContext) response.Response {
 
 // swagger:route GET /orgs/name/{org_name} orgs getOrgByName
 //
-// Get Organization by ID.
+// Get Organization by Name.
 //
 // Security:
 // - basic:
