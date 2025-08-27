@@ -31,7 +31,7 @@ type converter struct {
 }
 
 func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.DataSource, error) {
-	if !(ds.Type == r.plugin || slices.Contains(r.alias, ds.Type)) {
+	if ds.Type != r.plugin && !slices.Contains(r.alias, ds.Type) {
 		return nil, fmt.Errorf("expected datasource type: %s %v // not: %s", r.plugin, r.alias, ds.Type)
 	}
 
