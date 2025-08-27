@@ -6,46 +6,29 @@ export interface ApiRequest {
   headers: Record<string, string>;
 }
 
-export function createApiRequest(
-  repositoryType: string,
-  token: string
-): {
-  branches: (owner: string, repo: string) => ApiRequest;
-} {
+export function getProviderHeaders(repositoryType: string, token: string): Record<string, string> {
   switch (repositoryType) {
-    case 'github': {
-      const headers = { Authorization: `Bearer ${token}` };
-      return {
-        branches: (owner, repo) => ({
-          url: `https://api.github.com/repos/${owner}/${repo}/branches`,
-          headers,
-        }),
-      };
-    }
+    case 'github':
+      return { Authorization: `Bearer ${token}` };
+    case 'gitlab':
+      return { 'Private-Token': token };
+    case 'bitbucket':
+      return { Authorization: `Bearer ${token}` };
+    default:
+      throw new Error(`Unsupported repository type: ${repositoryType}`);
+  }
+}
 
+export function getBranchesUrl(repositoryType: string, owner: string, repo: string): string {
+  switch (repositoryType) {
+    case 'github':
+      return `https://api.github.com/repos/${owner}/${repo}/branches`;
     case 'gitlab': {
-      const headers = { 'Private-Token': token };
-      return {
-        branches: (owner, repo) => {
-          const encodedPath = encodeURIComponent(`${owner}/${repo}`);
-          return {
-            url: `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches`,
-            headers,
-          };
-        },
-      };
+      const encodedPath = encodeURIComponent(`${owner}/${repo}`);
+      return `https://gitlab.com/api/v4/projects/${encodedPath}/repository/branches`;
     }
-
-    case 'bitbucket': {
-      const headers = { Authorization: `Bearer ${token}` };
-      return {
-        branches: (owner, repo) => ({
-          url: `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches`,
-          headers,
-        }),
-      };
-    }
-
+    case 'bitbucket':
+      return `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches`;
     default:
       throw new Error(`Unsupported repository type: ${repositoryType}`);
   }

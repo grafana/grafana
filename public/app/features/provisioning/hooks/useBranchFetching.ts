@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { isSupportedGitProvider } from '../guards';
 import { BranchInfo, RepositoryInfo, UseBranchFetchingProps } from '../types/repository';
-import { createApiRequest, getErrorMessage, makeApiRequest } from '../utils/httpUtils';
+import { getBranchesUrl, getErrorMessage, getProviderHeaders, makeApiRequest } from '../utils/httpUtils';
 
 const githubUrlRegex = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
 const gitlabUrlRegex = /^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/?$/;
@@ -68,8 +68,9 @@ export function useBranchFetching({
         throw new Error('Invalid repository URL format');
       }
 
-      const apiConfig = createApiRequest(repositoryType, trimmedToken);
-      const data = await makeApiRequest(apiConfig.branches(repoInfo.owner, repoInfo.repo));
+      const headers = getProviderHeaders(repositoryType, trimmedToken);
+      const url = getBranchesUrl(repositoryType, repoInfo.owner, repoInfo.repo);
+      const data = await makeApiRequest({ url, headers });
 
       let branchData: BranchInfo[] = [];
 
