@@ -792,6 +792,7 @@ func TestBuildIndex(t *testing.T) {
 		tmpDir := t.TempDir()
 		backend1, reg1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 		_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
+		require.NoError(t, err)
 		_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
 		require.NoError(t, err)
 
