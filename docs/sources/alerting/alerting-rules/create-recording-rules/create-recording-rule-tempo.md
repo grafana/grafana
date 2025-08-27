@@ -28,30 +28,39 @@ For additional information, refer to [Grafana-managed recording rules](https://g
 ## Create a new Tempo recording rule
 
 1. In Grafana, go to **Alerts & IRM** > **Alerting** > **Alert rules**.
+
 1. From the **More+** menu, select **New Grafana recording rule**.
 
-1. Enter a recording rule and metric name.
-   - In the **New recording rule** window, configure the following:
+1. Enter recording rule and metric name.
 
-   - **Name**: A human-readable identifier for the recording rule.
-   - **Metric**: The Prometheus-compatible name of the new metric series that will be generated.
-   - **Target data source**:
-     - Must be a **Prometheus** data source with _write_ permissions to store the rule’s results.
-     - Ensure your Prometheus or Mimir/Loki metrics backend allows Grafana to write the new series.
+    In the **New recording rule** window, configure the following:
+
+    - **Name**: A human-readable identifier for the recording rule.
+    - **Metric**: The Prometheus-compatible name of the new metric series that will be generated. For details, refer to [Prometheus metric names](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+    - **Target data source**: Must be a **Prometheus** data source with _write_ permissions (to store the rule's results). Ensure your Prometheus or Mimir metrics backend allows Grafana to write the new series.
 
 1. Define the recording rule.
-   - **Data source**: Select the **Tempo** data source with _read_ permissions.
-   - In **Options** select:
-     - **Time range**:
-       - TraceQL metrics queries are executed as **instant queries** over a window of time.
-       - The range you select defines the aggregation window. For example, use `from: now-5m` to `now-4m` for a `1`-minute recording-rule interval. The TraceQL query will run over the selected interval.
-       - Always include a **delay** of a few minutes (for example, 2–5 minutes) to account for traces still in flight. This avoids missing late-arriving spans.
-     - **Max data points** and **Interval** are not relevant for TraceQL instant queries.
-   - **Query**: Enter a valid **TraceQL metrics query**.
-     ```
-     { service.name = "checkout"}  | count_over_time()
-     ```
-   - **Expressions**: Typically use **Reduce → Last** to take the most recent computed value.
+
+    - **Data source**: Select the **Tempo** data source with _read_ permissions.
+    - In the **Options** dropdown, specify a time range.
+
+        {{< admonition type="note" >}}
+        Grafana Alerting only supports fixed relative time ranges, for example, `now-5m: now-4m`.
+
+        It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+        {{< /admonition >}}
+
+        - TraceQL metrics queries are executed as **instant queries** over a window of time.
+        - The range you select defines the aggregation window. For example use `now-5m: now-4m` for a 1-minute recording-rule interval with a 4-minute delay. The TraceQL query will run over the selected interval.
+        - Always include a **delay** of a few minutes (for example, 2–5 minutes) to account for traces still in flight. This avoids missing late-arriving spans.
+        - **Max data points** and **Interval** are not relevant for TraceQL instant queries.
+    - **Query**: Enter a valid TraceQL metrics query.
+        ```
+        { resource.service.name = "checkout" }  | count_over_time()
+        ```
+    - **Expressions**: Typically use **Reduce** > **Last** to take the most recent computed value.
+
+    {{< figure src="/media/docs/grafana/alerting/screenshot-recording-rule-tempo-definition-private-preview.png" alt="Defining the recording rule for Tempo.">}}
 
 1. Organize the rule by selecting a **folder** and adding **labels**.
    - Labels can help group or filter rules later.
@@ -59,10 +68,16 @@ For additional information, refer to [Grafana-managed recording rules](https://g
 
 1. Set evaluation behavior.
 
-   Recording rules are executed by evaluation groups at fixed intervals. Align this interval with the query’s time range.
-   - **Evaluation interval**: Should equal the size of the query window. For example, if your query covers `now-5m`..`now-4m` (1-minute window with 4-minute delay), use a **1-minute evaluation interval**. This ensures each evaluation produces a new, non-overlapping sample.
+    Recording rules are executed by evaluation groups at fixed intervals. Align this interval with the query's time range.
+
+    {{< admonition type="caution" >}}
+    The **Evaluation interval** of the evaluation group should equal the size of the query window. For example, if your query covers `now-5m: now-4m` (1-minute window with 4-minute delay), use a **1-minute evaluation interval**. This ensures each evaluation produces a new, non-overlapping sample.
+    {{< /admonition >}}
+
+    {{< figure src="/media/docs/grafana/alerting/screenshot-recording-rule-tempo-evaluation-group-private-preview.png" alt="Defining the recording rule evaluation group for Tempo." max-width="400px">}}
 
 ## Best practices
 
-- Always include a delay of at least 2 minutes in the query range to avoid incomplete spans.
+- Always include a delay of at least 2 minutes in the query range to avoid losing in-flight spans.
 - Align the evaluation interval with your query window size.
+- The time series generated by a recording rule will be time-shifted based on the selected query time range. To align it back with the original timeline, you can apply the `offset` modifier in your Prometheus queries.
