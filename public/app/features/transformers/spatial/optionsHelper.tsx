@@ -41,7 +41,7 @@ export function getTransformerOptionPane<T = any>(
   };
 
   // Use the panel options loader
-  fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems('spatial-transformer', supplier, access, getOptionsPaneCategory, context);
   return root;
 }
 

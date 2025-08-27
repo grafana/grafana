@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -21,10 +21,11 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
 
   const rowCategory = useMemo(
     () =>
-      new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'dash-row-edit' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: 'dash-row-title',
             skipField: true,
             render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
@@ -32,13 +33,15 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
-            render: () => <FillScreenSwitch row={model} />,
+            id: 'dash-row-fill-screen',
+            render: (descriptor) => <FillScreenSwitch id={descriptor.props.id} row={model} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.hide-header', 'Hide row header'),
-            render: () => <RowHeaderSwitch row={model} />,
+            id: 'dash-row-hide-header',
+            render: (descriptor) => <RowHeaderSwitch id={descriptor.props.id} row={model} />,
           })
         ),
     [model, isNewElement]
@@ -48,16 +51,17 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
     () =>
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.rows-layout.row-options.repeat.title', 'Repeat options'),
-        id: 'repeat-options',
+        id: 'dash-row-repeat',
         isOpenDefault: false,
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.rows-layout.row-options.repeat.variable.title', 'Repeat by variable'),
+          id: `dash-row-repeat-by-variable`,
           description: t(
             'dashboard.rows-layout.row-options.repeat.variable.description',
             'Repeat this row for each value in the selected variable.'
           ),
-          render: () => <RowRepeatSelect row={model} />,
+          render: (descriptor) => <RowRepeatSelect id={descriptor.props.id} row={model} />,
         })
       ),
     [model]
@@ -94,6 +98,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
       }
     >
       <Input
+        id={useId()}
         ref={ref}
         title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
         value={title}
@@ -103,19 +108,19 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   );
 }
 
-function RowHeaderSwitch({ row }: { row: RowItem }) {
+function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
   const { hideHeader: isHeaderHidden = false } = row.useState();
 
-  return <Switch value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
+  return <Switch id={id} value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
 }
 
-function FillScreenSwitch({ row }: { row: RowItem }) {
+function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
   const { fillScreen } = row.useState();
 
-  return <Switch value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
+  return <Switch id={id} value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
 }
 
-function RowRepeatSelect({ row }: { row: RowItem }) {
+function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
   const { layout } = row.useState();
   const dashboard = useDashboard(row);
 
@@ -131,6 +136,7 @@ function RowRepeatSelect({ row }: { row: RowItem }) {
   return (
     <>
       <RepeatRowSelect2
+        id={id}
         sceneContext={dashboard}
         repeat={row.state.repeatByVariable}
         onChange={(repeat) => row.onChangeRepeat(repeat)}

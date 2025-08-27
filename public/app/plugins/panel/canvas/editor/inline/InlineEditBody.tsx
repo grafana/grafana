@@ -174,7 +174,7 @@ function getOptionsPaneCategoryDescriptor<T extends object>(
   };
 
   // Use the panel options loader
-  fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems('canvas-inline', supplier, access, getOptionsPaneCategory, context);
   return root;
 }
 

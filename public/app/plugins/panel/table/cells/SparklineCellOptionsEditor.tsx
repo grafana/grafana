@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { createFieldConfigRegistry, SetFieldConfigOptionsArgs } from '@grafana/data';
 import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
@@ -51,6 +51,8 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
 
   const values = { ...defaultSparklineCellConfig, ...cellOptions };
 
+  const htmlIdBase = useId();
+
   return (
     <Stack direction="column">
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
@@ -67,6 +69,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
               value={(isOptionKey(path, values) ? values[path] : undefined) ?? item.defaultValue}
               item={item}
               context={{ data: [] }}
+              id={`${htmlIdBase}${item.id}`}
             />
           </Field>
         );

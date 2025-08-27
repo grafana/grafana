@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -42,19 +42,24 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
     const layoutElement = panel.parent!;
+    const rootId = useId();
+    const titleId = useId();
+    const descriptionId = useId();
+    const backgroundId = useId();
 
     const panelOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: rootId,
             render: () => <OpenPanelEditViz panel={this.panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
-            id: 'PanelFrameTitle',
+            id: titleId,
             value: panel.state.title,
             popularRank: 1,
             render: (descriptor) => (
@@ -65,7 +70,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.description', 'Description'),
-            id: 'description-text-area',
+            id: descriptionId,
             value: panel.state.description,
             render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
           })
@@ -73,11 +78,11 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            id: 'transparent-background',
+            id: backgroundId,
             render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
           })
         );
-    }, [panel, isNewElement]);
+    }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
 
     const layoutCategories = useMemo(
       () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
@@ -133,9 +138,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 }
 
-type OpenPanelEditVizProps = {
-  panel: VizPanel;
-};
+type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   return (

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { LocalValueVariable } from '@grafana/scenes';
@@ -24,16 +24,19 @@ export class LocalVariableEditableElement implements EditableDashboardElement {
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const variable = this.variable;
+    const localVariableCategoryId = useId();
+    const localVariableId = useId();
 
     return useMemo(() => {
       const category = new OptionsPaneCategoryDescriptor({
         title: '',
-        id: 'local-variable-options',
+        id: localVariableCategoryId,
       });
 
       category.addItem(
         new OptionsPaneItemDescriptor({
           title: '',
+          id: localVariableId,
           skipField: true,
           render: () => {
             return (
@@ -52,6 +55,6 @@ export class LocalVariableEditableElement implements EditableDashboardElement {
       );
 
       return [category];
-    }, [variable]);
+    }, [localVariableCategoryId, localVariableId, variable]);
   }
 }

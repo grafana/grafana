@@ -127,6 +127,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
+      id: `variable-${variable.state.name}-value`,
       render: () => <ModalEditor variable={variable} />,
     }),
   ];

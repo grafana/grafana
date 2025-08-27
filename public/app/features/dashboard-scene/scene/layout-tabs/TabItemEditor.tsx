@@ -24,7 +24,8 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
       new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-          render: () => <TabTitleInput tab={model} isNewElement={isNewElement} />,
+          id: 'tab-options-title',
+          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
         })
       ),
     [model, isNewElement]
@@ -39,11 +40,12 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.tabs-layout.tab-options.repeat.variable.title', 'Repeat by variable'),
+          id: 'tab-options-repeat-variable',
           description: t(
             'dashboard.tabs-layout.tab-options.repeat.variable.description',
             'Repeat this tab for each value in the selected variable.'
           ),
-          render: () => <TabRepeatSelect tab={model} />,
+          render: (descriptor) => <TabRepeatSelect id={descriptor.props.id} tab={model} />,
         })
       ),
     [model]
@@ -65,7 +67,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
   return editOptions;
 }
 
-function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: boolean }) {
+function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: boolean; id?: string }) {
   const { title } = tab.useState();
 
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
@@ -79,6 +81,7 @@ function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: bool
       }
     >
       <Input
+        id={id}
         ref={ref}
         title={t('dashboard.tabs-layout.tab-options.title-option', 'Title')}
         value={title}
@@ -88,7 +91,7 @@ function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: bool
   );
 }
 
-function TabRepeatSelect({ tab }: { tab: TabItem }) {
+function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
   const { layout } = tab.useState();
   const dashboard = useDashboard(tab);
 
@@ -104,6 +107,7 @@ function TabRepeatSelect({ tab }: { tab: TabItem }) {
   return (
     <>
       <RepeatRowSelect2
+        id={id}
         sceneContext={dashboard}
         repeat={tab.state.repeatByVariable}
         onChange={(repeat) => tab.onChangeRepeat(repeat)}

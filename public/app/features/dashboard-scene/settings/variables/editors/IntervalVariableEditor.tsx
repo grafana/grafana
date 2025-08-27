@@ -71,6 +71,7 @@ export function getIntervalVariableOptions(variable: SceneVariable): OptionsPane
 
   return [
     new OptionsPaneItemDescriptor({
+      id: `variable-${variable.state.name}-value`,
       render: () => <IntervalVariableEditor variable={variable} onRunQuery={noop} inline={true} />,
     }),
   ];

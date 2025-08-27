@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useRef } from 'react';
+import { ReactNode, useId, useMemo, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
@@ -36,10 +36,10 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
     // When layout changes we need to update options list
     const { body } = dashboard.useState();
+    const dashboardTitleInputId = useId();
+    const dashboardDescriptionInputId = useId();
 
     const dashboardOptions = useMemo(() => {
-      const dashboardTitleInputId = 'dashboard-title-input';
-      const dashboardDescriptionInputId = 'dashboard-description-input';
       const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
@@ -57,7 +57,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
         );
 
       return editPaneHeaderOptions;
-    }, [dashboard]);
+    }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
 
     const layoutCategory = useLayoutCategory(body);
 
