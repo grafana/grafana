@@ -2,13 +2,14 @@ package iam
 
 import (
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -24,12 +25,17 @@ type CoreRoleStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
 
+// RoleBindingStorageBackend uses the resource.StorageBackend interface to provide storage for role bindings.
+// Used by wire to identify the storage backend for role bindings.
+type RoleBindingStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store            legacy.LegacyIdentityStore
-	coreRolesStorage CoreRoleStorageBackend
-	rolesStorage     RoleStorageBackend
+	store               legacy.LegacyIdentityStore
+	coreRolesStorage    CoreRoleStorageBackend
+	rolesStorage        RoleStorageBackend
+	roleBindingsStorage RoleBindingStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer

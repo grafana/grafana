@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
@@ -72,6 +73,37 @@ var RoleInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var RoleBindingInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"rolebindings", "rolebinding", "RoleBinding",
+	func() runtime.Object { return &RoleBinding{} },
+	func() runtime.Object { return &RoleBindingList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Group", Type: "string", Format: "group", Description: "Role binding group"},
+			{Name: "Title", Type: "string", Format: "string", Description: "Role binding name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			roleBinding, ok := obj.(*RoleBinding)
+			if ok {
+				if roleBinding != nil {
+					return []interface{}{
+						roleBinding.Name,
+						roleBinding.Spec.Subject.Kind,
+						roleBinding.Spec.Subject.Name,
+						roleBinding.Spec.Subject.Namespace,
+						roleBinding.Spec.RoleRef[0].Kind,
+						roleBinding.Spec.RoleRef[0].Name,
+						roleBinding.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+			}
+			return nil, fmt.Errorf("expected role binding")
+		},
+	},
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -90,6 +122,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CoreRoleList{},
 		&Role{},
 		&RoleList{},
+		&RoleBinding{},
+		&RoleBindingList{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},
