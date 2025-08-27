@@ -94,8 +94,8 @@ export class QueryEditorRows extends PureComponent<Props> {
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {
     const { queries, onQueriesChange } = this.props;
 
-    onQueriesChange(
-      queries.map((item, itemIndex) => {
+    Promise.all(
+      queries.map(async (item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
@@ -113,12 +113,15 @@ export class QueryEditorRows extends PureComponent<Props> {
           }
         }
 
-        return {
-          refId: item.refId,
-          hide: item.hide,
-          datasource: dataSourceRef,
-        };
+        const ds = await getDataSourceSrv().get(dataSourceRef);
+
+        return { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...item, datasource: dataSourceRef };
       })
+    ).then(
+      (values) => onQueriesChange(values),
+      () => {
+        throw new Error(`Failed to get datasource ${dataSource.name ?? dataSource.uid}`);
+      }
     );
   }
 
