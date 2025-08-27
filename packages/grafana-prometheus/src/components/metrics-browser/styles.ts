@@ -58,6 +58,12 @@ export const getStylesValueSelector = (theme: GrafanaTheme2) => ({
     },
     position: 'relative',
   }),
+  spinner: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 120,
+  }),
   valueListArea: css({
     display: 'flex',
     flexWrap: 'wrap',

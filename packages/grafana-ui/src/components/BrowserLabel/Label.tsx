@@ -14,7 +14,6 @@ type OnLabelClick = (name: string, value: string | undefined, event: React.Mouse
 interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   name: string;
   active?: boolean;
-  loading?: boolean;
   searchTerm?: string;
   value?: string;
   facets?: number;
@@ -28,21 +27,7 @@ interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
  */
 export const Label = forwardRef<HTMLButtonElement, Props>(
   (
-    {
-      name,
-      value,
-      hidden,
-      facets,
-      onClick,
-      className,
-      loading,
-      searchTerm,
-      active,
-      style,
-      title,
-      highlightParts,
-      ...rest
-    },
+    { name, value, hidden, facets, onClick, className, searchTerm, active, style, title, highlightParts, ...rest },
     ref
   ) => {
     const theme = useTheme2();
