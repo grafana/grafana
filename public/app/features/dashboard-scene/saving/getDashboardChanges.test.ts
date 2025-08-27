@@ -327,7 +327,7 @@ describe('getDashboardChanges', () => {
   });
 
   it('should not see any changes on modified textbox var when we do not update variable values', () => {
-    const newDashboard = {
+    const newDashboard: Dashboard = {
       ...initial,
       templating: {
         list: [
@@ -339,12 +339,13 @@ describe('getDashboardChanges', () => {
               value: 'value1',
               text: 'text1',
             },
+            options: [],
           },
         ],
       },
-    } as Dashboard;
+    };
 
-    const changedDashboard = {
+    const changedDashboard: Dashboard = {
       ...newDashboard,
       templating: {
         list: [
@@ -356,10 +357,11 @@ describe('getDashboardChanges', () => {
               value: 'value1',
               text: 'text1',
             },
+            options: [],
           },
         ],
       },
-    } as Dashboard;
+    };
 
     const expectedChanges = {
       initialSaveModel: {
