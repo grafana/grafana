@@ -21,10 +21,11 @@ type T struct {
 	interval time.Duration
 	metrics  *Metrics
 	stopCh   chan struct{}
+	logger   log.Logger
 }
 
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
-func New(c clock.Clock, interval time.Duration, metric *Metrics) *T {
+func New(c clock.Clock, interval time.Duration, metric *Metrics, logger log.Logger) *T {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
 	}
@@ -35,6 +36,7 @@ func New(c clock.Clock, interval time.Duration, metric *Metrics) *T {
 		interval: interval,
 		metrics:  metric,
 		stopCh:   make(chan struct{}),
+		logger:   logger,
 	}
 	metric.IntervalSeconds.Set(t.interval.Seconds()) // Seconds report fractional part as well, so it matches the format of the timestamp we report below
 	go t.run()
@@ -47,8 +49,7 @@ func getStartTick(clk clock.Clock, interval time.Duration) time.Time {
 }
 
 func (t *T) run() {
-	logger := log.New("ticker")
-	logger.Info("starting", "first_tick", t.last.Add(t.interval))
+	t.logger.Info("starting", "component", "ticker", "first_tick", t.last.Add(t.interval))
 LOOP:
 	for {
 		next := t.last.Add(t.interval) // calculate the time of the next tick
@@ -72,7 +73,7 @@ LOOP:
 			break LOOP
 		}
 	}
-	logger.Info("stopped", "last_tick", t.last)
+	t.logger.Info("stopped", "component", "ticker", "last_tick", t.last)
 }
 
 // Stop stops the ticker. It does not close the C channel

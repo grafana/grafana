@@ -162,7 +162,10 @@ spec:
             - target
             - --config=/etc/grafana-config/grafana.ini
             - --homepath=/usr/share/grafana
-          image: grafana/grafana-oss-dev:12.2.0-257970
+          env:
+            - name: GF_PATHS_CONFIG
+              value: /etc/grafana-config/grafana.ini
+          image: grafana/grafana-dev:12.2.0-257970
           imagePullPolicy: IfNotPresent
           name: zanzana
           ports:
@@ -184,3 +187,4 @@ spec:
             name: zanzana-config
           name: zanzana-config
 ---
+

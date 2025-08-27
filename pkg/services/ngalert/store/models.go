@@ -92,7 +92,11 @@ func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 		a.IsPaused == b.IsPaused &&
 		a.NotificationSettings == b.NotificationSettings &&
 		a.Metadata == b.Metadata &&
-		a.MissingSeriesEvalsToResolve == b.MissingSeriesEvalsToResolve
+		compareInt64Pointer(a.MissingSeriesEvalsToResolve, b.MissingSeriesEvalsToResolve)
+}
+
+func compareInt64Pointer(a, b *int64) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
 }
 
 func (a alertRuleVersion) TableName() string {

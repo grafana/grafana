@@ -37,8 +37,7 @@
               "wrapText": false
             },
             "filterable": true,
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "links": [],
@@ -557,8 +556,7 @@
               "type": "color-background"
             },
             "filterable": true,
-            "inspect": true,
-            "wrapHeaderText": false
+            "inspect": true
           },
           "fieldMinMax": true,
           "links": [],
@@ -664,8 +662,7 @@
               "type": "auto"
             },
             "inspect": false,
-            "minWidth": 50,
-            "wrapHeaderText": false
+            "minWidth": 50
           },
           "mappings": [],
           "thresholds": {
@@ -1012,8 +1009,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1161,8 +1157,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1309,8 +1304,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1457,8 +1451,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1605,8 +1598,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "fieldMinMax": true,
           "mappings": [],
@@ -1788,8 +1780,7 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "wrapHeaderText": false
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
