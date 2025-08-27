@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,6 +124,7 @@ func RegisterAPIService(
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
+	zanzanaClient zanzana.Client,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -151,6 +153,7 @@ func RegisterAPIService(
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
+			zanzanaClient:    zanzanaClient,
 		},
 		reg: reg,
 	}

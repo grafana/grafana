@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +26,7 @@ import (
 type DashboardStorage struct {
 	Access           legacy.DashboardAccess
 	DashboardService dashboards.DashboardService
+	zanzanaClient    zanzana.Client
 }
 
 func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer, permissions dashboards.PermissionsRegistrationService, ac types.AccessClient) (grafanarest.Storage, error) {
@@ -43,7 +45,7 @@ func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Sch
 	}
 	client := legacy.NewDirectResourceClient(server) // same context
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil,
-		defaultOpts.StorageConfig.Config, nil, nil,
+		defaultOpts.StorageConfig.Config, nil, s.zanzanaClient,
 	)
 	optsGetter.RegisterOptions(dash.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport:         true,
