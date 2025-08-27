@@ -6373,7 +6373,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Query toevoegen uit bibliotheek"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -12708,10 +12708,6 @@
     "login": "Inloggen"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Als geselecteerde tekst wordt teruggelopen naar de breedte van de tekst in de geconfigureerde kolom",
-      "label-wrap-text": "Tekst afbreken"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Weergavemodus meter",
       "label-value-display": "Weergave van waarden"
@@ -12739,13 +12735,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Indien geselecteerd, wordt de hele rij gekleurd zoals deze cel zou zijn.",
-      "description-wrap-text": "Als geselecteerde tekst wordt teruggelopen naar de breedte van de tekst in de geconfigureerde kolom",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Toepassen op hele rij",
-      "label-background-display-mode": "Achtergrondweergavemodus",
-      "wrap-text": "Tekst afbreken"
+      "label-background-display-mode": "Achtergrondweergavemodus"
     },
     "column-alignment-options": {
       "label-auto": "Automatisch",
@@ -12763,7 +12754,9 @@
     "description-column-filter": "Schakelt veldfilters in tabel in/uit",
     "description-count-rows": "Een enkele telling weergeven voor alle gegevensrijen",
     "description-fields": "Selecteer de velden die moeten worden berekend",
+    "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Schakelt tekstterugloop in voor kolomkoppen",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatieve tekst die wordt weergegeven als een afbeelding niet kan worden weergegeven of voor gebruikers die een schermlezer gebruiken",
@@ -12789,51 +12782,7 @@
     "name-column-filter": "Kolomfilter",
     "name-column-width": "Kolombreedte",
     "name-count-rows": "Rijen tellen",
-    "name-enable-paginations": "Paginering inschakelen",
-    "name-fields": "Velden",
-    "name-hide-in-table": "In tabel verbergen",
-    "name-min-column-width": "Minimale kolombreedte",
-    "name-show-table-footer": "Voettekst tabel tonen",
-    "name-show-table-header": "Header tabel tonen",
-    "name-wrap-header-text": "Koptekst laten teruglopen",
-    "placeholder-column-width": "automatisch",
-    "placeholder-fields": "Alle numerieke velden",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Celopties",
-    "category-table": "Tabel",
-    "category-table-footer": "Voettekst tabel",
-    "cell-height-options": {
-      "label-large": "Large",
-      "label-medium": "Medium",
-      "label-small": "Klein"
-    },
-    "column-alignment-options": {
-      "label-auto": "Automatisch",
-      "label-center": "Midden",
-      "label-left": "Links",
-      "label-right": "Rechts"
-    },
-    "description-calculation": "Kies een verkleiningsfunctie/berekening",
-    "description-cell-value-inspect": "Celwaarde-inspectie inschakelen in een pop-upvenster",
-    "description-column-filter": "Schakelt veldfilters in tabel in/uit",
-    "description-count-rows": "Een enkele telling weergeven voor alle gegevensrijen",
-    "description-fields": "Selecteer de velden die moeten worden berekend",
-    "description-frozen-columns": "",
-    "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Berekening",
-    "name-cell-height": "Celhoogte",
-    "name-cell-type": "Type cel",
-    "name-cell-value-inspect": "Celwaarde inspecteren",
-    "name-column-alignment": "Kolomuitlijning",
-    "name-column-filter": "Kolomfilter",
-    "name-column-width": "Kolombreedte",
-    "name-count-rows": "Rijen tellen",
-    "name-enable-pagination": "Paginering inschakelen",
+    "name-enable-pagination": "",
     "name-fields": "Velden",
     "name-frozen-columns": "",
     "name-hide-in-table": "In tabel verbergen",
@@ -12842,8 +12791,12 @@
     "name-show-table-header": "Header tabel tonen",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Koptekst laten teruglopen",
     "placeholder-column-width": "automatisch",
     "placeholder-fields": "Alle numerieke velden",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
