@@ -237,7 +237,7 @@ In the following image, multiple calculations&mdash;**Mean**, **Max**, and **Las
 You can also see in the previous image that the mathematical functions, **Mean** and **Max**, haven't been applied to the text field in the table.
 Only the **Last** function has been applied to that field.
 
-In the following image, the **Total** calculation has been applied, and no label is displayed:
+In the following image, the **Total** calculation has been applied, and no label is displayed because it's the only function:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-2-v12.2.png" max-width="750px" alt="" >}}
 
