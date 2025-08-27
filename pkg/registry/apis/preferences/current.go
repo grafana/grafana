@@ -38,7 +38,6 @@ func newCalculator(cfg *setting.Cfg, sql *legacy.LegacySQL) *calculator {
 func (s *calculator) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
 	schema := defs["github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preference"].Schema
 
-	//	om.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v0alpha1.Preference
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
