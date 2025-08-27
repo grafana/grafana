@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -177,7 +178,7 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles) 
 		reg: prometheus.NewRegistry(),
 
 		accessClient: ac,
-		authorizer:   newMultiTenantAuthorizer(ac),
+		authorizer:   authsvc.NewResourceAuthorizer(ac),
 		features:     features,
 
 		ignoreLegacy: true,
