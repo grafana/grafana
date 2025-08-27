@@ -24,6 +24,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '1px',
     height: '100%',
     background: theme.colors.border.medium,
-    borderRadius: '1px',
   }),
 });
