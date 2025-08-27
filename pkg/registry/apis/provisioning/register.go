@@ -105,7 +105,7 @@ type APIBuilder struct {
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
-	statusPatcher    *controller.RepositoryStatusPatcher
+	statusPatcher    *appcontroller.RepositoryStatusPatcher
 	healthChecker    *controller.HealthChecker
 	// Extras provides additional functionality to the API.
 	extras []Extra
@@ -130,7 +130,7 @@ func NewAPIBuilder(
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
+	resourceLister := resources.NewResourceListerForMigrations(unified, unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
 		onlyApiServer:       onlyApiServer,
@@ -363,7 +363,7 @@ func (b *APIBuilder) GetJobQueue() jobs.Queue {
 	return b.jobs
 }
 
-func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
+func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
@@ -636,7 +636,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return fmt.Errorf("create API client job store: %w", err)
 			}
 
-			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
+			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
 			b.healthChecker = controller.NewHealthChecker(&repository.Tester{}, b.statusPatcher)
 
 			// if running solely CRUD, skip the rest of the setup

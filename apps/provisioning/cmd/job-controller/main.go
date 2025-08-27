@@ -31,7 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -43,6 +44,21 @@ var (
 	tlsKeyFile            = flag.String("tls-key-file", "", "Path to TLS private key file")
 	tlsCAFile             = flag.String("tls-ca-file", "", "Path to TLS CA certificate file")
 )
+
+// QUESTION: is this the right way to do this? will it work?
+// directConfigProvider always returns the provided rest.Config.
+// implements RestConfigProvider interface
+type directConfigProvider struct {
+	cfg *rest.Config
+}
+
+func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
+	return &directConfigProvider{cfg: cfg}
+}
+
+func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
+	return r.cfg, nil
+}
 
 func main() {
 	app := &cli.App{
@@ -107,8 +123,6 @@ func main() {
 }
 
 func runJobController(c *cli.Context) error {
-	// TODO: Wire notifications into a ConcurrentJobDriver when a client-backed Store and Workers are available.
-	// For now, just log notifications to verify events end-to-end.
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-job-controller")
@@ -136,7 +150,7 @@ func runJobController(c *cli.Context) error {
 		TLSClientConfig: tlsConfig,
 	}
 
-	provisioningClient, err := client.NewForConfig(config)
+	client, err := client.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
@@ -154,7 +168,7 @@ func runJobController(c *cli.Context) error {
 
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
+		client,
 		60*time.Second,
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
@@ -169,12 +183,12 @@ func runJobController(c *cli.Context) error {
 	if historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
 		historyInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-			provisioningClient,
+			client,
 			historyExpiration,
 		)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		_, err = controller.NewHistoryJobController(
-			provisioningClient.ProvisioningV0alpha1(),
+			client.ProvisioningV0alpha1(),
 			historyJobInformer,
 			historyExpiration,
 		)
@@ -187,6 +201,7 @@ func runJobController(c *cli.Context) error {
 		startHistoryInformers = func() {}
 	}
 
+	// HistoryWriter can be either Loki or the API server
 	// TODO: Loki support
 	// var jobHistoryWriter jobs.HistoryWriter
 	// if b.jobHistoryLoki != nil {
@@ -194,65 +209,57 @@ func runJobController(c *cli.Context) error {
 	// } else {
 	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
 	// }
-	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-
-	jobStore, err := jobs.NewJobStore(b.client, 30*time.Second)
+	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(client.ProvisioningV0alpha1())
+	jobStore, err := jobs.NewJobStore(client.ProvisioningV0alpha1(), 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
+	configProvider := &directConfigProvider{cfg: config}
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
 
+	// HACK: This is connecting to unified storage. It's ok for now as long as dashboards and folders are located in the
+	// same cluster and namespace
+	// This breaks when we start really trying to support any resource. This is on the search+storage roadmap to support federation at some level.
+	// TODO: unified
+	var (
+		unified      resourcepb.ManagedObjectIndexClient = nil
+		unifiedIndex resourcepb.ResourceIndexClient      = nil
+	)
+
+	resourceLister := resources.NewResourceLister(unified, unifiedIndex)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
+
 	stageIfPossible := repository.WrapWithStageAndPushIfPossible
 	exportWorker := export.NewExportWorker(
-		b.clients,
-		b.repositoryResources,
+		clients,
+		repositoryResources,
 		export.ExportAll,
 		stageIfPossible,
 	)
 
+	statusPatcher := controller.NewRepositoryStatusPatcher(client.ProvisioningV0alpha1())
 	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 	syncWorker := sync.NewSyncWorker(
-		b.clients,
-		b.repositoryResources,
-		b.storageStatus,
-		b.statusPatcher.Patch,
+		clients,
+		repositoryResources,
+		nil, // HACK: we have updated the worker to check for nil
+		statusPatcher.Patch,
 		syncer,
 	)
-	signerFactory := signature.NewSignerFactory(b.clients)
-	legacyResources := migrate.NewLegacyResourcesMigrator(
-		b.repositoryResources,
-		b.parsers,
-		b.legacyMigrator,
-		signerFactory,
-		b.clients,
-		export.ExportAll,
-	)
 
-	storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
-	legacyMigrator := migrate.NewLegacyMigrator(
-		legacyResources,
-		storageSwapper,
-		syncWorker,
-		stageIfPossible,
-	)
-
-	cleaner := migrate.NewNamespaceCleaner(b.clients)
+	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 		cleaner,
 		exportWorker,
 		syncWorker,
 	)
 
-	migrationWorker := migrate.NewMigrationWorker(
-		legacyMigrator,
-		unifiedStorageMigrator,
-		b.storageStatus,
-	)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
+	moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources)
 
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
-	moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
 	workers := []jobs.Worker{
 		deleteWorker,
 		exportWorker,
