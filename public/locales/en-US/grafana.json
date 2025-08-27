@@ -9644,8 +9644,7 @@
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
       "wrap-json-lines": "Wrap lines and expand JSON",
-      "wrap-lines": "Wrap lines",
-      "wrap-lines-plus": "+"
+      "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
       "newer-logs": "Newer logs",

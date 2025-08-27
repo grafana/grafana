@@ -531,7 +531,7 @@ const WrapLogMessageButton = () => {
       >
         <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
         {prettifyJSON && (
-          <span className={styles.customControlTag}>{t('logs.logs-controls.wrap-lines-plus', '+')}</span>
+          <span className={styles.customControlTag}>+</span>
         )}
       </button>
     </Tooltip>
