@@ -6415,7 +6415,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Přidat dotaz z knihovny"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -12790,10 +12790,6 @@
     "login": "Přihlášení"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Pokud bude vybraný text zabalen na šířku textu v nakonfigurovaném sloupci",
-      "label-wrap-text": "Zalomení textu"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Režim zobrazení měřidla",
       "label-value-display": "Zobrazení hodnoty"
@@ -12821,13 +12817,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Pokud je vybrán, celý řádek bude barevný jako tato buňka.",
-      "description-wrap-text": "Pokud bude vybraný text zabalen na šířku textu v nakonfigurovaném sloupci",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Použít na celý řádek",
-      "label-background-display-mode": "Režim zobrazení pozadí",
-      "wrap-text": "Zalomení textu"
+      "label-background-display-mode": "Režim zobrazení pozadí"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12845,7 +12836,9 @@
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
     "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
     "description-fields": "Vyberte pole, která by měla být vypočtena",
+    "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Povoluje zalomení textu pro záhlaví sloupců",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativní text, který se zobrazí, pokud nelze zobrazit obrázek, nebo pro uživatele, kteří používají čtečku obrazovky",
@@ -12871,51 +12864,7 @@
     "name-column-filter": "Filtr sloupce",
     "name-column-width": "Šířka sloupce",
     "name-count-rows": "Spočítat řádky",
-    "name-enable-paginations": "Povolit stránkování",
-    "name-fields": "Pole",
-    "name-hide-in-table": "Skrýt v tabulce",
-    "name-min-column-width": "Minimální šířka sloupce",
-    "name-show-table-footer": "Zobrazit zápatí tabulky",
-    "name-show-table-header": "Zobrazit záhlaví tabulky",
-    "name-wrap-header-text": "Zalomit text záhlaví",
-    "placeholder-column-width": "auto.",
-    "placeholder-fields": "Všechna číselná pole",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Možnosti buněk",
-    "category-table": "Tabulka",
-    "category-table-footer": "Zápatí tabulky",
-    "cell-height-options": {
-      "label-large": "Velké",
-      "label-medium": "Střední",
-      "label-small": "Malé"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Střed",
-      "label-left": "Vlevo",
-      "label-right": "Vpravo"
-    },
-    "description-calculation": "Vyberte funkci reduktoru / výpočet",
-    "description-cell-value-inspect": "Povolit kontrolu hodnoty buňky v modálním okně",
-    "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
-    "description-count-rows": "Zobrazit jeden počet pro všechny datové řádky",
-    "description-fields": "Vyberte pole, která by měla být vypočtena",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Výpočet",
-    "name-cell-height": "Výška buňky",
-    "name-cell-type": "Typ buňky",
-    "name-cell-value-inspect": "Kontrola hodnoty buňky",
-    "name-column-alignment": "Zarovnání sloupce",
-    "name-column-filter": "Filtr sloupce",
-    "name-column-width": "Šířka sloupce",
-    "name-count-rows": "Spočítat řádky",
-    "name-enable-pagination": "Povolit stránkování",
+    "name-enable-pagination": "",
     "name-fields": "Pole",
     "name-frozen-columns": "",
     "name-hide-in-table": "Skrýt v tabulce",
@@ -12924,8 +12873,12 @@
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Zalomit text záhlaví",
     "placeholder-column-width": "auto.",
     "placeholder-fields": "Všechna číselná pole",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
