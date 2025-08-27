@@ -1,6 +1,5 @@
 import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -81,7 +80,7 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
-      id: uuidv4(),
+      id: 'custom-variable-values',
       render: (descriptor) => <ValuesTextField id={descriptor.props.id} variable={variable} />,
     }),
   ];

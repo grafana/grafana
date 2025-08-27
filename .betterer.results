@@ -596,6 +596,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "packages/grafana-ui/src/components/Combobox/Combobox.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useEffect\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useState\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"]
+    ],
+    "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useArgs\\" is called in function \\"render\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"]
+    ],
     "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -615,6 +629,33 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DataSourceSettings/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/ElementSelectionContext/ElementSelectionContext.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"],
+      [0, 0, 0, "React Hook \\"useCallback\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
+      [0, 0, 0, "React Hook \\"useContext\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "2"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Form.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "5"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "6"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "7"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"renderForm\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "8"]
+    ],
+    "packages/grafana-ui/src/components/Forms/InlineField.story.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"basic: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"error: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"grow: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"multiple: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "3"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"multiple: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "4"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"multiple: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "5"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"withCombobox: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "6"],
+      [0, 0, 0, "React Hook \\"useId\\" is called in function \\"withTooltip: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "7"],
+      [0, 0, 0, "React Hook \\"useState\\" is called in function \\"withCombobox: StoryFn<typeof InlineField>\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "8"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -864,7 +905,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/api/clients/folder/v1beta1/hooks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "React Hook \\"useGetDisplayMappingQuery\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
+      [0, 0, 0, "React Hook \\"useGetFolderParentsQuery\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "2"],
+      [0, 0, 0, "React Hook \\"useGetFolderQuery\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "3"]
     ],
     "public/app/core/TableModel.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1274,6 +1318,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
+    "public/app/features/alerting/unified/components/receivers/TemplatePreview.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useStyles2\\" is called in function \\"getPreviewResults\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"]
+    ],
     "public/app/features/alerting/unified/components/receivers/form/ChannelOptions.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -1402,6 +1449,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rule-editor/rule-types/RuleType.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useStyles2\\" is called in function \\"createMetadata\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1554,6 +1604,18 @@ exports[`better eslint`] = {
     "public/app/features/browse-dashboards/components/NewFolderForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/features/commandPalette/actions/recentScopesActions.ts:5381": [
+      [0, 0, 0, "React Hook \\"useScopesServices\\" is called in function \\"getRecentScopesActions\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"]
+    ],
+    "public/app/features/commandPalette/actions/scopeActions.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useGlobalScopesSearch\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"],
+      [0, 0, 0, "React Hook \\"useRegisterActions\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "1"],
+      [0, 0, 0, "React Hook \\"useScopeTreeActions\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "2"],
+      [0, 0, 0, "React Hook \\"useScopesRow\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "3"]
+    ],
+    "public/app/features/commandPalette/actions/scopesUtils.ts:5381": [
+      [0, 0, 0, "React Hook \\"useObservable\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
+    ],
     "public/app/features/connections/components/ConnectionsRedirectNotice/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
@@ -1633,8 +1695,28 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneRenderer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useEffect\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"],
+      [0, 0, 0, "React Hook \\"useEffect\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "1"],
+      [0, 0, 0, "React Hook \\"useSceneObjectState\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "2"],
+      [0, 0, 0, "React Hook \\"useSnappingSplitter\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "3"]
+    ],
+    "public/app/features/dashboard-scene/edit-pane/DashboardEditableElement.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useLayoutCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"]
+    ],
     "public/app/features/dashboard-scene/edit-pane/DashboardOutline.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/dashboard-scene/edit-pane/VizPanelEditableElement.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "4"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "5"]
     ],
     "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1645,7 +1727,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "React Hook \\"useStyles2\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
     ],
     "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1662,7 +1745,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "React Hook \\"useStyles2\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useToggle\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"]
     ],
     "public/app/features/dashboard-scene/panel-edit/PanelVizTypePicker.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -1672,6 +1757,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
+    ],
+    "public/app/features/dashboard-scene/saving/SaveDashboardDrawer.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useIsProvisionedNG\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"]
     ],
     "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -1683,7 +1771,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1712,21 +1802,39 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
     ],
+    "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItemEditor.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useConditionalRenderingEditor\\" is called in function \\"getOptions\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"]
+    ],
     "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManagerEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
     ],
+    "public/app/features/dashboard-scene/scene/layout-default/DashboardGridItemEditor.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useConditionalRenderingEditor\\" is called in function \\"getDashboardGridItemOptions\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"]
+    ],
+    "public/app/features/dashboard-scene/scene/layout-default/SceneGridRowEditableElement.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
+    ],
     "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
+    "public/app/features/dashboard-scene/scene/layout-rows/RowItem.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useEditOptions\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"]
+    ],
     "public/app/features/dashboard-scene/scene/layout-rows/RowItemEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "React Hook \\"useConditionalRenderingEditor\\" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
+    ],
+    "public/app/features/dashboard-scene/scene/layout-tabs/TabItem.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useEditOptions\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"]
     ],
     "public/app/features/dashboard-scene/scene/layout-tabs/TabItemEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "React Hook \\"useConditionalRenderingEditor\\" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
     ],
     "public/app/features/dashboard-scene/serialization/angularMigration.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1751,6 +1859,15 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/serialization/transformToV1TypesUtils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/dashboard-scene/settings/GeneralSettingsEditView.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useDashboardEditPageNav\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"]
+    ],
+    "public/app/features/dashboard-scene/settings/JsonModelEditView.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useDashboardEditPageNav\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useSaveDashboard\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useState\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
+      [0, 0, 0, "React Hook \\"useStyles2\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"]
+    ],
     "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
@@ -1772,11 +1889,27 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "9"]
     ],
+    "public/app/features/dashboard-scene/settings/variables/LocalVariableEditableElement.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"]
+    ],
     "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "4"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "5"],
+      [0, 0, 0, "React Hook \\"useLocalVariableOptions\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "6"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "7"],
+      [0, 0, 0, "React Hook \\"useVariableSelectionOptionsCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "8"],
+      [0, 0, 0, "React Hook \\"useVariableTypeCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "9"]
     ],
     "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"]
     ],
     "public/app/features/dashboard-scene/settings/variables/components/AdHocVariableForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -2311,8 +2444,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/features/explore/TraceView/components/TracePageHeader/TracePageHeader.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"],
+      [0, 0, 0, "React Hook \\"usePluginLinks\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "1"]
+    ],
     "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TracePageHeader\`)", "0"]
+    ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/SpanDetailLinkButtons.tsx:5381": [
+      [0, 0, 0, "React Hook \\"usePluginLinks\\" is called in function \\"getSpanDetailLinkButtons\\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \\"use\\".", "0"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanLinks.tsx:5381": [
       [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
@@ -2615,14 +2755,24 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/features/provisioning/GettingStarted/Sidebar.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useStyles2\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"]
+    ],
     "public/app/features/provisioning/GettingStarted/SidebarItem.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "public/app/features/provisioning/Job/JobContent.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useEffect\\" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?", "0"]
+    ],
+    "public/app/features/provisioning/Job/RecentJobs.tsx:5381": [
+      [0, 0, 0, "React Hook \\"useMemo\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "0"]
     ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
+      [0, 0, 0, "React Hook \\"usePluginComponents\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
     ],
     "public/app/features/query/components/QueryEditorRowHeader.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -3819,9 +3969,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/table/TableCellOptionEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
-    "public/app/plugins/panel/table/cells/AutoCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
     "public/app/plugins/panel/table/cells/BarGaugeCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
@@ -3829,47 +3976,22 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/table/cells/ColorBackgroundCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/plugins/panel/table/cells/ImageCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
+    "public/app/plugins/panel/table/cells/MarkdownCellOptionsEditor.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
     "public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/plugins/panel/table/cells/TextWrapOptionsEditor.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
     "public/app/plugins/panel/table/migrations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "public/app/plugins/panel/table/table-new/TableCellOptionEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/plugins/panel/table/table-new/cells/BarGaugeCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
-    ],
-    "public/app/plugins/panel/table/table-new/cells/ColorBackgroundCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
-    ],
-    "public/app/plugins/panel/table/table-new/cells/ImageCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
-    ],
-    "public/app/plugins/panel/table/table-new/cells/MarkdownCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/plugins/panel/table/table-new/cells/SparklineCellOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/plugins/panel/table/table-new/cells/TextWrapOptionsEditor.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/plugins/panel/table/table-new/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
@@ -4221,8 +4343,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "packages/grafana-prometheus/src/configuration/PromSettings.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],

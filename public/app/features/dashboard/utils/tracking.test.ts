@@ -38,6 +38,7 @@ describe('trackDashboardLoaded', () => {
     expect(reportInteractionSpy).toHaveBeenCalledWith('dashboards_init_dashboard_completed', {
       duration: 200,
       isScene: false,
+      isDynamicDashboard: false,
       uid: 'dashboard-123',
       title: 'Test Dashboard',
       schemaVersion: model.schemaVersion, // This value is based on public/app/features/dashboard/state/DashboardMigrator.ts#L81

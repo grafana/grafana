@@ -28,6 +28,9 @@ outputs:
   docs:
     description: Whether the docs or self have changed in any way
     value: ${{ steps.changed-files.outputs.docs_any_changed || 'true' }}
+  dockerfile:
+    description: Whether the dockerfile or self have changed in any way
+    value: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}
 runs:
   using: composite
   steps:
@@ -42,6 +45,8 @@ runs:
           self:
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
+          dockerfile:
+            - 'Dockerfile'
           backend:
             - '!*.md'
             - '!docs/**'
@@ -98,7 +103,6 @@ runs:
             - 'proto/**'
             - '**/Makefile'
             - 'scripts/**'
-            - '!scripts/drone/**'
             - '!**.md'
             - '.github/actions/change-detection/**'
             - '**.cue'
@@ -123,7 +127,6 @@ runs:
             - 'scripts/**'
             - '!**.md'
             - '.citools/**'
-            - '.bingo/**'
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
           docs:
@@ -153,3 +156,5 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.dev_tooling_all_changed_files }}"
         echo "Docs: ${{ steps.changed-files.outputs.docs_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.docs_all_changed_files }}"
+        echo "Dockerfile: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.dockerfile_all_changed_files }}"

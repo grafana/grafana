@@ -551,6 +551,20 @@ describe('TableNG hooks', () => {
 
       expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
     });
+
+    it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        return useHeaderHeight({
+          fields,
+          columnWidths: [100, 100, 100, 100],
+          enabled: true,
+          typographyCtx,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(28);
+    });
   });
 
   describe('useRowHeight', () => {

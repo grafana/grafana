@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
@@ -55,6 +55,8 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       showTime: true,
       style: {},
       styles: styles,
+      timeRange: getDefaultTimeRange(),
+      timeZone: 'browser',
       wrapLogMessage: true,
     };
   });
@@ -212,6 +214,17 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       );
       expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
       await userEvent.click(screen.getByLabelText('Log menu'));
+      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+    });
+
+    test('The menu can be clicked', async () => {
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
+      );
+      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button'));
       expect(screen.getByText('Copy log line')).toBeInTheDocument();
     });
   });
