@@ -42,6 +42,17 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
+	getDeletePermission := func(roleID int64, scope string) sqltemplate.SQLTemplate {
+		v := deletePermissionTemplate{
+			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
+			PermissionTable: nodb.Table("permission"),
+			RoleID:          roleID,
+			Scope:           scope,
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -66,6 +77,12 @@ func TestTemplates(t *testing.T) {
 						Attribute:  "uid",
 						Identifier: "dash1",
 					}),
+				},
+			},
+			permissionDeleteTplt: {
+				{
+					Name: "delete_permission",
+					Data: getDeletePermission(23, "dashboard:uid:dash1"),
 				},
 			},
 		},
