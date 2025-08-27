@@ -43,7 +43,7 @@ composableKinds: DataQuery: {
 				maxNodes?:           int64
 				#PyroscopeQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
         // If set to true, the response will contain annotations
-        annotations?: bool | *true
+        annotations?: bool
 			}
 		}]
 		lenses: []
