@@ -64,11 +64,6 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission, namespace string
 
 	first := flatPerms[0]
 
-	// For ResourcePermissions, the SubjectUID contains the ResourcePermission name
-	if first.SubjectType != "resourcepermission" {
-		return nil
-	}
-
 	// Use the original ResourcePermission name from the SubjectUID
 	// This preserves the CRD name that was used when creating the ResourcePermission
 	name := first.SubjectUID
@@ -159,8 +154,8 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission, namespace string
 			resourceName = "*"
 		}
 	} else {
-		resourceType = "dashboards" 
-		resourceName = "*"          
+		resourceType = "dashboards"
+		resourceName = "*"
 	}
 
 	// Set the appropriate API group based on resource type

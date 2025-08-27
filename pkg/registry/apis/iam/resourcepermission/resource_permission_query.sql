@@ -1,27 +1,28 @@
--- Query to reconstruct ResourcePermissions from managed roles and their permissions
--- We look for managed roles that were created for ResourcePermissions (those with descriptions indicating ResourcePermission)
--- and extract the permissions + target resource information from those roles
-
 SELECT 
   p.id, p.action, p.scope, p.created, p.updated,
-  -- Extract ResourcePermission name from role description
-  SUBSTR(r.description, LENGTH('Managed role for ResourcePermission: ') + 1) as subject_uid,
-  'resourcepermission' as subject_type,
-  0 as is_service_account,
+  COALESCE(u.uid, t.uid, br.role) as subject_uid,
+  CASE WHEN u.uid IS NOT NULL THEN 'user' 
+       WHEN t.uid IS NOT NULL THEN 'team'
+       ELSE 'builtin_role' END as subject_type,
+  COALESCE(u.is_service_account, 0) as is_service_account,
   r.name as role_name
 FROM {{ .Ident .PermissionTable }} p
 INNER JOIN {{ .Ident .RoleTable }} r ON p.role_id = r.id
-WHERE r.description LIKE 'Managed role for ResourcePermission: %'
-{{ if .Query.Actions }}
-AND p.action LIKE {{ .Arg .Query.Actions }}+":%"
+LEFT JOIN user_role ur ON r.id = ur.role_id AND ur.org_id = r.org_id
+LEFT JOIN {{ .Ident "user" }} u ON ur.user_id = u.id
+LEFT JOIN team_role tr ON r.id = tr.role_id AND tr.org_id = r.org_id
+LEFT JOIN team t ON tr.team_id = t.id
+LEFT JOIN builtin_role br ON r.id = br.role_id
+WHERE r.name LIKE 'managed:%'
+{{ if .Query.ActionSets }}
+AND p.action in ({{ .ArgList .Query.ActionSets }})
 {{ end }}
-{{ if .Query.OrgID }}
-AND r.org_id = {{ .Arg .Query.OrgID }}
+{{ if .Query.Scope }}
+AND p.scope = {{ .Arg .Query.Scope }}
 {{ end }}
-{{ if .Query.UID }}
-AND r.description LIKE 'Managed role for ResourcePermission: %' || {{ .Arg .Query.UID }} || '%'
-{{ end }}
-ORDER BY subject_uid, p.scope, p.id
+AND (u.uid IS NOT NULL OR t.uid IS NOT NULL OR br.role IS NOT NULL)
+AND COALESCE(ur.org_id, tr.org_id, r.org_id) = {{ .Arg .Query.OrgID }}
+ORDER BY p.id
 {{ if .Query.Pagination.Limit }}
 LIMIT {{ .Arg .Query.Pagination.Limit }}
 {{ end }}
