@@ -34,7 +34,7 @@ func NewOptions(codec runtime.Codec, zanzanaClient zanzana.Client) *Options {
 		RecommendedOptions:       NewRecommendedOptions(codec),
 		APIEnablementOptions:     genericoptions.NewAPIEnablementOptions(),
 		GrafanaAggregatorOptions: NewGrafanaAggregatorOptions(zanzanaClient),
-		StorageOptions:           NewStorageOptions(),
+		StorageOptions:           NewStorageOptions(zanzanaClient),
 		ExtraOptions:             NewExtraOptions(),
 	}
 }

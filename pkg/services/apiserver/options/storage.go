@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -82,15 +83,17 @@ type StorageOptions struct {
 
 	// Access to the other clients
 	ConfigProvider RestConfigProvider
+	zanzanaClient  zanzana.Client
 }
 
-func NewStorageOptions() *StorageOptions {
+func NewStorageOptions(zanzanaClient zanzana.Client) *StorageOptions {
 	return &StorageOptions{
 		StorageType:                            StorageTypeUnified,
 		Address:                                "localhost:10000",
 		GrpcClientAuthenticationTokenNamespace: "*",
 		GrpcClientAuthenticationAllowInsecure:  false,
 		BlobThresholdBytes:                     BlobThresholdDefault,
+		zanzanaClient:                          zanzanaClient,
 	}
 }
 
@@ -224,7 +227,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 		o.InlineSecrets = inlineSecureValueService
 	}
 
-	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, nil)
+	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, o.zanzanaClient)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
 }
