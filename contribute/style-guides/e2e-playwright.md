@@ -6,7 +6,7 @@ Important notes:
 
 - We generally store all element identifiers ([CSS selectors](https://mdn.io/docs/Web/CSS/CSS_Selectors)) within the framework for reuse and maintainability.
 - We generally do not use stubs or mocks as to fully simulate a real user.
-- We also use Playwright for the [plugins' end-to-end tests](contribute/style-guides/e2e-plugins.md).
+- We also use Playwright for the [plugins' end-to-end tests](#playwright-for-plugins).
 
 ## Framework structure
 
