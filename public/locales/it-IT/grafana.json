@@ -5223,6 +5223,9 @@
       "save-json-to-file": "Salva JSON nel file",
       "see-docs": "Consulta la <2>documentazione</2> per ulteriori informazioni sul provisioning."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Caricamento configurazione"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambia visualizzazione",
@@ -6135,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Attiva/disattiva il menu di condivisione"
     },
-    "solo-panel-page": {
-      "loading": "Caricamento"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON dashboard utilizzato per risolvere i problemi di visualizzazione"
@@ -6370,7 +6373,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Aggiungi query dalla libreria"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "Mostra contesto",
       "show-log-line": "Mostra riga registro",
       "sidebar-mode": "Ancoraggio a destra",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Sblocca registro"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
     }
-  },
-  "panel-search": {
-    "no-matches": "Nessuna corrispondenza trovata",
-    "unsupported-layout": "Layout non supportato"
   },
   "panel-type-filter": {
     "clear-button": "Cancella tipi",
@@ -12702,10 +12708,6 @@
     "login": "Accedi"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Se il testo selezionato verrà adattato alla larghezza del testo nella colonna configurata",
-      "label-wrap-text": "Testo a capo"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Modalità di visualizzazione del misuratore",
       "label-value-display": "Visualizzazione del valore"
@@ -12733,13 +12735,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Se selezionato, l'intera riga verrà colorata come questa cella.",
-      "description-wrap-text": "Se il testo selezionato verrà adattato alla larghezza del testo nella colonna configurata",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "Applica a tutta la riga",
-      "label-background-display-mode": "Modalità di visualizzazione dello sfondo",
-      "wrap-text": "Testo a capo"
+      "label-background-display-mode": "Modalità di visualizzazione dello sfondo"
     },
     "column-alignment-options": {
       "label-auto": "Automatica",
@@ -12757,7 +12754,9 @@
     "description-column-filter": "Abilita/disabilita i filtri di campo nella tabella",
     "description-count-rows": "Visualizza un singolo conteggio per tutte le righe di dati",
     "description-fields": "Seleziona i campi da calcolare",
+    "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Abilita il ritorno a capo del testo per le intestazioni di colonna",
     "image-cell-options-editor": {
       "description-alt-text": "Testo alternativo che verrà visualizzato se un'immagine non può essere visualizzata o per gli utenti che utilizzano un lettore di schermo",
@@ -12783,51 +12782,7 @@
     "name-column-filter": "Filtro colonna",
     "name-column-width": "Larghezza colonna",
     "name-count-rows": "Conteggio righe",
-    "name-enable-paginations": "Abilita impaginazione",
-    "name-fields": "Campi",
-    "name-hide-in-table": "Nascondi nella tabella",
-    "name-min-column-width": "Larghezza minima colonna",
-    "name-show-table-footer": "Mostra piè di pagina tabella",
-    "name-show-table-header": "Mostra intestazione tabella",
-    "name-wrap-header-text": "Testo intestazione a capo",
-    "placeholder-column-width": "automatica",
-    "placeholder-fields": "Tutti i campi numerici",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Opzioni cella",
-    "category-table": "Tabella",
-    "category-table-footer": "Piè di pagina tabella",
-    "cell-height-options": {
-      "label-large": "Grande",
-      "label-medium": "Media",
-      "label-small": "Piccola"
-    },
-    "column-alignment-options": {
-      "label-auto": "Automatica",
-      "label-center": "Centrale",
-      "label-left": "A sinistra",
-      "label-right": "A destra"
-    },
-    "description-calculation": "Scegli una funzione/un calcolo di riduzione",
-    "description-cell-value-inspect": "Abilita l'ispezione del valore della cella in una finestra modale",
-    "description-column-filter": "Abilita/disabilita i filtri di campo nella tabella",
-    "description-count-rows": "Visualizza un singolo conteggio per tutte le righe di dati",
-    "description-fields": "Seleziona i campi da calcolare",
-    "description-frozen-columns": "",
-    "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Calcolo",
-    "name-cell-height": "Altezza cella",
-    "name-cell-type": "Tipo di cella",
-    "name-cell-value-inspect": "Ispezione del valore della cella",
-    "name-column-alignment": "Allineamento colonna",
-    "name-column-filter": "Filtro colonna",
-    "name-column-width": "Larghezza colonna",
-    "name-count-rows": "Conteggio righe",
-    "name-enable-pagination": "Abilita impaginazione",
+    "name-enable-pagination": "",
     "name-fields": "Campi",
     "name-frozen-columns": "",
     "name-hide-in-table": "Nascondi nella tabella",
@@ -12836,8 +12791,12 @@
     "name-show-table-header": "Mostra intestazione tabella",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
-    "placeholder-column-width": "automatico",
+    "name-wrap-header-text": "Testo intestazione a capo",
+    "placeholder-column-width": "automatica",
     "placeholder-fields": "Tutti i campi numerici",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

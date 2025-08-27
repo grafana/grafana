@@ -5223,6 +5223,9 @@
       "save-json-to-file": "Spara JSON till fil",
       "see-docs": "Se <2>dokumentationen</2> för mer information om provisionering."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Läser in konfiguration"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ändra visualisering",
@@ -6135,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Växla delningsmenyn"
     },
-    "solo-panel-page": {
-      "loading": "Laddar"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Instrumentpanel JSON används för att felsöka visualiseringsproblem"
@@ -6370,7 +6373,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Lägg till fråga från biblioteket"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "Visa sammanhang",
       "show-log-line": "Visa loggrad",
       "sidebar-mode": "Förankra till höger",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Frigör logg"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"
     }
-  },
-  "panel-search": {
-    "no-matches": "Inga träffar hittades",
-    "unsupported-layout": "Layout som inte stöds"
   },
   "panel-type-filter": {
     "clear-button": "Rensa typer",
@@ -12702,10 +12708,6 @@
     "login": "Logga in"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Om vald text kommer att radbrytas till textbredden i den konfigurerade kolumnen",
-      "label-wrap-text": "Radbryt text"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Mätarvisningsläge",
       "label-value-display": "Värdevisning"
@@ -12733,13 +12735,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Om valt kommer hela raden att färgas som denna cell skulle vara.",
-      "description-wrap-text": "Om vald text kommer att radbrytas till textbredden i den konfigurerade kolumnen",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Tillämpa på hela raden",
-      "label-background-display-mode": "Bakgrundsvisningsläge",
-      "wrap-text": "Radbryt text"
+      "label-background-display-mode": "Bakgrundsvisningsläge"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12757,7 +12754,9 @@
     "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
     "description-count-rows": "Visa ett enda antal för alla datarader",
     "description-fields": "Välj de fält som ska beräknas",
+    "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Aktiverar radbyte för kolumnrubriker",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativ text som kommer att visas om en bild inte kan visas eller för användare som använder en skärmläsare",
@@ -12783,51 +12782,7 @@
     "name-column-filter": "Kolumnfilter",
     "name-column-width": "Kolumnbredd",
     "name-count-rows": "Antal rader",
-    "name-enable-paginations": "Aktivera sidindelning",
-    "name-fields": "Fält",
-    "name-hide-in-table": "Dölj i tabell",
-    "name-min-column-width": "Minsta kolumnbredd",
-    "name-show-table-footer": "Visa tabellsidfot",
-    "name-show-table-header": "Visa tabellsidhuvud",
-    "name-wrap-header-text": "Radbryt rubriktext",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "Alla numeriska fält",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Cellalternativ",
-    "category-table": "Tabell",
-    "category-table-footer": "Tabellsidfot",
-    "cell-height-options": {
-      "label-large": "Stor",
-      "label-medium": "Medium",
-      "label-small": "Litet"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Centrera",
-      "label-left": "Vänster",
-      "label-right": "Höger"
-    },
-    "description-calculation": "Välj en reduceringsfunktion/beräkning",
-    "description-cell-value-inspect": "Aktivera cellvärdesinspektion i ett modalt fönster",
-    "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
-    "description-count-rows": "Visa ett enda antal för alla datarader",
-    "description-fields": "Välj de fält som ska beräknas",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Beräkning",
-    "name-cell-height": "Cellhöjd",
-    "name-cell-type": "Celltyp",
-    "name-cell-value-inspect": "Inspektion av cellvärde",
-    "name-column-alignment": "Kolumnjustering",
-    "name-column-filter": "Kolumnfilter",
-    "name-column-width": "Kolumnbredd",
-    "name-count-rows": "Antal rader",
-    "name-enable-pagination": "Aktivera sidindelning",
+    "name-enable-pagination": "",
     "name-fields": "Fält",
     "name-frozen-columns": "",
     "name-hide-in-table": "Dölj i tabell",
@@ -12836,8 +12791,12 @@
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Radbryt rubriktext",
     "placeholder-column-width": "auto",
     "placeholder-fields": "Alla numeriska fält",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

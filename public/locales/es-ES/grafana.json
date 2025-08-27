@@ -5223,6 +5223,9 @@
       "save-json-to-file": "Guardar JSON en un archivo",
       "see-docs": "Consulta la <2>documentación</2> para obtener más información sobre el aprovisionamiento."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Cargando configuración"
     },
@@ -5494,6 +5497,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Cambiar visualización",
@@ -6135,9 +6141,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menú de compartir"
     },
-    "solo-panel-page": {
-      "loading": "Cargando"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON del dashboard utilizado para ayudar a solucionar problemas de visualización"
@@ -6370,7 +6373,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Añadir consulta desde la biblioteca"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -7556,6 +7559,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -9533,6 +9537,12 @@
       "show-context": "Mostrar contexto",
       "show-log-line": "Mostrar línea de log",
       "sidebar-mode": "Anclar a la derecha",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Desanclar log"
     },
     "log-line-menu": {
@@ -10711,10 +10721,6 @@
     "viz-type-picker": {
       "could-anything-matching-query": "No se ha encontrado nada que coincida con tu consulta"
     }
-  },
-  "panel-search": {
-    "no-matches": "No se han encontrado coincidencias",
-    "unsupported-layout": "Diseño no compatible"
   },
   "panel-type-filter": {
     "clear-button": "Borrar tipos",
@@ -12702,10 +12708,6 @@
     "login": "Iniciar sesión"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Si se selecciona, el texto se ajustará al ancho del texto en la columna configurada",
-      "label-wrap-text": "Ajustar texto"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Modo de visualización del indicador",
       "label-value-display": "Visualización del valor"
@@ -12733,13 +12735,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Si se selecciona, toda la fila se coloreará como esta celda.",
-      "description-wrap-text": "Si se selecciona, el texto se ajustará al ancho del texto en la columna configurada",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Aplicar a toda la fila",
-      "label-background-display-mode": "Modo de visualización del fondo",
-      "wrap-text": "Ajustar texto"
+      "label-background-display-mode": "Modo de visualización del fondo"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12757,7 +12754,9 @@
     "description-column-filter": "Habilita/deshabilita los filtros de campo en la tabla",
     "description-count-rows": "Mostrar un único recuento para todas las filas de datos",
     "description-fields": "Seleccione los campos que deben calcularse",
+    "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Habilita el ajuste de texto para los encabezados de columna",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que se mostrará si no se puede visualizar una imagen o para los usuarios que utilizan un lector de pantalla",
@@ -12783,51 +12782,7 @@
     "name-column-filter": "Filtro de columna",
     "name-column-width": "Ancho de columna",
     "name-count-rows": "Contar filas",
-    "name-enable-paginations": "Habilitar paginación",
-    "name-fields": "Campos",
-    "name-hide-in-table": "Ocultar en la tabla",
-    "name-min-column-width": "Ancho mínimo de columna",
-    "name-show-table-footer": "Mostrar pie de tabla",
-    "name-show-table-header": "Mostrar encabezado de tabla",
-    "name-wrap-header-text": "Ajustar texto del encabezado",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "Todos los campos numéricos",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Opciones de celda",
-    "category-table": "Tabla",
-    "category-table-footer": "Pie de tabla",
-    "cell-height-options": {
-      "label-large": "Grande",
-      "label-medium": "Medio",
-      "label-small": "Pequeño"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Centro",
-      "label-left": "Izquierda",
-      "label-right": "Derecha"
-    },
-    "description-calculation": "Elegir una función de reducción/cálculo",
-    "description-cell-value-inspect": "Habilitar la inspección del valor de la celda en una ventana modal",
-    "description-column-filter": "Habilita/deshabilita los filtros de campo en la tabla",
-    "description-count-rows": "Mostrar un único recuento para todas las filas de datos",
-    "description-fields": "Seleccione los campos que deben calcularse",
-    "description-frozen-columns": "",
-    "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Cálculo",
-    "name-cell-height": "Altura de celda",
-    "name-cell-type": "Tipo de celda",
-    "name-cell-value-inspect": "Inspección del valor de celda",
-    "name-column-alignment": "Alineación de la columna",
-    "name-column-filter": "Filtro de columna",
-    "name-column-width": "Ancho de columna",
-    "name-count-rows": "Contar filas",
-    "name-enable-pagination": "Habilitar paginación",
+    "name-enable-pagination": "",
     "name-fields": "Campos",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ocultar en la tabla",
@@ -12836,8 +12791,12 @@
     "name-show-table-header": "Mostrar encabezado de tabla",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Ajustar texto del encabezado",
     "placeholder-column-width": "auto",
     "placeholder-fields": "Todos los campos numéricos",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
