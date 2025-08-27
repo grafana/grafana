@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../search/ # /docs/grafana/latest/search/
 description: Use the command palette to search all of Grafana and initiate key actions
 keywords:
   - search
@@ -13,7 +15,6 @@ labels:
     - oss
 menutitle: Search
 title: Search
-weight: 80
 ---
 
 # Grafana search
