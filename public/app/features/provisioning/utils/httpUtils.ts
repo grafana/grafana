@@ -1,5 +1,9 @@
-import { isHttpError } from '../guards';
-import { HttpError, RepositoryInfo } from '../types/repository';
+import { HttpError, isHttpError } from '../guards';
+
+export interface RepositoryInfo {
+  owner: string;
+  repo: string;
+}
 
 export interface ApiRequest {
   url: string;

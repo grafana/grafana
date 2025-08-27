@@ -1,9 +1,20 @@
+/**
+ * A hook to fetch all branches fron a given repository.
+ * Used to populate the branch dropdown in the repository selection.
+ * We can't use the '/ref` endpoint at this point because the repository connection hasn't been created yet.
+ */
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
+import { RepoType } from '../Wizard/types';
 import { isSupportedGitProvider } from '../guards';
-import { UseBranchOptionsProps } from '../types/repository';
 import { fetchAllBranches, getErrorMessage, parseRepositoryUrl } from '../utils/httpUtils';
+
+export interface UseBranchOptionsProps {
+  repositoryType: RepoType;
+  repositoryUrl: string;
+  repositoryToken: string;
+}
 
 export function useBranchOptions({ repositoryType, repositoryUrl = '', repositoryToken = '' }: UseBranchOptionsProps) {
   const trimmedUrl = repositoryUrl.trim();
