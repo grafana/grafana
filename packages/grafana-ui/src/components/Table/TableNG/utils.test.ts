@@ -547,14 +547,14 @@ describe('TableNG utils', () => {
         name: 'test',
         type: FieldType.string,
         config: {
-          custom: { cellOptions: { type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true } },
+          custom: { cellOptions: { type: TableCellDisplayMode.ColorText, inspectEnabled: false } },
         },
         values: [],
       };
 
       const options = getCellOptions(field);
 
-      expect(options).toEqual({ type: TableCellDisplayMode.ColorText, inspectEnabled: false, wrapText: true });
+      expect(options).toEqual({ type: TableCellDisplayMode.ColorText, inspectEnabled: false });
     });
 
     it('should handle legacy displayMode property', () => {
@@ -1074,12 +1074,12 @@ describe('TableNG utils', () => {
 
     it('sets up text height measurers for each text column if wrapping is on', () => {
       const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapText: true } } },
         {
           name: 'Address',
           type: FieldType.string,
           values: [],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
       const measurers = buildCellHeightMeasurers(fields, ctx);
@@ -1094,7 +1094,7 @@ describe('TableNG utils', () => {
           name: 'Address',
           type: FieldType.string,
           values: [],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
 
@@ -1108,7 +1108,7 @@ describe('TableNG utils', () => {
           name: 'Tags',
           type: FieldType.string,
           values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
-          config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill, wrapText: true } } },
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
       const measurers = buildCellHeightMeasurers(fields, ctx);
@@ -1125,7 +1125,7 @@ describe('TableNG utils', () => {
           name: 'Links',
           type: FieldType.string,
           values: ['http://example.com/1', 'http://example.com/2'],
-          config: { custom: { cellOptions: { type: TableCellDisplayMode.DataLinks, wrapText: true } } },
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.DataLinks } } },
           getLinks: jest.fn((): LinkModel[] => [
             { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
             { title: 'Link 2', href: 'http://example.com/2', target: '_self', origin: { datasourceUid: 'test' } },
@@ -1141,12 +1141,12 @@ describe('TableNG utils', () => {
     it('does not enable text counting for non-string fields', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapText: true } } },
       ];
 
       const measurers = buildCellHeightMeasurers(fields, ctx);
       // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
-      expect(measurers).toEqual([]);
+      expect(measurers).toBeUndefined();
     });
 
     it('returns an undefined if no columns are wrapped', () => {
@@ -1170,13 +1170,13 @@ describe('TableNG utils', () => {
           name: 'Name',
           type: FieldType.string,
           values: ['foo', 'bar', 'baz', 'longer one here', 'shorter'],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
         {
           name: 'Age',
           type: FieldType.number,
           values: [1, 2, 3, 123456, 789122349932],
-          config: { custom: { cellOptions: { wrapText: true } } },
+          config: { custom: { wrapText: true } },
         },
       ];
       measurers = [
