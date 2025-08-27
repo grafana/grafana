@@ -23,6 +23,15 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
+	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 )
 
 var (
@@ -154,19 +163,6 @@ func runJobController(c *cli.Context) error {
 		return fmt.Errorf("failed to create job controller: %w", err)
 	}
 
-	logger.Info("jobs controller started")
-	notifications := jobController.InsertNotifications()
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-notifications:
-				logger.Info("job create notification received")
-			}
-		}
-	}()
-
 	// Optionally enable history cleanup if a positive expiration is provided
 	historyExpiration := c.Duration("history-expiration")
 	var startHistoryInformers func()
@@ -190,6 +186,102 @@ func runJobController(c *cli.Context) error {
 	} else {
 		startHistoryInformers = func() {}
 	}
+
+	// TODO: Loki support
+	// var jobHistoryWriter jobs.HistoryWriter
+	// if b.jobHistoryLoki != nil {
+	// 	jobHistoryWriter = b.jobHistoryLoki
+	// } else {
+	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
+	// }
+	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
+
+	jobStore, err := jobs.NewJobStore(b.client, 30*time.Second)
+	if err != nil {
+		return fmt.Errorf("create API client job store: %w", err)
+	}
+
+	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
+
+	stageIfPossible := repository.WrapWithStageAndPushIfPossible
+	exportWorker := export.NewExportWorker(
+		b.clients,
+		b.repositoryResources,
+		export.ExportAll,
+		stageIfPossible,
+	)
+
+	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
+	syncWorker := sync.NewSyncWorker(
+		b.clients,
+		b.repositoryResources,
+		b.storageStatus,
+		b.statusPatcher.Patch,
+		syncer,
+	)
+	signerFactory := signature.NewSignerFactory(b.clients)
+	legacyResources := migrate.NewLegacyResourcesMigrator(
+		b.repositoryResources,
+		b.parsers,
+		b.legacyMigrator,
+		signerFactory,
+		b.clients,
+		export.ExportAll,
+	)
+
+	storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
+	legacyMigrator := migrate.NewLegacyMigrator(
+		legacyResources,
+		storageSwapper,
+		syncWorker,
+		stageIfPossible,
+	)
+
+	cleaner := migrate.NewNamespaceCleaner(b.clients)
+	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+		cleaner,
+		exportWorker,
+		syncWorker,
+	)
+
+	migrationWorker := migrate.NewMigrationWorker(
+		legacyMigrator,
+		unifiedStorageMigrator,
+		b.storageStatus,
+	)
+
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
+	moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
+	workers := []jobs.Worker{
+		deleteWorker,
+		exportWorker,
+		migrationWorker,
+		moveWorker,
+		syncWorker,
+	}
+
+	// This is basically our own JobQueue system
+	// TODO: Add repository getter
+	driver, err := jobs.NewConcurrentJobDriver(
+		3,              // 3 drivers for now
+		20*time.Minute, // Max time for each job
+		time.Minute,    // Cleanup jobs
+		30*time.Second, // Periodically look for new jobs
+		30*time.Second, // Lease renewal interval
+		jobStore,
+		nil, // TODO: add repository getter
+		jobHistoryWriter,
+		jobController.InsertNotifications(),
+		workers...,
+	)
+
+	go func() {
+		logger.Info("jobs controller started")
+		if err := driver.Run(ctx); err != nil {
+			logger.Error("job driver failed", "error", err)
+		}
+	}()
 
 	// Start informers
 	go jobInformerFactory.Start(ctx.Done())
