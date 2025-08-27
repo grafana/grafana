@@ -133,7 +133,7 @@ func (u *UnstructuredSpec) SetJSONData(v any) *UnstructuredSpec {
 // 1. Allows additional properties at the root
 // 2. The jsonData field *may* be an raw value OR a map
 func (UnstructuredSpec) OpenAPIDefinition() openapi.OpenAPIDefinition {
-	s := schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(func(path string) spec.Ref {
+	s := schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(func(path string) spec.Ref {
 		return spec.MustCreateRef(path)
 	})
 	s.Schema.AdditionalProperties = &spec.SchemaOrBool{
