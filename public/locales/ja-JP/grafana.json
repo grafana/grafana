@@ -6352,7 +6352,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "ライブラリからクエリを追加"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -12667,10 +12667,6 @@
     "login": "ログイン"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "選択されている場合、テキストは設定された列のテキスト幅で折り返されます",
-      "label-wrap-text": "テキストを折り返す"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "ゲージ表示モード",
       "label-value-display": "値を表示"
@@ -12698,13 +12694,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "選択されている場合、行全体がこのセルと同じ色で表示されます。",
-      "description-wrap-text": "選択されている場合、テキストは設定された列のテキスト幅で折り返されます",
-      "label": {
-        "text-alpha": "アルファ"
-      },
       "label-apply-to-entire-row": "行全体に適用",
-      "label-background-display-mode": "背景表示モード",
-      "wrap-text": "テキストを折り返す"
+      "label-background-display-mode": "背景表示モード"
     },
     "column-alignment-options": {
       "label-auto": "自動",
@@ -12722,7 +12713,9 @@
     "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
     "description-count-rows": "すべてのデータ行の単一カウントを表示",
     "description-fields": "計算するフィールドを選択",
+    "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "列ヘッダーのテキスト折り返しを有効にする",
     "image-cell-options-editor": {
       "description-alt-text": "画像が表示できない場合やスクリーンリーダーを使用するユーザーのために表示される代替テキスト",
@@ -12748,51 +12741,7 @@
     "name-column-filter": "列フィルター",
     "name-column-width": "列幅",
     "name-count-rows": "行数",
-    "name-enable-paginations": "ページ分割を有効化",
-    "name-fields": "フィールド",
-    "name-hide-in-table": "テーブルで非表示",
-    "name-min-column-width": "最小列幅",
-    "name-show-table-footer": "テーブルフッターを表示",
-    "name-show-table-header": "テーブルヘッダーを表示",
-    "name-wrap-header-text": "ヘッダーテキストの折り返し",
-    "placeholder-column-width": "自動",
-    "placeholder-fields": "すべての数値フィールド",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "セルオプション",
-    "category-table": "テーブル",
-    "category-table-footer": "テーブルフッター",
-    "cell-height-options": {
-      "label-large": "大",
-      "label-medium": "中",
-      "label-small": "小"
-    },
-    "column-alignment-options": {
-      "label-auto": "自動",
-      "label-center": "中央",
-      "label-left": "左",
-      "label-right": "右"
-    },
-    "description-calculation": "リデューサー関数/計算を選択",
-    "description-cell-value-inspect": "モーダルウィンドウでセル値の検査を有効化",
-    "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
-    "description-count-rows": "すべてのデータ行の単一カウントを表示",
-    "description-fields": "計算するフィールドを選択",
-    "description-frozen-columns": "",
-    "description-min-column-width": "列の自動サイズ変更の最小幅",
-    "description-tooltip-from-field": "",
-    "name-calculation": "計算",
-    "name-cell-height": "セルの高さ",
-    "name-cell-type": "セルの種類",
-    "name-cell-value-inspect": "セル値の検査",
-    "name-column-alignment": "列の配置",
-    "name-column-filter": "列フィルター",
-    "name-column-width": "列幅",
-    "name-count-rows": "行数",
-    "name-enable-pagination": "ページ分割を有効化",
+    "name-enable-pagination": "",
     "name-fields": "フィールド",
     "name-frozen-columns": "",
     "name-hide-in-table": "テーブルで非表示",
@@ -12801,8 +12750,12 @@
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "ヘッダーテキストの折り返し",
     "placeholder-column-width": "自動",
     "placeholder-fields": "すべての数値フィールド",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

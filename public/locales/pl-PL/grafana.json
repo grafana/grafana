@@ -6415,7 +6415,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Dodaj zapytanie z biblioteki"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -12790,10 +12790,6 @@
     "login": "Logowanie"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Jeśli zaznaczony tekst zostanie zawinięty do szerokości tekstu w skonfigurowanej kolumnie",
-      "label-wrap-text": "Zawijaj tekst"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Tryb wyświetlania wskaźników",
       "label-value-display": "Wyświetlanie wartości"
@@ -12821,13 +12817,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "W przypadku zaznaczenia cały wiersz będzie kolorowy, tak jak ta komórka.",
-      "description-wrap-text": "Jeśli zaznaczony tekst zostanie zawinięty do szerokości tekstu w skonfigurowanej kolumnie",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Zastosuj do całego wiersza",
-      "label-background-display-mode": "Tryb wyświetlania tła",
-      "wrap-text": "Zawijaj tekst"
+      "label-background-display-mode": "Tryb wyświetlania tła"
     },
     "column-alignment-options": {
       "label-auto": "Automatycznie",
@@ -12845,7 +12836,9 @@
     "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
     "description-count-rows": "Wyświetl pojedynczą liczbę dla wszystkich wierszy danych",
     "description-fields": "Wybierz pola, które powinny być obliczone",
+    "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Włącza zawijanie tekstu w nagłówkach kolumn",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatywny tekst wyświetlany, jeśli obraz nie może być wyświetlony, lub w przypadku użytkowników korzystających z czytnika ekranu",
@@ -12871,51 +12864,7 @@
     "name-column-filter": "Filtr kolumn",
     "name-column-width": "Szerokość kolumny",
     "name-count-rows": "Policz wiersze",
-    "name-enable-paginations": "Włącz paginację",
-    "name-fields": "Pola",
-    "name-hide-in-table": "Ukryj w tabeli",
-    "name-min-column-width": "Minimalna szerokość kolumny",
-    "name-show-table-footer": "Pokaż stopkę tabeli",
-    "name-show-table-header": "Pokaż nagłówek tabeli",
-    "name-wrap-header-text": "Zawijaj tekst nagłówka",
-    "placeholder-column-width": "automatycznie",
-    "placeholder-fields": "Wszystkie pola numeryczne",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Opcje komórki",
-    "category-table": "Tabela",
-    "category-table-footer": "Stopka tabeli",
-    "cell-height-options": {
-      "label-large": "Duża",
-      "label-medium": "Średnia",
-      "label-small": "Mała"
-    },
-    "column-alignment-options": {
-      "label-auto": "Automatycznie",
-      "label-center": "Pośrodku",
-      "label-left": "Po lewej",
-      "label-right": "Po prawej"
-    },
-    "description-calculation": "Wybierz funkcję reduktora / obliczenia",
-    "description-cell-value-inspect": "Włącz kontrolę wartości komórki w oknie modalnym",
-    "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
-    "description-count-rows": "Wyświetl pojedynczą liczbę dla wszystkich wierszy danych",
-    "description-fields": "Wybierz pola, które powinny być obliczone",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Obliczenie",
-    "name-cell-height": "Wysokość komórki",
-    "name-cell-type": "Typ komórki",
-    "name-cell-value-inspect": "Sprawdź wartość komórki",
-    "name-column-alignment": "Wyrównanie kolumn",
-    "name-column-filter": "Filtr kolumn",
-    "name-column-width": "Szerokość kolumny",
-    "name-count-rows": "Policz wiersze",
-    "name-enable-pagination": "Włącz paginację",
+    "name-enable-pagination": "",
     "name-fields": "Pola",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ukryj w tabeli",
@@ -12924,8 +12873,12 @@
     "name-show-table-header": "Pokaż nagłówek tabeli",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Zawijaj tekst nagłówka",
     "placeholder-column-width": "automatycznie",
     "placeholder-fields": "Wszystkie pola numeryczne",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
