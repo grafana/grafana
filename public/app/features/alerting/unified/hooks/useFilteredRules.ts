@@ -24,8 +24,16 @@ export function useRulesFilter() {
   const searchQuery = queryParams.get('search') ?? '';
 
   const filterState = useMemo<RulesFilter>(() => {
-    return getSearchFilterFromQuery(searchQuery);
-  }, [searchQuery]);
+    const base = getSearchFilterFromQuery(searchQuery);
+    const gmaDsParam = queryParams.get('gmaDs') ?? '';
+    const gmaQueryDataSourceNames = gmaDsParam
+      ? gmaDsParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+      : [];
+    return { ...base, gmaQueryDataSourceNames };
+  }, [searchQuery, queryParams]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const activeFilters = useMemo(() => {
@@ -35,7 +43,11 @@ export function useRulesFilter() {
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
       const newSearchQuery = applySearchFilterToQuery(searchQuery, newFilter);
-      updateQueryParams({ search: newSearchQuery });
+      const gmaDs =
+        newFilter.gmaQueryDataSourceNames && newFilter.gmaQueryDataSourceNames.length
+          ? newFilter.gmaQueryDataSourceNames.join(',')
+          : undefined;
+      updateQueryParams({ search: newSearchQuery, gmaDs });
     },
     [searchQuery, updateQueryParams]
   );
@@ -81,7 +93,7 @@ export function useRulesFilter() {
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
   const clearAll = useCallback(() => {
-    updateQueryParams({ search: undefined });
+    updateQueryParams({ search: undefined, gmaDs: undefined });
   }, [updateQueryParams]);
 
   return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters, clearAll, activeFilters };
@@ -225,6 +237,8 @@ const reduceGroups = (filterState: RulesFilter) => {
         }
       }
 
+      // Evaluate data source filters (DMA vs GMA)
+      let gmaOk = true;
       if ('dataSourceNames' in matchesFilterFor) {
         // External rules filtering is handled at namespace level above; always true here
         if (!rulerRuleType.grafana.rule(rule.rulerRule)) {
@@ -240,6 +254,9 @@ const reduceGroups = (filterState: RulesFilter) => {
             });
             if (queriesMatch) {
               matchesFilterFor.dataSourceNames = true;
+              gmaOk = true;
+            } else {
+              gmaOk = false;
             }
           }
         }
@@ -290,7 +307,7 @@ const reduceGroups = (filterState: RulesFilter) => {
         matchesFilterFor.dashboardUid = true;
       }
 
-      return Object.values(matchesFilterFor).every((match) => match === true);
+      return Object.values(matchesFilterFor).every((match) => match === true) && gmaOk;
     });
 
     // Add rules to the group that match the rule list filters
@@ -335,6 +352,7 @@ const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
   'ruleState',
   'ruleType',
   'dataSourceNames',
+  'gmaQueryDataSourceNames',
   'labels',
   'ruleHealth',
   'dashboardUid',
