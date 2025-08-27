@@ -71,7 +71,7 @@ export async function makeApiRequest(request: ApiRequest) {
   return response.json();
 }
 
-// Generic pagination helper for APIs that limit to 100 per page
+// GitHub and GitLab limit results to 100 items per page, so we need to paginate
 async function fetchWithPagination(
   buildUrl: (page: number) => string,
   headers: Record<string, string>
