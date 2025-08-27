@@ -72,8 +72,7 @@ func (s *starsStorage) List(ctx context.Context, options *internalversion.ListOp
 	}
 
 	if ns.Value == "" {
-		// TODO -- make sure the user can list across *all* namespaces
-		return nil, fmt.Errorf("TODO... get stars for all orgs")
+		return nil, fmt.Errorf("cross cluster listing is not supported")
 	}
 
 	list := &preferences.StarsList{}
