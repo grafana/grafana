@@ -77,7 +77,6 @@ export const Label = forwardRef<HTMLButtonElement, Props>(
         className={cx(
           styles.base,
           active && styles.active,
-          loading && styles.loading,
           hidden && styles.hidden,
           className,
           onClick && !hidden && styles.hover
@@ -116,25 +115,6 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     marginRight: theme.spacing(1),
     marginBottom: theme.spacing(0.5),
-  }),
-  loading: css({
-    fontWeight: theme.typography.fontWeightMedium,
-    backgroundColor: theme.colors.primary.shade,
-    color: theme.colors.text.primary,
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      animation: 'pulse 3s ease-out 0s infinite normal forwards',
-    },
-    '@keyframes pulse': {
-      '0%': {
-        color: theme.colors.text.primary,
-      },
-      '50%': {
-        color: theme.colors.text.secondary,
-      },
-      '100%': {
-        color: theme.colors.text.disabled,
-      },
-    },
   }),
   active: css({
     fontWeight: theme.typography.fontWeightMedium,

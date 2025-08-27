@@ -43,6 +43,12 @@ export const getStylesLabelSelector = (theme: GrafanaTheme2) => ({
     overflow: 'auto',
     alignContent: 'flex-start',
   }),
+  spinner: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 120,
+  }),
 });
 
 export const getStylesValueSelector = (theme: GrafanaTheme2) => ({

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
+import { BrowserLabel as PromLabel, Input, Label, useStyles2, Spinner } from '@grafana/ui';
 
 import { METRIC_LABEL } from '../../constants';
 
@@ -44,24 +44,31 @@ export function LabelSelector() {
         />
       </div>
       {/* Using fixed height here to prevent jumpy layout */}
-      <div className={styles.list} style={{ height: 120 }}>
-        {filteredLabelKeys.map((label) => (
-          <PromLabel
-            key={label}
-            name={label}
-            loading={isLoadingLabels}
-            active={selectedLabelKeys.includes(label)}
-            hidden={false}
-            facets={undefined}
-            onClick={(name: string) => {
-              // Resetting search to prevent empty results
-              setLabelSearchTerm('');
-              onLabelKeyClick(name);
-            }}
-            searchTerm={labelSearchTerm}
-          />
-        ))}
-      </div>
+      {!isLoadingLabels && (
+        <div className={styles.list} style={{ height: 120 }}>
+          {filteredLabelKeys.map((label) => (
+            <PromLabel
+              key={label}
+              name={label}
+              loading={false}
+              active={selectedLabelKeys.includes(label)}
+              hidden={false}
+              facets={undefined}
+              onClick={(name: string) => {
+                // Resetting search to prevent empty results
+                setLabelSearchTerm('');
+                onLabelKeyClick(name);
+              }}
+              searchTerm={labelSearchTerm}
+            />
+          ))}
+        </div>
+      )}
+      {isLoadingLabels && (
+        <div className={styles.spinner}>
+          <Spinner size="xl" />
+        </div>
+      )}
     </div>
   );
 }
