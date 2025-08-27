@@ -1702,15 +1702,21 @@ exports[`better eslint`] = {
       [0, 0, 0, "React Hook \\"useSnappingSplitter\\" is called conditionally. React Hooks must be called in the exact same order in every component render.", "3"]
     ],
     "public/app/features/dashboard-scene/edit-pane/DashboardEditableElement.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useLayoutCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
-      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useLayoutCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"]
     ],
     "public/app/features/dashboard-scene/edit-pane/DashboardOutline.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/edit-pane/VizPanelEditableElement.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
-      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "4"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "5"]
     ],
     "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1765,7 +1771,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1882,18 +1890,26 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "9"]
     ],
     "public/app/features/dashboard-scene/settings/variables/LocalVariableEditableElement.tsx:5381": [
-      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"]
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "0"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"]
     ],
     "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "React Hook \\"useLocalVariableOptions\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
-      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
-      [0, 0, 0, "React Hook \\"useVariableSelectionOptionsCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"],
-      [0, 0, 0, "React Hook \\"useVariableTypeCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "4"]
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "3"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "4"],
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "5"],
+      [0, 0, 0, "React Hook \\"useLocalVariableOptions\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "6"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "7"],
+      [0, 0, 0, "React Hook \\"useVariableSelectionOptionsCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "8"],
+      [0, 0, 0, "React Hook \\"useVariableTypeCategory\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "9"]
     ],
     "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"]
+      [0, 0, 0, "React Hook \\"useId\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "1"],
+      [0, 0, 0, "React Hook \\"useMemo\\" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.", "2"]
     ],
     "public/app/features/dashboard-scene/settings/variables/components/AdHocVariableForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]

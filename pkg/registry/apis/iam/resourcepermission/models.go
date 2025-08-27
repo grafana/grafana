@@ -12,3 +12,11 @@ var (
 	errNamespaceMismatch = fmt.Errorf("namespace mismatch")
 	errInvalidSpec       = fmt.Errorf("invalid spec")
 )
+
+type grant struct {
+	RoleName        string
+	AssigneeID      string
+	AssignmentTable string
+	Action          string
+	Scope           string
+}

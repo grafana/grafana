@@ -14,6 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// List
+
+// Get
+
+// Create
+
 // TODO: use mapper?
 func actionSet(resource string, level string) string {
 	return fmt.Sprintf("%s:%s", resource, level)
@@ -25,11 +31,11 @@ func scope(resource string, name string) string {
 }
 
 // getOrCreateManagedRole gets an existing managed role or creates a new one
-func (s *ResourcePermSqlBackend) getOrCreateManagedRole(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, orgID int64, roleName string, resourcePermissionName string) (int64, error) {
+func (s *ResourcePermSqlBackend) getOrCreateManagedRole(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, orgID int64, assign grant) (int64, error) {
 	// Check if role already exists
 	var roleID int64
 	query := fmt.Sprintf("SELECT id FROM %s WHERE org_id = ? AND name = ?", dbHelper.Table("role"))
-	err := tx.Get(ctx, &roleID, query, orgID, roleName)
+	err := tx.Get(ctx, &roleID, query, orgID, assign.RoleName)
 
 	if err == nil {
 		// Role exists, return its ID
@@ -72,15 +78,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 		return 0, fmt.Errorf("resource permission must have at least one permission: %w", errInvalidSpec)
 	}
 
-	// TODO better name
-	type assignment struct {
-		RoleName        string
-		AssigneeID      string
-		AssignmentTable string
-		Action          string
-	}
-
-	assignments := make([]assignment, 0, len(v0ResourcePerm.Spec.Permissions))
+	assignments := make([]grant, 0, len(v0ResourcePerm.Spec.Permissions))
 	rbacScope := scope(v0ResourcePerm.Spec.Resource.Resource, v0ResourcePerm.Spec.Resource.Name)
 
 	// Implement proper managed role pattern
@@ -107,7 +105,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 				if userID == nil {
 					return fmt.Errorf("user %q not found: %w", perm.Name, errInvalidSpec)
 				}
-				assignments = append(assignments, assignment{
+				assignments = append(assignments, grant{
 					RoleName:        fmt.Sprintf("managed:users:%d:permissions", userID.ID),
 					AssigneeID:      fmt.Sprintf("%d", userID.ID),
 					AssignmentTable: "user_role",
@@ -124,7 +122,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 				if teamID == nil {
 					return fmt.Errorf("team %q not found: %w", perm.Name, errInvalidSpec)
 				}
-				assignments = append(assignments, assignment{
+				assignments = append(assignments, grant{
 					RoleName:        fmt.Sprintf("managed:teams:%d:permissions", teamID.ID),
 					AssigneeID:      fmt.Sprintf("%d", teamID.ID),
 					AssignmentTable: "team_role",
@@ -141,14 +139,14 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 				if saID == nil {
 					return fmt.Errorf("service account %q not found: %w", perm.Name, errInvalidSpec)
 				}
-				assignments = append(assignments, assignment{
+				assignments = append(assignments, grant{
 					RoleName:        fmt.Sprintf("managed:users:%d:permissions", saID.ID),
 					AssigneeID:      fmt.Sprintf("%d", saID.ID),
 					AssignmentTable: "user_role",
 					Action:          rbacActionSet,
 				})
 			case v0alpha1.ResourcePermissionSpecPermissionKindBasicRole:
-				assignments = append(assignments, assignment{
+				assignments = append(assignments, grant{
 					RoleName:        fmt.Sprintf("managed:builtins:%s:permissions", perm.Name),
 					AssigneeID:      perm.Name,
 					AssignmentTable: "builtin_role",
@@ -169,3 +167,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 	// Not sure since it could have effectively been updated for another resource than the one at stake.
 	return int64(time.Now().UnixMilli()), nil
 }
+
+// Update
+
+// Delete
