@@ -80,8 +80,6 @@ var RoleBindingInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Group", Type: "string", Format: "group", Description: "Role binding group"},
-			{Name: "Title", Type: "string", Format: "string", Description: "Role binding name"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -93,8 +91,8 @@ var RoleBindingInfo = utils.NewResourceInfo(GROUP, VERSION,
 						roleBinding.Spec.Subject.Kind,
 						roleBinding.Spec.Subject.Name,
 						roleBinding.Spec.Subject.Namespace,
-						roleBinding.Spec.RoleRef[0].Kind,
-						roleBinding.Spec.RoleRef[0].Name,
+						roleBinding.Spec.RoleRefs[0].Kind,
+						roleBinding.Spec.RoleRefs[0].Name,
 						roleBinding.CreationTimestamp.UTC().Format(time.RFC3339),
 					}, nil
 				}
