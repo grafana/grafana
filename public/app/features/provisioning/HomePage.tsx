@@ -11,6 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { RepositoryList } from './Shared/RepositoryList';
+import { InlineSecureValueWarning } from './components/InlineSecureValueWarning';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
@@ -86,6 +87,7 @@ export default function HomePage() {
             </Trans>
           </Alert>
         )}
+        <InlineSecureValueWarning items={items} />
         <ConfirmModal
           isOpen={showDeleteModal}
           title={t(
