@@ -24,6 +24,34 @@ func scope(resource string, name string) string {
 	return fmt.Sprintf("%s:uid:%s", resource, name)
 }
 
+// getOrCreateManagedRole gets an existing managed role or creates a new one
+func (s *ResourcePermSqlBackend) getOrCreateManagedRole(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, orgID int64, roleName string, resourcePermissionName string) (int64, error) {
+	// Check if role already exists
+	var roleID int64
+	query := fmt.Sprintf("SELECT id FROM %s WHERE org_id = ? AND name = ?", dbHelper.Table("role"))
+	err := tx.Get(ctx, &roleID, query, orgID, roleName)
+
+	if err == nil {
+		// Role exists, return its ID
+		return roleID, nil
+	}
+
+	// Role doesn't exist, create it
+	roleID, err = s.createManagedRole(ctx, tx, dbHelper, orgID, roleName, resourcePermissionName)
+	if err != nil {
+		return 0, err
+	}
+
+	// Add the role assignment (to user/team/builtin)
+	// We'll implement proper role assignments here with direct database access
+	err = s.assignManagedRole(ctx, tx, dbHelper, orgID, roleName, roleID)
+	if err != nil {
+		return 0, fmt.Errorf("assigning managed role %d: %w", roleID, err)
+	}
+
+	return roleID, nil
+}
+
 func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
 	if v0ResourcePerm == nil {
 		return 0, fmt.Errorf("resource permission cannot be nil")
@@ -45,12 +73,14 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 	}
 
 	// TODO better name
-	type roleDesc struct {
-		RoleName string
-		Action   string
+	type assignment struct {
+		RoleName        string
+		AssigneeID      string
+		AssignmentTable string
+		Action          string
 	}
 
-	roles := make([]roleDesc, 0, len(v0ResourcePerm.Spec.Permissions))
+	assignments := make([]assignment, 0, len(v0ResourcePerm.Spec.Permissions))
 	rbacScope := scope(v0ResourcePerm.Spec.Resource.Resource, v0ResourcePerm.Spec.Resource.Name)
 
 	// Implement proper managed role pattern
@@ -77,9 +107,11 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 				if userID == nil {
 					return fmt.Errorf("user %q not found: %w", perm.Name, errInvalidSpec)
 				}
-				roles = append(roles, roleDesc{
-					RoleName: fmt.Sprintf("managed:users:%d:permissions", userID.ID),
-					Action:   rbacActionSet,
+				assignments = append(assignments, assignment{
+					RoleName:        fmt.Sprintf("managed:users:%d:permissions", userID.ID),
+					AssigneeID:      fmt.Sprintf("%d", userID.ID),
+					AssignmentTable: "user_role",
+					Action:          rbacActionSet,
 				})
 			case v0alpha1.ResourcePermissionSpecPermissionKindTeam:
 				teamID, err := s.identityStore.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{
@@ -92,9 +124,11 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 				if teamID == nil {
 					return fmt.Errorf("team %q not found: %w", perm.Name, errInvalidSpec)
 				}
-				roles = append(roles, roleDesc{
-					RoleName: fmt.Sprintf("managed:teams:%d:permissions", teamID.ID),
-					Action:   rbacActionSet,
+				assignments = append(assignments, assignment{
+					RoleName:        fmt.Sprintf("managed:teams:%d:permissions", teamID.ID),
+					AssigneeID:      fmt.Sprintf("%d", teamID.ID),
+					AssignmentTable: "team_role",
+					Action:          rbacActionSet,
 				})
 			case v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount:
 				saID, err := s.identityStore.GetServiceAccountInternalID(ctx, ns, legacy.GetServiceAccountInternalIDQuery{
@@ -107,14 +141,18 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 				if saID == nil {
 					return fmt.Errorf("service account %q not found: %w", perm.Name, errInvalidSpec)
 				}
-				roles = append(roles, roleDesc{
-					RoleName: fmt.Sprintf("managed:users:%d:permissions", saID.ID),
-					Action:   rbacActionSet,
+				assignments = append(assignments, assignment{
+					RoleName:        fmt.Sprintf("managed:users:%d:permissions", saID.ID),
+					AssigneeID:      fmt.Sprintf("%d", saID.ID),
+					AssignmentTable: "user_role",
+					Action:          rbacActionSet,
 				})
 			case v0alpha1.ResourcePermissionSpecPermissionKindBasicRole:
-				roles = append(roles, roleDesc{
-					RoleName: fmt.Sprintf("managed:builtins:%s:permissions", perm.Name),
-					Action:   rbacActionSet,
+				assignments = append(assignments, assignment{
+					RoleName:        fmt.Sprintf("managed:builtins:%s:permissions", perm.Name),
+					AssigneeID:      perm.Name,
+					AssignmentTable: "builtin_role",
+					Action:          rbacActionSet,
 				})
 			}
 		}
