@@ -8,13 +8,10 @@ import { logError } from '../../../../Analytics';
 export interface NotificationMessageSectionExtensionProps {}
 
 // Internal variable to store the extension component, for now only one component is supported
-let InternalNotificationMessageSectionExtension: ComponentType<NotificationMessageSectionExtensionProps> | null =
-  null;
+let InternalNotificationMessageSectionExtension: ComponentType<NotificationMessageSectionExtensionProps> | null = null;
 
 // This component is used to render the notification message section extension.
-export const NotificationMessageSectionExtension: ComponentType<NotificationMessageSectionExtensionProps> = (
-  props
-) => {
+export const NotificationMessageSectionExtension: ComponentType<NotificationMessageSectionExtensionProps> = (props) => {
   if (!InternalNotificationMessageSectionExtension) {
     return null;
   }
@@ -32,8 +29,6 @@ export const NotificationMessageSectionExtension: ComponentType<NotificationMess
   return <WrappedComponent {...props} />;
 };
 
-export function addRuleFormEnrichmentSection(
-  component: ComponentType<NotificationMessageSectionExtensionProps> 
-) {
+export function addRuleFormEnrichmentSection(component: ComponentType<NotificationMessageSectionExtensionProps>) {
   InternalNotificationMessageSectionExtension = component;
 }

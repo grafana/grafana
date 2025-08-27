@@ -233,11 +233,11 @@ const AnnotationsStep = () => {
         </Stack>
         {showPanelSelector && (
           <DashboardPicker
-          isOpen={true}
-          dashboardUid={selectedDashboardUid}
-          panelId={selectedPanelId}
-          onChange={setSelectedDashboardAndPanelId}
-          onDismiss={() => setShowPanelSelector(false)}
+            isOpen={true}
+            dashboardUid={selectedDashboardUid}
+            panelId={selectedPanelId}
+            onChange={setSelectedDashboardAndPanelId}
+            onDismiss={() => setShowPanelSelector(false)}
           />
         )}
         <NotificationMessageSectionExtension />
