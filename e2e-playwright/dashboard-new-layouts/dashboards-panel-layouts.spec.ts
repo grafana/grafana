@@ -31,7 +31,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await page.getByLabel('Expand Group layout category').click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -49,6 +49,7 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await checkAutoGridLayoutInputs(dashboardPage, selectors);
     });
@@ -62,7 +63,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await page.getByLabel('Expand Group layout category').click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -97,6 +98,7 @@ test.describe(
       await page.reload();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -122,7 +124,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await page.getByLabel('Expand Group layout category').click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -147,6 +149,7 @@ test.describe(
       await verifyPanelsStackedVertically(dashboardPage, selectors);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -179,7 +182,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await page.getByLabel('Expand Group layout category').click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -197,6 +200,7 @@ test.describe(
       await verifyPanelsStackedVertically(dashboardPage, selectors);
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns)
@@ -214,7 +218,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await page.getByLabel('Expand Group layout category').click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -249,6 +253,7 @@ test.describe(
       }).toPass();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
@@ -269,7 +274,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await page.getByLabel('Expand Group layout category').click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -302,6 +307,7 @@ test.describe(
       }).toPass();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(
@@ -326,7 +332,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
       ).toHaveCount(3);
 
-      await page.getByLabel('Expand Group layout category').click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await page.getByLabel('Auto grid').click();
 
@@ -356,6 +362,7 @@ test.describe(
       }).toPass();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await page.getByLabel('Expand Panel layout category').click();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen)
