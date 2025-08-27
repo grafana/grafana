@@ -21,6 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 )
 
+type WebhookRepository interface {
+	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
+}
+
 // Webhook endpoint max size (25MB)
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
@@ -172,7 +176,7 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 	eventAge := time.Since(lastEvent)
 
 	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
-		patchOp := map[string]interface{}{
+		patchOp := map[string]any{
 			"op":    "replace",
 			"path":  "/status/webhook/lastEvent",
 			"value": time.Now().UnixMilli(),

@@ -10,7 +10,7 @@ on:
   schedule:
     # Every weeknight at midnight
     # "Scheduled workflows will only run on the default branch." (docs.github.com)
-    - cron: "0 0 * * 1-5"
+    - cron: '0 0 * * 1-5'
   push:
     branches:
       - release-*.*.*
@@ -49,7 +49,7 @@ jobs:
   setup:
     name: setup
     runs-on: github-hosted-ubuntu-x64-small
-    if: github.repository == 'grafana/grafana'
+    if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
@@ -104,11 +104,12 @@ jobs:
           BUCKET: grafana-prerelease
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
+          REPO: ${{ github.repository }}
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT} = process.env;
-            
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
+
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
@@ -120,6 +121,7 @@ jobs:
                   "bucket": BUCKET,
                   "grafana-commit": GRAFANA_COMMIT,
                   "source-event": SOURCE_EVENT,
+                  "upstream": REPO,
                 }
             })
 
@@ -166,7 +168,7 @@ jobs:
             artifacts: targz:grafana:darwin/arm64
             verify: true
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -209,3 +211,60 @@ jobs:
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
+  publish-dockerhub:
+    if: github.ref_name == 'main'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-x64-small
+    needs:
+      - setup
+      - build
+    steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-list-linux-amd64
+          path: .
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-list-linux-arm64
+          path: .
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-list-linux-armv7
+          path: .
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-linux-amd64
+          path: dist
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-linux-arm64
+          path: dist
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: artifacts-linux-armv7
+          path: dist
+      - name: Push to Docker Hub
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          # grep can use a wildcard but then it includes the filename as part of the result and that gets complicated.
+          # It's easier to use cat to combine the artifact lists
+          cat artifacts-*.txt > artifacts.txt
+          grep 'grafana_.*docker.tar.gz$' artifacts.txt | xargs -I % docker load -i % | sed 's/Loaded image: //g' | tee docker_images
+          while read -r line; do
+            # This tag will be `grafana/grafana-image-tags:...`
+            docker push "$line"
+          done < docker_images
+
+          docker manifest create grafana/grafana:main "grafana/grafana-image-tags:${VERSION}-amd64" "grafana/grafana-image-tags:${VERSION}-arm64"  "grafana/grafana-image-tags:${VERSION}-armv7"
+          docker manifest create grafana/grafana:main-ubuntu "grafana/grafana-image-tags:${VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${VERSION}-ubuntu-armv7"
+          docker manifest create "grafana/grafana-dev:${VERSION}" "grafana/grafana-image-tags:${VERSION}-amd64" "grafana/grafana-image-tags:${VERSION}-arm64"  "grafana/grafana-image-tags:${VERSION}-armv7"
+          docker manifest create "grafana/grafana-dev:${VERSION}-ubuntu" "grafana/grafana-image-tags:${VERSION}-ubuntu-amd64" "grafana/grafana-image-tags:${VERSION}-ubuntu-arm64"  "grafana/grafana-image-tags:${VERSION}-ubuntu-armv7"
+
+          docker manifest push grafana/grafana:main
+          docker manifest push grafana/grafana:main-ubuntu
+          docker manifest push "grafana/grafana-dev:${VERSION}"
+          docker manifest push "grafana/grafana-dev:${VERSION}-ubuntu"
