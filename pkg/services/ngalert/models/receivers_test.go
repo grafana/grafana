@@ -280,9 +280,12 @@ func TestSecretsIntegrationConfig(t *testing.T) {
 	})
 
 	t.Run("Unknown version returns error", func(t *testing.T) {
-		maps.Keys(alertingNotify.AllKnownConfigsForTesting)
-		_, err := IntegrationConfigFromType("__--**unknown_type**--__", nil)
-		assert.Error(t, err)
+		version := util.Pointer("__--**unknown_version**--__")
+		types := maps.Keys(alertingNotify.AllKnownConfigsForTesting)
+		for itype := range types {
+			_, err := IntegrationConfigFromType(itype, version)
+			assert.Errorf(t, err, "unknown version for integration type %s did not return error but should", itype)
+		}
 	})
 }
 
