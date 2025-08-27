@@ -10,17 +10,12 @@ export function createApiRequest(
   repositoryType: string,
   token: string
 ): {
-  repositories: ApiRequest;
   branches: (owner: string, repo: string) => ApiRequest;
 } {
   switch (repositoryType) {
     case 'github': {
       const headers = { Authorization: `Bearer ${token}` };
       return {
-        repositories: {
-          url: 'https://api.github.com/user/repos?sort=updated&per_page=100',
-          headers,
-        },
         branches: (owner, repo) => ({
           url: `https://api.github.com/repos/${owner}/${repo}/branches`,
           headers,
@@ -31,10 +26,6 @@ export function createApiRequest(
     case 'gitlab': {
       const headers = { 'Private-Token': token };
       return {
-        repositories: {
-          url: 'https://gitlab.com/api/v4/projects?membership=true&order_by=last_activity_at&sort=desc&per_page=100',
-          headers,
-        },
         branches: (owner, repo) => {
           const encodedPath = encodeURIComponent(`${owner}/${repo}`);
           return {
@@ -48,10 +39,6 @@ export function createApiRequest(
     case 'bitbucket': {
       const headers = { Authorization: `Bearer ${token}` };
       return {
-        repositories: {
-          url: 'https://api.bitbucket.org/2.0/repositories?role=member&sort=-updated_on&pagelen=100',
-          headers,
-        },
         branches: (owner, repo) => ({
           url: `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/refs/branches`,
           headers,
