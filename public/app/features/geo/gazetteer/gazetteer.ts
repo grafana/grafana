@@ -180,9 +180,7 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
 const registry: KeyValue<Gazetteer> = {};
 
-export const COUNTRIES_GAZETTEER_PATH = window.public_cdn_path
-  ? `${window.public_cdn_path}gazetteer/countries.json`
-  : 'public/gazetteer/countries.json';
+export const COUNTRIES_GAZETTEER_PATH = `${window.public_cdn_path ?? 'public/'}gazetteer/countries.json`;
 
 /**
  * Given a path to a file return a cached lookup function
@@ -197,7 +195,8 @@ export async function getGazetteer(path?: string): Promise<Gazetteer> {
   if (!lookup) {
     try {
       // block the async function
-      const data = await fetch(path);
+      const response = await fetch(path);
+      const data = await response.json();
       lookup = loadGazetteer(path, data);
     } catch (err) {
       console.warn('Error loading placename lookup', path, err);
