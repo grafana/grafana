@@ -938,10 +938,10 @@ describe('DashboardScene', () => {
       const { contextSrv } = require('app/core/services/context_srv');
       contextSrv.hasPermission = jest.fn(() => true);
 
-      let panelAttentionListener: ((event: any) => void) | undefined;
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
       jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
         if (eventType === SetPanelAttentionEvent) {
-          panelAttentionListener = handler;
+          panelAttentionListener = handler as (event: unknown) => void;
         }
         return { unsubscribe: jest.fn() };
       });
@@ -965,7 +965,7 @@ describe('DashboardScene', () => {
       const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
         require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
       ].value as KeybindingSetMock;
-      const handlers = lastInstance.__handlers as any;
+      const handlers = lastInstance.__handlers;
       expect(typeof handlers['e']).toBe('function');
       // @ts-ignore
       handlers['e']();
@@ -979,10 +979,13 @@ describe('DashboardScene', () => {
       const scene = buildTestScene({ meta: { canEdit: true } });
       scene.onEnterEditMode();
 
-      let panelAttentionListener: ((event: any) => void) | undefined;
+      // Ensure we mock showModal before setting up shortcuts so handlers capture the mocked method
+      scene.showModal = jest.fn();
+
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
       jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
         if (eventType === SetPanelAttentionEvent) {
-          panelAttentionListener = handler;
+          panelAttentionListener = handler as (event: unknown) => void;
         }
         return { unsubscribe: jest.fn() };
       });
@@ -1001,17 +1004,14 @@ describe('DashboardScene', () => {
         });
       }
 
-      locationService.push = jest.fn();
-
       const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
         require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
-      ].value as any;
-      const handlers = lastInstance.__handlers as any;
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
       expect(typeof handlers['i']).toBe('function');
-      // @ts-ignore
       handlers['i']();
 
-      expect(locationService.push).toHaveBeenCalled();
+      expect(scene.showModal).toHaveBeenCalled();
     });
 
     it('should trigger delete panel shortcut for focused panel in edit mode', () => {
@@ -1020,10 +1020,10 @@ describe('DashboardScene', () => {
       const scene = buildTestScene({ meta: { canEdit: true } });
       scene.onEnterEditMode();
 
-      let panelAttentionListener: ((event: any) => void) | undefined;
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
       jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
         if (eventType === SetPanelAttentionEvent) {
-          panelAttentionListener = handler;
+          panelAttentionListener = handler as (event: unknown) => void;
         }
         return { unsubscribe: jest.fn() };
       });
@@ -1046,8 +1046,8 @@ describe('DashboardScene', () => {
 
       const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
         require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
-      ].value as any;
-      const handlers = lastInstance.__handlers as any;
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
       expect(typeof handlers['p r']).toBe('function');
       // @ts-ignore
       handlers['p r']();
@@ -1061,10 +1061,10 @@ describe('DashboardScene', () => {
       const scene = buildTestScene({ meta: { canEdit: true } });
       scene.onEnterEditMode();
 
-      let panelAttentionListener: ((event: any) => void) | undefined;
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
       jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
         if (eventType === SetPanelAttentionEvent) {
-          panelAttentionListener = handler;
+          panelAttentionListener = handler as (event: unknown) => void;
         }
         return { unsubscribe: jest.fn() };
       });
@@ -1087,8 +1087,8 @@ describe('DashboardScene', () => {
 
       const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
         require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
-      ].value as any;
-      const handlers = lastInstance.__handlers as any;
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
       expect(typeof handlers['p d']).toBe('function');
       // @ts-ignore
       handlers['p d']();
@@ -1102,10 +1102,10 @@ describe('DashboardScene', () => {
       const scene = buildTestScene({ meta: { canEdit: true } });
       scene.onEnterEditMode();
 
-      let panelAttentionListener: ((event: any) => void) | undefined;
+      let panelAttentionListener: ((event: unknown) => void) | undefined;
       jest.spyOn(appEvents, 'subscribe').mockImplementation((eventType, handler) => {
         if (eventType === SetPanelAttentionEvent) {
-          panelAttentionListener = handler;
+          panelAttentionListener = handler as (event: unknown) => void;
         }
         return { unsubscribe: jest.fn() };
       });
@@ -1128,8 +1128,8 @@ describe('DashboardScene', () => {
 
       const lastInstance = require('app/core/services/KeybindingSet').KeybindingSet.mock.results[
         require('app/core/services/KeybindingSet').KeybindingSet.mock.results.length - 1
-      ].value as any;
-      const handlers = lastInstance.__handlers as any;
+      ].value as KeybindingSetMock;
+      const handlers = lastInstance.__handlers;
       expect(typeof handlers['p l']).toBe('function');
       // @ts-ignore
       handlers['p l']();
@@ -1205,7 +1205,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             body: new VizPanel({
               title: 'Panel B',
               key: getCloneKey('panel-2', 1),
-              repeatSourceKey: 'panel-2',
+              // repeatSourceKey: 'panel-2', // This property doesn't exist in VizPanelState
               $variables: new SceneVariableSet({
                 variables: [new LocalValueVariable({ name: 'a', value: 'A' })],
               }),
