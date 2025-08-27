@@ -2620,11 +2620,22 @@
       "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
+      "dma": {
+        "grafana-label": "Grafana"
+      },
+      "ds-dropdown-info": "Only Prometheus-compatible data sources are shown.",
       "filter-options": {
         "aria-label": "Filter options",
         "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Select namespace",
         "placeholder-search-input": "Search by name or enter filter query..."
+      },
+      "gma-query-ds": {
+        "tooltip": {
+          "disabled": "This filter is only available when Grafana is selected in the Datasource picker.",
+          "title": "GMA datasource query help",
+          "what": "Filters Grafana-managed alert rules by the datasources referenced in their queries."
+        }
       },
       "grafana-folder": "Grafana folder",
       "health": "Health",
@@ -2638,6 +2649,7 @@
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
+      "placeholder-gma-data-sources": "Select Grafana query datasources",
       "placeholder-labels": "Select labels",
       "plugin-rules": "Plugin rules",
       "rule-type": "Rule type",
@@ -2657,6 +2669,7 @@
       "property": {
         "data-source": "Data source",
         "evaluation-group": "Evaluation group",
+        "gma-data-source": "GMA Datasource query",
         "labels": "Labels",
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
