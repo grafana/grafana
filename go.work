@@ -12,6 +12,7 @@ use (
 	./apps/iam
 	./apps/investigations
 	./apps/playlist
+	./apps/plugins
 	./apps/provisioning
 	./apps/secret
 	./apps/shorturl

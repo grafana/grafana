@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
+import { Button, Drawer, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -40,12 +40,6 @@ export function BrowseActions({ folderDTO }: Props) {
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
     folderDTO?.managedBy === ManagerKind.Repo
-  );
-
-  // Folders can only be moved if nested folders is enabled
-  const moveIsInvalid = useMemo(
-    () => !config.featureToggles.nestedFolders && Object.values(selectedItems.folder).some((v) => v),
-    [selectedItems]
   );
 
   const isSearching = stateManager.hasSearchFilters();
@@ -128,7 +122,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const moveButton = (
-    <Button onClick={showMoveModal} variant="secondary" disabled={moveIsInvalid}>
+    <Button onClick={showMoveModal} variant="secondary">
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
     </Button>
   );
@@ -136,13 +130,7 @@ export function BrowseActions({ folderDTO }: Props) {
   return (
     <>
       <Stack gap={1} data-testid="manage-actions">
-        {moveIsInvalid ? (
-          <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
-            {moveButton}
-          </Tooltip>
-        ) : (
-          moveButton
-        )}
+        {moveButton}
 
         <Button onClick={showDeleteModal} variant="destructive">
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>

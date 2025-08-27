@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from 'test/test-utils';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -144,112 +144,61 @@ describe('NestedFolderPicker', () => {
     expect(screen.getByLabelText(folderC.item.title)).toBeInTheDocument();
   });
 
-  describe('when nestedFolders is enabled', () => {
-    let originalToggles = { ...config.featureToggles };
+  it('can expand and collapse a folder to show its children', async () => {
+    const { user } = render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
 
-    beforeAll(() => {
-      config.featureToggles.nestedFolders = true;
-    });
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await user.click(button);
+    await screen.findByLabelText(folderA.item.title);
 
-    afterAll(() => {
-      config.featureToggles = originalToggles;
-    });
+    // Expand Folder A
+    // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
+    fireEvent.mouseDown(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
 
-    it('can expand and collapse a folder to show its children', async () => {
-      const { user } = render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
+    // Folder A's children are visible
+    expect(await screen.findByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
+    expect(await screen.findByLabelText(folderA_folderB.item.title)).toBeInTheDocument();
 
-      // Open the picker and wait for children to load
-      const button = await screen.findByRole('button', { name: 'Select folder' });
-      await user.click(button);
-      await screen.findByLabelText(folderA.item.title);
+    // Collapse Folder A
+    // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
+    fireEvent.mouseDown(screen.getByRole('button', { name: `Collapse folder ${folderA.item.title}` }));
+    expect(screen.queryByLabelText(folderA_folderA.item.title)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(folderA_folderB.item.title)).not.toBeInTheDocument();
 
-      // Expand Folder A
-      // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
-      fireEvent.mouseDown(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
+    // Expand Folder A again
+    // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
+    fireEvent.mouseDown(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
 
-      // Folder A's children are visible
-      expect(await screen.findByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
-      expect(await screen.findByLabelText(folderA_folderB.item.title)).toBeInTheDocument();
-
-      // Collapse Folder A
-      // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
-      fireEvent.mouseDown(screen.getByRole('button', { name: `Collapse folder ${folderA.item.title}` }));
-      expect(screen.queryByLabelText(folderA_folderA.item.title)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText(folderA_folderB.item.title)).not.toBeInTheDocument();
-
-      // Expand Folder A again
-      // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
-      fireEvent.mouseDown(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
-
-      // Select the first child
-      await user.click(screen.getByLabelText(folderA_folderA.item.title));
-      expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
-    });
-
-    it('can expand and collapse a folder to show its children with the keyboard', async () => {
-      const { user } = render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
-      const button = await screen.findByRole('button', { name: 'Select folder' });
-
-      await user.click(button);
-
-      // Expand Folder A
-      await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}');
-
-      // Folder A's children are visible
-      expect(await screen.findByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
-      expect(await screen.findByLabelText(folderA_folderB.item.title)).toBeInTheDocument();
-      expect(await screen.findByLabelText(folderA_folderC.item.title)).toBeInTheDocument();
-
-      // Collapse Folder A
-      await user.keyboard('{ArrowLeft}');
-      expect(screen.queryByLabelText(folderA_folderA.item.title)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText(folderA_folderB.item.title)).not.toBeInTheDocument();
-
-      // Expand Folder A again
-      await user.keyboard('{ArrowRight}');
-
-      // Select the first child
-      await user.keyboard('{ArrowDown}{Enter}');
-      expect(mockOnChange).toHaveBeenCalledWith(folderA_folderC.item.uid, folderA_folderC.item.title);
-    });
+    // Select the first child
+    await user.click(screen.getByLabelText(folderA_folderA.item.title));
+    expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
   });
 
-  describe('when nestedFolders is disabled', () => {
-    let originalToggles = { ...config.featureToggles };
+  it('can expand and collapse a folder to show its children with the keyboard', async () => {
+    const { user } = render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
+    const button = await screen.findByRole('button', { name: 'Select folder' });
 
-    beforeAll(() => {
-      config.featureToggles.nestedFolders = false;
-    });
+    await user.click(button);
 
-    afterAll(() => {
-      config.featureToggles = originalToggles;
-    });
+    // Expand Folder A
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}');
 
-    it('does not show an expand button', async () => {
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    // Folder A's children are visible
+    expect(await screen.findByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
+    expect(await screen.findByLabelText(folderA_folderB.item.title)).toBeInTheDocument();
+    expect(await screen.findByLabelText(folderA_folderC.item.title)).toBeInTheDocument();
 
-      // Open the picker and wait for children to load
-      const button = await screen.findByRole('button', { name: 'Select folder' });
-      await user.click(button);
-      await screen.findByLabelText(folderA.item.title);
+    // Collapse Folder A
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.queryByLabelText(folderA_folderA.item.title)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(folderA_folderB.item.title)).not.toBeInTheDocument();
 
-      // There should be no expand button
-      // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
-      expect(screen.queryByRole('button', { name: `Expand folder ${folderA.item.title}` })).not.toBeInTheDocument();
-    });
+    // Expand Folder A again
+    await user.keyboard('{ArrowRight}');
 
-    it('does not expand a folder with the keyboard', async () => {
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
-      const button = await screen.findByRole('button', { name: 'Select folder' });
-
-      await user.click(button);
-
-      // try to expand Folder A
-      await user.keyboard('{ArrowDown}{ArrowDown}{ArrowRight}');
-
-      // Folder A's children are not visible
-      expect(screen.queryByLabelText(folderA_folderA.item.title)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText(folderA_folderB.item.title)).not.toBeInTheDocument();
-    });
+    // Select the first child
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(mockOnChange).toHaveBeenCalledWith(folderA_folderC.item.uid, folderA_folderC.item.title);
   });
 });

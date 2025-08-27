@@ -36,7 +36,6 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "esbuild": "0.25.8",
     "glob": "^11.0.0",

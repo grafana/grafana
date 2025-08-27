@@ -12,8 +12,13 @@ services:
     ports:
       - '3000:80' # Gateway
       - '3010:81' # CDN
+    depends_on:
+      - grafana-api
+      - frontend-service
+    labels:
+      - 'alloy.logs=true'
 
-  backend:
+  grafana-api:
     image: grafana-fs-dev
     build:
       context: ../..
@@ -21,7 +26,12 @@ services:
     entrypoint: ['bin/grafana', 'server']
     volumes:
       - backend-data:/grafana/data
+      - ./provisioning/datasources:/grafana/conf/provisioning/datasources
+      - ./provisioning/dashboards:/grafana/conf/provisioning/dashboards
+      - ../dev-dashboards:/grafana/conf/dev-dashboards
     environment:
+      GF_DEFAULT_APP_MODE: development
+      GF_PANELS_ENABLE_ALPHA: true
       GF_SERVER_CDN_URL: http://localhost:3010
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
       GF_DATABASE_TYPE: postgres
@@ -31,6 +41,8 @@ services:
       GF_DATABASE_PASSWORD: grafana
     ports:
       - '3011:3000'
+    labels:
+      - 'alloy.logs=true'
 
   frontend-service:
     image: grafana-fs-dev
@@ -40,6 +52,8 @@ services:
     entrypoint: ['bin/grafana', 'server', 'target']
     ports:
       - '3012:3000'
+    labels:
+      - 'alloy.logs=true'
     environment:
       GF_DEFAULT_APP_MODE: development
       GF_DEFAULT_TARGET: frontend-server
@@ -54,7 +68,35 @@ services:
       POSTGRES_DB: grafana
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    labels:
+      - 'alloy.logs=true'
+
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./configs/alloy:/alloy-config
+      - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
+      - alloy-data:/var/lib/alloy/data
+    ports:
+      - '12346:12345' # Alloy UI
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /alloy-config
+    depends_on:
+      - loki
+
+  loki:
+    image: grafana/loki
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    labels:
+      - 'alloy.logs=true'
 
 volumes:
   backend-data:
   postgres-data:
+  alloy-data:
+  loki-data:

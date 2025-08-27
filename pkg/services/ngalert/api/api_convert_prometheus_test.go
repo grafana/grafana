@@ -292,6 +292,91 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		}
 	})
 
+	t.Run("with extra labels header should apply labels to all rules", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(extraLabelsHeader, "environment=production,team=alerting")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		for _, rule := range rules {
+			require.Equal(t, "production", rule.Labels["environment"])
+			require.Equal(t, "alerting", rule.Labels["team"])
+		}
+
+		// Original labels must be preserved
+		alertRule := rules[0]
+		if alertRule.Title == "recorded-metric" {
+			alertRule = rules[1]
+		}
+		require.Equal(t, "critical", alertRule.Labels["severity"])
+	})
+
+	t.Run("with extra labels that conflict with rule labels", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		// rules in the simpleGroup already have a severity label, so
+		// it should not be overwritten by the label from the header
+		rc.Req.Header.Set(extraLabelsHeader, "environment=production,severity=low")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		for _, rule := range rules {
+			require.Equal(t, "production", rule.Labels["environment"])
+			require.NotEqual(t, "low", rule.Labels["severity"])
+		}
+	})
+
+	t.Run("with invalid extra labels header should return 400", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			headerValue   string
+			expectedError string
+		}{
+			{
+				name:          "missing equals sign",
+				headerValue:   "environment,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: format should be 'key=value,key2=value2'",
+			},
+			{
+				name:          "empty key",
+				headerValue:   "=production,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: keys and values cannot be empty",
+			},
+			{
+				name:          "empty value",
+				headerValue:   "environment=,team=platform",
+				expectedError: "Invalid value for header X-Grafana-Alerting-Extra-Labels: keys and values cannot be empty",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				srv, _, _ := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(extraLabelsHeader, tc.headerValue)
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusBadRequest, response.Status())
+				require.Contains(t, string(response.Body()), tc.expectedError)
+			})
+		}
+	})
+
 	t.Run("with empty rule group name should return 400", func(t *testing.T) {
 		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
