@@ -114,7 +114,8 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
         <Stack direction="column" gap={2}>
           <Box paddingBottom={2}>
             <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-warning">
-              This will move selected folders and their descendants. In total, this will affect:
+              This will move selected folders and their descendants. Available target folders depend on the selected
+              resources. In total, this will affect:
             </Trans>
             <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
           </Box>
