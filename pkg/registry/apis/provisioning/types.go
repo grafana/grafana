@@ -4,7 +4,7 @@ import (
 	"context"
 
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 type RepoGetter interface {

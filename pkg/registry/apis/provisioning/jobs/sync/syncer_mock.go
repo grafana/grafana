@@ -8,7 +8,7 @@ import (
 	jobs "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	mock "github.com/stretchr/testify/mock"
 
-	repository "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
 	resources "github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 
