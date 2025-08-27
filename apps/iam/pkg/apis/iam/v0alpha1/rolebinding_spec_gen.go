@@ -7,7 +7,8 @@ type RoleBindingspecSubject struct {
 	// kind of the identity getting the permission
 	Kind RoleBindingSpecSubjectKind `json:"kind"`
 	// uid of the identity
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 // NewRoleBindingspecSubject creates a new RoleBindingspecSubject object.
@@ -30,15 +31,15 @@ func NewRoleBindingspecRoleRef() *RoleBindingspecRoleRef {
 
 // +k8s:openapi-gen=true
 type RoleBindingSpec struct {
-	Subjects []RoleBindingspecSubject `json:"subjects"`
-	RoleRef  RoleBindingspecRoleRef   `json:"roleRef"`
+	Subject RoleBindingspecSubject   `json:"subject"`
+	RoleRef []RoleBindingspecRoleRef `json:"roleRef"`
 }
 
 // NewRoleBindingSpec creates a new RoleBindingSpec object.
 func NewRoleBindingSpec() *RoleBindingSpec {
 	return &RoleBindingSpec{
-		Subjects: []RoleBindingspecSubject{},
-		RoleRef:  *NewRoleBindingspecRoleRef(),
+		Subject: *NewRoleBindingspecSubject(),
+		RoleRef: []RoleBindingspecRoleRef{},
 	}
 }
 

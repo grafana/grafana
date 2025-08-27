@@ -6,6 +6,7 @@ RoleBindingSpec: {
 		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
 		// uid of the identity
 		name: string
+		namespace: string
 	}
 	#RoleRef: {
 		// kind of role
@@ -14,8 +15,8 @@ RoleBindingSpec: {
 		name: string
 	}
 
-	subjects: [...#Subject]
-	roleRef: #RoleRef
+	subject: #Subject
+	roleRef: [...#RoleRef]
 }
 
 GlobalRoleBindingSpec: {
@@ -24,6 +25,7 @@ GlobalRoleBindingSpec: {
 		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
 		// uid of the identity
 		name: string
+		namespace: string
 	}
 	#RoleRef: {
 		// kind of role
@@ -32,6 +34,6 @@ GlobalRoleBindingSpec: {
 		name: string
 	}
 
-	subjects: [...#Subject]
-	roleRef: #RoleRef
+	subject: #Subject
+	roleRef: [...#RoleRef]
 }
