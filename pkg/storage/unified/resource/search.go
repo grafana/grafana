@@ -109,6 +109,8 @@ type SearchBackend interface {
 		indexBuildReason string,
 		builder BuildFn,
 		updater UpdateFn,
+		rebuild bool,
+		searchAfterWrite bool,
 	) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
@@ -475,7 +477,7 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 			if rebuild {
 				reason = "rebuild"
 			}
-			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion, reason)
+			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion, reason, rebuild)
 			return err
 		})
 	}
@@ -693,7 +695,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 				}
 			}
 
-			idx, _, err = s.build(ctx, key, size, rv, reason)
+			idx, _, err = s.build(ctx, key, size, rv, reason, false)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
@@ -729,7 +731,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	return idx, nil
 }
 
-func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, documentStatsRV int64, indexBuildReason string) (ResourceIndex, int64, error) {
+func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, documentStatsRV int64, indexBuildReason string, rebuild bool) (ResourceIndex, int64, error) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
@@ -897,7 +899,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return rv, docs, nil
 	}
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, documentStatsRV, fields, indexBuildReason, builderFn, updaterFn)
+	index, err := s.search.BuildIndex(ctx, nsr, size, documentStatsRV, fields, indexBuildReason, builderFn, updaterFn, rebuild, s.searchAfterWrite)
 
 	if err != nil {
 		return nil, 0, err
@@ -931,7 +933,7 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 	}, func(context context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		// No update is performed.
 		return 0, 0, nil
-	})
+	}, false, s.searchAfterWrite)
 }
 
 type builderCache struct {
