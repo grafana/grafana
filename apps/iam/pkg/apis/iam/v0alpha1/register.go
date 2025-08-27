@@ -72,6 +72,32 @@ var RoleInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var ResourcePermissionInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"resourcepermissions", "resourcepermission", "ResourcePermission",
+	func() runtime.Object { return &ResourcePermission{} },
+	func() runtime.Object { return &ResourcePermissionList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Resource", Type: "string", Format: "string", Description: "Resource type"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			perm, ok := obj.(*ResourcePermission)
+			if ok {
+				if perm != nil {
+					return []interface{}{
+						perm.Name,
+						perm.Spec.Resource.Resource,
+						perm.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+			}
+			return nil, fmt.Errorf("expected resource permission")
+		},
+	},
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -90,6 +116,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CoreRoleList{},
 		&Role{},
 		&RoleList{},
+		&ResourcePermission{},
+		&ResourcePermissionList{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},

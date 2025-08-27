@@ -58,18 +58,19 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:               store,
-		coreRolesStorage:    coreRolesStorage,
-		rolesStorage:        rolesStorage,
-		sso:                 ssoService,
-		authorizer:          authorizer,
-		legacyAccessClient:  legacyAccessClient,
-		accessClient:        accessClient,
-		display:             user.NewLegacyDisplayREST(store),
-		reg:                 reg,
-		enableAuthZApis:     features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		enableAuthnMutation: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter:    true,
+		store:                        store,
+		coreRolesStorage:             coreRolesStorage,
+		rolesStorage:                 rolesStorage,
+		sso:                          ssoService,
+		authorizer:                   authorizer,
+		legacyAccessClient:           legacyAccessClient,
+		accessClient:                 accessClient,
+		display:                      user.NewLegacyDisplayREST(store),
+		reg:                          reg,
+		enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+		enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter:             true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -171,6 +172,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
+	}
+
+	if b.enableResourcePermissionApis {
+		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
