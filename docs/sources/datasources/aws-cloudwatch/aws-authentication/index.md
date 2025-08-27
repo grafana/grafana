@@ -72,7 +72,7 @@ The Grafana Assume Role authentication method requires you to enter an **Assume 
 
 Specify an IAM role to assume in the **Assume Role ARN** field.
 
-When you configure **Assume Role ARN**, Grafana uses the provided credentials to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.  The primary authentication method only needs permission to assume the role, while the assumed role requires CloudWatch access permissions.
+When you configure **Assume Role ARN**, Grafana uses the provided credentials to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call. The primary authentication method only needs permission to assume the role, while the assumed role requires CloudWatch access permissions.
 
 For example, you might use one set of long-term credentials across all AWS data sources but want to limit each data source's AWS access (such as separating staging and production data access). You could create separate credentials for each data source with distinct permissions, but this approach requires managing and rotating multiple secret and access keys across many data source instances.
 
@@ -203,4 +203,4 @@ To use the Grafana Assume Role:
 
 ## CloudWatch Logs data protection
 
-CloudWatch Logs can protect data by applying log group data protection policies. When data protection is enabled for a log group, any sensitive data that matches the identifiers you select is automatically masked. To view masked data, your IAM role or user must have the `logs:Unmask` permission. For more details, refer to [the AWS guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) on masking sensitive log data. 
+CloudWatch Logs can protect data by applying log group data protection policies. When data protection is enabled for a log group, any sensitive data that matches the identifiers you select is automatically masked. To view masked data, your IAM role or user must have the `logs:Unmask` permission. For more details, refer to [the AWS guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) on masking sensitive log data.

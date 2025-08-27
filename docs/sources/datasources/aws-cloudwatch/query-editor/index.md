@@ -63,17 +63,17 @@ Select the API to query using the drop-down to the right of the **Region** setti
 
 The following are the components of the CloudWatch query editor.
 
-| **Setting**        | **Description** |
-|------------------|-----------------|
-| **Region**       | Select an AWS region if it differs from the default. |
-| **Namespace**    | The AWS service namespace. Examples: `AWS/EC2`, `AWS_Lambda`. |
-| **Metric name**  | The name of the metric you want to visualize. Example: `CPUUtilization`. |
-| **Statistic**    | Choose how to aggregate your data. Examples: `sum`, `average`, `maximum`. |
-| **Dimensions**   | Select dimensions from the drop-down. Examples: `InstanceId`, `FunctionName`, `latency`. You can add several dimensions to your query. |
-| **Match exact**  | _Optional_. When enabled, this option restricts query results to metrics that precisely match the specified dimensions and their values. All dimensions of the queried metric must be explicitly defined in the query to ensure an exact schema match. If disabled, the query will also return metrics that match the defined schema but possess additional dimensions. |
-| **ID**           | _Optional_. Unique identifier required by the GetMetricData API for referencing queries in math expressions. Must start with a lowercase letter and can include letters, numbers, and underscores. If not specified, Grafana generates an ID using the pattern `query[refId]` (for example, `queryA`for the first query row). |
-| **Period**       | The minimum time interval, in seconds, between data points. The default is `auto`. Valid values are 1, 5, 10, 30, or any multiple of 60. When set to auto or left blank, Grafana calculates the period using time range in seconds / 2000, then rounds up to the next value (60, 300, 900, 3600, 21600, 86400) based on [Cloudwatch's retention policy](https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/). |
-| **Label**        | _Optional_. Add a customized time series legend name. The label field overrides the default metric legend name using CloudWatch dynamic labels. Time-based dynamic labels like ${MIN_MAX_TIME_RANGE} derive legend values from the current timezone in the time range picker. For the full list of label patterns and limitations, refer to [CloudWatch dynamic labels](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html).|
+| **Setting**     | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Region**      | Select an AWS region if it differs from the default.                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Namespace**   | The AWS service namespace. Examples: `AWS/EC2`, `AWS_Lambda`.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Metric name** | The name of the metric you want to visualize. Example: `CPUUtilization`.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Statistic**   | Choose how to aggregate your data. Examples: `sum`, `average`, `maximum`.                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Dimensions**  | Select dimensions from the drop-down. Examples: `InstanceId`, `FunctionName`, `latency`. You can add several dimensions to your query.                                                                                                                                                                                                                                                                                                                                    |
+| **Match exact** | _Optional_. When enabled, this option restricts query results to metrics that precisely match the specified dimensions and their values. All dimensions of the queried metric must be explicitly defined in the query to ensure an exact schema match. If disabled, the query will also return metrics that match the defined schema but possess additional dimensions.                                                                                                   |
+| **ID**          | _Optional_. Unique identifier required by the GetMetricData API for referencing queries in math expressions. Must start with a lowercase letter and can include letters, numbers, and underscores. If not specified, Grafana generates an ID using the pattern `query[refId]` (for example, `queryA`for the first query row).                                                                                                                                             |
+| **Period**      | The minimum time interval, in seconds, between data points. The default is `auto`. Valid values are 1, 5, 10, 30, or any multiple of 60. When set to auto or left blank, Grafana calculates the period using time range in seconds / 2000, then rounds up to the next value (60, 300, 900, 3600, 21600, 86400) based on [Cloudwatch's retention policy](https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/). |
+| **Label**       | _Optional_. Add a customized time series legend name. The label field overrides the default metric legend name using CloudWatch dynamic labels. Time-based dynamic labels like ${MIN_MAX_TIME_RANGE} derive legend values from the current timezone in the time range picker. For the full list of label patterns and limitations, refer to [CloudWatch dynamic labels](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html).        |
 
 ## Use Builder mode
 
@@ -120,14 +120,14 @@ The query type you use depends on how you want to interact with AWS metrics. Use
 
 Metric search queries help you discover and filter available metrics. These queries use wildcards and filters to find metrics without needing to know exact metric names.
 
-A valid metric query requires a specified namespace, metric name, and at least one statistic.  Dimensions are optional, but if included, you must provide both a `key` and a `value`.
+A valid metric query requires a specified namespace, metric name, and at least one statistic. Dimensions are optional, but if included, you must provide both a `key` and a `value`.
 
-The `Match Exact` option controls how dimension filtering is applied to metric queries. When you enable `match exact`, the query returns only metrics whose dimensions precisely match the specified criteria. 
+The `Match Exact` option controls how dimension filtering is applied to metric queries. When you enable `match exact`, the query returns only metrics whose dimensions precisely match the specified criteria.
 
 This requires the following:
 
 - All dimensions present on the target metric must be explicitly specified.
-- Dimensions you don't want to filter by must use a wildcard (*) filter.
+- Dimensions you don't want to filter by must use a wildcard (\*) filter.
 - The metric schema must match exactly as defined in the [CloudWatch metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) documentation.
 
 When `Match Exact` is disabled, you can specify any subset of dimensions for filtering. The query returns metrics that:
@@ -144,7 +144,7 @@ Enhance metric queries using template variables to create dynamic, reusable dash
 
 ### Create dynamic queries with dimension wildcards
 
-Use the asterisk (`*`) wildcard for dimension values to create dynamic queries that automatically monitor changing sets of AWS resources. 
+Use the asterisk (`*`) wildcard for dimension values to create dynamic queries that automatically monitor changing sets of AWS resources.
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" caption="CloudWatch dimension wildcard" >}}
 
@@ -273,9 +273,9 @@ It supports querying CloudWatch logs with three query language options:
 
 **Create a CloudWatch Logs query:**
 
-1. Select a region. 
+1. Select a region.
 1. Select **CloudWatch Logs** from the query type drop-down.
-1. Select the query language you would like to use in the **Query Language** drop-down. 
+1. Select the query language you would like to use in the **Query Language** drop-down.
 1. Click **Select log groups** and choose up to 20 log groups to query.
 1. Use the main input area to write your logs query. Amazon CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
 
@@ -289,19 +289,19 @@ Click **CloudWatch Logs Insights** to interactively view, search, and analyze yo
 
 When querying log groups with OpenSearch SQL, you **must** explicitly state the log group identifier or ARN in the `FROM` clause:
 
-   ```sql
-   SELECT window.start, COUNT(*) AS exceptionCount
-   FROM `log_group`
-   WHERE `@message` LIKE '%Exception%'
-   ```
+```sql
+SELECT window.start, COUNT(*) AS exceptionCount
+FROM `log_group`
+WHERE `@message` LIKE '%Exception%'
+```
 
-   or, when querying multiple log groups:
+or, when querying multiple log groups:
 
-   ```sql
-   SELECT window.start, COUNT(*) AS exceptionCount
-   FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
-   WHERE `@message` LIKE '%Exception%'
-   ```
+```sql
+SELECT window.start, COUNT(*) AS exceptionCount
+FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
+WHERE `@message` LIKE '%Exception%'
+```
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
 When making `stats` queries in [Explore](ref:explore), ensure you are in Metrics Explore mode.
@@ -324,4 +324,3 @@ After you have configured it, you'll see a **Monitoring account** badge in the q
 ## Query caching
 
 When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.
-

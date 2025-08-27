@@ -81,30 +81,30 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
   variables:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
   annotate-visualizations:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
   set-up-grafana-monitoring:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
   transformations:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
   visualizations:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
 ---
 
 # Amazon CloudWatch data source
@@ -185,5 +185,3 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
 To use this feature, configure a monitoring and source account in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), and then add the necessary IAM permissions as described above.
-
-
