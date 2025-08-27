@@ -2781,6 +2781,7 @@
           "time": "Time"
         }
       },
+      "error-message-prefix": "Error message:",
       "filter-group": "Filter group",
       "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
@@ -4167,7 +4168,7 @@
         },
         "collector": {
           "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
-          "title": "Collector:"
+          "title": "Collector"
         },
         "data-sources": {
           "subtitle": "Manage your existing data source connections",
@@ -5223,6 +5224,9 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "search-panel": {
+      "no-match": "No panels matching"
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Loading configuration"
     },
@@ -5494,6 +5498,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": "Panel not found"
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
@@ -6135,9 +6142,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
     },
-    "solo-panel-page": {
-      "loading": "Loading"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
@@ -6370,7 +6374,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Add query from library"
+      "add-from-saved-queries": "Add from saved queries"
     },
     "settings": {
       "variables": {
@@ -6421,8 +6425,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>.",
-    "success-more-details-links-extensions": "You can also explore data with the following extensions:"
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7557,6 +7560,7 @@
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
       "folder-deleted-success": "Folder deleted"
     },
     "get-loading-nav": {
@@ -9036,6 +9040,7 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "inline-token-warning-badge-tooltip": "The method to save the token is to re-enter it in the repository settings.",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -9534,6 +9539,12 @@
       "show-context": "Show context",
       "show-log-line": "Show log line",
       "sidebar-mode": "Anchor to the right",
+      "trace": {
+        "error-message": "Could not retrieve trace.",
+        "error-tooltip": "The trace could have been sampled or be temporarily unavailable.",
+        "loading-message": "Loading trace..."
+      },
+      "trace-section": "Trace",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
@@ -9633,6 +9644,7 @@
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
+      "wrap-json-lines": "Wrap lines and expand JSON",
       "wrap-lines": "Wrap lines"
     },
     "logs-navigation": {
@@ -10713,10 +10725,6 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
-  "panel-search": {
-    "no-matches": "No matches found",
-    "unsupported-layout": "Unsupported layout"
-  },
   "panel-type-filter": {
     "clear-button": "Clear types",
     "select-aria-label": "Panel type filter",
@@ -11225,6 +11233,7 @@
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
@@ -11254,11 +11263,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Delete",
-      "confirm-delete-repository": "Are you sure you want to delete the repository config?",
+      "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
+      "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
+      "delete": "Delete",
+      "delete-and-keep-resources": "Delete and keep resources",
+      "delete-and-remove-resources": "Delete and remove resources (default)",
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
-      "title-delete-repository": "Delete repository config",
-      "tooltip-delete-this-repository": "Delete this repository"
+      "title-delete-repository-and-resources": "Delete repository configuration and resources",
+      "title-delete-repository-only": "Delete repository configuration only"
     },
     "edit-repository-page": {
       "back-to-repositories": "Back to repositories",
@@ -11433,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Delete all configured repositories",
       "title-legacy-storage-detected": "Legacy storage detected"
     },
+    "http-utils": {
+      "access-denied": "Access denied. Please check your token permissions.",
+      "authentication-failed": "Authentication failed. Please check your access token.",
+      "http-error": "HTTP {{status}}: {{statusText}}",
+      "request-failed": "Request failed",
+      "resource-not-found": "Resource not found. Please check the URL or repository.",
+      "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
+    },
+    "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
+    "inline-token-warning-badge-text": "Token needs to be saved again",
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
@@ -12699,10 +12722,6 @@
     "login": "Login"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label-wrap-text": "Wrap text"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Gauge display mode",
       "label-value-display": "Value display"
@@ -12730,13 +12749,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
-      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "Apply to entire row",
-      "label-background-display-mode": "Background display mode",
-      "wrap-text": "Wrap text"
+      "label-background-display-mode": "Background display mode"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12754,8 +12768,9 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
+    "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
-    "description-wrap-header-text": "Enables text wrapping for column headers",
+    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -12780,50 +12795,6 @@
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
     "name-count-rows": "Count rows",
-    "name-enable-paginations": "Enable pagination",
-    "name-fields": "Fields",
-    "name-hide-in-table": "Hide in table",
-    "name-min-column-width": "Minimum column width",
-    "name-show-table-footer": "Show table footer",
-    "name-show-table-header": "Show table header",
-    "name-wrap-header-text": "Wrap header text",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields",
-    "text-wrap-options": {
-      "label-wrap-text": "Wrap text"
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Cell options",
-    "category-table": "Table",
-    "category-table-footer": "Table footer",
-    "cell-height-options": {
-      "label-large": "Large",
-      "label-medium": "Medium",
-      "label-small": "Small"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Center",
-      "label-left": "Left",
-      "label-right": "Right"
-    },
-    "description-calculation": "Choose a reducer function / calculation",
-    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
-    "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
-    "description-frozen-columns": "Columns are frozen from the left side of the table",
-    "description-min-column-width": "The minimum width for column auto resizing",
-    "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
-    "name-calculation": "Calculation",
-    "name-cell-height": "Cell height",
-    "name-cell-type": "Cell type",
-    "name-cell-value-inspect": "Cell value inspect",
-    "name-column-alignment": "Column alignment",
-    "name-column-filter": "Column filter",
-    "name-column-width": "Column width",
-    "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
     "name-fields": "Fields",
     "name-frozen-columns": "Frozen columns",
@@ -12833,6 +12804,8 @@
     "name-show-table-header": "Show table header",
     "name-tooltip-from-field": "Tooltip from field",
     "name-tooltip-placement": "Tooltip placement",
+    "name-wrap-header-text": "Wrap header text",
+    "name-wrap-text": "Wrap text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
     "tooltip-placement-options": {
@@ -13056,6 +13029,7 @@
         "name-point-size": "Point size",
         "name-show-points": "Show points",
         "name-show-thresholds": "Show thresholds",
+        "name-show-values": "Show values",
         "name-style": "Style",
         "name-transform": "Transform",
         "transform-options": {

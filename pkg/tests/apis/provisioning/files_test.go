@@ -43,6 +43,8 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, len(dashboards.Items))
 
+	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
+
 	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 2, len(folders.Items))
@@ -125,6 +127,13 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		ExpectedDashboards: 1,
 		ExpectedFolders:    0,
 	})
+
+	// Validate the dashboard metadata
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(dashboards.Items))
+
+	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
@@ -419,6 +428,17 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		ExpectedDashboards: 2, // Total across both repos
 		ExpectedFolders:    2, // Total across both repos
 	})
+
+	allDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	for _, dashboard := range allDashboards.Items {
+		annotations := dashboard.GetAnnotations()
+		// Expect to be managed by repo1 or repo2
+		managerID := annotations["grafana.app/managerId"]
+		if managerID != repo1 && managerID != repo2 {
+			t.Fatalf("dashboard %s is not managed by repo1 or repo2", dashboard.GetName())
+		}
+	}
 
 	t.Run("CREATE file with UID already owned by different repository - should fail", func(t *testing.T) {
 		// Try to create a dashboard in repo2 that has the same UID as the one in repo1

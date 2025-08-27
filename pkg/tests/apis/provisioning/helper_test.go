@@ -460,6 +460,34 @@ func (h *provisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 	}
 }
 
+// validateManagedDashboardsFolderMetadata validates the folder metadata
+// of the managed dashboards.
+// If folder is nested, folder annotations should not be empty.
+// Also checks that the managerId property exists.
+func (h *provisioningTestHelper) validateManagedDashboardsFolderMetadata(t *testing.T,
+	ctx context.Context, repoName string, dashboards []unstructured.Unstructured) {
+	t.Helper()
+
+	// Check if folder is nested or not.
+	// If not, folder annotations should be empty as we have an "instance" sync target
+	for _, d := range dashboards {
+		sourcePath, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		isNested := strings.Contains(sourcePath, "/")
+
+		folder, found, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+		if isNested {
+			require.True(t, found, "dashboard should have a folder annotation")
+			require.NotEmpty(t, folder, "dashboard should be in a non-empty folder")
+		} else {
+			require.False(t, found, "dashboard should not have a folder annotation")
+		}
+
+		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
+		// require.Equal(t, repoName, managerID, "dashboard should be managed by gitsync repo")
+		require.Equal(t, repoName, managerID, "dashboard should be managed by gitsync repo")
+	}
+}
+
 type TestRepo struct {
 	Name                   string
 	Target                 string
@@ -570,17 +598,9 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
-func useAppPlatformSecrets(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
-		featuremgmt.FlagProvisioningSecretsService,
-		featuremgmt.FlagSecretsManagementAppPlatform,
-	)
-}
-
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 		},
