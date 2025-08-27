@@ -3,7 +3,6 @@ package metadata
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -88,13 +87,12 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		} else {
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
-			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error())
+			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error(), "result", metrics.DecryptResultLabel(decryptErr))
 		}
 
 		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
 
-		success := decryptErr == nil
-		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.DecryptDuration.WithLabelValues(metrics.DecryptResultLabel(decryptErr)).Observe(time.Since(start).Seconds())
 	}()
 
 	// Basic authn check before reading a secure value metadata, it is here on purpose.
