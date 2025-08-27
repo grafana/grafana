@@ -24,8 +24,8 @@ import {
   TableCellHeight,
 } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../../utils/colors';
-import { TableCellOptions } from '../types';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
+import { TableCellOptions } from '../Table/types';
 
 import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getCellRenderer } from './Cells/renderers';

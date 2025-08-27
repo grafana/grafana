@@ -7,10 +7,10 @@ import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { Checkbox } from '../../../Forms/Checkbox';
-import { Label } from '../../../Forms/Label';
-import { Stack } from '../../../Layout/Stack/Stack';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { Checkbox } from '../../Forms/Checkbox';
+import { Label } from '../../Forms/Label';
+import { Stack } from '../../Layout/Stack/Stack';
 
 import { operatorSelectableValues } from './FilterPopup';
 

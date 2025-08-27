@@ -5,13 +5,13 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { Button } from '../../../Button/Button';
-import { ClickOutsideWrapper } from '../../../ClickOutsideWrapper/ClickOutsideWrapper';
-import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
-import { FilterInput } from '../../../FilterInput/FilterInput';
-import { Label } from '../../../Forms/Label';
-import { Stack } from '../../../Layout/Stack/Stack';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { Button } from '../../Button/Button';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { ButtonSelect } from '../../Dropdown/ButtonSelect';
+import { FilterInput } from '../../FilterInput/FilterInput';
+import { Label } from '../../Forms/Label';
+import { Stack } from '../../Layout/Stack/Stack';
 import { FilterType } from '../types';
 import { getDisplayName } from '../utils';
 

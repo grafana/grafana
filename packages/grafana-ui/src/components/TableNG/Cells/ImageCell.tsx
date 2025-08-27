@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { TableCellDisplayMode } from '../../types';
+import { TableCellDisplayMode } from '../../Table/types';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { ImageCellProps, TableCellStyles } from '../types';
 

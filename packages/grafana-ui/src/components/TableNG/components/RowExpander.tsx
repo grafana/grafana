@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
-import { Icon } from '../../../Icon/Icon';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { Icon } from '../../Icon/Icon';
 import { RowExpanderNGProps } from '../types';
 
 export function RowExpander({ onCellExpand, isExpanded }: RowExpanderNGProps) {

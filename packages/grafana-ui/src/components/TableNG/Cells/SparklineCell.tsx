@@ -22,9 +22,9 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 
-import { measureText } from '../../../../utils/measureText';
-import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
-import { Sparkline } from '../../../Sparkline/Sparkline';
+import { measureText } from '../../../utils/measureText';
+import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
+import { Sparkline } from '../../Sparkline/Sparkline';
 import { SparklineCellProps, TableCellStyles } from '../types';
 import { getAlignmentFactor, getCellOptions } from '../utils';
 

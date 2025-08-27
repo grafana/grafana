@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { ActionButton } from '../../../Actions/ActionButton';
+import { ActionButton } from '../../Actions/ActionButton';
 import { ActionCellProps, TableCellStyles } from '../types';
 
 export const ActionsCell = ({ field, rowIdx, getActions }: ActionCellProps) => {
