@@ -109,18 +109,18 @@ const dataSources = {
   }),
   mixed: mockDataSource({
     name: MIXED_DATASOURCE_NAME,
+    uid: '-- Mixed --',
     type: 'mixed',
-    uid: MIXED_DATASOURCE_NAME,
     isDefault: false,
   }),
   influx: mockDataSource({
-    name: 'InfluxDB Test Datasource',
+    name: 'InfluxDB Test',
     uid: 'influx-uid',
     type: 'influxdb',
     isDefault: false,
   }),
   cloudwatch: mockDataSource({
-    name: 'CloudWatch Test Datasource',
+    name: 'CloudWatch Test',
     uid: 'cloudwatch-uid',
     type: 'cloudwatch',
     isDefault: false,
@@ -206,7 +206,7 @@ describe('Backend / Frontend result comparison', () => {
         expect(backendOutput.spec).toBeDefined();
 
         // Compare the spec structures
-        expect(backendOutput.spec).toMatchObject(frontendOutput.spec);
+        expect(frontendOutput.spec).toEqual(backendOutput.spec);
 
         // Verify the conversion doesn't throw errors and produces a valid structure
         expect(() => JSON.stringify(frontendOutput)).not.toThrow();

@@ -485,7 +485,7 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: ds.type!,
+          group: ds.type ?? getDefaultDatasourceType(),
           ...(ds.uid && {
             datasource: {
               name: ds.uid,
@@ -501,7 +501,7 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
   });
 }
 
-export function buildPanelKind(p: Panel): PanelKind {
+export function buildPanelKind(p: Panel & { transparent?: boolean }): PanelKind {
   const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
 
   const transformations = getPanelTransformations(p.transformations || []);
@@ -511,12 +511,13 @@ export function buildPanelKind(p: Panel): PanelKind {
     spec: {
       title: p.title || '',
       description: p.description || '',
+      ...(p.transparent !== undefined && { transparent: p.transparent }),
       vizConfig: {
         kind: 'VizConfig',
         group: p.type,
         version: p.pluginVersion ?? '',
         spec: {
-          fieldConfig: defaultFieldConfigSource(),
+          fieldConfig: p.fieldConfig || defaultFieldConfigSource(),
           options: p.options as any,
         },
       },
@@ -775,28 +776,34 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
 
 function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annotations'] {
   return annotations.map((a) => {
+    // Extract properties that are explicitly handled
+    const { name, enable, hide, iconColor, builtIn, datasource, target, filter, ...legacyOptions } = a;
+
     const aq: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
-        name: a.name,
-        enable: a.enable,
-        hide: Boolean(a.hide),
-        iconColor: a.iconColor,
-        builtIn: Boolean(a.builtIn),
+        name,
+        enable,
+        hide: Boolean(hide),
+        iconColor: iconColor,
+        builtIn: Boolean(builtIn),
         query: {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
-          group: a.datasource?.type || getDefaultDatasourceType(),
-          ...(a.datasource?.uid && {
+          group: datasource?.type || (builtIn ? 'grafana' : getDefaultDatasourceType()),
+          ...(datasource?.uid && {
             datasource: {
-              name: a.datasource.uid,
+              name: datasource.uid,
             },
           }),
           spec: {
-            ...a.target,
+            ...target,
           },
         },
-        ...(a.filter !== undefined && { filter: a.filter }),
+        ...(filter !== undefined && { filter }),
+
+        // Include any additional properties as legacyOptions
+        ...(Object.keys(legacyOptions).length > 0 && { legacyOptions }),
       },
     };
     return aq;
@@ -1079,7 +1086,7 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     ...fieldConfig.defaults,
   };
 
-  if (fieldConfig.defaults.mappings) {
+  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length > 0) {
     transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
       switch (mapping.type) {
         case 'value':

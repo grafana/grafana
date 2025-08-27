@@ -155,7 +155,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "grafana",
             "version": "v0",
             "spec": {
               "expr": "static_annotation_query",
@@ -272,7 +272,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "grafana",
             "version": "v0",
             "spec": {}
           },
@@ -289,7 +289,6 @@
     ],
     "cursorSync": "Off",
     "description": "Testing annotation transformations",
-    "editable": false,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -298,9 +297,7 @@
       }
     },
     "links": [],
-    "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [
       "test",
       "annotations"
@@ -323,9 +320,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Annotation Conversions Test Dashboard",
     "variables": []

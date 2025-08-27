@@ -549,8 +549,9 @@ const (
 
 // +k8s:openapi-gen=true
 type DashboardThreshold struct {
-	Value float64 `json:"value"`
-	Color string  `json:"color"`
+	// Value null means -Infinity
+	Value *float64 `json:"value"`
+	Color string   `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.

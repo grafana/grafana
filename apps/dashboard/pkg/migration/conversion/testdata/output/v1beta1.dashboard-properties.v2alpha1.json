@@ -14,7 +14,7 @@
         "kind": "AnnotationQuery",
         "spec": {
           "query": {
-            "kind": "prometheus",
+            "kind": "grafana",
             "spec": {
               "refId": "Anno"
             }
@@ -68,12 +68,7 @@
               "pluginVersion": "",
               "options": {},
               "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "defaults": {},
-                    "overrides": []
-                  }
-                },
+                "defaults": {},
                 "overrides": null
               }
             }
@@ -161,7 +156,6 @@
     ],
     "liveNow": true,
     "preload": true,
-    "revision": 0,
     "tags": [
       "test",
       "properties",

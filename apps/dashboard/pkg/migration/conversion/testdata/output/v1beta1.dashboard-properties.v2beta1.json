@@ -15,7 +15,7 @@
         "spec": {
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "grafana",
             "version": "v0",
             "spec": {
               "refId": "Anno"
@@ -72,12 +72,7 @@
             "spec": {
               "options": {},
               "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "defaults": {},
-                    "overrides": []
-                  }
-                },
+                "defaults": {},
                 "overrides": []
               }
             }
@@ -165,7 +160,6 @@
     ],
     "liveNow": true,
     "preload": true,
-    "revision": 0,
     "tags": [
       "test",
       "properties",

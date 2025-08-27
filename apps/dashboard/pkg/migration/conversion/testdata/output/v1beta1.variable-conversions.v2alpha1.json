@@ -12,7 +12,6 @@
     "annotations": [],
     "cursorSync": "Off",
     "description": "Testing all variable types and transformations",
-    "editable": false,
     "elements": {},
     "layout": {
       "kind": "GridLayout",
@@ -21,9 +20,7 @@
       }
     },
     "links": [],
-    "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [
       "test",
       "variables"
@@ -46,9 +43,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Variable Conversions Test Dashboard",
     "variables": [

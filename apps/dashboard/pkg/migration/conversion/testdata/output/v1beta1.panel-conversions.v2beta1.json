@@ -107,32 +107,26 @@
               },
               "fieldConfig": {
                 "defaults": {
-                  "custom": {
-                    "defaults": {
-                      "color": {
-                        "mode": "palette-classic"
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
                       },
-                      "custom": {
-                        "drawStyle": "line",
-                        "fillOpacity": 10,
-                        "lineWidth": 1
-                      },
-                      "mappings": [],
-                      "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                          {
-                            "color": "green",
-                            "value": null
-                          },
-                          {
-                            "color": "red",
-                            "value": 80
-                          }
-                        ]
+                      {
+                        "value": 80,
+                        "color": "red"
                       }
-                    },
-                    "overrides": []
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "fillOpacity": 10,
+                    "lineWidth": 1
                   }
                 },
                 "overrides": []
@@ -194,13 +188,7 @@
             "spec": {
               "options": {},
               "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "defaults": {
-                      "custom": {}
-                    }
-                  }
-                },
+                "defaults": {},
                 "overrides": []
               }
             }
@@ -251,12 +239,7 @@
                 "showHeader": true
               },
               "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "defaults": {},
-                    "overrides": []
-                  }
-                },
+                "defaults": {},
                 "overrides": []
               }
             }
@@ -359,15 +342,11 @@
               },
               "fieldConfig": {
                 "defaults": {
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  },
                   "custom": {
-                    "defaults": {
-                      "color": {
-                        "mode": "continuous-GrYlRd"
-                      },
-                      "custom": {
-                        "orientation": "horizontal"
-                      }
-                    }
+                    "orientation": "horizontal"
                   }
                 },
                 "overrides": []
@@ -503,9 +482,7 @@
       }
     },
     "links": [],
-    "liveNow": false,
     "preload": false,
-    "revision": 0,
     "tags": [
       "test",
       "panels"
@@ -528,9 +505,7 @@
         "1d"
       ],
       "hideTimepicker": false,
-      "weekStart": "monday",
-      "fiscalYearStartMonth": 0,
-      "nowDelay": ""
+      "fiscalYearStartMonth": 0
     },
     "title": "Panel Conversions Test Dashboard",
     "variables": []

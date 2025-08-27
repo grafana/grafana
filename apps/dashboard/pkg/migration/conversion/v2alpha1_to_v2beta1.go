@@ -303,6 +303,7 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 			Steps: make([]dashv2beta1.DashboardThreshold, len(in.Thresholds.Steps)),
 		}
 		for i, step := range in.Thresholds.Steps {
+			// Convert threshold values: preserve null values from v2alpha1
 			out.Thresholds.Steps[i] = dashv2beta1.DashboardThreshold{
 				Value: step.Value,
 				Color: step.Color,

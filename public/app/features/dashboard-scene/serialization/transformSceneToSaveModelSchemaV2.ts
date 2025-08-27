@@ -494,7 +494,16 @@ export function getDefaultDataSourceRef(): DataSourceRef {
   const dsList = config.datasources;
   const ds = dsList[defaultDatasource];
 
-  return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+  // If we can't find the default datasource, fall back to grafana
+  if (!ds) {
+    return { type: 'grafana', uid: '-- Grafana --' };
+  }
+
+  // Try to get the type from different possible locations
+  const dsType = ds.type || ds.meta?.id || 'grafana';
+  const dsUid = ds.uid || ds.name || '-- Grafana --';
+
+  return { type: dsType, uid: dsUid };
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec

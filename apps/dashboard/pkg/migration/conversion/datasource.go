@@ -39,7 +39,7 @@ func getDefaultDatasourceRef() dashv2alpha1.DashboardDataSourceRef {
 // getDatasourceTypeByUID gets the datasource type by UID using the conversion module's datasource provider
 func getDatasourceTypeByUID(uid string) string {
 	if uid == "" {
-		return *getDefaultDatasourceRef().Uid
+		return *getDefaultDatasourceRef().Type
 	}
 
 	// Get the datasource info from the conversion module's provider
@@ -57,6 +57,6 @@ func getDatasourceTypeByUID(uid string) string {
 		}
 	}
 
-	// If not found, return the default
-	return *getDefaultDatasourceRef().Uid
+	// If not found, return the default type
+	return *getDefaultDatasourceRef().Type
 }
