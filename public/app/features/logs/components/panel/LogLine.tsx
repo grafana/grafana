@@ -149,7 +149,9 @@ const LogLineComponent = memo(
 
     const handleClick = useCallback(
       (e: MouseEvent<HTMLElement>) => {
-        onClick(e, log);
+        if (isLogLineClick(e.target)) {
+          onClick(e, log);
+        }
       },
       [log, onClick]
     );
@@ -158,11 +160,14 @@ const LogLineComponent = memo(
 
     return (
       <>
+        {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''}`}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
           ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
+          onClick={handleClick}
         >
           <LogLineMenu styles={styles} log={log} />
           {dedupStrategy !== LogsDedupStrategy.none && (
@@ -204,16 +209,13 @@ const LogLineComponent = memo(
               )}
             </div>
           )}
-          {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
-            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
+            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
             style={
               collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
                 : undefined
             }
-            onClick={handleClick}
           >
             <Log
               collapsed={collapsed}
@@ -595,3 +597,8 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     }),
   };
 };
+
+function isLogLineClick(target: EventTarget) {
+  const targetIsButton = target instanceof HTMLButtonElement || (target instanceof Element && target.closest('button'));
+  return !targetIsButton;
+}

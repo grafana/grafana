@@ -2781,6 +2781,7 @@
           "time": "Time"
         }
       },
+      "error-message-prefix": "Error message:",
       "filter-group": "Filter group",
       "filter-group-tooltip": "Filter each state history group either by exact match or a regular expression, for example:",
       "placeholder-search": "Search",
@@ -9039,6 +9040,7 @@
     "name-line-width": "Line width",
     "name-stacking": "Stacking"
   },
+  "inline-token-warning-badge-tooltip": "The method to save the token is to re-enter it in the repository settings.",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -11451,6 +11453,8 @@
       "resource-not-found": "Resource not found. Please check the URL or repository.",
       "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
     },
+    "inline-secure-values-warning": "You need to save your access tokens again due to a system update",
+    "inline-token-warning-badge-text": "Token needs to be saved again",
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",

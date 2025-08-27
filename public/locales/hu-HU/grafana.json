@@ -6373,7 +6373,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Lekérdezés hozzáadása könyvtárból"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -12708,10 +12708,6 @@
     "login": "Bejelentkezés"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Ha ki van választva, a szöveg a konfigurált oszlop szövegének szélességéhez lesz tördelve",
-      "label-wrap-text": "Sortörés"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Mérőeszköz kijelzési módja",
       "label-value-display": "Érték megjelenítése"
@@ -12739,13 +12735,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Ha ki van választva, a teljes sor olyan színű lesz, mint ez a cella.",
-      "description-wrap-text": "Ha ki van választva, a szöveg a konfigurált oszlop szövegének szélességéhez lesz tördelve",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Alkalmazás a teljes sorra",
-      "label-background-display-mode": "Háttér megjelenítési módja",
-      "wrap-text": "Sortörés"
+      "label-background-display-mode": "Háttér megjelenítési módja"
     },
     "column-alignment-options": {
       "label-auto": "Automatikus",
@@ -12763,7 +12754,9 @@
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
     "description-count-rows": "Egyetlen szám megjelenítése az összes adatsorhoz",
     "description-fields": "Válassza ki a kiszámítandó mezőket",
+    "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
+    "description-tooltip-from-field": "",
     "description-wrap-header-text": "Engedélyezi a szöveg tördelését az oszlopfejléceknél",
     "image-cell-options-editor": {
       "description-alt-text": "Helyettesítő szöveg, amely akkor jelenik meg, ha egy kép nem jeleníthető meg, és amely a képernyőolvasót használó felhasználóknak hasznos",
@@ -12789,51 +12782,7 @@
     "name-column-filter": "Oszlopszűrő",
     "name-column-width": "Oszlopszélesség",
     "name-count-rows": "Sorok számlálása",
-    "name-enable-paginations": "Oldalszámozás engedélyezése",
-    "name-fields": "Mezők",
-    "name-hide-in-table": "Elrejtés a táblázatban",
-    "name-min-column-width": "Minimális oszlopszélesség",
-    "name-show-table-footer": "Táblázatlábléc megjelenítése",
-    "name-show-table-header": "Táblázatfejléc megjelenítése",
-    "name-wrap-header-text": "Fejléc szövegének tördelése",
-    "placeholder-column-width": "automatikus",
-    "placeholder-fields": "Numerikus mezők",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Cellabeállítások",
-    "category-table": "Táblázat",
-    "category-table-footer": "Táblázat lábléce",
-    "cell-height-options": {
-      "label-large": "Nagy",
-      "label-medium": "Közepes",
-      "label-small": "Kicsi"
-    },
-    "column-alignment-options": {
-      "label-auto": "Automatikus",
-      "label-center": "Középre",
-      "label-left": "Balra",
-      "label-right": "Jobbra"
-    },
-    "description-calculation": "Válasszon egy szűkítőfüggvényt/-számítást",
-    "description-cell-value-inspect": "A cellaérték ellenőrzésének engedélyezése egy modális ablakban",
-    "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
-    "description-count-rows": "Egyetlen szám megjelenítése az összes adatsorhoz",
-    "description-fields": "Válassza ki a kiszámítandó mezőket",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Számítás",
-    "name-cell-height": "Cellamagasság",
-    "name-cell-type": "Cellatípus",
-    "name-cell-value-inspect": "Cellaérték ellenőrzése",
-    "name-column-alignment": "Oszlop igazítása",
-    "name-column-filter": "Oszlopszűrő",
-    "name-column-width": "Oszlopszélesség",
-    "name-count-rows": "Sorok számlálása",
-    "name-enable-pagination": "Oldalszámozás engedélyezése",
+    "name-enable-pagination": "",
     "name-fields": "Mezők",
     "name-frozen-columns": "",
     "name-hide-in-table": "Elrejtés a táblázatban",
@@ -12842,8 +12791,12 @@
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Fejléc szövegének tördelése",
     "placeholder-column-width": "automatikus",
     "placeholder-fields": "Numerikus mezők",
+    "text-wrap-options": {
+      "label-wrap-text": ""
+    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

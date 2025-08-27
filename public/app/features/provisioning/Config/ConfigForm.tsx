@@ -21,6 +21,7 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
+import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
@@ -51,6 +52,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     control,
     formState: { errors, isDirty },
     setValue,
+    setError,
     watch,
     getValues,
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
@@ -84,6 +86,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
+
+  // TODO: this should be removed after 12.2 is released
+  useEffect(() => {
+    if (isGitBased && !data?.secure?.token) {
+      setTokenConfigured(false);
+      setError('token', {
+        type: 'manual',
+        message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
+      });
+    }
+  }, [data, gitFields, setTokenConfigured, setError, isGitBased]);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -128,6 +141,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
+            <InlineSecureValueWarning repo={data} />
             <Field
               noMargin
               label={gitFields.tokenConfig.label}
@@ -146,6 +160,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                   return (
                     <SecretInput
                       {...field}
+                      invalid={!!errors.token}
                       id={'token'}
                       placeholder={gitFields.tokenConfig.placeholder}
                       isConfigured={tokenConfigured}
