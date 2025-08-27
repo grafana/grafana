@@ -41,6 +41,12 @@ enable = sqlExpressions
 
 - If you are using Grafana Cloud, contact [Support](https://grafana.com/help/) to enable this feature.
 
+## Known limitations
+
+- Currently, only one SQL expression is supported per panel or alert.
+- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
+- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+
 ## Transform data with SQL expressions
 
 SQL expressions allow you to:
@@ -73,7 +79,7 @@ The following are compatible data sources:
 - Google Sheets
 - Amazon Athena
 
-**Partial support:** The following data sources offer limited or conditional support. Some allow different types of queries, depending on the service being accessed. For example, Azure Monitor can query multiple services, each with its own query format. In some cases, you can also change the query type within a panel.
+**Partial support:** The following data sources have limited or conditional support. Some support multiple query types depending on the service. For example, Azure Monitor can query multiple services, each with its own query format. In some cases, you can also switch the query type within a panel.
 
 - InfluxDB
 - Infinity
@@ -169,8 +175,8 @@ error_count,service,region
 
 This query returns:
 
-- Numeric column: error_count (values: 25, 0, 15)
-- String columns: service and region
+- the numeric column `error_count` (values: 25, 0, 15)
+- the string columns `service` and `region`
 
 For alert rules, this creates three alert instances:
 
@@ -183,15 +189,6 @@ For recording rules, creates one metric with three series:
 - First series: error_count_total{service=auth-service, region=us-east} 25
 - Second series: error_count_total{service=payment-service, region=us-west} 0
 - Third series: error_count_total{service=user-service, region=eu-west} 15
-
-
-
-
-## Known limitations
-
-- Currently, only one SQL expression is supported per panel or alert.
-- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
-- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
 
 ## Supported data source formats
 
@@ -244,3 +241,19 @@ During conversion:
 2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
    ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
+
+## LLM integration
+
+The Grafana LLM plugin seamlessly integrates AI-powered assistance into your SQL expressions workflow.
+
+{{< admonition type="note" >}}
+The Grafana LLM plugin is currently in public preview, meaning Grafana offers limited support, and breaking changes might occur prior to the feature being made generally available.
+{{< /admonition >}}
+
+To use this integration, first [install and configure the LLM plugin](https://grafana.com/grafana/plugins/grafana-llm-app/). After installation, open your dashboard and select **Edit** to open the panel editor. Navigate to the **Queries** tab and scroll to the bottom where you'll find two new buttons positioned to the right of the **Run query** button.
+
+{{< figure src="/media/docs/sql-expressions/sqlexpressions-LLM-integration-v12.2.png" caption="LLM integration" >}}
+
+Click **Explain query** to open a drawer that displays a detailed explanation of your query, including its business meaning and performance statistics. Once the explanation is generated, the button changes to **View explanation**.
+
+Click **Improve query** to open a suggestions drawer that contains performance and reliability enhancements, column naming best practices, and guidance on panel optimization. Click **Apply** to implement a suggestion. After you’ve interacted with the interface, you'll see a **Suggestions** button for quick access. Newer suggestions appear at the top, with older ones listed below, creating a history of improvements. If your SQL query has a parsing error, such as a syntax issue, the LLM provides a corrected version. The LLM automatically identifies errors and helps you rewrite the query correctly.
