@@ -41,12 +41,6 @@ enable = sqlExpressions
 
 - If you are using Grafana Cloud, contact [Support](https://grafana.com/help/) to enable this feature.
 
-## Known limitations
-
-- Currently, only one SQL expression is supported per panel or alert.
-- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
-- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
-
 ## Transform data with SQL expressions
 
 SQL expressions allow you to:
@@ -66,11 +60,17 @@ A key capability of SQL expressions is the ability to JOIN data from multiple ta
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
 
+## Known limitations
+
+- Currently, only one SQL expression is supported per panel or alert.
+- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
+- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
+
 ## Compatible data sources
 
 The following are compatible data sources:
 
-**Full support:** All query types for each data source are supported.
+**Full support:** Grafana supports all query types for each of these data sources.
 
 - Elasticsearch
 - MySQL
@@ -142,16 +142,16 @@ The SQL expression workflow in Grafana is designed with the following behaviors:
 
 ## SQL conversion rules
 
-When a RefID is referenced within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
+When you reference a RefID within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
 
 The SQL conversion path:
 
-- The query result is treated as a single data frame, without labels, and is mapped directly to a tabular format.
+- The query result appears as a single data frame, without labels, and is mapped directly to a tabular format.
 - If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example, labeled formats), Grafana automatically converts the data into a table structure.
 
 ## Supported functions
 
-A complete list of supported SQL keywords, operators, and functions is maintained in the SQL expressions query validator implementation.
+Grafana maintains a complete list of supported SQL keywords, operators, and functions in the SQL expressions query validator implementation.
 
 For the most up-to-date reference of all supported SQL functionality, refer to the `allowedNode` and `allowedFunction` definitions in the Grafana [codebase](https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go).
 
@@ -164,7 +164,7 @@ For SQL Expressions to work properly with alerting and recording rules, your que
 - One numeric column - **_required_**.  This contains the value that triggers alerts or gets recorded.
 - One or more string columns - _optional_. These become **labels** for the alert instances or metrics. Column names and their row values become labels.
 
-Consider the following query results set:
+Consider the following query results:
 
 ```sql
 error_count,service,region
