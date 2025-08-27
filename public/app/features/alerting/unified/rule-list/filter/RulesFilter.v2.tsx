@@ -546,7 +546,33 @@ function GmaQueryDataSourceField({
   return (
     <>
       <Label>
-        <Trans i18nKey="alerting.search.property.gma-data-source">GMA Datasource query</Trans>
+        <Stack gap={0.5} alignItems="center">
+          <span>
+            <Trans i18nKey="alerting.search.property.gma-data-source">GMA Datasource query</Trans>
+          </span>
+          <Tooltip
+            content={
+              <div>
+                <p>
+                  <Trans i18nKey="alerting.rules-filter.gma-query-ds.tooltip.what">
+                    Filters Grafana-managed alert rules by the datasources referenced in their queries.
+                  </Trans>
+                </p>
+                <p>
+                  <Trans i18nKey="alerting.rules-filter.gma-query-ds.tooltip.disabled">
+                    This filter is only available when Grafana is selected in the Datasource picker.
+                  </Trans>
+                </p>
+              </div>
+            }
+          >
+            <Icon
+              name="info-circle"
+              size="sm"
+              title={t('alerting.rules-filter.gma-query-ds.tooltip.title', 'GMA datasource query help')}
+            />
+          </Tooltip>
+        </Stack>
       </Label>
       <Controller
         name="gmaQueryDataSourceNames"
