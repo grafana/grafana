@@ -53,6 +53,20 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
+	getInsertAssignment := func(orgID int64, roleID int64, assignment grant) sqltemplate.SQLTemplate {
+		v := insertAssignmentTemplate{
+			SQLTemplate:      sqltemplate.New(nodb.DialectForDriver()),
+			AssignmentTable:  nodb.Table(assignment.AssignmentTable),
+			AssignmentColumn: assignment.AssignmentColumn,
+			RoleID:           roleID,
+			OrgID:            orgID,
+			AssigneeID:       assignment.AssigneeID,
+			Now:              "2025-08-27 21:35:00",
+		}
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -83,6 +97,28 @@ func TestTemplates(t *testing.T) {
 				{
 					Name: "delete_permission",
 					Data: getDeletePermission(23, "dashboard:uid:dash1"),
+				},
+			},
+			assignmentInsertTplt: {
+				{
+					Name: "insert user assignment",
+					Data: getInsertAssignment(8, 23, grant{
+						AssigneeID:       5,
+						AssignmentTable:  "user_role",
+						AssignmentColumn: "user_id",
+						Action:           "dashboards:edit",
+						Scope:            "dashboard:uid:dash1",
+					}),
+				},
+				{
+					Name: "insert basic role assignment",
+					Data: getInsertAssignment(74, 96, grant{
+						AssigneeID:       "Viewer",
+						AssignmentTable:  "builtin_role",
+						AssignmentColumn: "role",
+						Action:           "dashboards:admin",
+						Scope:            "dashboard:uid:dash2",
+					}),
 				},
 			},
 		},
