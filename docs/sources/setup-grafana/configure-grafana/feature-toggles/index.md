@@ -98,7 +98,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `regressionTransformation`        | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage                                              |
-| `tableNextGen`                    | Allows access to the new react-data-grid based table component.                                        |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                           |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
