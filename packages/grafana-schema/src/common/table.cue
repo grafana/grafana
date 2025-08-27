@@ -107,9 +107,20 @@ TableGeoCellOptions: {
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
 
+
+
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
 TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions | TableGeoCellOptions @cuetsy(kind="type")
+
+TableCellTooltipPlacement: "top" | "bottom" | "left" | "right" | "auto" @cuetsy(kind="enum")
+
+TableCellTooltipOptions: {
+  // The name of the field to get the tooltip content from
+  field: string
+  // placement of the tooltip
+  placement?: TableCellTooltipPlacement
+}
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
@@ -127,4 +138,6 @@ TableFieldOptions: {
 	hideHeader?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
+  // Selecting or hovering this field will show a tooltip containing the content within the target field
+  tooltip?: TableCellTooltipOptions
 } @cuetsy(kind="interface")

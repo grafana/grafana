@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -125,7 +125,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
-		connectLogger := b.log.New("traceId", traceId.String())
+		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
@@ -167,7 +167,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
 		if err != nil {
-			b.log.Error("Hit unexpected error when reading query", "err", err)
+			connectLogger.Error("Hit unexpected error when reading query", "err", err)
 			err = errorsK8s.NewBadRequest("error reading query")
 			// TODO: can we wrap the error so details are not lost?!
 			// errutil.BadRequest(
@@ -181,8 +181,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
 		if err != nil {
-			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
-			logEmptyRefids(raw.Queries, b.log)
+			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+			logEmptyRefids(raw.Queries, connectLogger)
 			if qdr != nil { // if we have a response, we assume the err is set in the response
 				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
 					QueryDataResponse: *qdr,
@@ -190,19 +190,40 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				return
 			} else {
 				var errorDataResponse backend.DataResponse
-				if errors.Is(err, service.ErrInvalidDatasourceID) || errors.Is(err, service.ErrNoQueriesFound) || errors.Is(err, service.ErrMissingDataSourceInfo) || errors.Is(err, service.ErrQueryParamMismatch) || errors.Is(err, service.ErrDuplicateRefId) {
+
+				badRequestErrors := []error{
+					service.ErrInvalidDatasourceID,
+					service.ErrNoQueriesFound,
+					service.ErrMissingDataSourceInfo,
+					service.ErrQueryParamMismatch,
+					service.ErrDuplicateRefId,
+					datasources.ErrDataSourceNotFound,
+				}
+				isTypedBadRequestError := false
+				for _, badRequestError := range badRequestErrors {
+					if errors.Is(err, badRequestError) {
+						isTypedBadRequestError = true
+					}
+				}
+				if isTypedBadRequestError {
 					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
 				} else if strings.Contains(err.Error(), "expression request error") {
-					b.log.Error("Error calling TransformData in an expression", "err", err)
+					connectLogger.Error("Error calling TransformData in an expression", "err", err)
 					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
 				} else {
-					b.log.Error("unknown error, treated as a 500", "err", err)
+					connectLogger.Error("unknown error, treated as a 500", "err", err)
 					responder.Error(err)
 					return
 				}
+				// TODO ensure errors also return the refId wherever possible
+				errorRefId := raw.Queries[0].RefID
+				if errorRefId == "" {
+					errorRefId = "A"
+				}
+
 				qdr = &backend.QueryDataResponse{
 					Responses: map[string]backend.DataResponse{
-						"A": errorDataResponse,
+						errorRefId: errorDataResponse,
 					},
 				}
 				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
@@ -223,12 +244,12 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	for _, query := range raw.Queries {
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
-			b.log.Error("error marshalling", err)
+			connectLogger.Error("error marshalling", err)
 		}
 
 		sjQuery, _ := simplejson.NewJson(jsonBytes)
 		if err != nil {
-			b.log.Error("error unmarshalling", err)
+			connectLogger.Error("error unmarshalling", err)
 		}
 
 		jsonQueries = append(jsonQueries, sjQuery)
@@ -255,9 +276,9 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	instanceConfig := instance.GetSettings()
 
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger).New("ruleuid", headers["X-Rule-Uid"])
+	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
 
-	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithInstance(
+	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
 		instance,
 		ctx,
 		dsQuerierLoggerWithSlug,
@@ -265,20 +286,21 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	exprService := expr.ProvideService(
 		&setting.Cfg{
-			ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
-			SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
-			SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
-			SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
+			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
+			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
+			SQLExpressionOutputCellLimit:  instanceConfig.SQLExpressionOutputCellLimit,
+			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
+			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
 		},
 		nil,
 		nil,
 		instanceConfig.FeatureToggles,
 		nil,
 		b.tracer,
-		mtDsClientBuilder,
+		qsDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
 
 	// tell the `instance` structure that it can now report
 	// metrics that are only reported once during a request

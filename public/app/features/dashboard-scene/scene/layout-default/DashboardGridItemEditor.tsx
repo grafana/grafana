@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -9,20 +8,22 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
+import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
 export function getDashboardGridItemOptions(gridItem: DashboardGridItem): OptionsPaneCategoryDescriptor[] {
+  const categoryId = 'repeat-options';
   const repeatCategory = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.default-layout.item-options.repeat.title', 'Repeat options'),
-    id: 'Repeat options',
+    id: categoryId,
     isOpenDefault: false,
   })
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
-        id: uuidv4(),
+        id: `${categoryId}-repeat-by-variable`,
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
@@ -33,6 +34,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.direction.title', 'Repeat direction'),
+        id: `${categoryId}-repeat-direction`,
         useShowIf: () => {
           const { variableName } = gridItem.useState();
           return Boolean(variableName);
@@ -43,7 +45,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.max', 'Max per row'),
-        id: uuidv4(),
+        id: `${categoryId}-max-per-row`,
         useShowIf: () => {
           const { variableName, repeatDirection } = gridItem.useState();
           return Boolean(variableName) && repeatDirection === 'h';
@@ -52,7 +54,15 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
       })
     );
 
-  return [repeatCategory];
+  const conditionalRenderingCategory = useConditionalRenderingEditor(
+    undefined,
+    t(
+      'dashboard.conditional-rendering.editor.not-supported-for-custom-grid',
+      'Conditional rendering is not supported for the custom grid layout. Switch to auto grid to use conditional rendering.'
+    )
+  );
+
+  return [repeatCategory, conditionalRenderingCategory];
 }
 
 interface OptionComponentProps {
