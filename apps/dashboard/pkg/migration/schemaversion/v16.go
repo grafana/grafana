@@ -66,7 +66,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 		}
 
 		// Skip repeated rows (line 1031-1033 in TS)
-		if _, hasRepeatIteration := row["repeatIteration"]; hasRepeatIteration {
+		if repeatIteration, hasRepeatIteration := row["repeatIteration"]; hasRepeatIteration && repeatIteration != nil {
 			continue
 		}
 
@@ -283,7 +283,11 @@ func getMaxPanelID(rows []interface{}) int {
 func shouldShowRows(rows []interface{}) bool {
 	for _, rowInterface := range rows {
 		if row, ok := rowInterface.(map[string]interface{}); ok {
-			if GetBoolValue(row, "collapse") || GetBoolValue(row, "showTitle") || GetStringValue(row, "repeat") != "" {
+			collapse := GetBoolValue(row, "collapse")
+			showTitle := GetBoolValue(row, "showTitle")
+			repeat := GetStringValue(row, "repeat")
+
+			if collapse || showTitle || repeat != "" {
 				return true
 			}
 		}

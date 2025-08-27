@@ -4,7 +4,7 @@ import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
-test.use({ viewport: { width: 2000, height: 1080 }, featureToggles: { tableNextGen: true } });
+test.use({ viewport: { width: 2000, height: 1080 } });
 
 // helper utils
 const waitForTableLoad = async (loc: Page | Locator) => {
