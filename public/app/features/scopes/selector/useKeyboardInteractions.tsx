@@ -1,10 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export function useKeyboardInteraction(optionCount: number, onSelect: (index: number) => void) {
+// Uses enum to enable extension in the future
+export enum KeyboardAction {
+  SELECT = 'select',
+  EXPAND = 'expand',
+}
+
+// Handles keyboard interactions for the scopes tree
+// optionCount is the number of options in the tree
+// onSelect is the function to call when an option is selected
+// Returns the highlighted index
+export function useKeyboardInteraction(optionCount: number, onSelect: (index: number, action: KeyboardAction) => void) {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent): void => {
+      // If there are no options, do nothing. Also to prevent dividing by 0
+      if (optionCount === 0) {
+        return;
+      }
+
       switch (event.key) {
         case 'ArrowDown':
           setHighlightedIndex((prev) => (prev + 1) % optionCount);
@@ -14,7 +29,12 @@ export function useKeyboardInteraction(optionCount: number, onSelect: (index: nu
           break;
         case 'Enter':
           if (highlightedIndex !== -1) {
-            onSelect(highlightedIndex);
+            onSelect(highlightedIndex, KeyboardAction.SELECT);
+          }
+          break;
+        case 'ArrowRight':
+          if (highlightedIndex !== -1) {
+            onSelect(highlightedIndex, KeyboardAction.EXPAND);
           }
           break;
         case 'Escape':

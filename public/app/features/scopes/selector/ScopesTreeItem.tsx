@@ -55,7 +55,7 @@ export function ScopesTreeItem({
     <div
       key={treeNode.scopeNodeId}
       role="treeitem"
-      aria-selected={treeNode.expanded}
+      aria-selected={treeNode.expanded || selected}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
     >
       <div

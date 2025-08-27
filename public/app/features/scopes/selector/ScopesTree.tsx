@@ -9,8 +9,9 @@ import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
+import { isNodeExpandable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
-import { useKeyboardInteraction } from './useKeyboardInteractions';
+import { KeyboardAction, useKeyboardInteraction } from './useKeyboardInteractions';
 
 export interface ScopesTreeProps {
   tree: TreeNode;
@@ -71,18 +72,24 @@ export function ScopesTree({
   // Use the same hightoighing for the two different lists
   const { highlightedIndex } = useKeyboardInteraction(
     searchFocused ? selectedNodesToShow.length + childrenArray.length : 0,
-    (index: number) => {
-      // Toggle selection
-      if (selectedScopes.some((s) => s.scopeNodeId === childrenArray[index - selectedNodesToShow.length].scopeNodeId)) {
-        deselectScope(childrenArray[index - selectedNodesToShow.length].scopeNodeId);
-      } else {
-        selectScope(childrenArray[index - selectedNodesToShow.length].scopeNodeId);
+    (index: number, action: KeyboardAction) => {
+      const nodeId =
+        index >= selectedNodesToShow.length
+          ? childrenArray[index - selectedNodesToShow.length].scopeNodeId
+          : selectedNodesToShow[index].scopeNodeId;
+
+      //Handle container expand/collapse
+      if (action === KeyboardAction.EXPAND && isNodeExpandable(scopeNodes[nodeId])) {
+        onNodeUpdate(nodeId, true, tree.query);
+        setSearchFocused(false);
+        return;
       }
 
-      if (index >= selectedNodesToShow.length) {
-        selectScope(childrenArray[index - selectedNodesToShow.length].scopeNodeId);
+      // Toggle selection
+      if (selectedScopes.some((s) => s.scopeNodeId === nodeId)) {
+        deselectScope(nodeId);
       } else {
-        selectScope(selectedNodesToShow[index].scopeNodeId);
+        selectScope(nodeId);
       }
     }
   );
