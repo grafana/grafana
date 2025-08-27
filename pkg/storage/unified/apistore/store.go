@@ -137,7 +137,7 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts:            opts,
-		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient), //TODO handle nil clients
+		permissionStore: reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 
 	if opts.RequireDeprecatedInternalID {
