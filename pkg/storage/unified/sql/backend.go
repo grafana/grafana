@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +18,9 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -612,6 +614,13 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Request:     new(resourcepb.ListRequest),
 		}
+
+		for _, filter := range req.Options.Fields {
+			if filter.Key == utils.AnnoKeyFolder {
+				fmt.Printf("TODO somehow add folder cl: %v\n", filter)
+			}
+		}
+
 		listReq.Request = proto.Clone(req).(*resourcepb.ListRequest)
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceList, listReq)
