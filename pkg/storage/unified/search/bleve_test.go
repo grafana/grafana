@@ -873,10 +873,11 @@ func TestBuildIndex(t *testing.T) {
 			index_server_open_indexes{index_storage="memory"} 0
 			index_server_open_indexes{index_storage="file"} 1
 			`), "index_server_open_indexes"))
+
+			backend.CloseAllIndexes()
 		})
 	})
 
-	// t.Run("", func(t *testing.T) {})
 	t.Run("file based index reuse", func(t *testing.T) {
 		ns := resource.NamespacedResource{
 			Namespace: "test",
@@ -1047,11 +1048,11 @@ func TestBuildIndex(t *testing.T) {
 			t.Run(testName, func(t *testing.T) {
 				var size int64 = 10
 				var rv int64 = 100
-				backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, false, false)
+				backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, tt.rebuild, tt.searchAfterWrite)
 				backend1.CloseAllIndexes()
 
 				if !tt.sameSize {
-					size = 101
+					size = 11
 				}
 				switch tt.rv {
 				case RVBiggerThan:
