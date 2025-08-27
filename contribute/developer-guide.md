@@ -278,7 +278,7 @@ Note this will not start a development server, so you must ensure that Grafana i
 
 Playwright has several commands commonly used:
 
-1 - **To open Playwright in UI**. It boosts the Grafana server and then Playwright, which runs against this server.
+1 - **To open the Playwright UI**. It starts the Grafana server and then Playwright, which runs against this server.
 
 ```
 yarn e2e:playwright --ui
@@ -290,23 +290,31 @@ yarn e2e:playwright --ui
 yarn e2e:playwright --grep <testname>
 ```
 
+You can also run all the tests matching a specific tag with _@tagName_.
+
+```
+yarn e2e:playwright --grep @<tagname>
+```
+
 3 - **To run a project**. It will run the entire project, also known as '_suite_'. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
 
 ```
 yarn e2e:playwright --project <projectname>
 ```
 
-4 - **To run tests with a specific tagname**. The tagnames are specified in each test, like you can see here in [lokiEditor.spec.ts](https://github.com/grafana/grafana/blob/main/e2e-playwright/plugin-e2e/plugin-e2e-api-tests/as-admin-user/lokiEditor.spec.ts#L7)
-
-```
-yarn e2e:playwright --grep @<tagname>
-```
-
-5- **To open the last HTML report**. It will open a Chrome window with the test list and the related info (success/error, name, time, steps, ...).
+4- **To open the last HTML report**. It will open a Chrome window with the test list and the related info (success/error, name, time, steps, ...).
 
 ```
 yarn playwright show-report
 ```
+
+You can open an arbitrary report with `yarn playwright show-report <reportLocation>`. For Grafanistas, the reports are also downloable from CI by:
+
+- Clicking through to _End-to-end tests_/_All Playwright tests complete_.
+- Clicking _Summary_.
+- Download the _playwright-html-<number>_ artifact.
+- Unzip.
+- Run `yarn playwright show-report <reportLocation>`
 
 You can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options) if you are curious about other commands.
 
