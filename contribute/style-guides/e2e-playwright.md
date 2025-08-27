@@ -223,7 +223,7 @@ You can also run all the tests matching a specific tag with _@tagName_.
 yarn e2e:playwright --grep @<tagname>
 ```
 
-3 - **To run a project**. It will run the entire project, also known as '_suite_'. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
+3 - **To run a project**. It will run the entire project. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
 
 ```
 yarn e2e:playwright --project <projectname>
