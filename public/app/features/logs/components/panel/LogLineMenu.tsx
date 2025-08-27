@@ -160,6 +160,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         className={styles.menuIcon}
         name="ellipsis-v"
         aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
+        role="button"
       />
     </Dropdown>
   );
