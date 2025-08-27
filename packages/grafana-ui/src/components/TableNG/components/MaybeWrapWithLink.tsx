@@ -3,7 +3,7 @@ import { memo, ReactNode } from 'react';
 import { Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { renderSingleLink } from '../../DataLinksActionsTooltip';
+import { renderSingleLink } from '../../Table/DataLinksActionsTooltip';
 import { getCellLinks } from '../utils';
 
 interface MaybeWrapWithLinkProps {

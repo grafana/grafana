@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
 
-import { TableCellDisplayMode } from '../../types';
+import { TableCellDisplayMode } from '../../Table/types';
 
 import { DataLinksCell } from './DataLinksCell';
 

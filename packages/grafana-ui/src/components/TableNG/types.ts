@@ -16,8 +16,8 @@ import {
 } from '@grafana/data';
 import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
-import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellOptions } from '../types';
+import { TableCellInspectorMode } from '../Table/TableCellInspector';
+import { TableCellOptions } from '../Table/types';
 
 import { TextAlign } from './utils';
 

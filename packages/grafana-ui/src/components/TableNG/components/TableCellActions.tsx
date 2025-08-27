@@ -5,9 +5,9 @@ import { memo } from 'react';
 import { FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { IconButton } from '../../../IconButton/IconButton';
-import { TableCellInspectorMode } from '../../TableCellInspector';
-import { TableCellDisplayMode } from '../../types';
+import { IconButton } from '../../IconButton/IconButton';
+import { TableCellInspectorMode } from '../../Table/TableCellInspector';
+import { TableCellDisplayMode } from '../../Table/types';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellActionsProps } from '../types';
 
 export const TableCellActions = memo(

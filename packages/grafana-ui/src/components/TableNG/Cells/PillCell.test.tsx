@@ -2,7 +2,7 @@ import { render, RenderResult } from '@testing-library/react';
 
 import { Field, FieldType, MappingType, createTheme } from '@grafana/data';
 
-import { getTextColorForBackground } from '../../../../utils/colors';
+import { getTextColorForBackground } from '../../../utils/colors';
 
 import { PillCell } from './PillCell';
 

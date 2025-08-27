@@ -3,7 +3,7 @@ import { memo, MemoExoticComponent } from 'react';
 
 import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
-import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
+import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../Table/types';
 import { TableCellRenderer, TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
 import { getCellOptions } from '../utils';
 

@@ -27,14 +27,14 @@ import {
 import { Trans } from '@grafana/i18n';
 import { FieldColorModeId, TableCellTooltipPlacement, TableFooterOptions } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
-import { Pagination } from '../../Pagination/Pagination';
-import { PanelContext, usePanelContext } from '../../PanelChrome';
-import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
-import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellDisplayMode } from '../types';
-import { DataLinksActionsTooltipState } from '../utils';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getTextColorForBackground as _getTextColorForBackground } from '../../utils/colors';
+import { Pagination } from '../Pagination/Pagination';
+import { PanelContext, usePanelContext } from '../PanelChrome';
+import { DataLinksActionsTooltip } from '../Table/DataLinksActionsTooltip';
+import { TableCellInspector, TableCellInspectorMode } from '../Table/TableCellInspector';
+import { TableCellDisplayMode } from '../Table/types';
+import { DataLinksActionsTooltipState } from '../Table/utils';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { HeaderCell } from './components/HeaderCell';

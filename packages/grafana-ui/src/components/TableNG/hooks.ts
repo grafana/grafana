@@ -3,7 +3,7 @@ import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-gr
 
 import { compareArrayValues, Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 
-import { TableColumnResizeActionCallback } from '../types';
+import { TableColumnResizeActionCallback } from '../Table/types';
 
 import { TABLE } from './constants';
 import { FilterType, FooterFieldState, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';

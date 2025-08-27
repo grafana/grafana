@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 
 import { createDataFrame, createTheme, Field, FieldType } from '@grafana/data';
 
-import { TableCellOptions, TableCellDisplayMode, TableCustomCellOptions } from '../../types';
+import { TableCellOptions, TableCellDisplayMode, TableCustomCellOptions } from '../../Table/types';
 
 import { getCellRenderer } from './renderers';
 

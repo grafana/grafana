@@ -5,8 +5,8 @@ import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellTooltipPlacement } from '@grafana/schema';
 
-import { Popover } from '../../../Tooltip/Popover';
-import { TableCellOptions } from '../../types';
+import { TableCellOptions } from '../../Table/types';
+import { Popover } from '../../Tooltip/Popover';
 import { getTooltipStyles } from '../styles';
 import { TableCellRenderer, TableCellRendererProps } from '../types';
 

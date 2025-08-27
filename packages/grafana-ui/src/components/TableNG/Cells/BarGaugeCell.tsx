@@ -1,7 +1,7 @@
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
-import { BarGauge } from '../../../BarGauge/BarGauge';
+import { BarGauge } from '../../BarGauge/BarGauge';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { TABLE } from '../constants';
 import { BarGaugeCellProps } from '../types';

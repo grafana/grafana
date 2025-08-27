@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
-import { TableCellDisplayMode } from '../types';
+import { TableCellDisplayMode } from '../Table/types';
 
 import { COLUMN, TABLE } from './constants';
 import { MeasureCellHeightEntry } from './types';

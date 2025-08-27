@@ -11,4 +11,4 @@
 
 export * from './utils/skeleton';
 
-export { TableNG } from './components/Table/TableNG/TableNG';
+export { TableNG } from './components/TableNG/TableNG';

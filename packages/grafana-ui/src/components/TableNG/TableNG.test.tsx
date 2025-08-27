@@ -14,8 +14,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
-import { TableCellDisplayMode } from '../types';
+import { PanelContext, PanelContextProvider } from '../../components/PanelChrome';
+import { TableCellDisplayMode } from '../Table/types';
 
 import { TableNG } from './TableNG';
 

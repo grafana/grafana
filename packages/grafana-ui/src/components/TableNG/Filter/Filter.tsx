@@ -4,9 +4,9 @@ import { useRef, useState } from 'react';
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
-import { Icon } from '../../../Icon/Icon';
-import { Popover } from '../../../Tooltip/Popover';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { Icon } from '../../Icon/Icon';
+import { Popover } from '../../Tooltip/Popover';
 import { FilterType, TableRow } from '../types';
 
 import { REGEX_OPERATOR } from './FilterList';
