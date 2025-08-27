@@ -32,7 +32,7 @@ export const NotificationMessageSectionExtension: ComponentType<GenNotificationM
   return createElement(WrappedComponent, props);
 };
 
-export function addNotificationMessageSectionExtension(
+export function addRuleFormEnrichmentSection(
   component: ComponentType<GenNotificationMessageSectionExtensionProps> | null
 ) {
   InternalNotificationMessageSectionExtension = component;
