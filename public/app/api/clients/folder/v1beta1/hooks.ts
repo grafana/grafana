@@ -203,24 +203,28 @@ export function useDeleteMultipleFoldersMutationFacade() {
   }
 
   return async function deleteFolders({ folderUIDs }: { folderUIDs: string[] }) {
+    const successMessage = t('folders.api.folder-deleted-success', 'Folder deleted');
+
     // Delete all the folders sequentially
     // TODO error handling here
     for (const folderUID of folderUIDs) {
       // This also shows warning alert
-      if (await isProvisionedFolderCheck(dispatch, folderUID)) {
-        continue;
-      }
-      const result = await deleteFolder({ name: folderUID });
-      if (!result.error) {
-        // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
-        // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
-        });
-        dispatch(refreshParents(folderUIDs));
+      const isProvisioned = await isProvisionedFolderCheck(dispatch, folderUID);
+
+      if (!isProvisioned) {
+        const result = await deleteFolder({ name: folderUID });
+        if (!result.error) {
+          // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
+          // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+          getAppEvents().publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [successMessage],
+          });
+        }
       }
     }
+
+    dispatch(refreshParents(folderUIDs));
     return { data: undefined };
   };
 }
@@ -235,37 +239,41 @@ export function useMoveMultipleFoldersMutationFacade() {
   }
 
   return async function moveFolders({ folderUIDs, destinationUID }: { folderUIDs: string[]; destinationUID: string }) {
-    // Move all the folders sequentially
+    const provisionedWarning = t(
+      'folders.api.folder-move-error-provisioned',
+      'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'
+    );
+    const successMessage = t('folders.api.folder-moved-success', 'Folder moved');
+
+    // Move all the folders sequentially one by one
     for (const folderUID of folderUIDs) {
-      // This also shows warning alert
-      if (
-        await isProvisionedFolderCheck(dispatch, folderUID, {
-          warning: t(
-            'folders.api.folder-move-error-provisioned',
-            'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'
-          ),
-        })
-      ) {
-        continue;
-      }
-      const result = await updateFolder({
-        name: folderUID,
-        patch: { metadata: { annotations: { [AnnoKeyFolder]: destinationUID } } },
-      });
-      if (!result.error) {
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [t('folders.api.folder-moved-success', 'Folder moved')],
+      // isProvisionedFolderCheck also shows a warning alert
+      const isFolderProvisioned = await isProvisionedFolderCheck(dispatch, folderUID, { warning: provisionedWarning });
+
+      // If provisioned, we just skip this folder
+      if (!isFolderProvisioned) {
+        const result = await updateFolder({
+          name: folderUID,
+          patch: { metadata: { annotations: { [AnnoKeyFolder]: destinationUID } } },
         });
-        dispatch(
-          refetchChildren({
-            parentUID: destinationUID,
-            pageSize: PAGE_SIZE,
-          })
-        );
-        dispatch(refreshParents(folderUIDs));
+        if (!result.error) {
+          getAppEvents().publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [successMessage],
+          });
+        }
       }
     }
+
+    // Refresh the state of the parent folders to update the UI after folders are moved
+    dispatch(
+      refetchChildren({
+        parentUID: destinationUID,
+        pageSize: PAGE_SIZE,
+      })
+    );
+    dispatch(refreshParents(folderUIDs));
+
     return { data: undefined };
   };
 }
