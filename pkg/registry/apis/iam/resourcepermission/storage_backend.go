@@ -2,13 +2,10 @@ package resourcepermission
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"iter"
 	"net/http"
 	"sync"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -88,19 +85,6 @@ func isValidKey(key *resourcepb.ResourceKey, requireName bool) error {
 	return nil
 }
 
-func getResourcePermissionFromEvent(event resource.WriteEvent) (*v0alpha1.ResourcePermission, error) {
-	obj, ok := event.Object.GetRuntimeObject()
-	if ok && obj != nil {
-		resourcePermission, ok := obj.(*v0alpha1.ResourcePermission)
-		if ok {
-			return resourcePermission, nil
-		}
-	}
-	resourcePermission := &v0alpha1.ResourcePermission{}
-	err := json.Unmarshal(event.Value, resourcePermission)
-	return resourcePermission, err
-}
-
 func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
 	ns, err := types.ParseNamespace(event.Key.Namespace)
 	if err != nil {
@@ -115,58 +99,9 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	}
 
 	switch event.Type {
-	case resourcepb.WatchEvent_ADDED:
-		{
-			var v0resourceperm *v0alpha1.ResourcePermission
-			v0resourceperm, err = getResourcePermissionFromEvent(event)
-			if err != nil {
-				return 0, err
-			}
-
-			if v0resourceperm.Name != event.Key.Name {
-				return 0, apierrors.NewBadRequest(
-					fmt.Sprintf("resource permission name %q != %q: %v", event.Key.Name, v0resourceperm.Name, errNameMismatch.Error()),
-				)
-			}
-			if v0resourceperm.Namespace != ns.Value {
-				return 0, apierrors.NewBadRequest(
-					fmt.Sprintf("namespace %q != %q: %v", ns.Value, v0resourceperm.Namespace, errNamespaceMismatch.Error()),
-				)
-			}
-
-			dbHelper, err := s.dbProvider(ctx)
-			if err != nil {
-				return 0, err
-			}
-
-			rv, err = s.createResourcePermission(ctx, dbHelper, ns, v0resourceperm)
-			if err != nil {
-				if errors.Is(err, errInvalidSpec) {
-					return 0, apierrors.NewBadRequest(err.Error())
-				}
-				return 0, err
-			}
-		}
 	default:
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}
 
-	// Async notify all subscribers (not HA!!!)
-	if s.subscribers != nil {
-		go func() {
-			write := &resource.WrittenEvent{
-				Type:       event.Type,
-				Key:        event.Key,
-				PreviousRV: event.PreviousRV,
-				Value:      event.Value,
-
-				Timestamp:       time.Now().UnixMilli(),
-				ResourceVersion: rv,
-			}
-			for _, sub := range s.subscribers {
-				sub <- write
-			}
-		}()
-	}
 	return rv, nil
 }
