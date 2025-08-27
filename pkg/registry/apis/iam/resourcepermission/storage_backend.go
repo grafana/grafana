@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -23,9 +22,8 @@ var (
 )
 
 type ResourcePermSqlBackend struct {
-	dbProvider    legacysql.LegacyDatabaseProvider
-	identityStore legacy.LegacyIdentityStore
-	logger        log.Logger
+	dbProvider legacysql.LegacyDatabaseProvider
+	logger     log.Logger
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
@@ -102,6 +100,4 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	default:
 		return 0, fmt.Errorf("unsupported event type: %v", event.Type)
 	}
-
-	return rv, nil
 }
