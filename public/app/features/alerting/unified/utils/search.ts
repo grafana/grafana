@@ -5,6 +5,7 @@ export function getFilter(filter: Partial<RulesFilter>): RulesFilter {
     freeFormWords: [],
     labels: [],
     dataSourceNames: [],
+    gmaQueryDataSourceNames: [],
     ...filter,
   };
 }

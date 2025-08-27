@@ -142,7 +142,7 @@ describe('filterRules', function () {
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 
-  it('should filter out rules by datasource', function () {
+  it('should filter out rules by datasource (DMA) and by Grafana query datasource (GMA)', function () {
     const rules = [
       mockCombinedRule({
         name: 'High CPU usage',
@@ -169,7 +169,10 @@ describe('filterRules', function () {
       'Prometheus-ds'
     );
 
-    const filtered = filterRules([ns, cloudNs], getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }));
+    const filtered = filterRules(
+      [ns, cloudNs],
+      getFilter({ dataSourceNames: ['Prometheus-ds'], gmaQueryDataSourceNames: ['loki'] })
+    );
 
     expect(filtered[0].groups[0].rules).toHaveLength(2);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
