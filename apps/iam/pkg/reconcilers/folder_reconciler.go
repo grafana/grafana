@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/grafana/grafana/pkg/services/authz"
+	"k8s.io/client-go/rest"
 )
 
 // FolderStore interface for retrieving folder information
@@ -27,8 +25,9 @@ type PermissionStore interface {
 }
 
 // AppConfig represents the app-specific configuration
-type AppConfig struct {
-	ZanzanaAddr               string
+type ReconcilerConfig struct {
+	ZanzanaCfg                authz.ZanzanaClientConfig
+	KubeConfig                *rest.Config
 	FolderReconcilerNamespace string
 }
 
@@ -37,21 +36,16 @@ type FolderReconciler struct {
 	folderStore     FolderStore
 }
 
-func NewFolderReconciler(cfg app.Config) (operator.Reconciler, error) {
-	// Extract Zanzana address from config
-	appCfg, ok := cfg.SpecificConfig.(AppConfig)
-	if !ok {
-		return nil, fmt.Errorf("invalid config type: expected AppConfig, got %T", cfg.SpecificConfig)
-	}
-
+func NewFolderReconciler(cfg ReconcilerConfig) (operator.Reconciler, error) {
 	// Create Zanzana client
-	zanzanaClient, err := getZanzanaClient(appCfg.ZanzanaAddr)
+	zanzanaClient, err := authz.NewZanzanaClient("*", cfg.ZanzanaCfg)
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to create zanzana client: %w", err)
 	}
 
 	// Create dependencies
-	folderStore := NewAPIFolderStore(&cfg.KubeConfig)
+	folderStore := NewAPIFolderStore(cfg.KubeConfig)
 	permissionStore := NewZanzanaPermissionStore(zanzanaClient)
 
 	folderReconciler := &FolderReconciler{
@@ -66,33 +60,10 @@ func NewFolderReconciler(cfg app.Config) (operator.Reconciler, error) {
 	return reconciler, nil
 }
 
-func getZanzanaClient(addr string) (zanzana.Client, error) {
-	transportCredentials := insecure.NewCredentials()
-
-	dialOptions := []grpc.DialOption{
-		grpc.WithTransportCredentials(transportCredentials),
-	}
-
-	conn, err := grpc.NewClient(addr, dialOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
-	}
-
-	client, err := zanzana.NewClient(conn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
-	}
-
-	return client, nil
-}
-
 func (r *FolderReconciler) reconcile(ctx context.Context, req operator.TypedReconcileRequest[*foldersKind.Folder]) (operator.ReconcileResult, error) {
 	// Add timeout to prevent hanging operations
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
-
-	logger := logging.FromContext(ctx)
-	logger.Info("Reconciling request", "req", req)
 
 	err := validateFolder(req.Object)
 	if err != nil {
@@ -119,11 +90,13 @@ func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *folde
 
 	parentUID, err := r.folderStore.GetFolderParent(ctx, namespace, folderUID)
 	if err != nil {
+		logger.Error("Error getting folder parent", "error", err)
 		return operator.ReconcileResult{}, err
 	}
 
 	parents, err := r.permissionStore.GetFolderParents(ctx, namespace, folderUID)
 	if err != nil {
+		logger.Error("Error getting folder parents", "error", err)
 		return operator.ReconcileResult{}, err
 	}
 
@@ -135,6 +108,7 @@ func (r *FolderReconciler) handleUpdateFolder(ctx context.Context, folder *folde
 
 	err = r.permissionStore.SetFolderParent(ctx, namespace, folderUID, parentUID)
 	if err != nil {
+		logger.Error("Error setting folder parent", "error", err)
 		return operator.ReconcileResult{}, err
 	}
 
@@ -151,6 +125,7 @@ func (r *FolderReconciler) handleDeleteFolder(ctx context.Context, folder *folde
 
 	err := r.permissionStore.DeleteFolderParents(ctx, namespace, folderUID)
 	if err != nil {
+		logger.Error("Error deleting folder parents", "error", err)
 		return operator.ReconcileResult{}, err
 	}
 

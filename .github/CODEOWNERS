@@ -1256,6 +1256,7 @@ embed.go @grafana/grafana-as-code
 /.github/zizmor.yml @grafana/grafana-developer-enablement-squad
 /.github/license_finder.yaml @bergquist
 /.github/actionlint.yaml @grafana/grafana-developer-enablement-squad
+/.github/workflows/pr-test-docker.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

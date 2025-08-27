@@ -30,6 +30,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
@@ -55,24 +56,27 @@ func RegisterAPIService(
 	rolesStorage RoleStorageBackend,
 	zanzanaClient zanzana.Client,
 ) (*IdentityAccessManagementAPIBuilder, error) {
-	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
+	dbProvider := legacysql.NewDatabaseProvider(sql)
+	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:               store,
-		coreRolesStorage:    coreRolesStorage,
-		rolesStorage:        rolesStorage,
-		sso:                 ssoService,
-		authorizer:          authorizer,
-		legacyAccessClient:  legacyAccessClient,
-		accessClient:        accessClient,
-		display:             user.NewLegacyDisplayREST(store),
-		reg:                 reg,
-		enableAuthZApis:     features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		enableAuthnMutation: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter:    true,
-		zanzanaClient:       zanzanaClient,
+		store:                        store,
+		coreRolesStorage:             coreRolesStorage,
+		rolesStorage:                 rolesStorage,
+		resourcePermissionsStorage:   resourcepermission.ProvideStorageBackend(dbProvider),
+		sso:                          ssoService,
+		authorizer:                   authorizer,
+		legacyAccessClient:           legacyAccessClient,
+		accessClient:                 accessClient,
+		display:                      user.NewLegacyDisplayREST(store),
+		reg:                          reg,
+		enableAuthZApis:              features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableResourcePermissionApis: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+		enableAuthnMutation:          features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter:             true,
+		zanzanaClient:                zanzanaClient,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -174,6 +178,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
+	}
+
+	if b.enableResourcePermissionApis {
+		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage

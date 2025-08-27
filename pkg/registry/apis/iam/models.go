@@ -28,9 +28,10 @@ type RoleStorageBackend interface{ resource.StorageBackend }
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store            legacy.LegacyIdentityStore
-	coreRolesStorage CoreRoleStorageBackend
-	rolesStorage     RoleStorageBackend
+	store                      legacy.LegacyIdentityStore
+	coreRolesStorage           CoreRoleStorageBackend
+	rolesStorage               RoleStorageBackend
+	resourcePermissionsStorage resource.StorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer
@@ -51,7 +52,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
-	enableAuthZApis bool
+	enableAuthZApis              bool
+	enableResourcePermissionApis bool
 
 	// Toggle for enabling authn mutation
 	enableAuthnMutation bool
