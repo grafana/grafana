@@ -3,13 +3,15 @@ export type Filter = [key: string, operator: '=' | '=!', value: string];
 
 export type WorkbenchRow = GenericGroupedRow | AlertRuleRow;
 
+export type TimelineEntry = [timestamp: number, state: 'firing' | 'pending'];
+
 export interface AlertRuleRow {
   metadata: {
     title: string;
     folder: string;
     ruleUID: string;
   };
-  timeline: Array<[timestamp: string | number, 'firing' | 'pending']>;
+  timeline: TimelineEntry[];
   rows: unknown[];
 }
 
