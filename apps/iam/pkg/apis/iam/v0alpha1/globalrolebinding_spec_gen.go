@@ -31,15 +31,15 @@ func NewGlobalRoleBindingspecRoleRef() *GlobalRoleBindingspecRoleRef {
 
 // +k8s:openapi-gen=true
 type GlobalRoleBindingSpec struct {
-	Subject GlobalRoleBindingspecSubject   `json:"subject"`
-	RoleRef []GlobalRoleBindingspecRoleRef `json:"roleRef"`
+	Subject  GlobalRoleBindingspecSubject   `json:"subject"`
+	RoleRefs []GlobalRoleBindingspecRoleRef `json:"roleRefs"`
 }
 
 // NewGlobalRoleBindingSpec creates a new GlobalRoleBindingSpec object.
 func NewGlobalRoleBindingSpec() *GlobalRoleBindingSpec {
 	return &GlobalRoleBindingSpec{
-		Subject: *NewGlobalRoleBindingspecSubject(),
-		RoleRef: []GlobalRoleBindingspecRoleRef{},
+		Subject:  *NewGlobalRoleBindingspecSubject(),
+		RoleRefs: []GlobalRoleBindingspecRoleRef{},
 	}
 }
 

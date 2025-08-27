@@ -16,7 +16,7 @@ RoleBindingSpec: {
 	}
 
 	subject: #Subject
-	roleRef: [...#RoleRef]
+	roleRefs: [...#RoleRef]
 }
 
 GlobalRoleBindingSpec: {
@@ -35,5 +35,5 @@ GlobalRoleBindingSpec: {
 	}
 
 	subject: #Subject
-	roleRef: [...#RoleRef]
+	roleRefs: [...#RoleRef]
 }

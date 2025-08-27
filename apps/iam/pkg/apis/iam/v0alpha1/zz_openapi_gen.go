@@ -510,7 +510,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref common.ReferenceCall
 							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingspecSubject"),
 						},
 					},
-					"roleRef": {
+					"roleRefs": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -524,7 +524,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"subject", "roleRef"},
+				Required: []string{"subject", "roleRefs"},
 			},
 		},
 		Dependencies: []string{
@@ -1384,7 +1384,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref common.ReferenceCallback) 
 							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingspecSubject"),
 						},
 					},
-					"roleRef": {
+					"roleRefs": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1398,7 +1398,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"subject", "roleRef"},
+				Required: []string{"subject", "roleRefs"},
 			},
 		},
 		Dependencies: []string{
