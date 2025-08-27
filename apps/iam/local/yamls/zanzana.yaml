@@ -159,7 +159,7 @@ spec:
           env:
             - name: GF_PATHS_CONFIG
               value: /etc/grafana-config/grafana.ini
-          image: grafana/grafana-oss-dev:12.2.0-257970
+          image: grafana/grafana-dev:12.2.0-257970
           imagePullPolicy: IfNotPresent
           name: zanzana
           volumeMounts:
@@ -175,3 +175,4 @@ spec:
         - emptyDir: {}
           name: zanzana-storage
 ---
+
