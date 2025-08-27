@@ -20,7 +20,7 @@ import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/al
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { grafanaRulerGroup } from '../../../../mocks/grafanaRulerApi';
+import { grafanaRulerGroup, mockPreviewApiResponse } from '../../../../mocks/grafanaRulerApi';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: ReactNode }) => <div>{actions}</div>,
@@ -63,6 +63,8 @@ const selectContactPoint = async (contactPointName: string) => {
   await clickSelectOption(contactPointInput, contactPointName);
 };
 
+const server = setupMswServer();
+
 // combobox hack
 beforeEach(() => {
   const mockGetBoundingClientRect = jest.fn(() => ({
@@ -77,9 +79,10 @@ beforeEach(() => {
   Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
     value: mockGetBoundingClientRect,
   });
+
+  mockPreviewApiResponse(server, []);
 });
 
-setupMswServer();
 setupDataSources(dataSources.default, dataSources.am);
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors

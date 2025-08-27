@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
-import { grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import { grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
 import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { setupDataSources } from '../testSetup/datasources';
 import { Annotation } from '../utils/constants';
@@ -23,7 +23,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 jest.setTimeout(60 * 1000);
 
-setupMswServer();
+const server = setupMswServer();
 
 function renderRuleEditor(identifier: string) {
   return render(
@@ -85,6 +85,7 @@ describe('RuleEditor grafana managed rules', () => {
     setupDataSources(dataSources.default);
     setFolderResponse(mockFolder(folder));
     setFolderResponse(mockFolder(slashedFolder));
+    mockPreviewApiResponse(server, []);
   });
 
   it('can edit grafana managed rule', async () => {
