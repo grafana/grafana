@@ -4,7 +4,7 @@ import { CoreApp, DataFrame } from '@grafana/data';
 import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 
 type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
-type onLogOptionsChangeType = (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+type onLogOptionsChangeType = (option: LogListControlOptions, value: string | boolean | string[]) => void;
 
 export function isOnNewLogsReceivedType(callback: unknown): callback is onNewLogsReceivedType {
   return typeof callback === 'function';

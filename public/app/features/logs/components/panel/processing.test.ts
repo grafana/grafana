@@ -157,6 +157,22 @@ describe('preProcessLogs', () => {
       expect(logListModel.body).toBe(entry);
     });
 
+    test('Does not modify wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false, // unwrapped
+          prettifyJSON: false,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(entry);
+    });
+
     test('Prettifies wrapped JSON', () => {
       const entry = '{"key": "value", "otherKey": "otherValue"}';
       const logListModel = createLogLine(
@@ -166,6 +182,7 @@ describe('preProcessLogs', () => {
           order: LogsSortOrder.Descending,
           timeZone: 'browser',
           wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
         }
       );
       expect(logListModel.entry).toBe(entry);

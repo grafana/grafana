@@ -211,6 +211,42 @@ describe('LogListControls', () => {
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
   });
 
+  test('Controls line wrapping and prettify JSON', async () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    const onLogOptionsChange = jest.fn();
+    render(
+      <LogListContextProvider
+        {...contextProps}
+        wrapLogMessage={false}
+        onLogOptionsChange={onLogOptionsChange}
+        prettifyJSON={false}
+      >
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    await userEvent.click(screen.getByLabelText('Wrap lines'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+
+    await userEvent.click(screen.getByLabelText('Wrap lines and expand JSON'));
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(3);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', true);
+
+    await userEvent.click(screen.getByLabelText('Unwrap lines'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(5);
+
+    config.featureToggles.newLogsPanel = originalFlagState;
+  });
+
   test('Controls syntax highlighting', async () => {
     const onLogOptionsChange = jest.fn();
     render(
