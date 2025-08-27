@@ -37,6 +37,8 @@ type accessControlDashboardPermissionFilter struct {
 	// any recursive CTE queries (if supported)
 	recQueries                   []clause
 	recursiveQueriesAreSupported bool
+
+	dialect migrator.Dialect
 }
 
 type PermissionsFilter interface {
@@ -121,12 +123,12 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
 			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{
 				user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
-				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
 			},
 		}
 	} else {
 		f = &accessControlDashboardPermissionFilter{user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
-			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
 		}
 	}
 	f.buildClauses()
@@ -372,6 +374,11 @@ func (f *accessControlDashboardPermissionFilter) With() (string, []any) {
 }
 
 func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whereUIDSelect string, whereParams []any, orgID int64) {
+	forceIndex := ""
+	if f.dialect.DriverName() == migrator.MySQL {
+		forceIndex = " FORCE INDEX (IDX_folder_org_id_parent_uid) "
+	}
+
 	if f.recQueries == nil {
 		f.recQueries = make([]clause, 0, maximumRecursiveQueries)
 	}
@@ -382,8 +389,8 @@ func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whe
 		// covered by UQE_folder_org_id_uid and UQE_folder_org_id_parent_uid_title
 		string: fmt.Sprintf(`%s AS (
 			SELECT uid, parent_uid, org_id FROM folder WHERE org_id = ? AND uid IN %s
-			UNION ALL SELECT f.uid, f.parent_uid, f.org_id FROM folder f INNER JOIN %s r ON f.parent_uid = r.uid and f.org_id = r.org_id
-		)`, queryName, whereUIDSelect, queryName),
+			UNION ALL SELECT f.uid, f.parent_uid, f.org_id FROM folder f %s INNER JOIN %s r ON f.parent_uid = r.uid and f.org_id = r.org_id
+		)`, queryName, whereUIDSelect, forceIndex, queryName),
 		params: c,
 	})
 }
