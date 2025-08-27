@@ -1,15 +1,17 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
-import { Fragment, memo, useEffect } from 'react';
+import { Fragment, memo, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
 
+import { ErrorMessageRow } from './ErrorMessageRow';
 import { LogRecord, omitLabels } from './common';
 
 type LogRecordViewerProps = {
@@ -49,10 +51,10 @@ export const LogRecordViewerByTimestamp = memo(
 
     const groupedLines = groupRecordsByTimestamp(records);
 
-    const timestampRefs = new Map<number, HTMLElement>();
+    const timestampRefs = useRef<Map<number, HTMLElement>>(new Map());
     useEffect(() => {
-      onRecordsRendered && onRecordsRendered(timestampRefs);
-    });
+      onRecordsRendered && onRecordsRendered(timestampRefs.current);
+    }, [onRecordsRendered, records]);
 
     return (
       <ul
@@ -68,30 +70,43 @@ export const LogRecordViewerByTimestamp = memo(
               id={key.toString(10)}
               key={key}
               data-testid={key}
-              ref={(element) => element && timestampRefs.set(key, element)}
+              ref={(element) => {
+                if (element) {
+                  timestampRefs.current.set(key, element);
+                } else {
+                  timestampRefs.current.delete(key);
+                }
+              }}
               className={styles.listItemWrapper}
             >
               <Timestamp time={key} />
-              <div className={styles.logsContainer}>
-                {records.map(({ line }) => (
-                  <Fragment key={uniqueId()}>
-                    <AlertStateTag state={line.previous} size="sm" muted />
-                    <Icon name="arrow-right" size="sm" />
-                    <AlertStateTag state={line.current} />
-                    <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
-                    <div>
-                      {line.labels && (
-                        <TagList
-                          tags={omitLabels(Object.entries(line.labels), commonLabels).map(
-                            ([key, value]) => `${key}=${value}`
-                          )}
-                          onClick={onLabelClick}
-                        />
-                      )}
+              {records.map(({ line }, idx) => {
+                const id = line.fingerprint ?? `${key}-${idx}`;
+
+                const isErrorRow =
+                  mapStateWithReasonToBaseState(line.current) === GrafanaAlertState.Error && Boolean(line.error);
+                return (
+                  <Fragment key={id}>
+                    <div className={styles.logsContainer}>
+                      <AlertStateTag state={line.previous} size="sm" muted />
+                      <Icon name="arrow-right" size="sm" />
+                      <AlertStateTag state={line.current} />
+                      <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                      <div>
+                        {line.labels && (
+                          <TagList
+                            tags={omitLabels(Object.entries(line.labels), commonLabels).map(
+                              ([key, value]) => `${key}=${value}`
+                            )}
+                            onClick={onLabelClick}
+                          />
+                        )}
+                      </div>
                     </div>
+                    {isErrorRow && line.error && <ErrorMessageRow message={line.error} />}
                   </Fragment>
-                ))}
-              </div>
+                );
+              })}
             </li>
           );
         })}

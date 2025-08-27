@@ -9,6 +9,7 @@ export interface Line {
   labels?: Record<string, string>;
   fingerprint?: string;
   ruleUID?: string;
+  error?: string;
 }
 
 export interface LogRecord {
