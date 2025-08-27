@@ -18,9 +18,9 @@ import {
   SceneDataLayerProvider,
   UserActionEvent,
   SceneObjectState,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import {
   getDashboardInteractionCallback,
@@ -50,6 +50,7 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { getIsLazy } from '../scene/layouts-shared/utils';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -326,7 +327,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   } else {
     body = new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+        isLazy: getIsLazy(dto.preload),
         children: createSceneObjectsForPanels(oldModel.panels),
       }),
     });
@@ -440,6 +441,21 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       timeFrom: panel.timeFrom,
       timeShift: panel.timeShift,
       hideTimeOverride: panel.hideTimeOverride,
+    });
+  }
+
+  if (panel.scopedVars && panel.targets?.[0]?.queryType === 'snapshot') {
+    vizPanelState.$variables = new SceneVariableSet({
+      variables: Object.entries(panel.scopedVars).map(
+        ([key, variable]) =>
+          new LocalValueVariable({
+            name: key,
+            value: variable?.value,
+            text: variable?.text,
+            isMulti: true,
+            includeAll: true,
+          })
+      ),
     });
   }
 

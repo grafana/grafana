@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -29,41 +30,41 @@ func (m *mockReaderWriter) Delete(ctx context.Context, path, ref, message string
 // simpleRepository implements only the base Repository interface, not ReaderWriter
 type simpleRepository struct{}
 
-func (s *simpleRepository) Config() *provisioning.Repository { return nil }
-func (s *simpleRepository) Validate() field.ErrorList        { return nil }
-func (s *simpleRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
+func (s *simpleRepository) Config() *v0alpha1.Repository { return nil }
+func (s *simpleRepository) Validate() field.ErrorList    { return nil }
+func (s *simpleRepository) Test(ctx context.Context) (*v0alpha1.TestResults, error) {
 	return nil, nil
 }
 
 func TestDeleteWorker_IsSupported(t *testing.T) {
 	tests := []struct {
 		name     string
-		job      provisioning.Job
+		job      v0alpha1.Job
 		expected bool
 	}{
 		{
 			name: "delete action is supported",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action: provisioning.JobActionDelete,
+			job: v0alpha1.Job{
+				Spec: v0alpha1.JobSpec{
+					Action: v0alpha1.JobActionDelete,
 				},
 			},
 			expected: true,
 		},
 		{
 			name: "pull action is not supported",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action: provisioning.JobActionPull,
+			job: v0alpha1.Job{
+				Spec: v0alpha1.JobSpec{
+					Action: v0alpha1.JobActionPull,
 				},
 			},
 			expected: false,
 		},
 		{
 			name: "push action is not supported",
-			job: provisioning.Job{
-				Spec: provisioning.JobSpec{
-					Action: provisioning.JobActionPush,
+			job: v0alpha1.Job{
+				Spec: v0alpha1.JobSpec{
+					Action: v0alpha1.JobActionPush,
 				},
 			},
 			expected: false,
@@ -80,9 +81,9 @@ func TestDeleteWorker_IsSupported(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessMissingDeleteSettings(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
 		},
 	}
 
@@ -92,10 +93,10 @@ func TestDeleteWorker_ProcessMissingDeleteSettings(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -121,10 +122,10 @@ func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessWrapFnError(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -144,10 +145,10 @@ func TestDeleteWorker_ProcessWrapFnError(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Paths: []string{"test/path1", "test/path2"},
 				Ref:   "main",
 			},
@@ -164,6 +165,7 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 		return !opts.PushOnWrites &&
 			opts.Timeout == 10*time.Minute &&
 			opts.Mode == repository.StageModeCommitOnlyOnce &&
+			opts.Ref == "main" &&
 			opts.CommitOnlyOnceMessage == "Delete from Grafana "+job.Name
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -191,10 +193,10 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Paths: []string{"test/path1", "test/path2"},
 				Ref:   "main",
 			},
@@ -229,10 +231,10 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -263,7 +265,7 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 	mockProgress.On("ResetResults").Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
-	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
+	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob v0alpha1.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
 	}), mockProgress).Return(nil)
 
@@ -273,10 +275,10 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Paths: []string{"test/path"},
 			},
 		},
@@ -356,7 +358,7 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 			}
 			mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-			opts := provisioning.DeleteJobOptions{
+			opts := v0alpha1.DeleteJobOptions{
 				Ref: "main",
 			}
 
@@ -392,12 +394,12 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Paths: []string{"test/path1"},
-				Resources: []provisioning.ResourceRef{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -480,11 +482,11 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
-				Resources: []provisioning.ResourceRef{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -535,11 +537,11 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
-				Resources: []provisioning.ResourceRef{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "nonexistent-dashboard",
 						Kind:  "Dashboard",
@@ -590,7 +592,7 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
 	mockSyncWorker := jobs.NewMockWorker(t)
-	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
+	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob v0alpha1.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
 	}), mockProgress).Return(nil)
 
@@ -600,11 +602,11 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
-				Resources: []provisioning.ResourceRef{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -639,11 +641,11 @@ func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessResourceRefsNotReaderWriter(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
-				Resources: []provisioning.ResourceRef{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "test-dashboard",
 						Kind:  "Dashboard",
@@ -675,11 +677,11 @@ func TestDeleteWorker_ProcessResourceRefsNotReaderWriter(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
-				Resources: []provisioning.ResourceRef{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "nonexistent-dashboard",
 						Kind:  "Dashboard",
@@ -728,11 +730,11 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 }
 
 func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
-				Resources: []provisioning.ResourceRef{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "valid-dashboard",
 						Kind:  "Dashboard",
@@ -826,13 +828,13 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 
 func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 	// Test that duplicate paths from explicit paths and resource resolution are deduplicated
-	job := provisioning.Job{
-		Spec: provisioning.JobSpec{
-			Action: provisioning.JobActionDelete,
-			Delete: &provisioning.DeleteJobOptions{
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
 				Ref:   "main",                                                             // Add ref to avoid sync worker execution
 				Paths: []string{"dashboards/test-dashboard.json", "folders/test-folder/"}, // Explicit paths
-				Resources: []provisioning.ResourceRef{
+				Resources: []v0alpha1.ResourceRef{
 					{
 						Name:  "test-dashboard", // This will resolve to "dashboards/test-dashboard.json" (duplicate)
 						Kind:  "Dashboard",
@@ -982,4 +984,168 @@ func TestDeduplicatePaths(t *testing.T) {
 			require.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
+	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	config := &v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Type: v0alpha1.GitHubRepositoryType,
+		},
+	}
+	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
+
+	// Mock RefURLs method to return expected URLs
+	expectedRefURLs := &v0alpha1.RepositoryURLs{
+		SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
+		CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+		NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+	}
+	mockRepoWithURLs.On("RefURLs", mock.Anything, "feature-branch").Return(expectedRefURLs, nil)
+
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress.On("SetTotal", mock.Anything, 1).Once()
+	mockProgress.On("StrictMaxErrors", 1).Once()
+	mockProgress.On("SetMessage", mock.Anything, "Deleting test.json").Once()
+	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
+	mockProgress.On("TooManyErrors").Return(nil).Once()
+	mockProgress.On("SetRefURLs", mock.Anything, expectedRefURLs).Once()
+
+	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter.On("Delete", mock.Anything, "test.json", "feature-branch", "Delete test.json").Return(nil)
+
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn.On("Execute", mock.Anything, mockRepoWithURLs, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockReaderWriter, true)
+	})
+
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+
+	job := v0alpha1.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Ref:   "feature-branch",
+				Paths: []string{"test.json"},
+			},
+		},
+	}
+
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory)
+	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	require.NoError(t, err)
+
+	// Verify that SetRefURLs was called with the expected RefURLs
+	mockProgress.AssertExpectations(t)
+	mockRepoWithURLs.AssertExpectations(t)
+}
+
+func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
+	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	config := &v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Type: v0alpha1.GitHubRepositoryType,
+		},
+	}
+	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
+
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress.On("SetTotal", mock.Anything, 1).Once()
+	mockProgress.On("StrictMaxErrors", 1).Once()
+	mockProgress.On("SetMessage", mock.Anything, "Deleting test.json").Once()
+	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
+	mockProgress.On("TooManyErrors").Return(nil).Once()
+	mockProgress.On("ResetResults").Once()
+	mockProgress.On("SetMessage", mock.Anything, "pull resources").Once()
+	// SetRefURLs should NOT be called since no ref is specified
+
+	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter.On("Delete", mock.Anything, "test.json", "", "Delete test.json").Return(nil)
+
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn.On("Execute", mock.Anything, mockRepoWithURLs, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockReaderWriter, true)
+	})
+
+	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker.On("Process", mock.Anything, mockRepoWithURLs, mock.Anything, mockProgress).Return(nil)
+
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+
+	job := v0alpha1.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				// No ref specified
+				Paths: []string{"test.json"},
+			},
+		},
+	}
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory)
+	err := worker.Process(context.Background(), mockRepoWithURLs, job, mockProgress)
+	require.NoError(t, err)
+
+	// Verify that SetRefURLs was NOT called since no ref was specified
+	mockProgress.AssertExpectations(t)
+}
+
+func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
+	mockRepo := repository.NewMockRepository(t)
+	config := &v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			Type: v0alpha1.GitRepositoryType, // Regular git repo, not GitHub
+		},
+	}
+	mockRepo.On("Config").Return(config).Maybe() // Config may be called multiple times
+
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress.On("SetTotal", mock.Anything, 1).Once()
+	mockProgress.On("StrictMaxErrors", 1).Once()
+	mockProgress.On("SetMessage", mock.Anything, "Deleting test.json").Once()
+	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
+	mockProgress.On("TooManyErrors").Return(nil).Once()
+	// SetRefURLs should NOT be called since repo doesn't support URLs
+
+	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter.On("Delete", mock.Anything, "test.json", "feature-branch", "Delete test.json").Return(nil)
+
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockReaderWriter, true)
+	})
+
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+
+	job := v0alpha1.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Ref:   "feature-branch",
+				Paths: []string{"test.json"},
+			},
+		},
+	}
+
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory)
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+
+	// Verify that SetRefURLs was NOT called since repo doesn't support URLs
+	mockProgress.AssertExpectations(t)
 }

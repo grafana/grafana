@@ -7,25 +7,20 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
-
-//nolint:gosec // This is a constant for a secret suffix
-const githubTokenSecretSuffix = "-github-token"
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	git.GitRepository
-	config  *provisioning.Repository
-	gh      Client // assumes github.com base URL
-	secrets secrets.RepositorySecrets
+	config *provisioning.Repository
+	gh     Client // assumes github.com base URL
 
 	owner string
 	repo  string
@@ -42,19 +37,17 @@ type GithubRepository interface {
 	repository.Reader
 	repository.RepositoryWithURLs
 	repository.StageableRepository
-	repository.Hooks
 	Owner() string
 	Repo() string
 	Client() Client
 }
 
-func NewGitHub(
+func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
 	factory *Factory,
-	token string,
-	secrets secrets.RepositorySecrets,
+	token common.RawSecureValue,
 ) (GithubRepository, error) {
 	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
 	if err != nil {
@@ -67,7 +60,6 @@ func NewGitHub(
 		gh:            factory.New(ctx, token), // TODO, baseURL from config
 		owner:         owner,
 		repo:          repo,
-		secrets:       secrets,
 	}, nil
 }
 
@@ -198,7 +190,7 @@ func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem
 }
 
 // ResourceURLs implements RepositoryWithURLs.
-func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.ResourceURLs, error) {
+func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
 	cfg := r.config.Spec.GitHub
 	if file.Path == "" || cfg == nil {
 		return nil, nil
@@ -209,7 +201,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 		ref = cfg.Branch
 	}
 
-	urls := &provisioning.ResourceURLs{
+	urls := &provisioning.RepositoryURLs{
 		RepositoryURL: cfg.URL,
 		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
 	}
@@ -224,22 +216,21 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 	return urls, nil
 }
 
-func (r *githubRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *githubRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, error) {
-	return nil, nil
-}
-
-func (r *githubRepository) OnDelete(ctx context.Context) error {
-	logger := logging.FromContext(ctx)
-	secretName := r.config.Name + githubTokenSecretSuffix
-	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
-		return fmt.Errorf("delete github token secret: %w", err)
+// RefURLs implements RepositoryWithURLs.
+func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error) {
+	cfg := r.config.Spec.GitHub
+	if cfg == nil || ref == "" {
+		return nil, nil
 	}
 
-	logger.Info("Deleted github token secret", "secretName", secretName)
+	urls := &provisioning.RepositoryURLs{
+		SourceURL: fmt.Sprintf("%s/tree/%s", cfg.URL, ref),
+	}
 
-	return nil
+	if ref != cfg.Branch {
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
+		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
+	}
+
+	return urls, nil
 }

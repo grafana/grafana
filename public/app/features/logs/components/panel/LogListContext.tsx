@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react';
 
-import { createContext as createAssistantContext, ItemDataType, useAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
   DataFrame,
@@ -24,17 +24,19 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
+import { LogLineTimestampResolution } from './LogLine';
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
+import { reportInteractionOnce } from './analytics';
 import { LogListModel } from './processing';
-import { LOG_LIST_MIN_WIDTH } from './virtualization';
+import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
@@ -62,8 +64,10 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
+  setTimestampResolution: (format: LogLineTimestampResolution) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
+  timestampResolution: LogLineTimestampResolution;
   toggleDetails: (log: LogListModel) => void;
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
@@ -97,11 +101,13 @@ export const LogListContext = createContext<LogListContextData>({
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
+  setTimestampResolution: () => {},
   setWrapLogMessage: () => {},
   showDetails: [],
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  timestampResolution: 'ns',
   toggleDetails: () => {},
   wrapLogMessage: false,
   isAssistantAvailable: false,
@@ -139,6 +145,7 @@ export type LogListState = Pick<
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
+  | 'timestampResolution'
   | 'wrapLogMessage'
 >;
 
@@ -183,6 +190,7 @@ export interface Props {
   showTime: boolean;
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
+  timestampResolution?: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
@@ -226,6 +234,9 @@ export const LogListContextProvider = ({
   showUniqueLabels,
   sortOrder,
   syntaxHighlighting,
+  timestampResolution = logOptionsStorageKey
+    ? (store.get(`${logOptionsStorageKey}.timestampResolution`) ?? 'ms')
+    : 'ms',
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -240,52 +251,15 @@ export const LogListContextProvider = ({
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
+    timestampResolution,
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
-  const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
+  const [detailsWidth, setDetailsWidthState] = useState(
+    getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls)
+  );
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
   const [isAssistantAvailable, openAssistant] = useAssistant();
-
-  const openAssistantByLog = useCallback(
-    async (log: LogListModel) => {
-      if (!openAssistant) {
-        return;
-      }
-
-      const datasource = await getDataSourceSrv().get(log.datasourceUid);
-      const context = [];
-      if (datasource) {
-        context.push(
-          createAssistantContext(ItemDataType.Datasource, {
-            datasourceUid: datasource.uid,
-            datasourceName: datasource.name,
-            datasourceType: datasource.type,
-          })
-        );
-      }
-      openAssistant({
-        prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
-
-      \`\`\`
-${log.entry.replaceAll('`', '\\`')}
-      \`\`\`
-      `,
-        context: [
-          ...context,
-          createAssistantContext(ItemDataType.Structured, {
-            title: t('logs.log-line-menu.log-line', 'Log line'),
-            data: {
-              labels: log.labels,
-              value: log.entry,
-              timestamp: log.timestamp,
-            },
-          }),
-        ],
-      });
-    },
-    [openAssistant]
-  );
 
   useEffect(() => {
     if (noInteractions) {
@@ -301,11 +275,13 @@ ${log.entry.replaceAll('`', '\\`')}
       detailsWidth,
       detailsMode,
       withDisplayedFields: displayedFields.length > 0,
+      timestampResolution: logListState.timestampResolution,
     });
     // Just once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // OTel displayed fields
   useEffect(() => {
     if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
       return;
@@ -316,6 +292,7 @@ ${log.entry.replaceAll('`', '\\`')}
     }
   }, [displayedFields.length, logs, setDisplayedFields]);
 
+  // Sync state
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
     if (showControls && app !== CoreApp.PanelEditor) {
@@ -344,6 +321,7 @@ ${log.entry.replaceAll('`', '\\`')}
     wrapLogMessage,
   ]);
 
+  // Sync filter levels
   useEffect(() => {
     if (filterLevels === undefined) {
       return;
@@ -356,16 +334,19 @@ ${log.entry.replaceAll('`', '\\`')}
     });
   }, [filterLevels]);
 
+  // Sync font size
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
   }, [fontSize]);
 
+  // Sync pinned logs
   useEffect(() => {
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       setLogListState({ ...logListState, pinnedLogs });
     }
   }, [logListState, pinnedLogs]);
 
+  // Sync show details
   useEffect(() => {
     if (!showDetails.length) {
       return;
@@ -378,16 +359,33 @@ ${log.entry.replaceAll('`', '\\`')}
     }
   }, [logs, showDetails]);
 
+  // Sync log details inline and sidebar width
   useEffect(() => {
+    setDetailsWidthState(getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsMode, showControls));
+  }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
+
+  // Sync log details width
+  useEffect(() => {
+    if (!containerElement) {
+      return;
+    }
     const handleResize = debounce(() => {
-      setDetailsWidthState((detailsWidth) => getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth));
+      setDetailsWidthState((detailsWidth) =>
+        getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth, detailsMode, showControls)
+      );
     }, 50);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [containerElement, logOptionsStorageKey]);
+    const observer = new ResizeObserver(() => handleResize());
+    observer.observe(containerElement);
+    return () => observer.disconnect();
+  }, [containerElement, detailsMode, logOptionsStorageKey, showControls]);
+
+  // Sync timestamp resolution
+  useEffect(() => {
+    setLogListState((state) => ({
+      ...state,
+      timestampResolution,
+    }));
+  }, [timestampResolution]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -437,10 +435,16 @@ ${log.entry.replaceAll('`', '\\`')}
 
   const setShowTime = useCallback(
     (showTime: boolean) => {
-      setLogListState({ ...logListState, showTime });
+      const newTimestampFormat = showTime === false ? 'ms' : logListState.timestampResolution;
+      setLogListState({
+        ...logListState,
+        showTime,
+        timestampResolution: newTimestampFormat,
+      });
       onLogOptionsChange?.('showTime', showTime);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.showTime`, showTime);
+        store.set(`${logOptionsStorageKey}.timestampResolution`, newTimestampFormat);
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
@@ -551,6 +555,29 @@ ${log.entry.replaceAll('`', '\\`')}
     [containerElement, logOptionsStorageKey]
   );
 
+  const setTimestampResolution = useCallback(
+    (timestampResolution: LogLineTimestampResolution) => {
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.timestampResolution`, timestampResolution);
+      }
+      setLogListState((state) => ({
+        ...state,
+        timestampResolution,
+      }));
+    },
+    [logOptionsStorageKey]
+  );
+
+  const openAssistantByLog = useCallback(
+    (log: LogListModel) => {
+      if (!openAssistant) {
+        return;
+      }
+      handleOpenAssistant(openAssistant, log);
+    },
+    [openAssistant]
+  );
+
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
@@ -608,12 +635,14 @@ ${log.entry.replaceAll('`', '\\`')}
         setShowUniqueLabels,
         setSortOrder,
         setSyntaxHighlighting,
+        setTimestampResolution,
         setWrapLogMessage,
         showDetails,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
+        timestampResolution: logListState.timestampResolution,
         toggleDetails,
         wrapLogMessage: logListState.wrapLogMessage,
         isAssistantAvailable,
@@ -642,10 +671,15 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 function getDetailsWidth(
   containerElement: HTMLDivElement | undefined,
   logOptionsStorageKey?: string,
-  currentWidth?: number
+  currentWidth?: number,
+  detailsMode: LogLineDetailsMode = 'sidebar',
+  showControls?: boolean
 ) {
   if (!containerElement) {
     return 0;
+  }
+  if (detailsMode === 'inline') {
+    return containerElement.clientWidth - getScrollbarWidth() - (showControls ? LOG_LIST_CONTROLS_WIDTH : 0);
   }
   const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth =
@@ -677,11 +711,30 @@ export function removeDetailsScrollPosition(log: LogListModel) {
   detailsScrollMap.delete(log.uid);
 }
 
-const reportInteractionOnce = (interactionName: string, properties?: Record<string, unknown>) => {
-  const key = `logs.log-list-context.events.${interactionName}`;
-  if (sessionStorage.getItem(key)) {
-    return;
+async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
+  const datasource = await getDataSourceSrv().get(log.datasourceUid);
+  const context = [];
+  if (datasource) {
+    context.push(createAssistantContextItem('datasource', { datasourceUid: datasource.uid }));
   }
-  sessionStorage.setItem(key, '1');
-  reportInteraction(interactionName, properties);
-};
+  openAssistant({
+    prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
+    
+    \`\`\`
+    ${log.entry.replaceAll('`', '\\`')}
+    \`\`\`
+    `,
+    origin: 'explain-log-line',
+    context: [
+      ...context,
+      createAssistantContextItem('structured', {
+        title: t('logs.log-line-menu.log-line', 'Log line'),
+        data: {
+          labels: log.labels,
+          value: log.entry,
+          timestamp: log.timestamp,
+        },
+      }),
+    ],
+  });
+}

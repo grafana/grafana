@@ -20,12 +20,15 @@ env:
 
 jobs:
   detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.e2e }}
+      cloud_plugins_changed: ${{ steps.detect-changes.outputs.e2e-cloud-plugins }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,7 +58,7 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
+          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', 'public/*',  'packages/*', 'conf/*', 'pkg/**/*.go', '**/go.mod', '**/go.sum', '!**_test.go', '!**.test.ts', '!**.test.tsx', 'Dockerfile') }}"
           path: |
             build-dir
 
@@ -206,8 +209,6 @@ jobs:
         include:
           - suite: various-suite
             path: e2e/various-suite
-          - suite: dashboards-suite
-            path: e2e/dashboards-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
             flags: --flags="--env dashboardScene=false"
@@ -320,9 +321,76 @@ jobs:
           path: ./blob-report
           retention-days: 1
 
+  run-azure-monitor-e2e:
+    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-grafana
+      - detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: grafana/shared-workflows/actions/login-to-gar@login-to-gar-v0.4.0
+        id: login-to-gar
+        with:
+          registry: "us-docker.pkg.dev"
+          environment: "dev"
+
+      - id: pull-docker-image
+        run: |
+          docker pull us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest
+
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            AZURE_SP_APP_ID=cpp-azure-resourcemanager-credentials:application_id
+            AZURE_SP_PASSWORD=cpp-azure-resourcemanager-credentials:application_secret
+            AZURE_TENANT=cpp-azure-resourcemanager-credentials:tenant_id
+
+      - id: deploy-resources
+        env:
+          AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID}}
+          AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD}}
+          AZURE_TENANT: ${{ env.AZURE_TENANT }}
+          NAME: ${{ github.ref_name }}
+        run: |
+          docker container run --name cpp-e2e-deploy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT -e PLAYWRIGHT_CI=true us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure "${NAME}" deploy
+
+      - id: extract-creds
+        # see https://github.com/grafana/oss-plugin-partnerships/blob/a77040d0456003cd258668b61d542dc7c75db5b5/e2e/scripts/deploy.sh#L25 for path
+        run: |
+          docker cp cpp-e2e-deploy:/outputs.json /tmp/outputs.json
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: grafana-tar-gz
+
+      - name: Run E2E tests
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --playwright-command="yarn e2e:playwright:cloud-plugins" --cloud-plugin-creds=/tmp/outputs.json
+
+      - name: Destroy resources
+        if: always() && steps.deploy-resources.outcome == 'success'
+        env:
+          AZURE_SP_APP_ID: ${{ env.AZURE_SP_APP_ID }}
+          AZURE_SP_PASSWORD: ${{ env.AZURE_SP_PASSWORD }}
+          AZURE_TENANT: ${{ env.AZURE_TENANT }}
+          NAME: ${{ github.ref_name }}
+        run: |
+          docker container run --name cpp-e2e-destroy -e AZURE_SP_APP_ID -e AZURE_SP_PASSWORD -e AZURE_TENANT us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-playwright:latest ./cpp-e2e/scripts/ci-run-playwright.sh azure "${NAME}" destroy
+
   required-playwright-tests:
     needs:
       - run-playwright-tests
+      - run-azure-monitor-e2e
       - run-storybook-test
       - build-grafana
     if: ${{ !cancelled() }}

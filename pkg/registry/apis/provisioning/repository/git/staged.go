@@ -31,13 +31,9 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 		branch = repo.gitConfig.Branch
 	}
 
-	ref, err := repo.client.GetRef(ctx, "refs/heads/"+branch)
+	ref, err := repo.ensureBranchExists(ctx, branch)
 	if err != nil {
-		// TODO: opts.CreateIfNotExists doesn't make sense in the context of the staged repository
-		// because we only support the branch that is passed in.
-		// we should probably add branch to the repository.CloneOptions which should be repurposed
-		// as some kind of branch creation options.
-		return nil, err
+		return nil, fmt.Errorf("ensure branch exists: %w", err)
 	}
 
 	writer, err := repo.client.NewStagedWriter(ctx, ref)
@@ -219,12 +215,24 @@ func (r *stagedGitRepository) Push(ctx context.Context) error {
 		if message == "" {
 			message = "Staged changes"
 		}
+
 		if err := r.commit(ctx, r.writer, message); err != nil {
 			return err
 		}
 	}
 
-	return r.writer.Push(ctx)
+	err := r.writer.Push(ctx)
+	if err != nil {
+		// Convert nanogit-specific errors to repository-level errors to avoid leaky abstraction
+		if errors.Is(err, nanogit.ErrNothingToPush) {
+			return repository.ErrNothingToPush
+		}
+		if errors.Is(err, nanogit.ErrNothingToCommit) {
+			return repository.ErrNothingToCommit
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *stagedGitRepository) Remove(ctx context.Context) error {

@@ -1,10 +1,11 @@
-import { Trans } from '@grafana/i18n';
-import { Button, LinkButton, Stack } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
+import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
@@ -21,9 +22,11 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const repoType = repository.spec?.type;
   const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
   const providerIcon = repoConfig?.icon || 'external-link-alt';
+  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
 
   return (
     <Stack>
+      {isReadOnlyRepo && <Badge color="darkgrey" text={t('folder-repo.read-only-badge', 'Read only')} />}
       <StatusBadge repo={repository} />
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>
@@ -34,7 +37,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       <LinkButton variant="secondary" icon="cog" href={`${PROVISIONING_URL}/${name}/edit`}>
         <Trans i18nKey="provisioning.repository-actions.settings">Settings</Trans>
       </LinkButton>
-      <DeleteRepositoryButton name={name} redirectTo={PROVISIONING_URL} />
+      <DeleteRepositoryButton name={name} repository={repository} redirectTo={PROVISIONING_URL} />
     </Stack>
   );
 }

@@ -3,11 +3,12 @@ package git
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
@@ -130,7 +131,48 @@ func TestNewStagedGitRepository(t *testing.T) {
 			opts: repository.StageOptions{
 				Mode: repository.StageModeCommitOnEach,
 			},
-			wantError: errors.New("ref not found"),
+			wantError: errors.New("ensure branch exists: check branch exists: ref not found"),
+		},
+		{
+			name: "creates branch when it doesn't exist",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// First call to GetRef for feature-branch returns not found
+				// Second call to GetRef for main branch (source) returns success
+				// Third call to CreateRef creates the feature branch
+				// Fourth call to GetRef for feature-branch returns the created branch
+				callCount := 0
+				mockClient.GetRefStub = func(ctx context.Context, ref string) (nanogit.Ref, error) {
+					callCount++
+					switch callCount {
+					case 1:
+						// First call: feature-branch doesn't exist
+						if ref == "refs/heads/feature-branch" {
+							return nanogit.Ref{}, nanogit.ErrObjectNotFound
+						}
+					case 2:
+						// Second call: get source branch (main)
+						if ref == "refs/heads/main" {
+							return nanogit.Ref{
+								Name: "refs/heads/main",
+								Hash: hash.Hash{1, 2, 3},
+							}, nil
+						}
+					}
+					return nanogit.Ref{}, errors.New("unexpected call")
+				}
+
+				// CreateRef should be called to create the new branch
+				mockClient.CreateRefReturns(nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			opts: repository.StageOptions{
+				Ref:  "feature-branch",
+				Mode: repository.StageModeCommitOnEach,
+			},
+			expectedRef: "refs/heads/feature-branch",
+			wantError:   nil,
 		},
 		{
 			name: "fails with NewStagedWriter error",
@@ -995,6 +1037,54 @@ func TestStagedGitRepository_Push(t *testing.T) {
 			expectPushCalls:   1,
 			expectCommitCalls: 1,
 		},
+		{
+			name: "returns repository ErrNothingToPush when nanogit returns ErrNothingToPush",
+			opts: repository.StageOptions{},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.PushReturns(nanogit.ErrNothingToPush)
+			},
+			wantError:         repository.ErrNothingToPush,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
+		{
+			name: "returns repository ErrNothingToCommit when nanogit returns ErrNothingToCommit",
+			opts: repository.StageOptions{
+				Mode: repository.StageModeCommitOnlyOnce,
+			},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.CommitReturns(nil, nanogit.ErrNothingToCommit)
+			},
+			wantError:         repository.ErrNothingToCommit,
+			expectPushCalls:   0,
+			expectCommitCalls: 1,
+		},
+		{
+			name: "returns repository ErrNothingToPush when nanogit returns wrapped ErrNothingToPush",
+			opts: repository.StageOptions{},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				// Use fmt.Errorf with %w to create a wrapped error that errors.Is can detect
+				wrappedErr := fmt.Errorf("git operation failed: %w", nanogit.ErrNothingToPush)
+				mockWriter.PushReturns(wrappedErr)
+			},
+			wantError:         repository.ErrNothingToPush,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
+		{
+			name: "returns repository ErrNothingToCommit when nanogit returns wrapped ErrNothingToCommit",
+			opts: repository.StageOptions{
+				Mode: repository.StageModeCommitOnlyOnce,
+			},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				// Use fmt.Errorf with %w to create a wrapped error that errors.Is can detect
+				wrappedErr := fmt.Errorf("git operation failed: %w", nanogit.ErrNothingToCommit)
+				mockWriter.CommitReturns(nil, wrappedErr)
+			},
+			wantError:         repository.ErrNothingToCommit,
+			expectPushCalls:   0,
+			expectCommitCalls: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1007,7 +1097,12 @@ func TestStagedGitRepository_Push(t *testing.T) {
 			err := stagedRepo.Push(context.Background())
 
 			if tt.wantError != nil {
-				require.EqualError(t, err, tt.wantError.Error())
+				// For nanogit error conversion tests, use ErrorIs to verify type conversion
+				if errors.Is(tt.wantError, repository.ErrNothingToPush) || errors.Is(tt.wantError, repository.ErrNothingToCommit) {
+					require.ErrorIs(t, err, tt.wantError)
+				} else {
+					require.EqualError(t, err, tt.wantError.Error())
+				}
 			} else {
 				require.NoError(t, err)
 			}

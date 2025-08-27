@@ -3,7 +3,7 @@ package jobs
 import (
 	"context"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -25,6 +25,7 @@ type JobProgressRecorder interface {
 	SetTotal(ctx context.Context, total int)
 	TooManyErrors() error
 	StrictMaxErrors(maxErrors int)
+	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)
 	Complete(ctx context.Context, err error) provisioning.JobStatus
 }
 

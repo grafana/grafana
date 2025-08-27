@@ -9,6 +9,13 @@ import { NeverCaseError } from './util';
 
 export type TriggerType = 'partial' | 'full';
 
+export type MonacoQueryFieldLocalState = {
+  isManualTriggerRequested: boolean;
+};
+
+const TRIGGER_CHARACTERS = ['{', ',', '[', '(', '=', '~', ' ', '"'];
+const MIN_WORD_LENGTH_FOR_FULL_COMPLETIONS = 3;
+
 export function getSuggestOptions(): monacoTypes.editor.ISuggestOptions {
   return {
     // monaco-editor sometimes provides suggestions automatically, i am not
@@ -50,19 +57,16 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
 }
 
 function getTriggerType(
-  context: monacoTypes.languages.CompletionContext,
   word: monacoTypes.editor.IWordAtPosition | null,
   model: monacoTypes.editor.ITextModel,
   position: monacoTypes.Position,
-  isManualTrigger: boolean
+  state: MonacoQueryFieldLocalState
 ): TriggerType {
-  // Manual trigger (Ctrl+Space)
-  if (isManualTrigger) {
+  // Manual trigger (Ctrl+Space) - always full completions
+  if (state.isManualTriggerRequested) {
     return 'full';
   }
 
-  // Trigger characters
-  const triggerChars = ['{', ',', '[', '(', '=', '~', ' ', '"'];
   const charBeforeCursor = model.getValueInRange({
     startLineNumber: position.lineNumber,
     endLineNumber: position.lineNumber,
@@ -70,12 +74,12 @@ function getTriggerType(
     endColumn: position.column,
   });
 
-  if (triggerChars.includes(charBeforeCursor)) {
+  if (TRIGGER_CHARACTERS.includes(charBeforeCursor)) {
     return 'full';
   }
 
-  // Word length >= 3
-  if (word && word.word.length >= 3) {
+  // For typed words of sufficient length, use full completions
+  if (word && word.word.length >= MIN_WORD_LENGTH_FOR_FULL_COMPLETIONS) {
     return 'full';
   }
 
@@ -86,20 +90,14 @@ export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider,
   timeRange: TimeRange
-): { provider: monacoTypes.languages.CompletionItemProvider; state: { isManualTriggerRequested: boolean } } {
-  // Short debounce to catch rapid typing
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const DEBOUNCE_DELAY = 150; // Much shorter delay to catch rapid typing
-
-  // Simple local state
-  const state = {
+): { provider: monacoTypes.languages.CompletionItemProvider; state: MonacoQueryFieldLocalState } {
+  const state: MonacoQueryFieldLocalState = {
     isManualTriggerRequested: false,
   };
 
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
-    position: monacoTypes.Position,
-    context: monacoTypes.languages.CompletionContext
+    position: monacoTypes.Position
   ): monacoTypes.languages.ProviderResult<monacoTypes.languages.CompletionList> => {
     const word = model.getWordAtPosition(position);
     const range =
@@ -112,110 +110,68 @@ export function getCompletionProvider(
           })
         : monaco.Range.fromPositions(position);
 
-    const isManualTrigger = state.isManualTriggerRequested;
-    if (isManualTrigger) {
-      state.isManualTriggerRequested = false;
+    // Set input range for data provider
+    dataProvider.monacoSettings.setInputInRange(model.getValueInRange(range));
+
+    // Get adjusted position for cursor/selection handling
+    const adjustedPosition = getAdjustedPosition(position);
+    const offset = model.getOffsetAt(adjustedPosition);
+    const situation = getSituation(model.getValue(), offset);
+
+    // Early exit if no situation detected
+    if (situation === null) {
+      return Promise.resolve({ suggestions: [], incomplete: false });
     }
 
-    const triggerType: TriggerType = getTriggerType(context, word, model, position, isManualTrigger);
+    const triggerType: TriggerType = getTriggerType(word, model, position, state);
 
-    // For immediate triggers (manual, trigger chars, or already 3+ chars), execute immediately
-    const isImmediate = isManualTrigger || triggerType === 'full';
+    return getCompletions(situation, dataProvider, timeRange, word?.word, triggerType).then((items) => {
+      // Monaco by-default alphabetically orders the items.
+      // We use a number-as-string sortkey to maintain our custom order
+      const maxIndexDigits = items.length > 0 ? items.length.toString().length : 1;
+      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
+        kind: getMonacoCompletionItemKind(item.type, monaco),
+        label: item.label,
+        insertText: item.insertText,
+        insertTextRules: item.insertTextRules,
+        detail: item.detail,
+        documentation: item.documentation,
+        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+        range,
+        command: item.triggerOnInsert
+          ? {
+              id: 'editor.action.triggerSuggest',
+              title: '',
+            }
+          : undefined,
+      }));
 
-    if (isImmediate) {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-        debounceTimer = null;
-      }
-      return executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word, triggerType);
-    }
-
-    // For typing scenarios, use short debounce to catch rapid typing
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-
-    return new Promise((resolve) => {
-      debounceTimer = setTimeout(() => {
-        // Re-check if we should use full completions after debounce
-        const updatedWord = model.getWordAtPosition(position);
-        const updatedTriggerType: TriggerType = getTriggerType(context, updatedWord, model, position, false)
-          ? 'full'
-          : 'partial';
-
-        executeCompletionLogic(
-          model,
-          position,
-          range,
-          dataProvider,
-          timeRange,
-          updatedWord?.word,
-          updatedTriggerType
-        ).then(resolve);
-      }, DEBOUNCE_DELAY);
+      return { suggestions };
     });
   };
 
-  const executeCompletionLogic = async (
-    model: monacoTypes.editor.ITextModel,
-    position: monacoTypes.Position,
-    range: monacoTypes.Range,
-    dataProvider: DataProvider,
-    timeRange: TimeRange,
-    wordText?: string,
-    triggerType: TriggerType = 'full'
-  ): Promise<monacoTypes.languages.CompletionList> => {
-    // documentation says `position` will be "adjusted" in `getOffsetAt`
-    // i don't know what that means, to be sure i clone it
-    const positionClone = {
-      column: position.column,
-      lineNumber: position.lineNumber,
-    };
-
-    dataProvider.monacoSettings.setInputInRange(model.getValueInRange(range));
+  // Helper function to handle position adjustment for selection
+  function getAdjustedPosition(position: monacoTypes.Position): { column: number; lineNumber: number } {
+    let adjustedColumn = position.column;
 
     // Check to see if the browser supports window.getSelection()
     if (window.getSelection) {
       const selectedText = window.getSelection()?.toString();
-      // If the user has selected text, adjust the cursor position to be at the start of the selection, instead of the end
+      // If the user has selected text, adjust the cursor position to be at the start of the selection
       if (selectedText && selectedText.length > 0) {
-        positionClone.column = positionClone.column - selectedText.length;
+        adjustedColumn = Math.max(1, adjustedColumn - selectedText.length);
       }
     }
 
-    const offset = model.getOffsetAt(positionClone);
-    const situation = getSituation(model.getValue(), offset);
-    const completionsPromise =
-      situation != null
-        ? getCompletions(situation, dataProvider, timeRange, wordText, triggerType)
-        : Promise.resolve([]);
-
-    return completionsPromise.then((items) => {
-      // monaco by-default alphabetically orders the items.
-      // to stop it, we use a number-as-string sortkey,
-      // so that monaco keeps the order we use
-      const maxIndexDigits = items.length.toString().length;
-      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
-        range,
-        label: item.label,
-        detail: item.detail,
-        insertText: item.insertText,
-        documentation: item.documentation,
-        insertTextRules: item.insertTextRules,
-        kind: getMonacoCompletionItemKind(item.type, monaco),
-        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-        command: item.triggerOnInsert ? { id: 'editor.action.triggerSuggest', title: '' } : undefined,
-      }));
-
-      return {
-        suggestions,
-      };
-    });
-  };
+    return {
+      column: adjustedColumn,
+      lineNumber: position.lineNumber,
+    };
+  }
 
   return {
     provider: {
-      triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
+      triggerCharacters: TRIGGER_CHARACTERS,
       provideCompletionItems,
     },
     state,

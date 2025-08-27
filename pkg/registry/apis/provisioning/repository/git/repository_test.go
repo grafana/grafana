@@ -12,9 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
@@ -152,7 +151,7 @@ func TestGitRepository_Validate(t *testing.T) {
 				Token:  "", // Empty token
 			},
 			want: field.ErrorList{
-				field.Required(field.NewPath("spec", "test_type", "token"), "a git access token is required"),
+				field.Required(field.NewPath("secure", "token"), "a git access token is required"),
 			},
 		},
 		{
@@ -291,10 +290,9 @@ func TestNewGit(t *testing.T) {
 		Path:   "configs",
 	}
 
-	mockSecrets := secrets.NewMockRepositorySecrets(t)
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewGitRepository(ctx, config, gitConfig, mockSecrets)
+	gitRepo, err := NewRepository(ctx, config, gitConfig)
 	require.NoError(t, err)
 	require.NotNil(t, gitRepo)
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
@@ -502,7 +500,7 @@ func TestGitRepository_Test(t *testing.T) {
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "test_type", "token").String(),
+						Field:  field.NewPath("secure", "token").String(),
 						Detail: "failed check if authorized: auth error",
 					},
 				},
@@ -523,7 +521,7 @@ func TestGitRepository_Test(t *testing.T) {
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "test_type", "token").String(),
+						Field:  field.NewPath("secure", "token").String(),
 						Detail: "not authorized",
 					},
 				},
@@ -1862,8 +1860,7 @@ func TestNewGitRepository(t *testing.T) {
 				},
 			}
 
-			mockSecrets := secrets.NewMockRepositorySecrets(t)
-			gitRepo, err := NewGitRepository(ctx, config, tt.gitConfig, mockSecrets)
+			gitRepo, err := NewRepository(ctx, config, tt.gitConfig)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -2822,8 +2819,7 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 		Path:   "configs",
 	}
 
-	mockSecrets := secrets.NewMockRepositorySecrets(t)
-	gitRepo, err := NewGitRepository(ctx, config, gitConfig, mockSecrets)
+	gitRepo, err := NewRepository(ctx, config, gitConfig)
 
 	// We expect this to fail during client creation
 	require.Error(t, err)
@@ -3733,82 +3729,6 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 			case protocol.FileStatusTypeChanged:
 				require.Equal(t, repository.FileActionUpdated, changes[0].Action)
 			}
-		})
-	}
-}
-
-func TestGitRepository_OnDelete(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupMock     func(*secrets.MockRepositorySecrets)
-		config        *provisioning.Repository
-		expectedError string
-	}{
-		{
-			name: "successful secret deletion",
-			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
-				mockSecrets.EXPECT().Delete(
-					context.Background(),
-					&provisioning.Repository{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-repo",
-							Namespace: "default",
-						},
-					},
-					"test-repo"+gitTokenSecretSuffix,
-				).Return(nil)
-			},
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
-			},
-		},
-		{
-			name: "secret deletion error",
-			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
-				mockSecrets.EXPECT().Delete(
-					context.Background(),
-					&provisioning.Repository{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-repo",
-							Namespace: "default",
-						},
-					},
-					"test-repo"+gitTokenSecretSuffix,
-				).Return(errors.New("failed to delete secret"))
-			},
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
-			},
-			expectedError: "delete git token secret: failed to delete secret",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockSecrets := secrets.NewMockRepositorySecrets(t)
-			tt.setupMock(mockSecrets)
-
-			gitRepo := &gitRepository{
-				config:  tt.config,
-				secrets: mockSecrets,
-			}
-
-			err := gitRepo.OnDelete(context.Background())
-
-			if tt.expectedError != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				require.NoError(t, err)
-			}
-
-			mockSecrets.AssertExpectations(t)
 		})
 	}
 }

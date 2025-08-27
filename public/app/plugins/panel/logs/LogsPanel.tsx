@@ -37,6 +37,7 @@ import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
@@ -124,6 +125,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Set the mode used by the Log Details panel. Displayed as a sidebar, or inline below the log line. Defaults to "inline".
    * detailsMode?: 'inline' | 'sidebar'
+   *
+   * When showing timestamps, toggle between showing nanoseconds or milliseconds.
+   * timestampResolution?: 'ms' | 'ns'
    */
 }
 interface LogsPermalinkUrlState {
@@ -165,8 +169,10 @@ export const LogsPanel = ({
     syntaxHighlighting,
     detailsMode: detailsModeProp,
     noInteractions,
+    timestampResolution,
     ...options
   },
+  height,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -531,7 +537,7 @@ export const LogsPanel = ({
 
   return (
     <>
-      {contextRow && (
+      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && contextRow && (
         <LogRowContextModal
           open={contextRow !== null}
           row={contextRow}
@@ -542,10 +548,25 @@ export const LogsPanel = ({
           getLogRowContextUi={getLogRowContextUi}
         />
       )}
+      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getLogRowContext && contextRow && (
+        <LogLineContext
+          open={contextRow !== null}
+          log={contextRow}
+          onClose={onCloseContext}
+          getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
+          getLogRowContextUi={getLogRowContextUi}
+          logOptionsStorageKey={controlsStorageKey}
+          timeZone={timeZone}
+          displayedFields={displayedFields}
+          onClickShowField={showField}
+          onClickHideField={hideField}
+        />
+      )}
       {config.featureToggles.newLogsPanel && (
         <div
           onMouseLeave={onLogContainerMouseLeave}
           className={style.logListContainer}
+          style={height ? { minHeight: height } : undefined}
           ref={(element: HTMLDivElement) => setScrollElement(element)}
         >
           {deduplicatedRows.length > 0 && scrollElement && (
@@ -592,6 +613,7 @@ export const LogsPanel = ({
               logOptionsStorageKey={storageKey}
               syntaxHighlighting={syntaxHighlighting}
               timeRange={data.timeRange}
+              timestampResolution={timestampResolution}
               timeZone={timeZone}
               wrapLogMessage={wrapLogMessage}
             />
@@ -721,6 +743,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flex: 1,
     flexDirection: 'column',
+    overflow: 'hidden',
   }),
   controlledLogsContainer: css({
     height: '100%',

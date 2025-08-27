@@ -117,6 +117,9 @@ profile.cov
 /pkg/server/wireexts_enterprise.go
 /pkg/server/enterprise_wire_gen.go
 /pkg/build/cmd/enterprise.go
+/pkg/build/cmd/artifactspage.go
+/pkg/build/cmd/artifactspage.tmpl.html
+/pkg/build/cmd/exportversion.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
@@ -238,3 +241,4 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e-playwright/test-plugins/*/dist
+/apps/provisioning/cmd/job-controller/bin/
