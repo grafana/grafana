@@ -984,7 +984,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.2.0-pre",
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "csvContent": "use-case,normal,color-text,color-bg,highlight\n\"color bg and apply to row\",1,0,1,1\n\"color text and apply to row\",1,1,0,1\n\"color text + color bg + apply to row\",1,1,1,1\n\"only apply to row\",1,0,0,1\n\"only color bg\",1,0,1,0\n\"only color text\",1,1,0,0\n\"color text + color bg\",1,1,1,0\n\"no colorization\",1,0,0,0",
@@ -1852,5 +1852,5 @@
   "timezone": "",
   "title": "Panel Tests - Table - Kitchen Sink",
   "uid": "dcb9f5e9-8066-4397-889e-864b99555dbb",
-  "version": 32
+  "version": 33
 }
