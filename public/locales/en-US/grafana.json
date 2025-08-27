@@ -4564,8 +4564,8 @@
     },
     "controls": {
       "menu": {
-        "aria-label": "Dashboard controls menu",
-        "title": "Dashboard controls"
+        "aria-label": "",
+        "title": ""
       }
     },
     "dash-nav": {
