@@ -14,7 +14,6 @@ export interface HttpError extends Error {
   status?: number;
 }
 
-
 export interface UseBranchOptionsProps {
   repositoryType: RepoType;
   repositoryUrl: string;
