@@ -11,8 +11,8 @@ import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unif
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
 
-import { LogRecord, omitLabels } from './common';
 import { ErrorMessageRow } from './ErrorMessageRow';
+import { LogRecord, omitLabels } from './common';
 
 type LogRecordViewerProps = {
   records: LogRecord[];
