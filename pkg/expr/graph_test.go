@@ -233,7 +233,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 	}
 	s := Service{
-		cfg: setting.NewCfg(),
+		cfg:    setting.NewCfg(),
+		tracer: &testTracer{},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

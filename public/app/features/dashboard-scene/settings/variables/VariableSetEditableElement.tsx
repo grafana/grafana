@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -18,15 +18,17 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
+  const variableListId = useId();
   const options = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
       new OptionsPaneItemDescriptor({
         title: '',
+        id: variableListId,
         skipField: true,
         render: () => <VariableList set={set} />,
       })
     );
-  }, [set]);
+  }, [set, variableListId]);
 
   return [options];
 }

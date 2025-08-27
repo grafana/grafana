@@ -208,6 +208,8 @@ func (b *bleveBackend) BuildIndex(
 	indexBuildReason string,
 	builder resource.BuildFn,
 	updater resource.UpdateFn,
+	rebuild bool,
+	searchAfterWrite bool,
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
@@ -269,8 +271,8 @@ func (b *bleveBackend) BuildIndex(
 		// We only check for the existing file-based index if we don't already have an open index for this key.
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
-		if cachedIndex == nil && resourceVersion > 0 {
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, resourceVersion, size)
+		if cachedIndex == nil && resourceVersion > 0 && !rebuild {
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir, resourceVersion, size, searchAfterWrite)
 		}
 
 		if index != nil {
@@ -488,7 +490,7 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64) (bleve.Index, string, int64) {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64, searchAfterWrite bool) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
 		return nil, "", 0
@@ -529,7 +531,8 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 			continue
 		}
 
-		if indexRV < resourceVersion {
+		// if searchAfterWrite is enabled, we don't need to re-build the index, as it will be updated at request time
+		if !searchAfterWrite && indexRV < resourceVersion {
 			b.log.Debug("indexRV is less than requested resourceVersion. ignoring index", "indexDir", indexDir, "rv", indexRV, "resourceVersion", resourceVersion)
 			_ = idx.Close()
 			continue

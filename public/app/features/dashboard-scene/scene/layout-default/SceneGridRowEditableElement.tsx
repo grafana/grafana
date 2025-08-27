@@ -27,6 +27,7 @@ function useEditPaneOptions(this: SceneGridRowEditableElement, row: SceneGridRow
     }).addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.row-options.form.title', 'Title'),
+        id: 'row-options-title',
         render: () => <RowTitleInput row={row} />,
       })
     );
@@ -42,6 +43,7 @@ function useEditPaneOptions(this: SceneGridRowEditableElement, row: SceneGridRow
     }).addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.row-options.repeat.variable.title', 'Variable'),
+        id: 'row-options-repeat-variable',
         render: () => <RowRepeatSelect row={row} dashboard={dashboard} />,
       })
     );
@@ -78,13 +80,13 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
   }
 }
 
-function RowTitleInput({ row }: { row: SceneGridRow }) {
+function RowTitleInput({ row, id }: { row: SceneGridRow; id?: string }) {
   const { title } = row.useState();
 
-  return <Input value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
+  return <Input id={id} value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
 }
 
-function RowRepeatSelect({ row, dashboard }: { row: SceneGridRow; dashboard: DashboardScene }) {
+function RowRepeatSelect({ row, dashboard, id }: { row: SceneGridRow; dashboard: DashboardScene; id?: string }) {
   const { $behaviors, children } = row.useState();
   let repeatBehavior = $behaviors?.find((b) => b instanceof RowRepeaterBehavior);
   const vizPanels = useMemo(
@@ -104,6 +106,7 @@ function RowRepeatSelect({ row, dashboard }: { row: SceneGridRow; dashboard: Das
   return (
     <>
       <RepeatRowSelect2
+        id={id}
         sceneContext={dashboard}
         repeat={repeatBehavior?.state.variableName}
         onChange={(repeat) => {
