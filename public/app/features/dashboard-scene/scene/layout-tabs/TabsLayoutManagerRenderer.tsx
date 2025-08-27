@@ -1,13 +1,12 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
-import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
-import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
@@ -17,20 +16,19 @@ import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { TabItem } from './TabItem';
 import { TabItemRepeater } from './TabItemRepeater';
 import { TabsLayoutManager } from './TabsLayoutManager';
+import { TabItemLayoutRenderer } from './TabItemRenderer';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
   const { tabs, key } = model.useState();
   const currentTab = model.getCurrentTab();
-  const { layout } = currentTab.useState();
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
   const soloPanelContext = useSoloPanelContext();
 
   if (soloPanelContext) {
-    return <layout.Component model={layout} />;
+    return tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
   }
 
   const isClone = isRepeatCloneOrChildOf(model);
@@ -92,18 +90,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
         </DragDropContext>
       </TabsBar>
 
-      {isEditing && (
-        <TabContent className={cx(styles.tabContentContainer, conditionalRenderingClass)}>
-          {currentTab && <layout.Component model={layout} />}
-          {conditionalRenderingOverlay}
-        </TabContent>
-      )}
-
-      {!isEditing && (
-        <TabContent className={styles.tabContentContainer}>
-          {currentTab && <layout.Component model={layout} />}
-        </TabContent>
-      )}
+      {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
     </div>
   );
 }
@@ -141,17 +128,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
-  }),
-  tabContentContainer: css({
-    backgroundColor: 'transparent',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    // Without this min height, the custom grid (SceneGridLayout) wont render
-    // Should be bigger than paddingTop value
-    // consist of paddingTop + 0.125 = 9px
-    minHeight: theme.spacing(1 + 0.125),
-    paddingTop: theme.spacing(1),
   }),
 });

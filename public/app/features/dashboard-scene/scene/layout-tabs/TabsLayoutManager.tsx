@@ -93,9 +93,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.setState({ currentTabSlug: tab.getSlug() });
   }
 
-  public getCurrentTab(): TabItem {
+  public getCurrentTab(): TabItem | undefined {
     const tabs = this.getTabs();
-    return tabs.find((tab) => tab.getSlug() === this.state.currentTabSlug) ?? tabs[0];
+    return tabs.find((tab) => tab.getSlug() === this.state.currentTabSlug);
   }
 
   public getTabs(): TabItem[] {
@@ -107,7 +107,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public addPanel(vizPanel: VizPanel) {
-    this.getCurrentTab().getLayout().addPanel(vizPanel);
+    const tab = this.getCurrentTab();
+
+    if (tab) {
+      tab.getLayout().addPanel(vizPanel);
+    }
   }
 
   public getVizPanels(): VizPanel[] {
@@ -269,7 +273,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     const editPane = getDashboardSceneFor(this).state.editPane;
     editPane.selectObject(tab!, tabKey, { force: true, multi: false });
-    this.setState({ currentTabIndex: tabIndex });
+    this.setState({ currentTabSlug: tab.getSlug() });
   }
 
   public static createEmpty(): TabsLayoutManager {
