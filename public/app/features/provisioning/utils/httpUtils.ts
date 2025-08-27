@@ -1,3 +1,5 @@
+import { t } from '@grafana/i18n';
+
 import { HttpError, isHttpError } from '../guards';
 
 export interface RepositoryInfo {
@@ -50,7 +52,11 @@ export function getProviderHeaders(repositoryType: string, token: string): Recor
     case 'bitbucket':
       return { Authorization: `Bearer ${token}` };
     default:
-      throw new Error(`Unsupported repository type: ${repositoryType}`);
+      throw new Error(
+        t('provisioning.http-utils.unsupported-repository-type', 'Unsupported repository type: {{repositoryType}}', {
+          repositoryType,
+        })
+      );
   }
 }
 
@@ -63,7 +69,12 @@ export async function makeApiRequest(request: ApiRequest) {
   if (!response.ok) {
     const errorData = await response.text();
     console.error('API Error Response:', errorData);
-    const error: HttpError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const error: HttpError = new Error(
+      t('provisioning.http-utils.http-error', 'HTTP {{status}}: {{statusText}}', {
+        status: response.status,
+        statusText: response.statusText,
+      })
+    );
     error.status = response.status;
     throw error;
   }
@@ -150,20 +161,30 @@ export async function fetchAllBranches(
     case 'bitbucket':
       return fetchAllBitbucketBranches(owner, repo, headers);
     default:
-      throw new Error(`Unsupported repository type: ${repositoryType}`);
+      throw new Error(
+        t('provisioning.http-utils.unsupported-repository-type', 'Unsupported repository type: {{repositoryType}}', {
+          repositoryType,
+        })
+      );
   }
 }
 
 export function getErrorMessage(err: unknown) {
-  let errorMessage = 'Request failed';
+  let errorMessage = t('provisioning.http-utils.request-failed', 'Request failed');
 
   if (isHttpError(err)) {
     if (err.status === 401) {
-      errorMessage = 'Authentication failed. Please check your access token.';
+      errorMessage = t(
+        'provisioning.http-utils.authentication-failed',
+        'Authentication failed. Please check your access token.'
+      );
     } else if (err.status === 404) {
-      errorMessage = 'Resource not found. Please check the URL or repository.';
+      errorMessage = t(
+        'provisioning.http-utils.resource-not-found',
+        'Resource not found. Please check the URL or repository.'
+      );
     } else if (err.status === 403) {
-      errorMessage = 'Access denied. Please check your token permissions.';
+      errorMessage = t('provisioning.http-utils.access-denied', 'Access denied. Please check your token permissions.');
     } else if (err.message) {
       errorMessage = err.message;
     }

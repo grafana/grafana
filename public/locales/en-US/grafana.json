@@ -11443,6 +11443,14 @@
       "title-delete-all-configured-repositories": "Delete all configured repositories",
       "title-legacy-storage-detected": "Legacy storage detected"
     },
+    "http-utils": {
+      "access-denied": "Access denied. Please check your token permissions.",
+      "authentication-failed": "Authentication failed. Please check your access token.",
+      "http-error": "HTTP {{status}}: {{statusText}}",
+      "request-failed": "Request failed",
+      "resource-not-found": "Resource not found. Please check the URL or repository.",
+      "unsupported-repository-type": "Unsupported repository type: {{repositoryType}}"
+    },
     "job-status": {
       "label-view-details": "View details",
       "loading-finished-job": "Loading finished job...",
