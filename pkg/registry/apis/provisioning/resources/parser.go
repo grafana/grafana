@@ -65,6 +65,7 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 		},
 		urls:    urls,
 		clients: clients,
+		config:  config,
 	}, nil
 }
 
@@ -74,6 +75,8 @@ type parser struct {
 
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
+
+	config *provisioning.Repository
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
@@ -192,6 +195,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		dirPath := safepath.Dir(info.Path)
 		if dirPath != "" {
 			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+		} else {
+			parsed.Meta.SetFolder(RootFolder(r.config))
 		}
 	}
 	obj.SetUID("")             // clear identifiers
