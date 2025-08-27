@@ -48,23 +48,21 @@ describe('Geomap layer controls options', () => {
         cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
       });
 
-    e2e.components.Panels.Panel.content({ timeout: TIMEOUT })
-      .should('be.visible')
-      .within(() => {
-        // Verify zoom
-        cy.get('.ol-zoom', { timeout: TIMEOUT }).should('be.visible');
+    e2e.components.Panels.Panel.content({ timeout: TIMEOUT }).should('be.visible');
 
-        // Verify attribution
-        cy.get('.ol-attribution', { timeout: TIMEOUT }).should('be.visible');
+    // Verify zoom
+    cy.get('.ol-zoom', { timeout: TIMEOUT }).should('be.visible');
 
-        // Verify scale
-        cy.get('.ol-scale-line', { timeout: TIMEOUT }).should('be.visible');
+    // Verify attribution
+    cy.get('.ol-attribution', { timeout: TIMEOUT }).should('be.visible');
 
-        // Verify measure tool
-        e2e.components.PanelEditor.measureButton({ timeout: TIMEOUT }).should('be.visible');
+    // Verify scale
+    cy.get('.ol-scale-line', { timeout: TIMEOUT }).should('be.visible');
 
-        // Verify debug tool
-        e2e.components.DebugOverlay.wrapper({ timeout: TIMEOUT }).should('be.visible');
-      });
+    // Verify measure tool
+    e2e.components.PanelEditor.measureButton({ timeout: TIMEOUT }).should('be.visible');
+
+    // Verify debug tool
+    e2e.components.DebugOverlay.wrapper({ timeout: TIMEOUT }).should('be.visible');
   });
 });
