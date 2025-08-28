@@ -1301,11 +1301,6 @@ export class DashboardModel implements TimeModel {
     return !isEqual(currentVariables, originalVariables);
   }
 
-  public hasVariableErrors(): boolean {
-    const variables = this.getVariablesFromState(this.uid);
-    return Boolean(variables.find((v) => Boolean(v.error)));
-  }
-
   private variablesTimeRangeProcessDoneHandler(event: VariablesTimeRangeProcessDone) {
     const processRepeats = event.payload.variableIds.length > 0;
     this.variablesChangedHandler(new VariablesChanged({ panelIds: [], refreshAll: true }), processRepeats);

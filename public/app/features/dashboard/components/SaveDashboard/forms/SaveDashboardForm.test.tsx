@@ -1,8 +1,6 @@
-import { screen, render, waitFor } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { byRole } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
@@ -12,19 +10,12 @@ import { SaveDashboardOptions } from '../types';
 
 import { SaveDashboardForm } from './SaveDashboardForm';
 
-const prepareDashboardMock = ({
-  resetTimeSpy = jest.fn(),
-  resetVarsSpy = jest.fn(),
-  timeChanged,
-  variableErrors = false,
-  variableValuesChanged,
-}: {
-  timeChanged: boolean;
-  variableValuesChanged: boolean;
-  resetTimeSpy?: jest.Mock;
-  resetVarsSpy?: jest.Mock;
-  variableErrors?: boolean;
-}) => {
+const prepareDashboardMock = (
+  timeChanged: boolean,
+  variableValuesChanged: boolean,
+  resetTimeSpy: jest.Mock,
+  resetVarsSpy: jest.Mock
+) => {
   const json: Dashboard = {
     title: 'name',
     id: 5,
@@ -36,7 +27,6 @@ const prepareDashboardMock = ({
     meta: {},
     hasTimeChanged: jest.fn().mockReturnValue(timeChanged),
     hasVariablesChanged: jest.fn().mockReturnValue(variableValuesChanged),
-    hasVariableErrors: jest.fn().mockReturnValue(variableErrors),
     resetOriginalTime: () => resetTimeSpy(),
     resetOriginalVariables: () => resetVarsSpy(),
     getSaveModelClone: () => json,
@@ -70,19 +60,13 @@ const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mo
   const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
   await userEvent.click(button);
 };
-
-const ui = {
-  variablesCheckbox: byRole('checkbox', { name: selectors.pages.SaveDashboardModal.saveVariables }),
-  timeRangeCheckbox: byRole('checkbox', { name: selectors.pages.SaveDashboardModal.saveTimerange }),
-};
-
 describe('SaveDashboardAsForm', () => {
   describe('time and variables toggle rendering', () => {
     it('renders switches when variables or timerange', () => {
       render(
         <SaveDashboardForm
           isLoading={false}
-          dashboard={prepareDashboardMock({ timeChanged: true, variableValuesChanged: true })}
+          dashboard={prepareDashboardMock(true, true, jest.fn(), jest.fn())}
           onCancel={() => {}}
           onSuccess={() => {}}
           onSubmit={async () => {
@@ -101,65 +85,15 @@ describe('SaveDashboardAsForm', () => {
         />
       );
 
-      expect(ui.variablesCheckbox.get()).toBeInTheDocument();
-      expect(ui.timeRangeCheckbox.get()).toBeInTheDocument();
-    });
+      const variablesCheckbox = screen.getByRole('checkbox', {
+        name: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
+      });
+      const timeRangeCheckbox = screen.getByRole('checkbox', {
+        name: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+      });
 
-    it('should not render warning when there are no variable errors and variables checkbox is toggled', async () => {
-      render(
-        <SaveDashboardForm
-          isLoading={false}
-          dashboard={prepareDashboardMock({ timeChanged: false, variableValuesChanged: true })}
-          onCancel={() => {}}
-          onSuccess={() => {}}
-          onSubmit={async () => {
-            return {} as SaveDashboardResponseDTO;
-          }}
-          saveModel={{
-            clone: { id: 1, schemaVersion: 3 },
-            diff: {},
-            diffCount: 0,
-            hasChanges: true,
-          }}
-          options={{ saveVariables: true }}
-          onOptionsChange={(opts: SaveDashboardOptions) => {
-            return;
-          }}
-        />
-      );
-
-      expect(ui.variablesCheckbox.get()).toBeInTheDocument();
-      expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.variablesWarningAlert)).not.toBeInTheDocument(); // the alert shouldn't show as default
-    });
-
-    it('should render warning when there are variable errors and variables checkbox is toggled', async () => {
-      render(
-        <SaveDashboardForm
-          isLoading={false}
-          dashboard={prepareDashboardMock({ timeChanged: false, variableValuesChanged: true, variableErrors: true })}
-          onCancel={() => {}}
-          onSuccess={() => {}}
-          onSubmit={async () => {
-            return {} as SaveDashboardResponseDTO;
-          }}
-          saveModel={{
-            clone: { id: 1, schemaVersion: 3 },
-            diff: {},
-            diffCount: 0,
-            hasChanges: true,
-          }}
-          options={{ saveVariables: true }}
-          onOptionsChange={(opts: SaveDashboardOptions) => {
-            return;
-          }}
-        />
-      );
-
-      // when options.saveVariables === true then the alert should show
-      expect(ui.variablesCheckbox.get()).toBeInTheDocument();
-      await waitFor(() =>
-        expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.variablesWarningAlert)).toBeInTheDocument()
-      );
+      expect(variablesCheckbox).toBeInTheDocument();
+      expect(timeRangeCheckbox).toBeInTheDocument();
     });
   });
 
@@ -169,10 +103,7 @@ describe('SaveDashboardAsForm', () => {
       const resetVarsSpy = jest.fn();
       const submitSpy = jest.fn();
 
-      await renderAndSubmitForm(
-        prepareDashboardMock({ timeChanged: false, variableValuesChanged: false, resetTimeSpy, resetVarsSpy }),
-        submitSpy
-      );
+      await renderAndSubmitForm(prepareDashboardMock(false, false, resetTimeSpy, resetVarsSpy), submitSpy);
 
       expect(resetTimeSpy).not.toBeCalled();
       expect(resetVarsSpy).not.toBeCalled();
@@ -185,10 +116,7 @@ describe('SaveDashboardAsForm', () => {
         const resetTimeSpy = jest.fn();
         const resetVarsSpy = jest.fn();
         const submitSpy = jest.fn();
-        await renderAndSubmitForm(
-          prepareDashboardMock({ timeChanged: true, variableValuesChanged: true, resetTimeSpy, resetVarsSpy }),
-          submitSpy
-        );
+        await renderAndSubmitForm(prepareDashboardMock(true, true, resetTimeSpy, resetVarsSpy), submitSpy);
 
         expect(resetTimeSpy).toBeCalledTimes(0);
         expect(resetVarsSpy).toBeCalledTimes(0);

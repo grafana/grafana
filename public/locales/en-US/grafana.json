@@ -5215,10 +5215,6 @@
       "save": "Save",
       "saving": "Saving..."
     },
-    "save-dashboard-form-common-options": {
-      "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Save current variable values as dashboard default” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
-      "show-variables-warning-alert-title": "Variable queries failed"
-    },
     "save-provisioned-dashboard-form": {
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
