@@ -766,8 +766,9 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Record != nil {
 		result.Record = &Record{
-			From:   alertRule.Record.From,
-			Metric: alertRule.Record.Metric,
+			From:                alertRule.Record.From,
+			Metric:              alertRule.Record.Metric,
+			TargetDatasourceUID: alertRule.Record.TargetDatasourceUID,
 		}
 	}
 

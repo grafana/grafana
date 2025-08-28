@@ -537,6 +537,14 @@ func (a *AlertRuleMutators) WithAllRecordingRules() AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithoutTargetDataSource() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Record != nil {
+			rule.Record.TargetDatasourceUID = ""
+		}
+	}
+}
+
 func (a *AlertRuleMutators) WithMetric(metric string) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		if rule.Record == nil {
@@ -1337,6 +1345,9 @@ func ConvertToRecordingRule(rule *AlertRule) {
 	}
 	if rule.Record.Metric == "" {
 		rule.Record.Metric = fmt.Sprintf("some_metric_%s", util.GenerateShortUID())
+	}
+	if rule.Record.TargetDatasourceUID == "" {
+		rule.Record.TargetDatasourceUID = util.GenerateShortUID()
 	}
 	rule.Condition = ""
 	rule.NoDataState = ""
