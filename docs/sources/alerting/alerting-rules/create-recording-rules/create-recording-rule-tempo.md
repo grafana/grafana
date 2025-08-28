@@ -60,7 +60,7 @@ For additional information, refer to [Grafana-managed recording rules](https://g
      ```
    - **Expressions**: Typically use **Reduce** > **Last** to take the most recent computed value.
 
-   {{< figure src="/media/docs/grafana/alerting/screenshot-recording-rule-tempo-definition-private-preview.png" alt="Defining the recording rule for Tempo.">}}
+   {{< figure src="/media/docs/grafana/alerting/screenshot-recording-rule-tempo-definition-private-preview.png" alt="Defining the recording rule for Tempo." >}}
 
 1. Organize the rule by selecting a **folder** and adding **labels**.
    - Labels can help group or filter rules later.
