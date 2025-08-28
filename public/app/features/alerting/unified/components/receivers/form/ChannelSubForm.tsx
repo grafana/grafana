@@ -7,7 +7,7 @@ import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption } from 'app/types/alerting';
+import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {

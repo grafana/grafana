@@ -28,7 +28,7 @@ import {
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/types/alerting';
+import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
