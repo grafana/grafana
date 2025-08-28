@@ -969,7 +969,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/routes/ @grafana/grafana-search-navigate-organise
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
-/public/app/types/alerting.ts @grafana/alerting-frontend
 /public/app/types/unified-alerting-dto.ts @grafana/alerting-frontend
 /public/app/types/unified-alerting.ts @grafana/alerting-frontend
 /public/dashboards/ @grafana/dashboards-squad
