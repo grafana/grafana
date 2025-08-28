@@ -87,7 +87,7 @@ export const FolderPickerTab = (props: Props) => {
                     value: `${folder}/${item.name}`,
                     label: item.name,
                     search: (idx ? item.name.substring(0, idx) : item.name).toLowerCase(),
-                    imgUrl: `public/${folder}/${item.name}`,
+                    imgUrl: `${window.__grafana_public_path__}${folder}/${item.name}`,
                   });
                 }
               });
