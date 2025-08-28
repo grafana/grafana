@@ -169,8 +169,8 @@ describe('Infinity connections', () => {
   describe('buildActionProxyRequest', () => {
     const createProxyConnectionAction = (overrides = {}): Action => ({
       title: 'Infinity API Call',
-      type: ActionType.Proxy,
-      [ActionType.Proxy]: {
+      type: ActionType.Infinity,
+      [ActionType.Infinity]: {
         method: HttpRequestMethod.POST,
         url: 'https://api.example.com/data',
         body: '{"test": "data"}',

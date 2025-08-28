@@ -4,7 +4,7 @@ import { SelectableValue } from './select';
 
 export enum ActionType {
   Fetch = 'fetch',
-  Proxy = 'proxy',
+  Infinity = 'infinity',
 }
 
 type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
@@ -13,7 +13,7 @@ export interface Action {
   type: ActionType;
   title: string;
   [ActionType.Fetch]?: FetchOptions;
-  [ActionType.Proxy]?: ProxyOptions;
+  [ActionType.Infinity]?: InfinityOptions;
   confirmation?: string;
   oneClick?: boolean;
   variables?: ActionVariable[];
@@ -50,7 +50,7 @@ export interface FetchOptions {
   headers?: Array<[string, string]>;
 }
 
-export interface ProxyOptions extends FetchOptions {
+export interface InfinityOptions extends FetchOptions {
   datasourceType: SupportedDataSourceTypes;
   datasourceUid: string;
 }

@@ -114,11 +114,11 @@ describe('ActionEditor', () => {
       expect(screen.getByText('Connection')).toBeInTheDocument();
     });
 
-    it('renders connection picker for proxy action type', () => {
+    it('renders connection picker for Infinity action type', () => {
       const proxyAction: Action = {
         ...defaultAction,
-        type: ActionType.Proxy,
-        [ActionType.Proxy]: {
+        type: ActionType.Infinity,
+        [ActionType.Infinity]: {
           method: HttpRequestMethod.POST,
           url: 'https://api.example.com',
           body: '{}',
@@ -153,11 +153,11 @@ describe('ActionEditor', () => {
       expect(screen.getByText('Direct from browser')).toBeInTheDocument();
     });
 
-    it('renders with proxy action type showing datasource connection', () => {
+    it('renders with Infinity action type showing datasource connection', () => {
       const proxyAction: Action = {
         ...defaultAction,
-        type: ActionType.Proxy,
-        [ActionType.Proxy]: {
+        type: ActionType.Infinity,
+        [ActionType.Infinity]: {
           method: HttpRequestMethod.POST,
           url: 'https://api.example.com',
           body: '{}',

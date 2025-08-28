@@ -11,7 +11,7 @@ import {
   FieldType,
   getFieldDataContextClone,
   InterpolateFunction,
-  ProxyOptions,
+  InfinityOptions,
   ScopedVars,
   textUtil,
   ValueLinkConfig,
@@ -88,7 +88,7 @@ export const getActions = (
       onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         let request = {} as BackendSrvRequest;
-        if (grafanaConfig.featureToggles.vizActionsAuth && action.type === ActionType.Proxy) {
+        if (grafanaConfig.featureToggles.vizActionsAuth && action.type === ActionType.Infinity) {
           request = buildActionProxyRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
         } else if (action.type === ActionType.Fetch) {
           request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
@@ -244,7 +244,7 @@ interface KeyValuePair {
 /** @internal */
 interface DatasourceRequestBuilder {
   buildRequest(
-    proxyConfig: ProxyOptions,
+    proxyConfig: InfinityOptions,
     url: URL,
     data: string | undefined,
     headers: Array<[string, string]>,
@@ -256,7 +256,7 @@ interface DatasourceRequestBuilder {
 /** @internal */
 class InfinityRequestBuilder implements DatasourceRequestBuilder {
   buildRequest(
-    proxyConfig: ProxyOptions,
+    proxyConfig: InfinityOptions,
     url: URL,
     data: string | undefined,
     headers: Array<[string, string]>,
@@ -330,11 +330,11 @@ export const buildActionProxyRequest = (action: Action, replaceVariables: Interp
 
   // @TODO
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const proxyConfig = config as ProxyOptions;
-  if (!proxyConfig.datasourceUid) {
+  const infinityConfig = config as InfinityOptions;
+  if (!infinityConfig.datasourceUid) {
     throw new Error('Proxy action requires a datasource to be configured');
   }
 
-  const requestBuilder = getDatasourceRequestBuilder(proxyConfig.datasourceType);
-  return requestBuilder.buildRequest(proxyConfig, url, data, processedHeaders, processedQueryParams, contentType);
+  const requestBuilder = getDatasourceRequestBuilder(infinityConfig.datasourceType);
+  return requestBuilder.buildRequest(infinityConfig, url, data, processedHeaders, processedQueryParams, contentType);
 };

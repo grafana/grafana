@@ -9,7 +9,7 @@ import {
   httpMethodOptions,
   HttpRequestMethod,
   VariableSuggestion,
-  ProxyOptions,
+  InfinityOptions,
   FetchOptions,
   SupportedDataSourceTypes,
   ActionVariable,
@@ -55,10 +55,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const getActionConfig = (): FetchOptions | ProxyOptions => {
-    if (value.type === ActionType.Proxy) {
+  const getActionConfig = (): FetchOptions | InfinityOptions => {
+    if (value.type === ActionType.Infinity) {
       return (
-        value[ActionType.Proxy] || {
+        value[ActionType.Infinity] || {
           ...DEFAULT_HTTP_CONFIG,
           datasourceUid: '',
           datasourceType: SupportedDataSourceTypes.Infinity,
@@ -69,17 +69,17 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     return value[ActionType.Fetch] || DEFAULT_HTTP_CONFIG;
   };
 
-  const updateActionConfig = (updates: Partial<FetchOptions | ProxyOptions>) => {
-    const configKey = value.type === ActionType.Proxy ? ActionType.Proxy : ActionType.Fetch;
+  const updateActionConfig = (updates: Partial<FetchOptions | InfinityOptions>) => {
+    const configKey = value.type === ActionType.Infinity ? ActionType.Infinity : ActionType.Fetch;
     const baseConfig = getActionConfig();
 
     const updatedConfig = {
       ...baseConfig,
       ...updates,
-      ...(value.type === ActionType.Proxy && {
+      ...(value.type === ActionType.Infinity && {
         datasourceType: SupportedDataSourceTypes.Infinity,
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        datasourceUid: (baseConfig as ProxyOptions).datasourceUid || '',
+        datasourceUid: (baseConfig as InfinityOptions).datasourceUid || '',
       }),
     };
 
@@ -90,8 +90,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
   };
 
   const updateConfig =
-    <K extends keyof (FetchOptions & ProxyOptions)>(field: K) =>
-    (newValue: (FetchOptions & ProxyOptions)[K]) => {
+    <K extends keyof (FetchOptions & InfinityOptions)>(field: K) =>
+    (newValue: (FetchOptions & InfinityOptions)[K]) => {
       updateActionConfig({ [field]: newValue });
     };
 
@@ -148,8 +148,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     } else {
       onChange(index, {
         ...baseAction,
-        type: ActionType.Proxy,
-        [ActionType.Proxy]: {
+        type: ActionType.Infinity,
+        [ActionType.Infinity]: {
           ...getActionConfig(),
           datasourceUid: connectionType.uid,
           datasourceType: SupportedDataSourceTypes.Infinity,
@@ -225,7 +225,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
           <ConnectionPicker
             actionType={value.type}
-            datasourceUid={value?.[ActionType.Proxy]?.datasourceUid}
+            datasourceUid={value?.[ActionType.Infinity]?.datasourceUid}
             onChange={onConnectionChange}
           />
         </InlineField>

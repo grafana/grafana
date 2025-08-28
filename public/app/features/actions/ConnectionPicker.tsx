@@ -63,7 +63,7 @@ export const ConnectionPicker = ({ actionType, datasourceUid, onChange }: Connec
   const getCurrentValue = () => {
     if (actionType === ActionType.Fetch) {
       return DIRECT_OPTION_VALUE;
-    } else if (actionType === ActionType.Proxy && datasourceUid) {
+    } else if (actionType === ActionType.Infinity && datasourceUid) {
       return datasourceUid;
     }
     return DIRECT_OPTION_VALUE;

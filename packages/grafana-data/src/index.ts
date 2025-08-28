@@ -843,7 +843,7 @@ export {
   httpMethodOptions,
   SupportedDataSourceTypes,
   type FetchOptions,
-  type ProxyOptions,
+  type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

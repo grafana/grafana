@@ -48,7 +48,7 @@ export const ActionEditorModalContent = ({
           disabled={
             dirtyAction.title.trim() === '' ||
             !dirtyAction[dirtyAction.type]?.url?.trim() ||
-            (dirtyAction.type === ActionType.Proxy && !dirtyAction[ActionType.Proxy]?.datasourceUid)
+            (dirtyAction.type === ActionType.Infinity && !dirtyAction[ActionType.Infinity]?.datasourceUid)
           }
         >
           <Trans i18nKey="action-editor.modal.save-button">Save</Trans>
