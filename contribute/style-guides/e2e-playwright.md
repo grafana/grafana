@@ -73,7 +73,7 @@ yarn e2e:playwright --project <projectname>
 yarn playwright show-report
 ```
 
-You can open an arbitrary report with `yarn playwright show-report <reportLocation>`. For Grafanistas, the reports are also downloadable from CI by:
+You can open an arbitrary report with `yarn playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
 
 - Clicking through to _End-to-end tests_/_All Playwright tests complete_.
 - Clicking _Summary_.
