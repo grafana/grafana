@@ -42,36 +42,42 @@ const dataSources = {
     uid: 'default-ds-uid',
     type: 'prometheus',
     isDefault: true,
+    apiVersion: 'v1',
   }),
   nonDefault: mockDataSource({
     name: 'Non Default Test Datasource Name',
     uid: 'non-default-test-ds-uid',
     type: 'loki',
     isDefault: false,
+    apiVersion: 'v1',
   }),
   existingRef: mockDataSource({
     name: 'Existing Ref Name',
     uid: 'existing-ref-uid',
     type: 'prometheus',
     isDefault: false,
+    apiVersion: 'v1',
   }),
   existingTarget: mockDataSource({
     name: 'Existing Target Name',
     uid: 'existing-target-uid',
     type: 'elasticsearch',
     isDefault: false,
+    apiVersion: 'v2',
   }),
   existingRefAlt: mockDataSource({
     name: 'Existing Ref Name',
     uid: 'existing-ref',
     type: 'prometheus',
     isDefault: false,
+    apiVersion: 'v1',
   }),
   mixed: mockDataSource({
     name: MIXED_DATASOURCE_NAME,
     type: 'mixed',
     uid: MIXED_DATASOURCE_NAME,
     isDefault: false,
+    apiVersion: 'v1',
   }),
 };
 
@@ -113,7 +119,7 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   jsonInputs
-    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 38)
+    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 35)
     .forEach((inputFile) => {
       it(`should migrate ${inputFile} correctly`, async () => {
         const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
@@ -218,4 +224,6 @@ function cleanDashboardModel(dashboard: DashboardModel) {
     // @ts-expect-error - Backend removes these deprecated table properties
     delete panel.columns;
   }
+
+  return dashboardWithoutNulls;
 }
