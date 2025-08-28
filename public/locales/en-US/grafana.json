@@ -3626,7 +3626,7 @@
       "error-title": "Error loading folders",
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
-      "root-title-custom": "",
+      "root-title-custom": "{{title}}",
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },

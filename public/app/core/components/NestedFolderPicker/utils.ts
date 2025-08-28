@@ -21,7 +21,7 @@ export const getCustomRootFolderItem = (
   item: {
     kind: 'folder' as const,
     title: title
-      ? t('browse-dashboards.folder-picker.root-title-custom', title)
+      ? t('browse-dashboards.folder-picker.root-title-custom', '{{title}}', { title })
       : t('browse-dashboards.folder-picker.root-title', 'Dashboards'),
     uid: '',
     managedBy: managedBy,

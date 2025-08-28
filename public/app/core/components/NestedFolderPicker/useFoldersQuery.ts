@@ -11,6 +11,7 @@ export function useFoldersQuery({
   permission,
   /* Start tree from this folder instead of root */
   rootFolderUID,
+  /* rootFolderItem: provide a custom root folder item, if no value passed in, default to "Dashboards" */
   rootFolderItem,
 }: {
   isBrowsing: boolean;

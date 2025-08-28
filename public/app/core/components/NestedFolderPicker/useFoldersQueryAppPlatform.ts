@@ -30,7 +30,7 @@ export function useFoldersQueryAppPlatform(
   openFolders: Record<string, boolean>,
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID?: string,
-  /* Custom root folder item, default is "Dashboards" */
+  /* rootFolderItem: provide a custom root folder item, if no value passed in, default to "Dashboards" */
   rootFolderItem?: DashboardsTreeItem
 ) {
   const dispatch = useDispatch();

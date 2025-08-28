@@ -51,6 +51,7 @@ export function useFoldersQueryLegacy(
   permission?: PermissionLevelString,
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID?: string,
+  /* rootFolderItem: provide a custom root folder item, if no value passed in, default to "Dashboards" */
   rootFolderItem?: DashboardsTreeItem
 ) {
   const dispatch = useDispatch();
