@@ -2709,9 +2709,6 @@ exports[`better eslint`] = {
     "public/app/features/plugins/extensions/usePluginFunctions.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/plugins/loader/sharedDependencies.ts:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/features/plugins/sandbox/distortions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3153,9 +3150,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./LogsQueryEditor\`)", "0"]
     ],
-    "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3173,9 +3167,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TracesQueryEditor\`)", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -3246,9 +3237,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/MetricsQueryEditor.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/QueryEditor/MetricsQueryEditor/SQLBuilderEditor/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./SQLBuilderEditor\`)", "0"]
@@ -3919,9 +3907,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/live/LivePanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/panel/logs/LogsPanel.test.tsx:5381": [
-      [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/panel/logs/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
