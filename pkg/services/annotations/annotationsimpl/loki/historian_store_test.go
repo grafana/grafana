@@ -828,7 +828,7 @@ func NewFakeLokiClient() *FakeLokiClient {
 		cfg: lokiclient.LokiConfig{
 			WritePathURL:   url,
 			ReadPathURL:    url,
-			Encoder:        lokiclient.JsonEncoder{},
+			Encoder:        lokiclient.JSONEncoder{},
 			MaxQueryLength: 721 * time.Hour,
 			MaxQuerySize:   65536,
 		},
