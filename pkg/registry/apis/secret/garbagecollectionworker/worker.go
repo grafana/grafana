@@ -44,6 +44,7 @@ func (w *Worker) Run(ctx context.Context) error {
 	}
 
 	timer := time.NewTicker(w.Cfg.SecretsManagement.GCWorkerPollInterval)
+	defer timer.Stop()
 
 	for {
 		select {
