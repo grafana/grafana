@@ -584,80 +584,17 @@ func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []
 	return count, err
 }
 
-func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesByGroupQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
+func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.Table("alert_rule")
-
-		if query.OrgID >= 0 {
-			q = q.Where("org_id = ?", query.OrgID)
+		q, groupsSet, err := st.buildListAlertRulesQuery(sess, query)
+		if err != nil {
+			return err
 		}
-
-		if query.DashboardUID != "" {
-			q = q.Where("dashboard_uid = ?", query.DashboardUID)
-			if query.PanelID != 0 {
-				q = q.Where("panel_id = ?", query.PanelID)
-			}
-		}
-
-		if len(query.NamespaceUIDs) > 0 {
-			args, in := getINSubQueryArgs(query.NamespaceUIDs)
-			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
-		}
-
-		if len(query.RuleUIDs) > 0 {
-			args, in := getINSubQueryArgs(query.RuleUIDs)
-			q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
-		}
-
-		var groupsMap map[string]struct{}
-		if len(query.RuleGroups) > 0 {
-			groupsMap = make(map[string]struct{})
-			args, in := getINSubQueryArgs(query.RuleGroups)
-			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
-			for _, group := range query.RuleGroups {
-				groupsMap[group] = struct{}{}
-			}
-		}
-
-		if query.ReceiverName != "" {
-			q, err = st.filterByContentInNotificationSettings(query.ReceiverName, q)
-			if err != nil {
-				return err
-			}
-		}
-
-		if query.TimeIntervalName != "" {
-			q, err = st.filterByContentInNotificationSettings(query.TimeIntervalName, q)
-			if err != nil {
-				return err
-			}
-		}
-
-		if query.HasPrometheusRuleDefinition != nil {
-			q, err = st.filterWithPrometheusRuleDefinition(*query.HasPrometheusRuleDefinition, q)
-			if err != nil {
-				return err
-			}
-		}
-
-		switch query.RuleType {
-		case ngmodels.RuleTypeFilterAlerting:
-			q = q.Where("record = ''")
-		case ngmodels.RuleTypeFilterRecording:
-			q = q.Where("record != ''")
-		case ngmodels.RuleTypeFilterAll:
-			// no additional filter
-		default:
-			return fmt.Errorf("unknown rule type filter %q", query.RuleType)
-		}
-
-		// Order by group first, then by rule index within group
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		var cursor ngmodels.GroupCursor
-		if query.GroupContinueToken != "" {
+		if query.ContinueToken != "" {
 			// only set the cursor if it's valid, otherwise we'll start from the beginning
-			if cur, err := ngmodels.DecodeGroupCursor(query.GroupContinueToken); err == nil {
+			if cur, err := ngmodels.DecodeGroupCursor(query.ContinueToken); err == nil {
 				cursor = cur
 			}
 		}
@@ -701,7 +638,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 			if key != cursor {
 				// Check if we've reached the group limit
-				if query.GroupLimit > 0 && groupsFetched == query.GroupLimit {
+				if query.Limit > 0 && groupsFetched == query.Limit {
 					// Generate next token for the next group
 					nextToken = ngmodels.EncodeGroupCursor(cursor)
 					break
@@ -713,7 +650,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 
 			// Apply post-query filters
-			if !shouldIncludeRule(&converted, query, groupsMap) {
+			if !shouldIncludeRule(&converted, query, groupsSet) {
 				continue
 			}
 
@@ -731,7 +668,7 @@ func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm
 		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup)
 }
 
-func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesByGroupQuery, groupsMap map[string]struct{}) bool {
+func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
 	if query.ReceiverName != "" {
 		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
 			return settings.Receiver == query.ReceiverName
@@ -786,6 +723,24 @@ func (st DBstore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.L
 		if err != nil {
 			return err
 		}
+
+		if query.ContinueToken != "" {
+			cursor, err := decodeCursor(query.ContinueToken)
+			if err != nil {
+				return fmt.Errorf("invalid continue token: %w", err)
+			}
+
+			// Build cursor condition that matches the ORDER BY clause
+			q = buildCursorCondition(q, cursor)
+		}
+
+		if query.Limit > 0 {
+			// Ensure we clamp to the max int available on the platform
+			lim := min(query.Limit, math.MaxInt)
+			// Fetch one extra rule to determine if there are more results
+			q = q.Limit(int(lim) + 1)
+		}
+
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		rule := new(alertRule)
 		rows, err := q.Rows(rule)
@@ -919,23 +874,6 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	}
 
 	q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
-
-	if query.ContinueToken != "" {
-		cursor, err := decodeCursor(query.ContinueToken)
-		if err != nil {
-			return nil, groupsSet, fmt.Errorf("invalid continue token: %w", err)
-		}
-
-		// Build cursor condition that matches the ORDER BY clause
-		q = buildCursorCondition(q, cursor)
-	}
-
-	if query.Limit > 0 {
-		// Ensure we clamp to the max int available on the platform
-		lim := min(query.Limit, math.MaxInt)
-		// Fetch one extra rule to determine if there are more results
-		q = q.Limit(int(lim) + 1)
-	}
 	return q, groupsSet, nil
 }
 
