@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -36,17 +36,19 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    const variableListId = useId();
     const set = this.set;
 
     const options = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
         new OptionsPaneItemDescriptor({
           title: '',
+          id: variableListId,
           skipField: true,
           render: () => <VariableList set={set} />,
         })
       );
-    }, [set]);
+    }, [set, variableListId]);
 
     return [options];
   }

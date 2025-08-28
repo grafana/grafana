@@ -339,7 +339,7 @@ export const LogLineDetailsField = ({
         }
         return (
           <div className={styles.row} key={`${link.title}-${i}`}>
-            <div className={disableActions ? undefined : styles.link}>
+            <div className={disableActions ? styles.linkNoActions : styles.link}>
               <DataLinkButton
                 buttonProps={{
                   // Show tooltip message if max number of pinned lines has been reached
@@ -400,6 +400,10 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   }),
   link: css({
     gridColumn: '2 / 4',
+  }),
+  linkNoActions: css({
+    gridColumn: 'span 2',
+    paddingBottom: theme.spacing(0.5),
   }),
   stats: css({
     paddingRight: theme.spacing(1),

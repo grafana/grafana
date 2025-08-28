@@ -534,13 +534,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "prometheusCodeModeMetricNamesSearch",
-			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-		},
-		{
 			Name:         "addFieldFromCalculationStatFunctions",
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1061,13 +1054,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "tableNextGen",
-			Description:  "Allows access to the new react-data-grid based table component.",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "alertingPrometheusRulesPrimary",
 			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
 			Stage:        FeatureStageExperimental,
@@ -1292,6 +1278,15 @@ var (
 		{
 			Name:              "alertingAIGenTemplates",
 			Description:       "Enable AI-generated alerting templates.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingEnrichmentPerRule",
+			Description:       "Enable enrichment per rule in the alerting UI.",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,

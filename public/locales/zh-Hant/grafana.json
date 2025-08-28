@@ -2768,6 +2768,7 @@
           "time": "時間"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "篩選群組",
       "filter-group-tooltip": "透過完全匹配或正規表達式篩選每個狀態歷史紀錄組，例如：",
       "placeholder-search": "搜尋",
@@ -6352,7 +6353,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "從資料庫新增查詢"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -9018,6 +9019,7 @@
     "name-line-width": "線寬",
     "name-stacking": "堆疊"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在載入",
@@ -9613,6 +9615,7 @@
       "show-timestamps": "顯示時間戳記",
       "show-unique-labels": "顯示唯一標籤",
       "unwrap-lines": "取消換行",
+      "wrap-json-lines": "",
       "wrap-lines": "換行"
     },
     "logs-navigation": {
@@ -11195,6 +11198,7 @@
       "description-enabled": "一旦啟用自動拉取，目標便無法變更。",
       "description-read-only": "無法透過 Grafana 修改資源。",
       "description-title": "設定的人類可讀名稱",
+      "error-fetch-branches": "",
       "error-required": "此為必填欄位。",
       "error-save-repository": "無法儲存儲存庫設定",
       "label-automatic-pulling": "自動拉取",
@@ -11407,6 +11411,16 @@
       "title-delete-all-configured-repositories": "刪除所有已設定的儲存庫",
       "title-legacy-storage-detected": "偵測到舊的儲存空間"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "檢視詳細資料",
       "loading-finished-job": "正在載入已完成的作業…",
@@ -12667,10 +12681,6 @@
     "login": "登入"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "若選取，文字將依配置欄位的寬度換行",
-      "label-wrap-text": "文字自動換行"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "儀表顯示模式",
       "label-value-display": "數值顯示"
@@ -12698,13 +12708,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "若選取，整列將以此儲存格的顏色顯示。",
-      "description-wrap-text": "若選取，文字將依配置欄位的寬度換行",
-      "label": {
-        "text-alpha": "Alpha"
-      },
       "label-apply-to-entire-row": "套用至整列",
-      "label-background-display-mode": "背景顯示模式",
-      "wrap-text": "文字自動換行"
+      "label-background-display-mode": "背景顯示模式"
     },
     "column-alignment-options": {
       "label-auto": "自動",
@@ -12722,8 +12727,9 @@
     "description-column-filter": "啟用/停用表格中的欄位篩選條件",
     "description-count-rows": "顯示所有資料列的單一計數",
     "description-fields": "選擇應計算的欄位",
+    "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
-    "description-wrap-header-text": "啟用欄標題的文字自動換行功能",
+    "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "若圖片無法顯示或為使用螢幕閱讀器的使用者顯示的替代文字",
       "description-title-text": "滑鼠移至圖片上方時所顯示的文字",
@@ -12748,51 +12754,7 @@
     "name-column-filter": "欄篩選條件",
     "name-column-width": "欄寬",
     "name-count-rows": "計數列",
-    "name-enable-paginations": "啟用分頁",
-    "name-fields": "欄位",
-    "name-hide-in-table": "在表格中隱藏",
-    "name-min-column-width": "最小欄寬",
-    "name-show-table-footer": "顯示表格頁尾",
-    "name-show-table-header": "顯示表格頁首",
-    "name-wrap-header-text": "換行標題文字",
-    "placeholder-column-width": "自動",
-    "placeholder-fields": "所有數值欄位",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "儲存格選項",
-    "category-table": "表格",
-    "category-table-footer": "表格頁尾",
-    "cell-height-options": {
-      "label-large": "大",
-      "label-medium": "中",
-      "label-small": "小"
-    },
-    "column-alignment-options": {
-      "label-auto": "自動",
-      "label-center": "置中",
-      "label-left": "靠左",
-      "label-right": "右側"
-    },
-    "description-calculation": "選擇一個歸約函數/計算方式",
-    "description-cell-value-inspect": "在模式視窗中啟用儲存格值檢查",
-    "description-column-filter": "啟用/停用表格中的欄位篩選條件",
-    "description-count-rows": "顯示所有資料列的單一計數",
-    "description-fields": "選擇應計算的欄位",
-    "description-frozen-columns": "",
-    "description-min-column-width": "欄自動調整大小的最小寬度",
-    "description-tooltip-from-field": "",
-    "name-calculation": "計算",
-    "name-cell-height": "儲存格高度",
-    "name-cell-type": "儲存格類型",
-    "name-cell-value-inspect": "儲存格值檢查",
-    "name-column-alignment": "欄對齊方式",
-    "name-column-filter": "欄篩選條件",
-    "name-column-width": "欄寬",
-    "name-count-rows": "計數列",
-    "name-enable-pagination": "啟用分頁",
+    "name-enable-pagination": "",
     "name-fields": "欄位",
     "name-frozen-columns": "",
     "name-hide-in-table": "在表格中隱藏",
@@ -12801,6 +12763,8 @@
     "name-show-table-header": "顯示表格頁首",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "換行標題文字",
+    "name-wrap-text": "",
     "placeholder-column-width": "自動",
     "placeholder-fields": "所有數值欄位",
     "tooltip-placement-options": {
