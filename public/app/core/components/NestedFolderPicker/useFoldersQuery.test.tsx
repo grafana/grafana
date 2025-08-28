@@ -51,7 +51,14 @@ describe('useFoldersQuery', () => {
 });
 
 async function testFn() {
-  const { result } = renderHook(() => useFoldersQuery(true, {}), { wrapper });
+  const { result } = renderHook(
+    () =>
+      useFoldersQuery({
+        isBrowsing: true,
+        openFolders: {},
+      }),
+    { wrapper }
+  );
 
   expect(result.current.items[0]).toEqual(getRootFolderItem());
   expect(result.current.isLoading).toBe(false);

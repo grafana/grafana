@@ -29,7 +29,8 @@ export function useFoldersQueryAppPlatform(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
   /* rootFolderUID: configure which folder to start browsing from */
-  rootFolderUID?: string
+  rootFolderUID?: string,
+  rootFolderDisplay?: string
 ) {
   const dispatch = useDispatch();
 
@@ -157,10 +158,10 @@ export function useFoldersQueryAppPlatform(
 
     const startingToken = rootFolderUID ?? rootFolderToken;
     const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
-    rootFlatTree.unshift(getRootFolderItem());
+    rootFlatTree.unshift(getRootFolderItem(rootFolderDisplay));
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderDisplay]);
 
   return {
     items: treeList,
