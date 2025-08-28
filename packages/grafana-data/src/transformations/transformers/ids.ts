@@ -43,4 +43,5 @@ export enum DataTransformerID {
   regression = 'regression',
   groupToNestedTable = 'groupToNestedTable',
   eventDistribution = 'eventDistribution',
+  ignoreRow = 'ignoreRow',
 }

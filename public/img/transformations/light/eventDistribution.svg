@@ -1,0 +1,58 @@
+<svg width="72" height="48" viewBox="0 0 72 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clip-path="url(#clip0_eventDistribution)">
+        <!-- Timeline base -->
+        <path d="M4 40H68" stroke="#24292E" stroke-width="2" />
+
+        <!-- Time markers -->
+        <circle cx="12" cy="40" r="2" fill="#24292E" />
+        <circle cx="24" cy="40" r="2" fill="#24292E" />
+        <circle cx="36" cy="40" r="2" fill="#24292E" />
+        <circle cx="48" cy="40" r="2" fill="#24292E" />
+        <circle cx="60" cy="40" r="2" fill="#24292E" />
+
+        <!-- Event distribution bars with gradient -->
+        <rect x="8" y="30" width="8" height="10" fill="url(#paint0_linear_eventDistribution)" />
+        <rect x="20" y="15" width="8" height="25" fill="url(#paint1_linear_eventDistribution)" />
+        <rect x="32" y="8" width="8" height="32" fill="url(#paint2_linear_eventDistribution)" />
+        <rect x="44" y="20" width="8" height="20" fill="url(#paint3_linear_eventDistribution)" />
+        <rect x="56" y="25" width="8" height="15" fill="url(#paint4_linear_eventDistribution)" />
+
+        <!-- Event dots to show individual events -->
+        <circle cx="12" cy="28" r="1.5" fill="#3865AB" />
+        <circle cx="24" cy="12" r="1.5" fill="#3865AB" />
+        <circle cx="36" cy="6" r="1.5" fill="#3865AB" />
+        <circle cx="48" cy="18" r="1.5" fill="#3865AB" />
+        <circle cx="60" cy="23" r="1.5" fill="#3865AB" />
+    </g>
+
+    <defs>
+        <linearGradient id="paint0_linear_eventDistribution" x1="8" y1="30" x2="16" y2="40"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F2CC0C" />
+            <stop offset="1" stop-color="#FF9830" />
+        </linearGradient>
+        <linearGradient id="paint1_linear_eventDistribution" x1="20" y1="15" x2="28" y2="40"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F2CC0C" />
+            <stop offset="1" stop-color="#FF9830" />
+        </linearGradient>
+        <linearGradient id="paint2_linear_eventDistribution" x1="32" y1="8" x2="40" y2="40"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F2CC0C" />
+            <stop offset="1" stop-color="#FF9830" />
+        </linearGradient>
+        <linearGradient id="paint3_linear_eventDistribution" x1="44" y1="20" x2="52" y2="40"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F2CC0C" />
+            <stop offset="1" stop-color="#FF9830" />
+        </linearGradient>
+        <linearGradient id="paint4_linear_eventDistribution" x1="56" y1="25" x2="64" y2="40"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F2CC0C" />
+            <stop offset="1" stop-color="#FF9830" />
+        </linearGradient>
+        <clipPath id="clip0_eventDistribution">
+            <rect width="72" height="48" fill="white" />
+        </clipPath>
+    </defs>
+</svg> 
