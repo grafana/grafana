@@ -414,6 +414,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         dashboardRef: this.getRef(),
         saveAsCopy,
         onSaveSuccess,
+        showVariablesWarning: this.hasVariableErrors(),
       }),
     });
   }
@@ -791,6 +792,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
+  }
+
+  private hasVariableErrors(): boolean {
+    return Boolean(this.state.$variables?.state.variables.find((v) => Boolean(v.state.error)));
   }
 }
 

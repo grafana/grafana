@@ -17,7 +17,7 @@ import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
 
-const AutoCellRenderer = memo((props: TableCellRendererProps) => (
+export const AutoCellRenderer = memo((props: TableCellRendererProps) => (
   <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 ));
 AutoCellRenderer.displayName = 'AutoCellRenderer';

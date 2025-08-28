@@ -54,6 +54,7 @@ export function useNamespaceAndGroupOptions(): {
       ruleSource: { uid: ds.uid },
       excludeAlerts: true,
       groupLimit: 500,
+      notificationOptions: { showErrorAlert: false },
     })
   );
 
