@@ -495,7 +495,10 @@ func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
 	panic("not possible")
 }
 
-// assumes the objects are sorted by name AND resourceVersion (doesn't look like it's the case right now)
+// k.dataStore.Keys lists ALL objects under Namespace/Group/Resource
+// -> manually skip the ones that are older than sinceRv
+// -> assumes the objects are sorted by name AND resourceVersion (doesn't look like it's the case right now, but we could
+// change it?)
 func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeen *ModifiedResource
@@ -524,6 +527,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 
 			if lastSeen.Key.Name != dataKey.Name {
 				fmt.Println("yielding: ", dataKey)
+				// TODO get value from k.dataStore.Get so we can update ModifiedResource.Value before yielding
 				if !yield(lastSeen, nil) {
 					return
 				}
@@ -545,6 +549,11 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	}
 }
 
+// only returns events newer than sinceRv
+// will return events for ALL tenants. So manually filter out events that are not from Namespace/Group/Resource
+// results will be ordered by RV. Need to sort by Name->RV and then yield the latest one for each Name
+// k.eventStore.Get to retrieve the full JSON of the event
+// Event doesn't seem to have Value???
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv) {
