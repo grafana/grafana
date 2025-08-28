@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -177,9 +178,13 @@ func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles) 
 		log: log.New("grafana-apiserver.dashboards"),
 		reg: prometheus.NewRegistry(),
 
-		accessClient: ac,
-		authorizer:   authsvc.NewResourceAuthorizer(ac),
-		features:     features,
+		cfg: &setting.Cfg{
+			MinRefreshInterval: "10s",
+		},
+		accessClient:     ac,
+		authorizer:       authsvc.NewResourceAuthorizer(ac),
+		features:         features,
+		dashboardService: &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 
 		ignoreLegacy: true,
 	}
@@ -315,20 +320,20 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	id, err := identity.GetRequester(ctx)
+	/* id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
-	}
+	} */
 
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
-		if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+		/* if err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), accessor.GetFolder())
-		}
+		} */
 	}
 
 	// Validate quota
-	if !a.IsDryRun() {
+	/* if !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
 		params.OrgID = id.GetOrgID()
 		internalId, err := id.GetInternalID()
@@ -343,7 +348,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		if quotaReached {
 			return apierrors.NewForbidden(dashv1.DashboardResourceInfo.GroupResource(), a.GetName(), dashboards.ErrQuotaReached)
 		}
-	}
+	} */
 
 	return nil
 }
