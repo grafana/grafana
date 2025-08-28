@@ -67,20 +67,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	query := oas.Paths.Paths[root+options.QueryPath]
 	if query != nil && query.Post != nil {
 		query.Post.Tags = []string{"DataSource"}
-		query.Parameters = []*spec3.Parameter{
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "namespace",
-					In:          "path",
-					Description: "object name and auth scope, such as for teams and projects",
-					Example:     "default",
-					Required:    true,
-					Schema:      spec.StringProperty().UniqueValues(),
-				},
-			},
-		}
 		query.Post.Description = options.QueryDescription
-		query.Post.Parameters = nil //
 		query.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{

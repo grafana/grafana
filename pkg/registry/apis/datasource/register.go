@@ -235,8 +235,8 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// FIXME: temporarily register both "datasources" and "connections" query paths
 	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
 	// while we transition requests to the new path
-	storage["connections"] = &noopREST{}
-	storage["connections/query"] = &subQueryREST{builder: b}
+	storage["connections"] = &noopREST{}                            // hidden from openapi
+	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
