@@ -540,7 +540,7 @@ jobs:
         with:
           name: pa11y-ci-results
       - name: Extract and publish metrics
-        run: ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics "$GRAFANA_MISC_STATS_API_KEY"
+        run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
           GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
 
