@@ -229,7 +229,11 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 			}
 		}
 
-		ruleList = append(ruleList, r)
+		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
+			continue
+		}
+		copyR := models.CopyRule(r)
+		ruleList = append(ruleList, copyR)
 	}
 
 	return ruleList, nil
