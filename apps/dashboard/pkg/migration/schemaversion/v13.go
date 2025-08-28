@@ -41,6 +41,7 @@ func getDefaultCustomProperties() map[string]interface{} {
 			"type": "linear",
 		},
 		"showPoints": "auto",
+		"showValues": false,
 		"spanNulls":  false,
 		"stacking": map[string]interface{}{
 			"group": "A",
@@ -381,6 +382,7 @@ func isAliasRegex(alias string) bool {
 	return false
 }
 
+//nolint:gocyclo
 func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 	properties := []interface{}{}
 
@@ -424,16 +426,6 @@ func extractSeriesProperties(seriesMap map[string]interface{}) []interface{} {
 			properties = append(properties, map[string]interface{}{
 				"id":    "custom.showPoints",
 				"value": pointsBool,
-			})
-		}
-	}
-
-	// Show values
-	if showValues, ok := seriesMap["showValues"]; ok {
-		if showValuesBool, ok := showValues.(bool); ok {
-			properties = append(properties, map[string]interface{}{
-				"id":    "custom.showValues",
-				"value": showValuesBool,
 			})
 		}
 	}
