@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Kayıt kurallarını devre dışı bırak (beta)",
         "label-http-method": "HTTP yöntemi",
         "label-incremental-querying-beta": "Artımlı sorgulama (beta)",
-        "label-metric-names-suggestion-limit": "Metrik adları öneri sınırı",
         "label-prom-type-version": "{{promType}} sürümü",
         "label-prometheus-type": "Prometheus türü",
         "label-query-overlap-window": "Sorgu çakışma penceresi",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Bu özellik, kayıt kurallarını devre dışı bırakacaktır. Pano performansını artırmak için bu seçeneği etkinleştirin",
         "tooltip-http-method": "Prometheus veri kaynağınızı sorgulamak için POST veya GET HTTP yöntemini kullanabilirsiniz. POST, daha büyük sorgulara izin verdiği için önerilen yöntemdir. Prometheus sürümünüz 2.1'den eskiyse ya da ağınızda POST istekleri kısıtlıysa bunu GET olarak değiştirin.",
         "tooltip-incremental-querying-beta": "Bu özellik, göreli sorguların varsayılan davranışını değiştirerek Prometheus örneğinden her zaman güncel veri istenmesini sağlar. Bunun yerine, sorgu sonuçları önbelleğe alınır ve yalnızca yeni kayıtlar istenir. Veri tabanı ve ağ yükünü azaltmak için bu özelliği etkinleştirin.",
-        "tooltip-metric-names-suggestion-limit": "Kod modundaki sorgu düzenleyicide otomatik tamamlama önerisi olarak görünebilecek maksimum metrik adı sayısı.",
         "tooltip-prom-type-version": "{{promType}} örneğinizin sürümü otomatik olarak yapılandırılmamışsa bunu burada ayarlayın.",
         "tooltip-prometheus-type": "Veri tabanınızın türünü burada belirtin, örneğin: Prometheus, Cortex, Mimir veya Thanos. Bu alanı değiştirdiğinizde mevcut ayarlarınız kaydedilecektir. Bazı Prometheus türleri çeşitli API'leri destekler veya desteklemez. Örneğin bazı türler, etiket sorgularında performansı artırmak için düzenli ifade eşlemesini destekler. Bazı türlerin meta veriler için bir API'si vardır. Bu ayarı yanlış yaparsanız metrik ve etiket sorgularında beklenmedik davranışlarla karşılaşabilirsiniz. Lütfen doğru türü girdiğinizden emin olmak için Prometheus belgelerinizi kontrol edin.",
         "tooltip-query-overlap-window": "Süreyi {{example1}}, {{example2}} veya {{example3}} biçiminde ayarlayın. Varsayılan ayar {{default}}. Bu süre, her artımlı isteğin süresine eklenecektir.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "otomatik",
         "title-options": "Seçenekler",
         "tooltip-min-step": "Prometheus sorgusunun step (adım) parametresi ve <2>{{interval}}</2> ile <4>{{rateInterval}}</4> değişkenleri için ek bir alt sınırdır."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Otomatik tamamlama önerileri sınırlı",
-        "tooltip-autocomplete-suggestions-limited": "Metrik adlarının sayısı otomatik tamamlama sınırını aşıyor. Yalnızca en alakalı {{autocompleteLimit}} metrik görüntülenir. Eşiği veri kaynağı ayarlarından düzenleyebilirsiniz."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Bir sözdizimi hatası var veya oluşturucu moduna geçerken sorgu yapısı görselleştirilemiyor. Sorgunun bazı kısımları kaybolabilir.",

@@ -70,7 +70,6 @@ queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
 addFieldFromCalculationStatFunctions,GA,@grafana/dataviz-squad,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
@@ -168,6 +167,7 @@ alertingAIGenAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
 alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
+alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
