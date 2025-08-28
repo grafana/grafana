@@ -87,13 +87,9 @@ export function shouldTextWrap(field: Field): boolean {
 /**
  * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
  */
-function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight?: number): MeasureCellHeight {
+function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): MeasureCellHeight {
   return (value, width, field, rowIdx, lineHeight) => {
     const rawHeight = measurer(value, width, field, rowIdx, lineHeight);
-    if (maxHeight == null) {
-      return rawHeight;
-    }
-
     return Math.min(rawHeight, maxHeight);
   };
 }
