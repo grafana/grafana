@@ -5,8 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
-import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
 import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
+import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';

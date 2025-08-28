@@ -5,13 +5,13 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/core';
+import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import {
   AlertmanagerGroup,
   MatcherOperator,
   ObjectMatcher,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
 
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { mockReceiversState } from '../../mocks';

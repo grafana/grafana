@@ -1,18 +1,18 @@
 import { has, isArray, isNil, omitBy, pickBy } from 'lodash';
 
 import {
+  CloudNotifierType,
+  NotificationChannelOption,
+  NotifierDTO,
+  NotifierType,
+} from 'app/features/alerting/unified/types/alerting';
+import {
   AlertmanagerReceiver,
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   GrafanaManagedReceiverSecureFields,
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
-import {
-  CloudNotifierType,
-  NotificationChannelOption,
-  NotifierDTO,
-  NotifierType,
-} from 'app/features/alerting/unified/types/alerting';
 
 import {
   ChannelValues,
