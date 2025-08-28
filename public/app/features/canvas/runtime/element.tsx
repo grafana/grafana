@@ -866,7 +866,8 @@ export class ElementState implements LayerElement {
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
 
-    const shouldHandleTooltip = !scene?.isEditingEnabled && !scene?.tooltipPayload?.isOpen;
+    const shouldHandleTooltip =
+      !scene?.isEditingEnabled && (!scene?.tooltipPayload?.isOpen || scene?.tooltipPayload?.element === this);
     if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
@@ -933,7 +934,14 @@ export class ElementState implements LayerElement {
 
   handleTooltip = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && scene.tooltipMode !== TooltipDisplayMode.None) {
+    if (!scene || !scene.tooltipCallback) {
+      return;
+    }
+
+    const shouldDisableForOneClick = scene.tooltipDisableForOneClick && this.oneClickMode !== OneClickMode.Off;
+    const shouldShowTooltip = scene.tooltipMode !== TooltipDisplayMode.None && !shouldDisableForOneClick;
+
+    if (shouldShowTooltip) {
       const rect = this.div?.getBoundingClientRect();
       scene.tooltipCallback({
         anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
