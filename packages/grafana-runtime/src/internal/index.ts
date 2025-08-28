@@ -27,3 +27,8 @@ export {
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
 export { UserStorage } from '../utils/userStorage';
+
+export {
+  type GetUrlMetadataOptions,
+  type GetUrlMetadataResult,
+} from '../services/pluginExtensions/getUrlMetadata';

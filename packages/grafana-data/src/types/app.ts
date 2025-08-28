@@ -148,6 +148,8 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   addUrlRecognizer<T = Record<string, unknown>>(recognizerConfig: PluginExtensionAddedUrlRecognizerConfig<T>) {
+    // Type assertion is needed because we store non-generic version but accept generic ones for flexibility
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     this._addedUrlRecognizerConfigs.push(recognizerConfig as PluginExtensionAddedUrlRecognizerConfig);
 
     return this;

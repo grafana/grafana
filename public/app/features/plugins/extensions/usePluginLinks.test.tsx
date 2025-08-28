@@ -16,6 +16,7 @@ import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { UrlRecognizersRegistry } from './registry/UrlRecognizersRegistry';
 import { PluginExtensionRegistries } from './registry/types';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginLinks } from './usePluginLinks';
@@ -66,6 +67,7 @@ describe('usePluginLinks()', () => {
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
       addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      urlRecognizersRegistry: new UrlRecognizersRegistry(),
     };
     resetLogMock(log);
 

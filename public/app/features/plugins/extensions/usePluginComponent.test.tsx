@@ -10,6 +10,7 @@ import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { UrlRecognizersRegistry } from './registry/UrlRecognizersRegistry';
 import { PluginExtensionRegistries } from './registry/types';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';
@@ -93,6 +94,7 @@ describe('usePluginComponent()', () => {
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
       addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      urlRecognizersRegistry: new UrlRecognizersRegistry(),
     };
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);

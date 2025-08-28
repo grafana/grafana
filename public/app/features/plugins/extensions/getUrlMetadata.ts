@@ -7,7 +7,8 @@ export async function getUrlMetadata(options: GetUrlMetadataOptions): Promise<Ge
   const results: GetUrlMetadataResult = [];
 
   // Get all registered URL recognizers
-  const recognizers = urlRecognizersRegistry.getState()['url-recognizers'] || [];
+  const state = await urlRecognizersRegistry.getState();
+  const recognizers = state['url-recognizers'] || [];
 
   // Run all recognizers in parallel
   const promises = recognizers.map(async (recognizer) => {
