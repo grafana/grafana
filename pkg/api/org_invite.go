@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /org/invites org_invites getPendingOrgInvites
+// swagger:route GET /org/invites org invites getPendingOrgInvites
 //
 // Get pending invites.
 //
@@ -48,7 +48,7 @@ func (hs *HTTPServer) GetPendingOrgInvites(c *contextmodel.ReqContext) response.
 	return response.JSON(http.StatusOK, queryResult)
 }
 
-// swagger:route POST /org/invites org_invites addOrgInvite
+// swagger:route POST /org/invites org invites addOrgInvite
 //
 // Add invite.
 //
@@ -184,7 +184,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 	})
 }
 
-// swagger:route DELETE /org/invites/{invitation_code}/revoke org_invites revokeInvite
+// swagger:route DELETE /org/invites/{invitation_code}/revoke org invites revokeInvite
 //
 // Revoke invite.
 //
