@@ -222,7 +222,7 @@ export function SaveProvisionedDashboardForm({
                         }}
                         value={value.uid}
                         {...field}
-                        repositoryName={repository?.name}
+                        showAllFolders
                       />
                     );
                   }}

@@ -10,9 +10,10 @@ import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
 interface Props extends NestedFolderPickerProps {
   /* Repository name (uid) or undefined (when it's non-provisioned folder). This decides when to show only one provisioned folder */
   repositoryName?: string;
+  showAllFolders?: boolean;
 }
 
-export function ProvisioningAwareFolderPicker({ repositoryName, ...props }: Props) {
+export function ProvisioningAwareFolderPicker({ repositoryName, showAllFolders, ...props }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance();
   const provisioningEnabled = config.featureToggles.provisioning;
   const { data: settingsData } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
@@ -33,8 +34,8 @@ export function ProvisioningAwareFolderPicker({ repositoryName, ...props }: Prop
   return (
     <FolderPicker
       {...props}
-      rootFolderUID={rootFolderUID}
-      excludeUIDs={[...excludeUIDs, ...(props.excludeUIDs || [])]}
+      rootFolderUID={showAllFolders ? undefined : rootFolderUID}
+      excludeUIDs={showAllFolders ? undefined : [...excludeUIDs, ...(props.excludeUIDs || [])]}
     />
   );
 }
