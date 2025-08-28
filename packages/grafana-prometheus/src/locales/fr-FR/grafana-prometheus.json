@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Désactiver les règles d’enregistrement (bêta)",
         "label-http-method": "Méthode HTTP",
         "label-incremental-querying-beta": "Requête incrémentale (bêta)",
-        "label-metric-names-suggestion-limit": "Limite de suggestion de noms de métriques",
         "label-prom-type-version": "Version {{promType}}",
         "label-prometheus-type": "Type Prometheus",
         "label-query-overlap-window": "Fenêtre de chevauchement de requête",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Cette fonctionnalité désactivera les règles d’enregistrement. Activez cette option pour améliorer les performances du tableau de bord",
         "tooltip-http-method": "Vous pouvez utiliser la méthode POST ou GET HTTP pour interroger votre source de données Prometheus. POST est la méthode recommandée car elle permet des requêtes plus volumineuses. Changez ceci en GET si vous avez une version Prometheus antérieure à la version 2.1 ou si les demandes POST sont restreintes dans votre réseau.",
         "tooltip-incremental-querying-beta": "Cette fonctionnalité modifiera le comportement par défaut des requêtes relatives pour toujours demander des données récentes à l’instance Prometheus. Au lieu de cela, les résultats des requêtes seront mis en cache et seuls les nouveaux enregistrements seront demandés. Activez cette option pour réduire la charge de la base de données et du réseau.",
-        "tooltip-metric-names-suggestion-limit": "Le nombre maximal de noms de métriques pouvant apparaître comme suggestions de saisie semi-automatique dans le mode Code de l’éditeur de requêtes.",
         "tooltip-prom-type-version": "Utilisez cette option pour définir la version de votre instance {{promType}} si elle n’est pas configurée automatiquement.",
         "tooltip-prometheus-type": "Définissez-la sur le type de votre base de données Prometheus, par exemple Prometheus, Cortex, Mimir ou Thanos. La modification de ce champ enregistrera vos paramètres actuels. Certains types de Prometheus prennent en charge ou non diverses API. Par exemple, certains types prennent en charge la correspondance d’expressions régulières pour les requêtes d’étiquettes afin d’améliorer les performances. Certains types ont une API pour les métadonnées. Si vous définissez cette option de manière incorrecte, vous risquez d’observer un comportement inhabituel lors de la requête de métriques et d’étiquettes. Veuillez consulter votre documentation Prometheus pour vous assurer que vous saisissez le bon type.",
         "tooltip-query-overlap-window": "Définissez une durée comme {{example1}} ou {{example2}} ou {{example3}}. Par défaut : {{default}}. Cette durée sera ajoutée à la durée de chaque demande incrémentielle.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "auto",
         "title-options": "Options",
         "tooltip-min-step": "Une limite inférieure supplémentaire pour le paramètre d’étape de la requête Prometheus et pour les variables <2>{{interval}}</2> et <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Suggestions de saisie semi-automatique limitées",
-        "tooltip-autocomplete-suggestions-limited": "Le nombre de noms de métriques dépasse la limite de saisie semi-automatique. Seules les {{autocompleteLimit}} métriques les plus pertinentes sont affichées. Vous pouvez ajuster le seuil dans les paramètres de la source de données."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Une erreur de syntaxe ou une structure de requête invalide empêche l’affichage en mode Builder. Certaines parties de la requête peuvent être perdues.",

@@ -2807,6 +2807,7 @@
           "time": "Время"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Фильтровать группу",
       "filter-group-tooltip": "Фильтруйте каждую группу истории состояний по точному совпадению или регулярному выражению, например:",
       "placeholder-search": "Поиск",
@@ -9081,6 +9082,7 @@
     "name-line-width": "Ширина линии",
     "name-stacking": "Расположение в стеке"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Загрузка",
@@ -9700,6 +9702,7 @@
       "show-timestamps": "Показать метки времени",
       "show-unique-labels": "Показать уникальные метки",
       "unwrap-lines": "Не переносить строки",
+      "wrap-json-lines": "",
       "wrap-lines": "Переносить строки"
     },
     "logs-navigation": {
@@ -11300,6 +11303,7 @@
       "description-enabled": "После включения автоматического внесения изменения целевой элемент невозможно изменить.",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
       "description-title": "Понятное название конфигурации",
+      "error-fetch-branches": "",
       "error-required": "Поле является обязательным.",
       "error-save-repository": "Не удалось сохранить параметры репозитория",
       "label-automatic-pulling": "Автоматическое включение изменений",
@@ -11512,6 +11516,16 @@
       "title-delete-all-configured-repositories": "Удаление всех настроенных репозиториев",
       "title-legacy-storage-detected": "Обнаружено устаревшее хранилище"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Подробнее",
       "loading-finished-job": "Загрузка завершенного задания...",
@@ -12839,7 +12853,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Включает перенос текста для заголовков столбцов",
     "image-cell-options-editor": {
       "description-alt-text": "Альтернативный текст, который будет отображаться, если невозможно показать изображение, или для пользователей, которые используют программу чтения с экрана",
       "description-title-text": "Текст, который будет отображаться при наведении курсора на изображение",
@@ -12874,11 +12887,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Перенос текста заголовка",
+    "name-wrap-text": "",
     "placeholder-column-width": "авто",
     "placeholder-fields": "Все числовые поля",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

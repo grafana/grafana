@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Nonaktifkan aturan perekaman (beta)",
         "label-http-method": "Metode HTTP",
         "label-incremental-querying-beta": "Kueri inkremental (beta)",
-        "label-metric-names-suggestion-limit": "Batas saran nama metrik",
         "label-prom-type-version": "Versi {{promType}}",
         "label-prometheus-type": "Jenis Prometheus",
         "label-query-overlap-window": "Jendela kueri tumpang tindih",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Fitur ini akan menonaktifkan aturan perekaman. Aktifkan ini untuk meningkatkan kinerja dasbor",
         "tooltip-http-method": "Anda dapat menggunakan metode HTTP POST atau GET untuk melakukan kueri sumber data Prometheus Anda. POST adalah metode yang disarankan karena memungkinkan kueri yang lebih besar. Ubah ini menjadi GET jika Anda memiliki versi Prometheus yang lebih lama dari 2.1 atau jika permintaan POST dibatasi di jaringan Anda.",
         "tooltip-incremental-querying-beta": "Fitur ini akan mengubah perilaku default kueri relatif: alih-alih selalu meminta data terbaru dari instans Prometheus, hasil kueri akan disimpan sementara, dan hanya data baru yang akan diminta. Aktifkan ini untuk mengurangi beban basis data dan jaringan.",
-        "tooltip-metric-names-suggestion-limit": "Jumlah maksimum nama metrik yang mungkin muncul sebagai saran pelengkapan otomatis dalam mode Kode editor kueri.",
         "tooltip-prom-type-version": "Gunakan ini untuk mengatur versi instans {{promType}} Anda jika tidak dikonfigurasi secara otomatis.",
         "tooltip-prometheus-type": "Atur ini ke jenis basis data prometheus Anda, misalnya Prometheus, Cortex, Mimir, atau Thanos. Mengubah bidang ini akan menyimpan pengaturan Anda saat ini. Jenis Prometheus tertentu mendukung atau tidak mendukung berbagai API. Misalnya, beberapa jenis mendukung pencocokan regex bagi kueri label untuk meningkatkan kinerja. Beberapa jenis memiliki API untuk metadata. Jika Anda mengatur ini secara tidak benar, Anda mungkin mengalami perilaku tidak biasa saat melakukan kueri metrik dan label. Periksa dokumentasi Prometheus Anda untuk memastikan Anda memasukkan jenis yang benar.",
         "tooltip-query-overlap-window": "Tetapkan durasi seperti {{example1}} atau {{example2}} atau {{example3}}. Default {{default}}. Durasi ini akan ditambahkan ke durasi setiap permintaan tambahan.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "auto",
         "title-options": "Opsi",
         "tooltip-min-step": "Batas bawah tambahan untuk parameter langkah kueri Prometheus dan untuk variabel <2>{{interval}}</2> dan <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Saran pelengkapan otomatis dibatasi",
-        "tooltip-autocomplete-suggestions-limited": "Jumlah nama metrik melebihi batas pelengkapan otomatis. Hanya {{autocompleteLimit}} metrik yang paling relevan yang ditampilkan. Anda dapat menyesuaikan ambang batas dalam pengaturan sumber data."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Ada kesalahan sintaksis, atau struktur kueri tidak dapat divisualisasikan saat beralih ke mode pembuat. Bagian dari kueri mungkin hilang.",

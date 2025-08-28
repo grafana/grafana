@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Deshabilitar reglas de registro (beta)",
         "label-http-method": "Método HTTP",
         "label-incremental-querying-beta": "Consulta incremental (beta)",
-        "label-metric-names-suggestion-limit": "Límite de sugerencia de nombres de métricas",
         "label-prom-type-version": "Versión de {{promType}}",
         "label-prometheus-type": "Tipo de Prometheus",
         "label-query-overlap-window": "Ventana de superposición de consultas",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Esta función deshabilitará las reglas de registro. Actívelo para mejorar el rendimiento del dashboard",
         "tooltip-http-method": "Puede utilizar el método HTTP POST o GET para consultar su fuente de datos de Prometheus. POST es el método recomendado, ya que permite consultas de mayor tamaño. Cámbielo a GET si tiene una versión de Prometheus anterior a la 2.1 o si las solicitudes POST están restringidas en su red.",
         "tooltip-incremental-querying-beta": "Esta función cambiará el comportamiento predeterminado de las consultas relativas para solicitar siempre datos nuevos de la instancia de Prometheus, en lugar de almacenar en caché los resultados de las consultas y solo se solicitarán nuevos registros. Actívelo para disminuir la carga de la base de datos y de la red.",
-        "tooltip-metric-names-suggestion-limit": "El número máximo de nombres de métricas que pueden aparecer como sugerencias de autocompletado en el modo de código del editor de consultas.",
         "tooltip-prom-type-version": "Utilice esta opción para establecer la versión de su instancia {{promType}} si no se configura automáticamente.",
         "tooltip-prometheus-type": "Defina este valor en el tipo de su base de datos de Prometheus, por ejemplo, Prometheus, Cortex, Mimir o Thanos. Si cambia este campo, se guardarán sus ajustes actuales. Ciertos tipos de Prometheus admiten o no admiten varias API. Por ejemplo, algunos tipos admiten la coincidencia de expresiones regulares para consultas de etiquetas para mejorar el rendimiento. Algunos tipos tienen una API para metadatos. Si configuraseste valor incorrectamente, puede experimentar un comportamiento extraño al consultar métricas y etiquetas. Consulte la documentación de Prometheus para asegurarse de introducir el tipo correcto.",
         "tooltip-query-overlap-window": "Establezca una duración como {{example1}}, {{example2}} o {{example3}}. El valor predeterminado es {{default}}. Esta duración se añadirá a la duración de cada solicitud incremental.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "auto",
         "title-options": "Opciones",
         "tooltip-min-step": "Un límite inferior adicional para el parámetro de paso de la consulta de Prometheus y para las variables <2>{{interval}}</2> y <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Sugerencias de autocompletado limitadas",
-        "tooltip-autocomplete-suggestions-limited": "El número de nombres de métricas supera el límite de autocompletado. Solo se muestran las {{autocompleteLimit}} métricas más relevantes. Puede ajustar el umbral en la configuración de la fuente de datos."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Hay un error de sintaxis o la estructura de la consulta no se puede visualizar al cambiar al modo constructor. Es posible que se pierdan partes de la consulta.",

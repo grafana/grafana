@@ -2768,6 +2768,7 @@
           "time": "时间"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "筛选组",
       "filter-group-tooltip": "按完全匹配或正则表达式筛选每个状态历史记录组，例如：",
       "placeholder-search": "搜索",
@@ -9018,6 +9019,7 @@
     "name-line-width": "线宽度",
     "name-stacking": "堆叠"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在加载",
@@ -9613,6 +9615,7 @@
       "show-timestamps": "显示时间戳",
       "show-unique-labels": "显示唯一标签",
       "unwrap-lines": "取消多行显示",
+      "wrap-json-lines": "",
       "wrap-lines": "多行显示"
     },
     "logs-navigation": {
@@ -11195,6 +11198,7 @@
       "description-enabled": "启用自动拉取后，将无法更改目标。",
       "description-read-only": "无法通过 Grafana 修改资源。",
       "description-title": "人类可读的配置名称",
+      "error-fetch-branches": "",
       "error-required": "此字段是必填字段。",
       "error-save-repository": "保存存储库设置失败",
       "label-automatic-pulling": "自动拉取",
@@ -11407,6 +11411,16 @@
       "title-delete-all-configured-repositories": "删除所有已配置的存储库",
       "title-legacy-storage-detected": "检测到传统存储"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "查看详情",
       "loading-finished-job": "正在加载已完成的作业...",
@@ -12716,7 +12730,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "启用列标题的文字换行",
     "image-cell-options-editor": {
       "description-alt-text": "在图片无法显示或用户使用屏幕阅读器时，将显示的替代文本",
       "description-title-text": "光标悬停在图片上时将显示的文本",
@@ -12751,11 +12764,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "表头文字换行",
+    "name-wrap-text": "",
     "placeholder-column-width": "自动",
     "placeholder-fields": "所有数字字段",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

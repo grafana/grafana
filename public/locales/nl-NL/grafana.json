@@ -2781,6 +2781,7 @@
           "time": "Tijd"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Groep filteren",
       "filter-group-tooltip": "Filter elke statusgeschiedenisgroep op exacte overeenkomst of een reguliere expressie, bijvoorbeeld:",
       "placeholder-search": "Zoeken",
@@ -9039,6 +9040,7 @@
     "name-line-width": "Lijndikte",
     "name-stacking": "Opslaan"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Bezig met laden",
@@ -9642,6 +9644,7 @@
       "show-timestamps": "Tijdstempels weergeven",
       "show-unique-labels": "Unieke labels weergeven",
       "unwrap-lines": "Lijnen omsluiten",
+      "wrap-json-lines": "",
       "wrap-lines": "Lijnen omsluiten"
     },
     "logs-navigation": {
@@ -11230,6 +11233,7 @@
       "description-enabled": "Zodra automatische pulling is ingeschakeld, kan het doel niet worden gewijzigd.",
       "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
       "description-title": "Een voor mensen leesbare naam voor de configuratie",
+      "error-fetch-branches": "",
       "error-required": "Dit veld is verplicht.",
       "error-save-repository": "Kan de repository-instellingen niet opslaan",
       "label-automatic-pulling": "Automatische pulling",
@@ -11442,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Alle geconfigureerde repositories verwijderen",
       "title-legacy-storage-detected": "Verouderde opslag gedetecteerd"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Details bekijken",
       "loading-finished-job": "Voltooide taak laden...",
@@ -12757,7 +12771,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Schakelt tekstterugloop in voor kolomkoppen",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatieve tekst die wordt weergegeven als een afbeelding niet kan worden weergegeven of voor gebruikers die een schermlezer gebruiken",
       "description-title-text": "Tekst die wordt weergegeven wanneer de afbeelding wordt aangeraakt door een cursor",
@@ -12792,11 +12805,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Koptekst laten teruglopen",
+    "name-wrap-text": "",
     "placeholder-column-width": "automatisch",
     "placeholder-fields": "Alle numerieke velden",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

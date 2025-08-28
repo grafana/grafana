@@ -2781,6 +2781,7 @@
           "time": "Heure"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Filtrer par groupe",
       "filter-group-tooltip": "Filtrez chaque groupe d’historique d’état soit par correspondance exacte, soit par une expression régulière, par exemple :",
       "placeholder-search": "Rechercher",
@@ -9039,6 +9040,7 @@
     "name-line-width": "Épaisseur de ligne",
     "name-stacking": "Empilement"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Chargement en cours",
@@ -9642,6 +9644,7 @@
       "show-timestamps": "Afficher les horodatages",
       "show-unique-labels": "Afficher les étiquettes uniques",
       "unwrap-lines": "Dérouler les lignes",
+      "wrap-json-lines": "",
       "wrap-lines": "Enrouler les lignes"
     },
     "logs-navigation": {
@@ -11230,6 +11233,7 @@
       "description-enabled": "Une fois que la fusion automatique est activée, la cible ne peut pas être modifiée.",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
       "description-title": "Un nom lisible par l’utilisateur pour la configuration",
+      "error-fetch-branches": "",
       "error-required": "Ce champ est obligatoire.",
       "error-save-repository": "Échec de l’enregistrement des paramètres du référentiel",
       "label-automatic-pulling": "Fusion automatique",
@@ -11442,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Supprimer tous les référentiels configurés",
       "title-legacy-storage-detected": "Stockage hérité détecté"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Afficher les détails",
       "loading-finished-job": "Chargement de mission terminée…",
@@ -12757,7 +12771,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Active le retour à la ligne automatique pour les en-têtes de colonne",
     "image-cell-options-editor": {
       "description-alt-text": "Texte alternatif qui sera affiché si une image ne peut pas être affichée ou pour les utilisateurs qui utilisent un lecteur d’écran",
       "description-title-text": "Texte qui sera affiché lorsque l’image est survolée par un curseur",
@@ -12792,11 +12805,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
+    "name-wrap-text": "",
     "placeholder-column-width": "auto",
     "placeholder-fields": "Tous les champs numériques",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "기록 규칙 비활성화(베타)",
         "label-http-method": "HTTP 메소드",
         "label-incremental-querying-beta": "증분 쿼리(베타)",
-        "label-metric-names-suggestion-limit": "메트릭 이름 제안 한도",
         "label-prom-type-version": "{{promType}} 버전",
         "label-prometheus-type": "Prometheus 유형",
         "label-query-overlap-window": "쿼리 중복 창",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "이 기능을 사용하면 기록 규칙이 비활성화됩니다. 대시보드 성능을 향상시키려면 이 기능을 켜세요.",
         "tooltip-http-method": "POST 또는 GET HTTP 메소드를 사용하여 Prometheus 데이터 소스를 쿼리할 수 있습니다. POST는 더 큰 쿼리를 허용하기 때문에 권장되는 메소드입니다. Prometheus 버전이 2.1보다 이전 버전이거나 네트워크에서 POST 요청이 제한되어 있는 경우 이를 GET으로 변경하세요.",
         "tooltip-incremental-querying-beta": "이 기능은 상대적 쿼리의 기본 동작을 항상 Prometheus 인스턴스에서 최신 데이터를 요청하도록 변경합니다. 대신 쿼리 결과가 캐시되고 새 레코드만 요청됩니다. 데이터베이스 및 네트워크 부하를 줄이려면 이 기능을 켜세요.",
-        "tooltip-metric-names-suggestion-limit": "쿼리 편집기의 코드 모드에서 자동 완성 제안으로 표시될 수 있는 메트릭 이름 개수 최대 한도입니다.",
         "tooltip-prom-type-version": "{{promType}} 인스턴스의 버전이 자동으로 구성되지 않은 경우 이를 사용하여 버전을 설정합니다.",
         "tooltip-prometheus-type": "이를 Prometheus 데이터베이스의 유형(예: Prometheus, Cortex, Mimir, Thanos)으로 설정합니다. 이 필드를 변경하면 현재 설정이 저장됩니다. Prometheus는 유형에 따라 다양한 API를 지원할 수도, 지원하지 않을 수도 있습니다. 예를 들어, 일부 유형은 성능을 개선하기 위해 레이블 쿼리에 대한 정규식 매칭을 지원합니다. 일부 유형에는 메타데이터용 API가 있습니다. 이를 잘못 설정하면, 메트릭 및 레이블을 쿼리할 때 이상 작동이 발생할 수 있습니다. Prometheus 설명서를 살펴보고 올바른 유형을 입력했는지 확인하세요.",
         "tooltip-query-overlap-window": "{{example1}}, {{example2}}, 또는 {{example3}} 등의 지속 시간을 설정합니다. 기본값은 {{default}}입니다. 이 기간은 각 증분 요청의 기간에 추가됩니다.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "자동",
         "title-options": "옵션",
         "tooltip-min-step": "Prometheus 쿼리의 단계 매개변수와 <2>{{interval}}</2> 및 <4>{{rateInterval}} </4> 변수에 대한 추가적인 하한."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "자동 완성 제안 제한됨",
-        "tooltip-autocomplete-suggestions-limited": "메트릭 이름 수가 자동 완성 한도를 초과합니다. 가장 관련성이 높은 {{autocompleteLimit}}개 메트릭만 표시됩니다. 데이터 소스 설정에서 임계값을 조정할 수 있습니다."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "구문 오류가 있거나 빌더 모드로 전환할 때 쿼리 구조를 시각화할 수 없습니다. 쿼리의 일부가 손실될 수 있습니다.",

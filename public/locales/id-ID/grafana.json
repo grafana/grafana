@@ -2768,6 +2768,7 @@
           "time": "Waktu"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Filter grup",
       "filter-group-tooltip": "Filter setiap grup riwayat status, baik berdasarkan pencocokan tepat atau pola reguler, misalnya:",
       "placeholder-search": "Cari",
@@ -9018,6 +9019,7 @@
     "name-line-width": "Lebar garis",
     "name-stacking": "Tumpukan"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Memuat",
@@ -9613,6 +9615,7 @@
       "show-timestamps": "Tampilkan stempel waktu",
       "show-unique-labels": "Tampilkan label unik",
       "unwrap-lines": "Batal terapkan wrap pada baris",
+      "wrap-json-lines": "",
       "wrap-lines": "Terapkan wrap pada baris"
     },
     "logs-navigation": {
@@ -11195,6 +11198,7 @@
       "description-enabled": "Setelah pulling otomatis diaktifkan, target tidak dapat diubah.",
       "description-read-only": "Sumber daya tidak dapat dimodifikasi melalui Grafana.",
       "description-title": "Nama yang dapat dibaca manusia untuk konfigurasi",
+      "error-fetch-branches": "",
       "error-required": "Bidang ini wajib diisi.",
       "error-save-repository": "Gagal menyimpan pengaturan repositori",
       "label-automatic-pulling": "Pulling otomatis",
@@ -11407,6 +11411,16 @@
       "title-delete-all-configured-repositories": "Hapus semua repositori yang dikonfigurasi",
       "title-legacy-storage-detected": "Penyimpanan lama terdeteksi"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Lihat detail",
       "loading-finished-job": "Memuat pekerjaan yang sudah selesai...",
@@ -12716,7 +12730,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Mengaktifkan pembungkusan teks untuk header kolom",
     "image-cell-options-editor": {
       "description-alt-text": "Teks alternatif yang akan ditampilkan jika gambar tidak dapat ditampilkan atau untuk pengguna yang menggunakan pembaca layar",
       "description-title-text": "Teks yang akan ditampilkan saat gambar diarahkan oleh kursor",
@@ -12751,11 +12764,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Bungkus teks header",
+    "name-wrap-text": "",
     "placeholder-column-width": "otomatis",
     "placeholder-fields": "Semua Bidang Numerik",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

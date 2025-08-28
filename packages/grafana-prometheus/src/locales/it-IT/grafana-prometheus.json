@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Disabilita regole di registrazione (beta)",
         "label-http-method": "Metodo HTTP",
         "label-incremental-querying-beta": "Query incrementale (beta)",
-        "label-metric-names-suggestion-limit": "Limite di suggerimento dei nomi delle metriche",
         "label-prom-type-version": "Versione {{promType}}",
         "label-prometheus-type": "Tipo Prometheus",
         "label-query-overlap-window": "Finestra di sovrapposizione delle query",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Questa funzionalità disabiliterà le regole di registrazione. Attiva questa opzione per migliorare le prestazioni della dashboard",
         "tooltip-http-method": "Puoi utilizzare il metodo POST o GET HTTP per eseguire query sull'origine dati di Prometheus. POST è il metodo consigliato in quanto consente query più grandi. Usa GET se hai una versione di Prometheus precedente alla 2.1 o se le richieste POST sono limitate nella tua rete.",
         "tooltip-incremental-querying-beta": "Questa funzionalità modificherà il comportamento predefinito delle query relative per richiedere sempre dati aggiornati dall'istanza di Prometheus, mentre i risultati delle query verranno memorizzati nella cache e verranno richiesti solo i nuovi record. Attiva questa opzione per ridurre il carico del database e della rete.",
-        "tooltip-metric-names-suggestion-limit": "Il numero massimo di nomi di metriche che possono apparire come suggerimenti di completamento automatico nella modalità Codice dell'editor di query.",
         "tooltip-prom-type-version": "Utilizza questa opzione per impostare la versione della tua istanza {{promType}} se non è configurata automaticamente.",
         "tooltip-prometheus-type": "Imposta questo valore sul tipo del tuo database Prometheus, ad esempio Prometheus, Cortex, Mimir o Thanos. La modifica di questo campo salverà le impostazioni correnti. Alcuni tipi di Prometheus supportano o meno varie API. Ad esempio, alcuni tipi supportano la corrispondenza delle espressioni regolari per le query delle etichette per migliorare le prestazioni. Alcuni tipi hanno un'API per i metadati. Se imposti questo valore in modo errato, potresti riscontrare un comportamento strano durante l'interrogazione di metriche ed etichette. Controlla la documentazione di Prometheus per assicurarti di inserire il tipo corretto.",
         "tooltip-query-overlap-window": "Imposta una durata come {{example1}} o {{example2}} o {{example3}}. Impostazione predefinita di {{default}}. Questa durata verrà aggiunta alla durata di ogni richiesta incrementale.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "automatico",
         "title-options": "Opzioni",
         "tooltip-min-step": "Un ulteriore limite inferiore per il parametro passaggio della query Prometheus e per le variabili <2>{{interval}}</2> e <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Suggerimenti di completamento automatico limitati",
-        "tooltip-autocomplete-suggestions-limited": "Il numero di nomi di metriche supera il limite di completamento automatico. Vengono visualizzate solo le metriche {{autocompleteLimit}} più rilevanti. È possibile regolare la soglia nelle impostazioni dell'origine dati."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Si è verificato un errore di sintassi oppure la struttura della query non può essere visualizzata quando si passa alla modalità generatore. Parti della query potrebbero andare perse.",

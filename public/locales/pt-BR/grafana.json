@@ -2781,6 +2781,7 @@
           "time": "Tempo"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Grupo de filtros",
       "filter-group-tooltip": "Filtre cada grupo de histórico de estado por correspondência exata ou expressão regular, por exemplo:",
       "placeholder-search": "Pesquisar",
@@ -9039,6 +9040,7 @@
     "name-line-width": "Largura da linha",
     "name-stacking": "Empilhamento"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Carregando",
@@ -9642,6 +9644,7 @@
       "show-timestamps": "Exibir data e hora",
       "show-unique-labels": "Exibir rótulos únicos",
       "unwrap-lines": "Desfazer quebra de linha",
+      "wrap-json-lines": "",
       "wrap-lines": "Aplicar quebra de linha"
     },
     "logs-navigation": {
@@ -11230,6 +11233,7 @@
       "description-enabled": "Depois que a extração automática for ativada, não será possível alterar o destino.",
       "description-read-only": "Os recursos não podem ser modificados por meio da Grafana.",
       "description-title": "Um nome de fácil compreensão para a configuração",
+      "error-fetch-branches": "",
       "error-required": "Este campo é obrigatório.",
       "error-save-repository": "Falha ao salvar as configurações do repositório",
       "label-automatic-pulling": "Extração automática",
@@ -11442,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Excluir todos os repositórios configurados",
       "title-legacy-storage-detected": "Armazenamento legado detectado"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Veja os detalhes",
       "loading-finished-job": "Carregando tarefa concluída…",
@@ -12757,7 +12771,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Ativa a quebra de texto para cabeçalhos de coluna",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que será exibido se uma imagem não puder ser exibida ou para usuários que usam leitor de tela",
       "description-title-text": "Texto que será exibido ao passar o cursor sobre a imagem",
@@ -12792,11 +12805,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Ajustar texto do cabeçalho",
+    "name-wrap-text": "",
     "placeholder-column-width": "automático",
     "placeholder-fields": "Todos os campos numéricos",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

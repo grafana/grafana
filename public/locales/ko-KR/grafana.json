@@ -2768,6 +2768,7 @@
           "time": "시간"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "필터 그룹",
       "filter-group-tooltip": "정확한 일치 또는 정규 표현식을 사용하여 각 상태 이력 그룹을 필터링합니다. 예:",
       "placeholder-search": "검색",
@@ -9018,6 +9019,7 @@
     "name-line-width": "선 너비",
     "name-stacking": "스태킹"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "로딩 중",
@@ -9613,6 +9615,7 @@
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
       "unwrap-lines": "줄 바꿈 제거",
+      "wrap-json-lines": "",
       "wrap-lines": "줄 바꿈"
     },
     "logs-navigation": {
@@ -11195,6 +11198,7 @@
       "description-enabled": "자동 풀링이 활성화되면 대상을 변경할 수 없습니다.",
       "description-read-only": "Grafana를 통해 리소스를 수정할 수 없습니다.",
       "description-title": "사람이 읽을 수 있는 구성 이름",
+      "error-fetch-branches": "",
       "error-required": "이 필드는 필수 입력 항목입니다.",
       "error-save-repository": "리포지토리 설정 저장 실패",
       "label-automatic-pulling": "자동 풀링",
@@ -11407,6 +11411,16 @@
       "title-delete-all-configured-repositories": "구성된 모든 리포지토리 삭제",
       "title-legacy-storage-detected": "레거시 스토리지 감지됨"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "세부 정보 보기",
       "loading-finished-job": "완료된 작업 로딩 중...",
@@ -12716,7 +12730,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "열 헤더에 텍스트 줄 바꿈 사용",
     "image-cell-options-editor": {
       "description-alt-text": "이미지를 표시할 수 없거나 화면 리더를 이용하는 사용자를 위해 표시되는 대체 텍스트",
       "description-title-text": "이미지에 커서를 가져갔을 때 표시되는 텍스트",
@@ -12751,11 +12764,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
+    "name-wrap-text": "",
     "placeholder-column-width": "자동",
     "placeholder-fields": "모든 숫자 필드",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
