@@ -2,9 +2,9 @@ package resourcepermission
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"iter"
-	"net/http"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -57,11 +57,36 @@ func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key reso
 	}
 }
 
-func (s *ResourcePermSqlBackend) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	return &resource.BackendReadResponse{
-		Key:   req.GetKey(),
-		Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: errNotImplemented.Error()},
+func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	version := int64(0)
+	if req.ResourceVersion > 0 {
+		version = req.ResourceVersion
 	}
+
+	rsp := &resource.BackendReadResponse{
+		Key:             req.GetKey(),
+		ResourceVersion: version,
+	}
+
+	sql, err := s.dbProvider(ctx)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+
+	resourcePermission, err := s.getResourcePermission(ctx, sql, req.Key.Name)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+
+	rsp.Value, err = json.Marshal(resourcePermission)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+
+	return rsp
 }
 
 func (s *ResourcePermSqlBackend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
