@@ -68,7 +68,12 @@ dc_resource("frontend-service",
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])
+dc_resource("prometheus", labels=["observability"])
 dc_resource("loki", labels=["observability"])
+dc_resource("tempo", labels=["observability"])
+
+dc_resource("postgres", labels=["misc"])
+dc_resource("tempo-init", labels=["misc"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing the the path, it is relative to the Tiltfile
@@ -111,10 +116,10 @@ docker_build('grafana-proxy',
 
   # Path relative to the docker context (this folder)
   only=[
-    "./nginx.conf",
+    "./configs/nginx.conf",
   ],
   live_update = [
-    sync('./nginx.conf', '/etc/nginx/conf.d/default.conf'),
+    sync('./configs/nginx.conf', '/etc/nginx/conf.d/default.conf'),
     restart_container()
   ]
 )

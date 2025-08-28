@@ -6,11 +6,11 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 import { AccessControlAction } from 'app/types/accessControl';
-import { NotificationChannelOption } from 'app/types/alerting';
 
 import { TemplatesPicker, getTemplateOptions } from './TemplateSelector';
 import { parseTemplates } from './utils';

@@ -2,9 +2,24 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 
+import { config } from '../config';
+
 import { UserStorage } from './userStorage';
 
 const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
+
+export type FavoriteDatasources = {
+  enabled: boolean;
+  isLoading: boolean;
+  favoriteDatasources: string[];
+  initialFavoriteDataSources: string[];
+  addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
+  removeFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
+  isFavoriteDatasource: (dsUid: string) => boolean;
+};
+
+// Initialize user storage as a singleton
+const userStorage = new UserStorage('grafana-runtime');
 
 /**
  * A hook for managing favorite data sources using user storage.
@@ -12,6 +27,7 @@ const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
  * using the backend user storage (with localStorage fallback).
  *
  * @returns An object containing:
+ * - A boolean indicating if the feature is enabled
  * - An array of favorite data source UIDs
  * - An array of favorite data source UIDs that were initially loaded from storage
  * - A function to add a data source to favorites
@@ -19,39 +35,38 @@ const FAVORITE_DATASOURCES_KEY = 'favoriteDatasources';
  * - A function to check if a data source is favorited
  * @public
  */
-export function useFavoriteDatasources(): {
-  favoriteDatasources: string[];
-  initialFavoriteDataSources: string[];
-  addFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
-  removeFavoriteDatasource: (ds: DataSourceInstanceSettings) => void;
-  isFavoriteDatasource: (dsUid: string) => boolean;
-} {
-  const [userStorage] = useState(() => new UserStorage('grafana-runtime'));
+export function useFavoriteDatasources(): FavoriteDatasources {
   const [favoriteDatasources, setFavoriteDatasources] = useState<string[]>([]);
   const [initialFavoriteDataSources, setInitialFavoriteDataSources] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load favorites from storage on mount
   useEffect(() => {
+    if (!config.featureToggles.favoriteDatasources) {
+      return;
+    }
+
     const loadFavorites = async () => {
+      setIsLoading(true);
       const stored = await userStorage.getItem(FAVORITE_DATASOURCES_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         setFavoriteDatasources(parsed);
         setInitialFavoriteDataSources(parsed);
       }
+      setIsLoading(false);
     };
 
     loadFavorites();
-  }, [userStorage]);
+  }, []);
 
   // Helper function to save favorites to storage
-  const saveFavorites = useCallback(
-    async (newFavorites: string[]) => {
-      await userStorage.setItem(FAVORITE_DATASOURCES_KEY, JSON.stringify(newFavorites));
-      setFavoriteDatasources(newFavorites);
-    },
-    [userStorage]
-  );
+  const saveFavorites = useCallback(async (newFavorites: string[]) => {
+    setIsLoading(true);
+    await userStorage.setItem(FAVORITE_DATASOURCES_KEY, JSON.stringify(newFavorites));
+    setFavoriteDatasources(newFavorites);
+    setIsLoading(false);
+  }, []);
 
   const addFavoriteDatasource = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -85,7 +100,21 @@ export function useFavoriteDatasources(): {
     [favoriteDatasources]
   );
 
+  if (!config.featureToggles.favoriteDatasources) {
+    return {
+      enabled: false,
+      isLoading: false,
+      favoriteDatasources: [],
+      initialFavoriteDataSources: [],
+      addFavoriteDatasource: () => {},
+      removeFavoriteDatasource: () => {},
+      isFavoriteDatasource: () => false,
+    };
+  }
+
   return {
+    enabled: true,
+    isLoading,
     favoriteDatasources,
     addFavoriteDatasource,
     removeFavoriteDatasource,

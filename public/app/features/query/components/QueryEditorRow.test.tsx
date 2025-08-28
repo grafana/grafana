@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { PropsWithChildren } from 'react';
 
-import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import { CoreApp, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { filterPanelDataToQuery, Props, QueryEditorRow, QueryLibraryEditingBadge } from './QueryEditorRow';
+import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',
@@ -15,6 +15,12 @@ const mockDS = mockDataSource({
 // Mock the QueryLibraryContext
 const mockQueryLibraryContext = {
   queryLibraryEnabled: true,
+  renderQueryLibraryEditingHeader: jest.fn(),
+  renderSaveQueryButton: jest.fn(() => null),
+  openDrawer: jest.fn(),
+  closeDrawer: jest.fn(),
+  isDrawerOpen: false,
+  context: 'test',
 };
 
 jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
@@ -404,31 +410,59 @@ describe('QueryEditorRow', () => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
     });
   });
-});
 
-describe('QueryLibraryBadge', () => {
-  beforeEach(() => {
-    mockQueryLibraryContext.queryLibraryEnabled = true;
-  });
+  describe('Query Library Integration', () => {
+    let testData: PanelData;
+    let mockOnCancelEdit: jest.MockedFunction<() => void>;
 
-  it('should display badge when queryLibraryEnabled is true and queryLibraryRef is provided', () => {
-    render(<QueryLibraryEditingBadge queryLibraryRef="library-query-123" />);
-    expect(screen.getByText('Updating query from library')).toBeInTheDocument();
-  });
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockQueryLibraryContext.renderQueryLibraryEditingHeader.mockReturnValue(null);
+      mockOnCancelEdit = jest.fn();
 
-  it('should not display badge when queryLibraryEnabled is false', () => {
-    mockQueryLibraryContext.queryLibraryEnabled = false;
-    render(<QueryLibraryEditingBadge queryLibraryRef="library-query-123" />);
-    expect(screen.queryByText('Updating query from library')).not.toBeInTheDocument();
-  });
+      // Standard test data for QueryEditorRow
+      testData = {
+        series: [],
+        timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+        state: LoadingState.Done,
+      };
+    });
 
-  it('should not display badge when queryLibraryRef is not provided', () => {
-    render(<QueryLibraryEditingBadge />);
-    expect(screen.queryByText('Updating query from library')).not.toBeInTheDocument();
-  });
+    it('should render query library editing header when queryLibraryRef is provided', async () => {
+      render(
+        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onCancelQueryLibraryEdit={mockOnCancelEdit} />
+      );
 
-  it('should not display badge when queryLibraryRef is empty string', () => {
-    render(<QueryLibraryEditingBadge queryLibraryRef="" />);
-    expect(screen.queryByText('Updating query from library')).not.toBeInTheDocument();
+      // Wait for async datasource loading and component rendering
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          'test-ref', // queryLibraryRef
+          mockOnCancelEdit, // onCancelEdit
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function) // onSelectQuery
+        );
+      });
+    });
+
+    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+      render(<QueryEditorRow {...props(testData)} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('query-editor-row')).toBeInTheDocument();
+      });
+
+      expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();
+    });
+
+    it('should not render saved queries buttons when app is unified alerting', async () => {
+      render(<QueryEditorRow {...props(testData)} app={CoreApp.UnifiedAlerting} />);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Save query')).not.toBeInTheDocument();
+        expect(screen.queryByText('Replace with saved query')).not.toBeInTheDocument();
+      });
+    });
   });
 });
