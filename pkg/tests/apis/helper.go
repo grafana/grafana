@@ -181,9 +181,9 @@ type K8sResourceClient struct {
 	Resource dynamic.ResourceInterface
 }
 
-// newOptimizedRestConfigForTest creates a base rest.Config optimized for integration tests.
+// newOptimizedRestConfig creates a base rest.Config optimized for integration tests.
 // It disables client-side rate limiting and uses an optimized HTTP transport.
-func newOptimizedRestConfigForTest(host string) *rest.Config {
+func newOptimizedRestConfig(host string) *rest.Config {
 	return &rest.Config{
 		Host: host,
 		// For integration tests against a local server, client-side rate-limiting
@@ -223,7 +223,7 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 		client, clientErr = dynamic.NewForConfig(args.User.NewRestConfig())
 	} else {
 		// Use service account token for authentication
-		cfg := newOptimizedRestConfigForTest(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
+		cfg := newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
 		cfg.BearerToken = args.ServiceAccountToken
 		client, clientErr = dynamic.NewForConfig(cfg)
 	}
@@ -351,7 +351,7 @@ type User struct {
 }
 
 func (c *User) NewRestConfig() *rest.Config {
-	cfg := newOptimizedRestConfigForTest(c.baseURL)
+	cfg := newOptimizedRestConfig(c.baseURL)
 	cfg.Username = c.Identity.GetLogin()
 	cfg.Password = c.password
 	return cfg
@@ -710,7 +710,7 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
-	cfg := newOptimizedRestConfigForTest(baseUrl)
+	cfg := newOptimizedRestConfig(baseUrl)
 	cfg.Username = c.Org1.Admin.Identity.GetLogin()
 	cfg.Password = c.Org1.Admin.password
 	client, err := discovery.NewDiscoveryClientForConfig(cfg)
