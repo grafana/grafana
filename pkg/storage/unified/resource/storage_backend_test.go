@@ -668,6 +668,80 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, originalObj), collectedItems[0])
 }
 
+func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	ns := NamespacedResource{
+		Namespace: "default",
+		Group: "apps",
+		Resource: "resources",
+	}
+	_, _ = addTestObject(t, backend, ctx, ns, "somename2", "initial-data1")
+	rv, testObj := addTestObject(t, backend, ctx, ns, "somename", "initial-data")
+	rv = updateTestObject(t, backend, ctx, testObj, rv, ns, "somename", "new-data")
+	rv = updateTestObject(t, backend, ctx, testObj, rv, ns, "somename", "new-data2")
+	fmt.Println("rv: ", rv)
+
+	listRV, seq := backend.ListModifiedSince(ctx, ns, 1)
+
+	fmt.Println("got listRV: ", listRV)
+	for thing, err := range seq {
+		fmt.Println("got thing: ", thing)
+		fmt.Println("got err: ", err)
+	}
+}
+
+func addTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, name, value string) (int64, *unstructured.Unstructured) {
+	testObj, err := createTestObjectWithName(name, ns.Group, value)
+	require.NoError(t, err)
+
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	writeEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     ns.Group,
+			Resource:  "resources",
+			Name:      name,
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		PreviousRV: 0,
+	}
+
+	rv, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+	return rv, testObj
+}
+
+func updateTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, originalObj *unstructured.Unstructured, previousRV int64, ns NamespacedResource, name, value string) int64 {
+	originalObj.Object["spec"].(map[string]any)["value"] = "updated-data"
+
+	metaAccessor, err := utils.MetaAccessor(originalObj)
+	require.NoError(t, err)
+
+	writeEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_MODIFIED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     ns.Group,
+			Resource:  "resources",
+			Name:      name,
+		},
+		Value:      objectToJSONBytes(t, originalObj),
+		Object:     metaAccessor,
+		PreviousRV: previousRV,
+	}
+
+	writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+
+	rv, err := backend.WriteEvent(ctx, writeEvent)
+	return rv
+}
+
 func TestKvStorageBackend_ListHistory_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()

@@ -467,15 +467,103 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	// Generate a new resource version for the list
 	listRV := k.snowflake.Generate().Int64()
 
-	// check if sinceRv is < 1 hour old
-	// if yes -> listkeyssince (implement it) to get all events since sinceRv - loopback period
-	// if no -> use datastore to get all objects since sinceRv - loopback period
+	// TODO
+	// sinceRvTimestamp := snowflake.ID(sinceRv).Time()
+	// sinceTime := time.Unix(0, (sinceRvTimestamp+snowflake.Epoch)*int64(time.Millisecond))
+	// age := time.Since(sinceTime)
+	// if age < time.Hour {
+	// 	// if yes -> listkeyssince (implement it) to get all events since sinceRv - loopback period
+	// 	k.eventStore.ListKeysSince(ctx, sinceRv)
+	// } else {
+	// 	// if no -> use datastore to get all objects since sinceRv - loopback period
+	// }
 
-	seq := func(yield func(*ModifiedResource, error) bool) {
+	return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+}
 
+func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
+	switch action {
+	case DataActionCreated:
+		return resourcepb.WatchEvent_ADDED
+	case DataActionUpdated:
+		return resourcepb.WatchEvent_MODIFIED
+	case DataActionDeleted:
+		return resourcepb.WatchEvent_DELETED
 	}
 
-	return listRV, seq
+	// TODO what's best practice in go here?
+	panic("not possible")
+}
+
+// assumes the objects are sorted by name AND resourceVersion (doesn't look like it's the case right now)
+func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		var lastSeen *ModifiedResource
+		for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if dataKey.ResourceVersion < sinceRv {
+				continue
+			}
+
+			if lastSeen == nil {
+				lastSeen = &ModifiedResource{
+					Key: resourcepb.ResourceKey{
+						Namespace: dataKey.Namespace,
+						Group:     dataKey.Group,
+						Resource:  dataKey.Resource,
+						Name:      dataKey.Name,
+					},
+					ResourceVersion: dataKey.ResourceVersion,
+					Action:          convertEventType(dataKey.Action),
+				}
+			}
+
+			if lastSeen.Key.Name != dataKey.Name {
+				fmt.Println("yielding: ", dataKey)
+				if !yield(lastSeen, nil) {
+					return
+				}
+			}
+
+			lastSeen = &ModifiedResource{
+				Key: resourcepb.ResourceKey{
+					Namespace: dataKey.Namespace,
+					Group:     dataKey.Group,
+					Resource:  dataKey.Resource,
+					Name:      dataKey.Name,
+				},
+				ResourceVersion: dataKey.ResourceVersion,
+				Action:          convertEventType(dataKey.Action),
+			}
+		}
+
+		yield(lastSeen, nil)
+	}
+}
+
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	return func(yield func(*ModifiedResource, error) bool) {
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv) {
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			evtKey, err := ParseEventKey(evtKeyStr)
+			if err != nil {
+				yield(&ModifiedResource{}, err)
+				return
+			}
+
+			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+				continue
+			}
+		}
+	}
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
