@@ -5,11 +5,12 @@ import * as runtime from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import { DashboardViewItem } from '../../../features/search/types';
 
 import { useFoldersQuery } from './useFoldersQuery';
-import { getRootFolderItem } from './utils';
+import { getCustomRootFolderItem, getRootFolderItem } from './utils';
 
 const [_, { folderA, folderB, folderC }] = getFolderFixtures();
 
@@ -50,36 +51,18 @@ describe('useFoldersQuery', () => {
 
     it('uses custom root folder display name when rootFolderDisplay is provided', async () => {
       runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
-
-      const customRootName = 'Custom Root Folder';
       const { result } = renderHook(
         () =>
           useFoldersQuery({
             isBrowsing: true,
             openFolders: {},
-            rootFolderDisplay: customRootName,
+            rootFolderItem: getCustomRootFolderItem('Test Repo', ManagerKind.Repo),
           }),
         { wrapper }
       );
 
       // Test that root folder item uses the custom display name
-      expect(result.current.items[0]).toEqual(getRootFolderItem(customRootName));
-    });
-
-    it('uses empty string as rootFolderDisplay', async () => {
-      runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
-
-      const { result } = renderHook(
-        () =>
-          useFoldersQuery({
-            isBrowsing: true,
-            openFolders: {},
-            rootFolderDisplay: '',
-          }),
-        { wrapper }
-      );
-
-      expect(result.current.items[0]).toEqual(getRootFolderItem());
+      expect(result.current.items[0]).toEqual(getCustomRootFolderItem('Test Repo', ManagerKind.Repo));
     });
   });
 });

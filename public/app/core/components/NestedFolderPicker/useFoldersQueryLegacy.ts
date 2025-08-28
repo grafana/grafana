@@ -51,7 +51,7 @@ export function useFoldersQueryLegacy(
   permission?: PermissionLevelString,
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID?: string,
-  rootFolderDisplay?: string
+  rootFolderItem?: DashboardsTreeItem
 ) {
   const dispatch = useDispatch();
 
@@ -184,10 +184,10 @@ export function useFoldersQueryLegacy(
     const startingPages = rootFolderUID ? state.pagesByParent[rootFolderUID] : state.rootPages;
 
     const rootFlatTree = createFlatList(rootFolderUID ?? undefined, startingPages ?? [], 1);
-    rootFlatTree.unshift(getRootFolderItem(rootFolderDisplay));
+    rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderDisplay]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
     items: treeList,

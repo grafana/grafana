@@ -39,8 +39,8 @@ export interface NestedFolderPickerProps {
   /* Start tree from this folder instead of root */
   rootFolderUID?: string;
 
-  /* Display name for the root folder, default is "Dashboards" */
-  rootFolderDisplay?: string;
+  /* Custom root folder item, default is "Dashboards" */
+  rootFolderItem?: DashboardsTreeItem;
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
@@ -76,7 +76,7 @@ export function NestedFolderPicker({
   clearable = false,
   excludeUIDs,
   rootFolderUID,
-  rootFolderDisplay,
+  rootFolderItem,
   permission = 'edit',
   onChange,
   id,
@@ -119,7 +119,7 @@ export function NestedFolderPicker({
     openFolders: foldersOpenState,
     permission: permissionLevel,
     rootFolderUID,
-    rootFolderDisplay,
+    rootFolderItem,
   });
 
   useEffect(() => {
