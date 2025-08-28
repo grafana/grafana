@@ -1,10 +1,11 @@
 import { PluginExtensionAddedUrlRecognizerConfig, UrlMetadata } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 export function getDefaultUrlRecognizers(): PluginExtensionAddedUrlRecognizerConfig[] {
   return [
     {
-      title: 'Dashboard',
-      description: 'Recognizes Grafana dashboard URLs',
+      title: t('nav.dashboards.title', 'Dashboards'),
+      description: t('url-recognizer.dashboard.description', 'Recognizes Grafana dashboard URLs'),
       recognizer: async (url: string): Promise<UrlMetadata | null> => {
         try {
           const urlObj = new URL(url);
@@ -42,8 +43,8 @@ export function getDefaultUrlRecognizers(): PluginExtensionAddedUrlRecognizerCon
       },
     },
     {
-      title: 'Explore',
-      description: 'Recognizes Grafana Explore URLs',
+      title: t('nav.explore.title', 'Explore'),
+      description: t('url-recognizer.explore.description', 'Recognizes Grafana Explore URLs'),
       recognizer: async (url: string): Promise<UrlMetadata | null> => {
         try {
           const urlObj = new URL(url);
@@ -65,7 +66,7 @@ export function getDefaultUrlRecognizers(): PluginExtensionAddedUrlRecognizerCon
 
             return {
               id: 'explore',
-              title: 'Explore',
+              title: t('nav.explore.title', 'Explore'),
               description: `Explore view with ${datasourceName} datasource`,
               type: 'explore',
               datasource: datasourceName,
@@ -89,8 +90,8 @@ export function getDefaultUrlRecognizers(): PluginExtensionAddedUrlRecognizerCon
       },
     },
     {
-      title: 'Alert Rule',
-      description: 'Recognizes Grafana Alert Rule URLs',
+      title: t('nav.alerting-list.title', 'Alert rules'),
+      description: t('url-recognizer.alert.description', 'Recognizes Grafana Alert Rule URLs'),
       recognizer: async (url: string): Promise<UrlMetadata | null> => {
         try {
           const urlObj = new URL(url);
@@ -104,7 +105,7 @@ export function getDefaultUrlRecognizers(): PluginExtensionAddedUrlRecognizerCon
 
             return {
               id: uid,
-              title: 'Alert Rule',
+              title: t('nav.alerting-list.title', 'Alert rules'),
               description: `Alert rule (${viewMode} mode)`,
               type: 'alert',
               uid,
@@ -116,8 +117,8 @@ export function getDefaultUrlRecognizers(): PluginExtensionAddedUrlRecognizerCon
           if (pathname.startsWith('/alerting/list')) {
             return {
               id: 'alerting-list',
-              title: 'Alert Rules',
-              description: 'Alert rules list',
+              title: t('nav.alerting-list.title', 'Alert rules'),
+              description: t('nav.alerting-list.title', 'Alert rules'),
               type: 'alert-list',
             };
           }

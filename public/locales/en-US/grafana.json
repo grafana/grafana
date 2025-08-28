@@ -13906,6 +13906,17 @@
     "learn-more": "Learn more",
     "upgrade-button": "Upgrade"
   },
+  "url-recognizer": {
+    "alert": {
+      "description": "Recognizes Grafana Alert Rule URLs"
+    },
+    "dashboard": {
+      "description": "Recognizes Grafana dashboard URLs"
+    },
+    "explore": {
+      "description": "Recognizes Grafana Explore URLs"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
