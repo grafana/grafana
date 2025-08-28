@@ -30,6 +30,18 @@ export const ScopesSelector = () => {
     services?.scopesSelectorService.state
   );
 
+  // Keyboard shortcut for closing and applying
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // ctrl/cmd + enter. Do a check up here to prevent conditional useEffect
+      if (event.key === 'Enter' && event.metaKey && services?.scopesSelectorService) {
+        services.scopesSelectorService.closeAndApply();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [services]);
+
   if (!services || !scopes || !scopes.state.enabled || !selectorServiceState) {
     return null;
   }
@@ -55,18 +67,6 @@ export const ScopesSelector = () => {
     deselectScope,
     getRecentScopes,
   } = scopesSelectorService;
-
-  // Keyboard shortcut for closing and applying
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // ctrl/cmd + enter
-      if (event.key === 'Enter' && event.metaKey) {
-        closeAndApply();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [closeAndApply]);
 
   const recentScopes = getRecentScopes();
 
