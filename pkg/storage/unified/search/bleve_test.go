@@ -776,6 +776,56 @@ func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, 
 	return backend, reg
 }
 
+func TestBuildIndexExpiration(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	t.Run("memory based indexes should expire", func(t *testing.T) {
+		backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+		builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false, false)
+		require.NoError(t, err)
+
+		// Wait for index expiration, which is 1ns
+		time.Sleep(10 * time.Millisecond)
+		idx, err := backend.GetIndex(context.Background(), ns)
+		require.NoError(t, err)
+		require.Nil(t, idx)
+
+		// Verify that builtIndex is now closed.
+		_, err = builtIndex.DocCount(context.Background(), "")
+		require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+
+		// Verify that there are no open indexes.
+		checkOpenIndexes(t, reg, 0, 0)
+	})
+
+	t.Run("file based indexes should NOT expire", func(t *testing.T) {
+		backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+		// size=100 is above FileThreshold, this will be file-based index
+		builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false, false)
+		require.NoError(t, err)
+
+		// Wait for index expiration, which is 1ns
+		time.Sleep(10 * time.Millisecond)
+		idx, err := backend.GetIndex(context.Background(), ns)
+		require.NoError(t, err)
+		require.NotNil(t, idx)
+
+		// Verify that builtIndex is still open.
+		cnt, err := builtIndex.DocCount(context.Background(), "")
+		require.NoError(t, err)
+		require.Equal(t, int64(1), cnt)
+
+		checkOpenIndexes(t, reg, 0, 1)
+		backend.CloseAllIndexes()
+	})
+}
+
 func TestBuildIndex(t *testing.T) {
 	t.Run("closeAllIndexes should close all open indexes", func(t *testing.T) {
 		ns := resource.NamespacedResource{
@@ -802,62 +852,6 @@ func TestBuildIndex(t *testing.T) {
 
 		// Verify that there are no open indexes after CloseAllIndexes call.
 		checkOpenIndexes(t, reg, 0, 0)
-	})
-
-	t.Run("time based expiration", func(t *testing.T) {
-		t.Run("memory based indexes should expire", func(t *testing.T) {
-			backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
-
-			ns := resource.NamespacedResource{
-				Namespace: "test",
-				Group:     "group",
-				Resource:  "resource",
-			}
-
-			builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false, false)
-			require.NoError(t, err)
-
-			// Wait for index expiration, which is 1ns
-			time.Sleep(10 * time.Millisecond)
-			idx, err := backend.GetIndex(context.Background(), ns)
-			require.NoError(t, err)
-			require.Nil(t, idx)
-
-			// Verify that builtIndex is now closed.
-			_, err = builtIndex.DocCount(context.Background(), "")
-			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
-
-			// Verify that there are no open indexes.
-			checkOpenIndexes(t, reg, 0, 0)
-		})
-
-		t.Run("file based indexes should NOT expire", func(t *testing.T) {
-			backend, reg := setupBleveBackend(t, 5, time.Nanosecond, "")
-
-			ns := resource.NamespacedResource{
-				Namespace: "test",
-				Group:     "group",
-				Resource:  "resource",
-			}
-
-			// size=100 is above FileThreshold, this will be file-based index
-			builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, "test", indexTestDocs(ns, 1, 100), nil, false, false)
-			require.NoError(t, err)
-
-			// Wait for index expiration, which is 1ns
-			time.Sleep(10 * time.Millisecond)
-			idx, err := backend.GetIndex(context.Background(), ns)
-			require.NoError(t, err)
-			require.NotNil(t, idx)
-
-			// Verify that builtIndex is still open.
-			cnt, err := builtIndex.DocCount(context.Background(), "")
-			require.NoError(t, err)
-			require.Equal(t, int64(1), cnt)
-
-			checkOpenIndexes(t, reg, 0, 1)
-			backend.CloseAllIndexes()
-		})
 	})
 
 	t.Run("file based index reuse", func(t *testing.T) {
