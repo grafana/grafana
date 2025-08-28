@@ -18,6 +18,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveVariables?: boolean;
   saveRefresh?: boolean;
   saveAsCopy?: boolean;
+  showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
 }
 

@@ -6096,7 +6096,9 @@
       "save-timerange-description-current-range-default": "Will make current time range the new default",
       "save-timerange-label-update-default-time-range": "Update default time range",
       "save-variables-description-current-values-default": "Will make the current values the new default",
-      "save-variables-label-update-default-variable-values": "Update default variable values"
+      "save-variables-label-update-default-variable-values": "Update default variable values",
+      "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Update default variable values” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
+      "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-library-viz-panel-modal": {
       "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",

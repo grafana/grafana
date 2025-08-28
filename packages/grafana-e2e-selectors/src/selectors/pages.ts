@@ -638,6 +638,9 @@ export const versionedPages = {
     saveRefresh: {
       '11.1.0': 'Dashboard settings Save Dashboard Modal Save refresh checkbox',
     },
+    variablesWarningAlert: {
+      '12.2.0': 'Dashboard settings Save Dashboard Modal Save variables Variables With Errors Warning Alert',
+    },
   },
   SharePanelModal: {
     linkToRenderedImage: {
