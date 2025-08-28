@@ -196,7 +196,6 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 		return 0, err
 	}
 
-	// Implement proper managed role pattern
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		for _, assignment := range assignments {
 			err := s.handleAssignment(ctx, dbHelper, tx, ns.OrgID, assignment)
@@ -215,7 +214,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 	// Return a timestamp as resource version
 	// TODO should we return the latest updated managed role?
 	// Not sure since it could have effectively been updated for another resource than the one at stake.
-	return int64(time.Now().UnixMilli()), nil
+	return time.Now().UnixMilli(), nil
 }
 
 // Update
