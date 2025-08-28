@@ -5,13 +5,20 @@ import { RadioButtonGroup } from './RadioButtonGroup';
 
 # RadioButtonGroup
 
-`RadioButtonGroup` is used to select a single value from multiple mutually exclusive options.
+`RadioButtonGroup` is used to select a single value from a set of mutually-exclusive options, arranged in a _horizontal_ control.
 
 ### When to use
 
-Use `RadioButtonGroup` for mutually exclusive selections if there are up to four options available. This is because the `RadioButtonGroup` cannot have more than one row and should still accommodate small resolutions. For a mutually exclusive selection of more than four options, use `Select` component.
+- When you have roughly three or more _mutually-exclusive_ options
+- When you are more constrained by vertical than horizontal space
 
-Radio buttons can only exist in this type of group. If you want one single option, it's better to use `Switch` instead. To offer multiple choices within the same group or context which are not mutually exclusive, use `Checkbox` instead.
+### When not to use
+
+- When you are constrained by horizontal space
+- When you want to toggle between only two options; use [Switch](?path=/docs/inputs-switch--docs) instead
+- When you have more than four options; consider using a [RadioButtonList](?path=/docs/inputs-radiobuttonlist--docs) or [Combobox](?path=/docs/inputs-combobox--docs) instead
+- When you have _mutually-inclusive_ options; use [Checkboxes](https://developers.grafana.com/ui/latest/index.html?path=/story/inputs-checkbox--stacked-list) instead
+- When you need a navigation device for updating the UI based on the selected option; use [Tabs](?path=/docs/navigation-tabs--docs) instead
 
 ### Usage
 
