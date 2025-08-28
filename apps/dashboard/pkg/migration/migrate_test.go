@@ -19,6 +19,8 @@ const INPUT_DIR = "testdata/input"
 const OUTPUT_DIR = "testdata/output"
 const DEV_DASHBOARDS_INPUT_DIR = "../../../../devenv/dev-dashboards"
 const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
+const HISTORICAL_DASHBOARDS_INPUT_DIR = "testdata/historical-dashboards-input"
+const HISTORICAL_DASHBOARDS_OUTPUT_DIR = "testdata/historical-dashboards-output"
 
 func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
@@ -219,6 +221,90 @@ func TestMigrateDevDashboards(t *testing.T) {
 	}
 }
 
+// TestMigrateHistoricalDashboards tests migration of all collected historical dashboards
+// and generates output files following the same pattern as TestMigrateDevDashboards
+func TestMigrateHistoricalDashboards(t *testing.T) {
+	// Use the same datasource provider as other tests for consistency
+	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
+
+	// Find all historical dashboard files (historical-vXXX.*.json) in HISTORICAL_DASHBOARDS_INPUT_DIR
+	historicalFiles, err := filepath.Glob(filepath.Join(HISTORICAL_DASHBOARDS_INPUT_DIR, "historical-*.json"))
+	require.NoError(t, err, "failed to find historical dashboard files")
+	require.NotEmpty(t, historicalFiles, "no historical dashboard files found")
+
+	// Ensure output directory exists
+	err = os.MkdirAll(HISTORICAL_DASHBOARDS_OUTPUT_DIR, 0755)
+	require.NoError(t, err, "failed to create historical dashboards output directory")
+
+	t.Logf("Found %d historical dashboard files", len(historicalFiles))
+
+	for _, jsonFile := range historicalFiles {
+		fileName := filepath.Base(jsonFile)
+
+		// Skip non-historical files
+		if !strings.HasPrefix(fileName, "historical-") {
+			continue
+		}
+
+		// Use filename as relative output path (since historical files are flat in INPUT_DIR)
+		relativeOutputPath := fileName
+
+		// Create individual test cases for each dashboard (including invalid ones)
+		t.Run("validate "+relativeOutputPath, func(t *testing.T) {
+			// Load the dashboard
+			inputDash := loadDashboard(t, jsonFile)
+
+			// Check for missing schemaVersion
+			if _, ok := inputDash["schemaVersion"]; !ok {
+				t.Fatalf("Dashboard %s has no schemaVersion - this is not a valid dashboard for migration testing", relativeOutputPath)
+			}
+
+			inputVersion := getSchemaVersion(t, inputDash)
+
+			// Check for schema version below minimum
+			if inputVersion < schemaversion.MIN_VERSION {
+				t.Fatalf("Dashboard %s has schema version %d which is below minimum supported version %d", relativeOutputPath, inputVersion, schemaversion.MIN_VERSION)
+			}
+
+			// If we get here, the dashboard is valid - run the migrations
+			// Create a copy for the input check
+			inputDashCopy := make(map[string]interface{})
+			for k, v := range inputDash {
+				inputDashCopy[k] = v
+			}
+
+			// Input check: migrate to same version should not change anything
+			err := migration.Migrate(inputDashCopy, inputVersion)
+			if err != nil {
+				t.Fatalf("Input check migration failed for %s (v%d): %v", relativeOutputPath, inputVersion, err)
+			}
+			outBytes, err := json.MarshalIndent(inputDashCopy, "", "  ")
+			require.NoError(t, err, "failed to marshal migrated dashboard")
+			// We can ignore gosec G304 here since it's a test
+			// nolint:gosec
+			expectedDash, err := os.ReadFile(jsonFile)
+			require.NoError(t, err, "failed to read expected output file")
+			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", relativeOutputPath)
+		})
+
+		t.Run("migrate "+relativeOutputPath, func(t *testing.T) {
+			// Load the dashboard fresh for migration test
+			inputDash := loadDashboard(t, jsonFile)
+
+			// Skip if invalid (will be caught by validate test above)
+			if _, ok := inputDash["schemaVersion"]; !ok {
+				t.Skip("Dashboard has no schemaVersion")
+			}
+			inputVersion := getSchemaVersion(t, inputDash)
+			if inputVersion < schemaversion.MIN_VERSION {
+				t.Skip("Dashboard schema version below minimum")
+			}
+
+			testHistoricalDashboardMigration(t, inputDash, relativeOutputPath, schemaversion.LATEST_VERSION)
+		})
+	}
+}
+
 func testDevDashboardMigration(t *testing.T, dash map[string]interface{}, outputFileName string, targetVersion int) {
 	t.Helper()
 
@@ -233,6 +319,36 @@ func testDevDashboardMigration(t *testing.T, dash map[string]interface{}, output
 
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
 		// Create directory structure if needed
+		outDir := filepath.Dir(outPath)
+		err = os.MkdirAll(outDir, 0755)
+		require.NoError(t, err, "failed to create output directory", outDir)
+
+		err = os.WriteFile(outPath, outBytes, 0644)
+		require.NoError(t, err, "failed to write new output file", outPath)
+		return
+	}
+
+	// We can ignore gosec G304 here since it's a test
+	// nolint:gosec
+	existingBytes, err := os.ReadFile(outPath)
+	require.NoError(t, err, "failed to read existing output file")
+	require.JSONEq(t, string(existingBytes), string(outBytes), "%s did not match", outPath)
+}
+
+func testHistoricalDashboardMigration(t *testing.T, dash map[string]interface{}, outputFileName string, targetVersion int) {
+	t.Helper()
+
+	err := migration.Migrate(dash, targetVersion)
+	if err != nil {
+		t.Fatalf("Migration to version %d failed for %s: %v", targetVersion, outputFileName, err)
+	}
+
+	outPath := filepath.Join(HISTORICAL_DASHBOARDS_OUTPUT_DIR, outputFileName)
+	outBytes, err := json.MarshalIndent(dash, "", "  ")
+	require.NoError(t, err, "failed to marshal migrated dashboard")
+
+	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+		// Create directory structure if needed (though historical files are flat)
 		outDir := filepath.Dir(outPath)
 		err = os.MkdirAll(outDir, 0755)
 		require.NoError(t, err, "failed to create output directory", outDir)

@@ -1,0 +1,331 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "uid": "gdev-testdata"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "links": [],
+      "options": {
+        "maxValue": 100,
+        "minValue": 0,
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "thresholds": [
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          },
+          {
+            "color": "#EAB839",
+            "index": 1,
+            "value": 50
+          },
+          {
+            "color": "#6ED0E0",
+            "index": 2,
+            "value": 75
+          },
+          {
+            "color": "#EF843C",
+            "index": 3,
+            "value": 87.5
+          },
+          {
+            "color": "#E24D42",
+            "index": 4,
+            "value": 93.75
+          },
+          {
+            "color": "#1F78C1",
+            "index": 5,
+            "value": 96.875
+          }
+        ],
+        "valueMappings": [
+          {
+            "from": "50",
+            "id": 1,
+            "operator": "",
+            "text": "Hello :) ",
+            "to": "90",
+            "type": 2,
+            "value": ""
+          }
+        ],
+        "valueOptions": {
+          "decimals": 0,
+          "prefix": "",
+          "stat": "avg",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Horizontal with range variable",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "uid": "gdev-testdata"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "links": [],
+      "options": {
+        "maxValue": 100,
+        "minValue": 0,
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "thresholds": [
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          },
+          {
+            "color": "#EAB839",
+            "index": 1,
+            "value": 50
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "decimals": 0,
+          "prefix": "",
+          "stat": "avg",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Repeat horizontal",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "uid": "gdev-testdata"
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 5,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "links": [],
+      "options": {
+        "maxValue": "200",
+        "minValue": 0,
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "thresholds": [
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          },
+          {
+            "color": "#EAB839",
+            "index": 1,
+            "value": 50
+          },
+          {
+            "color": "#6ED0E0",
+            "index": 2,
+            "value": 75
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "decimals": 0,
+          "prefix": "",
+          "stat": "max",
+          "suffix": "",
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "datasource": {
+            "uid": "gdev-testdata"
+          },
+          "refId": "E",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Vertical",
+      "type": "gauge"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "panel-tests",
+    "gdev",
+    "gauge"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Panel Tests - Gauge Multi Series",
+  "uid": "szkuR1umk",
+  "version": 7
+}
