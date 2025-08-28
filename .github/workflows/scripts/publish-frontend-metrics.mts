@@ -28,6 +28,9 @@ if (!matches) {
   throw new Error("No metrics found");
 }
 
+console.log('matches[0]', matches[0])
+console.log('matches[1]', matches[1])
+
 const metrics: Record<string, string> = JSON.parse(matches[1]);
 
 // Convert metrics to payload format
