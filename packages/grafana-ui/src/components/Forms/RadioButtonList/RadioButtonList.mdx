@@ -16,12 +16,12 @@ This component should be used instead of [Select](?path=/docs/forms-select--basi
 
 ## Usage
 
-### Basic radio group
+### Basic radio list
 
 ```jsx
 import { RadioButtonList } from '@grafana/ui';
 
-<RadioButtonGroup options={...} value={...} onChange={...} />
+<RadioButtonList options={...} value={...} onChange={...} />
 
 ```
 
@@ -43,7 +43,7 @@ const options = [
 const disabledOptions = ['prometheus', 'elastic'];
 
 
-<RadioButtonGroup
+<RadioButtonList
   options={options}
   disabledOptions={disabledOptions}
   value={...}
@@ -67,7 +67,7 @@ const options = [
 const disabledOptions = ['prometheus', 'elastic'];
 
 
-<RadioButtonGroup
+<RadioButtonList
   options={options}
   disabledOptions={disabledOptions}
   value={...}
@@ -82,7 +82,7 @@ The `RadioButtonList` layout uses CSS Grid, so it is effortless to split the lis
 ```jsx
 import { RadioButtonList } from '@grafana/ui';
 
-<RadioButtonGroup
+<RadioButtonList
   options={...}
   value={...}
   onChange={...}
