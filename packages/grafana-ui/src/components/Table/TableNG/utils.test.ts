@@ -1172,7 +1172,7 @@ describe('TableNG utils', () => {
       expect(measurers![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBeGreaterThan(50);
 
       fields[0].config!.custom!.maxHeight = 50;
-      const measurersWithMax = buildCellHeightMeasurers(fields, ctx);
+      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, 50);
       expect(measurersWithMax![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBe(50);
     });
   });
