@@ -50,7 +50,7 @@ for (const [metricName, valueStr] of Object.entries(metrics)) {
 }
 
 const jsonPayload = JSON.stringify(data);
-console.log(`Publishing metrics to https://<user>:<pass>@graphite-us-central1.grafana.net/metrics, JSON: ${jsonPayload}`);
+console.log(`Publishing metrics to https://graphite-us-central1.grafana.net/metrics, JSON: ${jsonPayload}`);
 
 const url = 'https://graphite-us-central1.grafana.net/metrics';
 const username = '6371';
