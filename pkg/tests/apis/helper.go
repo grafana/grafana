@@ -187,10 +187,9 @@ func newOptimizedRestConfigForTest(host string) *rest.Config {
 	return &rest.Config{
 		Host: host,
 		// For integration tests against a local server, client-side rate-limiting
-		// is unnecessary and slows down tests. Setting QPS and Burst to high
-		// values effectively disables the rate limiter.
-		QPS:   -1,
-		Burst: -1,
+		// is too low and can cause requests to be throttled.
+		QPS:   10,
+		Burst: 20,
 		// Use a shared transport optimized for high-concurrency testing
 		// against a single host.
 		Transport: &http.Transport{
