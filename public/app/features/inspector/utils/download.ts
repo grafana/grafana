@@ -54,11 +54,21 @@ export function downloadDataFrameAsCsv(
   dataFrame: DataFrame,
   title: string,
   csvConfig?: CSVConfig,
-  transformId: DataTransformerID = DataTransformerID.noop
+  transformId: DataTransformerID = DataTransformerID.noop,
+  excelCompatibilityMode = false
 ) {
   let blob;
 
-  if (csvConfig?.useExcelHeader) {
+  if (excelCompatibilityMode) {
+    /**
+     * This compatibility mode creates a utf16le csv file that uses \t as the delimiter.
+     * This is to fix an issue where excel does not recognize the BOM indicating UTF-8 when the SEP= meta data header is present.
+     * Without the SEP= metadata header excel will try to use the system list separator.
+     * If the CSV was created on a system where the separator was ',' it will not work on a system where the separator is ';'
+     * This is common on locales where ',' is the decimal separator.
+     *
+     * When excel opens a utf16le csv file it will no longer try to use the system list separator, and instead use \t as the separator.
+     */
     const dataFrameCsv = toCSV([dataFrame], { ...csvConfig, useExcelHeader: false, delimiter: '\t' });
     const utf16le = new Uint16Array(Array.from('\ufeff' + dataFrameCsv).map((char) => char.charCodeAt(0)));
     blob = new Blob([utf16le], {
