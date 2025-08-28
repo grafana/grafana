@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { TreeNode } from '../types';
-import { KeyboardAction, useKeyboardInteraction } from '../useKeyboardInteractions';
+import { TreeNode } from './types';
+import { KeyboardAction, useKeyboardInteraction } from './useKeyboardInteractions';
 
 // Mock data for testing
 const createMockTreeNode = (id: string, hasChildren = false): TreeNode => ({

@@ -10,7 +10,7 @@ import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { getTreeItemElementId } from './ScopesTreeItem';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { isNodeExpandable } from './scopesTreeUtils';
+import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
 import { KeyboardAction, useKeyboardInteraction } from './useKeyboardInteractions';
 
@@ -87,7 +87,14 @@ export function ScopesTree({
           : selectedNodesToShow[index].scopeNodeId;
 
       //Handle container expand/collapse
-      if (action === KeyboardAction.EXPAND && isNodeExpandable(scopeNodes[nodeId])) {
+
+      const isExpanding = action === KeyboardAction.EXPAND && isNodeExpandable(scopeNodes[nodeId]);
+      // Selecting a non-selectable node that is expandable, should expand it instead
+      const isSelectingAndExpandable =
+        action === KeyboardAction.SELECT &&
+        !isNodeSelectable(scopeNodes[nodeId]) &&
+        isNodeExpandable(scopeNodes[nodeId]);
+      if (isExpanding || isSelectingAndExpandable) {
         onNodeUpdate(nodeId, true, tree.query);
         setSearchFocused(false);
         return;

@@ -54,10 +54,9 @@ export function useKeyboardInteraction(
         case 'ArrowRight':
           // Check if item is expandable and if it is, expand it
           if (highlightedIndex !== -1) {
-            if (items[highlightedIndex].children) {
-              event.preventDefault();
-              onSelect(highlightedIndex, KeyboardAction.EXPAND);
-            }
+            // Send an expand action here and let onSelect determine if the node actually is expandable
+            event.preventDefault();
+            onSelect(highlightedIndex, KeyboardAction.EXPAND);
           }
 
           break;

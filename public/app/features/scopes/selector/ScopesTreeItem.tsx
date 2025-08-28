@@ -56,7 +56,9 @@ export function ScopesTreeItem({
       key={treeNode.scopeNodeId}
       id={getTreeItemElementId(treeNode.scopeNodeId)}
       role="treeitem"
-      aria-selected={treeNode.expanded || selected}
+      // aria-selected refers to the highlighted item in the tree, not the selected checkbox/radio button
+      aria-selected={highlighted}
+      aria-expanded={isExpandable ? treeNode.expanded : undefined}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
     >
       <div
