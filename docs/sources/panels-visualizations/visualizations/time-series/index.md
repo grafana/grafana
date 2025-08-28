@@ -182,13 +182,18 @@ When you apply a time comparison to a visualization, the comparison data is disp
 
 {{< figure src="screenshot-time-comparison-v12.2.png" max-width="750px" alt="A time series graph with the comparison selector open and Month before selected" >}}
 
-Choose from the following time comparison options:
+<!-- to be replaced -->
 
-- None
-- Previous period <!-- what does this one mean? -->
-- Day before
-- Week before
-- Month before 
+The options available in the **Comparison** selector are dynamically populated since they're based on your data.
+They might include options like **Day before**, **Week before**, or **Month before**.
+If you have a lot of data, the list might include the option **Year before**.
+If you have very little data, the list might include the option **Minute before**.
+In all cases, the list includes the options:
+
+- **None**
+- **Previous period** - Based on the time range selection. For example, if the time range is **Last 6 hours**, the previous period would be the six hours before that.
+
+When you end a session, the **Comparison** selector resets to **None**.
 
 ### Tooltip options
 
