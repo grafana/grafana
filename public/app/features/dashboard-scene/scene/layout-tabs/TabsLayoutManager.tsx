@@ -95,7 +95,24 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public getCurrentTab(): TabItem | undefined {
     const tabs = this.getTabs();
-    return tabs.find((tab) => tab.getSlug() === this.state.currentTabSlug);
+    const selectedTab = tabs.find((tab) => tab.getSlug() === this.state.currentTabSlug);
+    if (selectedTab) {
+      return selectedTab;
+    }
+
+    // if loading return undefined
+    for (const tab of tabs) {
+      if (tab.state.repeatByVariable) {
+        const variable = sceneGraph.lookupVariable(tab.state.repeatByVariable, this);
+        if (variable && variable.state.loading) {
+          return;
+        }
+      }
+    }
+
+    // return first tab if no hits and variables finished loading
+    this.setState({ currentTabSlug: tabs[0].getSlug() });
+    return tabs[0];
   }
 
   public getTabs(): TabItem[] {
