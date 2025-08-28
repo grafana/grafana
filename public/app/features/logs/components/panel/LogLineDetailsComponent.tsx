@@ -118,6 +118,8 @@ export const LogLineDetailsComponent = memo(
       !labelGroups.length &&
       !fieldsWithoutLinks.length;
 
+    const hasLinks = fieldsWithLinks.links.length > 0 || fieldsWithLinks.linksFromVariableMap.length > 0;
+
     return (
       <>
         <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
@@ -141,7 +143,7 @@ export const LogLineDetailsComponent = memo(
               <LogLineDetailsDisplayedFields />
             </ControlledCollapse>
           )}
-          {fieldsWithLinks.links.length > 0 && (
+          {hasLinks && (
             <ControlledCollapse
               className={styles.collapsable}
               label={t('logs.log-line-details.links-section', 'Links')}
