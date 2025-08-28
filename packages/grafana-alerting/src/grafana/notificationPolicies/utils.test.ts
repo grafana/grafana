@@ -1,9 +1,15 @@
 import { LabelMatcherFactory, RouteFactory } from '../api/v0alpha1/mocks/fakes/Routes';
 import { Label } from '../matchers/types';
-import { LabelMatchDetails } from '../matchers/utils';
+import { LabelMatchDetails, matchLabels } from '../matchers/utils';
 
 import { Route } from './types';
-import { RouteMatchResult, findMatchingRoutes } from './utils';
+import {
+  InheritableProperties,
+  RouteMatchResult,
+  computeInheritedTree,
+  findMatchingRoutes,
+  getInheritedProperties,
+} from './utils';
 
 describe('findMatchingRoutes', () => {
   describe('basic matching', () => {
@@ -661,6 +667,330 @@ describe('findMatchingRoutes', () => {
       expect(result[0].route).toBe(matchingChild);
       expect(getRoutePath(result[0])).toEqual([parentRoute, matchingChild]);
     });
+  });
+});
+
+describe('getInheritedProperties()', () => {
+  describe('group_by: []', () => {
+    it('should get group_by: [] from parent', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_by: ['label'],
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_by: [],
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('group_by', ['label']);
+    });
+
+    it('should get group_by: [] from parent inherited properties', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_by: [],
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_by: [],
+      });
+
+      const parentInherited = { group_by: ['label'] };
+
+      const childInherited = getInheritedProperties(parent, child, parentInherited);
+      expect(childInherited).toHaveProperty('group_by', ['label']);
+    });
+
+    it('should not inherit if the child overrides an inheritable value (group_by)', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_by: ['parentLabel'],
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_by: ['childLabel'],
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).not.toHaveProperty('group_by');
+    });
+
+    it('should inherit if group_by is undefined', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_by: ['label'],
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_by: undefined,
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('group_by', ['label']);
+    });
+
+    it('should inherit from grandparent when parent is inheriting', () => {
+      const parentInheritedProperties: InheritableProperties = { receiver: 'grandparent' };
+      const parent = RouteFactory.build({ receiver: undefined, group_by: ['foo'], routes: [] });
+      const child = RouteFactory.build({ receiver: undefined, group_by: undefined });
+
+      const childInherited = getInheritedProperties(parent, child, parentInheritedProperties);
+      expect(childInherited).toHaveProperty('receiver', 'grandparent');
+      expect(childInherited.group_by).toEqual(['foo']);
+    });
+  });
+
+  describe('regular undefined or null values', () => {
+    it('should compute inherited properties being undefined', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_wait: '10s',
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_wait: undefined,
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toStrictEqual({ group_wait: '10s' });
+    });
+
+    it('should compute inherited properties being null', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_wait: '10s',
+      });
+
+      const child = RouteFactory.build({
+        receiver: undefined,
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toStrictEqual({ receiver: 'PARENT' });
+    });
+
+    it('should compute inherited properties being undefined from parent inherited properties', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_wait: undefined,
+      });
+
+      const childInherited = getInheritedProperties(parent, child, { group_wait: '10s' });
+      expect(childInherited).toStrictEqual({ group_wait: '10s' });
+    });
+
+    it('should not inherit if the child overrides an inheritable value', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_wait: '10s',
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_wait: '30s',
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).not.toHaveProperty('group_wait');
+    });
+
+    it('should not inherit if the child overrides an inheritable value and the parent inherits', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+      });
+
+      const child = RouteFactory.build({
+        receiver: 'CHILD',
+        group_wait: '30s',
+      });
+
+      const childInherited = getInheritedProperties(parent, child, { group_wait: '60s' });
+      expect(childInherited).not.toHaveProperty('group_wait');
+    });
+
+    it('should inherit if the child property is an empty string', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+      });
+
+      const child = RouteFactory.build({
+        receiver: '',
+        group_wait: '30s',
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('receiver', 'PARENT');
+    });
+  });
+
+  describe('timing options', () => {
+    it('should inherit timing options', () => {
+      const parent = RouteFactory.build({
+        receiver: 'PARENT',
+        group_wait: '1m',
+        group_interval: '2m',
+      });
+
+      const child = RouteFactory.build({
+        repeat_interval: '999s',
+        group_wait: undefined,
+        group_interval: undefined,
+      });
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('group_wait', '1m');
+      expect(childInherited).toHaveProperty('group_interval', '2m');
+    });
+  });
+  it('should not inherit mute timings from parent route', () => {
+    const parent = RouteFactory.build({
+      receiver: 'PARENT',
+      group_by: ['parentLabel'],
+      mute_time_intervals: ['Mon-Fri 09:00-17:00'],
+    });
+
+    const child = RouteFactory.build({
+      receiver: 'CHILD',
+      group_by: ['childLabel'],
+    });
+
+    const childInherited = getInheritedProperties(parent, child);
+    expect(childInherited).not.toHaveProperty('mute_time_intervals');
+  });
+});
+
+describe('computeInheritedTree', () => {
+  it('should merge properties from parent', () => {
+    const parent = RouteFactory.build({
+      receiver: 'PARENT',
+      group_wait: '1m',
+      group_interval: '2m',
+      repeat_interval: '3m',
+      routes: [
+        RouteFactory.build({
+          receiver: undefined,
+          group_wait: undefined,
+          group_interval: undefined,
+          repeat_interval: '999s',
+        }),
+      ],
+    });
+
+    const treeRoot = computeInheritedTree(parent);
+    expect(treeRoot).toHaveProperty('group_wait', '1m');
+    expect(treeRoot).toHaveProperty('group_interval', '2m');
+    expect(treeRoot).toHaveProperty('repeat_interval', '3m');
+
+    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '999s');
+  });
+
+  it('should not regress #73573', () => {
+    const parent = RouteFactory.build({
+      routes: [
+        RouteFactory.build({
+          group_wait: '1m',
+          group_interval: '2m',
+          repeat_interval: '3m',
+          routes: [
+            RouteFactory.build({
+              group_wait: '10m',
+              group_interval: '20m',
+              repeat_interval: '30m',
+            }),
+            RouteFactory.build({
+              group_wait: undefined,
+              group_interval: undefined,
+              repeat_interval: '999m',
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const treeRoot = computeInheritedTree(parent);
+    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '3m');
+
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_wait', '10m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_interval', '20m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.repeat_interval', '30m');
+
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.repeat_interval', '999m');
+  });
+});
+
+describe('matchLabels', () => {
+  it('should match with non-matching matchers', () => {
+    const result = matchLabels(
+      [
+        { label: 'foo', type: '=', value: '' },
+        { label: 'team', type: '=', value: 'operations' },
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.details).toMatchSnapshot();
+  });
+
+  it('should match with non-equal matchers', () => {
+    const result = matchLabels(
+      [
+        { label: 'foo', type: '!=', value: 'bar' },
+        { label: 'team', type: '=', value: 'operations' },
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.details).toMatchSnapshot();
+  });
+
+  it('should not match with a set of matchers', () => {
+    const result = matchLabels(
+      [
+        { label: 'foo', type: '!=', value: 'bar' },
+        { label: 'team', type: '=', value: 'operations' },
+      ],
+      [
+        ['team', 'operations'],
+        ['foo', 'bar'],
+      ]
+    );
+
+    expect(result).toHaveProperty('matches', false);
+    expect(result.details).toMatchSnapshot();
+  });
+
+  it('does not match unanchored regular expressions', () => {
+    const result = matchLabels([{ label: 'foo', type: '=~', value: 'bar' }], [['foo', 'barbarbar']]);
+    // This may seem unintuitive, but this is how Alertmanager matches, as it anchors the regex
+    expect(result.matches).toEqual(false);
+  });
+
+  it('matches regular expressions with wildcards', () => {
+    const result = matchLabels([{ label: 'foo', type: '=~', value: '.*bar.*' }], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
+  });
+
+  it('does match regular expressions with flags', () => {
+    const result = matchLabels([{ label: 'foo', type: '=~', value: '(?i).*BAr.*' }], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
   });
 });
 
