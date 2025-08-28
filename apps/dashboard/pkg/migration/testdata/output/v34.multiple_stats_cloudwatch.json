@@ -49,8 +49,7 @@
         "name": "CloudWatch Annotation Empty Statistics",
         "namespace": "AWS/ApplicationELB",
         "prefixMatching": false,
-        "region": "us-west-1",
-        "statistics": []
+        "region": "us-west-1"
       },
       {
         "datasource": {
@@ -378,8 +377,7 @@
           "metricQueryType": 0,
           "namespace": "AWS/S3",
           "refId": "A",
-          "region": "us-east-1",
-          "statistics": []
+          "region": "us-east-1"
         }
       ],
       "title": "CloudWatch Query Empty Statistics",

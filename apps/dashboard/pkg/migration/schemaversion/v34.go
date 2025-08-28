@@ -120,9 +120,10 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 		// Get valid statistics (including null and empty strings)
 		validStats, isEmpty := getValidStatistics(t["statistics"])
 
-		// Handle empty array case (preserve it)
+		// Handle empty array case (delete statistics field like frontend)
 		if isEmpty {
-			// Keep empty array as-is
+			// Delete statistics field to match frontend behavior
+			delete(t, "statistics")
 			newTargets = append(newTargets, t)
 			continue
 		}
@@ -196,9 +197,10 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 		// Get valid statistics (including null and empty strings)
 		validStats, isEmpty := getValidStatistics(a["statistics"])
 
-		// Handle empty array case (preserve it)
+		// Handle empty array case (delete statistics field like frontend)
 		if isEmpty {
-			// Keep empty array as-is
+			// Delete statistics field to match frontend behavior
+			delete(a, "statistics")
 			annotationsList[i] = a
 			continue
 		}
