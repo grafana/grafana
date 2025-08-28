@@ -28,7 +28,4 @@ export {
 
 export { UserStorage } from '../utils/userStorage';
 
-export {
-  type GetUrlMetadataOptions,
-  type GetUrlMetadataResult,
-} from '../services/pluginExtensions/getUrlMetadata';
+export { type GetUrlMetadataOptions, type GetUrlMetadataResult } from '../services/pluginExtensions/getUrlMetadata';

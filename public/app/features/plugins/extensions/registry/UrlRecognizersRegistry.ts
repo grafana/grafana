@@ -16,7 +16,10 @@ export type UrlRecognizerRegistryItem = {
   schema?: Record<string, unknown>;
 };
 
-export class UrlRecognizersRegistry extends Registry<UrlRecognizerRegistryItem[], PluginExtensionAddedUrlRecognizerConfig> {
+export class UrlRecognizersRegistry extends Registry<
+  UrlRecognizerRegistryItem[],
+  PluginExtensionAddedUrlRecognizerConfig
+> {
   constructor(
     options: {
       registrySubject?: ReplaySubject<RegistryType<UrlRecognizerRegistryItem[]>>;

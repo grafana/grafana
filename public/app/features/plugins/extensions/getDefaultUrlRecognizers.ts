@@ -52,7 +52,7 @@ export function getDefaultUrlRecognizers(): PluginExtensionAddedUrlRecognizerCon
           // Match explore URLs
           if (pathname.startsWith('/explore')) {
             const datasourceParam = urlObj.searchParams.get('left') || urlObj.searchParams.get('right');
-            
+
             let datasourceName = 'Unknown';
             if (datasourceParam) {
               try {

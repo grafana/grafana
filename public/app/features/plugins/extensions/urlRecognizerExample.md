@@ -18,55 +18,54 @@ interface IncidentMetadata {
   createdAt?: string;
 }
 
-export const plugin = new AppPlugin<{}>()
-  .addUrlRecognizer<IncidentMetadata>({
-    title: 'Incident',
-    description: 'Recognizes incident URLs from our incident management system',
-    recognizer: async (url: string) => {
-      // Check if URL matches your pattern
-      if (!url.includes('incidents.example.com')) {
+export const plugin = new AppPlugin<{}>().addUrlRecognizer<IncidentMetadata>({
+  title: 'Incident',
+  description: 'Recognizes incident URLs from our incident management system',
+  recognizer: async (url: string) => {
+    // Check if URL matches your pattern
+    if (!url.includes('incidents.example.com')) {
+      return null;
+    }
+
+    try {
+      const urlObj = new URL(url);
+      const incidentId = urlObj.pathname.match(/\/incident\/([^/]+)/)?.[1];
+
+      if (!incidentId) {
         return null;
       }
 
-      try {
-        const urlObj = new URL(url);
-        const incidentId = urlObj.pathname.match(/\/incident\/([^/]+)/)?.[1];
-        
-        if (!incidentId) {
-          return null;
-        }
+      // You could fetch additional metadata from your API here
+      // const metadata = await fetch(`/api/incidents/${incidentId}`);
 
-        // You could fetch additional metadata from your API here
-        // const metadata = await fetch(`/api/incidents/${incidentId}`);
-
-        // The return type is now strongly typed
-        return {
-          id: incidentId,
-          title: `Incident #${incidentId}`,
-          description: 'Critical production incident',
-          severity: 'high',
-          status: 'investigating',
-          assignee: 'john.doe@example.com',
-          createdAt: new Date().toISOString(),
-        };
-      } catch {
-        return null;
-      }
+      // The return type is now strongly typed
+      return {
+        id: incidentId,
+        title: `Incident #${incidentId}`,
+        description: 'Critical production incident',
+        severity: 'high',
+        status: 'investigating',
+        assignee: 'john.doe@example.com',
+        createdAt: new Date().toISOString(),
+      };
+    } catch {
+      return null;
+    }
+  },
+  schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      title: { type: 'string' },
+      description: { type: 'string' },
+      severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+      status: { type: 'string' },
+      assignee: { type: 'string' },
+      createdAt: { type: 'string', format: 'date-time' },
     },
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        title: { type: 'string' },
-        description: { type: 'string' },
-        severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
-        status: { type: 'string' },
-        assignee: { type: 'string' },
-        createdAt: { type: 'string', format: 'date-time' },
-      },
-      required: ['id', 'title', 'severity', 'status'],
-    },
-  });
+    required: ['id', 'title', 'severity', 'status'],
+  },
+});
 ```
 
 ### 2. Multiple Recognizers with Different Types
