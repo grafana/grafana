@@ -149,7 +149,7 @@ export const buildActionRequest = (action: Action, replaceVariables: Interpolate
   return request;
 };
 
-/** @internal */ 
+/** @internal */
 export const getActionsDefaultField = (dataLinks: DataLink[] = [], actions: Action[] = []): Field => {
   return {
     name: 'Default field',
