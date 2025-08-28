@@ -37,6 +37,10 @@ func (s ShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *shortur
 	return s.SQLStore.Update(ctx, shortURL)
 }
 
+func (s ShortURLService) List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error) {
+	return s.SQLStore.List(ctx, orgID)
+}
+
 func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, cmd *dtos.CreateShortURLCmd) (*shorturls.ShortUrl, error) {
 	relPath := strings.TrimSpace(cmd.Path)
 

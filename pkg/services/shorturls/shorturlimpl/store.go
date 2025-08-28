@@ -13,6 +13,7 @@ type store interface {
 	Update(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Insert(ctx context.Context, shortURL *shorturls.ShortUrl) error
 	Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error
+	List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error)
 }
 
 type sqlStore struct {
@@ -83,4 +84,20 @@ func (s sqlStore) Delete(ctx context.Context, cmd *shorturls.DeleteShortUrlComma
 		}
 		return nil
 	})
+}
+
+func (s sqlStore) List(ctx context.Context, orgID int64) ([]*shorturls.ShortUrl, error) {
+	var shortURLs []*shorturls.ShortUrl
+	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		err := dbSession.Where("org_id = ?", orgID).Find(&shortURLs)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return shortURLs, nil
 }
