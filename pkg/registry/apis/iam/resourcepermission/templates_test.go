@@ -42,17 +42,6 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
-	getDeletePermission := func(roleID int64, scope string) sqltemplate.SQLTemplate {
-		v := deletePermissionTemplate{
-			SQLTemplate:     sqltemplate.New(nodb.DialectForDriver()),
-			PermissionTable: nodb.Table("permission"),
-			RoleID:          roleID,
-			Scope:           scope,
-		}
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
 	getInsertAssignment := func(orgID int64, roleID int64, assignment grant) sqltemplate.SQLTemplate {
 		v := insertAssignmentTemplate{
 			SQLTemplate:      sqltemplate.New(nodb.DialectForDriver()),
@@ -91,12 +80,6 @@ func TestTemplates(t *testing.T) {
 						Attribute:  "uid",
 						Identifier: "dash1",
 					}),
-				},
-			},
-			permissionDeleteTplt: {
-				{
-					Name: "delete_permission",
-					Data: getDeletePermission(23, "dashboard:uid:dash1"),
 				},
 			},
 			assignmentInsertTplt: {

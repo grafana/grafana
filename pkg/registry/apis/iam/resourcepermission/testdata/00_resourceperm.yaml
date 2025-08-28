@@ -1,12 +1,12 @@
 apiVersion: iam.grafana.app/v0alpha1
 kind: ResourcePermission
 metadata:
-  name: folder.grafana.app-folders-fold1
+  name: dashboard.grafana.app-dashboards-ad5rwqs
 spec:
   resource: 
-    apiGroup: folder.grafana.app
-    resource: folders
-    name: fold1
+    apiGroup: dashboard.grafana.app
+    resource: dashboards
+    name: ad5rwqs
   permissions:
   - kind: User
     name: few8wwtp1si68e

@@ -85,17 +85,6 @@ func (s *ResourcePermSqlBackend) handleAssignment(ctx context.Context, dbHelper 
 		}
 	}
 
-	// Remove any existing permission for that resource
-	deletePermQuery, args, err := buildDeletePermissionQuery(dbHelper, roleID, assignment.Scope)
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(ctx, deletePermQuery, args...)
-	if err != nil {
-		s.logger.Error("deleting existing permission", "roleID", roleID, "scope", assignment.Scope, "error", err)
-		return fmt.Errorf("could not delete role permissions")
-	}
-
 	// Add the new permission
 	insertPermQuery, args, err := buildInsertPermissionQuery(dbHelper, roleID, assignment.permission())
 	if err != nil {
