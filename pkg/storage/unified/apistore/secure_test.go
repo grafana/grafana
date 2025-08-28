@@ -133,6 +133,7 @@ func TestSecureLifecycle(t *testing.T) {
 
 	t.Run("remove secure values", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		opts := &StorageOptions{SecureValues: secureStore}
 		previous := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 			"b": common.InlineSecureValue{Name: "NameForB"},
@@ -164,14 +165,14 @@ func TestSecureLifecycle(t *testing.T) {
 		owner := utils.ToObjectReference(obj)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForB").
 			Return(nil).Once()
-		err = info.finish(context.Background(), nil, secureStore)
+		err = info.finish(context.Background(), nil, opts)
 		require.NoError(t, err)
 		require.True(t, info.hasChanged)  // value was removed
 		secureStore.AssertExpectations(t) // nothing called
 
 		// When an error exists, no values will be deleted
 		err = fmt.Errorf("expected error")
-		outErr := info.finish(context.Background(), err, secureStore)
+		outErr := info.finish(context.Background(), err, opts)
 		require.Equal(t, err, outErr, "error should be passed through")
 	})
 

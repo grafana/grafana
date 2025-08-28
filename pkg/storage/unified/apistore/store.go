@@ -50,6 +50,23 @@ var _ storage.Interface = (*Storage)(nil)
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
+type StorageHooks struct {
+	// Called before CREATE, UPDATE or DELETE
+	// an error will immediately abort the operation
+	BeforeAction func(ctx context.Context, action resourcepb.WatchEvent_Type, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error
+
+	// Called after CREATE, UPDATE or DELETE has successfully executed
+	// an error here will attempt to rollback the previous operation
+	// ????
+	// ????	AfterAction func(ctx context.Context, action resourcepb.WatchEvent_Type, obj utils.GrafanaMetaAccessor) error
+	// can we put on rollback
+
+	// Called if an error occurs during CREATE, UPDATE or DELETE
+	// This gives you an opportunity to clean up any side-effects that happened in the Before hook
+	// Any errors must be handled internally and will not be reported up the chain
+	OnError func(ctx context.Context, err error, action resourcepb.WatchEvent_Type, obj utils.GrafanaMetaAccessor)
+}
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	// ????: should we constrain this to only dashboards for now?
@@ -61,6 +78,9 @@ type StorageOptions struct {
 
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Optionally inject behavior before/after actions
+	Hooks StorageHooks
 
 	// Process inline secure values
 	SecureValues secrets.InlineSecureValueSupport
@@ -198,26 +218,28 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	if err != nil {
 		return err
 	}
-
+	v.key = req.Key
+	v.action = resourcepb.WatchEvent_ADDED
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {
 		return err
 	}
 
-	rsp, err := s.store.Create(ctx, req)
-	if err != nil {
-		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s.opts.SecureValues)
+	if _, err := s.convertToObject(req.Value, out); err != nil {
+		return err
 	}
-	if rsp.Error != nil {
+	if err = v.before(ctx, &s.opts); err != nil {
+		return err
+	}
+	rsp, err := s.store.Create(ctx, req)
+	if err == nil && rsp.Error != nil {
 		err = resource.GetError(rsp.Error)
 		if rsp.Error.Code == http.StatusConflict {
 			err = storage.NewKeyExistsError(key, 0)
 		}
-		return v.finish(ctx, err, s.opts.SecureValues)
 	}
-
-	if _, err := s.convertToObject(req.Value, out); err != nil {
-		return err
+	if err != nil {
+		return v.finish(ctx, err, &s.opts)
 	}
 
 	meta, err := utils.MetaAccessor(out)
@@ -235,7 +257,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		})
 	}
 
-	return v.finish(ctx, nil, s.opts.SecureValues)
+	return v.finish(ctx, nil, &s.opts)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -297,22 +319,27 @@ func (s *Storage) Delete(
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 	}
 
-	rsp, err := s.store.Delete(ctx, cmd)
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
+	ofs := &objectForStorage{
+		key:    k,
+		action: resourcepb.WatchEvent_DELETED,
+		obj:    meta,
 	}
-	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
-	}
-
-	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
-		logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
-	}
-
-	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
+	if err = ofs.before(ctx, &s.opts); err != nil {
 		return err
 	}
-	return nil
+	rsp, err := s.store.Delete(ctx, cmd)
+	if err == nil && rsp.Error != nil {
+		err = resource.GetError(rsp.Error)
+	} else {
+		if err := handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+			logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
+		}
+		if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
+			logging.FromContext(ctx).Warn("unable to update RV on deleted resource", "err", err)
+		}
+	}
+
+	return ofs.finish(ctx, err, &s.opts)
 }
 
 // This version is not yet passing the watch tests
@@ -503,11 +530,12 @@ func (s *Storage) GuaranteedUpdate(
 	cachedExistingObject runtime.Object,
 ) error {
 	var (
-		res           storage.ResponseMeta
-		updatedObj    runtime.Object
-		existingObj   runtime.Object
-		existingBytes []byte
-		err           error
+		res            storage.ResponseMeta
+		updatedObj     runtime.Object
+		existingObj    runtime.Object
+		updateResponse *resourcepb.UpdateResponse
+		existingBytes  []byte
+		err            error
 	)
 	req := &resourcepb.UpdateRequest{}
 	req.Key, err = s.getKey(key)
@@ -596,24 +624,29 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
+	v.key = req.Key
+	v.action = resourcepb.WatchEvent_MODIFIED
 
 	// Only update (for real) if the bytes have changed
 	var rv uint64
 	req.Value = v.raw.Bytes()
 	if !bytes.Equal(req.Value, existingBytes) {
-		updateResponse, err := s.store.Update(ctx, req)
+		err = v.before(ctx, &s.opts)
 		if err != nil {
-			err = resource.GetError(resource.AsErrorResult(err))
-		} else if updateResponse.Error != nil {
-			err = resource.GetError(updateResponse.Error)
+			updateResponse, err = s.store.Update(ctx, req)
+			if err != nil {
+				err = resource.GetError(resource.AsErrorResult(err))
+			} else if updateResponse.Error != nil {
+				err = resource.GetError(updateResponse.Error)
+			} else {
+				rv = uint64(updateResponse.ResourceVersion)
+			}
 		}
 
 		// Cleanup secure values
-		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+		if err = v.finish(ctx, err, &s.opts); err != nil {
 			return err
 		}
-
-		rv = uint64(updateResponse.ResourceVersion)
 	}
 
 	if _, err := s.convertToObject(req.Value, destination); err != nil {

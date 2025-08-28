@@ -20,11 +20,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type objectForStorage struct {
+	key *resourcepb.ResourceKey
+
+	action resourcepb.WatchEvent_Type
+
+	obj utils.GrafanaMetaAccessor
+
+	old utils.GrafanaMetaAccessor
+
 	// The value to save in unistore
 	raw bytes.Buffer
 
@@ -48,13 +55,33 @@ type objectForStorage struct {
 	hasChanged bool
 }
 
-func (v *objectForStorage) finish(ctx context.Context, err error, secrets secrets.InlineSecureValueSupport) error {
+func (v *objectForStorage) before(ctx context.Context, opts *StorageOptions) error {
+	if opts == nil || opts.Hooks.BeforeAction == nil {
+		return nil // noop
+	}
+	if err := opts.Hooks.BeforeAction(ctx, v.action, v.obj, v.old); err != nil {
+		// Remove any secure values that were created
+		for _, s := range v.createdSecureValues {
+			if e := opts.SecureValues.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
+				logging.FromContext(ctx).Warn("unable to clean up new secure value", "name", s, "err", e)
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (v *objectForStorage) finish(ctx context.Context, err error, opts *StorageOptions) error {
 	if err != nil {
 		// Remove the secure values that were created
 		for _, s := range v.createdSecureValues {
-			if e := secrets.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
+			if e := opts.SecureValues.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
 				logging.FromContext(ctx).Warn("unable to clean up new secure value", "name", s, "err", e)
 			}
+		}
+
+		if opts != nil && opts.Hooks.OnError != nil {
+			opts.Hooks.OnError(ctx, err, v.action, v.obj)
 		}
 		return err
 	}
@@ -62,7 +89,7 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	// Delete secure values after successfully saving the object
 	if len(v.deleteSecureValues) > 0 {
 		for _, s := range v.deleteSecureValues {
-			if e := secrets.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
+			if e := opts.SecureValues.DeleteWhenOwnedByResource(ctx, v.ref, s); e != nil {
 				logging.FromContext(ctx).Warn("unable to clean up new secure value", "name", s, "err", e)
 			}
 		}
@@ -78,7 +105,9 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) (objectForStorage, error) {
-	v := objectForStorage{}
+	v := objectForStorage{
+		action: resourcepb.WatchEvent_ADDED,
+	}
 	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return v, errors.New("missing auth info")
@@ -139,12 +168,15 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err == nil {
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
+	v.obj = obj
 	return v, err
 }
 
 // Called on update
 func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) (objectForStorage, error) {
-	v := objectForStorage{}
+	v := objectForStorage{
+		action: resourcepb.WatchEvent_MODIFIED,
+	}
 	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return v, errors.New("missing auth info")
@@ -234,6 +266,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err == nil {
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
+	v.obj = obj
+	v.old = previous
 	return v, err
 }
 
