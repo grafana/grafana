@@ -938,14 +938,6 @@ const (
 	RuleTypeFilterRecording
 )
 
-type ListAlertRulesByGroupQuery struct {
-	ListAlertRulesQuery
-	RuleType RuleTypeFilter
-
-	GroupLimit         int64  // Number of groups to fetch
-	GroupContinueToken string // Token for per-group pagination
-}
-
 type GroupCursor struct {
 	NamespaceUID string `json:"n"`
 	RuleGroup    string `json:"g"`
