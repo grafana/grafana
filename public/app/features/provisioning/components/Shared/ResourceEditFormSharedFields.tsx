@@ -137,6 +137,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       )}
                       options={branchOptions}
                       loading={branchLoading}
+                      createCustomValue
                       isClearable
                       {...field}
                     />
