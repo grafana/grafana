@@ -16,9 +16,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
@@ -27,11 +28,11 @@ import (
 )
 
 type RepositoryConfig struct {
-	URL            string
-	Branch         string
-	Token          string
-	EncryptedToken []byte
-	Path           string
+	URL       string
+	Branch    string
+	TokenUser string
+	Token     common.RawSecureValue
+	Path      string
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -41,14 +42,19 @@ type gitRepository struct {
 	client    nanogit.Client
 }
 
-func NewGitRepository(
+func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
 	var opts []options.Option
-	if len(gitConfig.Token) > 0 {
-		opts = append(opts, options.WithBasicAuth("git", gitConfig.Token))
+	if !gitConfig.Token.IsZero() {
+		tokenUser := gitConfig.TokenUser
+		if tokenUser == "" {
+			tokenUser = "git"
+		}
+
+		opts = append(opts, options.WithBasicAuth(tokenUser, string(gitConfig.Token)))
 	}
 
 	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
@@ -93,10 +99,10 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
 	}
 
-	// If the repository has workflows, we require a token or encrypted token
+	// Readonly repositories may not need a token (if public)
 	if len(r.config.Spec.Workflows) > 0 {
-		if cfg.Token == "" && len(cfg.EncryptedToken) == 0 {
-			list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
+		if cfg.Token == "" && r.config.Secure.Token.IsZero() {
+			list = append(list, field.Required(field.NewPath("secure", "token"), "a git access token is required"))
 		}
 	}
 
@@ -153,7 +159,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", t, "token").String(),
+				Field:  field.NewPath("secure", "token").String(),
 				Detail: detail,
 			}},
 		}, nil
@@ -444,6 +450,30 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	return r.commitAndPush(ctx, writer, comment)
 }
 
+func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+	if ref == "" {
+		ref = r.gitConfig.Branch
+	}
+	ctx, _ = r.logger(ctx, ref)
+
+	branchRef, err := r.ensureBranchExists(ctx, ref)
+	if err != nil {
+		return err
+	}
+
+	// Create a staged writer
+	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	if err != nil {
+		return fmt.Errorf("create staged writer: %w", err)
+	}
+
+	if err := r.move(ctx, oldPath, newPath, writer); err != nil {
+		return err
+	}
+
+	return r.commitAndPush(ctx, writer, comment)
+}
+
 func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.StagedWriter) error {
 	finalPath := safepath.Join(r.gitConfig.Path, path)
 	// Check if it's a directory - use DeleteTree for directories, DeleteBlob for files
@@ -467,6 +497,44 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 	return nil
 }
 
+func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, writer nanogit.StagedWriter) error {
+	oldFinalPath := safepath.Join(r.gitConfig.Path, oldPath)
+	newFinalPath := safepath.Join(r.gitConfig.Path, newPath)
+
+	// Check if moving directories
+	if safepath.IsDir(oldPath) && safepath.IsDir(newPath) {
+		// For directories, trim trailing slashes and use MoveTree
+		oldTrimmed := strings.TrimSuffix(oldFinalPath, "/")
+		newTrimmed := strings.TrimSuffix(newFinalPath, "/")
+
+		if _, err := writer.MoveTree(ctx, oldTrimmed, newTrimmed); err != nil {
+			if errors.Is(err, nanogit.ErrObjectNotFound) {
+				return repository.ErrFileNotFound
+			}
+			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
+				return repository.ErrFileAlreadyExists
+			}
+			return fmt.Errorf("move tree: %w", err)
+		}
+	} else if !safepath.IsDir(oldPath) && !safepath.IsDir(newPath) {
+		// For files, use MoveBlob operation
+		if _, err := writer.MoveBlob(ctx, oldFinalPath, newFinalPath); err != nil {
+			if errors.Is(err, nanogit.ErrObjectNotFound) {
+				return repository.ErrFileNotFound
+			}
+			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
+				return repository.ErrFileAlreadyExists
+			}
+			return fmt.Errorf("move blob: %w", err)
+		}
+	} else {
+		// Mismatched types (file to directory or vice versa)
+		return apierrors.NewBadRequest("cannot move between file and directory types")
+	}
+
+	return nil
+}
+
 func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provisioning.HistoryItem, error) {
 	return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
 		Status:  metav1.StatusFailure,
@@ -474,6 +542,27 @@ func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provis
 		Reason:  metav1.StatusReasonMethodNotAllowed,
 		Message: "history is not supported for pure git repositories",
 	}}
+}
+
+func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
+	refs, err := r.client.ListRefs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list refs: %w", err)
+	}
+	refItems := make([]provisioning.RefItem, 0, len(refs))
+	for _, ref := range refs {
+		// Only branches
+		if !strings.HasPrefix(ref.Name, "refs/heads/") {
+			continue
+		}
+
+		refItems = append(refItems, provisioning.RefItem{
+			Name: strings.TrimPrefix(ref.Name, "refs/heads/"),
+			Hash: ref.Hash.String(),
+		})
+	}
+
+	return refItems, nil
 }
 
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
@@ -694,6 +783,10 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
 	author, committer := r.createSignature(ctx)
 	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
+		if errors.Is(err, nanogit.ErrNothingToCommit) {
+			return repository.ErrNothingToCommit
+		}
+
 		return fmt.Errorf("commit changes: %w", err)
 	}
 	return nil

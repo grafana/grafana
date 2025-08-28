@@ -12,6 +12,8 @@ import { t } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/limit.svg';
+import lightImage from '../images/light/limit.svg';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
 
@@ -56,4 +58,6 @@ export const getLimitTransformRegistryItem: () => TransformerRegistryItem<LimitT
   ),
   categories: new Set([TransformerCategory.Filter]),
   help: getTransformationContent(DataTransformerID.limit).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });

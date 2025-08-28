@@ -24,6 +24,8 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/filterByValue.svg';
+import lightImage from '../images/light/filterByValue.svg';
 
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
@@ -160,6 +162,8 @@ export const getFilterByValueTransformRegistryItem: () => TransformerRegistryIte
     ),
     categories: new Set([TransformerCategory.Filter]),
     help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });
 
 const useFieldsInfo = (data: DataFrame[]): DataFrameFieldsInfo => {

@@ -227,6 +227,9 @@ export const versionedPages = {
           exportAsJson: {
             '11.2.0': 'data-testid new export button export as json',
           },
+          exportAsImage: {
+            '12.1.0': 'data-testid new export button export as image',
+          },
         },
       },
       playlistControls: {
@@ -489,6 +492,27 @@ export const versionedPages = {
             queryOptionsQueryInput: {
               '10.4.0': 'data-testid Variable editor Form Default Variable Query Editor textarea',
             },
+            queryOptionsStaticOptionsRow: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options row',
+            },
+            queryOptionsStaticOptionsToggle: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options toggle',
+            },
+            queryOptionsStaticOptionsLabelInput: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Label input',
+            },
+            queryOptionsStaticOptionsValueInput: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Value input',
+            },
+            queryOptionsStaticOptionsDeleteButton: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Delete button',
+            },
+            queryOptionsStaticOptionsAddButton: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Add button',
+            },
+            queryOptionsStaticOptionsOrderDropdown: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Order dropdown',
+            },
             valueGroupsTagsEnabledSwitch: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query UseTags switch',
             },
@@ -613,6 +637,9 @@ export const versionedPages = {
     },
     saveRefresh: {
       '11.1.0': 'Dashboard settings Save Dashboard Modal Save refresh checkbox',
+    },
+    variablesWarningAlert: {
+      '12.2.0': 'Dashboard settings Save Dashboard Modal Save variables Variables With Errors Warning Alert',
     },
   },
   SharePanelModal: {

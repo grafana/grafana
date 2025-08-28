@@ -60,49 +60,61 @@ describe('TableNG Cells renderers', () => {
         config: {},
         state: {},
         display: jest.fn(() => ({ text: 'black', color: 'white', numeric: 0 })),
+        // @ts-ignore: this mock works fine for this test.
+        getLinks: jest.fn(() => [
+          {
+            title: 'example',
+            href: 'http://example.com',
+            target: '_blank',
+            origin: {},
+          },
+        ]),
       };
     }
 
     // Helper function to render a cell and get the test ID
-    const renderCell = (field: Field, cellOptions: TableCellOptions) =>
-      render(
-        getCellRenderer(
-          field,
-          cellOptions
-        )({
-          field,
-          value: 'test-value',
-          rowIdx: 0,
-          frame: createDataFrame({ fields: [field] }),
-          height: 100,
-          width: 100,
-          theme: createTheme(),
-          cellOptions,
-          cellInspect: false,
-          showFilters: false,
-          justifyContent: 'flex-start',
-        })
+    const renderCell = (field: Field, cellOptions: TableCellOptions) => {
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const CellComponent = getCellRenderer(field, cellOptions);
+      return render(
+        <CellComponent
+          field={field}
+          value="test-value"
+          rowIdx={0}
+          frame={createDataFrame({ fields: [field] })}
+          height={100}
+          width={100}
+          theme={createTheme()}
+          cellOptions={cellOptions}
+          cellInspect={false}
+          showFilters={false}
+          getActions={jest.fn(() => [
+            { title: 'Action', onClick: jest.fn(() => {}), confirmation: jest.fn(), style: {} },
+          ])}
+          getTextColorForBackground={jest.fn(() => '#000000')}
+        />
       );
+    };
 
     // Performance test helper
     const benchmarkCellPerformance = (field: Field, cellOptions: TableCellOptions, iterations = 100) => {
       // eslint-disable-next-line testing-library/render-result-naming-convention
-      const r = getCellRenderer(field, cellOptions);
+      const CellComponent = getCellRenderer(field, cellOptions);
       return measurePerformance(() => {
         render(
-          r({
-            field,
-            value: 'test-value',
-            rowIdx: 0,
-            frame: createDataFrame({ fields: [field] }),
-            height: 100,
-            width: 100,
-            theme: createTheme(),
-            cellOptions,
-            cellInspect: false,
-            showFilters: false,
-            justifyContent: 'flex-start',
-          })
+          <CellComponent
+            field={field}
+            value="test-value"
+            rowIdx={0}
+            frame={createDataFrame({ fields: [field] })}
+            height={100}
+            width={100}
+            theme={createTheme()}
+            getTextColorForBackground={jest.fn(() => '#000000')}
+            cellOptions={cellOptions}
+            cellInspect={false}
+            showFilters={false}
+          />
         );
       }, iterations);
     };
@@ -114,8 +126,8 @@ describe('TableNG Cells renderers', () => {
         { type: TableCellDisplayMode.JSONView, fieldType: FieldType.string },
         { type: TableCellDisplayMode.Image, fieldType: FieldType.string },
         { type: TableCellDisplayMode.DataLinks, fieldType: FieldType.string },
-        { type: TableCellDisplayMode.Actions, fieldType: FieldType.string },
         { type: TableCellDisplayMode.ColorText, fieldType: FieldType.string },
+        { type: TableCellDisplayMode.Actions, fieldType: FieldType.string },
         { type: TableCellDisplayMode.ColorBackground, fieldType: FieldType.string },
         { type: TableCellDisplayMode.Auto, fieldType: FieldType.string },
       ] as const)('should render $type cell into the document', ({ type, fieldType }) => {
@@ -278,6 +290,22 @@ describe('TableNG Cells renderers', () => {
         const { container } = renderCell(field, { type: TableCellDisplayMode.Auto });
         expect(container).toBeInTheDocument();
         expect(container.childNodes).toHaveLength(1);
+      });
+
+      it('should use AutoCell when attempting to render a field with an unsupported type', () => {
+        // confirm that a real pill cell has spans.
+        const stringField = createField(FieldType.string, ['42']);
+        const { container: stringFieldContainer } = renderCell(stringField, { type: TableCellDisplayMode.Pill });
+        expect(stringFieldContainer).toBeInTheDocument();
+        expect(stringFieldContainer.childNodes).toHaveLength(1);
+        expect(stringFieldContainer.querySelector('span')).toBeInTheDocument();
+
+        // confirm that number pill cell doesn't actually render a pill cell.
+        const numberField = createField(FieldType.number, [42]);
+        const { container: numberFieldContainer } = renderCell(numberField, { type: TableCellDisplayMode.Pill });
+        expect(numberFieldContainer).toBeInTheDocument();
+        expect(numberFieldContainer.childNodes).toHaveLength(1);
+        expect(numberFieldContainer.querySelector('span')).toBeNull();
       });
     });
 

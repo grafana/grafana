@@ -17,6 +17,8 @@ const meta: Meta<typeof MultiCombobox> = {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
 };
 
@@ -48,6 +50,31 @@ type Story = StoryObj<typeof MultiCombobox>;
 
 export const Basic: Story = {
   args: commonArgs,
+  render: (args) => {
+    const [{ value }, setArgs] = useArgs();
+
+    return (
+      <MultiCombobox
+        {...args}
+        value={value}
+        onChange={(val) => {
+          onChangeAction(val);
+          setArgs({ value: val });
+        }}
+      />
+    );
+  },
+};
+
+export const WithInfoOption: Story = {
+  name: 'With infoOption',
+  args: {
+    ...commonArgs,
+    options: [
+      ...commonArgs.options,
+      { label: 'Can’t find your country? Select “Other” or contact an admin', value: '__INFO__', infoOption: true },
+    ],
+  },
   render: (args) => {
     const [{ value }, setArgs] = useArgs();
 

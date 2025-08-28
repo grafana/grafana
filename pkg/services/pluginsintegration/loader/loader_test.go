@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
@@ -120,11 +121,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:    "core:plugin/cloudwatch",
-					BaseURL:   "public/plugins/cloudwatch",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
-					Signature: plugins.SignatureStatusInternal,
-					Class:     plugins.ClassCore,
+					Module:       "core:plugin/cloudwatch",
+					BaseURL:      "public/plugins/cloudwatch",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
+					Signature:    plugins.SignatureStatusInternal,
+					Class:        plugins.ClassCore,
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -219,6 +221,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -264,11 +267,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature: "unsigned",
+					Class:        plugins.ClassExternal,
+					Module:       "public/plugins/test-datasource/module.js",
+					BaseURL:      "public/plugins/test-datasource",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
+					Signature:    "unsigned",
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -327,11 +331,12 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.ClassExternal,
-					Module:    "public/plugins/test-datasource/module.js",
-					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature: plugins.SignatureStatusUnsigned,
+					Class:        plugins.ClassExternal,
+					Module:       "public/plugins/test-datasource/module.js",
+					BaseURL:      "public/plugins/test-datasource",
+					FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
+					Signature:    plugins.SignatureStatusUnsigned,
+					Translations: map[string]string{},
 				},
 			},
 		},
@@ -452,6 +457,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:     plugins.SignatureStatusUnsigned,
 					Module:        "public/plugins/test-app/module.js",
 					BaseURL:       "public/plugins/test-app",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -541,6 +547,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 				},
+				Translations: map[string]string{},
 			},
 		}
 
@@ -635,11 +642,12 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
 			},
-			FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
-			Class:     plugins.ClassExternal,
-			Signature: plugins.SignatureStatusValid,
-			BaseURL:   "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-			Module:    "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
+			FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
+			Class:        plugins.ClassExternal,
+			Signature:    plugins.SignatureStatusValid,
+			BaseURL:      "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+			Module:       "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
+			Translations: map[string]string{},
 		}}
 
 		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeErrorTracker())
@@ -726,6 +734,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Signature:     "valid",
 						SignatureType: plugins.SignatureTypePrivate,
 						SignatureOrg:  "Will Browne",
+						Translations:  map[string]string{},
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
@@ -844,6 +853,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 					SignatureOrg:  "gabrielmabille",
 					Module:        "public/plugins/test-app/module.js",
 					BaseURL:       "public/plugins/test-app",
+					Translations:  map[string]string{},
 				},
 			},
 		},
@@ -912,6 +922,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 				SignatureOrg:  "Will Browne",
 				Module:        "public/plugins/test-datasource/module.js",
 				BaseURL:       "public/plugins/test-datasource",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -998,6 +1009,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 				SignatureOrg:  "Grafana Labs",
 				Module:        "public/plugins/test-app/module.js",
 				BaseURL:       "public/plugins/test-app",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -1088,6 +1100,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 				SignatureOrg:  "Grafana Labs",
 				Module:        "public/plugins/test-app/module.js",
 				BaseURL:       "public/plugins/test-app",
+				Translations:  map[string]string{},
 			},
 		}
 
@@ -1289,6 +1302,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.ClassExternal,
+		Translations:  map[string]string{},
 	}
 
 	child := &plugins.Plugin{
@@ -1332,6 +1346,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
 		Class:         plugins.ClassExternal,
+		Translations:  map[string]string{},
 	}
 
 	parent.Children = []*plugins.Plugin{child}
@@ -1481,6 +1496,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			SignatureType: plugins.SignatureTypeGrafana,
 			SignatureOrg:  "Grafana Labs",
 			Class:         plugins.ClassExternal,
+			Translations:  map[string]string{},
 		}
 
 		child := &plugins.Plugin{
@@ -1531,6 +1547,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			SignatureType:   plugins.SignatureTypeGrafana,
 			SignatureOrg:    "Grafana Labs",
 			Class:           plugins.ClassExternal,
+			Translations:    map[string]string{},
 		}
 
 		parent.Children = []*plugins.Plugin{child}
@@ -1572,7 +1589,7 @@ type loaderDepOpts struct {
 func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Service, proc process.Manager,
 	backendFactory plugins.BackendFactoryProvider, errTracker pluginerrs.ErrorTracker,
 ) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
+	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	angularInspector := angularinspector.NewStaticInspector()
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
@@ -1586,7 +1603,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 }
 
 func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loaderDepOpts) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
+	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	reg := fakes.NewFakePluginRegistry()
 	proc := fakes.NewFakeProcessManager()
 

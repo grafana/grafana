@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
-import { Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { useBranchOptions } from '../hooks/useBranchOptions';
+import { getHasTokenInstructions } from '../utils/git';
+import { isGitProvider } from '../utils/repositoryTypes';
 
+import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
 
 export function ConnectStep() {
@@ -15,123 +18,152 @@ export function ConnectStep() {
     setValue,
     formState: { errors },
     getValues,
+    watch,
   } = useFormContext<WizardFormData>();
 
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
+  // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const isGithub = type === 'github';
+  const [repositoryUrl = '', repositoryToken = ''] = watch(['repository.url', 'repository.token']);
+  const isGitBased = isGitProvider(type);
+
+  const {
+    options: branchOptions,
+    loading: branchesLoading,
+    error: branchesError,
+  } = useBranchOptions({
+    repositoryType: type,
+    repositoryUrl,
+    repositoryToken,
+  });
+
+  const gitFields = isGitBased ? getGitProviderFields(type) : null;
+  const localFields = !isGitBased ? getLocalProviderFields(type) : null;
+  const hasTokenInstructions = getHasTokenInstructions(type);
 
   return (
-    <Stack direction="column">
-      {isGithub && (
+    <Stack direction="column" gap={2}>
+      {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+
+      {gitFields && (
         <>
-          <TokenPermissionsInfo />
           <Field
             noMargin
-            label={t('provisioning.connect-step.label-access-token', 'GitHub access token')}
-            required
-            description={t(
-              'provisioning.connect-step.description-paste-your-git-hub-personal-access-token',
-              'Paste your GitHub personal access token'
-            )}
-            error={errors.repository?.token?.message}
-            invalid={!!errors.repository?.token}
+            label={gitFields.tokenConfig.label}
+            required={gitFields.tokenConfig.required}
+            description={gitFields.tokenConfig.description}
+            error={errors?.repository?.token?.message}
+            invalid={!!errors?.repository?.token?.message}
           >
             <Controller
-              name={'repository.token'}
+              name="repository.token"
               control={control}
-              rules={{ required: t('provisioning.connect-step.error-field-required', 'This field is required.') }}
-              render={({ field: { ref, ...field } }) => {
-                return (
-                  <SecretInput
-                    {...field}
-                    id={'token'}
-                    placeholder={t(
-                      'provisioning.connect-step.placeholder-github-token',
-                      'github_pat_yourTokenHere1234567890abcdEFGHijklMNOP'
-                    )}
-                    isConfigured={tokenConfigured}
-                    onReset={() => {
-                      setValue('repository.token', '');
-                      setTokenConfigured(false);
-                    }}
-                  />
-                );
-              }}
+              rules={gitFields.tokenConfig.validation}
+              render={({ field: { ref, ...field } }) => (
+                <SecretInput
+                  {...field}
+                  id="token"
+                  placeholder={gitFields.tokenConfig.placeholder}
+                  isConfigured={tokenConfigured}
+                  onReset={() => {
+                    setValue('repository.token', '');
+                    setTokenConfigured(false);
+                  }}
+                />
+              )}
             />
           </Field>
 
+          {gitFields.tokenUserConfig && (
+            <Field
+              noMargin
+              label={gitFields.tokenUserConfig.label}
+              required={gitFields.tokenUserConfig.required}
+              description={gitFields.tokenUserConfig.description}
+              error={errors?.repository?.tokenUser?.message}
+              invalid={!!errors?.repository?.tokenUser?.message}
+            >
+              <Input
+                {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
+                id="tokenUser"
+                placeholder={gitFields.tokenUserConfig.placeholder}
+              />
+            </Field>
+          )}
+
           <Field
             noMargin
-            label={t('provisioning.connect-step.label-repository-url', 'GitHub repository URL')}
-            error={errors.repository?.url?.message}
-            invalid={!!errors.repository?.url}
-            description={t(
-              'provisioning.connect-step.description-repository-url',
-              'Paste the URL of your GitHub repository'
-            )}
-            required
+            label={gitFields.urlConfig.label}
+            description={gitFields.urlConfig.description}
+            error={errors?.repository?.url?.message}
+            invalid={Boolean(errors?.repository?.url?.message)}
+            required={gitFields.urlConfig.required}
           >
             <Input
-              {...register('repository.url', {
-                required: t('provisioning.connect-step.error-field-required', 'This field is required.'),
-                pattern: {
-                  // TODO: The regex is not correct when we support GHES.
-                  value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
-                  message: t(
-                    'provisioning.connect-step.error-invalid-github-url',
-                    'Please enter a valid GitHub repository URL'
-                  ),
-                },
-              })}
-              id={'repository-url'}
-              placeholder={t('provisioning.connect-step.placeholder-github-url', 'https://github.com/username/repo')}
+              {...register('repository.url', gitFields.urlConfig.validation)}
+              id="repository-url"
+              placeholder={gitFields.urlConfig.placeholder}
             />
           </Field>
 
           <Field
             noMargin
-            label={t('provisioning.connect-step.label-branch', 'Branch name')}
-            description={t('provisioning.connect-step.description-branch', 'Branch to use for the GitHub repository')}
-            error={errors.repository?.branch?.message}
-            invalid={!!errors.repository?.branch}
+            label={gitFields.branchConfig.label}
+            description={gitFields.branchConfig.description}
+            error={errors?.repository?.branch?.message}
+            required={gitFields.branchConfig.required}
+            invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+          >
+            <Controller
+              name="repository.branch"
+              control={control}
+              rules={gitFields.branchConfig.validation}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+                  onChange={(option) => onChange(option?.value || '')}
+                  placeholder={gitFields.branchConfig.placeholder}
+                  options={branchOptions}
+                  loading={branchesLoading}
+                  createCustomValue
+                  isClearable
+                  {...field}
+                />
+              )}
+            />
+          </Field>
+
+          <Field
+            noMargin
+            label={gitFields.pathConfig.label}
+            description={gitFields.pathConfig.description}
+            error={errors?.repository?.path?.message}
+            invalid={!!errors?.repository?.path?.message}
+            required={gitFields.pathConfig.required}
           >
             <Input
-              {...register('repository.branch')}
-              id={'repository-branch'}
-              placeholder={t('provisioning.connect-step.placeholder-branch', 'main')}
+              {...register('repository.path', gitFields.pathConfig.validation)}
+              id="git-path"
+              placeholder={gitFields.pathConfig.placeholder}
             />
-          </Field>
-
-          <Field
-            noMargin
-            label={t('provisioning.connect-step.label-path', 'Path to subdirectory in repository')}
-            error={errors.repository?.path?.message}
-            invalid={!!errors.repository?.path}
-            description={t(
-              'provisioning.connect-step.description-github-path',
-              'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from'
-            )}
-          >
-            <Input {...register('repository.path')} id="repository-path" />
           </Field>
         </>
       )}
 
-      {type === 'local' && (
+      {localFields && (
         <Field
           noMargin
-          label={t('provisioning.connect-step.label-local-path', 'Local path')}
-          error={errors.repository?.path?.message}
-          invalid={!!errors.repository?.path}
+          label={localFields.pathConfig.label}
+          description={localFields.pathConfig.description}
+          error={errors?.repository?.path?.message}
+          invalid={!!errors?.repository?.path?.message}
+          required={localFields.pathConfig.required}
         >
           <Input
-            {...register('repository.path', {
-              required: t('provisioning.connect-step.error-field-required', 'This field is required.'),
-            })}
-            id="repository-local-path"
-            placeholder={t('provisioning.connect-step.placeholder-local-path', '/path/to/repo')}
+            {...register('repository.path', localFields.pathConfig.validation)}
+            id="local-path"
+            placeholder={localFields.pathConfig.placeholder}
           />
         </Field>
       )}

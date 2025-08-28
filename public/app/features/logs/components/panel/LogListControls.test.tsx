@@ -5,14 +5,24 @@ import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from
 import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
-import { createLogRow } from '../mocks/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
 import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
 
-jest.mock('../../utils');
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  downloadLogs: jest.fn(),
+}));
+
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
 
 const fontSize: LogListFontSize = 'default';
 const contextProps = {
@@ -28,6 +38,8 @@ const contextProps = {
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 describe('LogListControls', () => {
@@ -199,6 +211,42 @@ describe('LogListControls', () => {
     expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
   });
 
+  test('Controls line wrapping and prettify JSON', async () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    const onLogOptionsChange = jest.fn();
+    render(
+      <LogListContextProvider
+        {...contextProps}
+        wrapLogMessage={false}
+        onLogOptionsChange={onLogOptionsChange}
+        prettifyJSON={false}
+      >
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+
+    await userEvent.click(screen.getByLabelText('Wrap lines'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(2);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', true);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+
+    await userEvent.click(screen.getByLabelText('Wrap lines and expand JSON'));
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(3);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', true);
+
+    await userEvent.click(screen.getByLabelText('Unwrap lines'));
+
+    expect(onLogOptionsChange).toHaveBeenCalledWith('wrapLogMessage', false);
+    expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyJSON', false);
+
+    expect(onLogOptionsChange).toHaveBeenCalledTimes(5);
+
+    config.featureToggles.newLogsPanel = originalFlagState;
+  });
+
   test('Controls syntax highlighting', async () => {
     const onLogOptionsChange = jest.fn();
     render(
@@ -294,14 +342,15 @@ describe('LogListControls', () => {
   });
 
   test('Controls new lines', async () => {
+    const log = createLogLine({ entry: 'the\\r\\nentry', hasUnescapedContent: true });
     const { rerender } = render(
-      <LogListContextProvider {...contextProps} hasUnescapedContent>
+      <LogListContextProvider {...contextProps} logs={[log]}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Fix incorrectly escaped newline and tab sequences in log lines'));
     rerender(
-      <LogListContextProvider {...contextProps} hasUnescapedContent>
+      <LogListContextProvider {...contextProps} logs={[log]}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );

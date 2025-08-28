@@ -11,6 +11,8 @@ import { t } from '@grafana/i18n';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/filterByRefId.svg';
+import lightImage from '../images/light/filterByRefId.svg';
 
 export const FilterByRefIdTransformerEditor = (props: TransformerUIProps<FilterFramesByRefIdTransformerOptions>) => {
   return (
@@ -42,4 +44,6 @@ export const getFilterFramesByRefIdTransformRegistryItem: () => TransformerRegis
     ),
     categories: new Set([TransformerCategory.Filter]),
     help: getTransformationContent(DataTransformerID.filterByRefId).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });

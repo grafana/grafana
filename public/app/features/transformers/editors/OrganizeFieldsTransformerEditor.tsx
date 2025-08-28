@@ -36,6 +36,8 @@ import {
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/organize.svg';
+import lightImage from '../images/light/organize.svg';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
@@ -241,6 +243,8 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [options, onChange, uiOrderByItems]
   );
 
+  const styles = useStyles2(getDraggableStyles);
+
   // Show warning that we only apply the first frame
   if (input.length > 1) {
     return (
@@ -252,8 +256,6 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
       </FieldValidationMessage>
     );
   }
-
-  const styles = useStyles2(getDraggableStyles);
 
   return (
     <>
@@ -283,7 +285,12 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
                 <>
                   <div ref={provided.innerRef} className={styles.labelsDraggable} {...provided.droppableProps}>
                     {uiOrderByItems.map((item, idx) => (
-                      <DraggableUIOrderByItem item={item} index={idx} onChangeSort={onChangeSort} />
+                      <DraggableUIOrderByItem
+                        item={item}
+                        index={idx}
+                        onChangeSort={onChangeSort}
+                        key={`${item.name}-${item.type}`}
+                      />
                     ))}
                   </div>
                   {provided.placeholder}
@@ -507,4 +514,6 @@ export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryIt
     ),
     categories: new Set([TransformerCategory.ReorderAndRename]),
     help: getTransformationContent(DataTransformerID.organize).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });

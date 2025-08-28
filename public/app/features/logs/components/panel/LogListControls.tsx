@@ -6,11 +6,12 @@ import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, L
 import { GrafanaTheme2 } from '@grafana/data/';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
+import { LogLineTimestampResolution } from './LogLine';
 import { useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
@@ -280,18 +281,22 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 />
               </Dropdown>
               <div className={styles.divider} />
-              <IconButton
-                name="clock-nine"
-                aria-pressed={showTime}
-                className={showTime ? styles.controlButtonActive : styles.controlButton}
-                onClick={onShowTimestampsClick}
-                tooltip={
-                  showTime
-                    ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                    : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-                }
-                size="lg"
-              />
+              {config.featureToggles.newLogsPanel ? (
+                <TimestampResolutionButton />
+              ) : (
+                <IconButton
+                  name="clock-nine"
+                  aria-pressed={showTime}
+                  className={showTime ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onShowTimestampsClick}
+                  tooltip={
+                    showTime
+                      ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
+                      : t('logs.logs-controls.show-timestamps', 'Show timestamps')
+                  }
+                  size="lg"
+                />
+              )}
               {/* When this is used in a Plugin context, app is unknown */}
               {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <IconButton
@@ -307,19 +312,23 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               )}
-              <IconButton
-                name="wrap-text"
-                className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
-                aria-pressed={wrapLogMessage}
-                onClick={onWrapLogMessageClick}
-                tooltip={
-                  wrapLogMessage
-                    ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
-                    : t('logs.logs-controls.wrap-lines', 'Wrap lines')
-                }
-                size="lg"
-              />
-              {prettifyJSON !== undefined && (
+              {config.featureToggles.newLogsPanel ? (
+                <WrapLogMessageButton />
+              ) : (
+                <IconButton
+                  name="wrap-text"
+                  className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={wrapLogMessage}
+                  onClick={onWrapLogMessageClick}
+                  tooltip={
+                    wrapLogMessage
+                      ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
+                      : t('logs.logs-controls.wrap-lines', 'Wrap lines')
+                  }
+                  size="lg"
+                />
+              )}
+              {prettifyJSON !== undefined && !config.featureToggles.newLogsPanel && (
                 <IconButton
                   name="brackets-curly"
                   aria-pressed={prettifyJSON}
@@ -417,6 +426,23 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
               size="lg"
             />
           </Dropdown>
+          {visualisationType === 'logs' && hasUnescapedContent && (
+            <IconButton
+              name="enter"
+              aria-pressed={forceEscape}
+              className={forceEscape ? styles.controlButtonActive : styles.controlButton}
+              onClick={onForceEscapeClick}
+              tooltip={
+                forceEscape
+                  ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
+                  : t(
+                      'logs.logs-controls.escape-newlines',
+                      'Fix incorrectly escaped newline and tab sequences in log lines'
+                    )
+              }
+              size="lg"
+            />
+          )}
         </>
       )}
       {visualisationType === 'logs' && (
@@ -431,6 +457,92 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         />
       )}
     </div>
+  );
+};
+
+const TimestampResolutionButton = () => {
+  const styles = useStyles2(getStyles);
+  const { setTimestampResolution, setShowTime, showTime, timestampResolution } = useLogListContext();
+
+  const onShowTimestampsClick = useCallback(() => {
+    if (!config.featureToggles.newLogsPanel) {
+      reportInteraction('logs_log_list_controls_show_time_clicked', {
+        show_time: !showTime,
+      });
+      setShowTime(!showTime);
+      return;
+    }
+    if (!showTime || timestampResolution === 'ns') {
+      setShowTime(!showTime);
+    } else if (timestampResolution === 'ms') {
+      setTimestampResolution('ns');
+    }
+  }, [setShowTime, setTimestampResolution, showTime, timestampResolution]);
+
+  return (
+    <Tooltip content={getTimestampTooltip(showTime, timestampResolution)}>
+      <button
+        aria-label={getTimestampTooltip(showTime, timestampResolution)}
+        aria-pressed={showTime}
+        className={`${styles.customControlButton} ${showTime ? styles.controlButtonActive : styles.controlButton}`}
+        type="button"
+        onClick={onShowTimestampsClick}
+      >
+        <Icon name="clock-nine" size="lg" className={styles.customControlIcon} />
+        {showTime && (
+          <span className={styles.customControlTag}>
+            {timestampResolution === 'ms'
+              ? t('logs.logs-controls.resolution-ms', 'ms')
+              : t('logs.logs-controls.resolution-ns', 'ns')}
+          </span>
+        )}
+      </button>
+    </Tooltip>
+  );
+};
+
+const WrapLogMessageButton = () => {
+  const styles = useStyles2(getStyles);
+  const { prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage } = useLogListContext();
+
+  /**
+   * This component currently controls two internal states: line wrapping and JSON formatting.
+   * The state transition is as follows:
+   * - Line wrapping and JSON formatting disabled.
+   * - Line wrapping enabled.
+   * - Line wrapping and JSON formatting enabled.
+   *
+   * Line wrapping also controls JSON formatting, because with line wrapping disabled,
+   * JSON formatting has no effect, so one is related with the other.
+   */
+  const onWrapLogMessageClick = useCallback(() => {
+    if (!wrapLogMessage) {
+      setWrapLogMessage(true);
+      setPrettifyJSON(false);
+    } else if (!prettifyJSON) {
+      setPrettifyJSON(true);
+    } else {
+      setWrapLogMessage(false);
+      setPrettifyJSON(false);
+    }
+    reportInteraction('logs_log_list_controls_wrap_clicked', {
+      state: !wrapLogMessage,
+    });
+  }, [prettifyJSON, setPrettifyJSON, setWrapLogMessage, wrapLogMessage]);
+
+  return (
+    <Tooltip content={getWrapLogMessageTooltip(wrapLogMessage, prettifyJSON)}>
+      <button
+        aria-label={getWrapLogMessageTooltip(wrapLogMessage, prettifyJSON)}
+        aria-pressed={wrapLogMessage}
+        className={`${styles.customControlButton} ${wrapLogMessage ? styles.controlButtonActive : styles.controlButton}`}
+        type="button"
+        onClick={onWrapLogMessageClick}
+      >
+        <Icon name="wrap-text" size="lg" className={styles.customControlIcon} />
+        {prettifyJSON && <span className={styles.customControlTag}>+</span>}
+      </button>
+    </Tooltip>
   );
 };
 
@@ -493,5 +605,50 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundColor: theme.colors.warning.main,
       },
     }),
+    customControlButton: css({
+      position: 'relative',
+      zIndex: 0,
+      margin: 0,
+      boxShadow: 'none',
+      border: 'none',
+      display: 'inline-flex',
+      background: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 0,
+      overflow: 'visible',
+    }),
+    customControlIcon: css({
+      verticalAlign: 'baseline',
+    }),
+    customControlTag: css({
+      color: theme.colors.primary.text,
+      fontSize: 10,
+      position: 'absolute',
+      bottom: -4,
+      right: 1,
+      lineHeight: '10px',
+      backgroundColor: theme.colors.background.primary,
+      paddingLeft: 2,
+    }),
   };
 };
+
+function getTimestampTooltip(showTime: boolean, timestampResolution: LogLineTimestampResolution) {
+  if (!showTime) {
+    return t('logs.logs-controls.show-ms-timestamps', 'Show millisecond timestamps');
+  }
+  if (timestampResolution === 'ms') {
+    return t('logs.logs-controls.show-ns-timestamps', 'Show nanosecond timestamps');
+  }
+  return t('logs.logs-controls.hide-timestamps', 'Hide timestamps');
+}
+
+function getWrapLogMessageTooltip(wrapLogMessage: boolean, prettifyJSON: boolean | undefined) {
+  if (!wrapLogMessage) {
+    return t('logs.logs-controls.wrap-lines', 'Wrap lines');
+  }
+  return prettifyJSON
+    ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
+    : t('logs.logs-controls.wrap-json-lines', 'Wrap lines and expand JSON');
+}

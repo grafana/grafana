@@ -13,6 +13,8 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/sortBy.svg';
+import lightImage from '../images/light/sortBy.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SortByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<SortByTransformerOptions>) => {
@@ -72,4 +74,6 @@ export const getSortByTransformRegistryItem: () => TransformerRegistryItem<SortB
   description: t('transformers.sort-by-transformer-editor.description.sort-fields', 'Sort fields in a frame.'),
   categories: new Set([TransformerCategory.ReorderAndRename]),
   help: getTransformationContent(DataTransformerID.sortBy).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });

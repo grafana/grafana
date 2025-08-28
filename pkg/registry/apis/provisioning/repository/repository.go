@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
 // FIXME: the name of the mock is different because there is another generated mock for Repository
@@ -114,19 +114,24 @@ type Writer interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
+
+	// Move a file from one path to another in the remote repository
+	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
+//go:generate mockery --name ReaderWriter --structname MockReaderWriter --inpackage --filename reader_writer_mock.go --with-expecter
 type ReaderWriter interface {
 	Reader
 	Writer
 }
 
-// Hooks called after the repository has been created, updated or deleted
+//go:generate mockery --name RepositoryWithURLs --structname MockRepositoryWithURLs --inpackage --filename repository_with_urls_mock.go --with-expecter
 type RepositoryWithURLs interface {
 	Repository
 
 	// Get resource URLs for a file inside a repository
-	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error)
+	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.RepositoryURLs, error)
+	RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted
@@ -167,5 +172,6 @@ type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
+	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }

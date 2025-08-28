@@ -12,6 +12,8 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/histogram.svg';
+import lightImage from '../images/light/histogram.svg';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
 
@@ -147,4 +149,6 @@ export const getHistogramTransformRegistryItem: () => TransformerRegistryItem<Hi
   ),
   categories: new Set([TransformerCategory.CreateNewVisualization]),
   help: getTransformationContent(DataTransformerID.histogram).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });

@@ -9,17 +9,18 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
-	gitRepo git.GitRepository
-	config  *provisioning.Repository
-	gh      Client // assumes github.com base URL
+	git.GitRepository
+	config *provisioning.Repository
+	gh     Client // assumes github.com base URL
 
 	owner string
 	repo  string
@@ -41,12 +42,12 @@ type GithubRepository interface {
 	Client() Client
 }
 
-func NewGitHub(
+func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
 	factory *Factory,
-	token string,
+	token common.RawSecureValue,
 ) (GithubRepository, error) {
 	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
 	if err != nil {
@@ -54,16 +55,12 @@ func NewGitHub(
 	}
 
 	return &githubRepository{
-		config:  config,
-		gitRepo: gitRepo,
-		gh:      factory.New(ctx, token), // TODO, baseURL from config
-		owner:   owner,
-		repo:    repo,
+		config:        config,
+		GitRepository: gitRepo,
+		gh:            factory.New(ctx, token), // TODO, baseURL from config
+		owner:         owner,
+		repo:          repo,
 	}, nil
-}
-
-func (r *githubRepository) Config() *provisioning.Repository {
-	return r.gitRepo.Config()
 }
 
 func (r *githubRepository) Owner() string {
@@ -80,7 +77,7 @@ func (r *githubRepository) Client() Client {
 
 // Validate implements provisioning.Repository.
 func (r *githubRepository) Validate() (list field.ErrorList) {
-	cfg := r.gitRepo.Config()
+	cfg := r.Config()
 	gh := cfg.Spec.GitHub
 	if gh == nil {
 		list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
@@ -101,11 +98,14 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 		return list
 	}
 
-	return r.gitRepo.Validate()
+	return r.GitRepository.Validate()
 }
 
 func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) {
-	parsed, e := url.Parse(strings.TrimSuffix(giturl, ".git"))
+	giturl = strings.TrimSuffix(giturl, ".git")
+	giturl = strings.TrimSuffix(giturl, "/")
+
+	parsed, e := url.Parse(giturl)
 	if e != nil {
 		err = e
 		return
@@ -127,32 +127,7 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
-	return r.gitRepo.Test(ctx)
-}
-
-// ReadResource implements provisioning.Repository.
-func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
-	return r.gitRepo.Read(ctx, filePath, ref)
-}
-
-func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	return r.gitRepo.ReadTree(ctx, ref)
-}
-
-func (r *githubRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
-	return r.gitRepo.Create(ctx, path, ref, data, comment)
-}
-
-func (r *githubRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
-	return r.gitRepo.Update(ctx, path, ref, data, comment)
-}
-
-func (r *githubRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
-	return r.gitRepo.Write(ctx, path, ref, data, message)
-}
-
-func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
-	return r.gitRepo.Delete(ctx, path, ref, comment)
+	return r.GitRepository.Test(ctx)
 }
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
@@ -200,16 +175,22 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	return ret, nil
 }
 
-func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
-	return r.gitRepo.LatestRef(ctx)
-}
+// ListRefs list refs from the git repository and add the ref URL to the ref item
+func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
+	refs, err := r.GitRepository.ListRefs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list refs: %w", err)
+	}
 
-func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
-	return r.gitRepo.CompareFiles(ctx, base, ref)
+	for i := range refs {
+		refs[i].RefURL = fmt.Sprintf("%s/tree/%s", r.config.Spec.GitHub.URL, refs[i].Name)
+	}
+
+	return refs, nil
 }
 
 // ResourceURLs implements RepositoryWithURLs.
-func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.ResourceURLs, error) {
+func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
 	cfg := r.config.Spec.GitHub
 	if file.Path == "" || cfg == nil {
 		return nil, nil
@@ -220,7 +201,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 		ref = cfg.Branch
 	}
 
-	urls := &provisioning.ResourceURLs{
+	urls := &provisioning.RepositoryURLs{
 		RepositoryURL: cfg.URL,
 		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
 	}
@@ -235,6 +216,21 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 	return urls, nil
 }
 
-func (r *githubRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
-	return r.gitRepo.Stage(ctx, opts)
+// RefURLs implements RepositoryWithURLs.
+func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error) {
+	cfg := r.config.Spec.GitHub
+	if cfg == nil || ref == "" {
+		return nil, nil
+	}
+
+	urls := &provisioning.RepositoryURLs{
+		SourceURL: fmt.Sprintf("%s/tree/%s", cfg.URL, ref),
+	}
+
+	if ref != cfg.Branch {
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
+		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
+	}
+
+	return urls, nil
 }

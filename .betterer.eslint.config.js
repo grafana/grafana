@@ -12,11 +12,14 @@ const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
-// Include the Grafana config and remove the rules,
+// Include the base Grafana configs and remove the rules,
 // as we just want to pull in all of the necessary configuration but not run the rules
 // (this should only be concerned with checking rules that we want to improve,
 // so there's no need to try and run the rules that will be linted properly anyway)
-const { rules, ...baseConfig } = grafanaConfig;
+const mappedBaseConfigs = grafanaConfig.map((config) => {
+  const { rules, ...baseConfig } = config;
+  return baseConfig;
+});
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -49,15 +52,13 @@ module.exports = [
     ],
   },
   {
-    name: 'react/jsx-runtime',
-    // @ts-ignore - not sure why but flat config is typed as a maybe?
-    ...reactPlugin.configs.flat['jsx-runtime'],
+    name: 'react/jsx-runtime-rules',
+    rules: reactPlugin.configs.flat['jsx-runtime'].rules,
   },
+  ...mappedBaseConfigs,
   {
     files: ['**/*.{ts,tsx,js}'],
-    ...baseConfig,
     plugins: {
-      ...baseConfig.plugins,
       '@emotion': emotionPlugin,
       lodash: lodashPlugin,
       jest: jestPlugin,
@@ -77,6 +78,7 @@ module.exports = [
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
+      'react-hooks/rules-of-hooks': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
       'no-restricted-imports': [
@@ -143,6 +145,11 @@ module.exports = [
           message:
             'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
         },
+        {
+          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
+          message:
+            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
+        },
       ],
     },
   },
@@ -150,6 +157,25 @@ module.exports = [
     files: ['public/app/**/*.{ts,tsx}'],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
+    },
+  },
+  {
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        },
+      ],
     },
   },
 ];

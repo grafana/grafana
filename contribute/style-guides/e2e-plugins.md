@@ -32,10 +32,12 @@ You can add Playwright end-to-end tests for plugins to the [`e2e-playwright/plug
 
 - `yarn e2e:playwright` runs all Playwright tests. Optionally, you can provide the `--project mysql` argument to run tests in a specific project.
 
-  The `yarn e2e:playwright` script assumes you have Grafana running on `localhost:3000`. You may change this with an environment variable:
+  The `yarn e2e:playwright` command starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and runs the Playwright tests.
 
-  `HOST=127.0.0.1 PORT=3001 yarn e2e:playwright`
+  You can run against an arbitrary instance by setting the `GRAFANA_URL` environment variable:
 
-  The `yarn e2e:playwright:server` starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and runs the Playwright tests.
+  `GRAFANA_URL=http://localhost:3000 yarn e2e:playwright`
+
+  Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
 
 - You can provision the development server with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources, and apps.

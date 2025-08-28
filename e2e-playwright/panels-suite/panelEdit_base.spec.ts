@@ -65,7 +65,7 @@ test.describe(
       // Check that table view works
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toHaveCount(0);
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('A-series')).toBeVisible();
 

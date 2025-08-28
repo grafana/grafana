@@ -22,9 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type LocalFolderResolver struct {
@@ -89,11 +89,12 @@ type localRepository struct {
 	path string
 }
 
-func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
 	r := &localRepository{
 		config:   config,
 		resolver: resolver,
 	}
+
 	if config.Spec.Local != nil {
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
 		if r.path != "" && !safepath.IsDir(r.path) {
@@ -371,4 +372,64 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 	}
 
 	return os.Remove(fullPath)
+}
+
+func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+	if err := r.validateRequest(ref); err != nil {
+		return err
+	}
+
+	oldFullPath := safepath.Join(r.path, oldPath)
+	newFullPath := safepath.Join(r.path, newPath)
+
+	// Check if source exists
+	sourceInfo, err := os.Stat(oldFullPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return repository.ErrFileNotFound
+	} else if err != nil {
+		return fmt.Errorf("check source: %w", err)
+	}
+
+	// Check if destination already exists
+	if _, err := os.Stat(newFullPath); !errors.Is(err, os.ErrNotExist) {
+		if err != nil {
+			return fmt.Errorf("check destination: %w", err)
+		}
+		return repository.ErrFileAlreadyExists
+	}
+
+	// Validate move types
+	sourceIsDir := sourceInfo.IsDir()
+	targetIsDir := safepath.IsDir(newPath)
+
+	if sourceIsDir != targetIsDir {
+		return apierrors.NewBadRequest("cannot move between file and directory types")
+	}
+
+	// Create destination directory if needed
+	if !sourceIsDir {
+		// For file moves, create the directory containing the file
+		destParent := path.Dir(newFullPath)
+		if err := os.MkdirAll(destParent, 0700); err != nil {
+			return fmt.Errorf("create destination directory: %w", err)
+		}
+	} else {
+		// For directory moves, create the parent directory of the destination
+		// but not the destination directory itself (os.Rename will create it)
+		// We need to be careful with trailing slashes in directory paths
+		cleanNewPath := strings.TrimSuffix(newFullPath, "/")
+		destParent := path.Dir(cleanNewPath)
+		if destParent != "." && destParent != "/" && destParent != r.path {
+			if err := os.MkdirAll(destParent, 0700); err != nil {
+				return fmt.Errorf("create destination parent directory: %w", err)
+			}
+		}
+	}
+
+	// Move the file or directory
+	if err := os.Rename(oldFullPath, newFullPath); err != nil {
+		return fmt.Errorf("move: %w", err)
+	}
+
+	return nil
 }

@@ -39,9 +39,7 @@ test.describe(
       await panelEditPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Table')).click();
 
       // Verify table header is visible
-      await expect(
-        panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header)
-      ).toBeVisible();
+      await expect(page.getByRole('grid').getByRole('row').first()).toBeVisible();
     });
   }
 );

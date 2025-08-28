@@ -1,0 +1,20 @@
+#!/bin/bash
+
+. scripts/grafana-server/variables
+
+LICENSE_PATH=""
+
+if [ "$1" = "enterprise" ]; then
+    if [ "$2" != "dev" ] && [ "$2" != "debug" ]; then
+      LICENSE_PATH=$2/license.jwt
+    else
+      LICENSE_PATH=$3/license.jwt
+    fi
+fi
+
+if [ "$BASE_URL" != "" ]; then
+    echo -e "BASE_URL set, skipping starting server"
+else
+  ./scripts/grafana-server/start-server $LICENSE_PATH > scripts/grafana-server/server.log
+fi
+

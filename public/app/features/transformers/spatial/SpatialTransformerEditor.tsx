@@ -17,6 +17,8 @@ import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/spatial.svg';
+import lightImage from '../images/light/spatial.svg';
 
 import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
@@ -184,5 +186,7 @@ export const getSpatialTransformRegistryItem: () => TransformerRegistryItem<Spat
     state: PluginState.alpha,
     categories: new Set([TransformerCategory.PerformSpatialOperations]),
     help: getTransformationContent(DataTransformerID.spatial).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   };
 };

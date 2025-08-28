@@ -1,4 +1,4 @@
-import { omitBy, isNil, isNumber, defaultTo, groupBy } from 'lodash';
+import { omitBy, isNil, isNumber, defaultTo, groupBy, omit } from 'lodash';
 
 import {
   PanelModel,
@@ -24,6 +24,9 @@ export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Optio
   if (!panel.pluginVersion && 'columns' in panel) {
     console.log('Was angular table', panel);
   }
+
+  migrateTextWrapToFieldLevel(panel);
+  migrateHiddenFields(panel);
 
   // Nothing changed
   return panel.options;
@@ -136,7 +139,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.decimals) {
+  if (style.decimals !== undefined) {
     override.properties.push({
       id: 'decimals',
       value: style.decimals,
@@ -186,7 +189,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.thresholds?.length) {
+  if (style.thresholds?.length && style.colors?.length) {
     override.properties.push({
       id: 'thresholds',
       value: {
@@ -216,7 +219,7 @@ const migrateDefaults = (prevDefaults: Style) => {
       isNil
     );
 
-    if (prevDefaults.thresholds.length) {
+    if (prevDefaults.thresholds && prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
         steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),
@@ -296,4 +299,50 @@ export const migrateFromParentRowIndexToNestedFrames = (frames: DataFrame[] | nu
 
 export const hasDeprecatedParentRowIndex = (frames: DataFrame[] | null) => {
   return frames?.some((df) => df.meta?.custom?.parentRowIndex !== undefined);
+};
+
+export const migrateTextWrapToFieldLevel = (panel: PanelModel<Partial<Options>>) => {
+  if (panel.fieldConfig?.defaults.custom?.wrapText !== undefined) {
+    // already migrated
+    return;
+  }
+
+  const legacyDefaultWrapText: boolean | undefined = panel.fieldConfig?.defaults.custom?.cellOptions?.wrapText;
+
+  panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+    if (override.properties) {
+      override.properties = override.properties.flatMap((property) => {
+        if (property.id === 'custom.cellOptions' && property.value && property.value.wrapText !== undefined) {
+          return [
+            { ...property, value: { ...omit(property.value, 'wrapText') } },
+            { id: 'custom.wrapText', value: property.value.wrapText },
+          ];
+        }
+        return [property];
+      });
+    }
+    return override;
+  });
+
+  panel.fieldConfig.defaults.custom = panel.fieldConfig.defaults.custom ?? {};
+  panel.fieldConfig.defaults.custom.wrapText = legacyDefaultWrapText;
+  delete panel.fieldConfig.defaults.custom.cellOptions?.wrapText;
+
+  return panel;
+};
+
+export const migrateHiddenFields = (panel: PanelModel<Partial<Options>>) => {
+  panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+    if (override.properties) {
+      override.properties = override.properties.map((property) => {
+        if (property.id === 'custom.hidden') {
+          return { ...property, id: 'custom.hideFrom.viz' };
+        }
+        return property;
+      });
+    }
+    return override;
+  });
+
+  return panel;
 };

@@ -104,6 +104,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
 
+					if len(pathConfig.SubTitle) > 0 {
+						link.SubTitle = pathConfig.SubTitle
+					}
+
 					// Check if the section already has a page with the same URL, and in that case override it
 					// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
 					isOverridingCorePage := false
@@ -324,7 +328,8 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "IRM"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4, Text: "OnCall"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Incident"},
-		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "AI & machine learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
+		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle", IsNew: true},
+		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
@@ -341,13 +346,17 @@ func (s *ServiceImpl) readNavigationSettings() {
 		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
 			SectionID: navtree.NavIDCfg,
 			Text:      "Advisor",
-			SubTitle:  "Keep Grafana running smoothly and securely",
+			SubTitle:  "Run checks and get suggestions to fix issues",
 			IsNew:     true,
 		}
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
-		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfgAccess, SortWeight: 2},
+		"/a/grafana-auth-app": {
+			SectionID:  navtree.NavIDCfgAccess,
+			SortWeight: 2,
+			SubTitle:   "Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services",
+		},
 	}
 
 	appSections := s.cfg.Raw.Section("navigation.app_sections")

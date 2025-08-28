@@ -262,6 +262,10 @@ Use the following pointer and keyboard strokes:
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
 
+##### Zoom to content
+
+When you toggle on the **Zoom to content** switch, Grafana automatically adjusts the view to fit all visible elements in your canvas visualization into the viewport, adding a small margin around the edges. This makes it easy to reset your view, present content, or switch between devices without losing your framing. The content will re‑fit even if you resize the panel.
+
 ##### Infinite panning
 
 You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
@@ -269,6 +273,14 @@ You can enable infinite panning in a canvas when pan and zoom is enabled. This a
 {{< admonition type="note" >}}
 Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
 {{< /admonition >}}
+
+### Tooltip options
+
+The **Tooltip mode** setting controls the display of tooltips when hovering over canvas elements that are connected to data, data links, or actions.
+The options are:
+
+- **Enabled** - Show a tooltip when the cursor hovers over an element.
+- **Disabled** - Tooltips are not shown on hover.
 
 ### Layer options
 
@@ -469,12 +481,18 @@ You can style the selected connection using the following options:
 - **Color** - Set the connection color.
 - **Size** - Control the size of the connection by entering a number in the **Value** field.
 - **Radius** - Add curve to the connection by entering a value to represent the degree.
-- **Arrow Direction** - Control the appearance of the arrow head. Choose from:
+- **Direction** - Control the appearance of the arrow head. Choose your source from **Fixed** or **Field**. The default value is **Forward** regardless of the source type.
 
+  If the direction source is **Fixed**, choose from:
   - **Forward** - The arrow head points in the direction in which the connection was drawn.
   - **Reverse** - The arrow head points in the opposite direction of which the connection was drawn.
   - **Both** - Adds arrow heads to both ends of the connection.
   - **None** - Removes the arrow head.
+
+  If the direction source is **Field**, select a field that contains numeric values:
+  - **Positive values** - Display forward arrows.
+  - **Negative values** - Display reverse arrows.
+  - **Zero** - Display no arrow heads.
 
 - **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
 

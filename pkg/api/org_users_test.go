@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +44,9 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
@@ -65,6 +68,9 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 }
 
 func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 

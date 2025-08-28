@@ -27,6 +27,8 @@ import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../../docs/getTransformationContent';
+import darkImage from '../../images/dark/calculateField.svg';
+import lightImage from '../../images/light/calculateField.svg';
 
 import { BinaryOperationOptionsEditor } from './BinaryOperationOptionsEditor';
 import { CumulativeOptionsEditor } from './CumulativeOptionsEditor';
@@ -279,4 +281,6 @@ export const getCalculateFieldTransformRegistryItem: () => TransformerRegistryIt
     ),
     categories: new Set([TransformerCategory.CalculateNewFields]),
     help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });

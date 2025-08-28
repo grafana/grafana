@@ -69,7 +69,11 @@ func ViceroyContainer(
 	container := d.Container(containerOpts).From(fmt.Sprintf("rfratto/viceroy:%s", viceroyVersion))
 
 	// Install Go manually, and install make, git, and curl from the package manager.
-	container = container.WithExec([]string{"apt-get", "update"}).
+	container = container.
+		WithExec([]string{"dpkg", "--remove-architecture", "ppc64el"}).
+		WithExec([]string{"dpkg", "--remove-architecture", "s390x"}).
+		WithExec([]string{"dpkg", "--remove-architecture", "armel"}).
+		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
 		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
@@ -102,7 +106,9 @@ func GolangContainer(
 		WithExec([]string{"wget", "-q", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
 		WithExec([]string{"tar", "-xf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
 		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"})
+		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"}).
+		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/riscv64-linux-musl-cross.tgz", "-P", "/toolchain"}).
+		WithExec([]string{"tar", "-xf", "/toolchain/riscv64-linux-musl-cross.tgz", "-C", "/toolchain"})
 
 	return WithGoEnv(log, container, distro, opts)
 }
@@ -193,7 +199,6 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
-		WithDirectory("/src/.bingo", src.Directory(".bingo")).
 		WithDirectory("/src/.citools", src.Directory(".citools")).
 		WithFile("/src/Makefile", src.File("Makefile")).
 		WithWorkdir("/src").

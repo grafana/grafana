@@ -6,10 +6,13 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
+	grpcmetadata "google.golang.org/grpc/metadata"
+	"k8s.io/utils/ptr"
 
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 )
@@ -43,50 +46,10 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, "svc", types.TypeUser)
 
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = map[string]struct{}{"group1": {}}
-		}))
+		sut := testutils.Setup(t)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "non-existent-value")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotFound)
-		require.Empty(t, exposed)
-	})
-
-	t.Run("when auth info is not in allowlist, it returns an unauthorized error", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		svName := "sv-test"
-		svcIdentity := "svc"
-
-		// Create auth context with identity that is not in allowlist
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/" + svName + ":decrypt"}, svcIdentity, types.TypeUser)
-
-		// Create an allowlist that doesn't include the permission
-		allowList := map[string]struct{}{"allowed-group": {}}
-
-		// Setup service
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = allowList
-		}))
-
-		// Create a secure value that is not in the allowlist
-		spec := secretv0alpha1.SecureValueSpec{
-			Description: "description",
-			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
-		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
-		sv.Name = svName
-		sv.Namespace = "default"
-
-		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
-		require.NoError(t, err)
-
-		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
 
@@ -101,21 +64,16 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions that match the decrypters
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, svcIdentity, types.TypeUser)
 
-		// Include the group in allowlist
-		allowList := map[string]struct{}{svcIdentity: {}}
-
 		// Setup service
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = allowList
-		}))
+		sut := testutils.Setup(t)
 
-		// Create a secure value that is in the allowlist
-		spec := secretv0alpha1.SecureValueSpec{
+		// Create a secure value
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -140,21 +98,16 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions that match the decrypters
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/sv-test2:decrypt"}, svcIdentity, types.TypeUser)
 
-		// Include the group in allowlist
-		allowList := map[string]struct{}{svcIdentity: {}}
-
 		// Setup service
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = allowList
-		}))
+		sut := testutils.Setup(t)
 
-		// Create a secure value that is in the allowlist
-		spec := secretv0alpha1.SecureValueSpec{
+		// Create a secure value
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -181,12 +134,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -214,12 +167,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -246,12 +199,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -279,12 +232,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -297,10 +250,73 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.Empty(t, exposed)
 	})
 
-	// TODO: add more tests for keeper failure scenarios, lets see how the async work will change this though.
+	t.Run("happy path with grpc metadata in request, also record the metadata as part of the service identity", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		tokenSvcIdentity := "svc"
+		stSvcIdentity := "st-svc"
+
+		// Create auth context with proper permissions that match the decrypters
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, tokenSvcIdentity, types.TypeUser)
+
+		// Needs to be incoming because we are pretending we received the metadata from a gRPC request
+		ctx = grpcmetadata.NewIncomingContext(authCtx, grpcmetadata.New(map[string]string{
+			contracts.HeaderGrafanaServiceIdentityName: stSvcIdentity,
+		}))
+
+		// Setup service
+		sut := testutils.Setup(t)
+
+		// Create a secure value
+		spec := secretv1beta1.SecureValueSpec{
+			Description: "description",
+			Decrypters:  []string{tokenSvcIdentity},
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+		}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv.Name = "sv-test"
+		sv.Namespace = "default"
+
+		_, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
+
+		fakeLogger := &mockLogger{}
+
+		loggerCtx := logging.Context(ctx, fakeLogger)
+
+		exposed, err := sut.DecryptStorage.Decrypt(loggerCtx, "default", "sv-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, exposed)
+		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
+
+		require.Len(t, fakeLogger.InfoMsgs, 3)
+		require.Equal(t, fakeLogger.InfoMsgs[0], "SecureValueMetadataStorage.Read")
+		require.Equal(t, fakeLogger.InfoMsgs[1], "KeeperMetadataStorage.GetKeeperConfig")
+		require.Equal(t, fakeLogger.InfoMsgs[2], "Secrets Audit Log")
+
+		require.Len(t, fakeLogger.InfoArgs, 3)
+		// we only want to check the audit log args
+		args := fakeLogger.InfoArgs[2]
+		require.Contains(t, args, "grafana_decrypter_identity")
+		require.Contains(t, args, "decrypter_identity")
+		for i, arg := range args {
+			if arg == "grafana_decrypter_identity" {
+				require.Equal(t, stSvcIdentity, args[i+1].(string))
+			}
+
+			if arg == "decrypter_identity" {
+				require.Equal(t, tokenSvcIdentity, args[i+1].(string))
+			}
+		}
+	})
 }
 
 func createAuthContext(ctx context.Context, namespace string, permissions []string, svc string, identityType types.IdentityType) context.Context {
+	ctx = logging.Context(ctx, logging.DefaultLogger)
+
 	requester := &identity.StaticRequester{
 		Type:      identityType,
 		Namespace: namespace,
@@ -317,4 +333,19 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 	}
 
 	return types.WithAuthInfo(ctx, requester)
+}
+
+type mockLogger struct {
+	logging.Logger
+	InfoMsgs []string
+	InfoArgs [][]any
+}
+
+func (m *mockLogger) Info(msg string, args ...any) {
+	m.InfoMsgs = append(m.InfoMsgs, msg)
+	m.InfoArgs = append(m.InfoArgs, args)
+}
+
+func (m *mockLogger) WithContext(ctx context.Context) logging.Logger {
+	return m
 }

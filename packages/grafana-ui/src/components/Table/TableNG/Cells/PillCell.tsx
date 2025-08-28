@@ -1,14 +1,53 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, isDataFrame, classicColors, colorManipulator, Field } from '@grafana/data';
-import { TablePillCellOptions } from '@grafana/schema';
+import {
+  GrafanaTheme2,
+  classicColors,
+  Field,
+  getColorByStringHash,
+  FALLBACK_COLOR,
+  fieldColorModeRegistry,
+} from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
-import { TableCellRendererProps } from '../types';
+import { PillCellProps, TableCellStyles, TableCellValue } from '../types';
 
-const DEFAULT_PILL_BG_COLOR = '#FF780A';
+export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
+  const value = field.values[rowIdx];
+  const pills: Pill[] = useMemo(() => {
+    const pillValues = inferPills(value);
+    return pillValues.length > 0
+      ? pillValues.map((pill, index) => {
+          const bgColor = getPillColor(pill, field, theme);
+          const textColor = getTextColorForBackground(bgColor);
+          return {
+            value: String(pill),
+            key: `${pill}-${index}`,
+            bgColor,
+            color: textColor,
+          };
+        })
+      : [];
+  }, [value, field, theme, getTextColorForBackground]);
+
+  if (pills.length === 0) {
+    return null;
+  }
+
+  return pills.map((pill) => (
+    <span
+      key={pill.key}
+      style={{
+        backgroundColor: pill.bgColor,
+        color: pill.color,
+        border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+      }}
+    >
+      {pill.value}
+    </span>
+  ));
+}
 
 interface Pill {
   value: string;
@@ -17,169 +56,69 @@ interface Pill {
   color: string;
 }
 
-function createPills(pillValues: string[], cellOptions: TableCellRendererProps['cellOptions'], field: Field): Pill[] {
-  return pillValues.map((pill, index) => {
-    const bgColor = getPillColor(pill, cellOptions, field);
-    const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
-    return {
-      value: pill,
-      key: `${pill}-${index}`,
-      bgColor,
-      color: textColor,
-    };
-  });
-}
+const SPLIT_RE = /\s*,\s*/;
+const TRANSPARENT = 'rgba(0,0,0,0)';
 
-export function PillCell({ value, field, justifyContent, cellOptions }: TableCellRendererProps) {
-  const styles = useStyles2(getStyles, justifyContent);
-
-  const pills: Pill[] = useMemo(() => {
-    const pillValues = inferPills(value);
-    return createPills(pillValues, cellOptions, field);
-  }, [value, cellOptions, field]);
-
-  if (pills.length === 0) {
-    return <div className={styles.cell}>-</div>;
-  }
-
-  return (
-    <div className={styles.cell}>
-      <div className={styles.pillsContainer}>
-        {pills.map((pill) => (
-          <span
-            key={pill.key}
-            className={styles.pill}
-            style={{
-              backgroundColor: pill.bgColor,
-              color: pill.color,
-            }}
-          >
-            {pill.value}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function inferPills(value: unknown): string[] {
-  if (!value) {
+export function inferPills(rawValue: TableCellValue): unknown[] {
+  if (rawValue === '' || rawValue == null) {
     return [];
   }
 
-  // Handle DataFrame - not supported for pills
-  if (isDataFrame(value)) {
-    return [];
-  }
+  const value = String(rawValue);
 
-  // Handle different value types
-  const stringValue = String(value);
-
-  // Try to parse as JSON first
-  try {
-    const parsed = JSON.parse(stringValue);
-    if (Array.isArray(parsed)) {
-      // JSON array of strings
-      return parsed
-        .filter((item) => item != null && item !== '')
-        .map(String)
-        .map((text) => text.trim())
-        .filter((item) => item !== '');
+  if (value[0] === '[') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.trim().split(SPLIT_RE);
     }
-  } catch {
-    // Not valid JSON, continue with other parsing
   }
 
-  // Handle CSV string
-  if (stringValue.includes(',')) {
-    return stringValue
-      .split(',')
-      .map((text) => text.trim())
-      .filter((item) => item !== '');
-  }
-
-  // Single value - strip quotes
-  return [stringValue.replace(/["'`]/g, '').trim()];
+  return value.trim().split(SPLIT_RE);
 }
 
-function isPillCellOptions(cellOptions: TableCellRendererProps['cellOptions']): cellOptions is TablePillCellOptions {
-  return cellOptions?.type === 'pill';
-}
+// FIXME: this does not yet support "shades of a color"
+function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): string {
+  const cfg = field.config;
 
-function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOptions'], field: Field): string {
-  if (!isPillCellOptions(cellOptions)) {
-    return getDeterministicColor(pill);
+  if (cfg.mappings?.length ?? 0 > 0) {
+    return field.display!(value).color ?? FALLBACK_COLOR;
   }
 
-  const colorMode = cellOptions.colorMode || 'auto';
-
-  // Fixed color mode (highest priority)
-  if (colorMode === 'fixed' && cellOptions.color) {
-    return cellOptions.color;
+  if (cfg.color?.mode === FieldColorModeId.Fixed) {
+    return theme.visualization.getColorByName(cfg.color?.fixedColor ?? FALLBACK_COLOR);
   }
 
-  // Mapped color mode - use field's value mappings
-  if (colorMode === 'mapped') {
-    // Check if field has value mappings
-    if (field.config.mappings && field.config.mappings.length > 0) {
-      // Use the field's display processor to get the mapped value
-      const displayValue = field.display!(pill);
-      if (displayValue.color) {
-        return displayValue.color;
-      }
+  let colors = classicColors;
+  const configuredColor = cfg.color;
+  if (configuredColor) {
+    const mode = fieldColorModeRegistry.get(configuredColor.mode);
+    if (typeof mode?.getColors === 'function') {
+      colors = mode.getColors(theme);
     }
-    // Fallback to default color for unmapped values
-    return cellOptions.color || DEFAULT_PILL_BG_COLOR;
   }
 
-  // Auto mode - deterministic color assignment based on string hash
-  if (colorMode === 'auto') {
-    return getDeterministicColor(pill);
-  }
-
-  // Default color for unknown values or fallback
-  return DEFAULT_PILL_BG_COLOR;
+  return getColorByStringHash(colors, String(value));
 }
 
-function getDeterministicColor(text: string): string {
-  // Create a simple hash of the string to get consistent colors
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-
-  // Use absolute value and modulo to get a consistent index
-  const colorValues = Object.values(classicColors);
-  const index = Math.abs(hash) % colorValues.length;
-
-  return colorValues[index];
-}
-
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
-  cell: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'flex-start',
-    alignItems: 'center',
-    height: '100%',
-    padding: theme.spacing(0.5),
-  }),
-  pillsContainer: css({
-    display: 'flex',
-    flexWrap: 'wrap',
+export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow }) =>
+  css({
+    display: 'inline-flex',
     gap: theme.spacing(0.5),
-    maxWidth: '100%',
-  }),
-  pill: css({
-    display: 'inline-block',
-    padding: theme.spacing(0.25, 0.75),
-    borderRadius: theme.shape.radius.default,
-    fontSize: theme.typography.bodySmall.fontSize,
-    lineHeight: theme.typography.bodySmall.lineHeight,
-    fontWeight: theme.typography.fontWeightMedium,
-    whiteSpace: 'nowrap',
-    textAlign: 'center',
-    minWidth: 'fit-content',
-  }),
-});
+    flexWrap: textWrap ? 'wrap' : 'nowrap',
+
+    ...(shouldOverflow && {
+      '&:hover, &[aria-selected=true]': {
+        flexWrap: 'wrap',
+      },
+    }),
+
+    '> span': {
+      display: 'flex',
+      padding: theme.spacing(0.25, 0.75),
+      borderRadius: theme.shape.radius.default,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      whiteSpace: 'nowrap',
+    },
+  });

@@ -20,7 +20,7 @@ import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
@@ -98,7 +98,9 @@ export const wrapWithPluginContext = <T,>({
     return (
       <PluginContextProvider meta={pluginMeta}>
         <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
-          <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+          <Component
+            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
+          />
         </ExtensionErrorBoundary>
       </PluginContextProvider>
     );
@@ -251,6 +253,7 @@ interface ProxyOptions {
   log?: ExtensionsLog;
   source?: MutationSource;
   pluginId?: string;
+  pluginVersion?: string;
 }
 
 /**
@@ -261,6 +264,7 @@ interface ProxyOptions {
  * @param options.log The logger to use
  * @param options.source The source of the mutation
  * @param options.pluginId The id of the plugin that is mutating the object
+ * @param options.pluginVersion The version of the plugin that is mutating the object
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
 export function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
@@ -268,31 +272,40 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
     return obj;
   }
 
-  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options ?? {};
+  const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
   const cache = new WeakMap();
   const logFunction = isGrafanaDevMode() ? log.error.bind(log) : log.warning.bind(log); // should show error during local development
 
   return new Proxy(obj, {
     deleteProperty(target, prop) {
-      logFunction(`Attempted to delete object property "${String(prop)}" from ${source} with id ${pluginId}`, {
-        stack: new Error().stack ?? '',
-      });
+      logFunction(
+        `Attempted to delete object property "${String(prop)}" from ${source} with id ${pluginId} and version ${pluginVersion}`,
+        {
+          stack: new Error().stack ?? '',
+        }
+      );
       Reflect.deleteProperty(target, prop);
       return true;
     },
     defineProperty(target, prop, descriptor) {
       // because immer (used by RTK) calls Object.isFrozen and Object.freeze we know that defineProperty will be called
       // behind the scenes as well so we only log message with debug level to minimize the noise and false positives
-      log.debug(`Attempted to define object property "${String(prop)}" from ${source} with id ${pluginId}`, {
-        stack: new Error().stack ?? '',
-      });
+      log.debug(
+        `Attempted to define object property "${String(prop)}" from ${source} with id ${pluginId} and version ${pluginVersion}`,
+        {
+          stack: new Error().stack ?? '',
+        }
+      );
       Reflect.defineProperty(target, prop, descriptor);
       return true;
     },
     set(target, prop, newValue) {
-      logFunction(`Attempted to mutate object property "${String(prop)}" from ${source} with id ${pluginId}`, {
-        stack: new Error().stack ?? '',
-      });
+      logFunction(
+        `Attempted to mutate object property "${String(prop)}" from ${source} with id ${pluginId} and version ${pluginVersion}`,
+        {
+          stack: new Error().stack ?? '',
+        }
+      );
       Reflect.set(target, prop, newValue);
       return true;
     },
@@ -318,7 +331,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
-          cache.set(value, getMutationObserverProxy(value, { log, source, pluginId }));
+          cache.set(value, getMutationObserverProxy(value, { log, source, pluginId, pluginVersion }));
         }
         return cache.get(value);
       }
@@ -336,6 +349,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
  * @param options.log The logger to use
  * @param options.source The source of the mutation
  * @param options.pluginId The id of the plugin that is mutating the object
+ * @param options.pluginVersion The version of the plugin that is mutating the object
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
 export function writableProxy<T>(value: T, options?: ProxyOptions): T {
@@ -344,10 +358,10 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
     return value;
   }
 
-  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options ?? {};
+  const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
 
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, source });
+  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
 }
 
 function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {
@@ -528,6 +542,9 @@ export function getLinkExtensionOnClick(
               componentTitle,
             })
           );
+        },
+        closeSidebar: () => {
+          appEvents.publish(new CloseExtensionSidebarEvent());
         },
       };
 

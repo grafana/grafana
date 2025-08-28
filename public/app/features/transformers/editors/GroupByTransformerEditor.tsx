@@ -16,6 +16,8 @@ import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/groupBy.svg';
+import lightImage from '../images/light/groupBy.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -24,11 +26,7 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupByTransformerEditor = ({
-  input,
-  options,
-  onChange,
-}: TransformerUIProps<GroupByTransformerOptions>) => {
+const GroupByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<GroupByTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input, true);
 
   const onConfigChange = useCallback(
@@ -86,7 +84,7 @@ export const GroupByTransformerEditor = ({
   );
 };
 
-export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
+const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
 
   const styles = getStyles(theme);
@@ -125,7 +123,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
           />
         </div>
 
-        {config?.operation === GroupByOperationID.aggregate && (
+        {config?.operation && (
           <StatsPicker
             className={styles.aggregations}
             placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
@@ -134,6 +132,9 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
             onChange={(stats) => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
+            filterOptions={(option) =>
+              config?.operation === GroupByOperationID.groupBy ? option.id === ReducerID.count : true
+            }
           />
         )}
       </Stack>
@@ -174,4 +175,6 @@ export const getGroupByTransformRegistryItem: () => TransformerRegistryItem<Grou
     TransformerCategory.Reformat,
   ]),
   help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });

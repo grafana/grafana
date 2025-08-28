@@ -65,6 +65,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MemberlistJoinMember = section.Key("memberlist_join_member").String()
 	cfg.MemberlistClusterLabel = section.Key("memberlist_cluster_label").String()
 	cfg.MemberlistClusterLabelVerificationDisabled = section.Key("memberlist_cluster_label_verification_disabled").MustBool(false)
+	cfg.SearchRingReplicationFactor = section.Key("search_ring_replication_factor").MustInt(1)
 	cfg.InstanceID = section.Key("instance_id").String()
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
@@ -73,7 +74,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
-	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(100)
+	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
 	cfg.HttpsSkipVerify = section.Key("https_skip_verify").MustBool(false)
 }

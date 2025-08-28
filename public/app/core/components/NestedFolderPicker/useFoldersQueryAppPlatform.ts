@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -10,9 +10,9 @@ import { AnnoKeyManagerKind, ManagerKind } from '../../../features/apiserver/typ
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
-import { ROOT_FOLDER_ITEM } from './utils';
+import { getRootFolderItem } from './utils';
 
-type GetFolderChildrenQuery = ReturnType<ReturnType<typeof folderAPIv1beta1.endpoints.getFolderChildren.select>>;
+type GetFolderChildrenQuery = ReturnType<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>;
 type GetFolderChildrenRequest = {
   unsubscribe: () => void;
 };
@@ -25,16 +25,21 @@ const collator = new Intl.Collator();
  * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
  * does not have pagination at the moment.
  */
-export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Record<string, boolean>) {
+export function useFoldersQueryAppPlatform(
+  isBrowsing: boolean,
+  openFolders: Record<string, boolean>,
+  /* rootFolderUID: configure which folder to start browsing from */
+  rootFolderUID?: string
+) {
   const dispatch = useDispatch();
 
   // Keep a list of all request subscriptions so we can unsubscribe from them when the component is unmounted
   const requestsRef = useRef<GetFolderChildrenRequest[]>([]);
 
   // Keep a list of selectors for dynamic state selection
-  const [selectors, setSelectors] = useState<
-    Array<ReturnType<typeof folderAPIv1beta1.endpoints.getFolderChildren.select>>
-  >([]);
+  const [selectors, setSelectors] = useState<Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.getSearch.select>>>(
+    []
+  );
 
   // This is an aggregated dynamic selector of all the selectors for all the request issued while loading the folder
   // tree and returns the whole tree that was loaded so far.
@@ -50,7 +55,7 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
           isLoading = true;
         }
 
-        const parentName = response.originalArgs?.name;
+        const parentName = response.originalArgs?.folder;
         if (parentName) {
           responseByParent[parentName] = response;
         }
@@ -77,13 +82,13 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
         return;
       }
 
-      const args = { name: finalParentUid };
+      const args = { folder: finalParentUid, type: 'folder' };
 
       // Make a request
-      const subscription = dispatch(folderAPIv1beta1.endpoints.getFolderChildren.initiate(args));
+      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.getSearch.initiate(args));
 
       // Add selector for the response to the list so we can then have an aggregated selector for all the folders
-      const selector = folderAPIv1beta1.endpoints.getFolderChildren.select(args);
+      const selector = dashboardAPIv0alpha1.endpoints.getSearch.select(args);
       setSelectors((selectors) => selectors.concat(selector));
 
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
@@ -113,18 +118,18 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
       response: GetFolderChildrenQuery | undefined,
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
-      let folders = response?.data?.items ? [...response.data.items] : [];
-      folders.sort((a, b) => collator.compare(a.spec.title, b.spec.title));
+      let folders = response?.data?.hits ? [...response.data.hits] : [];
+      folders.sort((a, b) => collator.compare(a.title, b.title));
 
       const list = folders.flatMap((item) => {
-        const name = item.metadata.name!;
+        const name = item.name;
         const folderIsOpen = openFolders[name];
         const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
           isOpen: Boolean(folderIsOpen),
           level: level,
           item: {
             kind: 'folder' as const,
-            title: item.spec.title,
+            title: item.title,
             // We use resource name as UID because well, not sure what metadata.uid would be used for now as you cannot
             // query by it.
             uid: name,
@@ -150,11 +155,12 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
       return list;
     }
 
-    const rootFlatTree = createFlatList(rootFolderToken, state.responseByParent[rootFolderToken], 1);
-    rootFlatTree.unshift(ROOT_FOLDER_ITEM);
+    const startingToken = rootFolderUID ?? rootFolderToken;
+    const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
+    rootFlatTree.unshift(getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders]);
+  }, [state, isBrowsing, openFolders, rootFolderUID]);
 
   return {
     items: treeList,

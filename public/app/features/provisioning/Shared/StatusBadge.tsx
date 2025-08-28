@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Badge, BadgeColor, IconName } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -11,6 +12,26 @@ interface StatusBadgeProps {
 export function StatusBadge({ repo }: StatusBadgeProps) {
   if (!repo) {
     return null;
+  }
+
+  // TODO: remove after 12.2
+  if (repo.spec?.type !== 'local' && !repo.secure?.token?.name) {
+    return (
+      <Badge
+        color={'red'}
+        icon={'exclamation-triangle'}
+        style={{ cursor: 'pointer' }}
+        text={t('provisioning.inline-token-warning-badge-text', 'Token needs to be saved again')}
+        tooltip={t(
+          'inline-token-warning-badge-tooltip',
+          'The method to save the token is to re-enter it in the repository settings.'
+        )}
+        onClick={() => {
+          // navigate to edit page, rather than view page
+          locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/edit`);
+        }}
+      />
+    );
   }
 
   let tooltip: string | undefined = undefined;
@@ -27,7 +48,7 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
     text = 'Automatic pulling disabled';
     icon = 'info-circle';
   } else if (!repo.status?.sync?.state?.length) {
-    color = 'orange';
+    color = 'darkgrey';
     text = 'Pending';
     icon = 'spinner';
     tooltip = 'Waiting for health check to run';
@@ -40,8 +61,13 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
         color = 'green';
         break;
       case 'working':
-      case 'pending':
+      case 'warning':
         color = 'orange';
+        text = 'warning';
+        icon = 'exclamation-triangle';
+        break;
+      case 'pending':
+        color = 'darkgrey';
         text = 'Pulling';
         icon = 'spinner';
         break;

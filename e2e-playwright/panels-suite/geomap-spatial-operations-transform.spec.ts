@@ -8,7 +8,7 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests location auto option', async ({ gotoDashboardPage, selectors }) => {
+    test('Tests location auto option', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_ID,
         queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -40,12 +40,12 @@ test.describe(
       await locationInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('Point')).toBeVisible();
     });
 
-    test('Tests location coords option', async ({ gotoDashboardPage, dashboardPage, selectors }) => {
+    test('Tests location coords option', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
       await gotoDashboardPage({ uid: DASHBOARD_ID, queryParams: new URLSearchParams({ editPanel: '1' }) });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
@@ -90,7 +90,7 @@ test.describe(
       await longitudeInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('Point')).toBeVisible();
     });
@@ -99,6 +99,7 @@ test.describe(
       gotoDashboardPage,
       dashboardPage,
       selectors,
+      page,
     }) => {
       await gotoDashboardPage({ uid: DASHBOARD_ID, queryParams: new URLSearchParams({ editPanel: '1' }) });
 
@@ -136,12 +137,12 @@ test.describe(
       await geohashFieldInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('State 1')).toBeVisible();
     });
 
-    test('Tests location lookup option', async ({ gotoDashboardPage, dashboardPage, selectors }) => {
+    test('Tests location lookup option', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
       await gotoDashboardPage({ uid: DASHBOARD_ID, queryParams: new URLSearchParams({ editPanel: '1' }) });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
@@ -186,7 +187,7 @@ test.describe(
       await gazetteerFieldInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('Geometry')).toBeVisible();
     });

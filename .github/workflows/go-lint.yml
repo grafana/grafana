@@ -13,13 +13,56 @@ permissions:
   contents: read
 
 jobs:
-  lint-go:
+  detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/go-lint.yml
+
+  go-fmt:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5.5.0
+        with:
+          go-version-file: ./go.mod
+      - name: Run gofmt
+        run: |
+          GOFMT="$(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}' | xargs gofmt -s -e -l 2>&1 | grep -v '/pkg/build/' || true)"
+          if [ -n "$GOFMT" ]; then
+            echo "Found files that are not gofmt'ed"
+            echo "Run 'gofmt -s -w .' or 'make gofmt' or install the pre-commit hook with 'make lefthook-install'"
+            echo "${GOFMT}"
+            exit 1
+          fi
+
+  lint-go:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5.5.0
         with:
           go-version-file: ./go.mod
       - name: golangci-lint

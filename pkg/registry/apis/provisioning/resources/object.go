@@ -8,8 +8,8 @@ import (
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -146,6 +146,12 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 				Resource: v.Resource,
 				Count:    v.Count,
 			})
+			// Everything is unmanaged in legacy storage
+			stats.Unmanaged = append(stats.Unmanaged, provisioning.ResourceCount{
+				Group:    v.Group,
+				Resource: v.Resource,
+				Count:    v.Count,
+			})
 		}
 		return stats, nil
 	}
@@ -157,12 +163,35 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	if err != nil {
 		return nil, err
 	}
+
+	// Create a map to track managed counts by group/resource
+	managedCounts := make(map[string]int64)
+	for _, manager := range stats.Managed {
+		for _, managedStat := range manager.Stats {
+			key := managedStat.Group + ":" + managedStat.Resource
+			managedCounts[key] += managedStat.Count
+		}
+	}
+
 	for _, v := range info.Stats {
 		stats.Instance = append(stats.Instance, provisioning.ResourceCount{
 			Group:    v.Group,
 			Resource: v.Resource,
 			Count:    v.Count,
 		})
+
+		// Calculate unmanaged count: total - managed
+		key := v.Group + ":" + v.Resource
+		managedCount := managedCounts[key]
+		unmanagedCount := v.Count - managedCount
+
+		if unmanagedCount > 0 {
+			stats.Unmanaged = append(stats.Unmanaged, provisioning.ResourceCount{
+				Group:    v.Group,
+				Resource: v.Resource,
+				Count:    unmanagedCount,
+			})
+		}
 	}
 	return stats, nil
 }

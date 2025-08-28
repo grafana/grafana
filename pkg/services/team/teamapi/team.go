@@ -257,7 +257,7 @@ func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &queryResult)
 }
 
-// swagger:route GET /teams/{team_id}/preferences teams getTeamPreferences
+// swagger:route GET /teams/{team_id}/preferences teams preferences getTeamPreferences
 //
 // Get Team Preferences.
 //
@@ -274,7 +274,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId)
 }
 
-// swagger:route PUT /teams/{team_id}/preferences teams updateTeamPreferences
+// swagger:route PUT /teams/{team_id}/preferences teams preferences updateTeamPreferences
 //
 // Update Team Preferences.
 //

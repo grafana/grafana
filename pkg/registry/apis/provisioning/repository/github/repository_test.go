@@ -14,7 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 )
@@ -81,12 +82,12 @@ func TestNewGitHub(t *testing.T) {
 			gitRepo := git.NewMockGitRepository(t)
 
 			// Call the function under test
-			repo, err := NewGitHub(
+			repo, err := NewRepository(
 				context.Background(),
 				tt.config,
 				gitRepo,
 				factory,
-				tt.token,
+				common.RawSecureValue(tt.token),
 			)
 
 			// Check results
@@ -101,7 +102,7 @@ func TestNewGitHub(t *testing.T) {
 				assert.Equal(t, tt.expectedRepo, repo.Repo())
 				concreteRepo, ok := repo.(*githubRepository)
 				require.True(t, ok)
-				assert.Equal(t, gitRepo, concreteRepo.gitRepo)
+				assert.Equal(t, gitRepo, concreteRepo.GitRepository)
 			}
 		})
 	}
@@ -175,8 +176,12 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
-						Token:  "valid-token",
 						Path:   "dashboards",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -186,8 +191,12 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "https://github.com/grafana/grafana",
 							Branch: "main",
-							Token:  "valid-token",
 							Path:   "dashboards",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -219,7 +228,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -229,7 +242,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "",
 							Branch: "main",
-							Token:  "valid-token",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -244,7 +261,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "invalid-url",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -254,7 +275,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "invalid-url",
 							Branch: "main",
-							Token:  "valid-token",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -269,7 +294,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://gitlab.com/grafana/grafana",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -279,7 +308,11 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							URL:    "https://gitlab.com/grafana/grafana",
 							Branch: "main",
-							Token:  "valid-token",
+						},
+					},
+					Secure: provisioning.SecureValues{
+						Token: common.InlineSecureValue{
+							Name: "with-name",
 						},
 					},
 				})
@@ -297,8 +330,8 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 			}
 
 			repo := &githubRepository{
-				config:  tt.config,
-				gitRepo: mockGitRepo,
+				config:        tt.config,
+				GitRepository: mockGitRepo,
 			}
 
 			errors := repo.Validate()
@@ -335,7 +368,11 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -357,7 +394,11 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "invalid-url",
 						Branch: "main",
-						Token:  "valid-token",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Name: "with-name",
 					},
 				},
 			},
@@ -384,10 +425,10 @@ func TestGitHubRepositoryTest(t *testing.T) {
 			}
 
 			repo := &githubRepository{
-				config:  tt.config,
-				gitRepo: mockGitRepo,
-				owner:   "grafana",
-				repo:    "grafana",
+				config:        tt.config,
+				GitRepository: mockGitRepo,
+				owner:         "grafana",
+				repo:          "grafana",
 			}
 
 			result, err := repo.Test(context.Background())
@@ -684,7 +725,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		name          string
 		file          *repository.FileInfo
 		config        *provisioning.Repository
-		expectedURLs  *provisioning.ResourceURLs
+		expectedURLs  *provisioning.RepositoryURLs
 		expectedError error
 	}{
 		{
@@ -701,7 +742,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.ResourceURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				RepositoryURL:     "https://github.com/grafana/grafana",
 				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/test.json",
 				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
@@ -722,7 +763,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 					},
 				},
 			},
-			expectedURLs: &provisioning.ResourceURLs{
+			expectedURLs: &provisioning.RepositoryURLs{
 				RepositoryURL: "https://github.com/grafana/grafana",
 				SourceURL:     "https://github.com/grafana/grafana/blob/main/dashboards/test.json",
 			},
@@ -779,6 +820,92 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 	}
 }
 
+func TestGitHubRepositoryRefURLs(t *testing.T) {
+	tests := []struct {
+		name          string
+		ref           string
+		config        *provisioning.Repository
+		expectedURLs  *provisioning.RepositoryURLs
+		expectedError error
+	}{
+		{
+			name: "ref different from branch",
+			ref:  "feature-branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				SourceURL:         "https://github.com/grafana/grafana/tree/feature-branch",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "ref same as branch",
+			ref:  "main",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				SourceURL: "https://github.com/grafana/grafana/tree/main",
+			},
+		},
+		{
+			name: "empty ref returns nil",
+			ref:  "",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: nil,
+		},
+		{
+			name: "nil github config returns nil",
+			ref:  "feature-branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: nil,
+				},
+			},
+			expectedURLs: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &githubRepository{
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			urls, err := repo.RefURLs(context.Background(), tt.ref)
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedURLs, urls)
+			}
+		})
+	}
+}
+
 // Test simple delegation functions
 func TestGitHubRepositoryDelegation(t *testing.T) {
 	ctx := context.Background()
@@ -788,7 +915,11 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 			GitHub: &provisioning.GitHubRepositoryConfig{
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
-				Token:  "test-token",
+			},
+		},
+		Secure: provisioning.SecureValues{
+			Token: common.InlineSecureValue{
+				Name: "with-name",
 			},
 		},
 	}
@@ -798,8 +929,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Config").Return(config)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result := repo.Config()
@@ -818,8 +949,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Read", ctx, "test.yaml", "main").Return(expectedFileInfo, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.Read(ctx, "test.yaml", "main")
@@ -836,8 +967,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("ReadTree", ctx, "main").Return(expectedEntries, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.ReadTree(ctx, "main")
@@ -852,8 +983,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Create", ctx, "new-file.yaml", "main", data, "Create new file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Create(ctx, "new-file.yaml", "main", data, "Create new file")
@@ -867,8 +998,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Update", ctx, "existing-file.yaml", "main", data, "Update file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Update(ctx, "existing-file.yaml", "main", data, "Update file")
@@ -882,8 +1013,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Write", ctx, "file.yaml", "main", data, "Write file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Write(ctx, "file.yaml", "main", data, "Write file")
@@ -896,8 +1027,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Delete", ctx, "file.yaml", "main", "Delete file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Delete(ctx, "file.yaml", "main", "Delete file")
@@ -911,13 +1042,47 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("LatestRef", ctx).Return(expectedRef, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.LatestRef(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, expectedRef, result)
+		mockGitRepo.AssertExpectations(t)
+	})
+
+	t.Run("ListRefs delegates to git repo but adds ref URL", func(t *testing.T) {
+		mockGitRepo := git.NewMockGitRepository(t)
+		// The git repo returns refs without RefURL
+		gitRepoRefs := []provisioning.RefItem{
+			{Name: "main", Hash: "abc123def456"},
+			{Name: "feature", Hash: "def456ghi789"},
+		}
+		mockGitRepo.On("ListRefs", ctx).Return(gitRepoRefs, nil)
+
+		repo := &githubRepository{
+			config:        config,
+			GitRepository: mockGitRepo,
+		}
+
+		result, err := repo.ListRefs(ctx)
+		require.NoError(t, err)
+
+		// The returned refs should have RefURL set
+		expectedRefs := []provisioning.RefItem{
+			{
+				Name:   "main",
+				Hash:   "abc123def456",
+				RefURL: "https://github.com/grafana/grafana/tree/main",
+			},
+			{
+				Name:   "feature",
+				Hash:   "def456ghi789",
+				RefURL: "https://github.com/grafana/grafana/tree/feature",
+			},
+		}
+		assert.Equal(t, expectedRefs, result)
 		mockGitRepo.AssertExpectations(t)
 	})
 
@@ -933,8 +1098,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("CompareFiles", ctx, "main", "feature-branch").Return(expectedChanges, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.CompareFiles(ctx, "main", "feature-branch")
@@ -947,14 +1112,14 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		mockStagedRepo := repository.NewMockStagedRepository(t)
 		opts := repository.StageOptions{
-			PushOnWrites: true,
-			Timeout:      10 * time.Second,
+			Mode:    repository.StageModeCommitOnEach,
+			Timeout: 10 * time.Second,
 		}
 		mockGitRepo.On("Stage", ctx, opts).Return(mockStagedRepo, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.Stage(ctx, opts)
@@ -971,7 +1136,6 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 			GitHub: &provisioning.GitHubRepositoryConfig{
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
-				Token:  "test-token",
 			},
 		},
 	}
@@ -1011,4 +1175,91 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 		result := repo.Client()
 		assert.Equal(t, mockClient, result)
 	})
+}
+
+func TestGithubRepository_Move(t *testing.T) {
+	tests := []struct {
+		name        string
+		oldPath     string
+		newPath     string
+		ref         string
+		comment     string
+		setupMock   func(*git.MockGitRepository)
+		expectedErr error
+	}{
+		{
+			name:    "successful move delegates to git repository",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "move error from git repository",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(errors.New("git move failed"))
+			},
+			expectedErr: errors.New("git move failed"),
+		},
+		{
+			name:    "successful directory move",
+			oldPath: "old/",
+			newPath: "new/",
+			ref:     "main",
+			comment: "move directory",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old/", "new/", "main", "move directory").Return(nil)
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock git repository
+			mockGitRepo := git.NewMockGitRepository(t)
+
+			// Setup mock expectations
+			tt.setupMock(mockGitRepo)
+
+			// Create GitHub repository
+			config := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/example/repo",
+					},
+				},
+			}
+
+			githubRepo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				owner:         "example",
+				repo:          "repo",
+			}
+
+			// Execute move operation
+			err := githubRepo.Move(context.Background(), tt.oldPath, tt.newPath, tt.ref, tt.comment)
+
+			// Verify results
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tt.expectedErr.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

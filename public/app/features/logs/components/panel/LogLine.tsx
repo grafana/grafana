@@ -3,7 +3,7 @@ import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState,
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
+import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
@@ -31,6 +31,8 @@ export interface Props {
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
+  timeRange: TimeRange;
+  timeZone: string;
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
@@ -48,6 +50,8 @@ export const LogLine = ({
   onClick,
   onOverflow,
   showTime,
+  timeRange,
+  timeZone,
   variant,
   virtualization,
   wrapLogMessage,
@@ -64,6 +68,8 @@ export const LogLine = ({
         onClick={onClick}
         onOverflow={onOverflow}
         showTime={showTime}
+        timeRange={timeRange}
+        timeZone={timeZone}
         variant={variant}
         virtualization={virtualization}
         wrapLogMessage={wrapLogMessage}
@@ -87,6 +93,8 @@ const LogLineComponent = memo(
     onClick,
     onOverflow,
     showTime,
+    timeRange,
+    timeZone,
     variant,
     virtualization,
     wrapLogMessage,
@@ -99,6 +107,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      timestampResolution,
       onLogLineHover,
     } = useLogListContext();
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
@@ -109,7 +118,7 @@ const LogLineComponent = memo(
     const permalinked = useLogIsPermalinked(log);
 
     useEffect(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization || !height) {
+      if (!onOverflow || !logLineRef.current || !virtualization || !height || !wrapLogMessage) {
         return;
       }
       const calculatedHeight = typeof height === 'number' ? height : undefined;
@@ -133,14 +142,16 @@ const LogLineComponent = memo(
 
     const handleExpandCollapse = useCallback(() => {
       const newState = !collapsed;
-      setCollapsed(newState);
       log.setCollapsedState(newState);
+      setCollapsed(newState);
       onOverflow?.(index, log.uid);
     }, [collapsed, index, log, onOverflow]);
 
     const handleClick = useCallback(
       (e: MouseEvent<HTMLElement>) => {
-        onClick(e, log);
+        if (isLogLineClick(e.target)) {
+          onClick(e, log);
+        }
       },
       [log, onClick]
     );
@@ -149,11 +160,14 @@ const LogLineComponent = memo(
 
     return (
       <>
+        {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''}`}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
           ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
+          onClick={handleClick}
         >
           <LogLineMenu styles={styles} log={log} />
           {dedupStrategy !== LogsDedupStrategy.none && (
@@ -195,22 +209,21 @@ const LogLineComponent = memo(
               )}
             </div>
           )}
-          {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
-            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
+            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
             style={
               collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
                 : undefined
             }
-            onClick={handleClick}
           >
             <Log
+              collapsed={collapsed}
               displayedFields={displayedFields}
               log={log}
               showTime={showTime}
               styles={styles}
+              timestampResolution={timestampResolution}
               wrapLogMessage={wrapLogMessage}
             />
           </div>
@@ -241,25 +254,35 @@ const LogLineComponent = memo(
             </Button>
           </div>
         )}
-        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={logs} />}
+        {detailsMode === 'inline' && detailsShown && (
+          <InlineLogLineDetails logs={logs} log={log} timeRange={timeRange} timeZone={timeZone} />
+        )}
       </>
     );
   }
 );
 LogLineComponent.displayName = 'LogLineComponent';
 
+export type LogLineTimestampResolution = 'ms' | 'ns';
+
 interface LogProps {
+  collapsed?: boolean;
   displayedFields: string[];
   log: LogListModel;
   showTime: boolean;
   styles: LogLineStyles;
+  timestampResolution: LogLineTimestampResolution;
   wrapLogMessage: boolean;
 }
 
-const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
+const Log = memo(({ displayedFields, log, showTime, styles, timestampResolution, wrapLogMessage }: LogProps) => {
   return (
     <>
-      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+      {showTime && (
+        <span className={`${styles.timestamp} level-${log.logLevel} field`}>
+          {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
+        </span>
+      )}
       {
         // When logs are unwrapped, we want an empty column space to align with other log lines.
       }
@@ -323,7 +346,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   const { matchingUids, search } = useLogListSearchContext();
 
   const highlight = useMemo(() => {
-    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
+    const searchWords = syntaxHighlighting && log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
     if (search && matchingUids?.includes(log.uid)) {
       searchWords.push(search);
     }
@@ -331,7 +354,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
       return undefined;
     }
     return { searchWords, highlightClassName: styles.matchHighLight };
-  }, [log.searchWords, log.uid, matchingUids, search, styles.matchHighLight]);
+  }, [log.searchWords, log.uid, matchingUids, search, styles.matchHighLight, syntaxHighlighting]);
 
   if (log.hasAnsi) {
     return (
@@ -372,15 +395,16 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     debug: '#6E9FFF',
     trace: '#6ed0e0',
     info: '#6CCF8E',
-    metadata: theme.colors.text.primary,
-    parsedField: theme.colors.text.primary,
+    metadata: theme.colors.text.secondary,
+    default: theme.colors.text.primary,
+    parsedField: theme.colors.text.secondary,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(4).toRgbString();
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({
-      color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
+      color: colors.default,
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -404,7 +428,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
       '& .log-syntax-highlight': {
         '.log-token-string': {
-          color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
+          color: colors.default,
         },
         '.log-token-duration': {
           color: theme.colors.success.text,
@@ -417,7 +441,6 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
         },
         '.log-token-key': {
           color: colors.parsedField,
-          opacity: 0.9,
           fontWeight: theme.typography.fontWeightMedium,
         },
         '.log-token-json-key': {
@@ -450,7 +473,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: hoverColor,
+      background: tinycolor(theme.colors.background.canvas).darken(2).toRgbString(),
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
@@ -524,6 +547,14 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       border: 'none',
       display: 'inline',
     }),
+    loadMoreTopContainer: css({
+      backgroundColor: tinycolor(theme.colors.background.primary).setAlpha(0.75).toString(),
+      left: 0,
+      position: 'absolute',
+      top: 0,
+      width: '100%',
+      zIndex: theme.zIndex.navbarFixed,
+    }),
     overflows: css({
       outline: 'solid 1px red',
     }),
@@ -566,3 +597,8 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     }),
   };
 };
+
+function isLogLineClick(target: EventTarget) {
+  const targetIsButton = target instanceof HTMLButtonElement || (target instanceof Element && target.closest('button'));
+  return !targetIsButton;
+}

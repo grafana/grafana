@@ -5,7 +5,7 @@ package repository
 import (
 	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -194,6 +194,64 @@ func (_c *MockVersioned_LatestRef_Call) Return(_a0 string, _a1 error) *MockVersi
 }
 
 func (_c *MockVersioned_LatestRef_Call) RunAndReturn(run func(context.Context) (string, error)) *MockVersioned_LatestRef_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListRefs provides a mock function with given fields: ctx
+func (_m *MockVersioned) ListRefs(ctx context.Context) ([]v0alpha1.RefItem, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRefs")
+	}
+
+	var r0 []v0alpha1.RefItem
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]v0alpha1.RefItem, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []v0alpha1.RefItem); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]v0alpha1.RefItem)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockVersioned_ListRefs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRefs'
+type MockVersioned_ListRefs_Call struct {
+	*mock.Call
+}
+
+// ListRefs is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockVersioned_Expecter) ListRefs(ctx interface{}) *MockVersioned_ListRefs_Call {
+	return &MockVersioned_ListRefs_Call{Call: _e.mock.On("ListRefs", ctx)}
+}
+
+func (_c *MockVersioned_ListRefs_Call) Run(run func(ctx context.Context)) *MockVersioned_ListRefs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockVersioned_ListRefs_Call) Return(_a0 []v0alpha1.RefItem, _a1 error) *MockVersioned_ListRefs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockVersioned_ListRefs_Call) RunAndReturn(run func(context.Context) ([]v0alpha1.RefItem, error)) *MockVersioned_ListRefs_Call {
 	_c.Call.Return(run)
 	return _c
 }

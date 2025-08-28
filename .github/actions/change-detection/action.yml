@@ -19,12 +19,18 @@ outputs:
     value: ${{ steps.changed-files.outputs.e2e_any_changed == 'true' ||
       steps.changed-files.outputs.backend_any_changed == 'true' ||
       steps.changed-files.outputs.frontend_any_changed == 'true' || 'true' }}
+  e2e-cloud-plugins:
+    description: Whether the cloud plugins code or tests have changed in any way
+    value: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_changed || 'true' }}
   dev-tooling:
     description: Whether the dev tooling or self have changed in any way
     value: ${{ steps.changed-files.outputs.dev_tooling_any_changed || 'true' }}
   docs:
     description: Whether the docs or self have changed in any way
     value: ${{ steps.changed-files.outputs.docs_any_changed || 'true' }}
+  dockerfile:
+    description: Whether the dockerfile or self have changed in any way
+    value: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}
 runs:
   using: composite
   steps:
@@ -39,6 +45,8 @@ runs:
           self:
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
+          dockerfile:
+            - 'Dockerfile'
           backend:
             - '!*.md'
             - '!docs/**'
@@ -47,6 +55,10 @@ runs:
             - '.github/actions/checkout/**'
             - '**/go.mod'
             - '**/go.sum'
+            - 'go.mod'
+            - 'go.sum'
+            - 'go.work'
+            - 'go.work.sum'
             - '**.go'
             - 'pkg/**'
             - '!pkg/**.md'
@@ -91,12 +103,16 @@ runs:
             - 'proto/**'
             - '**/Makefile'
             - 'scripts/**'
-            - '!scripts/drone/**'
             - '!**.md'
             - '.github/actions/change-detection/**'
             - '**.cue'
             - 'conf/**'
             - 'cypress.config.js'
+            - '${{ inputs.self }}'
+          e2e_cloud_plugins:
+            - 'pkg/tsdb/azuremonitor/**'
+            - 'public/app/plugins/datasource/azuremonitor/**'
+            - 'e2e-playwright/cloud-plugins-suite/azure-monitor.spec.ts'
             - '${{ inputs.self }}'
           dev_tooling:
             - '.github/actions/setup-enterprise/**'
@@ -111,7 +127,6 @@ runs:
             - 'scripts/**'
             - '!**.md'
             - '.citools/**'
-            - '.bingo/**'
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
           docs:
@@ -135,7 +150,11 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.e2e_all_changed_files }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_changed_files }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_all_changed_files }}"
+        echo "E2E cloud plugins: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.e2e_cloud_plugins_all_changed_files }}"
         echo "Dev Tooling: ${{ steps.changed-files.outputs.dev_tooling_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.dev_tooling_all_changed_files }}"
         echo "Docs: ${{ steps.changed-files.outputs.docs_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.docs_all_changed_files }}"
+        echo "Dockerfile: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.dockerfile_all_changed_files }}"

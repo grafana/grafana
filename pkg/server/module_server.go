@@ -189,11 +189,11 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.promGatherer, s.license)
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
 	m.RegisterModule(modules.All, nil)

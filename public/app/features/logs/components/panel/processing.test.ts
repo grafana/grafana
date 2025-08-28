@@ -1,4 +1,5 @@
 import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine, createLogRow } from '../mocks/logRow';
@@ -141,7 +142,7 @@ describe('preProcessLogs', () => {
       expect(logListModel.getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME, true)).toBe('log message 1');
     });
 
-    test('Prettifies JSON', () => {
+    test('Does not modify unwrapped JSON', () => {
       const entry = '{"key": "value", "otherKey": "otherValue"}';
       const logListModel = createLogLine(
         { entry },
@@ -150,6 +151,38 @@ describe('preProcessLogs', () => {
           order: LogsSortOrder.Descending,
           timeZone: 'browser',
           wrapLogMessage: false, // unwrapped
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(entry);
+    });
+
+    test('Does not modify wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false, // unwrapped
+          prettifyJSON: false,
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toBe(entry);
+    });
+
+    test('Prettifies wrapped JSON', () => {
+      const entry = '{"key": "value", "otherKey": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+          prettifyJSON: true,
         }
       );
       expect(logListModel.entry).toBe(entry);
@@ -169,6 +202,40 @@ describe('preProcessLogs', () => {
       );
       expect(logListModel.entry).toBe(entry);
       expect(logListModel.body).toContain('90071992547409911');
+    });
+
+    test.each([
+      '{"timestamp":"2025-08-19T12:34:56Z","level":"INFO","message":"User logged in","user_id":1234}',
+      '{"time":"2025-08-19T12:35:10Z","level":"ERROR","service":"payment","error":"Insufficient funds","transaction_id":"tx-98765"}',
+      '{"ts":1692444912,"lvl":"WARN","component":"auth","msg":"Token expired","session_id":"abcd1234"}',
+      '{"@timestamp":"2025-08-19T12:36:00Z","severity":"DEBUG","event":"cache_hit","key":"user_profile:1234","duration_ms":3}',
+      '{}',
+    ])('Detects JSON logs', (entry: string) => {
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+        }
+      );
+      expect(logListModel.body).toBeDefined(); // Triggers parsing
+      expect(logListModel.isJSON).toBe(true);
+    });
+
+    test.each(['1', '"1"', 'true', 'null', 'false', 'not json', '"nope"'])('Detects non-JSON logs', (entry: string) => {
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+        }
+      );
+      expect(logListModel.body).toBeDefined(); // Triggers parsing
+      expect(logListModel.isJSON).toBe(false);
     });
   });
 
@@ -345,5 +412,45 @@ describe('preProcessLogs', () => {
       expect(longLog.collapsed).toBe(false);
       expect(longLog.body).toBe(entry);
     });
+  });
+});
+
+describe('OTel logs', () => {
+  let originalOtelLogsFormatting = config.featureToggles.otelLogsFormatting;
+  afterAll(() => {
+    config.featureToggles.otelLogsFormatting = originalOtelLogsFormatting;
+  });
+
+  test('Requires a feature flag', () => {
+    const log = createLogLine({
+      labels: {
+        severity_number: '1',
+        telemetry_sdk_language: 'php',
+        scope_name: 'scope',
+        aws_ignore: 'ignored',
+        key: 'value',
+        otel: 'otel',
+      },
+      entry: `place="luna" 1ms 3 KB`,
+    });
+    expect(log.otelLanguage).toBeDefined();
+    expect(log.body).toEqual(`place="luna" 1ms 3 KB`);
+  });
+
+  test('Augments OTel log lines', () => {
+    config.featureToggles.otelLogsFormatting = true;
+    const log = createLogLine({
+      labels: {
+        severity_number: '1',
+        telemetry_sdk_language: 'php',
+        scope_name: 'scope',
+        aws_ignore: 'ignored',
+        key: 'value',
+        otel: 'otel',
+      },
+      entry: `place="luna" 1ms 3 KB`,
+    });
+    expect(log.otelLanguage).toBeDefined();
+    expect(log.body).toEqual(`place="luna" 1ms 3 KB key=value otel=otel`);
   });
 });

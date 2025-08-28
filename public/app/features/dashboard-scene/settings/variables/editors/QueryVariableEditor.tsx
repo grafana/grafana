@@ -14,6 +14,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
+import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
@@ -27,8 +28,19 @@ interface QueryVariableEditorProps {
 type VariableQueryType = QueryVariable['state']['query'];
 
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
-  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query, allowCustomValue } =
-    variable.useState();
+  const {
+    datasource,
+    regex,
+    sort,
+    refresh,
+    isMulti,
+    includeAll,
+    allValue,
+    query,
+    allowCustomValue,
+    staticOptions,
+    staticOptionsOrder,
+  } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
@@ -67,6 +79,16 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     onRunQuery();
   };
 
+  const onStaticOptionsChange = (staticOptions: StaticOptionsType) => {
+    onRunQuery();
+    variable.setState({ staticOptions });
+  };
+
+  const onStaticOptionsOrderChange = (staticOptionsOrder: StaticOptionsOrderType) => {
+    onRunQuery();
+    variable.setState({ staticOptionsOrder });
+  };
+
   return (
     <QueryVariableEditorForm
       datasource={datasource ?? undefined}
@@ -89,6 +111,10 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onAllValueChange={onAllValueChange}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      staticOptions={staticOptions}
+      staticOptionsOrder={staticOptionsOrder}
+      onStaticOptionsChange={onStaticOptionsChange}
+      onStaticOptionsOrderChange={onStaticOptionsOrderChange}
     />
   );
 }
@@ -101,6 +127,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
+      id: `variable-${variable.state.name}-value`,
       render: () => <ModalEditor variable={variable} />,
     }),
   ];

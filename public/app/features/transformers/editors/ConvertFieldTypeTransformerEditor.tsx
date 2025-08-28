@@ -15,10 +15,12 @@ import {
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
-import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
+import { getAllFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions/utils';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/convertFieldType.svg';
+import lightImage from '../images/light/convertFieldType.svg';
 import { getTimezoneOptions } from '../utils';
 
 import { EnumMappingEditor } from './EnumMappingEditor';
@@ -32,7 +34,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
-  const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
+  const allTypes = getAllFieldTypeIconOptions().filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
   // Format timezone options
@@ -280,4 +282,6 @@ export const getConvertFieldTypeTransformRegistryItem: () => TransformerRegistry
     categories: new Set([TransformerCategory.Reformat]),
     help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
     tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
+    imageDark: darkImage,
+    imageLight: lightImage,
   });

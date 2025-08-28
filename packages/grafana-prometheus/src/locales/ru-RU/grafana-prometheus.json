@@ -2,381 +2,490 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "Ошибка загрузки данных аннотации.",
+        "aria-label-lower-limit-parameter": "Установить нижний предел для параметра шага",
+        "label-min-step": "Мин. шаг",
+        "label-series-value-as-timestamp": "Значение ряда как метка времени",
         "label-tags": "Теги",
-        "label-text": "",
+        "label-text": "Текст",
         "label-title": "Заголовок",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "авто",
+        "tooltip-either-pattern-example-instance-replaced-label": "Используйте название или шаблон. Например, {{labelTemplate}} заменяется на значение метки {{labelName}}.",
+        "tooltip-min-step": "Дополнительный нижний предел для параметра шага запроса Prometheus и для переменных <2>{{intervalVar}}</2> и <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Единица метки времени — миллисекунды. Если единицей для значения ряда являются секунды, умножьте вектор диапазона на 1000."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "Выполните мгновенный запрос и запрос диапазона"
         },
         "label": {
-          "both": ""
+          "both": "Оба"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "Выполните запрос, относящийся к определенному диапазону времени"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "Мгновенный",
+            "range": "Диапазон"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "Выражение фильтра для метки",
+        "description-select-labels": "После выбора значений меток отображаются только возможные комбинации меток.",
+        "select-labels-to-search-in": "2. Выберите метки для выполнения поиска"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "Выражение фильтра для метрики",
+        "aria-label-limit-results-from-series-endpoint": "Ограничить результаты от конечной точки ряда",
+        "description-series-limit": "Лимит распространяется на все метрики, метки и значения. Оставьте поле пустым, чтобы использовался лимит по умолчанию. Установите значение 0, чтобы отключить ограничение и получать все данные. Это может привести к проблемам с производительностью.",
+        "label-select-metric": "После выбора метрики отображаются только возможные метки. Метки ограничены лимитом рядов, указанным ниже.",
+        "select-a-metric": "1. Выберите метрику",
+        "series-limit": "Лимит рядов"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "Памятка PromQL"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "Образцы",
+        "tooltip-disable-query": "Отключить запросы с образцами",
+        "tooltip-enable-query": "Включить запросы с образцами"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Дополнительное поле Prometheus",
+        "aria-label-query-type-field": "Поле типа запроса",
+        "aria-label-step-field": "Поле шага",
+        "min-step": "Мин. шаг",
+        "query-type": "Тип запроса",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Здесь можно использовать единицы времени и встроенные переменные: например, {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (по умолчанию, если не указана единица: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "Введите запрос PromQL…"
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "Классический запрос",
+        "aria-label-metric-regex": "Регулярное выражение метрики",
+        "aria-label-metric-selector": "Селектор метрик",
+        "aria-label-prometheus-query": "Запрос Prometheus",
+        "aria-label-query-type": "Тип запроса",
+        "aria-label-series-query": "Запрос рядов",
+        "label-classic-query": "Классический запрос",
         "label-label": "Метка",
-        "label-metric-regex": "",
+        "label-metric-regex": "Регулярное выражение метрики",
         "label-query": "Запрос",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "Тип запроса",
+        "label-series-query": "Запрос рядов",
+        "placeholder-classic-query": "Классический запрос",
+        "placeholder-metric-regex": "Регулярное выражение метрики",
+        "placeholder-prometheus-query": "Запрос Prometheus",
         "placeholder-select-query-type": "Выбрать тип запроса",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "Запрос рядов",
+        "returns-metrics-matching-specified-metric-regex": "Возвращает список метрик, соответствующих указанному регулярному выражению.",
+        "tooltip-classic-query": "Оригинальная реализация редактора запросов переменных Prometheus. Введите строку с правильным типом запроса и параметрами, указанными в документации. Например, {{exampleQuery}}.",
+        "tooltip-label": "Возвращает список значений для метки с соответствующим названием во всех метриках, если не указана конкретная метрика.",
+        "tooltip-metric-regex": "Возвращает список названий меток, при необходимости фильтруя их по указанному регулярному выражению метрики.",
+        "tooltip-query": "Возвращает список результатов запросов Prometheus для текущего запроса. Сюда могут входить функции Prometheus, например {{exampleQuery}}.",
+        "tooltip-query-type": "Плагин источника данных Prometheus предоставляет следующие типы запросов для переменных шаблона.",
+        "tooltip-series-query": "Укажите метрику с метками, только метрику или только метки, например {{example1}}, {{example2}} или {{example3}}. Возвращает список временных рядов, связанных с введенными данными."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "селектор",
+        "aria-label-selector-clear-button": "Кнопка очистки селектора",
+        "aria-label-use-selector-as-metrics-button": "Использовать селектор как кнопку метрик",
+        "aria-label-use-selector-for-query-button": "Использовать селектор для кнопки запроса",
+        "aria-label-validate-submit-button": "Проверить кнопку отправки",
         "clear": "Очистить",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. Полученный селектор",
+        "use-as-rate-query": "Использовать как запрос скорости изменения",
+        "use-query": "Использовать запрос",
+        "validate-selector": "Проверить селектор"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "Выражение фильтра для значений меток",
+        "aria-label-values-for": "Значения для {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Используйте поле поиска, чтобы найти значения в выбранных метках.",
+        "select-multiple-values-for-your-labels": "3. Выберите значения для меток"
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "Разрешить в качестве цели для правил записи",
+        "label-manage-alerts-via-alerting-ui": "Управление оповещениями через пользовательский интерфейс Alerting",
         "title-alerting": "Оповещение",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "Разрешить выбор этого источника данных в качестве цели для правил записи.",
         "tooltip-manage-alerts-via-alerting-ui": "Управление правилами оповещения для этого источника данных. Чтобы управлять другими ресурсами Alerting, добавьте обработчик оповещений Alertmanager в качестве источника данных."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "Режим доступа через браузер в источнике данных Prometheus больше не доступен. Переключитесь в режим доступа к серверу.",
+        "description-advanced-settings": "Дополнительные параметры — это необязательные параметры, которые можно настроить для получения большего контроля над источником данных.",
         "title-advanced-settings": "Дополнительные параметры",
         "title-error": "Ошибка"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "Вашим методом доступа является <1>Браузер</1>, то есть URL-адрес должен быть доступен из браузера.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "Укажите полный URL-адрес HTTP (например, {{exampleURL}})",
         "tooltip-server-access-mode": "Вашим методом доступа является <1>Сервер</1>, то есть URL-адрес должен быть доступен из серверной части/сервера Grafana."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "Более подробную информацию см. в документации."
       },
       "exemplar-setting": {
         "label-data-source": "Источник данных",
-        "label-internal-link": "",
+        "label-internal-link": "Внутренняя ссылка",
         "label-label-name": "Название метки",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "Удалить образец ссылки",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "Метка URL-адреса",
+        "placeholder-go-to-examplecom": "Перейти на example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "Удалить образец ссылки",
+        "tooltip-data-source": "Источник данных, на который перейдет образец.",
+        "tooltip-internal-link": "Включите этот параметр, если у вас есть внутренняя ссылка. Если этот параметр включен, отображается селектор источников данных. Выберите серверное хранилище данных трассировки для вашего образца данных.",
+        "tooltip-label-name": "Имя поля в объекте меток, которое следует использовать для получения идентификатора traceID.",
+        "tooltip-url": "URL-адрес сервера трассировки, на который необходимо перейти пользователю для просмотра своей трассировки",
+        "tooltip-url-label": "Используйте для переопределения метки кнопки в поле traceID образца."
       },
       "exemplars-settings": {
         "add": "Добавить",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "Нет конфигураций образцов",
+        "title-exemplars": "Образцы"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
+        "aria-label-default-editor": "Редактор по умолчанию (редактор кода или конструктор)",
+        "aria-label-prom-type-type": "Тип {{promType}}",
+        "aria-label-prometheus-type": "Тип Prometheus",
+        "aria-label-select-http-method": "Выбрать HTTP-метод",
         "editor-options": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Конструктор",
+          "label-code": "Код"
         },
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "label-cache-level": "Уровень кэша",
+        "label-custom-query-parameters": "Пользовательские параметры запроса",
+        "label-default-editor": "Редактор по умолчанию",
+        "label-disable-metrics-lookup": "Отключить поиск метрик",
+        "label-disable-recording-rules-beta": "Отключить правила записи (бета)",
+        "label-http-method": "HTTP-метод",
+        "label-incremental-querying-beta": "Инкрементальные запросы (бета)",
+        "label-prom-type-version": "Версия {{promType}}",
+        "label-prometheus-type": "Тип Prometheus",
+        "label-query-overlap-window": "Окно перекрытия запросов",
+        "label-query-timeout": "Превышение времени ожидания запроса",
+        "label-scrape-interval": "Интервал опроса",
+        "label-series-limit": "Лимит рядов",
+        "label-use-series-endpoint": "Использовать конечную точку ряда",
+        "more-info": "Более подробную информацию о настройке типа и версии Prometheus в источниках данных см. в <2>документации по подготовке</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Пример: {{example}}",
+        "title-interval-behaviour": "Поведение интервалов",
+        "title-other": "Прочее",
         "title-performance": "Производительность",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "Редактор запросов",
+        "tooltip-cache-level": "Устанавливает уровень кэширования в браузере для запросов редактора. Для источников данных с высокой кардинальностью рекомендуются более высокие настройки кэша.",
+        "tooltip-custom-query-parameters": "Добавьте пользовательские параметры в URL-адрес запроса Prometheus. Например, {{example1}}, {{example2}}, {{example3}}, или {{example4}}. Несколько параметров следует объединить с {{concatenationChar}}.",
+        "tooltip-default-editor": "Установите параметр редактора по умолчанию для всех пользователей этого источника данных.",
+        "tooltip-disable-metrics-lookup": "При включении этого параметра будут отключены выбор метрик и поддержка метрик/меток при автозаполнении поля запроса. Функция полезна, если вы испытываете проблемы с производительностью при использовании более крупных экземляров Prometheus. ",
+        "tooltip-disable-recording-rules-beta": "Функция отключит правила записи. Включите, чтобы улучшить производительность дашборда",
+        "tooltip-http-method": "Для отправки запросов в источник данных Prometheus можно использовать HTTP-методы POST или GET. POST является рекомендуемым методом, поскольку позволяет выполнять более крупные запросы. Измените метод на GET, если вы используете версию Prometheus старше 2.1 или в вашей сети запрещены запросы POST.",
+        "tooltip-incremental-querying-beta": "Функция изменит поведение относительных запросов по умолчанию. Вместо запроса свежих данных из экземпляра Prometheus, результаты запросов будут кэшироваться, и запрашиваться будут только новые записи. Включите, чтобы уменьшить нагрузку на базу данных и сеть.",
+        "tooltip-prom-type-version": "Используйте эту функцию, чтобы установить версию вашего экземпляра {{promType}}, если она не установлена автоматически.",
+        "tooltip-prometheus-type": "Установите тип вашей базы данных Prometheus, например Prometheus, Cortex, Mimir или Thanos. При изменении этого поля текущие настройки будут сохранены. Разные типы Prometheus могут поддерживать или не поддерживать различные API. Например, некоторые типы поддерживают сопоставление регулярных выражений для запросов меток в целях повышения производительности. Некоторые типы имеют API для метаданных. В случае неправильной настройки типа вы можете столкнуться со странным поведением источника данных при запросе метрик и меток. Проверьте документацию Prometheus и убедитесь, что указали правильный тип.",
+        "tooltip-query-overlap-window": "Задайте продолжительность, например {{example1}} или {{example2}}, или {{example3}}. По умолчанию: {{default}}. Эта продолжительность будет добавлена к продолжительности каждого инкрементального запроса.",
+        "tooltip-query-timeout": "Задайте время ожидания запроса Prometheus.",
+        "tooltip-scrape-interval": "Этот интервал определяет, как часто Prometheus будет опрашивать целевые объекты. Задайте стандартный интервал опроса и оценки, установленный в файле конфигурации Prometheus. Если вы установите значение больше, чем интервал в файле конфигурации Prometheus, Grafana будет оценивать данные в соответствии с этим интервалом и вы будете получать меньше точек данных. По умолчанию: {{default}}.",
+        "tooltip-series-limit": "Лимит распространяется на все ресурсы (метрики, метки и значения) для обеих конечных точек (серий и меток). Оставьте поле пустым, чтобы использовался лимит по умолчанию (40000). Установите значение 0, чтобы отключить ограничение и получать все данные. Это может привести к проблемам с производительностью. Лимит по умолчанию: 40000.",
+        "tooltip-use-series-endpoint": "При включении этого параметра конечная точка ряда с параметром {{exampleParameter}} будет иметь приоритет над конечной точкой значений меток с параметром {{exampleParameter}}. Хотя конечная точка значений меток считается более эффективной, некоторые пользователи предпочитают конечную точку ряда, поскольку она использует метод POST в отличие от конечной точки значений меток, которая использует метод GET."
       }
+    },
+    "metrics-browser": {
+      "disabled-label": "(отключено)",
+      "enabled-label": "Браузер метрик"
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
-        "description-auto": "",
-        "description-custom": "",
-        "description-verbose": "",
-        "label-auto": "",
-        "label-custom": "",
-        "label-verbose": ""
+        "description-auto": "Включает только уникальные метки",
+        "description-custom": "Предоставьте шаблон именования",
+        "description-verbose": "Все имена и значения меток",
+        "label-auto": "Авто",
+        "label-custom": "Пользовательская",
+        "label-verbose": "Подробная"
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "Вычисляет среднее значение по измерениям",
+        "documentation-bottomk": "Наименьшее значение k элементов по значению выборки",
+        "documentation-count": "Считает количество элементов в векторе",
+        "documentation-count-values": "Считает количество элементов с одинаковым значением",
+        "documentation-group": "Все значения в итоговом векторе равны 1",
+        "documentation-max": "Выбирает максимальное значение по измерениям",
+        "documentation-min": "Выбирает минимальное значение по измерениям",
+        "documentation-quantile": "Вычисляет φ-квантиль (0 ≤ φ ≤ 1) по измерениям",
+        "documentation-stddev": "Вычисляет среднеквадратическое отклонение по измерениям",
+        "documentation-stdvar": "Вычисляет стандартную дисперсию по измерениям",
+        "documentation-sum": "Вычисляет сумму по измерениям",
+        "documentation-topk": "Наибольшее значение k элементов по значению выборки"
+      },
+      "getFunctions": {
+        "documentation-abs": "Возвращает входной вектор, в котором все значения выборки преобразованы в их абсолютные значения.",
+        "documentation-absent": "Возвращает пустой вектор, если переданный вектор имеет какие-либо элементы, и одноэлементный вектор со значением 1, если переданный вектор не имеет элементов. Функция полезна для оповещения, когда для данного имени метрики и комбинации меток не существует временных рядов.",
+        "documentation-absent-over-time": "Возвращает пустой вектор, если переданный вектор диапазона имеет какие-либо элементы, и одноэлементный вектор со значением 1, если переданный вектор диапазона не имеет элементов.",
+        "documentation-avg-over-time": "Среднее значение всех точек в указанном интервале.",
+        "documentation-ceil": "Округляет выборочные значения всех элементов в v в большую сторону до ближайшего целого числа.",
+        "documentation-changes": "Для каждого входного временного ряда функция changes(v range-vector) возвращает количество изменений его значения в пределах заданного временного диапазона в виде мгновенного вектора.",
+        "documentation-clamp": "Ограничивает выборочные значения всех элементов в v до нижнего предела min и верхнего предела max.",
+        "documentation-clamp-max": "Ограничивает выборочные значения всех элементов в v до верхнего предела max.",
+        "documentation-clamp-min": "Ограничивает выборочные значения всех элементов в v до нижнего предела min.",
+        "documentation-count-over-time": "Количество всех значений в указанном интервале.",
+        "documentation-count-scalar": "Возвращает количество элементов в векторе временных рядов в виде скаляра. Этим она отличается от оператора агрегации count(), который всегда возвращает вектор (пустой, если входной вектор пуст) и допускает группировку по меткам с помощью оператора by.",
+        "documentation-day-of-month": "Возвращает день месяца для каждого из указанных значений времени в формате UTC. Возвращаемые значения находятся в диапазоне от 1 до 31.",
+        "documentation-day-of-week": "Возвращает день недели для каждого из указанных значений времени в формате UTC. Возвращаемые значения находятся в диапазоне от 0 до 6, где 0 означает воскресенье и т. д.",
+        "documentation-day-of-year": "Возвращает день года для каждого из указанных значений времени в формате UTC. Возвращаемые значения находятся в диапазоне от 1 до 365 для невисокосных лет и от 1 до 366 для високосных лет.",
+        "documentation-days-in-month": "Возвращает количество дней в месяце для каждого из указанных значений времени в формате UTC. Возвращаемые значения находятся в диапазоне от 28 до 31.",
+        "documentation-deg": "Преобразует радианы в градусы для всех элементов в v.",
+        "documentation-delta": "Вычисляет разницу между первым и последним значением каждого элемента временного ряда в векторе диапазона v, возвращая мгновенный вектор с заданными дельтами и эквивалентными метками. Дельта экстраполируется для охвата всего временного диапазона, указанного в селекторе вектора диапазона, что позволяет получить нецелочисленный результат, даже если все значения выборки являются целыми числами.",
+        "documentation-deriv": "Вычисляет посекундную производную временного ряда в векторе диапазона v, используя простую линейную регрессию.",
+        "documentation-double-exponential-smoothing": "Возвращает сглаженное значение для временного ряда на основе диапазона в v. Чем ниже коэффициент сглаживания sf, тем большее значение придается старым данным. Чем выше коэффициент тренда tf, тем больше трендов в данных учитывается. Оба значения sf и tf должны находиться в диапазоне от 0 до 1.",
+        "documentation-drop-common-labels": "Удаляет все метки, имеющие одинаковое имя и значение во всех рядах входного вектора.",
+        "documentation-exp": "Вычисляет экспоненциальную функцию для всех элементов в v.\nОсобые случаи:\n* Exp(+Inf) = +Inf \n* Exp(NaN) = NaN",
+        "documentation-floor": "Округляет выборочные значения всех элементов в v в меньшую сторону до ближайшего целого числа.",
+        "documentation-histogram-avg": "Возвращает среднее арифметическое наблюдаемых значений, хранящихся во встроенной гистограмме. Выборки, не являющиеся встроенными гистограммами, игнорируются и не отображаются в возвращаемом векторе.",
+        "documentation-histogram-count": "Возвращает количество наблюдений, хранящихся во встроенной гистограмме.",
+        "documentation-histogram-fraction": "Возвращает вычисленную долю наблюдений между заданными нижним и верхним значениями.",
+        "documentation-histogram-quantile": "Вычисляет φ-квантиль (0 ≤ φ ≤ 1) из интервалов b гистограммы. Выборки в b представляют собой количество наблюдений в каждом интервале. Каждая выборка должна иметь метку le, где значение метки обозначает верхнюю границу интервала включительно. (Выборки без такой метки игнорируются.) Тип метрик гистограммы автоматически обеспечивает временные ряды с суффиксом _bucket и соответствующими метками.",
+        "documentation-histogram-stddev": "Возвращает вычисленное стандартное отклонение наблюдений во встроенной гистограмме на основе геометрического среднего значения интервалов, в которых находятся наблюдения.",
+        "documentation-histogram-stdvar": "Возвращает вычисленную стандартную дисперсию наблюдений во встроенной гистограмме.",
+        "documentation-histogram-sum": "Возвращает суммарное количество наблюдений, хранящихся во встроенной гистограмме.",
+        "documentation-holt-winters": "Переименована в double_exponential_smoothing в Prometheus v3.x. Используйте double_exponential_smoothing для версий Prometheus v3.0 и выше. \n\nВозвращает сглаженное значение для временного ряда на основе диапазона в v. Чем ниже коэффициент сглаживания sf, тем большее значение придается старым данным. Чем выше коэффициент тренда tf, тем больше трендов в данных учитывается. Оба значения sf и tf должны находиться в диапазоне от 0 до 1.",
+        "documentation-hour": "Возвращает час для каждого из указанных значений времени в формате UTC. Возвращаемые значения находятся в диапазоне от 0 до 23.",
+        "documentation-idelta": "Вычисляет разницу между двумя последними выборками в векторе диапазона v, возвращая мгновенный вектор с заданными дельтами и эквивалентными метками.",
+        "documentation-increase": "Вычисляет прирост временного ряда в векторе диапазона. Нарушения монотонности (например, сброс счетчика из-за перезапуска цели) автоматически корректируются. Прирост экстраполируется на весь временной диапазон, указанный в селекторе вектора диапазона, что позволяет получить нецелочисленный результат, даже если счетчик увеличивается только на целые числа.",
+        "documentation-info": "Возвращает последние сведения и метаданные о группе метрик, такие как их метки и текущие значения, без выполнения каких-либо вычислений.",
+        "documentation-irate": "Вычисляет мгновенную скорость прироста временного ряда в секунду в векторе диапазона. Вычисление основано на последних двух точках данных. Нарушения монотонности (например, сброс счетчика из-за перезапуска цели) автоматически корректируются.",
+        "documentation-label-join": "Для каждого временного ряда в v объединяет все значения всех меток src_labels с помощью функции separator и возвращает временной ряд с меткой dst_label, содержащий объединенное значение. В этой функции может быть любое количество меток src_labels.",
+        "documentation-label-replace": "Для каждого временного ряда в v функция label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string) сопоставляет регулярное выражение regex с меткой src_label. Если оно соответствует, то временной ряд возвращается с меткой dst_label, замененной на расширение replacement. $1 заменяется первой соответствующей подгруппой, $2 — второй и т. д. Если регулярное выражение не соответствует, то временной ряд возвращается без изменений.",
+        "documentation-last-over-time": "Самое последнее значение точки в указанном интервале.",
+        "documentation-ln": "Вычисляет натуральный логарифм для всех элементов в v.\nОсобые случаи:\n * ln(+Inf) = +Inf\n * ln(0) = -Inf\n * ln(x < 0) = NaN\n * ln(NaN) = NaN",
+        "documentation-log10": "Вычисляет десятичный логарифм для всех элементов в v. Особые случаи эквивалентны случаям в ln.",
+        "documentation-log2": "Вычисляет двоичный логарифм для всех элементов в v. Особые случаи эквивалентны случаям в ln.",
+        "documentation-max-over-time": "Максимальное значение всех точек в указанном интервале.",
+        "documentation-min-over-time": "Минимальное значение всех точек в указанном интервале.",
+        "documentation-minute": "Возвращает минуту для каждого из указанных значений времени в формате UTC. Возвращаемые значения находятся в диапазоне от 0 до 59.",
+        "documentation-month": "Возвращает месяц года для каждого из указанных значений времени в формате UTC. Возвращаемые значения находятся в диапазоне от 1 до 12, где 1 означает январь и т. д.",
+        "documentation-pi": "Возвращает число пи",
+        "documentation-predict-linear": "Прогнозирует значение временного ряда через t сек. с настоящего момента на основании вектора диапазона v, используя простую линейную регрессию.",
+        "documentation-present-over-time": "Значение 1 для любого ряда в указанном интервале.",
+        "documentation-quantile-over-time": "φ-квантиль (0 ≤ φ ≤ 1) значений в указанном интервале.",
+        "documentation-rad": "Преобразует градусы в радианы для всех элементов в v.",
+        "documentation-rate": "Вычисляет среднюю скорость прироста временного ряда в секунду в векторе диапазона. Нарушения монотонности (например, сброс счетчика из-за перезапуска цели) автоматически корректируются. Кроме того, вычисление экстраполируется на концы временного диапазона, что позволяет учитывать пропуски циклов извлечения данных или их несоответствие временному периоду диапазона.",
+        "documentation-resets": "Для каждого входного временного ряда функция resets(v range-vector) возвращает количество сбросов счетчика в пределах заданного временного диапазона в виде мгновенного вектора. Любое уменьшение значения между двумя последовательными выборками интерпретируется как сброс счетчика.",
+        "documentation-round": "Округляет выборочные значения всех элементов в v до ближайшего целого числа. В спорных случаях значения округляются в большую сторону. Необязательный аргумент to_nearest позволяет указать ближайшее кратное число, до которого следует округлить значения выборки. Кратное число также может быть дробью.",
+        "documentation-scalar": "Если задан одноэлементный входной вектор, функция scalar(v instant-vector) возвращает выборочное значение единственного элемента в виде скаляра. Если входной вектор содержит не один элемент, функция scalar вернет NaN.",
+        "documentation-sgn": "Возвращает вектор, в котором все выборочные значения преобразованы в соответствующие знаки, определяемые следующим образом: 1, если v является положительным, -1, если v является отрицательным, и 0, если v равно нулю.",
+        "documentation-sort": "Возвращает элементы вектора, отсортированные по значениям выборки, в порядке возрастания.",
+        "documentation-sort-desc": "Возвращает элементы вектора, отсортированные по значениям выборки, в порядке убывания.",
+        "documentation-sqrt": "Вычисляет квадратный корень всех элементов в v.",
+        "documentation-stddev-over-time": "Среднеквадратическое отклонение значений в указанном интервале.",
+        "documentation-stdvar-over-time": "Стандартная дисперсия значений в указанном интервале.",
+        "documentation-sum-over-time": "Сумма всех значений в указанном интервале.",
+        "documentation-time": "Возвращает количество секунд, прошедших с 1 января 1970 года по UTC. Обратите внимание, что возвращается не текущее время, а время, в которое должно быть получено выражение.",
+        "documentation-timestamp": "Возвращает временную метку каждого из образцов заданного вектора в виде количества секунд, прошедших с 1 января 1970 года по UTC.",
+        "documentation-vector": "Возвращает скаляр s в виде вектора без меток.",
+        "documentation-year": "Возвращает год для каждого из указанных значений времени в формате UTC."
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "вычисляет арккосинус всех элементов в {{argument}}",
+        "documentation-acosh": "вычисляет обратный гиперболический косинус всех элементов в {{argument}}",
+        "documentation-asin": "вычисляет арксинус всех элементов в {{argument}}",
+        "documentation-asinh": "вычисляет обратный гиперболический синус всех элементов в {{argument}}",
+        "documentation-atan": "вычисляет арктангенс всех элементов в {{argument}}",
+        "documentation-atanh": "вычисляет обратный гиперболический тангенс всех элементов в {{argument}}",
+        "documentation-cos": "вычисляет косинус всех элементов в {{argument}}",
+        "documentation-cosh": "вычисляет гиперболический косинус всех элементов в {{argument}}",
+        "documentation-sin": "вычисляет синус всех элементов в {{argument}}",
+        "documentation-sinh": "вычисляет гиперболический синус всех элементов в {{argument}}",
+        "documentation-tan": "вычисляет тангенс всех элементов в {{argument}}",
+        "documentation-tanh": "вычисляет гиперболический тангенс всех элементов в {{argument}}"
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
-      },
       "feedback-link": {
         "give-feedback": "Отправить отзыв",
-        "title-give-feedback": ""
+        "title-give-feedback": "Обозреватель метрик — это новая функция. Сообщите нам, как мы можем ее улучшить"
       },
       "get-collapsed-info": {
-        "exemplars": "",
-        "format": "",
-        "legend": "",
-        "step": "",
-        "type": ""
+        "exemplars": "Образцы: {{value}}",
+        "format": "Формат: {{value}}",
+        "legend": "Условные обозначения: {{value}}",
+        "step": "Шаг: {{value}}",
+        "type": "Тип: {{value}}"
+      },
+      "get-placeholders": {
+        "browse": "Поиск метрик по имени",
+        "type": "Фильтр по типу"
+      },
+      "get-prom-types": {
+        "description-counter": "Кумулятивная метрика, представляющая собой один монотонно увеличивающийся счетчик, значение которого может только увеличиваться или сбрасываться до нуля при перезапуске.",
+        "description-gauge": "Метрика, представляющая собой одно числовое значение, которое может произвольно увеличиваться и уменьшаться.",
+        "description-histogram": "Гистограмма содержит выборку наблюдений (обычно таких, как продолжительность запроса или размер ответа) и подсчитывает их в настраиваемых интервалах.",
+        "description-native-histogram": "Встроенные гистограммы отличаются от классических гистограмм Prometheus по ряду параметров: границы интервалов встроенной гистограммы вычисляются по формуле, которая зависит от ее масштаба (разрешения), и не определяются пользователем.",
+        "description-no-type": "Эти метрики не имеют определенного типа в метаданных.",
+        "description-summary": "Сводка содержит выборку наблюдений (обычно таких, как продолжительность запроса и размер ответа) и может вычислять настраиваемые квантили в скользящем временном окне.",
+        "description-unknown": "В метаданных этим метрикам присвоен тип «неизвестный».",
+        "label-counter": "Счетчик",
+        "label-gauge": "Индикатор",
+        "label-histogram": "Гистограмма",
+        "label-native-histogram": "Встроенная гистограмма",
+        "label-no-type": "Нет типа",
+        "label-summary": "Сводка",
+        "label-unknown": "Неизвестный"
       },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Неоднозначные результаты анализа запроса."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "Удалить {{name}}",
+        "placeholder-select-label": "Выбрать метку",
         "placeholder-select-value": "Выбрать значение"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "Фильтры меток",
+        "label-label-filters": "Фильтры меток",
+        "tooltip-label-filters": "(Необязательно.) Используется в качестве фильтра выбора метрик для этого типа запроса."
       },
       "label-param-editor": {
-        "loadingMessage-loading-labels": "",
-        "noOptionsMessage-no-labels-found": ""
+        "loadingMessage-loading-labels": "Загрузка меток",
+        "noOptionsMessage-no-labels-found": "Метки не найдены"
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "Открыть обозреватель метрик",
+          "placeholder-select-metric": "Выбрать метрику",
+          "tooltip-open-metrics-explorer": "Открыть обозреватель метрик"
         },
         "label-metric": "Метрика",
-        "tooltip-metric": ""
+        "tooltip-metric": "(Необязательно.) Возвращает список значений для метки с соответствующим названием в указанной метрике."
       },
       "metrics-modal": {
-        "additional-settings": "",
-        "aria-label-additional-settings": "Дополнительные параметры",
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_one": "",
-        "results-amount_few": "",
-        "results-amount_many": "",
-        "results-amount_other": ""
+        "aria-label-browse-metrics": "Поиск метрик",
+        "currently-selected": "Выбранные в данный момент: {{selected}}",
+        "metrics-pre-filtered": "Метрики были предварительно отфильтрованы по меткам, выбранным в соответствующих фильтрах.",
+        "title-metrics-explorer": "Обозреватель метрик"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "Игнорирование",
           "on": "Вкл."
         },
         "operator": "Оператор",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "Удалить совпадение",
+        "vector-matches": "Совпадения векторов"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "Операция {{id}} не найдена",
+        "title-remove": "Удалить {{name}}"
       },
       "operation-header": {
         "placeholder-replace-with": "Заменить на",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "Нажмите для просмотра альтернативных операций",
+        "title-remove-operation": "Удалить операцию"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "Нажмите для отображения описания",
+        "title-remove-operation": "Удалить операцию"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "Операции",
         "placeholder-search": "Поиск",
-        "title-add-operation": ""
+        "title-add-operation": "Добавить операцию"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "Добавить {{name}}",
+        "title-remove": "Удалить {{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "Вычисляет {{aggregationName}} по измерениям, сохраняя {{labels}} {{labelWord}}.",
+          "label-default": "Вычисляет {{aggregationName}} по измерениям.",
+          "label-without": "Вычисляет {{aggregationName}} по измерениям {{labels}}. Все остальные метки сохраняются."
+        }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
+        "aria-label-lower-limit-parameter": "Установить нижний предел для параметра шага",
+        "aria-label-select-resolution": "Выбрать разрешение",
         "format-options": {
-          "label-heatmap": "",
-          "label-table": "",
-          "label-time-series": ""
+          "label-heatmap": "Тепловая карта",
+          "label-table": "Таблица",
+          "label-time-series": "Временные ряды"
         },
-        "label-exemplars": "",
+        "label-exemplars": "Образцы",
         "label-format": "Формат",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "Мин. шаг",
+        "label-resolution": "Разрешение",
         "label-type": "Тип",
-        "placeholder-auto": "",
+        "placeholder-auto": "авто",
         "title-options": "Параметры",
-        "tooltip-min-step": ""
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "tooltip-min-step": "Дополнительный нижний предел для параметра шага запроса Prometheus и переменных <2>{{interval}}</2> и <4>{{rateInterval}}</4>."
       },
       "prom-query-editor-selector": {
-        "body-syntax-error": "",
-        "confirmText-continue": "",
+        "body-syntax-error": "При переключении в режим конструктора произошла синтаксическая ошибка или структура запроса не может быть визуализирована. Части запроса могут быть потеряны.",
+        "confirmText-continue": "Продолжить",
         "kick-start-your-query": "Запустить запрос",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "Объяснение",
+        "run-queries": "Выполнить запросы",
+        "title-parsing-error-switch-builder": "Ошибка анализа. Переключиться в режим конструктора?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "Условные обозначения",
+        "placeholder-select-legend-mode": "Выберите режим условных обозначений",
+        "tooltip-legend": "Переопределение или шаблон имени ряда. Например, вместо {{templateExample}} будет использоваться значение метки для {{labelName}}."
       },
       "query-builder-hints": {
-        "hint-details": ""
-      },
-      "query-editor-hints": {
-        "hint-details": ""
+        "hint-details": "рекомендация: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
-          "label-builder": "",
-          "label-code": ""
+          "label-builder": "Конструктор",
+          "label-code": "Код"
         }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "Применить запрос",
+        "aria-label-apply-query-starter-button": "кнопка применения запроса",
+        "aria-label-back-button": "кнопка назад",
+        "aria-label-create-new-query-button": "кнопка создания нового запроса",
+        "aria-label-raw-query": "Необработанный запрос {{patternName}}",
+        "aria-label-use-this-query-button": "использовать кнопку запроса",
         "back": "Назад",
-        "create-new-query": "",
+        "create-new-query": "Создать новый запрос",
         "use-this-query": "Использовать запрос"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "закрыть модальное окно запуска запроса",
         "aria-label-kick-start-your-query-modal": "Модальное окно запуска запроса",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "открыть и закрыть карту запуска запроса {{patternType}}",
         "close": "Закрыть",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "Запустите запрос, выбрав один из этих вариантов. Затем можно продолжить выполнение запроса.",
+        "label-toggle-query-starter": "Элементы запуска запроса {{patternType}}",
         "title-kick-start-your-query": "Запустить запрос"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "селектор"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "При создании {{descriptiveType}} Prometheus отображает несколько рядов со счетчиком типов. ",
         "description": "Описание",
+        "message-expand-label-filters": "Метрики не найдены. Попробуйте расширить фильтры меток.",
+        "message-expand-search": "Метрики не найдены. Попробуйте расширить поиск и фильтры.",
+        "message-no-metrics-found": "В источнике данных нет метрик.",
         "name": "Имя",
-        "select": "Выбрать",
         "type": "Тип"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Неоднозначные результаты анализа запроса."
         }
       }
     }

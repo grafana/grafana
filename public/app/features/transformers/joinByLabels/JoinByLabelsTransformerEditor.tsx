@@ -9,9 +9,11 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
+import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/joinByLabels.svg';
+import lightImage from '../images/light/joinByLabels.svg';
 import { getDistinctLabels } from '../utils';
 
 import { getJoinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
@@ -134,7 +136,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
               error="Unable to join by the value label"
               invalid={v === options.value}
             >
-              <HorizontalGroup>
+              <Stack>
                 <Select
                   options={info.joinOptions}
                   value={info.joinOptions.find((o) => o.value === v)}
@@ -151,7 +153,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                     variant="secondary"
                   />
                 )}
-              </HorizontalGroup>
+              </Stack>
             </InlineField>
           </InlineFieldRow>
         ))
@@ -189,5 +191,7 @@ export const getJoinByLabelsTransformRegistryItem: () => TransformerRegistryItem
     state: PluginState.beta,
     categories: new Set([TransformerCategory.Combine]),
     help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   };
 };

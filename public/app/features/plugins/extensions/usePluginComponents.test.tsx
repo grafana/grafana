@@ -1,7 +1,13 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import React from 'react';
 
-import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
+import {
+  PluginContextProvider,
+  PluginExtensionPoints,
+  PluginLoadingStrategy,
+  PluginMeta,
+  PluginType,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
@@ -102,6 +108,32 @@ describe('usePluginComponents()', () => {
         extensions: {
           exposedComponents: [],
         },
+      },
+    };
+
+    config.apps[pluginId] = {
+      id: pluginId,
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        addedFunctions: [],
+        exposedComponents: [],
+        extensionPoints: [],
       },
     };
 
@@ -267,7 +299,7 @@ describe('usePluginComponents()', () => {
     // Should also render the component if it wants to change the props
     expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
     expect(log.error).toHaveBeenCalledWith(
-      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app`,
+      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app and version unknown`,
       {
         stack: expect.any(String),
       }
@@ -331,7 +363,7 @@ describe('usePluginComponents()', () => {
     // Should also render the component if it wants to change the props
     expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
     expect(log.warning).toHaveBeenCalledWith(
-      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app`,
+      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app and version unknown`,
       {
         stack: expect.any(String),
       }
@@ -459,6 +491,49 @@ describe('usePluginComponents()', () => {
     expect(log.error).not.toHaveBeenCalled();
   });
 
+  // It can happen that core Grafana plugins (e.g. traces) reuse core components which implement extension points.
+  it('should not validate the extension point meta-info for core plugins', () => {
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const componentConfig = {
+      targets: extensionPointId,
+      title: '1',
+      description: '1',
+      component: () => <div>Component</div>,
+    };
+
+    // The `AddedComponentsRegistry` is validating if the link is registered in the plugin metadata (config.apps).
+    config.apps[pluginId].extensions.addedComponents = [componentConfig];
+
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider
+        meta={{
+          ...pluginMeta,
+          // The module tells if it is a core plugin
+          module: 'core:plugin/traces',
+          extensions: {
+            ...pluginMeta.extensions!,
+            // Empty list of extension points in the plugin meta (from plugin.json)
+            extensionPoints: [],
+          },
+        }}
+      >
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
+
+    registries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    // Trying to render an extension point that is not defined in the plugin meta
+    // (No restrictions due to being a core plugin)
+    let { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
+    expect(result.current.components.length).toBe(1);
+    expect(log.error).not.toHaveBeenCalled();
+  });
+
   it('should not validate the extension point id in production mode', () => {
     // Empty list of extension points in the plugin meta (from plugin.json)
     wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -498,7 +573,7 @@ describe('usePluginComponents()', () => {
       pluginId: 'grafana', // Only core Grafana can register extensions without a plugin context
       configs: [
         {
-          targets: 'grafana/extension-point/v1',
+          targets: PluginExtensionPoints.DashboardPanelMenu,
           title: '1',
           description: '1',
           component: () => <div>Component</div>,
@@ -506,14 +581,17 @@ describe('usePluginComponents()', () => {
       ],
     });
 
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId: 'grafana/extension-point/v1' }), {
-      wrapper,
-    });
+    let { result } = renderHook(
+      () => usePluginComponents({ extensionPointId: PluginExtensionPoints.DashboardPanelMenu }),
+      {
+        wrapper,
+      }
+    );
     expect(result.current.components.length).toBe(1);
     expect(log.error).not.toHaveBeenCalled();
   });
 
-  it('should not validate the extension point id if used in Grafana core (no plugin context)', () => {
+  it('should not allow to create an extension point in core Grafana that is not exposed to plugins', () => {
     // Imitate running in dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
@@ -522,11 +600,26 @@ describe('usePluginComponents()', () => {
       <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
 
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId: 'invalid-extension-point-id' }), {
+    const extensionPointId = 'grafana/not-exposed-extension-point/v1';
+
+    // Adding an extension to the extension point
+    registries.addedComponentsRegistry.register({
+      pluginId: 'grafana', // Only core Grafana can register extensions without a plugin context
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          component: () => <div>Component</div>,
+        },
+      ],
+    });
+
+    let { result } = renderHook(() => usePluginComponents({ extensionPointId }), {
       wrapper,
     });
     expect(result.current.components.length).toBe(0);
-    expect(log.error).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
   it('should validate if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {

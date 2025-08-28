@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -20,22 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
-// HACK: This is a hack so that wire can uniquely identify dependencies
-func MergeProvisioningExtras(webhook webhooks.WebhookExtraBuilder) []provisioning.ExtraBuilder {
-	return []provisioning.ExtraBuilder{
-		webhook.ExtraBuilder,
-	}
-}
-
-var ProvisioningExtras = wire.NewSet(
-	webhooks.ProvideWebhooks,
-	MergeProvisioningExtras,
-)
-
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
 var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
 	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	wire.Bind(new(iam.RoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 )
 
 var WireSet = wire.NewSet(
@@ -56,7 +44,6 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	ProvisioningExtras,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,

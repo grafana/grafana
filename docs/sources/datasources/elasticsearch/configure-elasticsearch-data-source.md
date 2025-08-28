@@ -32,6 +32,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+  provisioning-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/#provision-the-data-source
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/elasticsearch/#provision-the-data-source
 ---
 
 # Configure the Elasticsearch data source
@@ -42,7 +47,7 @@ You can create a variety of queries to visualize logs or metrics stored in Elast
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 
 Only users with the organization `administrator` role can add data sources.
-Administrators can also [configure the data source via YAML](ref:provisioning-data-sources) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](ref:provisioning-data-source) with Grafana's provisioning system.
 
 ## Configuring permissions
 
@@ -130,7 +135,6 @@ The following settings are specific to the Elasticsearch data source.
 - **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
 
 - **Pattern** - Select the matching pattern if using one in your index name. Options include:
-
   - no pattern
   - hourly
   - daily

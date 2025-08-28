@@ -481,6 +481,27 @@ export const versionedComponents = {
           '10.2.0': 'data-testid table body',
         },
       },
+      TableNG: {
+        Filters: {
+          HeaderButton: {
+            '12.1.0': 'data-testid tableng header filter',
+          },
+          Container: {
+            '12.1.0': 'data-testid tablenf filter container',
+          },
+          SelectAll: {
+            '12.1.0': 'data-testid tableng filter select-all',
+          },
+        },
+        Tooltip: {
+          Wrapper: {
+            '12.2.0': 'data-testid tableng tooltip wrapper',
+          },
+          Caret: {
+            '12.2.0': 'data-testid tableng tooltip caret',
+          },
+        },
+      },
     },
   },
   VizLegend: {
@@ -1226,6 +1247,9 @@ export const versionedComponents = {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
     },
+    wrapper: {
+      '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,
+    },
   },
   UserProfile: {
     profileSaveButton: {
@@ -1360,6 +1384,63 @@ export const versionedComponents = {
   Portal: {
     container: {
       '11.5.0': 'data-testid portal-container',
+    },
+  },
+  ExportImage: {
+    formatOptions: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-format-options',
+      },
+      png: {
+        ['12.1.0']: 'data-testid export-image-format-png',
+      },
+      jpg: {
+        ['12.1.0']: 'data-testid export-image-format-jpg',
+      },
+    },
+    rendererAlert: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert',
+      },
+      title: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert-title',
+      },
+      description: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert-description',
+      },
+    },
+    buttons: {
+      generate: {
+        ['12.1.0']: 'data-testid export-image-generate-button',
+      },
+      download: {
+        ['12.1.0']: 'data-testid export-image-download-button',
+      },
+      cancel: {
+        ['12.1.0']: 'data-testid export-image-cancel-button',
+      },
+    },
+    preview: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-preview-container',
+      },
+      loading: {
+        ['12.1.0']: 'data-testid export-image-preview-loading',
+      },
+      image: {
+        ['12.1.0']: 'data-testid export-image-preview',
+      },
+      error: {
+        container: {
+          ['12.1.0']: 'data-testid export-image-error',
+        },
+        title: {
+          ['12.1.0']: 'data-testid export-image-error-title',
+        },
+        message: {
+          ['12.1.0']: 'data-testid export-image-error-message',
+        },
+      },
     },
   },
 } satisfies VersionedSelectorGroup;

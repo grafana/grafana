@@ -39,6 +39,16 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    * Set of tags associated with the transformer for improved transformation search
    */
   tags?: Set<string>;
+
+  /**
+   * Image representing the transformer, for dark themes
+   */
+  imageDark: string;
+
+  /**
+   * Image representing the transformer, for light themes
+   */
+  imageLight: string;
 }
 
 export enum TransformerCategory {

@@ -5,11 +5,10 @@
 WIRE_TAGS = "oss"
 
 -include local/Makefile
-include .bingo/Variables.mk
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.4
+GO_VERSION = 1.24.6
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -168,7 +167,7 @@ gen-cuev2: ## Do all CUE code generation
 # TODO (@radiohead): uncomment once we want to start generating code for all apps.
 # For now, we want to use an explicit list of apps to generate code for.
 #
-# APPS_DIRS=$(shell find ./apps -mindepth 1 -maxdepth 1 -type d | sort)
+#APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
 APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
 
 .PHONY: gen-apps
@@ -200,7 +199,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
-	@echo "generatng Wire graph"
+	@echo "generating Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: fix-cue
@@ -263,8 +262,8 @@ build-plugin-go: ## Build decoupled plugins
 build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
-run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(bra) run
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
+	$(air) -c .air.toml
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -275,9 +274,17 @@ run-go: ## Build and run web server immediately.
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
-.PHONY: run-air
-run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration. Check https://github.com/air-verse/air for installation instructions.
-	air -c .air.toml
+.PHONY: run-bra
+run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
+	$(bra) run
+
+.PHONY: frontend-service-check
+frontend-service-check:
+	./devenv/frontend-service/local-init.sh
+
+.PHONY: frontend-service
+frontend-service: frontend-service-check
+	bash ./devenv/frontend-service/run.sh
 
 ##@ Testing
 
@@ -377,6 +384,10 @@ lint-go-diff:
 		sed 's,^,./,' | \
 		$(XARGSR) $(golangci-lint) run --config .golangci.yml
 
+.PHONY: gofmt
+gofmt: ## Run gofmt for all Go files.
+	gofmt -s -w .
+
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
@@ -388,13 +399,35 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
 
+# default to a production build for frontend
+#
+DOCKER_JS_NODE_ENV_FLAG = production
+DOCKER_JS_YARN_BUILD_FLAG = build
+DOCKER_JS_YARN_INSTALL_FLAG = --immutable
+#
+# if go is in dev mode, also build node in dev mode
+ifeq ($(GO_BUILD_DEV), dev)
+  DOCKER_JS_NODE_ENV_FLAG = dev
+  DOCKER_JS_YARN_BUILD_FLAG = dev
+	DOCKER_JS_YARN_INSTALL_FLAG =
+endif
+# if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
+ifeq (${NODE_ENV}, dev)
+  DOCKER_JS_NODE_ENV_FLAG = dev
+  DOCKER_JS_YARN_BUILD_FLAG = dev
+	DOCKER_JS_YARN_INSTALL_FLAG =
+endif
+
 .PHONY: build-docker-full
 build-docker-full: ## Build Docker image for development.
-	@echo "build docker container"
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -404,11 +437,14 @@ build-docker-full: ## Build Docker image for development.
 
 .PHONY: build-docker-full-ubuntu
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
-	@echo "build docker container"
+	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
 	tar -ch . | \
 	docker buildx build - \
 	--platform $(PLATFORM) \
-	--build-arg BINGO=false \
+	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
+	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
+	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -471,7 +507,7 @@ protobuf: ## Compile protobuf definitions
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
-	buf generate pkg/apis/secret/v0alpha1/decrypt --template pkg/apis/secret/v0alpha1/decrypt/buf.gen.yaml
+	buf generate apps/secret --template apps/secret/buf.gen.yaml
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
@@ -488,25 +524,6 @@ gen-ts:
 	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7
 	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
 	go mod tidy
-
-# This repository's configuration is protected (https://readme.drone.io/signature/).
-# Use this make target to regenerate the configuration YAML files when
-# you modify starlark files.
-.PHONY: drone
-drone: $(DRONE)
-	bash scripts/drone/env-var-check.sh
-	$(DRONE) starlark --format
-	$(DRONE) lint .drone.yml --trusted
-	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
-
-# Generate an Emacs tags table (https://www.gnu.org/software/emacs/manual/html_node/emacs/Tags-Tables.html) for Starlark files.
-.PHONY: scripts/drone/TAGS
-scripts/drone/TAGS: $(shell find scripts/drone -name '*.star')
-	etags --lang none --regex="/def \(\w+\)[^:]+:/\1/" --regex="/\s*\(\w+\) =/\1/" $^ -o $@
-
-.PHONY: format-drone
-format-drone:
-	buildifier --lint=fix -r scripts/drone
 
 .PHONY: go-race-is-enabled
 go-race-is-enabled:
@@ -534,4 +551,3 @@ help: ## Display this help.
 # container/check-licenses target)
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
-

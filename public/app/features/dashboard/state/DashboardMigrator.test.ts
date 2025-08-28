@@ -14,8 +14,6 @@ import { PanelModel } from '../state/PanelModel';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 
-jest.mock('app/core/services/context_srv', () => ({}));
-
 const dataSources = {
   prom: mockDataSource({
     name: 'prom',
@@ -1043,7 +1041,7 @@ describe('DashboardModel', () => {
       });
     });
 
-    it('should have 11 variables after migration', () => {
+    it('should have 14 variables after migration', () => {
       expect(model.templating.list.length).toBe(14);
     });
 
@@ -1846,6 +1844,16 @@ describe('DashboardModel', () => {
               },
             ],
           },
+          // @ts-expect-error
+          {
+            id: 7,
+            datasource: { type: 'prometheus', uid: 'prom-uid' },
+          },
+          // @ts-expect-error
+          {
+            id: 8,
+            datasource: { type: 'prometheus' },
+          },
         ],
       });
     });
@@ -1874,6 +1882,14 @@ describe('DashboardModel', () => {
 
     it('should update datasources in panels collapsed rows', () => {
       expect(model.panels[3].panels?.[0].datasource).toEqual({ type: 'prometheus', uid: 'prom-uid' });
+    });
+
+    it("should not migrate datasource if it's already a ref", () => {
+      expect(model.panels[4].datasource).toEqual({ type: 'prometheus', uid: 'prom-uid' });
+    });
+
+    it("should not migrate datasource if it's already a ref with only a type", () => {
+      expect(model.panels[5].datasource).toEqual({ type: 'prometheus' });
     });
   });
 

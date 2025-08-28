@@ -13,16 +13,24 @@ import (
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
+var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
+var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
-// Used wire to identify the storage backend for core roles.
+// Used by wire to identify the storage backend for core roles.
 type CoreRoleStorageBackend interface{ resource.StorageBackend }
+
+// RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
+// Used by wire to identify the storage backend for custom roles.
+type RoleStorageBackend interface{ resource.StorageBackend }
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store            legacy.LegacyIdentityStore
-	coreRolesStorage CoreRoleStorageBackend
+	store                      legacy.LegacyIdentityStore
+	coreRolesStorage           CoreRoleStorageBackend
+	rolesStorage               RoleStorageBackend
+	resourcePermissionsStorage resource.StorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer
@@ -40,5 +48,12 @@ type IdentityAccessManagementAPIBuilder struct {
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
-	enableAuthZApis bool
+	enableAuthZApis              bool
+	enableResourcePermissionApis bool
+
+	// Toggle for enabling authn mutation
+	enableAuthnMutation bool
+
+	// Toggle for enabling dual writer
+	enableDualWriter bool
 }

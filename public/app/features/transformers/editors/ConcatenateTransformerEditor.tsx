@@ -13,6 +13,8 @@ import { t } from '@grafana/i18n';
 import { InlineField, Input, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/concatenate.svg';
+import lightImage from '../images/light/concatenate.svg';
 
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
 
@@ -112,4 +114,6 @@ export const getConcatenateTransformRegistryItem: () => TransformerRegistryItem<
     categories: new Set([TransformerCategory.Combine]),
     help: getTransformationContent(DataTransformerID.concatenate).helperDocs,
     tags: new Set([t('transformers.editors.concatenate-transformer-editor.tags.combine', 'Combine')]),
+    imageDark: darkImage,
+    imageLight: lightImage,
   });

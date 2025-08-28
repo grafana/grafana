@@ -26,10 +26,12 @@ export interface TempoJsonData extends DataSourceJsonData {
   streamingEnabled?: {
     search?: boolean;
   };
+  timeRangeForTags?: number;
 }
 
 export interface TempoQuery extends TempoBase {
   queryType: TempoQueryType;
+  serviceMapUseNativeHistograms?: boolean;
 }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}

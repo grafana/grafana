@@ -1,10 +1,24 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, PlaywrightTestConfig, Project } from '@playwright/test';
 import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
 
 const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
+const DEFAULT_URL = 'http://localhost:3001';
+
+function withAuth(project: Project): Project {
+  project.dependencies ??= [];
+  project.use ??= {};
+
+  project.dependencies = project.dependencies.concat('authenticate');
+  project.use = {
+    ...project.use,
+    storageState: `playwright/.auth/${process.env.GRAFANA_ADMIN_USER || 'admin'}.json`,
+  };
+
+  return project;
+}
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
@@ -15,8 +29,12 @@ export default defineConfig<PluginOptions>({
   reporter: [
     ['html'], // pretty
   ],
+  expect: {
+    timeout: 10_000,
+  },
   use: {
-    baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
+    ...devices['Desktop Chrome'],
+    baseURL: process.env.GRAFANA_URL ?? DEFAULT_URL,
     trace: 'retain-on-failure',
     httpCredentials: {
       username: 'admin',
@@ -26,6 +44,14 @@ export default defineConfig<PluginOptions>({
     permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
   },
+  ...(!process.env.GRAFANA_URL && {
+    webServer: {
+      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+      url: DEFAULT_URL,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  }),
   projects: [
     // Login to Grafana with admin user and store the cookie on disk for use in other tests
     {
@@ -47,15 +73,10 @@ export default defineConfig<PluginOptions>({
       },
     },
     // Run all tests in parallel using user with admin role
-    {
+    withAuth({
       name: 'admin',
       testDir: path.join(pluginDirRoot, '/plugin-e2e-api-tests/as-admin-user'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
+    }),
     // Run all tests in parallel using user with viewer role
     {
       name: 'viewer',
@@ -66,201 +87,97 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['createUserAndAuthenticate'],
     },
-    {
+    withAuth({
       name: 'elasticsearch',
       testDir: path.join(pluginDirRoot, '/elasticsearch'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'mysql',
       testDir: path.join(pluginDirRoot, '/mysql'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'mssql',
       testDir: path.join(pluginDirRoot, '/mssql'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'grafana-e2etest-datasource',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'cloudwatch',
       testDir: path.join(pluginDirRoot, '/cloudwatch'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'azuremonitor',
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'cloudmonitoring',
       testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'influxdb',
       testDir: path.join(pluginDirRoot, '/influxdb'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'opentsdb',
       testDir: path.join(pluginDirRoot, '/opentsdb'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'jaeger',
       testDir: path.join(pluginDirRoot, '/jaeger'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'grafana-postgresql-datasource',
       testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
+      name: 'canvas',
+      testDir: path.join(testDirRoot, '/canvas'),
+    }),
+    withAuth({
       name: 'zipkin',
       testDir: path.join(pluginDirRoot, '/zipkin'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
+    }),
     {
-      name: 'scenarios',
-      testDir: path.join(testDirRoot, '/scenarios'),
-      use: {
-        ...devices['Desktop Chrome'],
-      },
+      name: 'unauthenticated',
+      testDir: path.join(testDirRoot, '/unauthenticated'),
     },
-    {
+    withAuth({
       name: 'various',
       testDir: path.join(testDirRoot, '/various-suite'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'panels',
       testDir: path.join(testDirRoot, '/panels-suite'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'smoke',
       testDir: path.join(testDirRoot, '/smoke-tests-suite'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'dashboards',
       testDir: path.join(testDirRoot, '/dashboards-suite'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'loki',
       testDir: path.join(testDirRoot, '/loki'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'cloud-plugins',
       testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
-    {
+    }),
+    withAuth({
       name: 'dashboard-new-layouts',
       testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
+    }),
   ],
 });

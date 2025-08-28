@@ -58,13 +58,10 @@ module.exports = [
       'public/build-swagger', // swagger build output
     ],
   },
-  // Conditionally run the betterer rules if enabled in dev's config
-  ...(enableBettererRules ? bettererConfig : []),
-  grafanaConfig,
+  ...grafanaConfig,
   {
-    name: 'react/jsx-runtime',
-    // @ts-ignore - not sure why but flat config is typed as a maybe?
-    ...reactPlugin.configs.flat['jsx-runtime'],
+    name: 'react/jsx-runtime-rules',
+    rules: reactPlugin.configs.flat['jsx-runtime'].rules,
   },
   {
     name: 'grafana/defaults',
@@ -157,6 +154,18 @@ module.exports = [
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          // value regex is to filter out whitespace-only text nodes (e.g. new lines and spaces in the JSX)
+          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
+          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
+        },
+      ],
+      // FIXME: Fix these in follow up PR
+      'react/no-unescaped-entities': 'off',
+      // Turn off react-hooks/rules-of-hooks whilst present in betterer
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {
@@ -311,6 +320,7 @@ module.exports = [
     files: [
       'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-data/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
@@ -355,6 +365,14 @@ module.exports = [
       // grafana-ui has lots of violations of direct node access and container methods, so disabling for now
       'testing-library/no-node-access': 'off',
       'testing-library/no-container': 'off',
+    },
+  },
+  {
+    name: 'grafana/test-disables',
+    files: ['**/*.{spec,test}.{ts,tsx}'],
+    rules: {
+      'react/display-name': 'off',
+      'react/no-children-prop': 'off',
     },
   },
   {
@@ -409,4 +427,25 @@ module.exports = [
       ],
     },
   },
+  {
+    name: 'grafana/no-extensions-imports',
+    files: ['**/*.{ts,tsx,js}'],
+    ignores: ['public/app/extensions/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['app/extensions', 'app/extensions/*'],
+              message: 'Importing from app/extensions is not allowed',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Conditionally run the betterer rules if enabled in dev's config
+  // Should be last in the config so it can override any temporary disables in here
+  ...(enableBettererRules ? bettererConfig : []),
 ];

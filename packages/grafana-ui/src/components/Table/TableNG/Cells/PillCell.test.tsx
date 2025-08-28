@@ -1,117 +1,130 @@
-import { render, screen } from '@testing-library/react';
+import { render, RenderResult } from '@testing-library/react';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2, MappingType, createTheme } from '@grafana/data';
-import { TableCellDisplayMode, TablePillCellOptions } from '@grafana/schema';
+import { Field, FieldType, MappingType, createTheme } from '@grafana/data';
 
-import { mockThemeContext } from '../../../../themes/ThemeContext';
+import { getTextColorForBackground } from '../../../../utils/colors';
 
-import { PillCell, inferPills } from './PillCell';
+import { PillCell } from './PillCell';
 
 describe('PillCell', () => {
-  let restoreThemeContext: () => void;
+  const theme = createTheme();
 
-  beforeEach(() => {
-    restoreThemeContext = mockThemeContext(createTheme());
-  });
-
-  afterEach(() => {
-    restoreThemeContext();
-  });
-
-  const mockCellOptions: TablePillCellOptions = {
-    type: TableCellDisplayMode.Pill,
-    colorMode: 'auto',
-  };
-
-  const mockField: Field = {
+  const fieldWithValues = (values: unknown[]): Field => ({
     name: 'test',
     type: FieldType.string,
-    values: [],
+    values: values,
     config: {},
+  });
+
+  const ser = new XMLSerializer();
+
+  const expectHTML = (result: RenderResult, expected: string) => {
+    let actual = ser.serializeToString(result.asFragment()).replace(/xmlns=".*?" /g, '');
+    expect(actual).toEqual(expected.replace(/^\s*|\n/gm, ''));
   };
 
-  const mockFrame: DataFrame = {
-    name: 'test',
-    fields: [mockField],
-    length: 1,
-  };
+  // one class for lightTextPill, darkTextPill
 
-  const defaultProps = {
-    value: 'test-value',
-    field: mockField,
-    justifyContent: 'flex-start' as const,
-    cellOptions: mockCellOptions,
-    rowIdx: 0,
-    frame: mockFrame,
-    height: 30,
-    width: 100,
-    theme: {} as GrafanaTheme2,
-    cellInspect: false,
-    showFilters: false,
-  };
-
-  describe('pill parsing', () => {
-    it('should render pills for single values', () => {
-      render(<PillCell {...defaultProps} />);
-      expect(screen.getByText('test-value')).toBeInTheDocument();
+  describe('Color by hash (classic palette)', () => {
+    it('single value', () => {
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['value1'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        `<span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>`
+      );
     });
 
-    it('should render pills for CSV values', () => {
-      render(<PillCell {...defaultProps} value="value1,value2,value3" />);
-      expect(screen.getByText('value1')).toBeInTheDocument();
-      expect(screen.getByText('value2')).toBeInTheDocument();
-      expect(screen.getByText('value3')).toBeInTheDocument();
+    it('empty string', () => {
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues([''])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        ''
+      );
     });
 
-    it('should render pills for JSON array values', () => {
-      render(<PillCell {...defaultProps} value='["item1","item2","item3"]' />);
-      expect(screen.getByText('item1')).toBeInTheDocument();
-      expect(screen.getByText('item2')).toBeInTheDocument();
-      expect(screen.getByText('item3')).toBeInTheDocument();
+    it('null', () => {
+      const { container } = render(
+        <PillCell
+          getTextColorForBackground={getTextColorForBackground}
+          field={fieldWithValues([])}
+          rowIdx={0}
+          theme={theme}
+        />
+      );
+      expect(container).toBeEmptyDOMElement();
     });
 
-    it('should show dash for empty values', () => {
-      render(<PillCell {...defaultProps} value="" />);
-      expect(screen.getByText('-')).toBeInTheDocument();
+    it('CSV values', () => {
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['value1,value2,value3'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        `
+        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
+        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        `
+      );
     });
 
-    it('should show dash for null values', () => {
-      render(<PillCell {...defaultProps} value={null as unknown as string} />);
-      expect(screen.getByText('-')).toBeInTheDocument();
+    it('JSON array values', () => {
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['["value1","value2","value3"]'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        `
+        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
+        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        `
+      );
+    });
+
+    it('non-string values', () => {
+      expectHTML(
+        render(
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={fieldWithValues(['[100,200,300]'])}
+            rowIdx={0}
+            theme={theme}
+          />
+        ),
+        `
+        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">100</span>
+        <span style="background-color: rgb(222, 218, 247); color: rgb(32, 34, 38);">200</span>
+        <span style="background-color: rgb(249, 217, 249); color: rgb(32, 34, 38);">300</span>
+        `
+      );
     });
   });
 
-  describe('color mapping', () => {
-    // These tests primarily ensure the color logic executes without throwing.
-    // For true color verification, visual regression tests would be needed.
-
-    it('should use mapped colors when colorMode is mapped', () => {
-      const mappedOptions: TablePillCellOptions = {
-        type: TableCellDisplayMode.Pill,
-        colorMode: 'mapped',
-      };
-
-      render(<PillCell {...defaultProps} value="success,error,warning,unknown" cellOptions={mappedOptions} />);
-
-      const successPill = screen.getByText('success');
-      const errorPill = screen.getByText('error');
-      const warningPill = screen.getByText('warning');
-      const unknownPill = screen.getByText('unknown');
-
-      expect(successPill).toBeInTheDocument();
-      expect(errorPill).toBeInTheDocument();
-      expect(warningPill).toBeInTheDocument();
-      expect(unknownPill).toBeInTheDocument();
-    });
-
-    it('should use field-level value mappings when available', () => {
-      const mappedOptions: TablePillCellOptions = {
-        type: TableCellDisplayMode.Pill,
-        colorMode: 'mapped',
-      };
-
-      // Mock field with value mappings
-      const fieldWithMappings: Field = {
+  describe('Color by value mappings', () => {
+    it('CSV values', () => {
+      const mockField = fieldWithValues(['success,error,warning,unknown']);
+      const field = {
         ...mockField,
         config: {
           ...mockField.config,
@@ -129,91 +142,30 @@ describe('PillCell', () => {
         display: (value: unknown) => ({
           text: String(value),
           color:
-            String(value) === 'success'
+            value === 'success'
               ? '#00FF00'
-              : String(value) === 'error'
+              : value === 'error'
                 ? '#FF0000'
-                : String(value) === 'warning'
+                : value === 'warning'
                   ? '#FFFF00'
                   : '#FF780A',
           numeric: 0,
         }),
-      };
+      } satisfies Field;
 
-      render(
-        <PillCell
-          {...defaultProps}
-          value="success,error,warning,unknown"
-          cellOptions={mappedOptions}
-          field={fieldWithMappings}
-        />
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">success</span>
+        <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">error</span>
+        <span style="background-color: rgb(255, 255, 0); color: rgb(32, 34, 38);">warning</span>
+        <span style="background-color: rgb(255, 120, 10); color: rgb(247, 248, 250);">unknown</span>
+        `
       );
-
-      const successPill = screen.getByText('success');
-      const errorPill = screen.getByText('error');
-      const warningPill = screen.getByText('warning');
-      const unknownPill = screen.getByText('unknown');
-
-      expect(successPill).toBeInTheDocument();
-      expect(errorPill).toBeInTheDocument();
-      expect(warningPill).toBeInTheDocument();
-      expect(unknownPill).toBeInTheDocument();
     });
 
-    it('should use fixed color when colorMode is fixed', () => {
-      const fixedOptions: TablePillCellOptions = {
-        type: TableCellDisplayMode.Pill,
-        colorMode: 'fixed',
-        color: '#FF00FF',
-      };
-
-      render(<PillCell {...defaultProps} cellOptions={fixedOptions} />);
-      expect(screen.getByText('test-value')).toBeInTheDocument();
-    });
-
-    it('should use auto color when colorMode is auto', () => {
-      const autoOptions: TablePillCellOptions = {
-        type: TableCellDisplayMode.Pill,
-        colorMode: 'auto',
-      };
-
-      render(<PillCell {...defaultProps} cellOptions={autoOptions} />);
-      expect(screen.getByText('test-value')).toBeInTheDocument();
-    });
-  });
-});
-
-describe('inferPills', () => {
-  // These tests verify the pill parsing logic handles various input formats correctly.
-  // They ensure the function can extract pill values from different data structures.
-
-  it('should return empty array for null/undefined values', () => {
-    expect(inferPills(null)).toEqual([]);
-    expect(inferPills(undefined)).toEqual([]);
-    expect(inferPills('')).toEqual([]);
-  });
-
-  it('should parse single values', () => {
-    expect(inferPills('test')).toEqual(['test']);
-    expect(inferPills('"quoted"')).toEqual(['quoted']);
-    expect(inferPills("'quoted'")).toEqual(['quoted']);
-  });
-
-  it('should parse CSV strings', () => {
-    expect(inferPills('value1,value2,value3')).toEqual(['value1', 'value2', 'value3']);
-    expect(inferPills(' value1 , value2 , value3 ')).toEqual(['value1', 'value2', 'value3']);
-    expect(inferPills('value1, ,value3')).toEqual(['value1', 'value3']);
-  });
-
-  it('should parse JSON arrays', () => {
-    expect(inferPills('["item1","item2","item3"]')).toEqual(['item1', 'item2', 'item3']);
-    expect(inferPills('["item1", "item2", "item3"]')).toEqual(['item1', 'item2', 'item3']);
-    expect(inferPills('["item1", null, "item3"]')).toEqual(['item1', 'item3']);
-  });
-
-  it('should handle mixed content', () => {
-    // When JSON parsing fails, it falls back to CSV parsing
-    expect(inferPills('["item1", "item2"],extra')).toEqual(['["item1"', '"item2"]', 'extra']);
-    expect(inferPills('not-json,value')).toEqual(['not-json', 'value']);
+    // TODO: handle null values?
   });
 });

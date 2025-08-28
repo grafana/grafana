@@ -17,6 +17,8 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/filterFieldsByName.svg';
+import lightImage from '../images/light/filterFieldsByName.svg';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -265,4 +267,6 @@ export const getFilterFieldsByNameTransformRegistryItem: () => TransformerRegist
     ),
     categories: new Set([TransformerCategory.Filter]),
     help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });
