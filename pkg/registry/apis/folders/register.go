@@ -177,6 +177,9 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		if err != nil {
 			return err
 		}
+		store.BeginCreate = b.beginCreate
+		store.BeginUpdate = b.beginUpdate
+		store.AfterDelete = b.afterDelete
 
 		dw, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
