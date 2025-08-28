@@ -1,7 +1,6 @@
 // 
 // Self-config
 //
-
 livedebugging {
 	enabled = true
 }
@@ -20,4 +19,14 @@ loki.relabel "alloy" {
 	}
 
 	forward_to = [loki.relabel.publish_logs.receiver]
+}
+
+// Metrics
+prometheus.exporter.self "alloy" { }
+
+prometheus.scrape "alloy" {
+	targets          = prometheus.exporter.self.alloy.targets
+	scrape_interval  = "60s"
+	forward_to       = [prometheus.relabel.publish_metrics.receiver]
+	scrape_protocols = ["PrometheusProto", "OpenMetricsText1.0.0", "OpenMetricsText0.0.1", "PrometheusText0.0.4"]
 }

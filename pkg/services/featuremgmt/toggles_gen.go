@@ -271,6 +271,10 @@ const (
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
 
+	// FlagQueryServiceWithConnections
+	// Adds datasource connections to the query service
+	FlagQueryServiceWithConnections = "queryServiceWithConnections"
+
 	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
@@ -682,6 +686,10 @@ const (
 	// FlagAlertingAIGenTemplates
 	// Enable AI-generated alerting templates.
 	FlagAlertingAIGenTemplates = "alertingAIGenTemplates"
+
+	// FlagAlertingEnrichmentPerRule
+	// Enable enrichment per rule in the alerting UI.
+	FlagAlertingEnrichmentPerRule = "alertingEnrichmentPerRule"
 
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.

@@ -18,36 +18,36 @@ func TestResourceRequest(t *testing.T) {
 	}{
 		{
 			desc:  "no resource path",
-			url:   "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/connections/abc",
+			url:   "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc",
 			error: true,
 		},
 		{
 			desc:         "root resource path",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/connections/abc/resource",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource",
 			expectedPath: "",
 			expectedURL:  "",
 		},
 		{
 			desc:         "root resource path",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/connections/abc/resource/",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/",
 			expectedPath: "",
 			expectedURL:  "",
 		},
 		{
 			desc:         "resource sub path",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/connections/abc/resource/test",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/test",
 			expectedPath: "test",
 			expectedURL:  "test",
 		},
 		{
 			desc:         "resource sub path with colon",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/connections/abc/resource/test-*,*:test-*/_mapping",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/test-*,*:test-*/_mapping",
 			expectedPath: "test-*,*:test-*/_mapping",
 			expectedURL:  "./test-%2A,%2A:test-%2A/_mapping",
 		},
 		{
 			desc:         "resource sub path with query params",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/connections/abc/resource/test?k1=v1&k2=v2",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/test?k1=v1&k2=v2",
 			expectedPath: "test",
 			expectedURL:  "test?k1=v1&k2=v2",
 		},
