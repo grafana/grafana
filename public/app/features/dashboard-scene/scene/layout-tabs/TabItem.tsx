@@ -175,6 +175,8 @@ export class TabItem
 
   public onChangeTitle(title: string) {
     this.setState({ title });
+    const currentTabSlug = this.getSlug();
+    this.getParentLayout().setState({ currentTabSlug });
   }
 
   public onChangeName(name: string): void {
