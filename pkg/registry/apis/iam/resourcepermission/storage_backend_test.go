@@ -71,21 +71,6 @@ func TestWriteEvent_Add(t *testing.T) {
 						Name: "Viewer",
 						Verb: "Admin",
 					},
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
-						Name: "captain",
-						Verb: "Edit",
-					},
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
-						Name: "robot",
-						Verb: "View",
-					},
-					{
-						Kind: v0alpha1.ResourcePermissionSpecPermissionKindTeam,
-						Name: "devs",
-						Verb: "Admin",
-					},
 				},
 			},
 		})

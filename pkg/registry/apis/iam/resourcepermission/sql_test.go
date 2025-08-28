@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -82,9 +83,10 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 		require.Equal(t, timeNow().UnixMilli(), rv)
 
 		var (
-			assigned int
-			roleID   int64
-			sess     = store.GetSqlxSession()
+			assigned   int
+			roleID     int64
+			permission accesscontrol.Permission
+			sess       = store.GetSqlxSession()
 		)
 
 		// Check that the roles were created and assigned
@@ -94,6 +96,10 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 		err = sess.Get(ctx, &assigned, "SELECT 1 FROM user_role WHERE org_id = ? AND role_id = ? AND user_id = ?", 1, roleID, "101")
 		require.NoError(t, err)
 		require.Equal(t, 1, assigned)
+		err = sess.Get(ctx, &permission, "SELECT action, scope FROM permission WHERE role_id = ?", roleID)
+		require.NoError(t, err)
+		require.Equal(t, "folders:uid:fold1", permission.Scope)
+		require.Equal(t, "folders:edit", permission.Action)
 
 		err = sess.Get(ctx, &roleID, "SELECT id FROM role WHERE org_id = ? AND name = ?", 1, "managed:users:201:permissions")
 		require.NoError(t, err)
@@ -101,6 +107,10 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 		err = sess.Get(ctx, &assigned, "SELECT 1 FROM user_role WHERE org_id = ? AND role_id = ? AND user_id = ?", 1, roleID, "201")
 		require.NoError(t, err)
 		require.Equal(t, 1, assigned)
+		err = sess.Get(ctx, &permission, "SELECT action, scope FROM permission WHERE role_id = ?", roleID)
+		require.NoError(t, err)
+		require.Equal(t, "folders:uid:fold1", permission.Scope)
+		require.Equal(t, "folders:view", permission.Action)
 
 		err = sess.Get(ctx, &roleID, "SELECT id FROM role WHERE org_id = ? AND name = ?", 1, "managed:teams:301:permissions")
 		require.NoError(t, err)
@@ -108,6 +118,10 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 		err = sess.Get(ctx, &assigned, "SELECT 1 FROM team_role WHERE org_id = ? AND role_id = ? AND team_id = ?", 1, roleID, "301")
 		require.NoError(t, err)
 		require.Equal(t, 1, assigned)
+		err = sess.Get(ctx, &permission, "SELECT action, scope FROM permission WHERE role_id = ?", roleID)
+		require.NoError(t, err)
+		require.Equal(t, "folders:uid:fold1", permission.Scope)
+		require.Equal(t, "folders:admin", permission.Action)
 
 		err = sess.Get(ctx, &roleID, "SELECT id FROM role WHERE org_id = ? AND name = ?", 1, "managed:builtins:viewer:permissions")
 		require.NoError(t, err)
@@ -115,6 +129,10 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 		err = sess.Get(ctx, &assigned, "SELECT 1 FROM builtin_role WHERE org_id = ? AND role = ?", 1, "Viewer")
 		require.NoError(t, err)
 		require.Equal(t, 1, assigned)
+		err = sess.Get(ctx, &permission, "SELECT action, scope FROM permission WHERE role_id = ?", roleID)
+		require.NoError(t, err)
+		require.Equal(t, "folders:uid:fold1", permission.Scope)
+		require.Equal(t, "folders:admin", permission.Action)
 	})
 
 }
