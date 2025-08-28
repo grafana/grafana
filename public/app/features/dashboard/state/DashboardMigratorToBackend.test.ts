@@ -119,7 +119,7 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   jsonInputs
-    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 32)
+    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 31)
     .forEach((inputFile) => {
       it(`should migrate ${inputFile} correctly`, async () => {
         const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));

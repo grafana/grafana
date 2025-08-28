@@ -134,11 +134,7 @@
       "id": 14,
       "panels": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
+          "datasource": null,
           "gridPos": {
             "h": 8,
             "w": 24,
@@ -146,25 +142,11 @@
             "y": 9
           },
           "id": 3,
-          "targets": [
-            {
-              "datasource": {
-                "apiVersion": "v1",
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "refId": "A"
-            }
-          ],
           "title": "Process List",
           "type": "table"
         },
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
+          "datasource": null,
           "gridPos": {
             "h": 6,
             "w": 12,
@@ -173,25 +155,11 @@
           },
           "height": 200,
           "id": 4,
-          "targets": [
-            {
-              "datasource": {
-                "apiVersion": "v1",
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "refId": "A"
-            }
-          ],
           "title": "Network I/O",
           "type": "graph"
         },
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
+          "datasource": null,
           "gridPos": {
             "h": 6,
             "w": 12,
@@ -200,16 +168,6 @@
           },
           "height": 200,
           "id": 5,
-          "targets": [
-            {
-              "datasource": {
-                "apiVersion": "v1",
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "refId": "A"
-            }
-          ],
           "title": "Disk I/O",
           "type": "graph"
         }
