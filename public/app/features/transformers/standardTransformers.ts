@@ -16,6 +16,7 @@ import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor
 import { groupToNestedTableTransformRegistryItem } from './editors/GroupToNestedTableTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
+import { ignoreRowTransformerRegistryItem } from './editors/IgnoreRowTransformerEditor';
 import { joinByFieldTransformerRegistryItem } from './editors/JoinByFieldTransformerEditor';
 import { labelsToFieldsTransformerRegistryItem } from './editors/LabelsToFieldsTransformerEditor';
 import { limitTransformRegistryItem } from './editors/LimitTransformerEditor';
@@ -66,6 +67,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
     eventDistributionTransformerRegistryItem,
+    ignoreRowTransformerRegistryItem,
     ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
     ...(config.featureToggles.regressionTransformation ? [regressionTransformerRegistryItem] : []),
     ...(config.featureToggles.groupToNestedTableTransformation ? [groupToNestedTableTransformRegistryItem] : []),

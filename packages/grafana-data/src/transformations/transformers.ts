@@ -13,6 +13,7 @@ import { groupByTransformer } from './transformers/groupBy';
 import { groupToNestedTable } from './transformers/groupToNestedTable';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
+import { ignoreRowTransformer } from './transformers/ignoreRow';
 import { joinByFieldTransformer } from './transformers/joinByField';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { limitTransformer } from './transformers/limit';
@@ -59,4 +60,5 @@ export const standardTransformers = {
   groupToNestedTable,
   transposeTransformer,
   eventDistributionTransformer,
+  ignoreRowTransformer,
 };

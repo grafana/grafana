@@ -1,0 +1,50 @@
+<svg width="72" height="48" viewBox="0 0 72 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_ignoreRow_dark)">
+<!-- Table structure -->
+<rect x="12" y="8" width="48" height="32" stroke="#E1E5E9" stroke-width="1.5" fill="#1F1F23"/>
+
+<!-- Table rows -->
+<line x1="12" y1="16" x2="60" y2="16" stroke="#5A5A5A" stroke-width="1"/>
+<line x1="12" y1="24" x2="60" y2="24" stroke="#5A5A5A" stroke-width="1"/>
+<line x1="12" y1="32" x2="60" y2="32" stroke="#5A5A5A" stroke-width="1"/>
+
+<!-- Table columns -->
+<line x1="28" y1="8" x2="28" y2="40" stroke="#5A5A5A" stroke-width="1"/>
+<line x1="44" y1="8" x2="44" y2="40" stroke="#5A5A5A" stroke-width="1"/>
+
+<!-- First row (top) - crossed out -->
+<rect x="12" y="8" width="48" height="8" fill="url(#paint0_linear_ignoreRow_dark)" opacity="0.3"/>
+<line x1="12" y1="8" x2="60" y2="16" stroke="#FF6B6B" stroke-width="2.5"/>
+<line x1="60" y1="8" x2="12" y2="16" stroke="#FF6B6B" stroke-width="2.5"/>
+
+<!-- Last row (bottom) - crossed out -->
+<rect x="12" y="32" width="48" height="8" fill="url(#paint1_linear_ignoreRow_dark)" opacity="0.3"/>
+<line x1="12" y1="32" x2="60" y2="40" stroke="#FF6B6B" stroke-width="2.5"/>
+<line x1="60" y1="32" x2="12" y2="40" stroke="#FF6B6B" stroke-width="2.5"/>
+
+<!-- Valid data rows highlighted -->
+<rect x="12" y="16" width="48" height="16" fill="#5794F2" opacity="0.2"/>
+
+<!-- Data indicators in valid rows -->
+<circle cx="20" cy="20" r="1.5" fill="#5794F2"/>
+<circle cx="36" cy="20" r="1.5" fill="#5794F2"/>
+<circle cx="52" cy="20" r="1.5" fill="#5794F2"/>
+<circle cx="20" cy="28" r="1.5" fill="#5794F2"/>
+<circle cx="36" cy="28" r="1.5" fill="#5794F2"/>
+<circle cx="52" cy="28" r="1.5" fill="#5794F2"/>
+</g>
+
+<defs>
+<linearGradient id="paint0_linear_ignoreRow_dark" x1="12" y1="8" x2="60" y2="16" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FF6B6B"/>
+<stop offset="1" stop-color="#FFB6B6"/>
+</linearGradient>
+<linearGradient id="paint1_linear_ignoreRow_dark" x1="12" y1="32" x2="60" y2="40" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FF6B6B"/>
+<stop offset="1" stop-color="#FFB6B6"/>
+</linearGradient>
+<clipPath id="clip0_ignoreRow_dark">
+<rect width="72" height="48" fill="white"/>
+</clipPath>
+</defs>
+</svg>

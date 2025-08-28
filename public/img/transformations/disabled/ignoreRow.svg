@@ -1,0 +1,42 @@
+<svg width="72" height="48" viewBox="0 0 72 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_ignoreRow_disabled)" opacity="0.4">
+<!-- Table structure -->
+<rect x="12" y="8" width="48" height="32" stroke="#8E8E8E" stroke-width="1.5" fill="white"/>
+
+<!-- Table rows -->
+<line x1="12" y1="16" x2="60" y2="16" stroke="#C7C7C7" stroke-width="1"/>
+<line x1="12" y1="24" x2="60" y2="24" stroke="#C7C7C7" stroke-width="1"/>
+<line x1="12" y1="32" x2="60" y2="32" stroke="#C7C7C7" stroke-width="1"/>
+
+<!-- Table columns -->
+<line x1="28" y1="8" x2="28" y2="40" stroke="#C7C7C7" stroke-width="1"/>
+<line x1="44" y1="8" x2="44" y2="40" stroke="#C7C7C7" stroke-width="1"/>
+
+<!-- First row (top) - crossed out -->
+<rect x="12" y="8" width="48" height="8" fill="#E0E0E0" opacity="0.3"/>
+<line x1="12" y1="8" x2="60" y2="16" stroke="#B0B0B0" stroke-width="2.5"/>
+<line x1="60" y1="8" x2="12" y2="16" stroke="#B0B0B0" stroke-width="2.5"/>
+
+<!-- Last row (bottom) - crossed out -->
+<rect x="12" y="32" width="48" height="8" fill="#E0E0E0" opacity="0.3"/>
+<line x1="12" y1="32" x2="60" y2="40" stroke="#B0B0B0" stroke-width="2.5"/>
+<line x1="60" y1="32" x2="12" y2="40" stroke="#B0B0B0" stroke-width="2.5"/>
+
+<!-- Valid data rows highlighted -->
+<rect x="12" y="16" width="48" height="16" fill="#E0E0E0" opacity="0.2"/>
+
+<!-- Data indicators in valid rows -->
+<circle cx="20" cy="20" r="1.5" fill="#8E8E8E"/>
+<circle cx="36" cy="20" r="1.5" fill="#8E8E8E"/>
+<circle cx="52" cy="20" r="1.5" fill="#8E8E8E"/>
+<circle cx="20" cy="28" r="1.5" fill="#8E8E8E"/>
+<circle cx="36" cy="28" r="1.5" fill="#8E8E8E"/>
+<circle cx="52" cy="28" r="1.5" fill="#8E8E8E"/>
+</g>
+
+<defs>
+<clipPath id="clip0_ignoreRow_disabled">
+<rect width="72" height="48" fill="white"/>
+</clipPath>
+</defs>
+</svg>
