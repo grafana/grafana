@@ -2807,6 +2807,7 @@
           "time": "Čas"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Skupina filtrů",
       "filter-group-tooltip": "Filtrujte každou skupinu historie stavů podle přesné shody nebo regulárního výrazu, například:",
       "placeholder-search": "Hledat",
@@ -9081,6 +9082,7 @@
     "name-line-width": "Šířka řádku",
     "name-stacking": "Stohování"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Načítání",
@@ -9700,6 +9702,7 @@
       "show-timestamps": "Zobrazit časová razítka",
       "show-unique-labels": "Zobrazit jedinečné štítky",
       "unwrap-lines": "Rozbalit řádky",
+      "wrap-json-lines": "",
       "wrap-lines": "Zalomit řádky"
     },
     "logs-navigation": {
@@ -11300,6 +11303,7 @@
       "description-enabled": "Jakmile je povoleno automatické tažení, cíl nelze změnit.",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
       "description-title": "Člověkem čitelný název konfigurace",
+      "error-fetch-branches": "",
       "error-required": "Toto pole je povinné.",
       "error-save-repository": "Nastavení úložiště se nepodařilo uložit",
       "label-automatic-pulling": "Automatické vyžádání",
@@ -11512,6 +11516,16 @@
       "title-delete-all-configured-repositories": "Odstranit všechna nakonfigurovaná úložiště",
       "title-legacy-storage-detected": "Bylo zjištěno starší úložiště"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Zobrazit podrobnosti",
       "loading-finished-job": "Načítání dokončené úlohy…",
@@ -12839,7 +12853,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Povoluje zalomení textu pro záhlaví sloupců",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativní text, který se zobrazí, pokud nelze zobrazit obrázek, nebo pro uživatele, kteří používají čtečku obrazovky",
       "description-title-text": "Text, který se zobrazí po najetí kurzoru na obrázek",
@@ -12874,11 +12887,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zalomit text záhlaví",
+    "name-wrap-text": "",
     "placeholder-column-width": "auto.",
     "placeholder-fields": "Všechna číselná pole",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

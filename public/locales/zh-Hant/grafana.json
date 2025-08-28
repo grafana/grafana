@@ -2768,6 +2768,7 @@
           "time": "時間"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "篩選群組",
       "filter-group-tooltip": "透過完全匹配或正規表達式篩選每個狀態歷史紀錄組，例如：",
       "placeholder-search": "搜尋",
@@ -9018,6 +9019,7 @@
     "name-line-width": "線寬",
     "name-stacking": "堆疊"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在載入",
@@ -9613,6 +9615,7 @@
       "show-timestamps": "顯示時間戳記",
       "show-unique-labels": "顯示唯一標籤",
       "unwrap-lines": "取消換行",
+      "wrap-json-lines": "",
       "wrap-lines": "換行"
     },
     "logs-navigation": {
@@ -11195,6 +11198,7 @@
       "description-enabled": "一旦啟用自動拉取，目標便無法變更。",
       "description-read-only": "無法透過 Grafana 修改資源。",
       "description-title": "設定的人類可讀名稱",
+      "error-fetch-branches": "",
       "error-required": "此為必填欄位。",
       "error-save-repository": "無法儲存儲存庫設定",
       "label-automatic-pulling": "自動拉取",
@@ -11407,6 +11411,16 @@
       "title-delete-all-configured-repositories": "刪除所有已設定的儲存庫",
       "title-legacy-storage-detected": "偵測到舊的儲存空間"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "檢視詳細資料",
       "loading-finished-job": "正在載入已完成的作業…",
@@ -12716,7 +12730,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "欄自動調整大小的最小寬度",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "啟用欄標題的文字自動換行功能",
     "image-cell-options-editor": {
       "description-alt-text": "若圖片無法顯示或為使用螢幕閱讀器的使用者顯示的替代文字",
       "description-title-text": "滑鼠移至圖片上方時所顯示的文字",
@@ -12751,11 +12764,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "換行標題文字",
+    "name-wrap-text": "",
     "placeholder-column-width": "自動",
     "placeholder-fields": "所有數值欄位",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
