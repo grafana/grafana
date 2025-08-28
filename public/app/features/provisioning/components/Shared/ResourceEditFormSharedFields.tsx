@@ -96,6 +96,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           <>
             <Field
               noMargin
+              style={{ overflow: 'auto' }} // TODO Fix radio button group display on smaller screens
               label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-workflow', 'Workflow')}
             >
               <Controller
