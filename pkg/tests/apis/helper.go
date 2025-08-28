@@ -332,6 +332,8 @@ type OrgUsers struct {
 	Editor User
 	Viewer User
 
+	OrgID int64
+
 	// Separate standalone service accounts with different roles
 	AdminServiceAccount       serviceaccounts.ServiceAccountDTO
 	AdminServiceAccountToken  string
@@ -559,18 +561,19 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}
+	users.OrgID = users.Admin.Identity.GetOrgID()
 
 	// Create service accounts
-	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.Admin.Identity.GetOrgID(), org.RoleAdmin)
-	users.AdminServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.AdminServiceAccount.Id, users.Admin.Identity.GetOrgID(), "admin-token", 0)
+	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.OrgID, org.RoleAdmin)
+	users.AdminServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.AdminServiceAccount.Id, users.OrgID, "admin-token", 0)
 
-	users.EditorServiceAccount = c.CreateServiceAccount(users.Admin, "editor-sa", users.Admin.Identity.GetOrgID(), org.RoleEditor)
-	users.EditorServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.EditorServiceAccount.Id, users.Admin.Identity.GetOrgID(), "editor-token", 0)
+	users.EditorServiceAccount = c.CreateServiceAccount(users.Admin, "editor-sa", users.OrgID, org.RoleEditor)
+	users.EditorServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.EditorServiceAccount.Id, users.OrgID, "editor-token", 0)
 
-	users.ViewerServiceAccount = c.CreateServiceAccount(users.Admin, "viewer-sa", users.Admin.Identity.GetOrgID(), org.RoleViewer)
-	users.ViewerServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.ViewerServiceAccount.Id, users.Admin.Identity.GetOrgID(), "viewer-token", 0)
+	users.ViewerServiceAccount = c.CreateServiceAccount(users.Admin, "viewer-sa", users.OrgID, org.RoleViewer)
+	users.ViewerServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.ViewerServiceAccount.Id, users.OrgID, "viewer-token", 0)
 
-	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.Admin.Identity.GetOrgID())
+	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.OrgID)
 
 	// Add Admin and Editor to Staff team as Admin and Member, respectively.
 	c.AddOrUpdateTeamMember(users.Admin, users.Staff.ID, team.PermissionTypeAdmin)
