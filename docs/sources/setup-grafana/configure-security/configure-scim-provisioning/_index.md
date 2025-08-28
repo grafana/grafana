@@ -95,7 +95,32 @@ The table below describes all SCIM configuration options. Like any other Grafana
 [auth.scim]
 user_sync_enabled = true
 group_sync_enabled = false
+reject_non_provisioned_users = false
 ```
+
+## Configure SCIM using Terraform
+
+You can also configure SCIM provisioning in Grafana using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/scim_config). This approach is particularly useful for infrastructure-as-code deployments and automated provisioning.
+
+### Terraform SCIM configuration example
+
+```hcl
+resource "grafana_scim_config" "scim_config" {
+  user_sync_enabled            = true
+  group_sync_enabled           = false
+  reject_non_provisioned_users = false
+}
+```
+
+### Terraform SCIM configuration options
+
+The Terraform `grafana_scim_config` resource supports the same configuration options as the manual configuration:
+
+| Setting                        | Required | Description                                                                                                                                                                                | Default |
+| ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `user_sync_enabled`            | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `false` |
+| `group_sync_enabled`           | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
+| `reject_non_provisioned_users` | No       | When enabled, prevents non-SCIM provisioned users from signing in. Cloud Portal users can always sign in regardless of this setting.                                                       | `false` |
 
 ## Supported identity providers
 
