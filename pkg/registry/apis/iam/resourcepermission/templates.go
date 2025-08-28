@@ -89,7 +89,7 @@ func (t insertAssignmentTemplate) Validate() error {
 func buildInsertAssignmentQuery(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, roleID int64, assignment grant) (string, []any, error) {
 	req := insertAssignmentTemplate{
 		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
-		AssignmentTable:  assignment.AssignmentTable,
+		AssignmentTable:  dbHelper.Table(assignment.AssignmentTable),
 		AssignmentColumn: assignment.AssignmentColumn,
 		RoleID:           roleID,
 		OrgID:            orgID,

@@ -1,5 +1,6 @@
-INSERT INTO {{ .Ident .RoleTable }} (org_id, uid, name, created, updated)
+INSERT INTO {{ .Ident .RoleTable }} (version, org_id, uid, name, created, updated)
 VALUES (
+    0,
     {{ .Arg .OrgID }},
     {{ .Arg .UID }},
     {{ .Arg .Name }},

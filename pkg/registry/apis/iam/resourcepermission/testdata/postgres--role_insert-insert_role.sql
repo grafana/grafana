@@ -1,5 +1,6 @@
-INSERT INTO "grafana"."role" (org_id, uid, name, created, updated)
+INSERT INTO "grafana"."role" (version, org_id, uid, name, created, updated)
 VALUES (
+    0,
     8,
     'managed_UEjD8KEQ8e2wzcugTRFOM2179aY',
     'managed:builtins:editor:1:permissions',
