@@ -1,4 +1,4 @@
-import { DataFrame, Field, Labels, PanelData } from '@grafana/data';
+import { DataFrame, Field, Labels, PanelData, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 
@@ -60,63 +60,82 @@ function convertDataPointsToTimeline(
   return timeline;
 }
 
-function extractAlertInstances(data: PanelData): AlertInstance[] {
+export function extractAlertInstances(data: PanelData): AlertInstance[] {
   if (!data?.series?.length) {
     return [];
   }
 
-  const instances: AlertInstance[] = [];
+  type Group = {
+    labels: Labels;
+    fieldName: string;
+    hasData: boolean;
+    dataPoints: Array<{ timestamp: number; state: 'firing' | 'pending' }>;
+  };
+
+  const groups: Map<string, Group> = new Map();
+
+  const normalizeLabels = (labels: Labels): Labels => {
+    const result: Labels = {};
+    const source = labels || {};
+    for (const key of Object.keys(source)) {
+      if (key === 'alertstate' || key === 'grafana_alertstate') {
+        continue;
+      }
+      result[key] = source[key] as string;
+    }
+    return result;
+  };
+
+  const labelsKey = (labels: Labels): string => {
+    const keys = Object.keys(labels).sort();
+    return keys.map((k) => `${k}=${labels[k]}`).join('|');
+  };
 
   // Process each DataFrame (series)
   data.series.forEach((frame: DataFrame) => {
-    // Find the time field
     const timeField = frame.fields.find((field) => field.type === 'time');
     if (!timeField) {
-      return; // Skip frames without time data
+      return;
     }
 
-    // For timeseries data, look for value fields (non-time fields)
     frame.fields.forEach((field: Field) => {
-      // Skip time fields
       if (field.type === 'time') {
         return;
       }
 
-      // Extract labels from the field
-      const labels = field.labels || {};
-      const hasData = field.values && field.values.length > 0;
+      const rawLabels = field.labels || {};
+      const baseLabels = normalizeLabels(rawLabels);
+      const key = labelsKey(baseLabels);
 
-      // Build timeline from the timeseries data
-      const dataPoints: Array<{ timestamp: number; state: 'firing' | 'pending' }> = [];
-
-      if (hasData && timeField.values.length === field.values.length) {
-        for (let i = 0; i < field.values.length; i++) {
-          const timestamp = timeField.values[i];
-          const value = field.values[i];
-
-          // Convert numeric values to alert states
-          // Assuming: 0 = pending, 1 = firing (adjust based on your data format)
-          let state: 'firing' | 'pending' = 'pending';
-          if (typeof value === 'number') {
-            state = value > 0 ? 'firing' : 'pending';
-          } else if (typeof value === 'string') {
-            state = value === 'firing' ? 'firing' : 'pending';
-          }
-
-          dataPoints.push({ timestamp, state });
-        }
+      let group = groups.get(key);
+      if (!group) {
+        group = { labels: baseLabels, fieldName: field.name, hasData: false, dataPoints: [] };
+        groups.set(key, group);
       }
 
-      const timeline = convertDataPointsToTimeline(dataPoints);
+      const hasData = !!(field.values && field.values.length > 0);
+      group.hasData = group.hasData || hasData;
 
-      instances.push({
-        labels,
-        fieldName: field.name,
-        hasData,
-        timeline,
-      });
+      if (hasData && timeField.values.length === field.values.length) {
+        const stateFromLabel = (rawLabels.alertstate as 'firing' | 'pending') || 'pending';
+        for (let i = 0; i < field.values.length; i++) {
+          const timestamp = timeField.values[i] as number;
+          group.dataPoints.push({ timestamp, state: stateFromLabel });
+        }
+      }
     });
   });
+
+  const instances: AlertInstance[] = [];
+  for (const group of groups.values()) {
+    const timeline = convertDataPointsToTimeline(group.dataPoints);
+    instances.push({
+      labels: group.labels,
+      fieldName: group.fieldName,
+      hasData: group.hasData,
+      timeline,
+    });
+  }
 
   return instances;
 }
@@ -128,6 +147,8 @@ function AlertInstanceSceneRenderer({ model }: SceneComponentProps<AlertInstance
 
   // Extract unique alert instances from timeseries data
   const alertInstances = dataState.data ? extractAlertInstances(dataState.data) : [];
+
+  const commonLabels = findCommonLabels(alertInstances.map((instance) => instance.labels));
 
   if (alertInstances.length === 0) {
     return (
@@ -149,7 +170,7 @@ function AlertInstanceSceneRenderer({ model }: SceneComponentProps<AlertInstance
           <GroupRow
             key={index}
             width={leftColumnWidth}
-            title={<AlertLabels labels={instance.labels} />}
+            title={<AlertLabels labels={instance.labels} commonLabels={commonLabels} />}
             content={<StateChangeChart domain={domain} timeline={instance.timeline} />}
           />
         );
@@ -160,9 +181,10 @@ function AlertInstanceSceneRenderer({ model }: SceneComponentProps<AlertInstance
 
 export function getAlertInstanceScene(ruleUID: string): AlertInstanceScene {
   return new AlertInstanceScene({
-    $data: getQueryRunner(`${METRIC_NAME}{grafana_rule_uid="${ruleUID}"}`, {
-      format: 'timeseries',
-    }),
+    $data: getQueryRunner(
+      `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{grafana_rule_uid="${ruleUID}"})`,
+      { format: 'timeseries' }
+    ),
     ruleUID,
   });
 }
