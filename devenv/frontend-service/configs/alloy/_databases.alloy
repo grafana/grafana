@@ -1,4 +1,23 @@
 //
+// Metrics
+prometheus.relabel "publish_metrics" {
+	rule {
+		action       = "replace"
+		target_label = "instance"
+		replacement  = constants.hostname
+	}
+
+	forward_to = [prometheus.remote_write.tilt_prom.receiver]
+}
+
+prometheus.remote_write "tilt_prom" {
+	endpoint {
+		url                    = "http://prometheus:9090/api/v1/write"
+		send_native_histograms = true
+	}
+}
+
+//
 // Logs
 loki.relabel "publish_logs" {
 	rule {

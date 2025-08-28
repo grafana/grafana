@@ -34,7 +34,7 @@ services:
       GF_DEFAULT_APP_MODE: development
       GF_PANELS_ENABLE_ALPHA: true
       GF_SERVER_CDN_URL: http://localhost:3010
-      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
+      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend enableNativeHTTPHistogram
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
       GF_SERVER_ROUTER_LOGGING: true
       GF_LOG_LEVEL: info
@@ -62,6 +62,7 @@ services:
       GF_DEFAULT_APP_MODE: development
       GF_DEFAULT_TARGET: frontend-server
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
+      GF_FEATURE_TOGGLES_ENABLE: enableNativeHTTPHistogram
       GF_SERVER_CDN_URL: http://localhost:3010
       GF_SERVER_ROUTER_LOGGING: true
       GF_LOG_LEVEL: info
@@ -95,6 +96,20 @@ services:
       - /alloy-config
     depends_on:
       - loki
+    labels:
+      - 'alloy.logs=true'
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-remote-write-receiver'
+      - '--enable-feature=native-histograms'
+    labels:
+      - 'alloy.logs=true'
 
   loki:
     image: grafana/loki
@@ -120,6 +135,8 @@ services:
       - tempo-data:/var/lib/tempo
       - ./configs/tempo.yaml:/etc/tempo/tempo.yaml
     command: ['-config.file=/etc/tempo/tempo.yaml']
+    labels:
+      - 'alloy.logs=true'
 
     depends_on:
       tempo-init:
@@ -131,3 +148,4 @@ volumes:
   alloy-data:
   loki-data:
   tempo-data:
+  prometheus-data:
