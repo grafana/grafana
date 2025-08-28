@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -26,6 +27,12 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
   const soloPanelContext = useSoloPanelContext();
+
+  useEffect(() => {
+    if (currentTab && currentTab.getSlug() !== model.state.currentTabSlug) {
+      model.setState({ currentTabSlug: currentTab.getSlug() });
+    }
+  }, [currentTab, model]);
 
   if (soloPanelContext) {
     return tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);

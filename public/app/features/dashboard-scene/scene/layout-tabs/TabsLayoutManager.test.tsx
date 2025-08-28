@@ -32,8 +32,8 @@ describe('TabsLayoutManager', () => {
         tabs: [new TabItem({ title: 'Performance' })],
       });
 
-      // getCurrentTab() during rendering so forcing here
-      tabsLayoutManager.getCurrentTab();
+      // currentTabSlug is set during rendering so forcing here
+      tabsLayoutManager.setState({ currentTabSlug: tabsLayoutManager.getCurrentTab()?.getSlug() });
 
       const urlState = tabsLayoutManager.getUrlState();
       expect(urlState).toEqual({ dtab: 'performance' });
@@ -44,8 +44,8 @@ describe('TabsLayoutManager', () => {
         tabs: [new TabItem({ title: 'Performance' })],
       });
 
-      // getCurrentTab() during rendering so forcing here
-      innerMostTabs.getCurrentTab();
+      // currentTabSlug is set during rendering so forcing here
+      innerMostTabs.setState({ currentTabSlug: innerMostTabs.getCurrentTab()?.getSlug() });
 
       new RowsLayoutManager({
         rows: [

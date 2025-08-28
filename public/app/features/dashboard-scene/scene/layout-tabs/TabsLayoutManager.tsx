@@ -111,7 +111,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     // return first tab if no hits and variables finished loading
-    this.setState({ currentTabSlug: tabs[0].getSlug() });
     return tabs[0];
   }
 
