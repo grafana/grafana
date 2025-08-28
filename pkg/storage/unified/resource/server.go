@@ -670,10 +670,6 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	if req.Key.Group == "folder.grafana.com" && req.Key.Resource == "folders" {
-		// ...
-	}
-
 	// If the resource already exists, the create will return an already exists error that is remapped appropriately by AsErrorResult.
 	// This also benefits from ACID behaviours on our databases, so we avoid race conditions.
 	var err error
