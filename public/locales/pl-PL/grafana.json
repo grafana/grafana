@@ -2807,6 +2807,7 @@
           "time": "Czas"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Filtruj grupę",
       "filter-group-tooltip": "Filtruj każdą grupę historii stanu według dopasowania dokładnego lub wyrażenia regularnego, na przykład:",
       "placeholder-search": "Szukaj",
@@ -9081,6 +9082,7 @@
     "name-line-width": "Szerokość linii",
     "name-stacking": "Układanie"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Ładowanie",
@@ -9700,6 +9702,7 @@
       "show-timestamps": "Pokaż znaczniki czasu",
       "show-unique-labels": "Pokaż unikalne etykiety",
       "unwrap-lines": "Nie zawijaj wierszy",
+      "wrap-json-lines": "",
       "wrap-lines": "Zawijaj wiersze"
     },
     "logs-navigation": {
@@ -11300,6 +11303,7 @@
       "description-enabled": "Po włączeniu automatycznego pobierania (pull) nie można zmienić celu.",
       "description-read-only": "Zasobów nie można modyfikować za pośrednictwem usługi Grafana.",
       "description-title": "Czytelna dla człowieka nazwa konfiguracji",
+      "error-fetch-branches": "",
       "error-required": "To pole jest wymagane.",
       "error-save-repository": "Nie udało się zapisać ustawień repozytorium",
       "label-automatic-pulling": "Automatyczne operacje pull",
@@ -11512,6 +11516,16 @@
       "title-delete-all-configured-repositories": "Usuń wszystkie skonfigurowane repozytoria",
       "title-legacy-storage-detected": "Wykryto starszą pamięć masową"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Zobacz szczegóły",
       "loading-finished-job": "Wczytywanie zakończonego zadania…",
@@ -12839,7 +12853,6 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
     "description-tooltip-from-field": "",
-    "description-wrap-header-text": "Włącza zawijanie tekstu w nagłówkach kolumn",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatywny tekst wyświetlany, jeśli obraz nie może być wyświetlony, lub w przypadku użytkowników korzystających z czytnika ekranu",
       "description-title-text": "Tekst wyświetlany po najechaniu kursorem na obraz",
@@ -12874,11 +12887,9 @@
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zawijaj tekst nagłówka",
+    "name-wrap-text": "",
     "placeholder-column-width": "automatycznie",
     "placeholder-fields": "Wszystkie pola numeryczne",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    },
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

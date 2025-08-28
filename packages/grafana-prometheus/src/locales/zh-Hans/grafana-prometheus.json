@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "禁用录制规则（测试版）",
         "label-http-method": "HTTP 方法",
         "label-incremental-querying-beta": "增量查询（测试版）",
-        "label-metric-names-suggestion-limit": "指标名称建议限制",
         "label-prom-type-version": "{{promType}} 版本",
         "label-prometheus-type": "Prometheus 类型",
         "label-query-overlap-window": "查询重叠窗口",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "此功能将禁用录制规则。开启此选项可提高数据面板性能",
         "tooltip-http-method": "您可以使用 POST 或 GET HTTP 方法来查询 Prometheus 数据源。POST 是推荐的方法，因为它允许更大的查询。如果您的 Prometheus 版本低于 2.1，或者您的网络中限制了 POST 请求，请将其更改为 GET。",
         "tooltip-incremental-querying-beta": "此功能将改变相对查询的默认行为，使其总是从 Prometheus 实例请求新数据，而不会缓存查询结果，且只请求新数据。开启此选项可减少数据库和网络负载。",
-        "tooltip-metric-names-suggestion-limit": "在查询编辑器的“代码”模式下，可能显示为自动完成建议的指标名称的最大数量。",
         "tooltip-prom-type-version": "如果 {{promType}} 实例未自动配置版本，请使用此项来设置它的版本。",
         "tooltip-prometheus-type": "将此设置为 Prometheus 数据库的类型，例如 Prometheus、Cortex、Mimir 或 Thanos。更改此字段将保存您的当前设置。某些类型的 Prometheus 对 API 的支持不一样。例如，某些类型支持标签查询的正则表达式匹配，以提高性能。某些类型具有用于元数据的 API。如果设置不正确，则在查询指标和标签时可能会遇到奇怪的行为。请检查您的 Prometheus 文档，以确保您输入了正确的类型。",
         "tooltip-query-overlap-window": "设置持续时间，如 {{example1}} 或 {{example2}} 或 {{example3}}。默认值为 {{default}}。此持续时间将添加到每个增量请求的持续时间中。",
@@ -430,10 +428,6 @@
         "placeholder-auto": "自动",
         "title-options": "选项",
         "tooltip-min-step": "Prometheus 查询的步长参数以及 <2>{{interval}}</2> 和 <4>{{rateInterval}}</4> 变量的附加下限。"
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "自动完成建议受限",
-        "tooltip-autocomplete-suggestions-limited": "指标名称的数量超过了自动完成限制。仅显示 {{autocompleteLimit}} 个最相关的指标。您可以在数据源设置中调整阈值。"
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "存在语法错误，或者切换到构建器模式时无法可视化查询结构。查询的某些部分可能会丢失。",

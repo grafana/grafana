@@ -127,7 +127,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
             <Menu.Item
               onClick={() => openAssistantByLog?.(log)}
               icon="ai-sparkle"
-              label={t('logs.log-line-menu.open-assistant', 'Explain this log line in Assistant')}
+              label={t('logs.log-line-menu.open-assistant', 'Explain log line in Assistant')}
             />
           </>
         )}
