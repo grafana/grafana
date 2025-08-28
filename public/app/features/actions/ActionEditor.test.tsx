@@ -8,7 +8,6 @@ import {
   VariableSuggestion,
   VariableOrigin,
   HttpRequestMethod,
-  SupportedDataSourceTypes,
 } from '@grafana/data';
 
 import { ActionEditor } from './ActionEditor';
@@ -125,7 +124,6 @@ describe('ActionEditor', () => {
           queryParams: [],
           headers: [['Content-Type', 'application/json']],
           datasourceUid: 'test-ds-uid',
-          datasourceType: SupportedDataSourceTypes.Infinity,
         },
       };
 
@@ -164,7 +162,6 @@ describe('ActionEditor', () => {
           queryParams: [],
           headers: [['Content-Type', 'application/json']],
           datasourceUid: 'test-datasource-uid',
-          datasourceType: SupportedDataSourceTypes.Infinity,
         },
       };
 

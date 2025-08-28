@@ -1,13 +1,6 @@
-import {
-  Action,
-  ActionType,
-  ActionVariableInput,
-  ActionVariableType,
-  HttpRequestMethod,
-  SupportedDataSourceTypes,
-} from '@grafana/data';
+import { Action, ActionType, ActionVariableInput, ActionVariableType, HttpRequestMethod } from '@grafana/data';
 
-import { buildActionRequest, buildActionProxyRequest, genReplaceActionVars } from './utils';
+import { buildActionRequest, buildActionProxyRequest, genReplaceActionVars, INFINITY_DATASOURCE_TYPE } from './utils';
 
 jest.mock('../query/state/PanelQueryRunner', () => ({
   getNextRequestId: jest.fn(() => 'test-request-id-123'),
@@ -183,7 +176,6 @@ describe('Infinity connections', () => {
           ['limit', '10'],
         ],
         datasourceUid: 'infinity-ds-uid',
-        datasourceType: SupportedDataSourceTypes.Infinity,
         ...overrides,
       },
     });
@@ -194,14 +186,14 @@ describe('Infinity connections', () => {
       const request = buildActionProxyRequest(action, mockReplaceVariables);
 
       expect(request).toEqual({
-        url: 'api/ds/query?ds_type=yesoreyeram-infinity-datasource&requestId=test-request-id-123',
+        url: `api/ds/query?ds_type=${INFINITY_DATASOURCE_TYPE}&requestId=test-request-id-123`,
         method: HttpRequestMethod.POST,
         data: {
           queries: [
             {
               refId: 'A',
               datasource: {
-                type: SupportedDataSourceTypes.Infinity,
+                type: INFINITY_DATASOURCE_TYPE,
                 uid: 'infinity-ds-uid',
               },
               type: 'json',
@@ -249,18 +241,7 @@ describe('Infinity connections', () => {
 
       expect(() => {
         buildActionProxyRequest(action, mockReplaceVariables);
-      }).toThrow('Proxy action requires a datasource to be configured');
-    });
-
-    it('should throw error for unsupported datasource type', () => {
-      const action = createProxyConnectionAction({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        datasourceType: 'unsupported-datasource' as any,
-      });
-
-      expect(() => {
-        buildActionProxyRequest(action, mockReplaceVariables);
-      }).toThrow('Unsupported datasource type: unsupported-datasource');
+      }).toThrow('Datasource not configured for Infinity action');
     });
   });
 });

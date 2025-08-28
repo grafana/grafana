@@ -841,7 +841,6 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
-  SupportedDataSourceTypes,
   type FetchOptions,
   type InfinityOptions,
 } from './types/action';

@@ -11,7 +11,6 @@ import {
   VariableSuggestion,
   InfinityOptions,
   FetchOptions,
-  SupportedDataSourceTypes,
   ActionVariable,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -61,7 +60,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         value[ActionType.Infinity] || {
           ...DEFAULT_HTTP_CONFIG,
           datasourceUid: '',
-          datasourceType: SupportedDataSourceTypes.Infinity,
         }
       );
     }
@@ -77,7 +75,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       ...baseConfig,
       ...updates,
       ...(value.type === ActionType.Infinity && {
-        datasourceType: SupportedDataSourceTypes.Infinity,
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         datasourceUid: (baseConfig as InfinityOptions).datasourceUid || '',
       }),
@@ -152,7 +149,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         [ActionType.Infinity]: {
           ...getActionConfig(),
           datasourceUid: connectionType.uid,
-          datasourceType: SupportedDataSourceTypes.Infinity,
         },
       });
     }

@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 
-import { ActionType, DataSourceInstanceSettings, SupportedDataSourceTypes } from '@grafana/data';
+import { ActionType, DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
+
+import { INFINITY_DATASOURCE_TYPE } from './utils';
 
 interface ConnectionOption {
   label: string;
@@ -23,11 +25,9 @@ const DIRECT_OPTION_VALUE = 'direct';
 
 const getSupportedDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
-  const supportedTypes = Object.values(SupportedDataSourceTypes);
 
   return dataSourceSrv.getList({
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    filter: (ds) => supportedTypes.includes(ds.type as SupportedDataSourceTypes),
+    filter: (ds) => ds.type === INFINITY_DATASOURCE_TYPE,
   });
 };
 

@@ -51,7 +51,6 @@ export interface FetchOptions {
 }
 
 export interface InfinityOptions extends FetchOptions {
-  datasourceType: SupportedDataSourceTypes;
   datasourceUid: string;
 }
 
@@ -85,7 +84,3 @@ export const defaultActionConfig: Action = {
 };
 
 export type ActionVariableInput = { [key: string]: string };
-
-export enum SupportedDataSourceTypes {
-  Infinity = 'yesoreyeram-infinity-datasource',
-}

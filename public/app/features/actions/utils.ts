@@ -231,30 +231,16 @@ const getData = (action: Action, replaceVariables: InterpolateFunction) => {
   return data;
 };
 
-export enum SupportedDataSourceType {
-  Infinity = 'yesoreyeram-infinity-datasource',
-}
-
 /** @internal */
 interface KeyValuePair {
   key: string;
   value: string;
 }
 
-/** @internal */
-interface DatasourceRequestBuilder {
-  buildRequest(
-    proxyConfig: InfinityOptions,
-    url: URL,
-    data: string | undefined,
-    headers: Array<[string, string]>,
-    queryParams: Array<[string, string]>,
-    contentType: string
-  ): BackendSrvRequest;
-}
+export const INFINITY_DATASOURCE_TYPE = 'yesoreyeram-infinity-datasource';
 
 /** @internal */
-class InfinityRequestBuilder implements DatasourceRequestBuilder {
+class InfinityRequestBuilder {
   buildRequest(
     proxyConfig: InfinityOptions,
     url: URL,
@@ -264,7 +250,7 @@ class InfinityRequestBuilder implements DatasourceRequestBuilder {
     contentType: string
   ): BackendSrvRequest {
     const requestId = getNextRequestId();
-    const infinityUrl = `api/ds/query?ds_type=${proxyConfig.datasourceType}&requestId=${requestId}`;
+    const infinityUrl = `api/ds/query?ds_type=${INFINITY_DATASOURCE_TYPE}&requestId=${requestId}`;
 
     const requestHeaders: KeyValuePair[] = [];
     headers.forEach(([name, value]) => {
@@ -294,7 +280,7 @@ class InfinityRequestBuilder implements DatasourceRequestBuilder {
           {
             refId: 'A',
             datasource: {
-              type: proxyConfig.datasourceType,
+              type: INFINITY_DATASOURCE_TYPE,
               uid: proxyConfig.datasourceUid,
             },
             type: 'json',
@@ -312,29 +298,18 @@ class InfinityRequestBuilder implements DatasourceRequestBuilder {
 }
 
 /** @internal */
-const getDatasourceRequestBuilder = (datasourceType: string): DatasourceRequestBuilder => {
-  switch (datasourceType) {
-    case SupportedDataSourceType.Infinity:
-      return new InfinityRequestBuilder();
-    default:
-      throw new Error(`Unsupported datasource type: ${datasourceType}`);
-  }
-};
-
-/** @internal */
 export const buildActionProxyRequest = (action: Action, replaceVariables: InterpolateFunction) => {
   const { config, url, data, processedHeaders, processedQueryParams, contentType } = processActionConfig(
     action,
     replaceVariables
   );
 
-  // @TODO
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const infinityConfig = config as InfinityOptions;
   if (!infinityConfig.datasourceUid) {
-    throw new Error('Proxy action requires a datasource to be configured');
+    throw new Error('Datasource not configured for Infinity action');
   }
 
-  const requestBuilder = getDatasourceRequestBuilder(infinityConfig.datasourceType);
+  const requestBuilder = new InfinityRequestBuilder();
   return requestBuilder.buildRequest(infinityConfig, url, data, processedHeaders, processedQueryParams, contentType);
 };
