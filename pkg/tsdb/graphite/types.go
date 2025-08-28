@@ -13,3 +13,12 @@ type TargetResponseDTO struct {
 
 type DataTimePoint [2]null.Float
 type DataTimeSeriesPoints []DataTimePoint
+
+type GraphiteQuery struct {
+	QueryType       string   `json:"queryType"`
+	TextEditor      *bool    `json:"textEditor,omitempty"`
+	Target          string   `json:"target,omitempty"`
+	TargetFull      string   `json:"targetFull,omitempty"`
+	Tags            []string `json:"tags,omitempty"`
+	FromAnnotations *bool    `json:"fromAnnotations,omitempty"`
+}
