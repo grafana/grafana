@@ -1,0 +1,88 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "folderUID": "",
+        "includeVars": true,
+        "keepTime": false,
+        "maxItems": 10,
+        "query": "",
+        "showHeadings": true,
+        "showRecentlyViewed": true,
+        "showSearch": false,
+        "showStarred": false,
+        "tags": []
+      },
+      "pluginVersion": "10.3.0-pre",
+      "title": "Include time range and variables enabled",
+      "type": "dashlist"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "A",
+          "value": "A"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": true,
+        "name": "server",
+        "query": "A,B,C,D",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - DashList",
+  "uid": "a6801696-cc53-4196-b1f9-2403e3909185",
+  "version": 1,
+  "weekStart": ""
+}

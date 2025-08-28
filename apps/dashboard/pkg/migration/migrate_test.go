@@ -17,6 +17,8 @@ import (
 
 const INPUT_DIR = "testdata/input"
 const OUTPUT_DIR = "testdata/output"
+const DEV_DASHBOARDS_INPUT_DIR = "../../../../devenv/dev-dashboards"
+const DEV_DASHBOARDS_OUTPUT_DIR = "testdata/dev-dashboards-output"
 
 func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
@@ -113,4 +115,136 @@ func loadDashboard(t *testing.T, path string) map[string]interface{} {
 	var dash map[string]interface{}
 	require.NoError(t, json.Unmarshal(inputBytes, &dash), "failed to unmarshal dashboard JSON")
 	return dash
+}
+
+// findJSONFiles recursively finds all .json files in a directory
+func findJSONFiles(dir string) ([]string, error) {
+	var jsonFiles []string
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), ".json") {
+			jsonFiles = append(jsonFiles, path)
+		}
+		return nil
+	})
+
+	return jsonFiles, err
+}
+
+// getRelativeOutputPath converts an input path to a relative output path preserving directory structure
+func getRelativeOutputPath(inputPath, inputDir string) string {
+	// Get the relative path from the input directory
+	relPath, err := filepath.Rel(inputDir, inputPath)
+	if err != nil {
+		// If we can't get relative path, just use the filename
+		return filepath.Base(inputPath)
+	}
+	// Preserve the directory structure
+	return relPath
+}
+
+func TestMigrateDevDashboards(t *testing.T) {
+	// Use the same datasource provider as the frontend test to ensure consistency
+	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
+
+	// Find all JSON files in the dev-dashboards directory
+	jsonFiles, err := findJSONFiles(DEV_DASHBOARDS_INPUT_DIR)
+	require.NoError(t, err, "failed to find JSON files in dev-dashboards directory")
+
+	// Ensure output directory exists
+	err = os.MkdirAll(DEV_DASHBOARDS_OUTPUT_DIR, 0755)
+	require.NoError(t, err, "failed to create output directory")
+
+	t.Logf("Found %d JSON files in dev-dashboards", len(jsonFiles))
+
+	for _, jsonFile := range jsonFiles {
+		relativeOutputPath := getRelativeOutputPath(jsonFile, DEV_DASHBOARDS_INPUT_DIR)
+
+		// Create individual test cases for each dashboard (including invalid ones)
+		t.Run("validate "+relativeOutputPath, func(t *testing.T) {
+			// Load the dashboard
+			inputDash := loadDashboard(t, jsonFile)
+
+			// Check for missing schemaVersion
+			if _, ok := inputDash["schemaVersion"]; !ok {
+				t.Fatalf("Dashboard %s has no schemaVersion - this is not a valid dashboard for migration testing", relativeOutputPath)
+			}
+
+			inputVersion := getSchemaVersion(t, inputDash)
+
+			// Check for schema version below minimum
+			if inputVersion < schemaversion.MIN_VERSION {
+				t.Fatalf("Dashboard %s has schema version %d which is below minimum supported version %d", relativeOutputPath, inputVersion, schemaversion.MIN_VERSION)
+			}
+
+			// If we get here, the dashboard is valid - run the migrations
+			// Create a copy for the input check
+			inputDashCopy := make(map[string]interface{})
+			for k, v := range inputDash {
+				inputDashCopy[k] = v
+			}
+
+			// Input check: migrate to same version should not change anything
+			err := migration.Migrate(inputDashCopy, inputVersion)
+			if err != nil {
+				t.Fatalf("Input check migration failed for %s (v%d): %v", relativeOutputPath, inputVersion, err)
+			}
+			outBytes, err := json.MarshalIndent(inputDashCopy, "", "  ")
+			require.NoError(t, err, "failed to marshal migrated dashboard")
+			// We can ignore gosec G304 here since it's a test
+			// nolint:gosec
+			expectedDash, err := os.ReadFile(jsonFile)
+			require.NoError(t, err, "failed to read expected output file")
+			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", relativeOutputPath)
+		})
+
+		t.Run("migrate "+relativeOutputPath, func(t *testing.T) {
+			// Load the dashboard fresh for migration test
+			inputDash := loadDashboard(t, jsonFile)
+
+			// Skip if invalid (will be caught by validate test above)
+			if _, ok := inputDash["schemaVersion"]; !ok {
+				t.Skip("Dashboard has no schemaVersion")
+			}
+			inputVersion := getSchemaVersion(t, inputDash)
+			if inputVersion < schemaversion.MIN_VERSION {
+				t.Skip("Dashboard schema version below minimum")
+			}
+
+			testDevDashboardMigration(t, inputDash, relativeOutputPath, schemaversion.LATEST_VERSION)
+		})
+	}
+}
+
+func testDevDashboardMigration(t *testing.T, dash map[string]interface{}, outputFileName string, targetVersion int) {
+	t.Helper()
+
+	err := migration.Migrate(dash, targetVersion)
+	if err != nil {
+		t.Fatalf("Migration to version %d failed for %s: %v", targetVersion, outputFileName, err)
+	}
+
+	outPath := filepath.Join(DEV_DASHBOARDS_OUTPUT_DIR, outputFileName)
+	outBytes, err := json.MarshalIndent(dash, "", "  ")
+	require.NoError(t, err, "failed to marshal migrated dashboard")
+
+	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+		// Create directory structure if needed
+		outDir := filepath.Dir(outPath)
+		err = os.MkdirAll(outDir, 0755)
+		require.NoError(t, err, "failed to create output directory", outDir)
+
+		err = os.WriteFile(outPath, outBytes, 0644)
+		require.NoError(t, err, "failed to write new output file", outPath)
+		return
+	}
+
+	// We can ignore gosec G304 here since it's a test
+	// nolint:gosec
+	existingBytes, err := os.ReadFile(outPath)
+	require.NoError(t, err, "failed to read existing output file")
+	require.JSONEq(t, string(existingBytes), string(outBytes), "%s did not match", outPath)
 }
