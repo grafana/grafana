@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // List
@@ -184,17 +183,6 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
 	if v0ResourcePerm == nil {
 		return 0, fmt.Errorf("resource permission cannot be nil")
-	}
-
-	if v0ResourcePerm.Name == "" {
-		if v0ResourcePerm.GenerateName == "" {
-			return 0, errEmptyName
-		}
-		rand, err := util.GetRandomString(10)
-		if err != nil {
-			return 0, fmt.Errorf("generating random string for resource permission name: %w", err)
-		}
-		v0ResourcePerm.Name = v0ResourcePerm.GenerateName + rand
 	}
 
 	if len(v0ResourcePerm.Spec.Permissions) == 0 {
