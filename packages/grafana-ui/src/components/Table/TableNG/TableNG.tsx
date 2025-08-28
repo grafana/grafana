@@ -476,7 +476,7 @@ export function TableNG(props: TableNGProps) {
         result.cellRootRenderers[displayName] = renderCellRoot;
 
         const clampByMaxHeight = (maxHeight: number, children: ReactNode, cellStyles: string) => (
-          <div className={clsx(styles.cellClamp, cellStyles)} style={{ maxHeight }}>
+          <div className={cellStyles} style={{ maxHeight }}>
             {children}
           </div>
         );
@@ -678,7 +678,6 @@ export function TableNG(props: TableNGProps) {
       rows,
       setFilter,
       showTypeIcons,
-      styles.cellClamp,
       theme,
       timeRange,
     ]

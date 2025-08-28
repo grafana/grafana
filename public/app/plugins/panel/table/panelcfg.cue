@@ -44,8 +44,8 @@ composableKinds: PanelCfg: {
 					}
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
-          // limits the maximum height of a row, if text wrapping or dynamic height is enabled
-          maxRowHeight?: number
+					// limits the maximum height of a row, if text wrapping or dynamic height is enabled
+					maxRowHeight?: number
 					// Defines the number of columns to freeze on the left side of the table
 					frozenColumns?: {
 						left?: number | *0

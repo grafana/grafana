@@ -80,10 +80,6 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
       marginBlock: TABLE.CELL_PADDING,
     }),
     cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
-    cellClamp: css({
-      overflowY: 'hidden',
-      justifyContent: 'flex-start !important',
-    }),
     noDataNested: css({
       height: TABLE.NESTED_NO_DATA_HEIGHT,
       display: 'flex',
@@ -132,13 +128,15 @@ export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Proper
     '&:last-child': { borderInlineEnd: 'none' },
   });
 
-export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow }) =>
+export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) =>
   css({
     display: 'flex',
     alignItems: 'center',
     textAlign,
-    justifyContent: getJustifyContent(textAlign),
+    justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
+    ...(maxHeight && { overflowY: 'hidden' }),
     ...(shouldOverflow && { minHeight: '100%' }),
+
     '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': { display: 'flex' },
       ...(shouldOverflow && {
