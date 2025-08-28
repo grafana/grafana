@@ -32,8 +32,8 @@ func scope(resource string, name string) string {
 	return fmt.Sprintf("%s:uid:%s", resource, name)
 }
 
-// createRoleAndAssign creates a new managed role and assigns it to the given user/team/service account/basic role
-func (s *ResourcePermSqlBackend) createRoleAndAssign(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment grant) (int64, error) {
+// createManagedRoleAndAssign creates a new managed role and assigns it to the given user/team/service account/basic role
+func (s *ResourcePermSqlBackend) createManagedRoleAndAssign(ctx context.Context, tx *session.SessionTx, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, assignment grant) (int64, error) {
 	// Create the managed role
 	roleUID := accesscontrol.PrefixedRoleUID(fmt.Sprintf("%s:org:%v", assignment.RoleName, orgID))
 	insertRoleQuery, args, err := buildInsertRoleQuery(dbHelper, orgID, roleUID, assignment.RoleName)
@@ -65,9 +65,9 @@ func (s *ResourcePermSqlBackend) createRoleAndAssign(ctx context.Context, tx *se
 	return roleID, nil
 }
 
-// handleAssignment ensures that a role exists for the given assignment, creates and assigns it if it doesn't
+// storeRbacAssignment ensures that a role exists for the given assignment, creates and assigns it if it doesn't
 // and then ensures that the role has the correct permission for the given scope
-func (s *ResourcePermSqlBackend) handleAssignment(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, orgID int64, assignment grant) error {
+func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, orgID int64, assignment grant) error {
 	// Check if role already exists
 	var roleID int64
 	query := fmt.Sprintf("SELECT id FROM %s WHERE org_id = ? AND name = ?", dbHelper.Table("role"))
@@ -78,7 +78,7 @@ func (s *ResourcePermSqlBackend) handleAssignment(ctx context.Context, dbHelper 
 
 	// Role doesn't exist, create it
 	if roleID == 0 {
-		roleID, err = s.createRoleAndAssign(ctx, tx, dbHelper, orgID, assignment)
+		roleID, err = s.createManagedRoleAndAssign(ctx, tx, dbHelper, orgID, assignment)
 		if err != nil {
 			return err
 		}
@@ -198,7 +198,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		for _, assignment := range assignments {
-			err := s.handleAssignment(ctx, dbHelper, tx, ns.OrgID, assignment)
+			err := s.storeRbacAssignment(ctx, dbHelper, tx, ns.OrgID, assignment)
 			if err != nil {
 				return err
 			}
