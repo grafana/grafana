@@ -2,7 +2,7 @@
   "panels": [
     {
       "datasource": {
-        "apiVersion": "1",
+        "apiVersion": "v1",
         "type": "loki",
         "uid": "non-default-test-ds-uid"
       },
@@ -11,7 +11,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "1",
+            "apiVersion": "v1",
             "type": "loki",
             "uid": "non-default-test-ds-uid"
           },
@@ -44,7 +44,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "1",
+        "apiVersion": "v1",
         "type": "loki",
         "uid": "non-default-test-ds-uid"
       },
@@ -53,7 +53,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "1",
+            "apiVersion": "v1",
             "type": "loki",
             "uid": "non-default-test-ds-uid"
           },
@@ -86,7 +86,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "1",
+        "apiVersion": "v1",
         "type": "loki",
         "uid": "non-default-test-ds-uid"
       },
@@ -95,7 +95,7 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "1",
+            "apiVersion": "v1",
             "type": "loki",
             "uid": "non-default-test-ds-uid"
           },
@@ -120,7 +120,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "1",
+            "apiVersion": "v1",
             "type": "loki",
             "uid": "non-default-test-ds-uid"
           },
@@ -150,7 +150,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "1",
+            "apiVersion": "v1",
             "type": "loki",
             "uid": "non-default-test-ds-uid"
           },
@@ -171,20 +171,12 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
+      "datasource": {},
       "description": "Tests v33 migration behavior with empty string datasource. Should migrate to empty object {} based on MigrateDatasourceNameToRef logic.",
       "id": 7,
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
+          "datasource": {},
           "description": "Empty string target should also migrate to empty object {}",
           "refId": "A"
         }
@@ -229,7 +221,7 @@
       "panels": [
         {
           "datasource": {
-            "apiVersion": "1",
+            "apiVersion": "v1",
             "type": "loki",
             "uid": "non-default-test-ds-uid"
           },
