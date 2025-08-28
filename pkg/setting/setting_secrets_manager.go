@@ -50,7 +50,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerEnabled = secretsMgmt.Key("gc_worker_enabled").MustBool(true)
 	cfg.SecretsManagement.GCWorkerMaxBatchSize = uint16(secretsMgmt.Key("gc_worker_batch_size").MustUint(16))
 	cfg.SecretsManagement.GCWorkerMaxConcurrentCleanups = uint16(secretsMgmt.Key("gc_worker_max_concurrency").MustUint(16))
-	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_batch_size").MustDuration(1 * time.Minute)
+	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
 
 	// Extract available KMS providers from configuration sections
