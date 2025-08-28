@@ -74,7 +74,7 @@ For additional information, refer to [Grafana-managed recording rules](https://g
    The **Evaluation interval** of the evaluation group should equal the size of the query window. For example, if your query covers `now-5m: now-4m` (1-minute window with 4-minute delay), use a **1-minute evaluation interval**. This ensures each evaluation produces a new, non-overlapping sample.
    {{< /admonition >}}
 
-   {{< figure src="/media/docs/grafana/alerting/screenshot-recording-rule-tempo-evaluation-group-private-preview.png" alt="Defining the recording rule evaluation group for Tempo." max-width="400px">}}
+   {{< figure src="/media/docs/grafana/alerting/screenshot-recording-rule-tempo-evaluation-group-private-preview.png" alt="Defining the recording rule evaluation group for Tempo." max-width="400px" >}}
 
 ## Best practices
 
