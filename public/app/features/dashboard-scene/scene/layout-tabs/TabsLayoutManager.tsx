@@ -100,11 +100,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       return selectedTab;
     }
 
-    // if loading return undefined
+    // return undefined either if variable is loading or repeats were not processed yet
     for (const tab of tabs) {
       if (tab.state.repeatByVariable) {
         const variable = sceneGraph.lookupVariable(tab.state.repeatByVariable, this);
-        if (variable && variable.state.loading) {
+        if ((variable && variable.state.loading) || !tab.state.repeatedTabs) {
           return;
         }
       }
