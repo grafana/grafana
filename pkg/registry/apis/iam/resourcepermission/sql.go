@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -172,7 +173,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 			})
 		case v0alpha1.ResourcePermissionSpecPermissionKindBasicRole:
 			assignments = append(assignments, grant{
-				RoleName:         fmt.Sprintf("managed:builtins:%s:permissions", perm.Name),
+				RoleName:         fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(perm.Name)),
 				AssignmentTable:  "builtin_role",
 				AssignmentColumn: "role",
 				AssigneeID:       perm.Name,
