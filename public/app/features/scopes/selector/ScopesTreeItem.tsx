@@ -54,6 +54,7 @@ export function ScopesTreeItem({
   return (
     <div
       key={treeNode.scopeNodeId}
+      id={getTreeItemElementId(treeNode.scopeNodeId)}
       role="treeitem"
       aria-selected={treeNode.expanded || selected}
       className={anyChildExpanded ? styles.expandedContainer : undefined}
@@ -122,6 +123,10 @@ export function ScopesTreeItem({
     </div>
   );
 }
+
+export const getTreeItemElementId = (scopeNodeId: string) => {
+  return `scopes-tree-item-${scopeNodeId}`;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

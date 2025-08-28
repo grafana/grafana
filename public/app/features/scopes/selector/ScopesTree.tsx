@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
+import { getTreeItemElementId } from './ScopesTreeItem';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { isNodeExpandable } from './scopesTreeUtils';
@@ -42,6 +43,10 @@ export function ScopesTree({
 }: ScopesTreeProps) {
   const styles = useStyles2(getStyles);
 
+  // Used for a11y reference
+  const selectedNodesToShowId = useId();
+  const childrenArrayId = useId();
+
   const nodeLoading = loadingNodeName === tree.scopeNodeId;
 
   const children = tree.children;
@@ -69,10 +74,11 @@ export function ScopesTree({
   // Only enable keyboard interaction when the search field is focused
   const [searchFocused, setSearchFocused] = useState(false);
 
-  // Use the same hightoighing for the two different lists
+  // Use the same highlighting for the two different lists
   const { highlightedIndex } = useKeyboardInteraction(
     searchFocused ? selectedNodesToShow.length + childrenArray.length : 0,
     (index: number, action: KeyboardAction) => {
+      // The highlight index is for both lists, hence we need to do some trickery to get the correct item from the different lists
       const nodeId =
         index >= selectedNodesToShow.length
           ? childrenArray[index - selectedNodesToShow.length].scopeNodeId
@@ -94,6 +100,13 @@ export function ScopesTree({
     }
   );
 
+  const getHighlightedId = (index: number) => {
+    if (index >= selectedNodesToShow.length) {
+      return childrenArray[index - selectedNodesToShow.length].scopeNodeId;
+    }
+    return selectedNodesToShow[index].scopeNodeId;
+  };
+
   // Used as a label and placeholder for search field
   const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
   const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
@@ -107,6 +120,10 @@ export function ScopesTree({
         searchArea={searchArea}
         onNodeUpdate={onNodeUpdate}
         treeNode={tree}
+        aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
+        aria-activedescendant={
+          highlightedIndex !== -1 ? getTreeItemElementId(getHighlightedId(highlightedIndex)) : undefined
+        }
         onFocus={() => setSearchFocused(true)}
         onBlur={() => setSearchFocused(false)}
       />
@@ -133,6 +150,7 @@ export function ScopesTree({
             deselectScope={deselectScope}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
             highlightedIndex={highlightedIndex}
+            id={selectedNodesToShowId}
           />
 
           <ScopesTreeHeadline
@@ -154,6 +172,7 @@ export function ScopesTree({
             deselectScope={deselectScope}
             maxHeight={'100%'}
             highlightedIndex={highlightedIndex - selectedNodesToShow.length}
+            id={childrenArrayId}
           />
         </>
       )}

@@ -22,17 +22,25 @@ export function useKeyboardInteraction(optionCount: number, onSelect: (index: nu
 
       switch (event.key) {
         case 'ArrowDown':
+          event.preventDefault();
+
           setHighlightedIndex((prev) => (prev + 1) % optionCount);
           break;
         case 'ArrowUp':
+          event.preventDefault();
+
           setHighlightedIndex((prev) => (prev - 1 + optionCount) % optionCount);
           break;
         case 'Enter':
+          event.preventDefault();
+
           if (highlightedIndex !== -1) {
             onSelect(highlightedIndex, KeyboardAction.SELECT);
           }
           break;
         case 'ArrowRight':
+          event.preventDefault();
+
           if (highlightedIndex !== -1) {
             onSelect(highlightedIndex, KeyboardAction.EXPAND);
           }

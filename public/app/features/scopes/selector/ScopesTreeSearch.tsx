@@ -15,6 +15,8 @@ export interface ScopesTreeSearchProps {
   onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
   onFocus: () => void;
   onBlur: () => void;
+  'aria-controls': string;
+  'aria-activedescendant'?: string;
 }
 
 export function ScopesTreeSearch({
@@ -24,6 +26,8 @@ export function ScopesTreeSearch({
   searchArea,
   onFocus,
   onBlur,
+  'aria-controls': ariaControls,
+  'aria-activedescendant': ariaActivedescendant,
 }: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
@@ -61,6 +65,11 @@ export function ScopesTreeSearch({
       placeholder={searchLabel}
       // Don't do autofocus for root node
       autoFocus={treeNode.scopeNodeId !== ''}
+      role="combobox"
+      aria-expanded={true}
+      aria-autocomplete="list"
+      aria-controls={ariaControls}
+      aria-activedescendant={ariaActivedescendant}
       aria-label={searchLabel}
       value={inputState.value}
       className={styles.input}

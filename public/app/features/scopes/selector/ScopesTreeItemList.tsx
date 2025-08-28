@@ -19,6 +19,7 @@ type Props = {
   selectScope: (scopeNodeId: string) => void;
   deselectScope: (scopeNodeId: string) => void;
   highlightedIndex: number;
+  id: string;
 };
 
 export function ScopesTreeItemList({
@@ -33,6 +34,7 @@ export function ScopesTreeItemList({
   selectScope,
   deselectScope,
   highlightedIndex,
+  id,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -41,7 +43,7 @@ export function ScopesTreeItemList({
   }
 
   const children = (
-    <div role="tree" className={anyChildExpanded ? styles.expandedContainer : undefined}>
+    <div role="tree" id={id} className={anyChildExpanded ? styles.expandedContainer : undefined}>
       {items.map((childNode, index) => {
         const selected =
           isNodeSelectable(scopeNodes[childNode.scopeNodeId]) &&
