@@ -1784,9 +1784,7 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 	}
 
 	if defaults, ok := fieldConfig["defaults"].(map[string]interface{}); ok {
-		fieldConfigDefaults := dashv2alpha1.DashboardFieldConfig{
-			Mappings: nil, // Explicitly set to nil to avoid empty slice
-		}
+		fieldConfigDefaults := dashv2alpha1.DashboardFieldConfig{}
 
 		// Track if we have any defaults to set
 		hasDefaults := false
@@ -2008,14 +2006,8 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 					}
 				}
 			}
-			// Only set mappings if we actually have mappings to set
-			if len(resultMappings) > 0 {
-				fieldConfigDefaults.Mappings = resultMappings
-				hasDefaults = true
-			} else {
-				// Don't set mappings field when it's empty to match frontend behavior
-				fieldConfigDefaults.Mappings = nil
-			}
+			fieldConfigDefaults.Mappings = resultMappings
+			hasDefaults = true
 		}
 		if max, exists := defaults["max"]; exists {
 			if maxVal, ok := max.(float64); ok {
@@ -2127,8 +2119,8 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 			}
 		}
 	} else {
-		// Don't set overrides field when it's empty to match expected output
-		fieldConfigSource.Overrides = nil
+		// Use empty array to match frontend behavior
+		fieldConfigSource.Overrides = []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{}
 	}
 
 	return dashv2alpha1.DashboardVizConfigKind{

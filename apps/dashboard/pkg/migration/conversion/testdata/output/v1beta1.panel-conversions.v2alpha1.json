@@ -126,7 +126,7 @@
                     "lineWidth": 1
                   }
                 },
-                "overrides": null
+                "overrides": []
               }
             }
           },
@@ -184,7 +184,7 @@
               "options": {},
               "fieldConfig": {
                 "defaults": {},
-                "overrides": null
+                "overrides": []
               }
             }
           }
@@ -233,7 +233,7 @@
               },
               "fieldConfig": {
                 "defaults": {},
-                "overrides": null
+                "overrides": []
               }
             }
           }
@@ -340,7 +340,7 @@
                     "orientation": "horizontal"
                   }
                 },
-                "overrides": null
+                "overrides": []
               }
             }
           }
