@@ -54,6 +54,7 @@ func Convert_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Da
 				Error:         ptr.To(err.Error()),
 			},
 		}
+
 		return err
 	}
 
