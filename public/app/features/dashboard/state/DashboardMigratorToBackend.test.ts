@@ -119,6 +119,7 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   jsonInputs
+    // TODO: remove this filter when we fixed all inconsistencies
     .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 29)
     .forEach((inputFile) => {
       it(`should migrate ${inputFile} correctly`, async () => {
