@@ -6,7 +6,7 @@ import { Select } from '../../../Select/Select';
 
 export type Props<T> = NoticeProps<SelectableValue<T>, boolean, GroupBase<SelectableValue<T>>>;
 
-/** @deprecated Please use the {@link Select} component*/
+/** @deprecated Please use the Combobox component instead */
 export const NoOptionsMessage = <T extends unknown>(props: Props<T>) => {
   const { children } = props;
   return (

@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { Icon } from '../../../Icon/Icon';
 import { Select } from '../../../Select/Select';
 
-/** @deprecated Please use the {@link Select} component*/
+/** @deprecated Please use the Combobox component instead */
 export const IndicatorsContainer = <T,>(props: IndicatorsContainerProps<SelectableValue<T>>) => {
   const isOpen = props.selectProps.menuIsOpen;
   return (
