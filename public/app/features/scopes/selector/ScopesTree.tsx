@@ -76,7 +76,9 @@ export function ScopesTree({
 
   // Use the same highlighting for the two different lists
   const { highlightedIndex } = useKeyboardInteraction(
-    searchFocused ? selectedNodesToShow.length + childrenArray.length : 0,
+    searchFocused,
+    [...selectedNodesToShow, ...childrenArray],
+    searchFocused ? tree.query : '',
     (index: number, action: KeyboardAction) => {
       // The highlight index is for both lists, hence we need to do some trickery to get the correct item from the different lists
       const nodeId =
@@ -101,10 +103,13 @@ export function ScopesTree({
   );
 
   const getHighlightedId = (index: number) => {
-    if (index >= selectedNodesToShow.length) {
-      return childrenArray[index - selectedNodesToShow.length].scopeNodeId;
+    if (index === -1) {
+      return undefined;
     }
-    return selectedNodesToShow[index].scopeNodeId;
+    if (index >= selectedNodesToShow.length) {
+      return childrenArray[index - selectedNodesToShow.length]?.scopeNodeId;
+    }
+    return selectedNodesToShow[index]?.scopeNodeId;
   };
 
   // Used as a label and placeholder for search field
@@ -121,9 +126,7 @@ export function ScopesTree({
         onNodeUpdate={onNodeUpdate}
         treeNode={tree}
         aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
-        aria-activedescendant={
-          highlightedIndex !== -1 ? getTreeItemElementId(getHighlightedId(highlightedIndex)) : undefined
-        }
+        aria-activedescendant={getTreeItemElementId(getHighlightedId(highlightedIndex))}
         onFocus={() => setSearchFocused(true)}
         onBlur={() => setSearchFocused(false)}
       />

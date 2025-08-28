@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { TreeNode } from './types';
+
 // Uses enum to enable extension in the future
 export enum KeyboardAction {
   SELECT = 'select',
@@ -7,30 +9,40 @@ export enum KeyboardAction {
 }
 
 // Handles keyboard interactions for the scopes tree
-// optionCount is the number of options in the tree
 // onSelect is the function to call when an option is selected
 // Returns the highlighted index
-export function useKeyboardInteraction(optionCount: number, onSelect: (index: number, action: KeyboardAction) => void) {
+export function useKeyboardInteraction(
+  enabled: boolean,
+  items: TreeNode[],
+  searchQuery: string,
+  onSelect: (index: number, action: KeyboardAction) => void
+) {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent): void => {
+      if (!enabled) {
+        return;
+      }
+
       // If there are no options, do nothing. Also to prevent dividing by 0
-      if (optionCount === 0) {
+      if (items.length === 0) {
         return;
       }
 
       switch (event.key) {
+        // Change highlighted index
         case 'ArrowDown':
           event.preventDefault();
 
-          setHighlightedIndex((prev) => (prev + 1) % optionCount);
+          setHighlightedIndex((prev) => (prev + 1) % items.length);
           break;
         case 'ArrowUp':
           event.preventDefault();
 
-          setHighlightedIndex((prev) => (prev - 1 + optionCount) % optionCount);
+          setHighlightedIndex((prev) => (prev - 1 + items.length) % items.length);
           break;
+        // Handle Select action
         case 'Enter':
           event.preventDefault();
 
@@ -38,12 +50,16 @@ export function useKeyboardInteraction(optionCount: number, onSelect: (index: nu
             onSelect(highlightedIndex, KeyboardAction.SELECT);
           }
           break;
+        // Handle Expand action
         case 'ArrowRight':
-          event.preventDefault();
-
+          // Check if item is expandable and if it is, expand it
           if (highlightedIndex !== -1) {
-            onSelect(highlightedIndex, KeyboardAction.EXPAND);
+            if (items[highlightedIndex].children) {
+              event.preventDefault();
+              onSelect(highlightedIndex, KeyboardAction.EXPAND);
+            }
           }
+
           break;
         case 'Escape':
           setHighlightedIndex(-1);
@@ -52,7 +68,7 @@ export function useKeyboardInteraction(optionCount: number, onSelect: (index: nu
           break;
       }
     },
-    [optionCount, onSelect, highlightedIndex]
+    [items, onSelect, highlightedIndex, enabled]
   );
 
   useEffect(() => {
@@ -62,12 +78,17 @@ export function useKeyboardInteraction(optionCount: number, onSelect: (index: nu
     };
   }, [handleKeyDown]);
 
-  // Reset highlighted index when optionCount changes to 0
+  // Reset highlighted index when items length changes to 0
   useEffect(() => {
-    if (optionCount === 0) {
+    if (items.length === 0) {
       setHighlightedIndex(-1);
     }
-  }, [optionCount]);
+  }, [items]);
+
+  useEffect(() => {
+    // Reset when doing a new query
+    setHighlightedIndex(-1);
+  }, [searchQuery]);
 
   return { highlightedIndex };
 }

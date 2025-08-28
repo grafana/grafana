@@ -124,8 +124,8 @@ export function ScopesTreeItem({
   );
 }
 
-export const getTreeItemElementId = (scopeNodeId: string) => {
-  return `scopes-tree-item-${scopeNodeId}`;
+export const getTreeItemElementId = (scopeNodeId?: string) => {
+  return scopeNodeId ? `scopes-tree-item-${scopeNodeId}` : undefined;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
