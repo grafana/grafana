@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -96,20 +97,142 @@ var ResourcePermissionInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var userKind = UserKind()
+var UserResourceInfo = utils.NewResourceInfo(userKind.Group(), userKind.Version(),
+	userKind.GroupVersionResource().Resource, strings.ToLower(userKind.Kind()), userKind.Kind(),
+	func() runtime.Object { return userKind.ZeroValue() },
+	func() runtime.Object { return userKind.ZeroListValue() },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Login", Type: "string", Format: "string", Description: "The user login"},
+			{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			u, ok := obj.(*User)
+			if ok {
+				return []interface{}{
+					u.Name,
+					u.Spec.Login,
+					u.Spec.Email,
+					u.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected user")
+		},
+	},
+)
+
+var teamKind = TeamKind()
+var TeamResourceInfo = utils.NewResourceInfo(teamKind.Group(), teamKind.Version(),
+	teamKind.GroupVersionResource().Resource, strings.ToLower(teamKind.Kind()), teamKind.Kind(),
+	func() runtime.Object { return teamKind.ZeroValue() },
+	func() runtime.Object { return teamKind.ZeroListValue() },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Format: "string", Description: "The team name"},
+			{Name: "Email", Type: "string", Format: "string", Description: "team email"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Team)
+			if !ok {
+				return nil, fmt.Errorf("expected team")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.Title,
+				m.Spec.Email,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)
+
+var serviceAccountKind = ServiceAccountKind()
+var ServiceAccountResourceInfo = utils.NewResourceInfo(serviceAccountKind.Group(), serviceAccountKind.Version(),
+	serviceAccountKind.GroupVersionResource().Resource, strings.ToLower(serviceAccountKind.Kind()), serviceAccountKind.Kind(),
+	func() runtime.Object { return serviceAccountKind.ZeroValue() },
+	func() runtime.Object { return serviceAccountKind.ZeroListValue() },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Format: "string"},
+			{Name: "Disabled", Type: "boolean"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			sa, ok := obj.(*ServiceAccount)
+			if ok {
+				return []interface{}{
+					sa.Name,
+					sa.Spec.Title,
+					sa.Spec.Disabled,
+					sa.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected service account")
+		},
+	},
+)
+
+var teamBindingKind = TeamBindingKind()
+var TeamBindingResourceInfo = utils.NewResourceInfo(
+	teamBindingKind.Group(), teamBindingKind.Version(),
+	teamBindingKind.GroupVersionResource().Resource,
+	strings.ToLower(teamBindingKind.Kind()), teamBindingKind.Kind(),
+	func() runtime.Object { return teamBindingKind.ZeroValue() },
+	func() runtime.Object { return teamBindingKind.ZeroListValue() },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Team", Type: "string"},
+			{Name: "Created At", Type: "string", Format: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*TeamBinding)
+			if !ok {
+				return nil, fmt.Errorf("expected team binding")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.TeamRef.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
 	AddToScheme        = localSchemeBuilder.AddToScheme
-	schemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
+
+	SchemeGroupVersion   = schema.GroupVersion{Group: GROUP, Version: VERSION}
+	InternalGroupVersion = schema.GroupVersion{Group: GROUP, Version: runtime.APIVersionInternal}
 )
 
 func init() {
-	localSchemeBuilder.Register(addKnownTypes, addDefaultingFuncs)
+	localSchemeBuilder.Register(func(s *runtime.Scheme) error {
+		err := AddAuthZKnownTypes(s)
+		if err != nil {
+			return err
+		}
+
+		err = AddAuthNKnownTypes(s)
+		if err != nil {
+			return err
+		}
+
+		metav1.AddToGroupVersion(s, SchemeGroupVersion)
+		return nil
+	}, addDefaultingFuncs)
 }
 
-// Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(schemeGroupVersion,
+func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion,
 		&CoreRole{},
 		&CoreRoleList{},
 		&Role{},
@@ -121,7 +244,31 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
-	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
+	return nil
+}
+
+func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		// Identity
+		&User{},
+		&UserList{},
+		&ServiceAccount{},
+		&ServiceAccountList{},
+		&Team{},
+		&TeamList{},
+		&TeamBinding{},
+		&TeamBindingList{},
+		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
+		// &UserTeamList{},
+		// &ServiceAccountTokenList{},
+		// &DisplayList{},
+		// &SSOSetting{},
+		// &SSOSettingList{},
+		// &TeamMemberList{},
+
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
+	)
 	return nil
 }
 

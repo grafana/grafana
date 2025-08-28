@@ -12,7 +12,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -26,7 +25,7 @@ var (
 	_ rest.Storage              = (*LegacyStore)(nil)
 )
 
-var resource = iamv0.ServiceAccountResourceInfo
+var resource = iamv0alpha1.ServiceAccountResourceInfo
 
 func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
 	return &LegacyStore{store, ac}

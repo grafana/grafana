@@ -104,9 +104,13 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if b.enableAuthZApis {
-		if err := iamv0.AddToScheme(scheme); err != nil {
+		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
 			return err
 		}
+	}
+
+	if err := iamv0.AddAuthNKnownTypes(scheme); err != nil {
+		return err
 	}
 
 	legacyiamv0.AddKnownTypes(scheme, legacyiamv0.VERSION)
@@ -116,8 +120,8 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	// "no kind is registered for the type"
 	legacyiamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
-	metav1.AddToGroupVersion(scheme, legacyiamv0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(legacyiamv0.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, iamv0.SchemeGroupVersion)
+	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -127,14 +131,14 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	teamResource := legacyiamv0.TeamResourceInfo
+	teamResource := iamv0.TeamResourceInfo
 	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
-	teamBindingResource := legacyiamv0.TeamBindingResourceInfo
+	teamBindingResource := iamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
-	userResource := legacyiamv0.UserResourceInfo
+	userResource := iamv0.UserResourceInfo
 	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
 	storage[userResource.StoragePath()] = legacyStore
 
@@ -153,7 +157,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
-	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
+	serviceAccountResource := iamv0.ServiceAccountResourceInfo
 	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
@@ -265,7 +269,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
+		if a.GetKind() == iamv0.UserResourceInfo.GroupVersionKind() {
 			return b.validateCreateUser(ctx, a, o)
 		}
 		return nil
@@ -290,7 +294,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 
 	// Temporary validation that the user is not trying to create a Grafana Admin without being a Grafana Admin.
 	if userObj.Spec.GrafanaAdmin && !requester.GetIsGrafanaAdmin() {
-		return apierrors.NewForbidden(legacyiamv0.UserResourceInfo.GroupResource(),
+		return apierrors.NewForbidden(iamv0.UserResourceInfo.GroupResource(),
 			userObj.Name,
 			fmt.Errorf("only grafana admins can create grafana admins"))
 	}
@@ -308,7 +312,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(ctx context.Cont
 func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
+		if a.GetKind() == iamv0.UserResourceInfo.GroupVersionKind() {
 			return b.mutateUser(ctx, a, o)
 		}
 		return nil
