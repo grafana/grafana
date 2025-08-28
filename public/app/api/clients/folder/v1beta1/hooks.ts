@@ -230,15 +230,15 @@ export function useDeleteMultipleFoldersMutationFacade() {
 }
 
 export function useMoveMultipleFoldersMutationFacade() {
-  const [moveFolders] = useMoveFoldersMutationLegacy();
-  const [updateFolder] = useUpdateFolderMutation();
+  const moveFoldersLegacyResult = useMoveFoldersMutationLegacy();
+  const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const dispatch = useDispatch();
 
   if (!config.featureToggles.foldersAppPlatformAPI) {
-    return moveFolders;
+    return moveFoldersLegacyResult;
   }
 
-  return async function moveFolders({ folderUIDs, destinationUID }: { folderUIDs: string[]; destinationUID: string }) {
+  async function moveFolders({ folderUIDs, destinationUID }: { folderUIDs: string[]; destinationUID: string }) {
     const provisionedWarning = t(
       'folders.api.folder-move-error-provisioned',
       'Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.'
@@ -275,7 +275,9 @@ export function useMoveMultipleFoldersMutationFacade() {
     dispatch(refreshParents(folderUIDs));
 
     return { data: undefined };
-  };
+  }
+
+  return [moveFolders, updateFolderData];
 }
 
 function combinedState(
