@@ -229,7 +229,7 @@ make test-go-integration-postgres
 - Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers: `yarn playwright install chromium`.
 - Run tests with `yarn e2e:playwright [optional path to test file]`.
 
-- To open the last HTML report, you can run `yarn playwright show-report`. You can also open an arbitrary report with `yarn playwright show-report <reportLocation>`. For Grafanistas, the reports are also downloable from CI by:
+- To open the last HTML report, you can run `yarn playwright show-report`. You can also open an arbitrary report with `yarn playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
   - Clicking through to _End-to-end tests_/_All Playwright tests complete_.
   - Clicking _Summary_.
   - Download the _playwright-html-<number>_ artifact.
