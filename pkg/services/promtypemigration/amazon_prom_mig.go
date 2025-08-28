@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -16,7 +16,7 @@ type AmazonPromMigrationService struct {
 
 func ProvideAmazonPromMigrationService(
 	dataSourcesService datasources.DataSourceService,
-	pluginStore pluginstore.Store,
+	pluginRegistry registry.Service,
 	pluginRepo repo.Service,
 	pluginInstaller plugins.Installer,
 	cfg *setting.Cfg,
@@ -24,7 +24,7 @@ func ProvideAmazonPromMigrationService(
 	return &AmazonPromMigrationService{
 		promMigrationService: promMigrationService{
 			dataSourcesService: dataSourcesService,
-			pluginStore:        pluginStore,
+			pluginRegistry:     pluginRegistry,
 			pluginRepo:         pluginRepo,
 			pluginInstaller:    pluginInstaller,
 			cfg:                cfg,
@@ -58,5 +58,5 @@ func (s *AmazonPromMigrationService) Migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return s.applyMigration(ctx, "grafana-amazonprometheus-datasource", pds)
+	return s.applyMigration(ctx, datasources.DS_AMAZON_PROMETHEUS, pds)
 }

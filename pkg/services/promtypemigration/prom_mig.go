@@ -6,15 +6,14 @@ import (
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type PromMigrationHandler interface {
 	Migrate(context.Context, *promMigrationService) error
-	getPrometheusDataSources(ctx context.Context, dataSourcesService datasources.DataSourceService) ([]*datasources.DataSource, error)
 }
 
 type dataSourceService interface {
@@ -26,7 +25,7 @@ type dataSourceService interface {
 type promMigrationService struct {
 	cfg                *setting.Cfg
 	dataSourcesService dataSourceService
-	pluginStore        pluginstore.Store
+	pluginRegistry     registry.Service
 	pluginRepo         repo.Service
 	pluginInstaller    plugins.Installer
 }
@@ -37,7 +36,7 @@ func (s *promMigrationService) applyMigration(ctx context.Context, pluginID stri
 	}
 
 	// check to see if prom is installed, if not install it
-	if _, installed := s.pluginStore.Plugin(ctx, pluginID); !installed {
+	if _, installed := s.pluginRegistry.Plugin(ctx, pluginID, ""); !installed {
 		compatOpts := plugins.NewAddOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, "")
 		err := s.pluginInstaller.Add(ctx, pluginID, "", compatOpts)
 		if err != nil {

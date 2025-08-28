@@ -8,24 +8,25 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
 
 // Mocks
 
-type mockPluginStore struct {
-	pluginstore.Store
+type mockPluginRegistry struct {
 	installed bool
 }
 
-func (m *mockPluginStore) Plugin(ctx context.Context, id string) (pluginstore.Plugin, bool) {
+func (m *mockPluginRegistry) Plugin(ctx context.Context, id string, _ string) (*plugins.Plugin, bool) {
 	if m.installed {
-		return pluginstore.Plugin{}, true
+		return &plugins.Plugin{}, true
 	}
-	return pluginstore.Plugin{}, false
+	return &plugins.Plugin{}, false
 }
+func (m *mockPluginRegistry) Plugins(ctx context.Context) []*plugins.Plugin         { return nil }
+func (m *mockPluginRegistry) Add(ctx context.Context, plugin *plugins.Plugin) error { return nil }
+func (m *mockPluginRegistry) Remove(ctx context.Context, id, version string) error  { return nil }
 
 type mockPluginInstaller struct {
 	addCalled bool
@@ -70,7 +71,7 @@ func TestApplyMigration_PluginAlreadyInstalled(t *testing.T) {
 	svc := &promMigrationService{
 		cfg:                &setting.Cfg{BuildVersion: "1.0"},
 		dataSourcesService: &mockDataSourcesService{},
-		pluginStore:        &mockPluginStore{installed: true},
+		pluginRegistry:     &mockPluginRegistry{installed: true},
 		pluginInstaller:    &mockPluginInstaller{},
 	}
 	err := svc.applyMigration(context.Background(), "prometheus", []*datasources.DataSource{ds})
@@ -83,7 +84,7 @@ func TestApplyMigration_PluginNotInstalled_InstallSucceeds(t *testing.T) {
 	svc := &promMigrationService{
 		cfg:                &setting.Cfg{BuildVersion: "1.0"},
 		dataSourcesService: &mockDataSourcesService{},
-		pluginStore:        &mockPluginStore{installed: false},
+		pluginRegistry:     &mockPluginRegistry{installed: false},
 		pluginInstaller:    installer,
 	}
 	err := svc.applyMigration(context.Background(), "prometheus", []*datasources.DataSource{ds})
@@ -97,7 +98,7 @@ func TestApplyMigration_PluginNotInstalled_InstallFails(t *testing.T) {
 	svc := &promMigrationService{
 		cfg:                &setting.Cfg{BuildVersion: "1.0"},
 		dataSourcesService: &mockDataSourcesService{},
-		pluginStore:        &mockPluginStore{installed: false},
+		pluginRegistry:     &mockPluginRegistry{installed: false},
 		pluginInstaller:    installer,
 	}
 	err := svc.applyMigration(context.Background(), "prometheus", []*datasources.DataSource{ds})
@@ -110,7 +111,7 @@ func TestApplyMigration_UpdateDataSourceFails(t *testing.T) {
 	svc := &promMigrationService{
 		cfg:                &setting.Cfg{BuildVersion: "1.0"},
 		dataSourcesService: dataSvc,
-		pluginStore:        &mockPluginStore{installed: true},
+		pluginRegistry:     &mockPluginRegistry{installed: true},
 		pluginInstaller:    &mockPluginInstaller{},
 	}
 	err := svc.applyMigration(context.Background(), "prometheus", []*datasources.DataSource{ds})

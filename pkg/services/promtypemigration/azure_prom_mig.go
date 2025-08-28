@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -16,7 +16,7 @@ type AzurePromMigrationService struct {
 
 func ProvideAzurePromMigrationService(
 	dataSourcesService datasources.DataSourceService,
-	pluginStore pluginstore.Store,
+	pluginRegistry registry.Service,
 	pluginRepo repo.Service,
 	pluginInstaller plugins.Installer,
 	cfg *setting.Cfg,
@@ -24,7 +24,7 @@ func ProvideAzurePromMigrationService(
 	return &AzurePromMigrationService{
 		promMigrationService: promMigrationService{
 			dataSourcesService: dataSourcesService,
-			pluginStore:        pluginStore,
+			pluginRegistry:     pluginRegistry,
 			pluginRepo:         pluginRepo,
 			pluginInstaller:    pluginInstaller,
 			cfg:                cfg,
@@ -59,5 +59,5 @@ func (s *AzurePromMigrationService) Migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return s.applyMigration(ctx, "grafana-azureprometheus-datasource", pds)
+	return s.applyMigration(ctx, datasources.DS_AZURE_PROMETHEUS, pds)
 }

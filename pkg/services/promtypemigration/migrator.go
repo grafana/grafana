@@ -46,12 +46,12 @@ func (s *PromTypeMigrationProviderImpl) Run(ctx context.Context) error {
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagPrometheusTypeMigration) {
 		return nil
 	}
-	return s.Migrate(ctx)
+	return s.migrate(ctx)
 }
 
-// Migrate Run migration services. This will block until all services have exited.
+// migrate Run migration services. This will block until all services have exited.
 // This should only be called once at startup
-func (s *PromTypeMigrationProviderImpl) Migrate(ctx context.Context) error {
+func (s *PromTypeMigrationProviderImpl) migrate(ctx context.Context) error {
 	err := s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
 		for _, service := range s.services {
 			serviceName := reflect.TypeOf(service).String()
