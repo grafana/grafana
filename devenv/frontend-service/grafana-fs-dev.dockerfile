@@ -24,6 +24,8 @@ COPY public/dashboards public/dashboards
 COPY public/app/plugins public/app/plugins
 COPY public/gazetteer public/gazetteer
 COPY public/maps public/maps
+COPY public/img/bg public/img/bg
+COPY public/img/icons public/img/icons
 
 ADD devenv/frontend-service/build/grafana bin/grafana
 
