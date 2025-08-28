@@ -112,12 +112,10 @@ func TestV30(t *testing.T) {
 										"type": "value",
 										"options": map[string]interface{}{
 											"1": map[string]interface{}{
-												"text":  "Up",
-												"color": "green",
+												"text": "Up",
 											},
 											"0": map[string]interface{}{
-												"text":  "Down",
-												"color": "green",
+												"text": "Down",
 											},
 										},
 									},
@@ -127,8 +125,7 @@ func TestV30(t *testing.T) {
 											"from": float64(10),
 											"to":   float64(20),
 											"result": map[string]interface{}{
-												"text":  "Medium",
-												"color": "green",
+												"text": "Medium",
 											},
 										},
 									},
@@ -137,8 +134,7 @@ func TestV30(t *testing.T) {
 										"options": map[string]interface{}{
 											"match": "null",
 											"result": map[string]interface{}{
-												"text":  "Null Value",
-												"color": "green",
+												"text": "Null Value",
 											},
 										},
 									},

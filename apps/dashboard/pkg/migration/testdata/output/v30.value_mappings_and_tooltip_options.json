@@ -12,11 +12,9 @@
             {
               "options": {
                 "0": {
-                  "color": "green",
                   "text": "Down"
                 },
                 "1": {
-                  "color": "green",
                   "text": "Up"
                 }
               },
@@ -26,7 +24,6 @@
               "options": {
                 "from": 10,
                 "result": {
-                  "color": "green",
                   "text": "Medium"
                 },
                 "to": 20
@@ -37,7 +34,6 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "color": "green",
                   "text": "Null Value"
                 }
               },
