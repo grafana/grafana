@@ -1,0 +1,3964 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 22,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "infinitePan": true,
+        "inlineEditing": false,
+        "panZoom": true,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            }
+          },
+          "border": {
+            "color": {
+              "fixed": "dark-green"
+            }
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "text"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Library"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 39",
+              "placement": {
+                "height": 118,
+                "left": 1584,
+                "top": 259,
+                "width": 204
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Viewport"
+                },
+                "valign": "bottom"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -0.8229007633587786,
+                    "y": 0.27741935483870966
+                  },
+                  "sourceOriginal": {
+                    "x": 1223.8335877862596,
+                    "y": 300
+                  },
+                  "target": {
+                    "x": 1.0112359550561798,
+                    "y": -0.012987012987012988
+                  },
+                  "targetName": "Element 20",
+                  "targetOriginal": {
+                    "x": 990,
+                    "y": 474
+                  },
+                  "vertices": [
+                    {
+                      "x": -0.18181818181818182,
+                      "y": 0
+                    },
+                    {
+                      "x": -0.18181818181818182,
+                      "y": 1
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "radius": {
+                    "fixed": 25,
+                    "max": 200,
+                    "min": 0
+                  },
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -0.3068702290076336,
+                    "y": -0.47419354838709676
+                  },
+                  "sourceOriginal": {
+                    "x": 1401.090076335878,
+                    "y": 533
+                  },
+                  "target": {
+                    "x": 1.0112359550561798,
+                    "y": -0.4805194805194805
+                  },
+                  "targetName": "Element 20",
+                  "targetOriginal": {
+                    "x": 990,
+                    "y": 492
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.415,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.4775,
+                      "y": 1
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "direction": "reverse",
+                  "path": "straight",
+                  "radius": {
+                    "fixed": 0,
+                    "max": 200,
+                    "min": 0
+                  },
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0.7903930131004366,
+                    "y": -0.36935483870967745
+                  },
+                  "sourceOriginal": {
+                    "x": 1778,
+                    "y": 500.5
+                  },
+                  "target": {
+                    "x": 1.0120481927710843,
+                    "y": 0.024691358024691357
+                  },
+                  "targetName": "Element 35",
+                  "targetOriginal": {
+                    "x": 1523,
+                    "y": 177
+                  },
+                  "vertices": [
+                    {
+                      "x": -0.1607843137254902,
+                      "y": 0
+                    },
+                    {
+                      "x": -0.1607843137254902,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 32",
+              "placement": {
+                "height": 620,
+                "left": 1163,
+                "top": 76,
+                "width": 687
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#464646"
+                },
+                "radius": 0,
+                "width": 2
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#505050"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Equipment State"
+                },
+                "valign": "bottom"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 36",
+              "placement": {
+                "height": 229,
+                "left": 1340,
+                "top": 386,
+                "width": 438
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Subscriptions"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 28",
+              "placement": {
+                "height": 77,
+                "left": 831,
+                "top": 339,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Subscriptions"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 27",
+              "placement": {
+                "height": 77,
+                "left": 821,
+                "top": 329,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Mutation"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 26",
+              "placement": {
+                "height": 77,
+                "left": 583,
+                "top": 455,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Mutation"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 25",
+              "placement": {
+                "height": 77,
+                "left": 573,
+                "top": 445,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#d9d9d9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Subscription"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 24",
+              "placement": {
+                "height": 77,
+                "left": 583,
+                "top": 338,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Subscription"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0.8876404494382022,
+                    "y": 0.2597402597402597
+                  },
+                  "sourceOriginal": {
+                    "x": 741,
+                    "y": 356.5
+                  },
+                  "target": {
+                    "x": -0.9775280898876404,
+                    "y": -0.012987012987012988
+                  },
+                  "targetName": "Element 19",
+                  "targetOriginal": {
+                    "x": 813,
+                    "y": 358
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 23",
+              "placement": {
+                "height": 77,
+                "left": 573,
+                "top": 328,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Query"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 22",
+              "placement": {
+                "height": 77,
+                "left": 583,
+                "top": 221,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Query"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0.8876404494382022,
+                    "y": 0.2597402597402597
+                  },
+                  "sourceOriginal": {
+                    "x": 741,
+                    "y": 239.5
+                  },
+                  "target": {
+                    "x": -0.9887640449438202,
+                    "y": -0.06493506493506493
+                  },
+                  "targetName": "Element 18",
+                  "targetOriginal": {
+                    "x": 812,
+                    "y": 242
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 21",
+              "placement": {
+                "height": 77,
+                "left": 573,
+                "top": 211,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Controllers"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -0.2247191011235955,
+                    "y": -0.4805194805194805
+                  },
+                  "sourceOriginal": {
+                    "x": 342,
+                    "y": 395
+                  },
+                  "target": {
+                    "x": 0.011235955056179775,
+                    "y": 0.922077922077922
+                  },
+                  "targetName": "Element 12",
+                  "targetOriginal": {
+                    "x": 343,
+                    "y": 458
+                  }
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0.7752808988764045,
+                    "y": 0.5194805194805194
+                  },
+                  "sourceOriginal": {
+                    "x": 431,
+                    "y": 356.5
+                  },
+                  "target": {
+                    "x": -1.0833333333333333,
+                    "y": 0.020618556701030927
+                  },
+                  "targetName": "Element 15",
+                  "targetOriginal": {
+                    "x": 526,
+                    "y": 356
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 11",
+              "placement": {
+                "height": 77,
+                "left": 273,
+                "top": 338,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Controllers"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 10",
+              "placement": {
+                "height": 77,
+                "left": 263,
+                "top": 328,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "light-orange"
+                },
+                "size": "contain"
+              },
+              "border": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "radius": 0,
+                "width": 5
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#D9D9D9"
+                },
+                "path": {
+                  "field": "",
+                  "fixed": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Forme_ligne.svg",
+                  "mode": "fixed"
+                }
+              },
+              "connections": [],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 2",
+              "placement": {
+                "height": 96,
+                "left": 1390,
+                "top": 461,
+                "width": 100
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {},
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": ""
+                },
+                "valign": "middle"
+              },
+              "connections": [],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 3",
+              "placement": {
+                "height": 30,
+                "left": 1390,
+                "top": 423,
+                "width": 30
+              },
+              "type": "ellipse"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {},
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": ""
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 4",
+              "placement": {
+                "height": 30,
+                "left": 1460,
+                "top": 423,
+                "width": 30
+              },
+              "type": "ellipse"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Controllers"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "green"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "sourceOriginal": {
+                    "x": 431,
+                    "y": 337.25
+                  },
+                  "target": {
+                    "x": -1.0112359550561798,
+                    "y": -0.012987012987012988
+                  },
+                  "targetName": "Element 16",
+                  "targetOriginal": {
+                    "x": 562,
+                    "y": 240
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.42748091603053434,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.42748091603053434,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 6",
+              "placement": {
+                "height": 77,
+                "left": 253,
+                "top": 318,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-purple"
+                },
+                "width": 4
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "DB"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "direction": "both",
+                  "lineStyle": "dashed",
+                  "path": "straight",
+                  "radius": {
+                    "fixed": 50,
+                    "max": 200,
+                    "min": 0
+                  },
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": -1
+                  },
+                  "sourceOriginal": {
+                    "x": 150,
+                    "y": 223
+                  },
+                  "target": {
+                    "x": -0.5168539325842697,
+                    "y": 1
+                  },
+                  "targetName": "Element 6",
+                  "targetOriginal": {
+                    "x": 296,
+                    "y": 318
+                  },
+                  "vertices": [
+                    {
+                      "x": 0,
+                      "y": 0.5263157894736842
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "direction": "reverse",
+                  "lineStyle": "dashed",
+                  "path": "straight",
+                  "radius": {
+                    "fixed": 15,
+                    "max": 200,
+                    "min": 0
+                  },
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 1
+                  },
+                  "sourceOriginal": {
+                    "x": 150,
+                    "y": 148
+                  },
+                  "target": {
+                    "x": -1.0112359550561798,
+                    "y": -0.012987012987012988
+                  },
+                  "targetName": "Element 30",
+                  "targetOriginal": {
+                    "x": 563,
+                    "y": 82
+                  },
+                  "vertices": [
+                    {
+                      "x": 0,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 9",
+              "placement": {
+                "height": 75,
+                "left": 61,
+                "top": 148,
+                "width": 178
+              },
+              "type": "parallelogram"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Recipes"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "direction": "both",
+                  "path": "straight",
+                  "size": {
+                    "fixed": 1,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 216,
+                    "y": 356.5
+                  },
+                  "target": {
+                    "x": -1.0112359550561798,
+                    "y": -0.012987012987012988
+                  },
+                  "targetName": "Element 6",
+                  "targetOriginal": {
+                    "x": 252,
+                    "y": 357
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 7",
+              "placement": {
+                "height": 77,
+                "left": 38,
+                "top": 318,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-red"
+                },
+                "width": 4
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Queue"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "direction": "both",
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": -1
+                  },
+                  "sourceOriginal": {
+                    "x": 342,
+                    "y": 223
+                  },
+                  "target": {
+                    "x": 0.011235955056179775,
+                    "y": 1.025974025974026
+                  },
+                  "targetName": "Element 6",
+                  "targetOriginal": {
+                    "x": 343,
+                    "y": 317
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 8",
+              "placement": {
+                "height": 75,
+                "left": 253,
+                "top": 148,
+                "width": 178
+              },
+              "type": "parallelogram"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#5b5959"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Data Pipeline"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 12",
+              "placement": {
+                "height": 77,
+                "left": 253,
+                "top": 455,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Equipment"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "direction": "both",
+                  "path": "straight",
+                  "size": {
+                    "fixed": 1,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 38,
+                    "y": 493.5
+                  },
+                  "target": {
+                    "x": -1.0224719101123596,
+                    "y": 0.013333333333333334
+                  },
+                  "targetName": "Element 9",
+                  "targetOriginal": {
+                    "x": 59,
+                    "y": 185
+                  },
+                  "vertices": [
+                    {
+                      "x": -0.9523809523809523,
+                      "y": 0
+                    },
+                    {
+                      "x": -0.9523809523809523,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 13",
+              "placement": {
+                "height": 77,
+                "left": 38,
+                "top": 455,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Subscription"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 14",
+              "placement": {
+                "height": 77,
+                "left": 563,
+                "top": 318,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "super-light-blue"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Filter"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 15",
+              "placement": {
+                "height": 36,
+                "left": 497,
+                "rotation": 90,
+                "top": 339,
+                "width": 97
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Query"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 16",
+              "placement": {
+                "height": 77,
+                "left": 563,
+                "top": 201,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Mutation"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "dark-orange"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 563,
+                    "y": 473.5
+                  },
+                  "target": {
+                    "x": 1.0224719101123596,
+                    "y": -0.45454545454545453
+                  },
+                  "targetName": "Element 6",
+                  "targetOriginal": {
+                    "x": 433,
+                    "y": 374
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.5692307692307692,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.5692307692307692,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 17",
+              "placement": {
+                "height": 77,
+                "left": 563,
+                "top": 435,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Initial State"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 989,
+                    "y": 239.5
+                  },
+                  "target": {
+                    "x": -0.96,
+                    "y": 0.4583333333333333
+                  },
+                  "targetName": "Element 2",
+                  "targetOriginal": {
+                    "x": 1392,
+                    "y": 487
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.3349875930521092,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.3349875930521092,
+                      "y": 0.12727272727272726
+                    },
+                    {
+                      "x": 0.826302729528536,
+                      "y": 0.13131313131313133
+                    },
+                    {
+                      "x": 0.826302729528536,
+                      "y": 1
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 1,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": -0.5
+                  },
+                  "sourceOriginal": {
+                    "x": 989,
+                    "y": 258.75
+                  },
+                  "target": {
+                    "x": -0.9761904761904762,
+                    "y": 0.5263157894736842
+                  },
+                  "targetName": "Element 34",
+                  "targetOriginal": {
+                    "x": 1138,
+                    "y": 290
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.5033557046979866,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.5033557046979866,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 18",
+              "placement": {
+                "height": 77,
+                "left": 811,
+                "top": 201,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Subscriptions"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 19",
+              "placement": {
+                "height": 77,
+                "left": 811,
+                "top": 319,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Controls"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 811,
+                    "y": 473.5
+                  },
+                  "target": {
+                    "x": 1.0112359550561798,
+                    "y": 0.012987012987012988
+                  },
+                  "targetName": "Element 17",
+                  "targetOriginal": {
+                    "x": 742,
+                    "y": 473
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 20",
+              "placement": {
+                "height": 77,
+                "left": 811,
+                "top": 435,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "super-light-blue"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "orange"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Filter"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": -0.5
+                  },
+                  "sourceOriginal": {
+                    "x": 1025.5,
+                    "y": 382.25
+                  },
+                  "target": {
+                    "x": -1.0238095238095237,
+                    "y": 0.10526315789473684
+                  },
+                  "targetName": "Element 33",
+                  "targetOriginal": {
+                    "x": 1136,
+                    "y": 384
+                  }
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 1,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "sourceOriginal": {
+                    "x": 1025.5,
+                    "y": 333.75
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0.05263157894736842
+                  },
+                  "targetName": "Element 34",
+                  "targetOriginal": {
+                    "x": 1137,
+                    "y": 299
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.5246636771300448,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.5246636771300448,
+                      "y": 1
+                    }
+                  ]
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 1025.5,
+                    "y": 358
+                  },
+                  "target": {
+                    "x": -0.98,
+                    "y": -0.10416666666666667
+                  },
+                  "targetName": "Element 2",
+                  "targetOriginal": {
+                    "x": 1391,
+                    "y": 514
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.7564979480164159,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.7564979480164159,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 29",
+              "placement": {
+                "height": 36,
+                "left": 959,
+                "rotation": 270,
+                "top": 340,
+                "width": 97
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "green"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "text"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "CAD"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "lineStyle": "dashed",
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 742,
+                    "y": 81.5
+                  },
+                  "target": {
+                    "x": -1.0112359550561798,
+                    "y": -0.012987012987012988
+                  },
+                  "targetName": "Element 31",
+                  "targetOriginal": {
+                    "x": 811,
+                    "y": 82
+                  }
+                },
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "lineStyle": "dashed",
+                  "path": "straight",
+                  "radius": {
+                    "fixed": 15,
+                    "max": 200,
+                    "min": 0
+                  },
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 1
+                  },
+                  "sourceOriginal": {
+                    "x": 653,
+                    "y": 43
+                  },
+                  "target": {
+                    "x": -0.029411764705882353,
+                    "y": 1
+                  },
+                  "targetName": "Element 38",
+                  "targetOriginal": {
+                    "x": 1673,
+                    "y": 249
+                  },
+                  "vertices": [
+                    {
+                      "x": 0,
+                      "y": -0.08737864077669903
+                    },
+                    {
+                      "x": 1,
+                      "y": -0.08737864077669903
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 30",
+              "placement": {
+                "height": 77,
+                "left": 564,
+                "top": 43,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "green"
+                },
+                "radius": 28,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "text"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Layout"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "radius": {
+                    "fixed": 15,
+                    "max": 200,
+                    "min": 0
+                  },
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 990,
+                    "y": 81.5
+                  },
+                  "target": {
+                    "x": -0.9939759036144579,
+                    "y": 0.5061728395061729
+                  },
+                  "targetName": "Element 35",
+                  "targetOriginal": {
+                    "x": 1190,
+                    "y": 138
+                  },
+                  "vertices": [
+                    {
+                      "x": 0.48,
+                      "y": 0
+                    },
+                    {
+                      "x": 0.48,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 31",
+              "placement": {
+                "height": 77,
+                "left": 812,
+                "top": 43,
+                "width": 178
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "semi-dark-red"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Alerts"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 1221,
+                    "y": 386
+                  },
+                  "target": {
+                    "x": 1.0337078651685394,
+                    "y": 0.45454545454545453
+                  },
+                  "targetName": "Element 20",
+                  "targetOriginal": {
+                    "x": 992,
+                    "y": 456
+                  },
+                  "vertices": [
+                    {
+                      "x": -0.05240174672489083,
+                      "y": 0
+                    },
+                    {
+                      "x": -0.05240174672489083,
+                      "y": 1
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 33",
+              "placement": {
+                "height": 38,
+                "left": 1137,
+                "top": 367,
+                "width": 84
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "light-green"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Jobs"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 34",
+              "placement": {
+                "height": 38,
+                "left": 1137,
+                "top": 281,
+                "width": 84
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "light-blue"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Viewport State"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 1189,
+                    "y": 179
+                  },
+                  "target": {
+                    "x": 0.19444444444444445,
+                    "y": 0.9896907216494846
+                  },
+                  "targetName": "Element 29",
+                  "targetOriginal": {
+                    "x": 1011,
+                    "y": 310
+                  },
+                  "vertices": [
+                    {
+                      "x": 1,
+                      "y": 0
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 35",
+              "placement": {
+                "height": 162,
+                "left": 1189,
+                "top": 98,
+                "width": 332
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "semi-dark-blue"
+                },
+                "size": "contain"
+              },
+              "border": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "radius": 0,
+                "width": 5
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#D9D9D9"
+                },
+                "path": {
+                  "field": "",
+                  "fixed": "img/icons/iot/pump.svg",
+                  "mode": "fixed"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 37",
+              "placement": {
+                "height": 96,
+                "left": 1601,
+                "top": 461,
+                "width": 100
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#222020"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "radius": 0,
+                "width": 3
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "text"
+                },
+                "size": 20,
+                "text": {
+                  "fixed": "Library"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 1574,
+                    "y": 308
+                  },
+                  "target": {
+                    "x": -0.4977168949771689,
+                    "y": 1.017467248908297
+                  },
+                  "targetName": "Element 36",
+                  "targetOriginal": {
+                    "x": 1450,
+                    "y": 384
+                  },
+                  "vertices": [
+                    {
+                      "x": 1,
+                      "y": 0
+                    }
+                  ]
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 38",
+              "placement": {
+                "height": 118,
+                "left": 1574,
+                "top": 249,
+                "width": 204
+              },
+              "type": "rectangle"
+            }
+          ],
+          "name": "Element 1711297729286",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "rotation": 0,
+            "top": 0,
+            "width": 100
+          },
+          "type": "frame"
+        },
+        "showAdvancedTypes": true
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1
+        }
+      ],
+      "title": "Flowcharting",
+      "type": "canvas"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 30
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "#EF843C",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 15,
+        "x": 5,
+        "y": 36
+      },
+      "id": 4,
+      "options": {
+        "infinitePan": false,
+        "inlineEditing": true,
+        "panZoom": false,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            }
+          },
+          "border": {
+            "color": {
+              "fixed": "dark-green"
+            }
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": "gateway"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "gateway",
+                    "fixed": "rgb(204, 204, 220)"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 216,
+                    "y": 192
+                  },
+                  "target": {
+                    "x": -1.02020202020202,
+                    "y": 0.041666666666666664
+                  },
+                  "targetName": "Element 2",
+                  "targetOriginal": {
+                    "x": 326,
+                    "y": 191
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 1",
+              "placement": {
+                "height": 48,
+                "left": 117,
+                "top": 168,
+                "width": 99
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": "productpage"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "product-details",
+                    "fixed": "white"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 1
+                  },
+                  "sourceOriginal": {
+                    "x": 426,
+                    "y": 168
+                  },
+                  "target": {
+                    "x": -0.9797979797979798,
+                    "y": 0
+                  },
+                  "targetName": "Element 3",
+                  "targetOriginal": {
+                    "x": 549,
+                    "y": 93
+                  }
+                },
+                {
+                  "color": {
+                    "field": "product-reviews",
+                    "fixed": "white"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": -1
+                  },
+                  "sourceOriginal": {
+                    "x": 426,
+                    "y": 216
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0.041666666666666664
+                  },
+                  "targetName": "Element 4",
+                  "targetOriginal": {
+                    "x": 549,
+                    "y": 297
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 2",
+              "placement": {
+                "height": 48,
+                "left": 327,
+                "top": 168,
+                "width": 99
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": "details"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "details-checkout",
+                    "fixed": "white"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 647,
+                    "y": 93
+                  },
+                  "target": {
+                    "x": -0.9595959595959596,
+                    "y": -0.041666666666666664
+                  },
+                  "targetName": "Element 11",
+                  "targetOriginal": {
+                    "x": 799,
+                    "y": 94
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 3",
+              "placement": {
+                "height": 48,
+                "left": 548,
+                "top": 69,
+                "width": 99
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": "reviews"
+                },
+                "valign": "middle"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "reviews-ratings",
+                    "fixed": "white"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 648,
+                    "y": 298
+                  },
+                  "target": {
+                    "x": -0.9797979797979798,
+                    "y": 0.041666666666666664
+                  },
+                  "targetName": "Element 5",
+                  "targetOriginal": {
+                    "x": 798,
+                    "y": 299
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 4",
+              "placement": {
+                "height": 48,
+                "left": 549,
+                "top": 274,
+                "width": 99
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": "ratings"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 5",
+              "placement": {
+                "height": 48,
+                "left": 797,
+                "top": 275,
+                "width": 99
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "field": "gateway",
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "field": "gateway",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 6",
+              "placement": {
+                "height": 36,
+                "left": 235,
+                "top": 148,
+                "width": 64
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "field": "product-details",
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "field": "product-details",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 7",
+              "placement": {
+                "height": 36,
+                "left": 415,
+                "top": 89,
+                "width": 64
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "field": "product-reviews",
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "field": "product-reviews",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 8",
+              "placement": {
+                "height": 36,
+                "left": 411,
+                "top": 258,
+                "width": 64
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "field": "reviews-ratings",
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "field": "reviews-ratings",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 9",
+              "placement": {
+                "height": 36,
+                "left": 686,
+                "top": 250,
+                "width": 64
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "rgb(204, 204, 220)"
+                },
+                "size": 16,
+                "text": {
+                  "fixed": "# of requests"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 10",
+              "placement": {
+                "height": 50,
+                "left": 13,
+                "top": 309,
+                "width": 100
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "text": {
+                  "fixed": "checkout"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 11",
+              "placement": {
+                "height": 48,
+                "left": 797,
+                "top": 68,
+                "width": 99
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "field": "details-checkout",
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "field": "details-checkout",
+                  "fixed": "0",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 12",
+              "placement": {
+                "height": 36,
+                "left": 684,
+                "top": 47,
+                "width": 63.99609375
+              },
+              "type": "metric-value"
+            }
+          ],
+          "name": "Element 1672955773575",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "rotation": 0,
+            "top": 0,
+            "width": 100
+          },
+          "type": "frame"
+        },
+        "showAdvancedTypes": false
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "gateway, product-details, product-reviews, reviews-ratings, details-checkout\n100, 56, 44, 22, 28",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Service Graph",
+      "type": "canvas"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Show details",
+              "url": "https://ops.grafana-ops.net/d/fU-WBSqWz/synthetic-monitoring-summary?orgId=1"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "blue",
+                "value": 30
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 15,
+        "x": 5,
+        "y": 47
+      },
+      "id": 2,
+      "options": {
+        "infinitePan": false,
+        "inlineEditing": false,
+        "panZoom": false,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            }
+          },
+          "border": {
+            "color": {
+              "fixed": "dark-green"
+            }
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "blinkRate": {
+                  "fixed": 2
+                },
+                "bulbColor": {
+                  "field": "server_database"
+                },
+                "statusColor": {
+                  "field": "server_region"
+                },
+                "type": "Single"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "server_database2",
+                    "fixed": "white"
+                  },
+                  "direction": {
+                    "field": "server_database2",
+                    "mode": "field"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": -1
+                  },
+                  "sourceOriginal": {
+                    "x": 468,
+                    "y": 125
+                  },
+                  "target": {
+                    "x": 0.030303030303030304,
+                    "y": 0
+                  },
+                  "targetName": "Element 11",
+                  "targetOriginal": {
+                    "x": 285,
+                    "y": 170
+                  }
+                },
+                {
+                  "color": {
+                    "field": "server_database",
+                    "fixed": "white"
+                  },
+                  "direction": {
+                    "field": "server_database",
+                    "mode": "field"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": -1
+                  },
+                  "sourceOriginal": {
+                    "x": 468,
+                    "y": 125
+                  },
+                  "target": {
+                    "x": 0.09090909090909091,
+                    "y": 0.16666666666666666
+                  },
+                  "targetName": "Element 12",
+                  "targetOriginal": {
+                    "x": 390,
+                    "y": 264
+                  }
+                },
+                {
+                  "color": {
+                    "field": "server_region",
+                    "fixed": "white"
+                  },
+                  "direction": {
+                    "field": "server_region",
+                    "mode": "field"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": -1
+                  },
+                  "sourceOriginal": {
+                    "x": 588.9921875,
+                    "y": 125
+                  },
+                  "target": {
+                    "x": -0.2727272727272727,
+                    "y": 0.4166666666666667
+                  },
+                  "targetName": "Element 13",
+                  "targetOriginal": {
+                    "x": 658,
+                    "y": 259
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "server 1",
+              "placement": {
+                "height": 114,
+                "left": 468,
+                "top": 11,
+                "width": 120.99609375
+              },
+              "type": "server"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "blinkRate": {
+                  "fixed": 0.25
+                },
+                "bulbColor": {
+                  "field": "database_server"
+                },
+                "statusColor": {
+                  "field": "database_server"
+                },
+                "type": "Database"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "database_server",
+                    "fixed": "white"
+                  },
+                  "direction": {
+                    "field": "database_server",
+                    "mode": "field"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 1
+                  },
+                  "sourceOriginal": {
+                    "x": 328,
+                    "y": 367
+                  },
+                  "target": {
+                    "x": -0.15151515151515152,
+                    "y": -0.16666666666666666
+                  },
+                  "targetName": "Element 12",
+                  "targetOriginal": {
+                    "x": 386,
+                    "y": 268
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "database 1",
+              "placement": {
+                "height": 114,
+                "left": 207,
+                "top": 367,
+                "width": 121
+              },
+              "type": "server"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "blinkRate": {
+                  "fixed": 0.5
+                },
+                "bulbColor": {
+                  "field": "region_server"
+                },
+                "statusColor": {
+                  "field": "region_server"
+                },
+                "type": "Terminal"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "region_server",
+                    "fixed": "white"
+                  },
+                  "direction": {
+                    "field": "region_server",
+                    "mode": "field"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": -1,
+                    "y": 1
+                  },
+                  "sourceOriginal": {
+                    "x": 699,
+                    "y": 365
+                  },
+                  "target": {
+                    "x": -0.21212121212121213,
+                    "y": 0.08333333333333333
+                  },
+                  "targetName": "Element 13",
+                  "targetOriginal": {
+                    "x": 659,
+                    "y": 263
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "region 1",
+              "placement": {
+                "height": 116,
+                "left": 699,
+                "top": 365,
+                "width": 121
+              },
+              "type": "server"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "image": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "database_server",
+                  "fixed": "#ffffff"
+                },
+                "size": 20,
+                "text": {
+                  "field": "database_server",
+                  "fixed": "10%",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 4",
+              "placement": {
+                "height": 29,
+                "left": 318,
+                "top": 282,
+                "width": 46
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "blinkRate": {
+                  "fixed": 0.5,
+                  "mode": "mod"
+                },
+                "bulbColor": {
+                  "field": "database2_server"
+                },
+                "statusColor": {
+                  "field": "database2_server"
+                },
+                "type": "Database"
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "database2_server",
+                    "fixed": "white"
+                  },
+                  "direction": {
+                    "field": "database2_server",
+                    "mode": "field"
+                  },
+                  "path": "straight",
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
+                  "source": {
+                    "x": 1,
+                    "y": 1
+                  },
+                  "sourceOriginal": {
+                    "x": 172,
+                    "y": 191
+                  },
+                  "target": {
+                    "x": -0.3333333333333333,
+                    "y": 0
+                  },
+                  "targetName": "Element 11",
+                  "targetOriginal": {
+                    "x": 279,
+                    "y": 170
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "database 2",
+              "placement": {
+                "height": 116,
+                "left": 55,
+                "top": 191,
+                "width": 117
+              },
+              "type": "server"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "image": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "server_database",
+                  "fixed": "#ffffff"
+                },
+                "size": 20,
+                "text": {
+                  "field": "server_database",
+                  "fixed": "10%",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 6",
+              "placement": {
+                "height": 29,
+                "left": 382,
+                "top": 162,
+                "width": 46
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "image": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "database2_server",
+                  "fixed": "#ffffff"
+                },
+                "size": 20,
+                "text": {
+                  "field": "database2_server",
+                  "fixed": "10%",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 7",
+              "placement": {
+                "height": 29,
+                "left": 206,
+                "top": 138,
+                "width": 46
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "image": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "server_database2",
+                  "fixed": "#ffffff"
+                },
+                "size": 20,
+                "text": {
+                  "field": "server_database2",
+                  "fixed": "10%",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 8",
+              "placement": {
+                "height": 29,
+                "left": 374,
+                "top": 103,
+                "width": 46
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "image": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "server_region",
+                  "fixed": "#ffffff"
+                },
+                "size": 20,
+                "text": {
+                  "field": "server_region",
+                  "fixed": "10%",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 9",
+              "placement": {
+                "height": 29,
+                "left": 625,
+                "top": 158,
+                "width": 46
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "image": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "region_server",
+                  "fixed": "#ffffff"
+                },
+                "size": 20,
+                "text": {
+                  "field": "region_server",
+                  "fixed": "10%",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 10",
+              "placement": {
+                "height": 29,
+                "left": 676,
+                "top": 282,
+                "width": 46
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 11",
+              "placement": {
+                "height": 24,
+                "left": 268,
+                "top": 158,
+                "width": 33
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 12",
+              "placement": {
+                "height": 24,
+                "left": 372,
+                "top": 254,
+                "width": 33
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 13",
+              "placement": {
+                "height": 24,
+                "left": 646,
+                "top": 252,
+                "width": 33
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "image": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "server_region",
+                  "fixed": "#ffffff"
+                },
+                "size": 20,
+                "text": {
+                  "field": "server_database2",
+                  "fixed": "Server 1",
+                  "mode": "fixed"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 14",
+              "placement": {
+                "height": 29,
+                "left": 483,
+                "top": 138,
+                "width": 89
+              },
+              "type": "text"
+            }
+          ],
+          "name": "Element 1672954602175",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "top": 0,
+            "width": 100
+          },
+          "type": "frame"
+        },
+        "showAdvancedTypes": false
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "database_server, server_database, server_region, region_server, database2_server, server_database2\n10, 53, 35, 12, 22, 81",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Network Weathermap",
+      "type": "canvas"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "canvas"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Canvas Connection Examples",
+  "uid": "Pu8lwQAVz",
+  "version": 15
+}

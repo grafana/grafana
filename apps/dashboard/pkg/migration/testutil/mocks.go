@@ -44,11 +44,19 @@ func (m *TestDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemave
 		},
 		{
 			Default:    false,
+			UID:        "testdata-ds-uid",
+			Type:       "grafana-testdata-datasource",
+			APIVersion: "v1",
+			Name:       "TestData",
+			ID:         5,
+		},
+		{
+			Default:    false,
 			UID:        "existing-ref",
 			Type:       "prometheus",
 			APIVersion: "v1",
 			Name:       "Existing Ref Name",
-			ID:         5,
+			ID:         6,
 		},
 		{
 			Default:    false,
@@ -56,7 +64,7 @@ func (m *TestDataSourceProvider) GetDataSourceInfo(_ context.Context) []schemave
 			Type:       "mixed",
 			APIVersion: "v1",
 			Name:       "-- Mixed --",
-			ID:         6,
+			ID:         7,
 		},
 	}
 }

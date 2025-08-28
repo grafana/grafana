@@ -1,0 +1,366 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 20,
+      "panels": [],
+      "title": "Row at the top - not repeated - saved expanded",
+      "type": "row"
+    },
+    {
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 15,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "\u003cdiv class=\"center-vh\"\u003e\n  Repeated row below. The row has \n  a panel that is also repeated horizontally based\n  on values in the $pod variable. \n\u003c/div\u003e",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.2.0-pre",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "id": 16,
+      "panels": [],
+      "repeat": "server",
+      "repeatDirection": "h",
+      "title": "Row for server $server",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 2,
+      "maxPerRow": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "repeat": "pod",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "alias": "server = $server, pod id = $pod ",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1
+        }
+      ],
+      "title": "server = $server, pod = $pod",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 25,
+      "panels": [
+        {
+          "gridPos": {
+            "h": 2,
+            "w": 24,
+            "x": 0,
+            "y": 22
+          },
+          "id": 30,
+          "options": {
+            "code": {
+              "language": "plaintext",
+              "showLineNumbers": false,
+              "showMiniMap": false
+            },
+            "content": "\u003cdiv class=\"center-vh\"\u003e\n  Just a panel\n\u003c/div\u003e",
+            "mode": "markdown"
+          },
+          "pluginVersion": "10.2.0-pre",
+          "type": "text"
+        }
+      ],
+      "title": "Row at the bottom - not repeated - saved collapsed ",
+      "type": "row"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [
+    "templating",
+    "gdev"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "A",
+            "B"
+          ],
+          "value": [
+            "A",
+            "B"
+          ]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "server",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": true,
+            "text": "A",
+            "value": "A"
+          },
+          {
+            "selected": true,
+            "text": "B",
+            "value": "B"
+          },
+          {
+            "selected": false,
+            "text": "C",
+            "value": "C"
+          },
+          {
+            "selected": false,
+            "text": "D",
+            "value": "D"
+          },
+          {
+            "selected": false,
+            "text": "E",
+            "value": "E"
+          },
+          {
+            "selected": false,
+            "text": "F",
+            "value": "F"
+          },
+          {
+            "selected": false,
+            "text": "E",
+            "value": "E"
+          },
+          {
+            "selected": false,
+            "text": "G",
+            "value": "G"
+          },
+          {
+            "selected": false,
+            "text": "H",
+            "value": "H"
+          },
+          {
+            "selected": false,
+            "text": "I",
+            "value": "I"
+          },
+          {
+            "selected": false,
+            "text": "J",
+            "value": "J"
+          },
+          {
+            "selected": false,
+            "text": "K",
+            "value": "K"
+          },
+          {
+            "selected": false,
+            "text": "L",
+            "value": "L"
+          }
+        ],
+        "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "Bob",
+            "Rob"
+          ],
+          "value": [
+            "1",
+            "2"
+          ]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "pod",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": true,
+            "text": "Bob",
+            "value": "1"
+          },
+          {
+            "selected": true,
+            "text": "Rob",
+            "value": "2"
+          },
+          {
+            "selected": false,
+            "text": "Sod",
+            "value": "3"
+          },
+          {
+            "selected": false,
+            "text": "Hod",
+            "value": "4"
+          },
+          {
+            "selected": false,
+            "text": "Cod",
+            "value": "5"
+          }
+        ],
+        "query": "Bob : 1, Rob : 2,Sod : 3, Hod : 4, Cod : 5",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Repeating rows",
+  "uid": "Repeating-rows-uid",
+  "version": 1,
+  "weekStart": ""
+}
