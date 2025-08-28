@@ -66,7 +66,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	// Rewrite the query path
 	query := oas.Paths.Paths[root+options.QueryPath]
 	if query != nil && query.Post != nil {
-		query.Post.Tags = []string{"Query"}
+		query.Post.Tags = []string{"DataSource"}
 		query.Parameters = []*spec3.Parameter{
 			{
 				ParameterProps: spec3.ParameterProps{
