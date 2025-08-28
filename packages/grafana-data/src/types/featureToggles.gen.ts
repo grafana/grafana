@@ -321,10 +321,6 @@ export interface FeatureToggles {
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
-  * Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
-  */
-  prometheusCodeModeMetricNamesSearch?: boolean;
-  /**
   * Add cumulative and window functions to the add field from calculation transformation
   * @default true
   */
@@ -616,10 +612,6 @@ export interface FeatureToggles {
   */
   newFiltersUI?: boolean;
   /**
-  * Allows access to the new react-data-grid based table component.
-  */
-  tableNextGen?: boolean;
-  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
@@ -755,6 +747,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingAIGenTemplates?: boolean;
+  /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
   /**
   * Enable AI-analyze central state history.
   * @default false

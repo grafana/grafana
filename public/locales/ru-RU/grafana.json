@@ -2807,6 +2807,7 @@
           "time": "Время"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Фильтровать группу",
       "filter-group-tooltip": "Фильтруйте каждую группу истории состояний по точному совпадению или регулярному выражению, например:",
       "placeholder-search": "Поиск",
@@ -6415,7 +6416,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Добавить запрос из библиотеки"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -9081,6 +9082,7 @@
     "name-line-width": "Ширина линии",
     "name-stacking": "Расположение в стеке"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Загрузка",
@@ -9700,6 +9702,7 @@
       "show-timestamps": "Показать метки времени",
       "show-unique-labels": "Показать уникальные метки",
       "unwrap-lines": "Не переносить строки",
+      "wrap-json-lines": "",
       "wrap-lines": "Переносить строки"
     },
     "logs-navigation": {
@@ -11300,6 +11303,7 @@
       "description-enabled": "После включения автоматического внесения изменения целевой элемент невозможно изменить.",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
       "description-title": "Понятное название конфигурации",
+      "error-fetch-branches": "",
       "error-required": "Поле является обязательным.",
       "error-save-repository": "Не удалось сохранить параметры репозитория",
       "label-automatic-pulling": "Автоматическое включение изменений",
@@ -11512,6 +11516,16 @@
       "title-delete-all-configured-repositories": "Удаление всех настроенных репозиториев",
       "title-legacy-storage-detected": "Обнаружено устаревшее хранилище"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Подробнее",
       "loading-finished-job": "Загрузка завершенного задания...",
@@ -12790,10 +12804,6 @@
     "login": "Вход"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "При выборе этого параметра текст будет переноситься по ширине текста в настроенном столбце",
-      "label-wrap-text": "Перенос текста"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Режим отображения индикатора",
       "label-value-display": "Отображаемое значение"
@@ -12821,13 +12831,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "При выборе этого параметра вся строка будет окрашена аналогично этой ячейке.",
-      "description-wrap-text": "При выборе этого параметра текст будет переноситься по ширине текста в настроенном столбце",
-      "label": {
-        "text-alpha": "Альфа"
-      },
       "label-apply-to-entire-row": "Применить ко всей строке",
-      "label-background-display-mode": "Режим отображения фона",
-      "wrap-text": "Перенос текста"
+      "label-background-display-mode": "Режим отображения фона"
     },
     "column-alignment-options": {
       "label-auto": "Авто",
@@ -12845,8 +12850,9 @@
     "description-column-filter": "Включает/отключает фильтры полей в таблице",
     "description-count-rows": "Отобразить один счетчик для всех строк данных",
     "description-fields": "Выбрать поля, которые необходимо рассчитать",
+    "description-frozen-columns": "",
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
-    "description-wrap-header-text": "Включает перенос текста для заголовков столбцов",
+    "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Альтернативный текст, который будет отображаться, если невозможно показать изображение, или для пользователей, которые используют программу чтения с экрана",
       "description-title-text": "Текст, который будет отображаться при наведении курсора на изображение",
@@ -12871,51 +12877,7 @@
     "name-column-filter": "Фильтр столбцов",
     "name-column-width": "Ширина столбца",
     "name-count-rows": "Подсчет строк",
-    "name-enable-paginations": "Включить нумерацию страниц",
-    "name-fields": "Поля",
-    "name-hide-in-table": "Скрыть в таблице",
-    "name-min-column-width": "Минимальная ширина столбца",
-    "name-show-table-footer": "Показать футер таблицы",
-    "name-show-table-header": "Показать заголовок таблицы",
-    "name-wrap-header-text": "Перенос текста заголовка",
-    "placeholder-column-width": "авто",
-    "placeholder-fields": "Все числовые поля",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Параметры ячеек",
-    "category-table": "Таблица",
-    "category-table-footer": "Футер таблицы",
-    "cell-height-options": {
-      "label-large": "Большая",
-      "label-medium": "Средняя",
-      "label-small": "Малая"
-    },
-    "column-alignment-options": {
-      "label-auto": "Авто",
-      "label-center": "По центру",
-      "label-left": "Слева",
-      "label-right": "Справа"
-    },
-    "description-calculation": "Выбрать функцию преобразования / расчета",
-    "description-cell-value-inspect": "Включить проверку значений ячеек в модальном окне",
-    "description-column-filter": "Включает/отключает фильтры полей в таблице",
-    "description-count-rows": "Отобразить один счетчик для всех строк данных",
-    "description-fields": "Выбрать поля, которые необходимо рассчитать",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Расчет",
-    "name-cell-height": "Высота ячеек",
-    "name-cell-type": "Тип ячеек",
-    "name-cell-value-inspect": "Проверка значений ячеек",
-    "name-column-alignment": "Выравнивание столбцов",
-    "name-column-filter": "Фильтр столбцов",
-    "name-column-width": "Ширина столбца",
-    "name-count-rows": "Подсчет строк",
-    "name-enable-pagination": "Включить нумерацию страниц",
+    "name-enable-pagination": "",
     "name-fields": "Поля",
     "name-frozen-columns": "",
     "name-hide-in-table": "Скрыть в таблице",
@@ -12924,6 +12886,8 @@
     "name-show-table-header": "Показать заголовок таблицы",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Перенос текста заголовка",
+    "name-wrap-text": "",
     "placeholder-column-width": "авто",
     "placeholder-fields": "Все числовые поля",
     "tooltip-placement-options": {

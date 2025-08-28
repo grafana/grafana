@@ -244,7 +244,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Namespace: summary.Namespace,
 				Group:     summary.Group,
 				Resource:  summary.Resource,
-			}, summary.Count, summary.ResourceVersion, "rebuildAfterBatchLoad")
+			}, summary.Count, summary.ResourceVersion, "rebuildAfterBatchLoad", true)
 			if err != nil {
 				s.log.Warn("error building search index after batch load", "err", err)
 				rsp.Error = &resourcepb.ErrorResult{

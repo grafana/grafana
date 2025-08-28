@@ -216,6 +216,21 @@
     },
     {
       "metadata": {
+        "name": "alertingEnrichmentPerRule",
+        "resourceVersion": "1756206837948",
+        "creationTimestamp": "2025-08-26T11:13:57Z"
+      },
+      "spec": {
+        "description": "Enable enrichment per rule in the alerting UI.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingFilterV2",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-09-11T11:29:26Z"
@@ -405,6 +420,22 @@
         "description": "Optimizes eligible queries in order to reduce load on datasources",
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleNotificationMessageSectionExtension",
+        "resourceVersion": "1756193222535",
+        "creationTimestamp": "2025-08-26T07:27:02Z",
+        "deletionTimestamp": "2025-08-26T11:13:57Z"
+      },
+      "spec": {
+        "description": "Enable rule notification message section extension.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2603,7 +2634,8 @@
       "metadata": {
         "name": "prometheusCodeModeMetricNamesSearch",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2024-04-04T20:38:23Z"
+        "creationTimestamp": "2024-04-04T20:38:23Z",
+        "deletionTimestamp": "2025-08-01T07:53:50Z"
       },
       "spec": {
         "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
@@ -3056,7 +3088,8 @@
       "metadata": {
         "name": "tableNextGen",
         "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-03-26T03:57:57Z"
+        "creationTimestamp": "2025-03-26T03:57:57Z",
+        "deletionTimestamp": "2025-08-19T14:11:23Z"
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",
