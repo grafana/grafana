@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -24,7 +24,7 @@ import {
   sceneGraph,
   useUrlSync,
 } from '@grafana/scenes';
-import { GraphDrawStyle, VisibilityMode } from '@grafana/schema/dist/esm/index';
+import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import {
   Button,
   GraphGradientMode,
@@ -39,10 +39,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { LogMessages, logInfo } from '../../../Analytics';
+// import { LogMessages, logInfo } from '../../../Analytics';
 
-import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
-import { HistoryEventsListObject } from './EventListSceneObject';
+// import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
+// import { HistoryEventsListObject } from './EventListSceneObject';
 
 export const LABELS_FILTER = 'LABELS_FILTER';
 export const STATE_FILTER_TO = 'STATE_FILTER_TO';
@@ -68,11 +68,11 @@ export const StateFilterValues = {
 export const CentralAlertHistoryScene = () => {
   //track the loading of the central alert state history
 
-  useEffect(() => {
-    logInfo(LogMessages.loadedCentralAlertStateHistory);
-  }, []);
+  // useEffect(() => {
+  //   logInfo(LogMessages.loadedCentralAlertStateHistory);
+  // }, []);
 
-  useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
+  // useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
   const scene = useMemo(() => {
     // create the variables for the filters
@@ -133,9 +133,10 @@ export const CentralAlertHistoryScene = () => {
         direction: 'column',
         children: [
           getEventsScenesFlexItem(),
-          new SceneFlexItem({
-            body: new HistoryEventsListObject({}),
-          }),
+          // new SceneFlexItem({
+          //   // body: new HistoryEventsListObject({}),
+          //   body: () =><div>Hello</div>,
+          // }),
         ],
       }),
     });
@@ -158,7 +159,7 @@ export const CentralAlertHistoryScene = () => {
  */
 function getQueryRunnerForAlertHistoryDataSource() {
   const query = new SceneQueryRunner({
-    datasource: alertStateHistoryDatasource,
+    // datasource: alertStateHistoryDatasource,
     queries: [
       {
         refId: 'A',
