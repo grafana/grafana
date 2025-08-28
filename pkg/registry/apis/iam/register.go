@@ -118,7 +118,6 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	// "no kind is registered for the type"
-	// TODO: check this
 	legacyiamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
 	metav1.AddToGroupVersion(scheme, iamv0.SchemeGroupVersion)
