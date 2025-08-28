@@ -1,5 +1,15 @@
 import * as React from 'react';
 
+interface FolderTreeItem {
+  isOpen: boolean;
+  level: number;
+  item: {
+    kind: 'folder';
+    title: string;
+    uid: string;
+  };
+}
+
 interface FolderPickerProps {
   /* Folder UID to show as selected */
   value?: string;
@@ -17,7 +27,7 @@ interface FolderPickerProps {
   rootFolderUID?: string;
 
   /* Custom root folder item, default is "Dashboards" */
-  rootFolderItem?: string;
+  rootFolderItem?: FolderTreeItem;
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';

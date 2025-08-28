@@ -49,7 +49,7 @@ describe('useFoldersQuery', () => {
       expect(sortedItemTitles).toEqual(expectedTitles);
     });
 
-    it('uses custom root folder display name when rootFolderDisplay is provided', async () => {
+    it('uses custom root folder display name when rootFolderItem is provided', async () => {
       runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
       const { result } = renderHook(
         () =>

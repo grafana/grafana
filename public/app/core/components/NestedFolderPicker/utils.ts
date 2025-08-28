@@ -1,8 +1,8 @@
 import { t } from '@grafana/i18n';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { DashboardsTreeItem, DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 
-export const getRootFolderItem = (): DashboardsTreeItem => ({
+export const getRootFolderItem = (): DashboardsTreeItem<DashboardViewItemWithUIItems> => ({
   isOpen: true,
   level: 0,
   item: {
@@ -12,7 +12,10 @@ export const getRootFolderItem = (): DashboardsTreeItem => ({
   },
 });
 
-export const getCustomRootFolderItem = (title?: string, managedBy?: ManagerKind): DashboardsTreeItem => ({
+export const getCustomRootFolderItem = (
+  title?: string,
+  managedBy?: ManagerKind
+): DashboardsTreeItem<DashboardViewItemWithUIItems> => ({
   isOpen: true,
   level: 0,
   item: {
