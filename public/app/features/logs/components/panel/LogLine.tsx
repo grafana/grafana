@@ -156,6 +156,16 @@ const LogLineComponent = memo(
       [log, onClick]
     );
 
+    const handleLogDetailsResize = useCallback(() => {
+      if (!onOverflow || !logLineRef.current || !virtualization) {
+        return;
+      }
+      const actualHeight = hasUnderOrOverflow(virtualization, logLineRef.current, undefined, log.collapsed);
+      if (actualHeight) {
+        onOverflow(index, log.uid, actualHeight);
+      }
+    }, [index, log.collapsed, log.uid, onOverflow, virtualization]);
+
     const detailsShown = detailsDisplayed(log);
 
     return (
@@ -255,7 +265,13 @@ const LogLineComponent = memo(
           </div>
         )}
         {detailsMode === 'inline' && detailsShown && (
-          <InlineLogLineDetails logs={logs} log={log} timeRange={timeRange} timeZone={timeZone} />
+          <InlineLogLineDetails
+            logs={logs}
+            log={log}
+            onResize={handleLogDetailsResize}
+            timeRange={timeRange}
+            timeZone={timeZone}
+          />
         )}
       </>
     );

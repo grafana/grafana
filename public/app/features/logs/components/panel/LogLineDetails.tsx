@@ -141,11 +141,12 @@ LogLineDetailsTabs.displayName = 'LogLineDetailsTabs';
 export interface InlineLogLineDetailsProps {
   log: LogListModel;
   logs: LogListModel[];
+  onResize(): void;
   timeRange: TimeRange;
   timeZone: string;
 }
 
-export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: InlineLogLineDetailsProps) => {
+export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
   const { app, detailsWidth, noInteractions } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -158,6 +159,14 @@ export const InlineLogLineDetails = memo(({ logs, log, timeRange, timeZone }: In
       });
     }
   }, [app, noInteractions]);
+
+  useEffect(() => {
+    function handleResize() {
+      onResize();
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [onResize]);
 
   const saveScroll = useCallback(() => {
     saveDetailsScrollPosition(log, scrollRef.current?.scrollTop ?? 0);
