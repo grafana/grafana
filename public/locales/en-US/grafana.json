@@ -2634,11 +2634,13 @@
       "grafana-folder": "Grafana folder",
       "health": "Health",
       "label": {
+        "dma": "External",
+        "gma": "Grafana Managed",
         "hide": "Hide",
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "no-groups": "No groups available",
+      "no-labels": "No labels available",
       "no-namespaces": "No folders available",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
@@ -2666,6 +2668,7 @@
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
         "rule-name": "Rule name",
+        "rule-source": "Rule source",
         "rule-type": "Type",
         "state": "State"
       }
