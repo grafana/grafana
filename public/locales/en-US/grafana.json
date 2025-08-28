@@ -1118,6 +1118,11 @@
       "new-alert-rule": "New alert rule",
       "new-recording-rule": "New recording rule"
     },
+    "enrichment": {
+      "error-boundary": {
+        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+      }
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
