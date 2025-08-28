@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Zakázat pravidla nahrávání (beta)",
         "label-http-method": "Metoda HTTP",
         "label-incremental-querying-beta": "Přírůstkové dotazování (beta)",
-        "label-metric-names-suggestion-limit": "Limit návrhů názvů metriky",
         "label-prom-type-version": "{{promType}} verze",
         "label-prometheus-type": "Typ Prometheus",
         "label-query-overlap-window": "Okno překrytí dotazu",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Tato funkce zakáže pravidla nahrávání. Zapněte tuto možnost pro zlepšení výkonu nástěnky",
         "tooltip-http-method": "K dotazu na zdroj dat Prometheus můžete použít metodu POST nebo GET HTTP. Doporučenou metodou je POST, protože umožňuje větší dotazy. Změňte na GET, pokud máte verzi Prometheus starší než 2.1 nebo pokud jsou požadavky POST ve vaší síti omezeny.",
         "tooltip-incremental-querying-beta": "Tato funkce změní výchozí chování relativních dotazů tak, aby vždy požadovaly aktuální data z instance Prometheus. Místo toho budou výsledky dotazů uloženy do vyrovnávací paměti a budou požadovány pouze nové záznamy. Povolte tuto možnost pro snížení zatížení databáze a sítě.",
-        "tooltip-metric-names-suggestion-limit": "Maximální počet názvů metrik, které se mohou zobrazit jako návrhy automatického doplňování v režimu kódu editoru dotazů.",
         "tooltip-prom-type-version": "Tímto nastavíte verzi své instance {{promType}}, pokud není automaticky nakonfigurována.",
         "tooltip-prometheus-type": "Nastavte hodnotu na typ databáze Prometheus, např. Prometheus, Cortex, Mimir nebo Thanos. Změna tohoto pole uloží aktuální nastavení. Některé typy Prometheus podporují nebo nepodporují různá rozhraní API. Některé typy například podporují shodu regex pro dotazy na štítky za účelem zlepšení výkonu. Některé typy mají API pro metadata. Pokud toto nastavíte nesprávně, při dotazování na metriky a štítky můžete zaznamenat neobvyklé chování. Zkontrolujte dokumentaci Prometheus a ujistěte se, že zadáváte správný typ.",
         "tooltip-query-overlap-window": "Nastavte dobu trvání, například {{example1}} nebo {{example2}} nebo {{example3}}. Výchozí hodnota: {{default}}. Tato doba trvání bude přidána k době trvání každého přírůstkového požadavku.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "auto.",
         "title-options": "Možnosti",
         "tooltip-min-step": "Dodatečný dolní limit pro parametr kroku dotazu Prometheus a pro proměnné <2>{{interval}}</2> a <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Návrhy automatického doplňování jsou omezeny",
-        "tooltip-autocomplete-suggestions-limited": "Počet názvů metrik překračuje limit automatického doplňování. Zobrazuje se pouze {{autocompleteLimit}} nejrelevantnější/ch metrik. Prahovou hodnotu můžete upravit v nastavení zdroje dat."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Došlo k syntaktické chybě nebo nelze vizualizovat strukturu dotazu při přepnutí do režimu nástroje pro tvorbu. Části dotazu mohou být ztraceny.",

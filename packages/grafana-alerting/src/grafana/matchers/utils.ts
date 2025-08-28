@@ -2,6 +2,13 @@ import { parseFlags } from '@grafana/data';
 
 import { Label, LabelMatcher } from './types';
 
+type LabelMatchingResult = {
+  // wether all of the labels match the given set of matchers
+  matches: boolean;
+  // details of which labels matched which matcher
+  details: LabelMatchDetails[];
+};
+
 // LabelMatchDetails is a map of labels to their match results
 export type LabelMatchDetails = {
   labelIndex: number; // index of the label in the labels array
@@ -15,13 +22,6 @@ type PositiveLabelMatch = {
 type NegativeLabelMatch = {
   match: false;
   matcher: null;
-};
-
-type LabelMatchingResult = {
-  // wether all of the labels match the given set of matchers
-  matches: boolean;
-  // details of which labels matched which matcher
-  details: LabelMatchDetails[];
 };
 
 // returns a match results for given set of matchers (from a policy for instance) and a set of labels

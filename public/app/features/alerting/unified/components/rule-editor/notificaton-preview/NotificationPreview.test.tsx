@@ -1,11 +1,10 @@
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
-import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { getMockConfig, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery, mockAlertmanagerAlert } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
@@ -18,7 +17,6 @@ import {
 } from '../../../utils/datasource';
 
 import { NotificationPreview } from './NotificationPreview';
-import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
 
 jest.mock('../../../useRouteGroupsMatcher');
 

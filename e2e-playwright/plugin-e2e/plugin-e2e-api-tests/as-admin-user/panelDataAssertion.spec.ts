@@ -38,7 +38,7 @@ test.describe(
           formatExpectError('Could not locate header elements in table panel')
         ).toContainText(['col1', 'col2']);
         await expect(
-          panelEditPage.panel.data,
+          panelEditPage.panel.locator.getByRole('gridcell'),
           formatExpectError('Could not locate headers in table panel')
         ).toContainText(['val1', 'val2', 'val3', 'val4']);
       });
@@ -58,7 +58,7 @@ test.describe(
           formatExpectError('Could not locate header elements in table panel')
         ).toContainText(['col1', 'col2']);
         await expect(
-          panelEditPage.panel.data,
+          panelEditPage.panel.locator.getByRole('gridcell'),
           formatExpectError('Could not locate data elements in table panel')
         ).toContainText(['val1', 'val2', 'val3', 'val4']);
       });
