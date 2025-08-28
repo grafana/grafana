@@ -1118,6 +1118,11 @@
       "new-alert-rule": "New alert rule",
       "new-recording-rule": "New recording rule"
     },
+    "enrichment": {
+      "error-boundary": {
+        "notification-message-section-extension": "Notification Message Section Extension failed to load"
+      }
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
@@ -9529,7 +9534,7 @@
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
-      "open-assistant": "Explain this log line in Assistant",
+      "open-assistant": "Explain log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
@@ -9555,8 +9560,8 @@
       "hide-details": "Show log details",
       "icon-label": "Log menu",
       "log-line": "Log line",
-      "log-line-explainer": "Explain this log line in a concise way",
-      "open-assistant": "Explain this log line in Assistant",
+      "log-line-explainer": "Explain log line in a concise way",
+      "open-assistant": "Explain log line in Assistant",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
