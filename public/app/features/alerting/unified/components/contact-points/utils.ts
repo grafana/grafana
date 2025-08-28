@@ -1,6 +1,7 @@
 import { difference, groupBy, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
+import { computeInheritedTree } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
@@ -14,7 +15,6 @@ import {
 import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types/alerting';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
-import { computeInheritedTree } from '../../utils/notification-policies';
 import { extractReceivers } from '../../utils/receivers';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
 import { ReceiverPluginMetadata, getOnCallMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';

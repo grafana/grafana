@@ -5,6 +5,7 @@ import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
+import { getInheritedProperties } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -38,7 +39,6 @@ import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } 
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createContactPointSearchLink, createMuteTimingLink } from '../../utils/misc';
-import { InheritableProperties, getInheritedProperties } from '../../utils/notification-policies';
 import { InsertPosition } from '../../utils/routeTree';
 import { Authorize } from '../Authorize';
 import { PopupCard } from '../HoverCard';
@@ -51,6 +51,8 @@ import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 import { Matchers } from './Matchers';
 import { RoutesMatchingFilters } from './NotificationPoliciesList';
 import { TimingOptions } from './timingOptions';
+
+type InheritableProperties = ReturnType<typeof getInheritedProperties>;
 
 const POLICIES_PER_PAGE = 20;
 
