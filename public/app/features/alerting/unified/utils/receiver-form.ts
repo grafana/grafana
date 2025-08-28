@@ -7,7 +7,7 @@ import {
   GrafanaManagedReceiverSecureFields,
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
-import { CloudNotifierType, NotificationChannelOption, NotifierDTO, NotifierType } from 'app/types/alerting';
+import { CloudNotifierType, NotificationChannelOption, NotifierDTO, NotifierType } from 'app/features/alerting/unified/types/alerting';
 
 import {
   ChannelValues,

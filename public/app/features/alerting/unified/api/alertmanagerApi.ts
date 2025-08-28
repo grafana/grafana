@@ -2,7 +2,7 @@ import { isEmpty } from 'lodash';
 
 import { encodeMatcher } from 'app/features/alerting/unified/utils/matchers';
 import { dispatch } from 'app/store/store';
-import { NotificationChannelOption, NotifierDTO, ReceiversStateDTO } from 'app/types/alerting';
+import { NotificationChannelOption, NotifierDTO, ReceiversStateDTO } from 'app/features/alerting/unified/types/alerting';
 
 import {
   AlertManagerCortexConfig,

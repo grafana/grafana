@@ -11,7 +11,7 @@ import {
   ObjectMatcher,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiversState } from 'app/types/alerting';
+import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
 
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { mockReceiversState } from '../../mocks';

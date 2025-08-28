@@ -32,7 +32,7 @@ import {
   Receiver,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiversState } from 'app/types/alerting';
+import { ReceiversState } from 'app/features/alerting/unified/types/alerting';
 
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';

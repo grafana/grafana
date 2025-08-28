@@ -11,7 +11,7 @@ import {
   Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types/alerting';
+import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/features/alerting/unified/types/alerting';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
 import { computeInheritedTree } from '../../utils/notification-policies';

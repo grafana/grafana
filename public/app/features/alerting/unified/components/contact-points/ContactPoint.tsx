@@ -11,7 +11,7 @@ import { useDeleteContactPointModal } from 'app/features/alerting/unified/compon
 import { useDeleteContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
-import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
+import { GrafanaNotifierType, NotifierStatus } from 'app/features/alerting/unified/types/alerting';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';

@@ -26,7 +26,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
-import { NotifiersState, ReceiversState } from 'app/types/alerting';
+import { NotifiersState, ReceiversState } from 'app/features/alerting/unified/types/alerting';
 import { DashboardDTO } from 'app/types/dashboard';
 import { FolderDTO } from 'app/types/folders';
 import { StoreState } from 'app/types/store';
