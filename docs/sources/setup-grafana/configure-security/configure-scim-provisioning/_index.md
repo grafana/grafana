@@ -160,5 +160,6 @@ The following table compares SCIM with other synchronization methods to help you
 ## Next steps
 
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
+- [Troubleshoot SCIM provisioning](troubleshooting/)
 - [Configure SCIM with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/)
 - [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/)
