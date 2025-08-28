@@ -2781,6 +2781,7 @@
           "time": "Tempo"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Grupo de filtros",
       "filter-group-tooltip": "Filtre cada grupo de histórico de estado por correspondência exata ou expressão regular, por exemplo:",
       "placeholder-search": "Pesquisar",
@@ -6373,7 +6374,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Adicionar consulta da biblioteca"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -9039,6 +9040,7 @@
     "name-line-width": "Largura da linha",
     "name-stacking": "Empilhamento"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Carregando",
@@ -9642,6 +9644,7 @@
       "show-timestamps": "Exibir data e hora",
       "show-unique-labels": "Exibir rótulos únicos",
       "unwrap-lines": "Desfazer quebra de linha",
+      "wrap-json-lines": "",
       "wrap-lines": "Aplicar quebra de linha"
     },
     "logs-navigation": {
@@ -11230,6 +11233,7 @@
       "description-enabled": "Depois que a extração automática for ativada, não será possível alterar o destino.",
       "description-read-only": "Os recursos não podem ser modificados por meio da Grafana.",
       "description-title": "Um nome de fácil compreensão para a configuração",
+      "error-fetch-branches": "",
       "error-required": "Este campo é obrigatório.",
       "error-save-repository": "Falha ao salvar as configurações do repositório",
       "label-automatic-pulling": "Extração automática",
@@ -11442,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Excluir todos os repositórios configurados",
       "title-legacy-storage-detected": "Armazenamento legado detectado"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Veja os detalhes",
       "loading-finished-job": "Carregando tarefa concluída…",
@@ -12708,10 +12722,6 @@
     "login": "Entrar"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Se selecionado, o texto será ajustado de acordo com a largura do texto na coluna configurada",
-      "label-wrap-text": "Quebrar texto"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Modo de exibição do medidor",
       "label-value-display": "Exibição de valor"
@@ -12739,13 +12749,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Se selecionada, toda a linha será colorida como esta célula.",
-      "description-wrap-text": "Se selecionado, o texto será ajustado de acordo com a largura do texto na coluna configurada",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Aplicar a toda a linha",
-      "label-background-display-mode": "Modo de exibição de plano de fundo",
-      "wrap-text": "Quebrar texto"
+      "label-background-display-mode": "Modo de exibição de plano de fundo"
     },
     "column-alignment-options": {
       "label-auto": "Automático",
@@ -12763,8 +12768,9 @@
     "description-column-filter": "Ativa/desativa filtros de campo na tabela",
     "description-count-rows": "Exibir uma única contagem para todas as linhas de dados",
     "description-fields": "Selecione os campos que devem ser calculados",
+    "description-frozen-columns": "",
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
-    "description-wrap-header-text": "Ativa a quebra de texto para cabeçalhos de coluna",
+    "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que será exibido se uma imagem não puder ser exibida ou para usuários que usam leitor de tela",
       "description-title-text": "Texto que será exibido ao passar o cursor sobre a imagem",
@@ -12789,51 +12795,7 @@
     "name-column-filter": "Filtro de coluna",
     "name-column-width": "Largura da coluna",
     "name-count-rows": "Contar linhas",
-    "name-enable-paginations": "Ativar paginação",
-    "name-fields": "Campos",
-    "name-hide-in-table": "Ocultar na tabela",
-    "name-min-column-width": "Largura mínima da coluna",
-    "name-show-table-footer": "Mostrar rodapé da tabela",
-    "name-show-table-header": "Mostrar cabeçalho da tabela",
-    "name-wrap-header-text": "Ajustar texto do cabeçalho",
-    "placeholder-column-width": "automático",
-    "placeholder-fields": "Todos os campos numéricos",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Opções de célula",
-    "category-table": "Tabela",
-    "category-table-footer": "Rodapé da tabela",
-    "cell-height-options": {
-      "label-large": "Grande",
-      "label-medium": "Média",
-      "label-small": "Pequeno"
-    },
-    "column-alignment-options": {
-      "label-auto": "Automático",
-      "label-center": "Centro",
-      "label-left": "Esquerda",
-      "label-right": "Direita"
-    },
-    "description-calculation": "Escolha uma função de redução/cálculo",
-    "description-cell-value-inspect": "Ativar inspeção de valor de célula em uma janela modal",
-    "description-column-filter": "Ativa/desativa filtros de campo na tabela",
-    "description-count-rows": "Exibir uma única contagem para todas as linhas de dados",
-    "description-fields": "Selecione os campos que devem ser calculados",
-    "description-frozen-columns": "",
-    "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Cálculo",
-    "name-cell-height": "Altura da célula",
-    "name-cell-type": "Tipo de célula",
-    "name-cell-value-inspect": "Inspeção do valor da célula",
-    "name-column-alignment": "Alinhamento da coluna",
-    "name-column-filter": "Filtro de coluna",
-    "name-column-width": "Largura da coluna",
-    "name-count-rows": "Contar linhas",
-    "name-enable-pagination": "Ativar paginação",
+    "name-enable-pagination": "",
     "name-fields": "Campos",
     "name-frozen-columns": "",
     "name-hide-in-table": "Ocultar na tabela",
@@ -12842,6 +12804,8 @@
     "name-show-table-header": "Mostrar cabeçalho da tabela",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Ajustar texto do cabeçalho",
+    "name-wrap-text": "",
     "placeholder-column-width": "automático",
     "placeholder-fields": "Todos os campos numéricos",
     "tooltip-placement-options": {

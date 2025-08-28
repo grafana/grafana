@@ -2768,6 +2768,7 @@
           "time": "時間"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "グループを絞り込む",
       "filter-group-tooltip": "各状態履歴グループを完全一致または正規表現で絞り込めます。例：",
       "placeholder-search": "検索",
@@ -6352,7 +6353,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "ライブラリからクエリを追加"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -9018,6 +9019,7 @@
     "name-line-width": "線の太さ",
     "name-stacking": "積み上げ"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "読込中",
@@ -9613,6 +9615,7 @@
       "show-timestamps": "タイムスタンプを表示",
       "show-unique-labels": "一意のラベルを表示",
       "unwrap-lines": "行の折り返しを解除",
+      "wrap-json-lines": "",
       "wrap-lines": "行を折り返す"
     },
     "logs-navigation": {
@@ -11195,6 +11198,7 @@
       "description-enabled": "自動取得を有効にすると、対象を変更できなくなります。",
       "description-read-only": "Grafanaではリソースを変更できません。",
       "description-title": "わかりやすい設定名",
+      "error-fetch-branches": "",
       "error-required": "このフィールドは必須です。",
       "error-save-repository": "リポジトリ設定の保存に失敗しました",
       "label-automatic-pulling": "自動取得",
@@ -11407,6 +11411,16 @@
       "title-delete-all-configured-repositories": "設定済みのリポジトリをすべて削除",
       "title-legacy-storage-detected": "レガシーストレージが検出されました"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "詳細を表示",
       "loading-finished-job": "完了したジョブを読み込み中...",
@@ -12667,10 +12681,6 @@
     "login": "ログイン"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "選択されている場合、テキストは設定された列のテキスト幅で折り返されます",
-      "label-wrap-text": "テキストを折り返す"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "ゲージ表示モード",
       "label-value-display": "値を表示"
@@ -12698,13 +12708,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "選択されている場合、行全体がこのセルと同じ色で表示されます。",
-      "description-wrap-text": "選択されている場合、テキストは設定された列のテキスト幅で折り返されます",
-      "label": {
-        "text-alpha": "アルファ"
-      },
       "label-apply-to-entire-row": "行全体に適用",
-      "label-background-display-mode": "背景表示モード",
-      "wrap-text": "テキストを折り返す"
+      "label-background-display-mode": "背景表示モード"
     },
     "column-alignment-options": {
       "label-auto": "自動",
@@ -12722,8 +12727,9 @@
     "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
     "description-count-rows": "すべてのデータ行の単一カウントを表示",
     "description-fields": "計算するフィールドを選択",
+    "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
-    "description-wrap-header-text": "列ヘッダーのテキスト折り返しを有効にする",
+    "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "画像が表示できない場合やスクリーンリーダーを使用するユーザーのために表示される代替テキスト",
       "description-title-text": "画像にカーソルを合わせたときに表示されるテキスト",
@@ -12748,51 +12754,7 @@
     "name-column-filter": "列フィルター",
     "name-column-width": "列幅",
     "name-count-rows": "行数",
-    "name-enable-paginations": "ページ分割を有効化",
-    "name-fields": "フィールド",
-    "name-hide-in-table": "テーブルで非表示",
-    "name-min-column-width": "最小列幅",
-    "name-show-table-footer": "テーブルフッターを表示",
-    "name-show-table-header": "テーブルヘッダーを表示",
-    "name-wrap-header-text": "ヘッダーテキストの折り返し",
-    "placeholder-column-width": "自動",
-    "placeholder-fields": "すべての数値フィールド",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "セルオプション",
-    "category-table": "テーブル",
-    "category-table-footer": "テーブルフッター",
-    "cell-height-options": {
-      "label-large": "大",
-      "label-medium": "中",
-      "label-small": "小"
-    },
-    "column-alignment-options": {
-      "label-auto": "自動",
-      "label-center": "中央",
-      "label-left": "左",
-      "label-right": "右"
-    },
-    "description-calculation": "リデューサー関数/計算を選択",
-    "description-cell-value-inspect": "モーダルウィンドウでセル値の検査を有効化",
-    "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
-    "description-count-rows": "すべてのデータ行の単一カウントを表示",
-    "description-fields": "計算するフィールドを選択",
-    "description-frozen-columns": "",
-    "description-min-column-width": "列の自動サイズ変更の最小幅",
-    "description-tooltip-from-field": "",
-    "name-calculation": "計算",
-    "name-cell-height": "セルの高さ",
-    "name-cell-type": "セルの種類",
-    "name-cell-value-inspect": "セル値の検査",
-    "name-column-alignment": "列の配置",
-    "name-column-filter": "列フィルター",
-    "name-column-width": "列幅",
-    "name-count-rows": "行数",
-    "name-enable-pagination": "ページ分割を有効化",
+    "name-enable-pagination": "",
     "name-fields": "フィールド",
     "name-frozen-columns": "",
     "name-hide-in-table": "テーブルで非表示",
@@ -12801,6 +12763,8 @@
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "ヘッダーテキストの折り返し",
+    "name-wrap-text": "",
     "placeholder-column-width": "自動",
     "placeholder-fields": "すべての数値フィールド",
     "tooltip-placement-options": {

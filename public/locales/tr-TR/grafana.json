@@ -2781,6 +2781,7 @@
           "time": "Zaman"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Filtre grubu",
       "filter-group-tooltip": "Her durum geçmişi grubunu tam eşleşmeyle veya düzenli ifadeyle filtreleyin, örn.",
       "placeholder-search": "Ara",
@@ -6373,7 +6374,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Kütüphaneden sorgu ekle"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -9039,6 +9040,7 @@
     "name-line-width": "Çizgi genişliği",
     "name-stacking": "İstifleme"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Yükleniyor",
@@ -9642,6 +9644,7 @@
       "show-timestamps": "Zaman damgalarını göster",
       "show-unique-labels": "Benzersiz etiketleri göster",
       "unwrap-lines": "Satırları çöz",
+      "wrap-json-lines": "",
       "wrap-lines": "Satırları kaydır"
     },
     "logs-navigation": {
@@ -11230,6 +11233,7 @@
       "description-enabled": "Otomatik çekme etkinleştirildikten sonra hedef değiştirilemez.",
       "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
       "description-title": "Yapılandırma için okunabilir ad",
+      "error-fetch-branches": "",
       "error-required": "Bu alan gereklidir.",
       "error-save-repository": "Depo ayarları kaydedilemedi",
       "label-automatic-pulling": "Otomatik çekme",
@@ -11442,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Yapılandırılmış tüm depoları sil",
       "title-legacy-storage-detected": "Eski depolama algılandı"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Ayrıntıları görüntüleyin",
       "loading-finished-job": "Tamamlanan iş yükleniyor...",
@@ -12708,10 +12722,6 @@
     "login": "Oturum Aç"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Seçilirse metin yapılandırılan sütunun metin genişliğine göre sığdırılır",
-      "label-wrap-text": "Metni satıra sığdır"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Gösterge ekranı modu",
       "label-value-display": "Değer görüntüleme"
@@ -12739,13 +12749,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Seçilirse tüm satır bu hücre gibi renklendirilecektir.",
-      "description-wrap-text": "Seçilirse metin yapılandırılan sütunun metin genişliğine göre sığdırılır",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Tüm satıra uygula",
-      "label-background-display-mode": "Arka plan görüntüleme modu",
-      "wrap-text": "Metni satıra sığdır"
+      "label-background-display-mode": "Arka plan görüntüleme modu"
     },
     "column-alignment-options": {
       "label-auto": "Otomatik",
@@ -12763,8 +12768,9 @@
     "description-column-filter": "Tablo içindeki alan filtrelerini etkinleştir/devre dışı bırak",
     "description-count-rows": "Tüm veri satırları için tek bir sayı görüntüle",
     "description-fields": "Hesaplanacak alanları seçin",
+    "description-frozen-columns": "",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
-    "description-wrap-header-text": "Sütun başlıkları için metin kaydırmayı etkinleştirir",
+    "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Görsel görüntülenemediğinde veya ekran okuyucu kullanan kullanıcılar için gösterilecek alternatif metin",
       "description-title-text": "İmleç görselin üzerine getirildiğinde görüntülenecek metin",
@@ -12789,51 +12795,7 @@
     "name-column-filter": "Sütun filtresi",
     "name-column-width": "Sütun genişliği",
     "name-count-rows": "Satır sayısını göster",
-    "name-enable-paginations": "Sayfalandırmayı etkinleştir",
-    "name-fields": "Alanlar",
-    "name-hide-in-table": "Tabloda gizle",
-    "name-min-column-width": "Minimum sütun genişliği",
-    "name-show-table-footer": "Tablo alt bilgisini göster",
-    "name-show-table-header": "Tablo başlığını göster",
-    "name-wrap-header-text": "Başlık metnini kaydır",
-    "placeholder-column-width": "otomatik",
-    "placeholder-fields": "Tüm Sayısal Alanlar",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Hücre seçenekleri",
-    "category-table": "Tablo",
-    "category-table-footer": "Tablo alt bilgisi",
-    "cell-height-options": {
-      "label-large": "Büyük",
-      "label-medium": "Orta",
-      "label-small": "Küçük"
-    },
-    "column-alignment-options": {
-      "label-auto": "Otomatik",
-      "label-center": "Merkez",
-      "label-left": "Sol",
-      "label-right": "Sağ"
-    },
-    "description-calculation": "Bir azaltıcı işlevi/hesaplama seçin",
-    "description-cell-value-inspect": "Hücre değerini açılır pencerede incelemeyi etkinleştir",
-    "description-column-filter": "Tablo içindeki alan filtrelerini etkinleştir/devre dışı bırak",
-    "description-count-rows": "Tüm veri satırları için tek bir sayı görüntüle",
-    "description-fields": "Hesaplanacak alanları seçin",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
-    "description-tooltip-from-field": "",
-    "name-calculation": "Hesaplama",
-    "name-cell-height": "Hücre yüksekliği",
-    "name-cell-type": "Hücre tipi",
-    "name-cell-value-inspect": "Hücre değeri incelemesi",
-    "name-column-alignment": "Sütun hizalama",
-    "name-column-filter": "Sütun filtresi",
-    "name-column-width": "Sütun genişliği",
-    "name-count-rows": "Satır sayısını göster",
-    "name-enable-pagination": "Sayfalandırmayı etkinleştir",
+    "name-enable-pagination": "",
     "name-fields": "Alanlar",
     "name-frozen-columns": "",
     "name-hide-in-table": "Tabloda gizle",
@@ -12842,6 +12804,8 @@
     "name-show-table-header": "Tablo başlığını göster",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
+    "name-wrap-header-text": "Başlık metnini kaydır",
+    "name-wrap-text": "",
     "placeholder-column-width": "otomatik",
     "placeholder-fields": "Tüm Sayısal Alanlar",
     "tooltip-placement-options": {
