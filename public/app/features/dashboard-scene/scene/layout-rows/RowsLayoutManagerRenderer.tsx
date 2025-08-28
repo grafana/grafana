@@ -7,8 +7,9 @@ import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { isInCloneChain } from '../../utils/clone';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { RowItem } from './RowItem';
@@ -20,8 +21,13 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
   const { hasCopiedRow } = useClipboardState();
+  const soloPanelContext = useSoloPanelContext();
 
-  const isClone = isInCloneChain(rows[0]?.state.key || '');
+  if (soloPanelContext) {
+    return rows.map((row) => <RowWrapper row={row} manager={model} key={row.state.key!} />);
+  }
+
+  const isClone = isRepeatCloneOrChildOf(model);
 
   return (
     <DragDropContext

@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Tystnad, gruppering och tidsinställningar"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Inga datakällor hittades"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Förhandsgranska",
       "previewCondition": "Förhandsgranska varningsregeltillstånd"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Lägg till kontaktpunktsintegrering",
       "body-attention": "Eftersom det inte finns någon standardpolicy konfigurerad ännu kommer denna kontaktpunkt automatiskt att ställas in som standard.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "Inga regler hittades",
       "error-button": "Fel",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Avbryt sökning",
         "no-more-results": "Inga fler resultat – hittade {{numberOfRules}} regler",
@@ -2768,6 +2781,7 @@
           "time": "Tid"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Filtergrupp",
       "filter-group-tooltip": "Filtrera varje tillståndshistorikgrupp antingen efter exakt matchning eller ett reguljärt uttryck, till exempel:",
       "placeholder-search": "Sök",
@@ -3537,7 +3551,6 @@
       "button-cancel": "Avbryt",
       "button-move": "Flytta",
       "button-moving": "Flyttar …",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3645,11 @@
       "button-create": "Skapa",
       "button-creating": "Skapar …",
       "cancel": "Avbryt",
+      "error-invalid-characters": "",
       "error-required": "Mappnamn krävs",
       "folder-name-input-placeholder-enter-folder-name": "Ange mappnamn",
       "label-folder-name": "Mappnamn",
       "text-pull-request-created": "En pull-begäran har skapats med ändringar i den här mappen:",
-      "text-your-folder-will-be-created-as": "Din mapp kommer att skapas som {{folderName}}",
       "title-pull-request-created": "Pull-begäran skapad",
       "title-this-repository-is-read-only": "Den här databasen är skrivskyddad"
     },
@@ -3743,7 +3756,7 @@
         }
       }
     },
-    "category-arrow-direction": "Pilriktning",
+    "category-arrow-direction": "",
     "category-background": "Bakgrund",
     "category-border": "Ram",
     "category-canvas": "Rityta",
@@ -3775,15 +3788,17 @@
         "auto": "Auto"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Aktivera val av experimentella elementtyper",
     "description-inline-editing": "Aktivera direkt redigering av panelen",
     "description-pan-zoom": "Aktivera panorering och zoom",
-    "direction-options": {
-      "label-both": "Båda",
-      "label-forward": "Framåt",
-      "label-none": "Ingen",
-      "label-reverse": "Omvänt"
-    },
     "drone-front-item": {
       "category-drone-front": "Drönare (front)",
       "name-roll-angle": "Rullvinkel"
@@ -4171,7 +4186,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Datakällor",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Inga resultat som matchar din fråga hittades",
       "request-data-source": "Begär en ny datakälla",
       "roadmap": "Visa planering"
@@ -5208,6 +5224,9 @@
       "save-json-to-file": "Spara JSON till fil",
       "see-docs": "Se <2>dokumentationen</2> för mer information om provisionering."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Läser in konfiguration"
     },
@@ -5479,6 +5498,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Ändra visualisering",
@@ -6120,9 +6142,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Växla delningsmenyn"
     },
-    "solo-panel-page": {
-      "loading": "Laddar"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Instrumentpanel JSON används för att felsöka visualiseringsproblem"
@@ -6355,7 +6374,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Lägg till fråga från biblioteket"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -6406,8 +6425,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicka <2>här</2> för att läsa mer om detta fel.",
-    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Därefter kan du börja visualisera data genom att <2>bygga en instrumentpanel</2> eller genom att fråga efter data i <5>Utforska vy</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6545,9 +6563,11 @@
       "explore": "Utforska"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Bygg en instrumentpanel",
       "explore-data": "Utforska data",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "Mer information om felet"
@@ -6655,6 +6675,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Fast färg",
       "noOptionsMessage-no-fields-found": "Inga fält hittades"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Ladda upp"
@@ -7122,7 +7150,7 @@
     "rich-history-card": {
       "add-comment-form": "Lägg till kommentarsformulär",
       "add-comment-tooltip": "Lägg till kommentar",
-      "add-to-library": "Lägg till i biblioteket",
+      "add-to-library": "",
       "cancel": "Avbryt",
       "confirm-delete": "Ta bort",
       "copy-query-tooltip": "Kopiera fråga till urklippet",
@@ -7234,7 +7262,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Lägg till fråga från biblioteket",
+      "add-from-query-library": "",
       "query-add-button": "Lägg till fråga",
       "query-add-button-aria-label": "Lägg till fråga",
       "query-history-button": "Frågehistorik",
@@ -7526,17 +7554,13 @@
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
   },
-  "folder-picker": {
-    "create-instructions": "Tryck på ENTER för att skapa den nya mappen.",
-    "input-placeholder": "Tryck på Enter för att bekräfta den nya mappen",
-    "loading": "Laddar mappar…"
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -8749,7 +8773,6 @@
       "filter-popup-input-placeholder": "Filtrera värden",
       "filter-popup-match-case": "Matcha gemener/versaler",
       "inspect-drawer-title": "Inspektera värde",
-      "inspect-menu-label": "Inspektera värde",
       "nested-table": {
         "no-data": "Inga data"
       },
@@ -9017,6 +9040,7 @@
     "name-line-width": "Linjebredd",
     "name-stacking": "Stapling"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Laddar",
@@ -9473,6 +9497,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9513,6 +9539,12 @@
       "show-context": "Visa sammanhang",
       "show-log-line": "Visa loggrad",
       "sidebar-mode": "Förankra till höger",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Frigör logg"
     },
     "log-line-menu": {
@@ -9612,6 +9644,7 @@
       "show-timestamps": "Visa tidsstämplar",
       "show-unique-labels": "Visa unika etiketter",
       "unwrap-lines": "Ta bort radbrytningar",
+      "wrap-json-lines": "",
       "wrap-lines": "Radbryt linjer"
     },
     "logs-navigation": {
@@ -9744,7 +9777,8 @@
       "message-name-required": "Namn är obligatoriskt",
       "message-reserved-name": "Detta är ett reserverat namn och kan inte användas för en mapp.",
       "message-same-name": "En kontrollpanel eller en mapp med samma namn finns redan",
-      "message-same-name-general": "En mapp eller kontrollpanel i den allmänna mappen med samma namn finns redan"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10691,10 +10725,6 @@
       "could-anything-matching-query": "Kunde inte hitta något som matchar din fråga"
     }
   },
-  "panel-search": {
-    "no-matches": "Inga träffar hittades",
-    "unsupported-layout": "Layout som inte stöds"
-  },
   "panel-type-filter": {
     "clear-button": "Rensa typer",
     "select-aria-label": "Filter för paneltyp",
@@ -11203,6 +11233,7 @@
       "description-enabled": "När automatisk hämtning är aktiverad kan målet inte ändras.",
       "description-read-only": "Resurser kan inte ändras via Grafana.",
       "description-title": "Ett användarvänligt namn för konfigurationen",
+      "error-fetch-branches": "",
       "error-required": "Detta fält är obligatoriskt.",
       "error-save-repository": "Det gick inte att spara lagringsplatsinställningar",
       "label-automatic-pulling": "Automatisk hämtning",
@@ -11232,11 +11263,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Ta bort",
-      "confirm-delete-repository": "Är du säker på att du vill radera lagringsplatskonfigurationen?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Det gick inte att radera lagringsplatsen",
       "success-repository-deleted": "Lagringsplatsinställningar köade för radering",
-      "title-delete-repository": "Radera lagringsplatskonfiguration",
-      "tooltip-delete-this-repository": "Radera den här lagringsplatsen"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
@@ -11411,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Radera alla konfigurerade databaser",
       "title-legacy-storage-detected": "Äldre lagring upptäcktes"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Visa detaljer",
       "loading-finished-job": "Läser in färdigt jobb …",
@@ -11883,7 +11928,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Dölj frågeraden",
       "datasource-help": "Visa hjälp med datakälla",
       "drag-and-drop": "Ändra ordning genom dra och släpp",
@@ -11891,14 +11935,10 @@
       "expand-row": "Expandera frågeraden",
       "hide-response": "Dölj svar",
       "remove-query": "Ta bort fråga",
-      "replace-query-from-library": "Ersätt med fråga från biblioteket",
+      "replace-query-from-library": "",
       "show-response": "Visa svar"
     },
-    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
   },
   "recently-deleted": {
     "buttons": {
@@ -12682,10 +12722,6 @@
     "login": "Logga in"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Om vald text kommer att radbrytas till textbredden i den konfigurerade kolumnen",
-      "label-wrap-text": "Radbryt text"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Mätarvisningsläge",
       "label-value-display": "Värdevisning"
@@ -12713,13 +12749,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Om valt kommer hela raden att färgas som denna cell skulle vara.",
-      "description-wrap-text": "Om vald text kommer att radbrytas till textbredden i den konfigurerade kolumnen",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Tillämpa på hela raden",
-      "label-background-display-mode": "Bakgrundsvisningsläge",
-      "wrap-text": "Radbryt text"
+      "label-background-display-mode": "Bakgrundsvisningsläge"
     },
     "column-alignment-options": {
       "label-auto": "Auto",
@@ -12737,13 +12768,17 @@
     "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
     "description-count-rows": "Visa ett enda antal för alla datarader",
     "description-fields": "Välj de fält som ska beräknas",
+    "description-frozen-columns": "",
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
-    "description-wrap-header-text": "Aktiverar radbyte för kolumnrubriker",
+    "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativ text som kommer att visas om en bild inte kan visas eller för användare som använder en skärmläsare",
       "description-title-text": "Text som visas när muspekaren hålls över bilden",
       "label-alt-text": "Alt text",
       "label-title-text": "Rubriktext"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
@@ -12760,58 +12795,26 @@
     "name-column-filter": "Kolumnfilter",
     "name-column-width": "Kolumnbredd",
     "name-count-rows": "Antal rader",
-    "name-enable-paginations": "Aktivera sidindelning",
-    "name-fields": "Fält",
-    "name-hide-in-table": "Dölj i tabell",
-    "name-min-column-width": "Minsta kolumnbredd",
-    "name-show-table-footer": "Visa tabellsidfot",
-    "name-show-table-header": "Visa tabellsidhuvud",
-    "name-wrap-header-text": "Radbryt rubriktext",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "Alla numeriska fält",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Cellalternativ",
-    "category-table": "Tabell",
-    "category-table-footer": "Tabellsidfot",
-    "cell-height-options": {
-      "label-large": "Stor",
-      "label-medium": "Medium",
-      "label-small": "Litet"
-    },
-    "column-alignment-options": {
-      "label-auto": "Auto",
-      "label-center": "Centrera",
-      "label-left": "Vänster",
-      "label-right": "Höger"
-    },
-    "description-calculation": "Välj en reduceringsfunktion/beräkning",
-    "description-cell-value-inspect": "Aktivera cellvärdesinspektion i ett modalt fönster",
-    "description-column-filter": "Aktiverar/inaktiverar fältfilter i tabellen",
-    "description-count-rows": "Visa ett enda antal för alla datarader",
-    "description-fields": "Välj de fält som ska beräknas",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
-    "name-calculation": "Beräkning",
-    "name-cell-height": "Cellhöjd",
-    "name-cell-type": "Celltyp",
-    "name-cell-value-inspect": "Inspektion av cellvärde",
-    "name-column-alignment": "Kolumnjustering",
-    "name-column-filter": "Kolumnfilter",
-    "name-column-width": "Kolumnbredd",
-    "name-count-rows": "Antal rader",
-    "name-enable-pagination": "Aktivera sidindelning",
+    "name-enable-pagination": "",
     "name-fields": "Fält",
     "name-frozen-columns": "",
     "name-hide-in-table": "Dölj i tabell",
     "name-min-column-width": "Minsta kolumnbredd",
     "name-show-table-footer": "Visa tabellsidfot",
     "name-show-table-header": "Visa tabellsidhuvud",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
+    "name-wrap-header-text": "Radbryt rubriktext",
+    "name-wrap-text": "",
     "placeholder-column-width": "auto",
-    "placeholder-fields": "Alla numeriska fält"
+    "placeholder-fields": "Alla numeriska fält",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Rensa taggar",
@@ -13026,6 +13029,7 @@
         "name-point-size": "Punktstorlek",
         "name-show-points": "Visa poäng",
         "name-show-thresholds": "Visa trösklar",
+        "name-show-values": "",
         "name-style": "Stil",
         "name-transform": "Omvandla",
         "transform-options": {

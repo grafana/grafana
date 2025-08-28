@@ -168,7 +168,6 @@
         "label-disable-recording-rules-beta": "Opnameregels uitschakelen (bèta)",
         "label-http-method": "HTTP-methode",
         "label-incremental-querying-beta": "Incrementeel zoeken (bèta)",
-        "label-metric-names-suggestion-limit": "Suggestielimiet voor metrische namen",
         "label-prom-type-version": "{{promType}}-versie",
         "label-prometheus-type": "Prometheus-type",
         "label-query-overlap-window": "Venster voor overlap van query",
@@ -189,7 +188,6 @@
         "tooltip-disable-recording-rules-beta": "Deze functie schakelt opnameregels uit. Schakel dit in om de prestaties van het dashboard te verbeteren",
         "tooltip-http-method": "Je kunt de HTTP-methode POST of GET gebruiken om je Prometheus-gegevensbron op te vragen. POST is de aanbevolen methode omdat het grotere query's toestaat. Wijzig dit in GET als je een Prometheus-versie ouder dan 2.1 hebt of als POST-verzoeken in je netwerk zijn beperkt.",
         "tooltip-incremental-querying-beta": "Deze functie zal het standaardgedrag van relatieve query's veranderen om altijd nieuwe gegevens van de Prometheus-instantie op te vragen, in plaats daarvan worden query-resultaten in de cache opgeslagen en worden alleen nieuwe records opgevraagd. Schakel dit in om de database- en netwerkbelasting te verminderen.",
-        "tooltip-metric-names-suggestion-limit": "Het maximale aantal metrische namen dat kan verschijnen als suggesties voor automatisch aanvullen in de codemodus van de query-editor.",
         "tooltip-prom-type-version": "Gebruik dit om de versie van je {{promType}}-instantie in te stellen als deze niet automatisch is geconfigureerd.",
         "tooltip-prometheus-type": "Stel dit in op het type van je Prometheus-database, bijvoorbeeld Prometheus, Cortex, Mimir of Thanos. Als je dit veld wijzigt, worden je huidige instellingen opgeslagen. Bepaalde soorten Prometheus ondersteunen of ondersteunen geen verschillende API's. Sommige typen ondersteunen bijvoorbeeld regex-matching voor label-query's om de prestaties te verbeteren. Sommige typen hebben een API voor metadata. Als je dit verkeerd instelt, kun je afwijkend gedrag ervaren bij het opvragen van metriek en labels. Controleer je Prometheus-documentatie om er zeker van te zijn dat je het juiste type invoert.",
         "tooltip-query-overlap-window": "Stel een duur in zoals {{example1}} of {{example2}} of {{example3}}. Standaard van {{default}}. Deze duur wordt toegevoegd aan de duur van elk incrementeel verzoek.",
@@ -430,10 +428,6 @@
         "placeholder-auto": "automatisch",
         "title-options": "Opties",
         "tooltip-min-step": "Een extra ondergrens voor de stapparameter van de Prometheus-query en voor de variabelen <2>{{interval}}</2> en <4>{{rateInterval}}</4>."
-      },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Automatisch aanvullen van suggesties beperkt",
-        "tooltip-autocomplete-suggestions-limited": "Het aantal metrische namen overschrijdt de limiet voor automatisch aanvullen. Alleen de meest relevante metriek voor {{autocompleteLimit}} worden weergegeven. Je kunt de drempelwaarde aanpassen in de instellingen van de gegevensbron."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "Er is een syntaxisfout of de querystructuur kan niet worden gevisualiseerd bij het overschakelen naar de bouwmodus. Delen van de query kunnen verloren gaan.",

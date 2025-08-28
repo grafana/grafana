@@ -493,6 +493,11 @@
       "title-muting-grouping-and-timings": "Némítás, csoportosítás és időzítés"
     },
     "alert-manager-picker": {
+      "external-alertmanagers-group": "",
+      "extra-config-warning": {
+        "content": "",
+        "title": ""
+      },
       "noOptionsMessage-no-datasources-found": "Nem található adatforrás"
     },
     "alert-menu": {
@@ -2216,6 +2221,13 @@
       "preview": "Előnézet",
       "previewCondition": "Riasztási szabály előnézeti feltétele"
     },
+    "receiver-filter": {
+      "aria-label-contact-points": "",
+      "contact-point": "",
+      "no-grouping": "",
+      "placeholder-contact-point": "",
+      "tooltip-contact-point": ""
+    },
     "receiver-form": {
       "add-contact-point-integration": "Kapcsolattartási pont integrációjának hozzáadása",
       "body-attention": "Mivel még nincs alapértelmezett házirend konfigurálva, ez a kapcsolattartási pont automatikusan alapértelmezettként lesz beállítva.",
@@ -2467,6 +2479,7 @@
       },
       "empty-data-source": "Nem található szabály",
       "error-button": "Hiba",
+      "export-all-grafana-rules": "",
       "filter-view": {
         "cancel-search": "Keresés visszavonása",
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
@@ -2768,6 +2781,7 @@
           "time": "Idő"
         }
       },
+      "error-message-prefix": "",
       "filter-group": "Szűrőcsoport",
       "filter-group-tooltip": "Szűrje az egyes állapotelőzmény-csoportokat pontos egyezés vagy reguláris kifejezés alapján, például:",
       "placeholder-search": "Keresés",
@@ -3537,7 +3551,6 @@
       "button-cancel": "Mégse",
       "button-move": "Áthelyezés",
       "button-moving": "Áthelyezés...",
-      "button-tooltip": "",
       "error": {
         "read-only-message": "",
         "read-only-saving-message": "",
@@ -3632,11 +3645,11 @@
       "button-create": "Létrehozás",
       "button-creating": "Létrehozás…",
       "cancel": "Mégse",
+      "error-invalid-characters": "",
       "error-required": "A mappa nevének megadása kötelező",
       "folder-name-input-placeholder-enter-folder-name": "Mappanév megadása",
       "label-folder-name": "Mappa neve",
       "text-pull-request-created": "A lekérési kérelem ennek a mappának a módosításával lett létrehozva:",
-      "text-your-folder-will-be-created-as": "A mappa neve {{folderName}} lesz",
       "title-pull-request-created": "Lekérési kérelem létrehozva",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
     },
@@ -3743,7 +3756,7 @@
         }
       }
     },
-    "category-arrow-direction": "Nyíl iránya",
+    "category-arrow-direction": "",
     "category-background": "Háttér",
     "category-border": "Szegély",
     "category-canvas": "Vászon",
@@ -3775,15 +3788,17 @@
         "auto": "Automatikus"
       }
     },
+    "connection": {
+      "direction-options": {
+        "label-both": "",
+        "label-forward": "",
+        "label-none": "",
+        "label-reverse": ""
+      }
+    },
     "description-experimental-types": "Kísérleti elemtípusok kiválasztásának engedélyezése",
     "description-inline-editing": "A panel közvetlen szerkesztésének engedélyezése",
     "description-pan-zoom": "Pásztázás és nagyítás engedélyezése",
-    "direction-options": {
-      "label-both": "Mindkettő",
-      "label-forward": "Előre",
-      "label-none": "Nincs",
-      "label-reverse": "Fordított"
-    },
     "drone-front-item": {
       "category-drone-front": "Drón eleje",
       "name-roll-angle": "Billentési szög"
@@ -4171,7 +4186,8 @@
       }
     },
     "connect-data": {
-      "category-header-label": "Adatforrások",
+      "apps-header": "",
+      "datasources-header": "",
       "empty-message": "Nincs találat a lekérdezésre",
       "request-data-source": "Új adatforrás kérése",
       "roadmap": "Ütemterv megtekintése"
@@ -5208,6 +5224,9 @@
       "save-json-to-file": "JSON mentése fájlba",
       "see-docs": "A kiépítéssel kapcsolatos további információkért tekintse meg a <2>dokumentációt</2>."
     },
+    "search-panel": {
+      "no-match": ""
+    },
     "share-public-dashboard-loader": {
       "loading-configuration": "Konfiguráció betöltése"
     },
@@ -5479,6 +5498,9 @@
     },
     "view-json-modal": {
       "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
     },
     "visualization-button": {
       "aria-label-change-visualization": "Vizualizáció módosítása",
@@ -6120,9 +6142,6 @@
     "share-button": {
       "aria-label-sharedropdownmenu": "Menümegosztás ki- és bekapcsolása"
     },
-    "solo-panel-page": {
-      "loading": "Betöltés"
-    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "A vizualizációs problémák elhárításához használt irányítópulti JSON-kód"
@@ -6355,7 +6374,7 @@
   },
   "dashboards": {
     "panel-queries": {
-      "add-query-from-library": "Lekérdezés hozzáadása könyvtárból"
+      "add-from-saved-queries": ""
     },
     "settings": {
       "variables": {
@@ -6406,8 +6425,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Ha többet szeretne megtudni erről a hibáról, kattintson <2>ide</2>.",
-    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>.",
-    "success-more-details-links-extensions": ""
+    "success-more-details-links": "Ezután < 2 >létrehozhat egy irányítópultot</2>, vagy lekérdezheti az adatokat az <5>Explore nézetben</5>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -6545,9 +6563,11 @@
       "explore": "Explore"
     },
     "edit-data-source-actions": {
+      "add-favorite": "",
       "build-a-dashboard": "Irányítópult létrehozása",
       "explore-data": "Adatok felfedezése",
-      "open-in-explore": ""
+      "open-in-explore": "",
+      "remove-favorite": ""
     },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "További részletek a hibáról"
@@ -6655,6 +6675,14 @@
     "color-dimension-editor": {
       "label-fixed-color": "Rögzített szín",
       "noOptionsMessage-no-fields-found": "Nem található mező"
+    },
+    "direction-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
+      "label-direction": "",
+      "label-field": "",
+      "label-fixed": "",
+      "label-source": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Feltöltés"
@@ -7122,7 +7150,7 @@
     "rich-history-card": {
       "add-comment-form": "Megjegyzésírási űrlap",
       "add-comment-tooltip": "Megjegyzés írása",
-      "add-to-library": "Hozzáadás a könyvtárhoz",
+      "add-to-library": "",
       "cancel": "Mégse",
       "confirm-delete": "Törlés",
       "copy-query-tooltip": "Lekérdezés másolása a vágólapra",
@@ -7234,7 +7262,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "Lekérdezés hozzáadása könyvtárból",
+      "add-from-query-library": "",
       "query-add-button": "Lekérdezés hozzáadása",
       "query-add-button-aria-label": "Lekérdezés hozzáadása",
       "query-history-button": "Lekérdezési előzmények",
@@ -7526,17 +7554,13 @@
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
   },
-  "folder-picker": {
-    "create-instructions": "Nyomja le az ENTER billentyűt az új mappa létrehozásához.",
-    "input-placeholder": "Nyomja le az Enter billentyűt az új mappa megerősítéséhez",
-    "loading": "Mappák betöltése..."
-  },
   "folder-repo": {
     "provisioned-badge": "",
     "read-only-badge": ""
   },
   "folders": {
     "api": {
+      "folder-delete-error-provisioned": "",
       "folder-deleted-success": ""
     },
     "get-loading-nav": {
@@ -8749,7 +8773,6 @@
       "filter-popup-input-placeholder": "Értékek szűrése",
       "filter-popup-match-case": "Nagybetűérzékeny",
       "inspect-drawer-title": "Érték ellenőrzése",
-      "inspect-menu-label": "Érték ellenőrzése",
       "nested-table": {
         "no-data": "Nincs adat"
       },
@@ -9017,6 +9040,7 @@
     "name-line-width": "Vonal szélessége",
     "name-stacking": "Egymásra helyezés"
   },
+  "inline-token-warning-badge-tooltip": "",
   "inspector": {
     "inspect-data-tab": {
       "loading": "Betöltés",
@@ -9473,6 +9497,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "time-window-label": "",
+      "time-window-tooltip": "",
       "title-log-context": "",
       "title-log-line": ""
     },
@@ -9513,6 +9539,12 @@
       "show-context": "Kontextus megjelenítése",
       "show-log-line": "Naplósor megjelenítése",
       "sidebar-mode": "Jobbra rögzítés",
+      "trace": {
+        "error-message": "",
+        "error-tooltip": "",
+        "loading-message": ""
+      },
+      "trace-section": "",
       "unpin-line": "Naplókitűzés feloldása"
     },
     "log-line-menu": {
@@ -9612,6 +9644,7 @@
       "show-timestamps": "Időbélyegek megjelenítése",
       "show-unique-labels": "Egyedi címkék megjelenítése",
       "unwrap-lines": "Sortörés megszüntetése",
+      "wrap-json-lines": "",
       "wrap-lines": "Sortörés"
     },
     "logs-navigation": {
@@ -9744,7 +9777,8 @@
       "message-name-required": "A név megadása kötelező",
       "message-reserved-name": "Ez egy fenntartott név, ezért mappaként nem használható.",
       "message-same-name": "Már létezik ilyen nevű irányítópult vagy mappa",
-      "message-same-name-general": "Az általános mappában már létezik ilyen nevű irányítópult vagy mappa"
+      "message-same-name-current-folder": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -10691,10 +10725,6 @@
       "could-anything-matching-query": "Nincs találat a lekérdezésre"
     }
   },
-  "panel-search": {
-    "no-matches": "Nincs találat",
-    "unsupported-layout": "Nem támogatott elrendezés"
-  },
   "panel-type-filter": {
     "clear-button": "Típusok törlése",
     "select-aria-label": "Paneltípusszűrő",
@@ -11203,6 +11233,7 @@
       "description-enabled": "Az automatikus lekérés engedélyezése után a cél nem módosítható.",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
       "description-title": "A konfiguráció emberek által olvasható neve",
+      "error-fetch-branches": "",
       "error-required": "A mező kitöltése kötelező.",
       "error-save-repository": "Az adattár beállításainak mentése sikertelen volt",
       "label-automatic-pulling": "Automatikus lekérés",
@@ -11232,11 +11263,15 @@
     },
     "delete-repository-button": {
       "button-delete": "Törlés",
-      "confirm-delete-repository": "Biztosan törli az adattár konfigurációját?",
+      "confirm-delete-keep-resources": "",
+      "confirm-delete-with-resources": "",
+      "delete": "",
+      "delete-and-keep-resources": "",
+      "delete-and-remove-resources": "",
       "error-repository-delete": "Az adattár törlése nem sikerült",
       "success-repository-deleted": "Adattár-beállítások felvéve a törlési várólistára",
-      "title-delete-repository": "Az adattár konfigurációjának törlése",
-      "tooltip-delete-this-repository": "Az adattár törlése"
+      "title-delete-repository-and-resources": "",
+      "title-delete-repository-only": ""
     },
     "edit-repository-page": {
       "back-to-repositories": "Vissza az adattárakhoz",
@@ -11411,6 +11446,16 @@
       "title-delete-all-configured-repositories": "Az összes konfigurált adattár törlése",
       "title-legacy-storage-detected": "Örökölt tárolás észlelve"
     },
+    "http-utils": {
+      "access-denied": "",
+      "authentication-failed": "",
+      "http-error": "",
+      "request-failed": "",
+      "resource-not-found": "",
+      "unsupported-repository-type": ""
+    },
+    "inline-secure-values-warning": "",
+    "inline-token-warning-badge-text": "",
     "job-status": {
       "label-view-details": "Részletek megtekintése",
       "loading-finished-job": "Befejezett feladat betöltése…",
@@ -11883,7 +11928,6 @@
   },
   "query-operation": {
     "header": {
-      "cancel-query-library-edit": "",
       "collapse-row": "Lekérdezési sor összecsukása",
       "datasource-help": "Adatforrás súgójának megjelenítése",
       "drag-and-drop": "Húzza át az átrendezéshez",
@@ -11891,14 +11935,10 @@
       "expand-row": "Lekérdezési sor kibontása",
       "hide-response": "Válasz elrejtése",
       "remove-query": "Lekérdezés eltávolítása",
-      "replace-query-from-library": "Lecserélés könyvtárból származó lekérdezésre",
+      "replace-query-from-library": "",
       "show-response": "Válasz megjelenítése"
     },
-    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem",
-    "query-library": {
-      "editing-tooltip": "",
-      "from-library": ""
-    }
+    "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
   },
   "recently-deleted": {
     "buttons": {
@@ -12682,10 +12722,6 @@
     "login": "Bejelentkezés"
   },
   "table": {
-    "auto-cell-options-editor": {
-      "description-wrap-text": "Ha ki van választva, a szöveg a konfigurált oszlop szövegének szélességéhez lesz tördelve",
-      "label-wrap-text": "Sortörés"
-    },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Mérőeszköz kijelzési módja",
       "label-value-display": "Érték megjelenítése"
@@ -12713,13 +12749,8 @@
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "Ha ki van választva, a teljes sor olyan színű lesz, mint ez a cella.",
-      "description-wrap-text": "Ha ki van választva, a szöveg a konfigurált oszlop szövegének szélességéhez lesz tördelve",
-      "label": {
-        "text-alpha": "Alfa"
-      },
       "label-apply-to-entire-row": "Alkalmazás a teljes sorra",
-      "label-background-display-mode": "Háttér megjelenítési módja",
-      "wrap-text": "Sortörés"
+      "label-background-display-mode": "Háttér megjelenítési módja"
     },
     "column-alignment-options": {
       "label-auto": "Automatikus",
@@ -12737,13 +12768,17 @@
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
     "description-count-rows": "Egyetlen szám megjelenítése az összes adatsorhoz",
     "description-fields": "Válassza ki a kiszámítandó mezőket",
+    "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
-    "description-wrap-header-text": "Engedélyezi a szöveg tördelését az oszlopfejléceknél",
+    "description-tooltip-from-field": "",
     "image-cell-options-editor": {
       "description-alt-text": "Helyettesítő szöveg, amely akkor jelenik meg, ha egy kép nem jeleníthető meg, és amely a képernyőolvasót használó felhasználóknak hasznos",
       "description-title-text": "Szöveg, amely akkor jelenik meg, amikor a kép fölé viszik a kurzort",
       "label-alt-text": "Helyettesítő szöveg",
       "label-title-text": "Cím szövege"
+    },
+    "link-wrapper": {
+      "menu": ""
     },
     "markdown-cell-options-editor": {
       "description-dynamic-height": "",
@@ -12760,58 +12795,26 @@
     "name-column-filter": "Oszlopszűrő",
     "name-column-width": "Oszlopszélesség",
     "name-count-rows": "Sorok számlálása",
-    "name-enable-paginations": "Oldalszámozás engedélyezése",
-    "name-fields": "Mezők",
-    "name-hide-in-table": "Elrejtés a táblázatban",
-    "name-min-column-width": "Minimális oszlopszélesség",
-    "name-show-table-footer": "Táblázatlábléc megjelenítése",
-    "name-show-table-header": "Táblázatfejléc megjelenítése",
-    "name-wrap-header-text": "Fejléc szövegének tördelése",
-    "placeholder-column-width": "automatikus",
-    "placeholder-fields": "Numerikus mezők",
-    "text-wrap-options": {
-      "label-wrap-text": ""
-    }
-  },
-  "table-new": {
-    "category-cell-options": "Cellabeállítások",
-    "category-table": "Táblázat",
-    "category-table-footer": "Táblázat lábléce",
-    "cell-height-options": {
-      "label-large": "Nagy",
-      "label-medium": "Közepes",
-      "label-small": "Kicsi"
-    },
-    "column-alignment-options": {
-      "label-auto": "Automatikus",
-      "label-center": "Középre",
-      "label-left": "Balra",
-      "label-right": "Jobbra"
-    },
-    "description-calculation": "Válasszon egy szűkítőfüggvényt/-számítást",
-    "description-cell-value-inspect": "A cellaérték ellenőrzésének engedélyezése egy modális ablakban",
-    "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
-    "description-count-rows": "Egyetlen szám megjelenítése az összes adatsorhoz",
-    "description-fields": "Válassza ki a kiszámítandó mezőket",
-    "description-frozen-columns": "",
-    "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
-    "name-calculation": "Számítás",
-    "name-cell-height": "Cellamagasság",
-    "name-cell-type": "Cellatípus",
-    "name-cell-value-inspect": "Cellaérték ellenőrzése",
-    "name-column-alignment": "Oszlop igazítása",
-    "name-column-filter": "Oszlopszűrő",
-    "name-column-width": "Oszlopszélesség",
-    "name-count-rows": "Sorok számlálása",
-    "name-enable-pagination": "Oldalszámozás engedélyezése",
+    "name-enable-pagination": "",
     "name-fields": "Mezők",
     "name-frozen-columns": "",
     "name-hide-in-table": "Elrejtés a táblázatban",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-show-table-footer": "Táblázatlábléc megjelenítése",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
+    "name-tooltip-from-field": "",
+    "name-tooltip-placement": "",
+    "name-wrap-header-text": "Fejléc szövegének tördelése",
+    "name-wrap-text": "",
     "placeholder-column-width": "automatikus",
-    "placeholder-fields": "Numerikus mezők"
+    "placeholder-fields": "Numerikus mezők",
+    "tooltip-placement-options": {
+      "label-auto": "",
+      "label-bottom": "",
+      "label-left": "",
+      "label-right": "",
+      "label-top": ""
+    }
   },
   "tag-filter": {
     "clear-button": "Címkék törlése",
@@ -13026,6 +13029,7 @@
         "name-point-size": "Pontméret",
         "name-show-points": "Pontok megjelenítése",
         "name-show-thresholds": "Küszöbértékek megjelenítése",
+        "name-show-values": "",
         "name-style": "Stílus",
         "name-transform": "Transzformáció",
         "transform-options": {

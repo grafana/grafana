@@ -156,7 +156,7 @@ export function validatePath<OriginalPath extends string>(path: OriginalPath): O
     }
 
     // Remove query params and fragments to check only the path portion
-    const cleaned = originalDecoded.split(/[\?&#]/)[0];
+    const cleaned = originalDecoded.split(/[\?#]/)[0];
     originalDecoded = cleaned;
 
     // If the original string contains traversal attempts, block it
