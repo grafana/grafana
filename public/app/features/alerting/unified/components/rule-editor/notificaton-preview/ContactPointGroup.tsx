@@ -90,7 +90,7 @@ export function ContactPointGroup({
   const [isExpanded, toggleExpanded] = useToggle(false);
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" role="list" data-testid="matched-contactpoint-group">
       <div className={styles.contactPointRow}>
         <Stack direction="row" alignItems="center">
           <CollapseToggle

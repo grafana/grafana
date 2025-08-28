@@ -42,7 +42,7 @@ export function NotificationPolicyDrawer({
   return (
     <>
       <Button fill="outline" variant="secondary" size="sm" onClick={handleOpenDrawer}>
-        <Trans i18nKey="alerting.instance-match.notification-policy">View journey</Trans>
+        <Trans i18nKey="alerting.instance-match.notification-policy">View route</Trans>
       </Button>
 
       {isDrawerOpen && (

@@ -1665,7 +1665,7 @@
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
-      "notification-policy": "View journey"
+      "notification-policy": "View route"
     },
     "irm-integration": {
       "connection-method": "How to connect to IRM",

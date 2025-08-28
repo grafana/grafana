@@ -33,7 +33,9 @@ import {
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
-export type PreviewResponse = AlertmanagerAlert[];
+export type PreviewResponse = Array<
+  Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
+>;
 
 export interface Datasource {
   type: string;

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { compact } from 'lodash';
 import { Fragment, Suspense, lazy } from 'react';
 import { useEffectOnce } from 'react-use';
 
@@ -7,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery, Labels } from 'app/types/unified-alerting-dto';
 
 import { Folder, KBObjectArray } from '../../../types/rule-form';
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
@@ -43,7 +42,13 @@ export const NotificationPreview = ({
 
   // potential instances are the instances that are going to be routed to the notification policies
   // convert data to list of labels: are the representation of the potential instances
-  const potentialInstances = compact(data.flatMap((label) => label?.labels));
+  const potentialInstances = data.reduce<Labels[]>((acc = [], instance) => {
+    if (instance.labels) {
+      acc.push(instance.labels);
+    }
+
+    return acc;
+  }, []);
 
   const onPreview = () => {
     if (!folder || !condition) {
