@@ -47,6 +47,40 @@ describe('useFoldersQuery', () => {
 
       expect(sortedItemTitles).toEqual(expectedTitles);
     });
+
+    it('uses custom root folder display name when rootFolderDisplay is provided', async () => {
+      runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
+
+      const customRootName = 'Custom Root Folder';
+      const { result } = renderHook(
+        () =>
+          useFoldersQuery({
+            isBrowsing: true,
+            openFolders: {},
+            rootFolderDisplay: customRootName,
+          }),
+        { wrapper }
+      );
+
+      // Test that root folder item uses the custom display name
+      expect(result.current.items[0]).toEqual(getRootFolderItem(customRootName));
+    });
+
+    it('uses empty string as rootFolderDisplay', async () => {
+      runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
+
+      const { result } = renderHook(
+        () =>
+          useFoldersQuery({
+            isBrowsing: true,
+            openFolders: {},
+            rootFolderDisplay: '',
+          }),
+        { wrapper }
+      );
+
+      expect(result.current.items[0]).toEqual(getRootFolderItem());
+    });
   });
 });
 
