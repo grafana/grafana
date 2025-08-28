@@ -8,6 +8,7 @@ import {
   useGetFolderQuery as useGetFolderQueryLegacy,
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
+  useMoveFolderMutation as useMoveFolderMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
@@ -164,21 +165,13 @@ export function useGetFolderQueryFacade(uid?: string) {
 export function useDeleteFolderMutationFacade() {
   const [deleteFolder] = useDeleteFolderMutation();
   const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
-  const dispatch = useDispatch();
+  const refresh = useRefreshFolders();
 
   return async (folder: FolderDTO) => {
     if (config.featureToggles.foldersAppPlatformAPI) {
       const result = await deleteFolder({ name: folder.uid });
       if (!result.error) {
-        // We need to update a legacy version of the folder storage for now until all is in the new API.
-        // we could do it in the enhanceEndpoint method but we would also need to change the args as we need parentUID
-        // here and so it seemed easier to do it here.
-        dispatch(
-          refetchChildren({
-            parentUID: folder.parentUid || GENERAL_FOLDER_UID,
-            pageSize: PAGE_SIZE,
-          })
-        );
+        refresh({ childrenOf: folder.parentUid || GENERAL_FOLDER_UID });
         // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
         // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
         getAppEvents().publish({
@@ -197,6 +190,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
   const [deleteFolders] = useDeleteFoldersMutationLegacy();
   const [deleteFolder] = useDeleteFolderMutation();
   const dispatch = useDispatch();
+  const refresh = useRefreshFolders();
 
   if (!config.featureToggles.foldersAppPlatformAPI) {
     return deleteFolders;
@@ -224,8 +218,35 @@ export function useDeleteMultipleFoldersMutationFacade() {
       }
     }
 
-    dispatch(refreshParents(folderUIDs));
+    refresh({ parentsOf: folderUIDs });
     return { data: undefined };
+  };
+}
+
+export function useMoveFolderMutationFacade() {
+  const [updateFolder] = useUpdateFolderMutation();
+  const [moveFolder] = useMoveFolderMutationLegacy();
+  const refresh = useRefreshFolders();
+
+  return async (folderUID: string, destinationFolderUID: string) => {
+    if (!config.featureToggles.foldersAppPlatformAPI) {
+      return moveFolder({ folderUID, destinationUID: destinationFolderUID });
+    }
+
+    const result = await updateFolder({
+      name: folderUID,
+      patch: { metadata: { annotations: { [AnnoKeyFolder]: destinationFolderUID } } },
+    });
+    if (!result.error) {
+      refresh({ parentsOf: [folderUID], childrenOf: destinationFolderUID });
+      // Before this was done in backend srv automatically because the old API sent a message with 200 request. see
+      // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+      getAppEvents().publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [t('folders.api.folder-moved-success', 'Folder moved')],
+      });
+    }
+    return result;
   };
 }
 
@@ -233,6 +254,7 @@ export function useMoveMultipleFoldersMutationFacade() {
   const [moveFolders] = useMoveFoldersMutationLegacy();
   const [updateFolder] = useUpdateFolderMutation();
   const dispatch = useDispatch();
+  const refresh = useRefreshFolders();
 
   if (!config.featureToggles.foldersAppPlatformAPI) {
     return moveFolders;
@@ -264,17 +286,30 @@ export function useMoveMultipleFoldersMutationFacade() {
         }
       }
     }
-
-    // Refresh the state of the parent folders to update the UI after folders are moved
-    dispatch(
-      refetchChildren({
-        parentUID: destinationUID,
-        pageSize: PAGE_SIZE,
-      })
-    );
-    dispatch(refreshParents(folderUIDs));
-
+    refresh({ parentsOf: folderUIDs, childrenOf: destinationUID });
     return { data: undefined };
+  };
+}
+
+/**
+ * Refresh the state of the parent folders to update the UI after folders are moved. This refreshes legacy storage
+ * of the folder structure outside the RTK query. Once all is migrated to new API this should not be needed.
+ */
+function useRefreshFolders() {
+  const dispatch = useDispatch();
+
+  return (options: { parentsOf?: string[]; childrenOf?: string }) => {
+    if (options.parentsOf) {
+      dispatch(refreshParents(options.parentsOf));
+    }
+    if (options.childrenOf) {
+      dispatch(
+        refetchChildren({
+          parentUID: options.childrenOf,
+          pageSize: PAGE_SIZE,
+        })
+      );
+    }
   };
 }
 
