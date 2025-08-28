@@ -104,9 +104,7 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 	assignments := make([]grant, 0, len(v0ResourcePerm.Spec.Permissions))
 
 	for _, perm := range v0ResourcePerm.Spec.Permissions {
-		// TODO: For now, only one verb per permission is supported
-		//       We should modify the spec to reflect that
-		rbacActionSet := actionSet(v0ResourcePerm.Spec.Resource.Resource, perm.Verbs[0])
+		rbacActionSet := actionSet(v0ResourcePerm.Spec.Resource.Resource, perm.Verb)
 		switch perm.Kind {
 		case v0alpha1.ResourcePermissionSpecPermissionKindUser:
 			userID, err := s.identityStore.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
