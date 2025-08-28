@@ -86,15 +86,6 @@ export function useNamespaceAndGroupOptions(): {
 
       const options = [...grafanaFolders, ...externalNamespaces];
       const filtered = filterBySearch(options, inputValue);
-      if (filtered.length === 0 && (inputValue ?? '') === '') {
-        return [
-          {
-            label: t('alerting.rules-filter.no-namespaces', 'No folders available'),
-            value: '__NO_NAMESPACES__',
-            infoOption: true,
-          },
-        ];
-      }
       return filtered;
     },
     [fetchGrafanaGroups, fetchExternalGroups, externalDataSources, formatNamespaceOption, collator]
@@ -154,7 +145,7 @@ export function useLabelOptions(): {
       } else {
         const features = await discoverDsFeatures({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }, true).unwrap();
         if (!features?.rulerConfig) {
-          return [createInfoOption()];
+          return [];
         }
         const rulerRules = await fetchRulerRules({
           rulerConfig: features.rulerConfig,
@@ -163,14 +154,8 @@ export function useLabelOptions(): {
       }
 
       const selectable = toOptions(labelsMap);
-      if (selectable.length === 0 && (inputValue ?? '') === '') {
-        return [
-          {
-            label: t('alerting.rules-filter.no-labels', 'No labels available'),
-            value: '__NO_LABELS__',
-            infoOption: true,
-          },
-        ];
+      if (selectable.length === 0) {
+        return [];
       }
 
       const options = [...selectable, createInfoOption()];
