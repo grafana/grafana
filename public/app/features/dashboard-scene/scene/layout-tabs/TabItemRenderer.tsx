@@ -10,9 +10,9 @@ import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDis
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 
 import { TabItem } from './TabItem';
-import { useSoloPanelContext } from '../SoloPanelContext';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, key, isDropTarget, layout } = model.useState();

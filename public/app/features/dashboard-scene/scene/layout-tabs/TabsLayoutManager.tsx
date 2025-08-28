@@ -221,9 +221,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         const tabIndex = tabs.findIndex((t) => t === tabToRemove);
         const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
 
+        const newTabsState = tabs.filter((t) => t !== tabToRemove);
+
         this.setState({
-          tabs: tabs.filter((t) => t !== tabToRemove),
-          currentTabSlug: tabs[newCurrentTabIndex]?.getSlug(),
+          tabs: newTabsState,
+          currentTabSlug: newTabsState[newCurrentTabIndex]?.getSlug(),
         });
       },
       undo: () => {

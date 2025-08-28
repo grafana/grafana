@@ -14,9 +14,9 @@ import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { TabItem } from './TabItem';
+import { TabItemLayoutRenderer } from './TabItemRenderer';
 import { TabItemRepeater } from './TabItemRepeater';
 import { TabsLayoutManager } from './TabsLayoutManager';
-import { TabItemLayoutRenderer } from './TabItemRenderer';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
