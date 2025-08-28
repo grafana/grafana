@@ -1,16 +1,17 @@
 import { DataFrame, Field, Labels, PanelData } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { EmbeddedScene, SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 
 import { AlertLabels } from '../../components/AlertLabels';
 import { GroupRow } from '../GroupRow';
+import { useWorkbenchContext } from '../WorkbenchContext';
+import { StateChangeChart } from '../stateChangeChart/StateChangeChart';
 import { TimelineEntry } from '../types';
 
 import { METRIC_NAME, getQueryRunner } from './utils';
 
 interface AlertInstanceSceneState extends SceneObjectState {
   ruleUID: string;
-  leftColumnWidth: number;
 }
 
 export class AlertInstanceScene extends SceneObjectBase<AlertInstanceSceneState> {
@@ -120,41 +121,10 @@ function extractAlertInstances(data: PanelData): AlertInstance[] {
   return instances;
 }
 
-function getInstanceTitle(instance: AlertInstance): string {
-  // Create a meaningful title from labels
-  const labelEntries = Object.entries(instance.labels);
-  if (labelEntries.length === 0) {
-    return instance.fieldName || 'Unknown Instance';
-  }
-
-  // Use the most identifying labels (like instance, job, etc.)
-  const priorityLabels = ['instance', 'job', 'alertname'];
-  const displayLabels = priorityLabels
-    .map((key) => (instance.labels[key] ? `${key}=${instance.labels[key]}` : null))
-    .filter(Boolean);
-
-  if (displayLabels.length > 0) {
-    return displayLabels.join(', ');
-  }
-
-  // Fallback to first few labels
-  return labelEntries
-    .slice(0, 2)
-    .map(([key, value]) => `${key}=${value}`)
-    .join(', ');
-}
-
-function getInstanceMetadata(instance: AlertInstance): string {
-  const totalStates = instance.timeline.length;
-  const firingCount = instance.timeline.filter(([, state]) => state === 'firing').length;
-  const pendingCount = totalStates - firingCount;
-
-  return `${totalStates} data points • ${firingCount} firing • ${pendingCount} pending`;
-}
-
 function AlertInstanceSceneRenderer({ model }: SceneComponentProps<AlertInstanceScene>) {
-  const { ruleUID, leftColumnWidth } = model.useState();
+  const { ruleUID } = model.useState();
   const dataState = sceneGraph.getData(model).useState();
+  const { domain, leftColumnWidth } = useWorkbenchContext();
 
   // Extract unique alert instances from timeseries data
   const alertInstances = dataState.data ? extractAlertInstances(dataState.data) : [];
@@ -175,23 +145,12 @@ function AlertInstanceSceneRenderer({ model }: SceneComponentProps<AlertInstance
   return (
     <>
       {alertInstances.map((instance, index) => {
-        const title = getInstanceTitle(instance);
-        const metadata = getInstanceMetadata(instance);
-
-        // Simple timeline content
-        const timelineContent = (
-          <div style={{ fontSize: '12px', color: '#666' }}>
-            <Trans i18nKey="alerting.triage.timeline-points">Timeline: {instance.timeline.length} points</Trans>
-          </div>
-        );
-
         return (
           <GroupRow
             key={index}
             width={leftColumnWidth}
             title={<AlertLabels labels={instance.labels} />}
-            metadata={metadata}
-            content={timelineContent}
+            content={<StateChangeChart domain={domain} timeline={instance.timeline} />}
           />
         );
       })}
@@ -199,12 +158,11 @@ function AlertInstanceSceneRenderer({ model }: SceneComponentProps<AlertInstance
   );
 }
 
-export function getAlertInstanceScene(ruleUID: string, leftColumnWidth: number): AlertInstanceScene {
+export function getAlertInstanceScene(ruleUID: string): AlertInstanceScene {
   return new AlertInstanceScene({
     $data: getQueryRunner(`${METRIC_NAME}{grafana_rule_uid="${ruleUID}"}`, {
       format: 'timeseries',
     }),
     ruleUID,
-    leftColumnWidth,
   });
 }

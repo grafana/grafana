@@ -12,6 +12,7 @@ import { EditorColumnHeader } from '../components/contact-points/templates/Edito
 
 import { GroupRow } from './GroupRow';
 import { TimelineHeader } from './Timeline';
+import { WorkbenchProvider } from './WorkbenchContext';
 import { StateChangeChart } from './stateChangeChart/StateChangeChart';
 import { AlertRuleRow, Domain, Filter, GenericGroupedRow, WorkbenchRow } from './types';
 
@@ -98,7 +99,9 @@ export function Workbench({ domain, data }: WorkbenchProps) {
           </EditorColumnHeader>
         </div>
         {/* Render actual data */}
-        {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index)))}
+        <WorkbenchProvider leftColumnWidth={leftColumnWidth} domain={domain}>
+          {data.map((row, index) => renderWorkbenchRow(row, leftColumnWidth, domain, generateRowKey(row, index)))}
+        </WorkbenchProvider>
       </div>
     </div>
   );
@@ -122,12 +125,17 @@ function generateRowKey(row: WorkbenchRow, fallbackIndex: number): string {
 }
 
 // Helper function to render a WorkbenchRow
-function renderWorkbenchRow(row: WorkbenchRow, width: number, domain: Domain, key: React.Key): React.ReactElement {
+function renderWorkbenchRow(
+  row: WorkbenchRow,
+  leftColumnWidth: number,
+  domain: Domain,
+  key: React.Key
+): React.ReactElement {
   if (isAlertRuleRow(row)) {
     return (
       <GroupRow
         key={key}
-        width={width}
+        width={leftColumnWidth}
         title={
           <TextLink inline={false} href="#">
             {row.metadata.title}
@@ -152,13 +160,13 @@ function renderWorkbenchRow(row: WorkbenchRow, width: number, domain: Domain, ke
     return (
       <GroupRow
         key={key}
-        width={width}
+        width={leftColumnWidth}
         title={groupedRow.metadata.value}
         actions={<Label size="sm" value={groupedRow.metadata.label} />}
         content={<StateChangeChart domain={domain} />}
       >
         {groupedRow.rows.map((childRow, childIndex) =>
-          renderWorkbenchRow(childRow, width, domain, `${key}-${generateRowKey(childRow, childIndex)}`)
+          renderWorkbenchRow(childRow, leftColumnWidth, domain, `${key}-${generateRowKey(childRow, childIndex)}`)
         )}
       </GroupRow>
     );

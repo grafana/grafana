@@ -218,7 +218,7 @@ export function createAlertRuleRowsFromDataPoints(
         ruleUID: group.ruleUID,
       },
       timeline,
-      instancesScene: getAlertInstanceScene(group.ruleUID, 350), // TODO How to pass width?
+      instancesScene: getAlertInstanceScene(group.ruleUID),
       rows: [],
     };
 
