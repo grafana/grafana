@@ -37,11 +37,11 @@ func TestStream(t *testing.T) {
 		b, err := stream.Marshal()
 		require.NoError(t, err)
 
-		var new Stream
-		err = new.Unmarshal(b)
+		var newStream Stream
+		err = newStream.Unmarshal(b)
 		require.NoError(t, err)
 
-		require.Equal(t, stream, new)
+		require.Equal(t, stream, newStream)
 	})
 	t.Log("avg allocs per run:", avg)
 }
@@ -51,11 +51,11 @@ func TestStreamAdapter(t *testing.T) {
 		b, err := streamAdapter.Marshal()
 		require.NoError(t, err)
 
-		var new StreamAdapter
-		err = new.Unmarshal(b)
+		var newStream StreamAdapter
+		err = newStream.Unmarshal(b)
 		require.NoError(t, err)
 
-		require.Equal(t, streamAdapter, new)
+		require.Equal(t, streamAdapter, newStream)
 	})
 	t.Log("avg allocs per run:", avg)
 }
@@ -73,11 +73,11 @@ func TestCompatibility(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, b, ba)
 
-	var new Stream
-	err = new.Unmarshal(ba)
+	var newStream Stream
+	err = newStream.Unmarshal(ba)
 	require.NoError(t, err)
 
-	require.Equal(t, stream, new)
+	require.Equal(t, stream, newStream)
 }
 
 func BenchmarkStream(b *testing.B) {
@@ -87,8 +87,8 @@ func BenchmarkStream(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		var new Stream
-		err = new.Unmarshal(by)
+		var newStream Stream
+		err = newStream.Unmarshal(by)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -102,8 +102,8 @@ func BenchmarkStreamAdapter(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		var new StreamAdapter
-		err = new.Unmarshal(by)
+		var newStream StreamAdapter
+		err = newStream.Unmarshal(by)
 		if err != nil {
 			b.Fatal(err)
 		}
