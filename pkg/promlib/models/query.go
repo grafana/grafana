@@ -191,7 +191,9 @@ type internalQueryModel struct {
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend
-	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
+	// UtcOffsetSecDoNotUse being non zero sometimes ignores data near end time.
+	// Do not use this parameter.
+	UtcOffsetSec int64  `json:"utcOffsetSecDoNotUse,omitempty"`
 	Interval     string `json:"interval,omitempty"`
 }
 
