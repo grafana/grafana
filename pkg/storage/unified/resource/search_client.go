@@ -115,10 +115,10 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) && !unified {
 		// Create background context with timeout but ignore parent cancelation
 		ctxBg := context.WithoutCancel(ctx)
-		ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 
 		// Make background call without blocking the main request
 		go func() {
+			ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 			defer cancel() // Ensure we clean up the context
 			_, bgErr := s.unifiedClient.GetStats(ctxBgWithTimeout, in, opts...)
 			if bgErr != nil {
@@ -154,10 +154,10 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 
 		// Create background context with timeout but ignore parent cancelation
 		ctxBg := context.WithoutCancel(ctx)
-		ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 
 		// Make background call and compare results
 		go func() {
+			ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 			defer cancel() // Ensure we clean up the context
 			unifiedResponse, bgErr := s.unifiedClient.Search(ctxBgWithTimeout, in, opts...)
 			if bgErr != nil {
