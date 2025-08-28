@@ -2634,8 +2634,6 @@
       "grafana-folder": "Grafana folder",
       "health": "Health",
       "label": {
-        "dma": "External",
-        "gma": "Grafana Managed",
         "hide": "Hide",
         "show": "Show"
       },
@@ -2668,7 +2666,6 @@
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
         "rule-name": "Rule name",
-        "rule-source": "Rule source",
         "rule-type": "Type",
         "state": "State"
       }

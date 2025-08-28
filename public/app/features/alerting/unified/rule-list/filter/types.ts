@@ -14,5 +14,4 @@ export type AdvancedFilters = {
   dashboardUid?: string;
   plugins?: 'show' | 'hide';
   contactPoint?: string | null;
-  ruleManager?: 'GMA' | 'DMA';
 };

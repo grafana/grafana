@@ -302,7 +302,6 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             <RuleTypeField />
             <RuleHealthField />
             {pluginsFilterEnabled && <PluginsField />}
-            <RuleManagerField />
           </div>
           <Stack direction="row" alignItems="center">
             <Button type="reset" variant="secondary" data-testid="filter-clear-button">
@@ -646,31 +645,6 @@ function PluginsField() {
             options={[
               { label: t('alerting.rules-filter.label.show', 'Show'), value: 'show' },
               { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
-            ]}
-            value={field.value}
-            onChange={field.onChange}
-          />
-        )}
-      />
-    </>
-  );
-}
-
-function RuleManagerField() {
-  const { control } = useFormContext<AdvancedFilters>();
-  return (
-    <>
-      <Label>
-        <Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>
-      </Label>
-      <Controller
-        name="ruleManager"
-        control={control}
-        render={({ field }) => (
-          <RadioButtonGroup<AdvancedFilters['ruleManager']>
-            options={[
-              { label: t('alerting.rules-filter.label.gma', 'Grafana Managed'), value: 'GMA' },
-              { label: t('alerting.rules-filter.label.dma', 'External'), value: 'DMA' },
             ]}
             value={field.value}
             onChange={field.onChange}
