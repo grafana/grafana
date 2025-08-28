@@ -826,230 +826,120 @@ func TestBuildIndexExpiration(t *testing.T) {
 	})
 }
 
+func TestCloseAllIndexes(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+	ns2 := resource.NamespacedResource{
+		Namespace: "test2",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+	backend1, reg := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
+	require.NoError(t, err)
+	_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
+	require.NoError(t, err)
+
+	// Verify two open indexes.
+	checkOpenIndexes(t, reg, 1, 1)
+	backend1.CloseAllIndexes()
+
+	// Verify that there are no open indexes after CloseAllIndexes call.
+	checkOpenIndexes(t, reg, 0, 0)
+}
+
 func TestBuildIndex(t *testing.T) {
-	t.Run("closeAllIndexes should close all open indexes", func(t *testing.T) {
-		ns := resource.NamespacedResource{
-			Namespace: "test",
-			Group:     "group",
-			Resource:  "resource",
-		}
-		ns2 := resource.NamespacedResource{
-			Namespace: "test2",
-			Group:     "group",
-			Resource:  "resource",
-		}
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
 
-		tmpDir := t.TempDir()
-		backend1, reg := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
-		_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
-		require.NoError(t, err)
-		_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
-		require.NoError(t, err)
+	tmpDir := t.TempDir()
 
-		// Verify two open indexes.
-		checkOpenIndexes(t, reg, 1, 1)
-		backend1.CloseAllIndexes()
+	type RV string
+	const RVLessThan RV = "less"
+	const RVBiggerThan RV = "more"
+	const RVSame RV = "same"
+	for _, searchAfterWrite := range []bool{false, true} {
+		for _, rebuild := range []bool{false, true} {
+			for _, sameSize := range []bool{false, true} {
+				for _, documentRV := range []RV{RVLessThan, RVSame, RVBiggerThan} {
+					shouldRebuild := false
+					if rebuild || !sameSize || (!searchAfterWrite && documentRV == RVBiggerThan) {
+						shouldRebuild = true
+					}
 
-		// Verify that there are no open indexes after CloseAllIndexes call.
-		checkOpenIndexes(t, reg, 0, 0)
-	})
+					testName := ""
+					if shouldRebuild {
+						testName += "should NOT reuse index "
+					} else {
+						testName += "should reuse index "
+					}
 
-	t.Run("file based index reuse", func(t *testing.T) {
-		ns := resource.NamespacedResource{
-			Namespace: "test",
-			Group:     "group",
-			Resource:  "resource",
-		}
+					if sameSize {
+						testName += "on same size "
+					} else {
+						testName += "on different size "
+					}
 
-		tmpDir := t.TempDir()
+					switch documentRV {
+					case RVLessThan:
+						testName += "and documentRV < indexRV "
+					case RVBiggerThan:
+						testName += "and documentRV > indexRV "
+					case RVSame:
+						testName += "and documentRV = indexRV "
+					}
 
-		type RV string
-		const RVLessThan RV = "less"
-		const RVBiggerThan RV = "more"
-		const RVSame RV = "same"
-		for _, tt := range []struct {
-			searchAfterWrite bool
-			rebuild          bool
-			sameSize         bool
-			rv               RV
-			shouldRebuild    bool
-		}{
-			{
-				searchAfterWrite: false,
-				rebuild:          false,
-				sameSize:         true,
-				rv:               RVSame,
-				shouldRebuild:    false,
-			},
-			{
-				searchAfterWrite: false,
-				rebuild:          false,
-				sameSize:         true,
-				rv:               RVLessThan,
-				shouldRebuild:    false,
-			},
-			{
-				searchAfterWrite: false,
-				rebuild:          false,
-				sameSize:         true,
-				rv:               RVBiggerThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: false,
-				rebuild:          false,
-				sameSize:         false,
-				rv:               RVLessThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: false,
-				rebuild:          true,
-				sameSize:         true,
-				rv:               RVSame,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: false,
-				rebuild:          true,
-				sameSize:         true,
-				rv:               RVLessThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: false,
-				rebuild:          true,
-				sameSize:         true,
-				rv:               RVBiggerThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: false,
-				rebuild:          true,
-				sameSize:         false,
-				rv:               RVLessThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          false,
-				sameSize:         true,
-				rv:               RVSame,
-				shouldRebuild:    false,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          false,
-				sameSize:         true,
-				rv:               RVLessThan,
-				shouldRebuild:    false,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          false,
-				sameSize:         true,
-				rv:               RVBiggerThan,
-				shouldRebuild:    false,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          false,
-				sameSize:         false,
-				rv:               RVLessThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          true,
-				sameSize:         true,
-				rv:               RVLessThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          true,
-				sameSize:         true,
-				rv:               RVSame,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          true,
-				sameSize:         true,
-				rv:               RVBiggerThan,
-				shouldRebuild:    true,
-			},
-			{
-				searchAfterWrite: true,
-				rebuild:          true,
-				sameSize:         false,
-				rv:               RVLessThan,
-				shouldRebuild:    true,
-			},
-		} {
-			testName := ""
-			if tt.shouldRebuild {
-				testName += "should NOT reuse index "
-			} else {
-				testName += "should reuse index "
-			}
+					if rebuild {
+						testName += "when rebuild is true "
+					} else {
+						testName += "when rebuild is false "
+					}
 
-			if tt.sameSize {
-				testName += "on same size "
-			} else {
-				testName += "on different size "
-			}
+					if searchAfterWrite {
+						testName += "and searchAfterWrite is true"
+					} else {
+						testName += "and searchAfterWrite is false"
+					}
 
-			switch tt.rv {
-			case RVLessThan:
-				testName += "and documentRV < indexRV "
-			case RVBiggerThan:
-				testName += "and documentRV > indexRV "
-			case RVSame:
-				testName += "and documentRV = indexRV "
-			}
+					t.Run(testName, func(t *testing.T) {
+						var size int64 = 10
+						var rv int64 = 100
+						backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, rebuild, searchAfterWrite)
+						backend1.CloseAllIndexes()
 
-			if tt.rebuild {
-				testName += "when rebuild is true "
-			} else {
-				testName += "when rebuild is false "
-			}
+						if !sameSize {
+							size = 11
+						}
+						switch documentRV {
+						case RVBiggerThan:
+							rv = 101
+						case RVLessThan:
+							rv = 99
+						case RVSame:
+						}
+						backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 1000, rebuild, searchAfterWrite)
 
-			if tt.searchAfterWrite {
-				testName += "and searchAfterWrite is true"
-			} else {
-				testName += "and searchAfterWrite is false"
-			}
-
-			t.Run(testName, func(t *testing.T) {
-				var size int64 = 10
-				var rv int64 = 100
-				backend1, _ := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 10, tt.rebuild, tt.searchAfterWrite)
-				backend1.CloseAllIndexes()
-
-				if !tt.sameSize {
-					size = 11
+						cnt, err := idx.DocCount(context.Background(), "")
+						require.NoError(t, err)
+						if shouldRebuild {
+							require.Equal(t, int64(1000), cnt)
+						} else {
+							require.Equal(t, int64(10), cnt)
+						}
+						backend2.CloseAllIndexes()
+					})
 				}
-				switch tt.rv {
-				case RVBiggerThan:
-					rv = 101
-				case RVLessThan:
-					rv = 99
-				case RVSame:
-				}
-				backend2, idx := createBleveBackendAndIndex(t, tmpDir, ns, size, rv, 1000, tt.rebuild, tt.searchAfterWrite)
-
-				cnt, err := idx.DocCount(context.Background(), "")
-				require.NoError(t, err)
-				if tt.shouldRebuild {
-					require.Equal(t, int64(1000), cnt)
-				} else {
-					require.Equal(t, int64(10), cnt)
-				}
-				backend2.CloseAllIndexes()
-			})
+			}
 		}
-	})
+	}
 }
 
 func createBleveBackendAndIndex(t *testing.T, tmpDir string, ns resource.NamespacedResource, size, rv int64, docCount int, rebuild, searchAfterWrite bool) (*bleveBackend, resource.ResourceIndex) {
