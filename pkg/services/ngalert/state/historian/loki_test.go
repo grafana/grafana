@@ -885,7 +885,7 @@ func createTestLokiBackend(t *testing.T, req client.Requester, met *metrics.Hist
 	cfg := lokiclient.LokiConfig{
 		WritePathURL:   url,
 		ReadPathURL:    url,
-		Encoder:        lokiclient.JSONEncoder{},
+		Encoder:        lokiclient.JsonEncoder{},
 		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
 	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
