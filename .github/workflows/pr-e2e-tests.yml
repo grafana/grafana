@@ -535,6 +535,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: yarn install --immutable
       - name: Get pa11y results
         uses: actions/download-artifact@v4
         with:
