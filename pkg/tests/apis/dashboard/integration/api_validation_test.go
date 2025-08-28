@@ -244,9 +244,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 	// Get a new resource client for admin user
 	// TODO: we need to figure out why reusing the same client results in slower tests
-	adminClient := func() *apis.K8sResourceClient {
-		return getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
-	}
+	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
 
 	t.Run("Dashboard UID validations", func(t *testing.T) {
@@ -254,15 +252,15 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with existing UID", func(t *testing.T) {
 			// Create a dashboard with a specific UID
 			specificUID := "existing-uid-dash"
-			createdDash, err := createDashboard(t, adminClient(), "Dashboard with Specific UID", nil, &specificUID)
+			createdDash, err := createDashboard(t, adminClient, "Dashboard with Specific UID", nil, &specificUID)
 			require.NoError(t, err)
 
 			// Try to create another dashboard with the same UID
-			_, err = createDashboard(t, adminClient(), "Another Dashboard with Same UID", nil, &specificUID)
+			_, err = createDashboard(t, adminClient, "Another Dashboard with Same UID", nil, &specificUID)
 			require.Error(t, err)
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), createdDash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), createdDash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
@@ -270,14 +268,14 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with too long UID", func(t *testing.T) {
 			// Create a dashboard with a long UID (over 40 chars)
 			longUID := "this-uid-is-way-too-long-for-a-dashboard-uid-12345678901234567890"
-			_, err := createDashboard(t, adminClient(), "Dashboard with Long UID", nil, &longUID)
+			_, err := createDashboard(t, adminClient, "Dashboard with Long UID", nil, &longUID)
 			require.Error(t, err)
 		})
 
 		// Test creating dashboard with invalid UID characters
 		t.Run("reject dashboard with invalid UID characters", func(t *testing.T) {
 			invalidUID := "invalid/uid/with/slashes"
-			_, err := createDashboard(t, adminClient(), "Dashboard with Invalid UID", nil, &invalidUID)
+			_, err := createDashboard(t, adminClient, "Dashboard with Invalid UID", nil, &invalidUID)
 			require.Error(t, err)
 		})
 	})
@@ -286,47 +284,47 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	t.Run("Dashboard title validations", func(t *testing.T) {
 		// Test empty title
 		t.Run("reject dashboard with empty title", func(t *testing.T) {
-			_, err := createDashboard(t, adminClient(), "", nil, nil)
+			_, err := createDashboard(t, adminClient, "", nil, nil)
 			require.Error(t, err)
 		})
 
 		// Test long title
 		t.Run("reject dashboard with excessively long title", func(t *testing.T) {
 			veryLongTitle := strings.Repeat("a", 10000)
-			_, err := createDashboard(t, adminClient(), veryLongTitle, nil, nil)
+			_, err := createDashboard(t, adminClient, veryLongTitle, nil, nil)
 			require.Error(t, err)
 		})
 
 		// Test updating dashboard with empty title
 		t.Run("reject dashboard update with empty title", func(t *testing.T) {
 			// First create a valid dashboard
-			dash, err := createDashboard(t, adminClient(), "Valid Dashboard Title", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Valid Dashboard Title", nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, dash)
 
 			// Try to update with empty title
-			_, err = updateDashboard(t, adminClient(), dash, "", nil)
+			_, err = updateDashboard(t, adminClient, dash, "", nil)
 			require.Error(t, err)
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
 		// Test updating dashboard with excessively long title
 		t.Run("reject dashboard update with excessively long title", func(t *testing.T) {
 			// First create a valid dashboard
-			dash, err := createDashboard(t, adminClient(), "Valid Dashboard Title", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Valid Dashboard Title", nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, dash)
 
 			// Try to update with excessively long title
 			veryLongTitle := strings.Repeat("a", 10000)
-			_, err = updateDashboard(t, adminClient(), dash, veryLongTitle, nil)
+			_, err = updateDashboard(t, adminClient, dash, veryLongTitle, nil)
 			require.Error(t, err)
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -334,15 +332,15 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	t.Run("Dashboard message validations", func(t *testing.T) {
 		// Test long message
 		t.Run("reject dashboard with excessively long update message", func(t *testing.T) {
-			dash, err := createDashboard(t, adminClient(), "Regular dashboard", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Regular dashboard", nil, nil)
 			require.NoError(t, err)
 
 			veryLongMessage := strings.Repeat("a", 600)
-			_, err = updateDashboard(t, adminClient(), dash, "Dashboard updated with a long message", &veryLongMessage)
+			_, err = updateDashboard(t, adminClient, dash, "Dashboard updated with a long message", &veryLongMessage)
 			require.Error(t, err)
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -351,21 +349,21 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		// Test non-existent folder UID
 		t.Run("reject dashboard with non-existent folder UID", func(t *testing.T) {
 			nonExistentFolderUID := "non-existent-folder-uid"
-			_, err := createDashboard(t, adminClient(), "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
+			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
 			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folders.folder.grafana.app \"non-existent-folder-uid\" not found")
 		})
 
 		t.Run("allow moving folder to general folder", func(t *testing.T) {
 			folder1 := createFolderObject(t, "folder1", "default", "")
 			folder1UID := folder1.GetName()
-			dash, err := createDashboard(t, adminClient(), "Dashboard in a Folder", &folder1UID, nil)
+			dash, err := createDashboard(t, adminClient, "Dashboard in a Folder", &folder1UID, nil)
 			require.NoError(t, err)
 
 			generalFolderUID := ""
-			_, err = updateDashboard(t, adminClient(), dash, "Move dashboard into the General Folder", &generalFolderUID)
+			_, err = updateDashboard(t, adminClient, dash, "Move dashboard into the General Folder", &generalFolderUID)
 			require.NoError(t, err)
 
-			err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -480,7 +478,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		// Test version increment on update
 		t.Run("version increments on dashboard update", func(t *testing.T) {
 			// Create a dashboard with admin
-			dash, err := createDashboard(t, adminClient(), "Dashboard for Version Test", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Dashboard for Version Test", nil, nil)
 			require.NoError(t, err, "Failed to create dashboard for version test")
 			dashUID := dash.GetName()
 
@@ -490,7 +488,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			initialRV := meta.GetResourceVersion()
 
 			// Update the dashboard
-			updatedDash, err := updateDashboard(t, adminClient(), dash, "Updated Dashboard for Version Test", nil)
+			updatedDash, err := updateDashboard(t, adminClient, dash, "Updated Dashboard for Version Test", nil)
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash)
 
@@ -500,25 +498,25 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NotEqual(t, meta.GetResourceVersion(), initialRV, "Resource version should be changed after update")
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
 		// Test generation conflict when updating concurrently
 		t.Run("reject update with version conflict", func(t *testing.T) {
 			// Create a dashboard with admin
-			dash, err := createDashboard(t, adminClient(), "Dashboard for Version Conflict Test", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Dashboard for Version Conflict Test", nil, nil)
 			require.NoError(t, err, "Failed to create dashboard for version conflict test")
 			dashUID := dash.GetName()
 
 			// Get the dashboard twice (simulating two users getting it)
-			dash1, err := adminClient().Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+			dash1, err := adminClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 			require.NoError(t, err)
 			dash2, err := editorClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 			require.NoError(t, err)
 
 			// Update with the first copy
-			updatedDash1, err := updateDashboard(t, adminClient(), dash1, "Updated by first user", nil)
+			updatedDash1, err := updateDashboard(t, adminClient, dash1, "Updated by first user", nil)
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash1)
 
@@ -528,7 +526,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
@@ -541,12 +539,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			meta.SetGeneration(5)
 
 			// Create the dashboard
-			createdDash, err := adminClient().Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
+			createdDash, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
 			require.NoError(t, err)
 			dashUID := createdDash.GetName()
 
 			// Fetch the created dashboard
-			fetchedDash, err := adminClient().Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+			fetchedDash, err := adminClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 			require.NoError(t, err)
 
 			// Verify the generation was handled properly
@@ -554,22 +552,22 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.Equal(t, 5, meta.GetGeneration(), "Generation should be 5")
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
 		t.Run("dashboard version history available, even for UIDs ending in hyphen", func(t *testing.T) {
 			dashboardUID := "test-dashboard-"
-			dash, err := createDashboard(t, adminClient(), "Dashboard with uid ending in hyphen", nil, &dashboardUID)
+			dash, err := createDashboard(t, adminClient, "Dashboard with uid ending in hyphen", nil, &dashboardUID)
 			require.NoError(t, err)
 
-			updatedDash, err := updateDashboard(t, adminClient(), dash, "Updated dashboard with uid ending in hyphen", nil)
+			updatedDash, err := updateDashboard(t, adminClient, dash, "Updated dashboard with uid ending in hyphen", nil)
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash)
 
 			labelSelector := utils.LabelKeyGetHistory + "=true"
 			fieldSelector := "metadata.name=" + dashboardUID
-			versions, err := adminClient().Resource.List(context.Background(), v1.ListOptions{
+			versions, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
 				LabelSelector: labelSelector,
 				FieldSelector: fieldSelector,
 				Limit:         10,
@@ -579,7 +577,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			// one from initial save, one from update
 			require.Equal(t, len(versions.Items), 2)
 
-			err = adminClient().Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -607,12 +605,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminClient(), "Dashboard for Provisioning Test", nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard for Provisioning Test", nil, nil)
 				require.NoError(t, err, "Failed to create dashboard for provisioning test")
 				dashUID := dash.GetName()
 
 				// Fetch the created dashboard
-				fetchedDash, err := adminClient().Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+				fetchedDash, err := adminClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 				require.NoError(t, err)
 				require.NotNil(t, fetchedDash)
 
@@ -620,7 +618,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				provisionedDash := markDashboardObjectAsProvisioned(t, fetchedDash, "test-provider", "test-external-id", "test-checksum", tc.allowsEdits)
 
 				// Update the dashboard to apply the provisioning annotations
-				updatedDash, err := adminClient().Resource.Update(context.Background(), provisionedDash, v1.UpdateOptions{})
+				updatedDash, err := adminClient.Resource.Update(context.Background(), provisionedDash, v1.UpdateOptions{})
 				require.NoError(t, err)
 				require.NotNil(t, updatedDash)
 
@@ -647,7 +645,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				}
 
 				// Clean up
-				err = adminClient().Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+				err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 				require.NoError(t, err)
 			})
 		}
@@ -713,14 +711,14 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 				_ = meta.SetSpec(specMap)
 
-				dash, err := adminClient().Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
+				dash, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
 
 				if tc.shouldSucceed {
 					require.NoError(t, err)
 					require.NotNil(t, dash)
 
 					// Clean up
-					err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+					err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 					require.NoError(t, err)
 				} else {
 					require.Error(t, err)
@@ -738,7 +736,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 			// Create a dashboard with a specific UID to make it easier to manage
 			specificUID := "size-limit-test-dash"
-			dash, err := createDashboard(t, adminClient(), "Dashboard Exceeding Size Limit", nil, &specificUID)
+			dash, err := createDashboard(t, adminClient, "Dashboard Exceeding Size Limit", nil, &specificUID)
 			require.NoError(t, err)
 
 			meta, _ := utils.MetaAccessor(dash)
@@ -778,12 +776,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err, "Failed to set spec")
 
 			// Try to update with too many panels
-			_, err = adminClient().Resource.Update(context.Background(), dash, v1.UpdateOptions{})
+			_, err = adminClient.Resource.Update(context.Background(), dash, v1.UpdateOptions{})
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "exceeds", "Error should mention size or limit exceeded")
 
 			// Clean up
-			err = adminClient().Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -1139,10 +1137,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 
 	// Get a new resource client for admin user
 	// TODO: we need to figure out why reusing the same client results in slower tests
-	adminClient := func() *apis.K8sResourceClient {
-		// admin token
-		return getServiceAccountResourceClient(t, ctx.Helper, ctx.AdminServiceAccountToken, ctx.OrgID, getDashboardGVR())
-	}
+	adminClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.AdminServiceAccountToken, ctx.OrgID, getDashboardGVR())
 
 	// Get clients for each identity type and role
 	adminUserClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
@@ -1252,7 +1247,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 							}
 
 							// Clean up
-							err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+							err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 							require.NoError(t, err)
 						} else {
 							// Test cannot create dashboard
@@ -1266,7 +1261,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 			// Test dashboard updates
 			t.Run("dashboard update", func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminClient(), "Dashboard to Update by "+identity.Name, nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard to Update by "+identity.Name, nil, nil)
 				require.NoError(t, err)
 				require.NotNil(t, dash)
 
@@ -1286,14 +1281,14 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				}
 
 				// Clean up
-				err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+				err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 				require.NoError(t, err)
 			})
 
 			// Test dashboard deletion permissions
 			t.Run("dashboard deletion", func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminClient(), "Dashboard for deletion test by "+identity.Name, nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard for deletion test by "+identity.Name, nil, nil)
 				require.NoError(t, err)
 				require.NotNil(t, dash)
 
@@ -1304,7 +1299,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				} else {
 					require.Error(t, err, "Should not be able to delete dashboard")
 					// Clean up with admin if the test identity couldn't delete
-					err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+					err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 					require.NoError(t, err)
 				}
 			})
@@ -1313,7 +1308,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 			// Test dashboard viewing for all roles
 			t.Run("dashboard viewing", func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminClient(), "Dashboard for "+identity.Name+" to view", nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard for "+identity.Name+" to view", nil, nil)
 				require.NoError(t, err)
 				require.NotNil(t, dash)
 
@@ -1323,7 +1318,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				require.NotNil(t, viewedDash)
 
 				// Clean up
-				err = adminClient().Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+				err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 				require.NoError(t, err)
 			})
 		})
