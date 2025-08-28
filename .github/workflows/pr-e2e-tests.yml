@@ -17,6 +17,7 @@ permissions: {}
 env:
   ACTIONS_STEP_DEBUG: true
   RUNNER_DEBUG: 1
+  GRABPL_VERSION: 3.0.44
 
 jobs:
   detect-changes:
@@ -500,6 +501,49 @@ jobs:
         with:
           verb: run
           args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail
+      - name: Upload pa11y results
+        # TODO uncomment before merging
+        # if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: pa11y-ci-results
+          path: pa11y-ci-results.json
+
+  publish-metrics:
+    needs:
+      - run-a11y-test
+    name: Publish metrics
+    # Run on `grafana/grafana` main branch only
+    # TODO uncomment before merging
+    # if: github.event_name == 'push' && github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: does the misc stats api key already live in vault?
+      # - id: vault-secrets
+      #   uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      #   with:
+      #     repo_secrets: |
+      #       GRAFANA_MISC_STATS_API_KEY=delivery-bot-app:PRIVATE_KEY
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Get pa11y results
+        uses: actions/download-artifact@v4
+        with:
+          name: pa11y-ci-results
+      - name: Download grabpl executable
+        shell: sh
+        run: |
+          mkdir -pv ./bin
+          curl -fL -o ./bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v"$GRABPL_VERSION"/grabpl
+          chmod 0755 ./bin/grabpl
+      - name: Extract and publish metrics
+        run: ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $$GRAFANA_MISC_STATS_API_KEY
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests.
