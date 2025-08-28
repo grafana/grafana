@@ -1,0 +1,178 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15.7
+          env:
+            - name: POSTGRES_USER
+              value: grafana
+            - name: POSTGRES_PASSWORD
+              value: password
+            - name: POSTGRES_DB
+              value: grafana
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: postgres-storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zanzana
+  namespace: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zanzana-config
+  namespace: default
+  labels:
+    name: zanzana
+data:
+  grafana.ini: |
+    app_mode = development
+    target = zanzana-server
+
+    [log]
+    level = info
+
+    [database]
+    type = postgres
+    host = postgres.default.svc:5432
+    name = grafana
+    user = grafana
+    password = password
+
+    [feature_toggles]
+    zanzana = true
+    authZGRPCServer = true
+
+    [zanzana.server]
+    allow_insecure = true
+    check_query_cache = true
+    http_addr = 0.0.0.0:8080
+
+    [grpc_server]
+    enabled = true
+    address = 0.0.0.0:50051
+    enable_logging = true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zanzana
+  namespace: default
+  labels:
+    name: zanzana
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+  selector:
+    name: zanzana
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zanzana
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: zanzana
+  template:
+    metadata:
+      labels:
+        name: zanzana
+    spec:
+      containers:
+        - command:
+            - grafana-server
+            - target
+            - --config=/etc/grafana-config/grafana.ini
+            - --homepath=/usr/share/grafana
+          env:
+            - name: GF_PATHS_CONFIG
+              value: /etc/grafana-config/grafana.ini
+          image: grafana/grafana-dev:12.2.0-257970
+          imagePullPolicy: IfNotPresent
+          name: zanzana
+          volumeMounts:
+            - mountPath: /etc/grafana-config
+              name: zanzana-config
+            - mountPath: /var/lib/grafana
+              name: zanzana-storage
+      serviceAccount: zanzana
+      volumes:
+        - configMap:
+            name: zanzana-config
+          name: zanzana-config
+        - emptyDir: {}
+          name: zanzana-storage
+---
+

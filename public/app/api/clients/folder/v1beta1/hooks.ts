@@ -6,6 +6,7 @@ import { config, getAppEvents } from '@grafana/runtime';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
   useGetFolderQuery as useGetFolderQueryLegacy,
+  useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
 
@@ -20,11 +21,12 @@ import {
   ManagerKind,
 } from '../../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
-import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
+import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
 import { useDispatch } from '../../../../types/store';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
+import { isProvisionedFolderCheck } from './utils';
 import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
 import { useGetFolderQuery, useGetFolderParentsQuery, useDeleteFolderMutation } from './index';
@@ -187,6 +189,38 @@ export function useDeleteFolderMutationFacade() {
     } else {
       return deleteFolderLegacy(folder);
     }
+  };
+}
+
+export function useDeleteMultipleFoldersMutationFacade() {
+  const [deleteFolders] = useDeleteFoldersMutationLegacy();
+  const [deleteFolder] = useDeleteFolderMutation();
+  const dispatch = useDispatch();
+
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return deleteFolders;
+  }
+
+  return async function deleteFolders({ folderUIDs }: { folderUIDs: string[] }) {
+    // Delete all the folders sequentially
+    // TODO error handling here
+    for (const folderUID of folderUIDs) {
+      // This also shows warning alert
+      if (await isProvisionedFolderCheck(dispatch, folderUID)) {
+        continue;
+      }
+      const result = await deleteFolder({ name: folderUID });
+      if (!result.error) {
+        // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
+        // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [t('folders.api.folder-deleted-success', 'Folder deleted')],
+        });
+        dispatch(refreshParents(folderUIDs));
+      }
+    }
+    return { data: undefined };
   };
 }
 

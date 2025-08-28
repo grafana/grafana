@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -49,7 +49,7 @@ func ProvideService(
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
-	mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder,
+	qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                        cfg,
@@ -60,7 +60,7 @@ func ProvideService(
 		pCtxProvider:               pCtxProvider,
 		log:                        log.New("query_data"),
 		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
-		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
+		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -87,7 +87,7 @@ type ServiceImpl struct {
 	pCtxProvider               *plugincontext.Provider
 	log                        log.Logger
 	concurrentQueryLimit       int
-	mtDatasourceClientBuilder  mtdsclient.MTDatasourceClientBuilder
+	qsDatasourceClientBuilder  dsquerierclient.QSDatasourceClientBuilder
 	headers                    map[string]string
 }
 
@@ -224,13 +224,13 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
-func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
+func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:                        log,
 		dataSourceCache:            dscache,
 		expressionService:          exprService,
 		dataSourceRequestValidator: validations.ProvideValidator(),
-		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
+		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
 		headers:                    headers,
 		concurrentQueryLimit:       16, // TODO: make it configurable
 	}
@@ -302,7 +302,11 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		req.Queries = append(req.Queries, q.query)
 	}
 
-	mtDsClient, ok := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	qsDsClient, ok, err := s.qsDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	if err != nil {
+		return nil, err
+	}
+
 	if !ok { // single tenant flow
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 		if err != nil {
@@ -310,13 +314,13 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		}
 		req.PluginContext = pCtx
 		return s.pluginClient.QueryData(ctx, req)
-	} else { // multi tenant flow
+	} else { // query-service flow (single or multi tenant)
 		// transform request from backend.QueryDataRequest to k8s request
 		k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
 		if err != nil {
 			return nil, err
 		}
-		return mtDsClient.QueryData(ctx, *k8sReq)
+		return qsDsClient.QueryData(ctx, *k8sReq)
 	}
 }
 
