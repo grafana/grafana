@@ -80,6 +80,10 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
       marginBlock: TABLE.CELL_PADDING,
     }),
     cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
+    cellClamp: css({
+      overflowY: 'hidden',
+      justifyContent: 'flex-start !important',
+    }),
     noDataNested: css({
       height: TABLE.NESTED_NO_DATA_HEIGHT,
       display: 'flex',
