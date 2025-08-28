@@ -1210,6 +1210,7 @@ func (n ReceiverMutators) WithProvenance(provenance Provenance) Mutator[Receiver
 
 func (n ReceiverMutators) WithValidIntegration(integrationType string) Mutator[Receiver] {
 	return func(r *Receiver) {
+		// TODO add support for v0
 		integration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 		r.Integrations = []*Integration{&integration}
 	}
@@ -1217,6 +1218,7 @@ func (n ReceiverMutators) WithValidIntegration(integrationType string) Mutator[R
 
 func (n ReceiverMutators) WithInvalidIntegration(integrationType string) Mutator[Receiver] {
 	return func(r *Receiver) {
+		// TODO add support for v0
 		integration := IntegrationGen(IntegrationMuts.WithInvalidConfig(integrationType))()
 		r.Integrations = []*Integration{&integration}
 	}
@@ -1305,8 +1307,9 @@ func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
 
 func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Integration] {
 	return func(c *Integration) {
+		// TODO add support for v0 integrations
 		config := alertingNotify.AllKnownConfigsForTesting[integrationType].GetRawNotifierConfig(c.Name)
-		integrationConfig, _ := IntegrationConfigFromType(integrationType)
+		integrationConfig, _ := IntegrationConfigFromType(integrationType, nil)
 		c.Config = integrationConfig
 
 		var settings map[string]any
@@ -1324,7 +1327,7 @@ func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Int
 
 func (n IntegrationMutators) WithInvalidConfig(integrationType string) Mutator[Integration] {
 	return func(c *Integration) {
-		integrationConfig, _ := IntegrationConfigFromType(integrationType)
+		integrationConfig, _ := IntegrationConfigFromType(integrationType, nil)
 		c.Config = integrationConfig
 		c.Settings = map[string]interface{}{}
 		c.SecureSettings = map[string]string{}

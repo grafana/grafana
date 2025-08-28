@@ -1522,14 +1522,15 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
-	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+	return createIntegrationWithSettings(t, integrationType, "v1", cfg.Config)
 }
-func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.ReceiverIntegration {
+func createIntegrationWithSettings(t *testing.T, integrationType string, integrationVersion string, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.ReceiverIntegration{
 		Settings:              settings.Object,
 		Type:                  integrationType,
+		Version:               integrationVersion,
 		DisableResolveMessage: util.Pointer(false),
 	}
 }

@@ -124,7 +124,7 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 }
 
 func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
-	config, err := models.IntegrationConfigFromType(p.Type)
+	config, err := models.IntegrationConfigFromType(p.Type, nil)
 	if err != nil {
 		return nil, err
 	}
