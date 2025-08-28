@@ -181,6 +181,24 @@ type K8sResourceClient struct {
 	Resource dynamic.ResourceInterface
 }
 
+// newOptimizedRestConfig creates a base rest.Config optimized for integration tests.
+// It disables client-side rate limiting and uses an optimized HTTP transport.
+func newOptimizedRestConfig(host string) *rest.Config {
+	return &rest.Config{
+		Host: host,
+		// For integration tests against a local server, client-side rate-limiting
+		// is too low and can cause requests to be throttled.
+		QPS:   10,
+		Burst: 20,
+		// Use a shared transport optimized for high-concurrency testing
+		// against a single host.
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 50, // Default is 2, which is too low for test concurrency.
+		},
+	}
+}
+
 // This will set the expected Group/Version/Resource and return the discovery info if found
 func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
 	c.t.Helper()
@@ -205,10 +223,8 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 		client, clientErr = dynamic.NewForConfig(args.User.NewRestConfig())
 	} else {
 		// Use service account token for authentication
-		cfg := &rest.Config{
-			Host:        fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()),
-			BearerToken: args.ServiceAccountToken,
-		}
+		cfg := newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
+		cfg.BearerToken = args.ServiceAccountToken
 		client, clientErr = dynamic.NewForConfig(cfg)
 	}
 	require.NoError(c.t, clientErr)
@@ -335,11 +351,10 @@ type User struct {
 }
 
 func (c *User) NewRestConfig() *rest.Config {
-	return &rest.Config{
-		Host:     c.baseURL,
-		Username: c.Identity.GetLogin(),
-		Password: c.password,
-	}
+	cfg := newOptimizedRestConfig(c.baseURL)
+	cfg.Username = c.Identity.GetLogin()
+	cfg.Password = c.password
+	return cfg
 }
 
 // Implements: apiserver.RestConfigProvider
@@ -695,12 +710,10 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
-	conf := &rest.Config{
-		Host:     baseUrl,
-		Username: c.Org1.Admin.Identity.GetLogin(),
-		Password: c.Org1.Admin.password,
-	}
-	client, err := discovery.NewDiscoveryClientForConfig(conf)
+	cfg := newOptimizedRestConfig(baseUrl)
+	cfg.Username = c.Org1.Admin.Identity.GetLogin()
+	cfg.Password = c.Org1.Admin.password
+	client, err := discovery.NewDiscoveryClientForConfig(cfg)
 	require.NoError(c.t, err)
 	return client
 }
