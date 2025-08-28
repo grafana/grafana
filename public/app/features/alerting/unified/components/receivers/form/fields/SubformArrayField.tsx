@@ -3,7 +3,11 @@ import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/features/alerting/unified/types/alerting';
+import {
+  NotificationChannelOption,
+  NotificationChannelSecureFields,
+  OptionMeta,
+} from 'app/features/alerting/unified/types/alerting';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 import { CollapsibleSection } from '../CollapsibleSection';
