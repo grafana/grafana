@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"maps"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -230,9 +231,13 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
-
-	// TODO! only setup this endpoint if it is implemented
 	storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+
+	// FIXME: temporarily register both "datasources" and "connections" query paths
+	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
+	// while we transition requests to the new path
+	storage["connections"] = &noopREST{}                            // hidden from openapi
+	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
@@ -262,9 +267,7 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 		defs := queryV0.GetOpenAPIDefinitions(ref) // required when running standalone
-		for k, v := range datasourceV0.GetOpenAPIDefinitions(ref) {
-			defs[k] = v
-		}
+		maps.Copy(defs, datasourceV0.GetOpenAPIDefinitions(ref))
 		return defs
 	}
 }

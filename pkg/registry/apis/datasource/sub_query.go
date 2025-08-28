@@ -26,6 +26,7 @@ var (
 	_ rest.Storage         = (*subQueryREST)(nil)
 	_ rest.Connecter       = (*subQueryREST)(nil)
 	_ rest.StorageMetadata = (*subQueryREST)(nil)
+	_ rest.Scoper          = (*subQueryREST)(nil)
 )
 
 func (r *subQueryREST) New() runtime.Object {
@@ -34,6 +35,10 @@ func (r *subQueryREST) New() runtime.Object {
 }
 
 func (r *subQueryREST) Destroy() {}
+
+func (r *subQueryREST) NamespaceScoped() bool {
+	return true
+}
 
 func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"} // and parquet!

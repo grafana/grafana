@@ -54,6 +54,26 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	ds.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
 	ds.Properties["kind"] = *spec.StringProperty().WithEnum("DataSource")
 
+	// Mark connections as deprecated
+	delete(oas.Paths.Paths, root+"namespaces/{namespace}/connections/{name}")
+	query := oas.Paths.Paths[root+"namespaces/{namespace}/connections/{name}/query"]
+	for query == nil || query.Post == nil {
+		return nil, fmt.Errorf("missing temporary connection path")
+	}
+	query.Post.Tags = []string{"Connections (deprecated)"}
+	query.Post.Deprecated = true
+	query.Post.RequestBody = &spec3.RequestBody{
+		RequestBodyProps: spec3.RequestBodyProps{
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema: spec.MapProperty(nil),
+					},
+				},
+			},
+		},
+	}
+
 	if b.schemaProvider == nil {
 		return oas, nil
 	}
