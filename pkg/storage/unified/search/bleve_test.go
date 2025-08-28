@@ -790,29 +790,18 @@ func TestBuildIndex(t *testing.T) {
 		}
 
 		tmpDir := t.TempDir()
-		backend1, reg1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+		backend1, reg := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
 		_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
 		require.NoError(t, err)
 		_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, 100, nil, "test", indexTestDocs(ns, 10, 100), nil, false, false)
 		require.NoError(t, err)
 
 		// Verify two open indexes.
-		require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 1
-		index_server_open_indexes{index_storage="file"} 1
-	`), "index_server_open_indexes"))
-
+		checkOpenIndexes(t, reg, 1, 1)
 		backend1.CloseAllIndexes()
 
 		// Verify that there are no open indexes after CloseAllIndexes call.
-		require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} 0
-		index_server_open_indexes{index_storage="file"} 0
-	`), "index_server_open_indexes"))
+		checkOpenIndexes(t, reg, 0, 0)
 	})
 
 	t.Run("time based expiration", func(t *testing.T) {
@@ -839,12 +828,7 @@ func TestBuildIndex(t *testing.T) {
 			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 
 			// Verify that there are no open indexes.
-			require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
-			# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-			# TYPE index_server_open_indexes gauge
-			index_server_open_indexes{index_storage="memory"} 0
-			index_server_open_indexes{index_storage="file"} 0
-			`), "index_server_open_indexes"))
+			checkOpenIndexes(t, reg, 0, 0)
 		})
 
 		t.Run("file based indexes should NOT expire", func(t *testing.T) {
@@ -871,13 +855,7 @@ func TestBuildIndex(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, int64(1), cnt)
 
-			require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
-			# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-			# TYPE index_server_open_indexes gauge
-			index_server_open_indexes{index_storage="memory"} 0
-			index_server_open_indexes{index_storage="file"} 1
-			`), "index_server_open_indexes"))
-
+			checkOpenIndexes(t, reg, 0, 1)
 			backend.CloseAllIndexes()
 		})
 	})
@@ -1145,14 +1123,18 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, int64(secondSize), cnt)
 
-			require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-				# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-				# TYPE index_server_open_indexes gauge
-				index_server_open_indexes{index_storage="memory"} %d
-				index_server_open_indexes{index_storage="file"} %d
-			`, openInMemoryIndexes, 1-openInMemoryIndexes)), "index_server_open_indexes"))
+			checkOpenIndexes(t, reg, openInMemoryIndexes, 1-openInMemoryIndexes)
 		})
 	}
+}
+
+func checkOpenIndexes(t *testing.T, reg prometheus.Gatherer, memory, file int) {
+	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE index_server_open_indexes gauge
+		index_server_open_indexes{index_storage="memory"} %d
+		index_server_open_indexes{index_storage="file"} %d
+	`, memory, file)), "index_server_open_indexes"))
 }
 
 func verifyDirEntriesCount(t *testing.T, dir string, count int) {
