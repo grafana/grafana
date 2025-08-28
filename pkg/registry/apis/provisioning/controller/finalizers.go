@@ -52,12 +52,16 @@ func (f *finalizer) process(ctx context.Context,
 		case ReleaseOrphanResourcesFinalizer:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerKind+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyManagerIdentity+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourcePath+`" },
-						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeySourceChecksum+`" }
-					]`), v1.PatchOptions{})
+					_, err := client.Patch(ctx, item.Name, types.MergePatchType, []byte(`{
+						"metadata": {
+							"annotations": {
+								"`+utils.AnnoKeyManagerKind+`": null,
+								"`+utils.AnnoKeyManagerIdentity+`": null,
+								"`+utils.AnnoKeySourcePath+`": null,
+								"`+utils.AnnoKeySourceChecksum+`": null
+							}
+						}
+					}`), v1.PatchOptions{})
 					return err
 				})
 			if err != nil {
