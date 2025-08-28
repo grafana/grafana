@@ -4042,7 +4042,7 @@
         "required": [
           "kind",
           "name",
-          "verbs"
+          "verb"
         ],
         "properties": {
           "kind": {
@@ -4055,13 +4055,10 @@
             "type": "string",
             "default": ""
           },
-          "verbs": {
-            "description": "list of actions granted to the user (e.g. \"admin\" or \"get\", \"update\")",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            }
+          "verb": {
+            "description": "action set granted to the user (e.g. \"admin\" or \"edit\", \"view\")",
+            "type": "string",
+            "default": ""
           }
         }
       },

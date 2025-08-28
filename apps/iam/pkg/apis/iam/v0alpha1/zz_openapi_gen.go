@@ -1111,23 +1111,16 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecPermission(ref common.Re
 							Format:      "",
 						},
 					},
-					"verbs": {
+					"verb": {
 						SchemaProps: spec.SchemaProps{
-							Description: "list of actions granted to the user (e.g. \"admin\" or \"get\", \"update\")",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
+							Description: "action set granted to the user (e.g. \"admin\" or \"edit\", \"view\")",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"kind", "name", "verbs"},
+				Required: []string{"kind", "name", "verb"},
 			},
 		},
 	}

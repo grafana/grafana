@@ -14,8 +14,8 @@ ResourcePermission: {
 		kind: "User" | "ServiceAccount" | "Team" | "BasicRole" 
 		// uid of the identity getting the permission
 		name: string
-		// list of actions granted to the user (e.g. "admin" or "get", "update")
-		verbs: [...string]
+		// action set granted to the user (e.g. "admin" or "edit", "view")
+		verb: string
 	}
 	
 	resource: #Resource
