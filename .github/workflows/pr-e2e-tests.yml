@@ -522,12 +522,11 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-      # TODO: does the misc stats api key already live in vault?
-      # - id: vault-secrets
-      #   uses: grafana/shared-workflows/actions/get-vault-secrets@main
-      #   with:
-      #     repo_secrets: |
-      #       GRAFANA_MISC_STATS_API_KEY=delivery-bot-app:PRIVATE_KEY
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -541,7 +540,9 @@ jobs:
         with:
           name: pa11y-ci-results
       - name: Extract and publish metrics
-        run: ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY
+        run: ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $GRAFANA_MISC_STATS_API_KEY
+        env:
+          GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests.
