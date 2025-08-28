@@ -54,7 +54,7 @@ func (w *Worker) Run(ctx context.Context) error {
 		case <-timer.C:
 			timeoutCtx, cancel := context.WithTimeout(context.Background(), w.Cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout)
 			if _, err := w.CleanupInactiveSecureValues(timeoutCtx); err != nil {
-				logging.FromContext(timeoutCtx).Error("cleaning up inactive secure values", err)
+				logging.FromContext(timeoutCtx).Error("cleaning up inactive secure values", "error", err)
 			}
 			cancel()
 		}
