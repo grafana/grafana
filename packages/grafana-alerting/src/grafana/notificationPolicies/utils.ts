@@ -24,6 +24,10 @@ export interface RouteMatchResult<T extends Route> {
   matchingJourney: Array<RouteMatchInfo<T>>;
 }
 
+// This function performs a depth-first left-to-right search through the route tree
+// and returns the matching routing nodes.
+//
+// If the current node is not a match, return nothing
 // Normalization should have happened earlier in the code
 export function findMatchingRoutes<T extends Route>(
   route: T,
@@ -94,9 +98,9 @@ export function computeInheritedTree<T extends Route>(parent: T): T {
 }
 
 // inherited properties are config properties that exist on the parent route (or its inherited properties) but not on the child route
-export function getInheritedProperties(
-  parentRoute: Route,
-  childRoute: Route,
+export function getInheritedProperties<T extends Route>(
+  parentRoute: T,
+  childRoute: T,
   propertiesParentInherited?: InheritableProperties
 ): InheritableProperties {
   const propsFromParent: InheritableProperties = pick(parentRoute, INHERITABLE_KEYS);
