@@ -174,6 +174,22 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+#### Time comparison
+
+Toggle on the **Time comparison** switch to enable the **Comparison** selector in the panel so you can compare data between two time ranges.
+
+When you apply a time comparison to a visualization, the comparison data is displayed in grey:
+
+{{< figure src="screenshot-time-comparison-v12.2.png" max-width="750px" alt="A time series graph with the comparison selector open and Month before selected" >}}
+
+Choose from the following time comparison options:
+
+- None
+- Previous period <!-- what does this one mean? -->
+- Day before
+- Week before
+- Month before 
+
 ### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1">}}
