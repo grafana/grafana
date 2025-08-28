@@ -513,7 +513,7 @@ jobs:
       - run-a11y-test
     name: Publish metrics
     # Run on `grafana/grafana` main branch only
-    if: github.event_name == 'push' && github.repository == 'grafana/grafana'
+    if: github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'main'
     permissions:
       contents: read
       id-token: write
