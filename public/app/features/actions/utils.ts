@@ -150,7 +150,6 @@ export const buildActionRequest = (action: Action, replaceVariables: Interpolate
 };
 
 /** @internal */
-// @TODO update return type
 export const getActionsDefaultField = (dataLinks: DataLink[] = [], actions: Action[] = []): Field => {
   return {
     name: 'Default field',
