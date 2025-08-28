@@ -6,16 +6,18 @@ import { RulesFilter } from '../../search/rulesSearchParser';
 import { AdvancedFilters } from './types';
 
 export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesFilter {
+  // Exclude UI-only fields from being applied to the RulesFilter
+  const { ruleSource: _ruleSource, ...rest } = values;
   return {
     freeFormWords: [],
-    ...values,
-    namespace: values.namespace || undefined,
-    groupName: values.groupName || undefined,
-    contactPoint: values.contactPoint || undefined,
-    ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
-    ruleState: values.ruleState === '*' ? undefined : values.ruleState,
-    ruleType: values.ruleType === '*' ? undefined : values.ruleType,
-    plugins: values.plugins === 'show' ? undefined : 'hide',
+    ...rest,
+    namespace: rest.namespace || undefined,
+    groupName: rest.groupName || undefined,
+    contactPoint: rest.contactPoint || undefined,
+    ruleHealth: rest.ruleHealth === '*' ? undefined : rest.ruleHealth,
+    ruleState: rest.ruleState === '*' ? undefined : rest.ruleState,
+    ruleType: rest.ruleType === '*' ? undefined : rest.ruleType,
+    plugins: rest.plugins === 'show' ? undefined : 'hide',
   };
 }
 
@@ -31,6 +33,7 @@ export const emptyAdvancedFilters: AdvancedFilters = {
   dashboardUid: undefined,
   plugins: 'show',
   contactPoint: null,
+  ruleSource: '*',
 };
 
 export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFilters {
@@ -46,6 +49,7 @@ export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFi
     dashboardUid: filterState.dashboardUid,
     plugins: filterState.plugins ?? 'show',
     contactPoint: filterState.contactPoint ?? null,
+    ruleSource: '*',
   };
 }
 
