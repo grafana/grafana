@@ -131,8 +131,6 @@ TableFieldOptions: {
 	hideHeader?: bool
   // if true, wrap the text content of the cell
   wrapText?: bool
-  // if set, limit the height in pixels that the wrapped text can flow to
-  maxHeight?: number
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
   // Selecting or hovering this field will show a tooltip containing the content within the target field

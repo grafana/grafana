@@ -84,18 +84,13 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(field.config.custom?.wrapText);
 }
 
-export function getMaxHeight(field: Field): number | undefined {
-  return field.config?.custom?.maxHeight;
-}
-
 /**
  * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
  */
-function clampByMaxHeight(measurer: MeasureCellHeight): MeasureCellHeight {
+function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight?: number): MeasureCellHeight {
   return (value, width, field, rowIdx, lineHeight) => {
     const rawHeight = measurer(value, width, field, rowIdx, lineHeight);
-    const maxHeight = getMaxHeight(field);
-    if (typeof maxHeight !== 'number') {
+    if (maxHeight == null) {
       return rawHeight;
     }
 
@@ -268,7 +263,8 @@ const spaceRegex = /[\s-]/;
  */
 export function buildCellHeightMeasurers(
   fields: Field[],
-  typographyCtx: TypographyCtx
+  typographyCtx: TypographyCtx,
+  maxHeight?: number
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
@@ -298,8 +294,8 @@ export function buildCellHeightMeasurers(
     if (!result[measurerFactoryKey]) {
       const [measure, estimate] = measurerFactory[measurerFactoryKey]();
       result[measurerFactoryKey] = {
-        measure: clampByMaxHeight(measure),
-        estimate: estimate != null ? clampByMaxHeight(estimate) : undefined,
+        measure: clampByMaxHeight(measure, maxHeight),
+        estimate: estimate != null ? clampByMaxHeight(estimate, maxHeight) : undefined,
         fieldIdxs: [],
       };
     }

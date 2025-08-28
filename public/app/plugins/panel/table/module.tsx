@@ -113,16 +113,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           name: t('table.name-wrap-text', 'Wrap text'),
           category,
         })
-        .addNumberInput({
-          path: 'maxHeight',
-          name: t('table.text-wrap-options.label-max-height', 'Max cell height'),
-          category,
-          settings: {
-            placeholder: t('table.text-wrap-options.placeholder-max-height', 'none'),
-            min: 0,
-          },
-          showIf: (cfg) => cfg.wrapText,
-        })
         .addBooleanSwitch({
           path: 'wrapHeaderText',
           name: t('table.name-wrap-header-text', 'Wrap header text'),
@@ -206,6 +196,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             { value: TableCellHeight.Md, label: t('table.cell-height-options.label-medium', 'Medium') },
             { value: TableCellHeight.Lg, label: t('table.cell-height-options.label-large', 'Large') },
           ],
+        },
+      })
+      .addNumberInput({
+        path: 'maxRowHeight',
+        name: t('table.text-wrap-options.label-max-height', 'Max row height'),
+        category,
+        settings: {
+          placeholder: t('table.text-wrap-options.placeholder-max-height', 'none'),
+          min: 0,
         },
       })
       .addBooleanSwitch({

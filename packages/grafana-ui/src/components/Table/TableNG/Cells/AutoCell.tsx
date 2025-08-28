@@ -24,14 +24,15 @@ export const getStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow, m
         whiteSpace: 'pre-line',
       },
     }),
-    ...(typeof maxHeight === 'number' && {
-      height: 'auto',
-      minHeight: 'none',
-      overflowY: 'hidden',
-      display: '-webkit-box',
-      WebkitBoxOrient: 'vertical',
-      WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
-    }),
+    ...(maxHeight != null &&
+      textWrap && {
+        height: 'auto',
+        minHeight: 'none',
+        overflowY: 'hidden',
+        display: '-webkit-box',
+        WebkitBoxOrient: 'vertical',
+        WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+      }),
   });
 
 export const getJsonCellStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow }) =>

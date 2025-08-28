@@ -296,10 +296,6 @@
                 }
               },
               {
-                "id": "custom.maxHeight",
-                "value": null
-              },
-              {
                 "id": "custom.width",
                 "value": 255
               },

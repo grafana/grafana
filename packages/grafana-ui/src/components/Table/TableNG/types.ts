@@ -132,6 +132,7 @@ export interface BaseTableProps {
   frozenColumns?: number;
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
