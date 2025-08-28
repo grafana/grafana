@@ -224,73 +224,19 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-Grafana uses [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [in our end-to-end testing style guide](./style-guides/e2e-playwright.md#playwright-for-plugins)
+- Grafana uses [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information [in our end-to-end testing style guide](./style-guides/e2e-playwright.md#playwright-for-plugins)
 
-#### Run the Playwright tests:
+- Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers: `yarn playwright install chromium`.
+- Run tests with `yarn e2e:playwright [optional path to test file]`.
 
-**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to use reports to analyze failing tests, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
+- To open the las HTML, you can run `yarn playwright show-report`. You can also open an arbitrary report with `yarn playwright show-report <reportLocation>`. For Grafanistas, the reports are also downloable from CI by:
+  - Clicking through to _End-to-end tests_/_All Playwright tests complete_.
+  - Clicking _Summary_.
+  - Download the _playwright-html-<number>_ artifact.
+  - Unzip.
+  - Run `yarn playwright show-report <reportLocation>`
 
-Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers.
-
-```
-yarn playwright install chromium
-```
-
-The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in CI) on port 3001 and runs all the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
-
-```
-yarn e2e:playwright
-```
-
-You can run against an arbitrary instance by setting the `GRAFANA_URL` environment variable:
-
-```
-GRAFANA_URL=http://localhost:3000 yarn e2e:playwright
-```
-
-Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
-
-Playwright has several commands commonly used:
-
-1 - **To open the Playwright UI**. It starts the Grafana server and then Playwright, which runs against this server.
-
-```
-yarn e2e:playwright --ui
-```
-
-2 - **To run an individual test**. It will run the test that matches the string passed to _grep_. Playwright will run all of them if you use a string that matches multiple tests.
-
-```
-yarn e2e:playwright --grep <testname>
-```
-
-You can also run all the tests matching a specific tag with _@tagName_.
-
-```
-yarn e2e:playwright --grep @<tagname>
-```
-
-3 - **To run a project**. It will run the entire project, also known as '_suite_'. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
-
-```
-yarn e2e:playwright --project <projectname>
-```
-
-4- **To open the last HTML report**. It will open a Chrome window with the test list and the related info (success/error, name, time, steps, ...).
-
-```
-yarn playwright show-report
-```
-
-You can open an arbitrary report with `yarn playwright show-report <reportLocation>`. For Grafanistas, the reports are also downloable from CI by:
-
-- Clicking through to _End-to-end tests_/_All Playwright tests complete_.
-- Clicking _Summary_.
-- Download the _playwright-html-<number>_ artifact.
-- Unzip.
-- Run `yarn playwright show-report <reportLocation>`
-
-You can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options) if you are curious about other commands.
+If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 
 ## Configure Grafana for development
 
