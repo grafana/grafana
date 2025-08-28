@@ -113,7 +113,7 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   jsonInputs
-    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) >= 39)
+    .filter((inputFile) => parseInt(inputFile.split('.')[0].replace('v', ''), 10) > 38)
     .forEach((inputFile) => {
       it(`should migrate ${inputFile} correctly`, async () => {
         const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
@@ -193,27 +193,29 @@ describe('Backend / Frontend result comparison', () => {
           }
         }
 
-        const frontendMigrationResult = frontendModel.getSaveModelClone();
-        const backendMigrationResult = backendModel.getSaveModelClone();
+        const frontendMigrationResult = cleanDashboardModel(frontendModel);
+        const backendMigrationResult = cleanDashboardModel(backendModel);
 
-        // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
-        // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
-        // Because Go and TS handle -Infinity differently.
-        const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
-
-        // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
-        for (const panel of cleanedFrontendResult.panels ?? []) {
-          // @ts-expect-error
-          delete panel.autoMigrateFrom;
-          // @ts-expect-error
-          delete panel.styles;
-          // @ts-expect-error - Backend removes these deprecated table properties
-          delete panel.transform;
-          // @ts-expect-error - Backend removes these deprecated table properties
-          delete panel.columns;
-        }
-
-        expect(backendMigrationResult).toEqual(cleanedFrontendResult);
+        expect(backendMigrationResult).toEqual(frontendMigrationResult);
       });
     });
 });
+
+function cleanDashboardModel(dashboard: DashboardModel) {
+  // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
+  // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
+  // Because Go and TS handle -Infinity differently.
+  const dashboardWithoutNulls = sortedDeepCloneWithoutNulls(dashboard.getSaveModelClone());
+
+  // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
+  for (const panel of dashboardWithoutNulls.panels ?? []) {
+    // @ts-expect-error
+    delete panel.autoMigrateFrom;
+    // @ts-expect-error
+    delete panel.styles;
+    // @ts-expect-error - Backend removes these deprecated table properties
+    delete panel.transform;
+    // @ts-expect-error - Backend removes these deprecated table properties
+    delete panel.columns;
+  }
+}
