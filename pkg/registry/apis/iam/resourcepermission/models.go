@@ -26,10 +26,9 @@ var (
 )
 
 type ListResourcePermissionsQuery struct {
-	ResourceUID       string
-	OrgID             int64
-	Actions           string
-	ManagedRolePrefix string
+	Scope   string
+	OrgID   int64
+	Actions string
 
 	Pagination common.Pagination
 }
@@ -44,105 +43,6 @@ type flatResourcePermission struct {
 	SubjectUID       string    `xorm:"subject_uid"`
 	SubjectType      string    `xorm:"subject_type"` // 'user', 'team', or 'builtin_role'
 	IsServiceAccount bool      `xorm:"is_service_account"`
-	SubjectName      string    `xorm:"subject_name"` // login, team name, or builtin role name
-}
-
-func toV0ResourcePermissionByResource(permissionGroups map[string][]flatResourcePermission, resourceUID string) *v0alpha1.ResourcePermission {
-	if len(permissionGroups) == 0 {
-		return nil
-	}
-
-	var firstPerm flatResourcePermission
-	var found bool
-	for _, perms := range permissionGroups {
-		if len(perms) > 0 {
-			firstPerm = perms[0]
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return nil
-	}
-
-	var apiGroup, resourceType, resourceName string
-	if firstPerm.Scope != "" {
-		parts := strings.Split(firstPerm.Scope, ":")
-		if len(parts) >= 1 {
-			resourceType = parts[0]
-			apiGroup = getApiGroupForResource(resourceType)
-		}
-		if len(parts) >= 3 {
-			resourceName = parts[2]
-		} else {
-			resourceName = "*"
-		}
-	} else {
-		apiGroup = "core.grafana.app"
-		resourceType = "unknown"
-		resourceName = "*"
-	}
-
-	// Build permissions array for all users/teams/roles
-	permissions := make([]v0alpha1.ResourcePermissionspecPermission, 0, len(permissionGroups))
-
-	for _, perms := range permissionGroups {
-		if len(perms) == 0 {
-			continue
-		}
-
-		first := perms[0]
-		var permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
-		var permissionName string
-
-		switch first.SubjectType {
-		case "user":
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-			permissionName = first.SubjectName
-		case "team":
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
-			permissionName = first.SubjectName
-		case "builtin_role":
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
-			permissionName = first.SubjectName
-		default:
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-			permissionName = "unknown"
-		}
-
-		if first.IsServiceAccount {
-			permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount
-		}
-
-		verbs := make([]string, 0, len(perms))
-		for _, perm := range perms {
-			verbs = append(verbs, perm.Action)
-		}
-
-		permissions = append(permissions, v0alpha1.ResourcePermissionspecPermission{
-			Kind:  permissionKind,
-			Name:  permissionName,
-			Verbs: verbs,
-		})
-	}
-
-	return &v0alpha1.ResourcePermission{
-		TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              resourceUID,
-			ResourceVersion:   firstPerm.Updated.Format(time.RFC3339),
-			CreationTimestamp: metav1.NewTime(firstPerm.Created),
-		},
-		Spec: v0alpha1.ResourcePermissionSpec{
-			Resource: v0alpha1.ResourcePermissionspecResource{
-				ApiGroup: apiGroup,
-				Resource: resourceType,
-				Name:     resourceName,
-			},
-			Permissions: permissions,
-		},
-	}
 }
 
 func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.ResourcePermission {
