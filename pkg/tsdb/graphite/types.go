@@ -1,9 +1,5 @@
 package graphite
 
-import (
-	"github.com/grafana/grafana/pkg/components/null"
-)
-
 type TargetResponseDTO struct {
 	Target     string               `json:"target"`
 	DataPoints DataTimeSeriesPoints `json:"datapoints"`
@@ -11,7 +7,7 @@ type TargetResponseDTO struct {
 	Tags map[string]any `json:"tags"`
 }
 
-type DataTimePoint [2]null.Float
+type DataTimePoint [2]Float
 type DataTimeSeriesPoints []DataTimePoint
 
 type GraphiteQuery struct {
