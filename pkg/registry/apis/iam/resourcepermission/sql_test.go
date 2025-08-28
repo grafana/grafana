@@ -134,7 +134,6 @@ func TestIntegrationCreateResourcePermission(t *testing.T) {
 		require.Equal(t, "folders:uid:fold1", permission.Scope)
 		require.Equal(t, "folders:admin", permission.Action)
 	})
-
 }
 
 type fakeIdentityStore struct {
