@@ -43,6 +43,12 @@ func New(cfg app.Config) (app.App, error) {
 
 	logging.DefaultLogger.Info("FolderReconciler created")
 
+	reconcilerOptions := simple.BasicReconcileOptions{}
+
+	if cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace != "" {
+		reconcilerOptions.Namespace = cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace
+	}
+
 	config := simple.AppConfig{
 		Name:       cfg.ManifestData.AppName,
 		KubeConfig: cfg.KubeConfig,
@@ -54,11 +60,9 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		UnmanagedKinds: []simple.AppUnmanagedKind{
 			{
-				Kind:       foldersKind.FolderKind(),
-				Reconciler: folderReconciler,
-				ReconcileOptions: simple.BasicReconcileOptions{
-					Namespace: cfg.SpecificConfig.(AppConfig).FolderReconcilerNamespace,
-				},
+				Kind:             foldersKind.FolderKind(),
+				Reconciler:       folderReconciler,
+				ReconcileOptions: reconcilerOptions,
 			},
 		},
 	}

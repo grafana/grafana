@@ -1,0 +1,16 @@
+
+# version_settings() enforces a minimum Tilt version
+# https://docs.tilt.dev/api.html#api.version_settings
+version_settings(constraint='>=0.22.2')
+
+custom_build(
+    'grafana-iam-operator',
+    command='docker build -t $EXPECTED_REF -f cmd/operator/Dockerfile .',
+    deps=[
+      'cmd/operator',
+      'pkg',
+    ],
+    disable_push=True,
+)
+
+k8s_yaml([filename for filename in listdir('local/yamls') if filename.lower().endswith(('.yaml', '.yml'))])
