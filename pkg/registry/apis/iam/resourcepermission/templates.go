@@ -56,7 +56,7 @@ func buildInsertRoleQuery(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64,
 		OrgID:       orgID,
 		UID:         uid,
 		Name:        name,
-		Now:         time.Now().Format(time.DateTime),
+		Now:         timeNow().Format(time.DateTime),
 	}
 	rawQuery, err := sqltemplate.Execute(roleInsertTplt, req)
 	if err != nil {
@@ -93,7 +93,7 @@ func buildInsertAssignmentQuery(dbHelper *legacysql.LegacyDatabaseHelper, orgID 
 		RoleID:           roleID,
 		OrgID:            orgID,
 		AssigneeID:       assignment.AssigneeID,
-		Now:              time.Now().Format(time.DateTime),
+		Now:              timeNow().Format(time.DateTime),
 	}
 	rawQuery, err := sqltemplate.Execute(assignmentInsertTplt, req)
 	if err != nil {
@@ -120,7 +120,7 @@ func buildInsertPermissionQuery(dbHelper *legacysql.LegacyDatabaseHelper, roleID
 		PermissionTable: dbHelper.Table("permission"),
 		RoleID:          roleID,
 		Permission:      permission,
-		Now:             time.Now().Format(time.DateTime),
+		Now:             timeNow().Format(time.DateTime),
 	}
 	rawQuery, err := sqltemplate.Execute(permissionInsertTplt, req)
 	if err != nil {

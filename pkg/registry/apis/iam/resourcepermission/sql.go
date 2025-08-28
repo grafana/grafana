@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -23,8 +22,12 @@ import (
 // Create
 
 // TODO: use mapper?
-func actionSet(resource string, level string) string {
-	return fmt.Sprintf("%s:%s", resource, level)
+func actionSet(resource string, level string) (string, error) {
+	level = strings.ToLower(level)
+	if !validLevels[level] {
+		return "", fmt.Errorf("invalid permission level (%s): %w", level, errInvalidSpec)
+	}
+	return fmt.Sprintf("%s:%s", resource, level), nil
 }
 
 // TODO: use mapper?
@@ -104,7 +107,11 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 	assignments := make([]grant, 0, len(v0ResourcePerm.Spec.Permissions))
 
 	for _, perm := range v0ResourcePerm.Spec.Permissions {
-		rbacActionSet := actionSet(v0ResourcePerm.Spec.Resource.Resource, perm.Verb)
+		rbacActionSet, err := actionSet(v0ResourcePerm.Spec.Resource.Resource, perm.Verb)
+		if err != nil {
+			return nil, err
+		}
+
 		switch perm.Kind {
 		case v0alpha1.ResourcePermissionSpecPermissionKindUser:
 			userID, err := s.identityStore.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
@@ -172,6 +179,8 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 				Action:           rbacActionSet,
 				Scope:            rbacScope,
 			})
+		default:
+			return nil, fmt.Errorf("unknown permission kind: %q: %w", perm.Kind, errInvalidSpec)
 		}
 	}
 
@@ -210,9 +219,7 @@ func (s *ResourcePermSqlBackend) createResourcePermission(ctx context.Context, d
 	}
 
 	// Return a timestamp as resource version
-	// TODO should we return the latest updated managed role?
-	// Not sure since it could have effectively been updated for another resource than the one at stake.
-	return time.Now().UnixMilli(), nil
+	return timeNow().UnixMilli(), nil
 }
 
 // Update

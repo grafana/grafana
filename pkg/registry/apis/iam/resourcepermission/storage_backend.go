@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	idStore "github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -27,7 +27,7 @@ var (
 
 type ResourcePermSqlBackend struct {
 	dbProvider    legacysql.LegacyDatabaseProvider
-	identityStore legacy.LegacyIdentityStore
+	identityStore IdentityStore
 	logger        log.Logger
 
 	subscribers []chan *resource.WrittenEvent
@@ -37,7 +37,7 @@ type ResourcePermSqlBackend struct {
 func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *ResourcePermSqlBackend {
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
-		identityStore: legacy.NewLegacySQLStores(dbProvider),
+		identityStore: idStore.NewLegacySQLStores(dbProvider),
 		logger:        log.New("resourceperm_storage_backend"),
 
 		subscribers: make([]chan *resource.WrittenEvent, 0),
