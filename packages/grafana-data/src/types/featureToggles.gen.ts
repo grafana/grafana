@@ -752,6 +752,11 @@ export interface FeatureToggles {
   */
   alertingAIGenTemplates?: boolean;
   /**
+  * Enable enrichment per rule in the alerting UI.
+  * @default false
+  */
+  alertingEnrichmentPerRule?: boolean;
+  /**
   * Enable AI-analyze central state history.
   * @default false
   */
