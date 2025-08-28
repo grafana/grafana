@@ -378,7 +378,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
-		promTypeMigrationProvider:    promTypeMigrationProvider,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
