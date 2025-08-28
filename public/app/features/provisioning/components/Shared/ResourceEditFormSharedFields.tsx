@@ -1,9 +1,10 @@
-import { memo } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+import { memo, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { Field, TextArea, Input, RadioButtonGroup } from '@grafana/ui';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { Field, TextArea, Input, RadioButtonGroup, Combobox } from '@grafana/ui';
+import { RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
@@ -27,10 +28,35 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       formState: { errors },
     } = useFormContext();
 
+    const {
+      data: branchData,
+      isLoading: branchLoading,
+      error: branchError,
+    } = useGetRepositoryRefsQuery(
+      !repository?.name || !isGitProvider(repository.type) ? skipToken : { name: repository.name }
+    );
+
+    const branchOptions = useMemo(() => {
+      if (!branchData?.items) {
+        return [];
+      }
+
+      return branchData.items.map((ref) => ({
+        label: ref.name,
+        value: ref.name,
+      }));
+    }, [branchData?.items]);
+
     const pathText =
       resourceType === 'dashboard'
-        ? 'File path inside the repository (.json or .yaml)'
-        : 'Folder path inside the repository';
+        ? t(
+            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
+            'File path inside the repository (.json or .yaml)'
+          )
+        : t(
+            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
+            'Folder path inside the repository'
+          );
 
     return (
       <>
@@ -88,10 +114,34 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-name-in-git-hub',
                   'Branch name in GitHub'
                 )}
-                invalid={!!errors.ref}
-                error={errors.ref && <BranchValidationError />}
+                invalid={Boolean(errors.ref || branchError)}
+                error={
+                  errors.ref ? (
+                    <BranchValidationError />
+                  ) : branchError ? (
+                    t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
+                  ) : undefined
+                }
               >
-                <Input id="provisioned-resource-form-branch" {...register('ref', { validate: validateBranchName })} />
+                <Controller
+                  name="ref"
+                  control={control}
+                  rules={{ validate: validateBranchName }}
+                  render={({ field: { ref, onChange, ...field } }) => (
+                    <Combobox
+                      invalid={!!errors.ref}
+                      onChange={(option) => onChange(option?.value || '')}
+                      placeholder={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
+                        'Select or enter branch name'
+                      )}
+                      options={branchOptions}
+                      loading={branchLoading}
+                      isClearable
+                      {...field}
+                    />
+                  )}
+                />
               </Field>
             )}
           </>
