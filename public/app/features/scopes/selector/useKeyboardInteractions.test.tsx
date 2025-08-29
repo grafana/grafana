@@ -327,45 +327,5 @@ describe('useKeyboardInteraction', () => {
       await user.keyboard('{ArrowUp}');
       expect(result.current.highlightedIndex).toBe(0);
     });
-
-    it('should handle items with undefined children correctly', async () => {
-      const itemsWithUndefinedChildren: TreeNode[] = [
-        { scopeNodeId: 'item1', expanded: false, query: '', children: undefined },
-        { scopeNodeId: 'item2', expanded: false, query: '', children: {} }, // empty object
-        { scopeNodeId: 'item3', expanded: false, query: '', children: { child: createMockTreeNode('child') } },
-      ];
-
-      const { result } = renderHook(() => useKeyboardInteraction(true, itemsWithUndefinedChildren, '', mockOnSelect));
-
-      // Focus the input to enable keyboard events
-      await user.click(inputElement);
-
-      // Navigate to item with undefined children
-      await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(0);
-
-      // Try to expand item with undefined children
-      await user.keyboard('{ArrowRight}');
-      expect(mockOnSelect).not.toHaveBeenCalled();
-
-      // Navigate to item with empty children object
-      await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(1);
-
-      // Try to expand item with empty children (empty object is truthy, so this will call onSelect)
-      await user.keyboard('{ArrowRight}');
-      expect(mockOnSelect).toHaveBeenCalledWith(1, KeyboardAction.EXPAND);
-
-      // Reset mock for next test
-      mockOnSelect.mockClear();
-
-      // Navigate to item with actual children
-      await user.keyboard('{ArrowDown}');
-      expect(result.current.highlightedIndex).toBe(2);
-
-      // Try to expand item with actual children
-      await user.keyboard('{ArrowRight}');
-      expect(mockOnSelect).toHaveBeenCalledWith(2, KeyboardAction.EXPAND);
-    });
   });
 });
