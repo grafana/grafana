@@ -149,7 +149,6 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
   const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
-    action: 'delete',
     title: parentFolder?.title,
   });
 

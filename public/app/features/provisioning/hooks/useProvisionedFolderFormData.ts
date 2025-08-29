@@ -11,7 +11,6 @@ import { BaseProvisionedFormData } from '../types/form';
 
 interface UseProvisionedFolderFormDataProps {
   folderUid?: string;
-  action: 'create' | 'delete';
   title?: string;
 }
 
@@ -28,29 +27,29 @@ export interface ProvisionedFolderFormDataResult {
  */
 export function useProvisionedFolderFormData({
   folderUid,
-  action,
   title,
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
   const { repository, folder, isLoading, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
 
-  const workflowOptions = getWorkflowOptions(repository);
   const timestamp = generateTimestamp();
+  const workflowOptions = getWorkflowOptions(repository);
 
   const initialValues = useMemo(() => {
     // Only create initial values when we have the data
     if (!repository || isLoading) {
       return undefined;
     }
+    const defaultWorkflow = getDefaultWorkflow(repository);
 
     return {
       title: title || '',
       comment: '',
-      ref: `folder/${timestamp}`,
+      ref: defaultWorkflow === 'branch' ? `folder/${timestamp}` : (repository?.branch ?? ''),
       repo: repository.name || '',
       path: folder?.metadata?.annotations?.[AnnoKeySourcePath] || '',
       workflow: getDefaultWorkflow(repository),
     };
-  }, [repository, folder, title, isLoading, timestamp]);
+  }, [repository, isLoading, title, timestamp, folder?.metadata?.annotations]);
 
   return {
     repository,
